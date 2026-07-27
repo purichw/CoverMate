@@ -20,6 +20,18 @@ wrapper and embedded bundle strings. There is no backend API in this repo.
 horizontal overflow, unauthenticated admin redirects, demo login to `/admin`,
 and authenticated admin launcher rendering.
 
+## Document Set
+
+Detailed project documents:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/SITE_MAP.md`](docs/SITE_MAP.md)
+- [`docs/INTERACTION_MAP.md`](docs/INTERACTION_MAP.md)
+- [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)
+- [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
+- [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
+- [`docs/HANDOFF.md`](docs/HANDOFF.md)
+
 ## Top-Level Files
 
 | Path | Purpose / ownership |
