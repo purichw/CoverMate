@@ -106,6 +106,26 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
   }
 
+  await page.goto(new URL("/admin/login", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
+  await page.evaluate(() => window.localStorage.removeItem("covermate-admin-session"));
+  await page.getByText("Sign in with Google").click();
+  await page.waitForTimeout(900);
+  const loginPath = new URL(page.url()).pathname.replace(/\/$/, "");
+  const loginFlowState = await page.evaluate(() => ({
+    text: document.body.innerText,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
+  }));
+  if (loginPath !== "/admin") {
+    failures.push(`${name} login: expected redirect to /admin, got ${page.url()}`);
+  }
+  if (!loginFlowState.text.includes("Manage your site")) {
+    failures.push(`${name} login: admin launcher did not render after sign-in`);
+  }
+  if (loginFlowState.scrollWidth > loginFlowState.clientWidth) {
+    failures.push(`${name} login: horizontal overflow ${loginFlowState.scrollWidth} > ${loginFlowState.clientWidth}`);
+  }
+
   await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
   await page.evaluate(() => {
     window.localStorage.setItem(
