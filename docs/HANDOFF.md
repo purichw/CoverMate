@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Current State
 
@@ -30,6 +30,11 @@ The admin launcher has an early session gate.
 Thai text across visitor and admin surfaces uses Google Sans Thai.
 
 Insurer logos are present under `assets/ins`.
+
+The visitor bundle has been reconciled with
+`/Users/point/Downloads/Purich Insurance Site (standalone).html`, including the
+new contact form selects, insurer relationship proof cards, card editing in the
+admin content panel, and local structural migration key.
 
 ## Project Documents
 
@@ -75,7 +80,10 @@ Admin/CMS state is browser-local, not server-backed.
 
 The static session gate is not real backend authorization.
 
-The insurer-logo asset folder has 14 files while the copy says "26+" insurers.
+The insurer-logo grid has 14 committed files while the copy says "26+"
+insurers. The latest reference supports this with additional AIA and Srikrung
+Broker proof cards below the grid; confirm any future claim/copy change with
+the business owner.
 
 The embedded exported bundle is hard to maintain by hand. Run parse checks and
 visual smoke checks after bundle edits.

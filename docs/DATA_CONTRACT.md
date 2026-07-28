@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Persistence Model
 
@@ -29,6 +29,11 @@ Implications:
 | `purich-admin-ever-v7` | Public bundle | Tracks whether admin tools have been opened. |
 | `purich-scrub-copy-v2` | Public bundle | Copy-scrub/sanitization state used by the exported app. |
 | `purich-site-config-v7` | Public bundle | Site configuration namespace used by the exported app. |
+| `covermate-text-v7` | Public bundle | Legacy editable text namespace read during migration. |
+| `purich-struct-cards-v2` | Public bundle | Structural migration marker for insurer relationship cards and card fields. |
+
+`purich-history-v3` is capped by the exported bundle. The current reference keeps
+the latest 20 publish/restore snapshots.
 
 ## Ownership Rules
 
@@ -77,6 +82,11 @@ Before deploying changes that affect storage shape or admin behavior:
 
 The exact nested config/text/history shape is owned by the embedded exported
 bundle. Inspect the bundle before making schema-level edits.
+
+The current insurer section includes both repeated insurer logo items and
+separate broker/agency relationship cards. Treat those cards as structural
+content, not plain testimonial copy, because the admin panel exposes dedicated
+card editing for them.
 
 The current auth/session model is suitable for prototype/private-owner workflow,
 not real multi-user production authorization.

@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Routes
 
@@ -29,7 +29,7 @@ Expected visible sections:
 | Coverage/products | Insurance categories and protection options. |
 | Fit/calculator | Helps visitors estimate or choose suitable coverage. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
-| Motor insurers | Shows insurer-logo animation and broker/license proof. |
+| Motor insurers | Shows insurer-logo animation, AIA/Srikrung proof cards, and broker/license proof. |
 | Testimonials | Customer proof and reassurance. |
 | About/license | Brand, owner/broker role, language support, and OIC verification. |
 | FAQ | Answers common objections. |
@@ -48,6 +48,10 @@ Expected visible sections:
 
 Visitor navigation should move through coverage, motor, calculator, steps, FAQ,
 and contact sections.
+
+`/#motor` uses its own compact navigation. Its links must resolve to
+`#motor-cover`, `#insurers`, `#how`, and `#talk`; do not reuse whole-site header
+anchors if those sections are hidden in the motor variant.
 
 Admin login must land on `/admin` after sign-in.
 
@@ -83,3 +87,7 @@ Current committed files:
 
 The bundle currently expects these numbered filenames. Do not rename them
 without updating bundle references and smoke expectations together.
+
+The latest standalone reference also renders relationship proof cards in the
+insurer section using `assets/logos/aia-logo.png` and
+`assets/logos/srikrung-logo.png` through the exported asset runtime.

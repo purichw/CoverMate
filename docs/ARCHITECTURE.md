@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Current Shape
 
@@ -43,6 +43,8 @@ writes `covermate-admin-session` and redirects to `/admin`.
 panel.
 
 `assets/ins/*.png` owns insurer logo media for the motor-insurance logo section.
+The exported reference also carries AIA/Srikrung Broker relationship-card logo
+assets through the bundle runtime.
 
 `organic.css` is the supplied organic design-system reference.
 
@@ -102,6 +104,10 @@ surface.
 Do not edit JSON inside `<script type="__bundler/template">` without keeping the
 embedded JSON valid.
 
+Do not let literal `</script>` strings appear inside the JSON script body.
+Escaped `<\u002Fscript>` text is required so the browser does not terminate the
+template early.
+
 ## Future Architecture Options
 
 These are proposals, not current implementation.
@@ -111,8 +117,9 @@ For a real production CMS, add server-backed auth and persistence.
 For maintainability, migrate the exported HTML bundles into source components
 while keeping the `.dc.html` references as visual fixtures.
 
-For the "26+" insurer claim, either add the remaining logo assets and update
-tests, or revise the copy.
+For the "26+" insurer claim, keep the visible 14-logo comparison grid plus
+AIA/Srikrung relationship proof cards aligned with the supplied reference unless
+the business owner supplies new insurer assets or revised copy.
 
 For paid traffic, have the business owner review all license, broker, OIC,
 contact, and insurance claim copy.

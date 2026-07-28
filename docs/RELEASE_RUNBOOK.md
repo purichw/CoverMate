@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Production
 
@@ -51,6 +51,9 @@ Minimum checks:
 - `/` loads public visitor site
 - first paint does not show exported placeholder UI
 - insurer logos render
+- insurer relationship proof cards render
+- contact form enquiry-type and coverage selects render
+- `/#motor` header links target visible motor-route sections
 - `/admin/login` loads
 - demo/Google login redirects to `/admin`
 - `/admin` shows the "Manage your site" launcher

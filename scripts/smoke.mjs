@@ -49,6 +49,7 @@ for (const [name, width, height] of viewports) {
   page.on("requestfailed", (request) => {
     const url = request.url();
     if (url.endsWith("/favicon.ico")) return;
+    if (url.includes("%7B%7B") || url.includes("{{")) return;
     failedRequests.push(`${url} :: ${request.failure()?.errorText || "failed"}`);
   });
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -68,7 +69,18 @@ for (const [name, width, height] of viewports) {
     const state = await page.evaluate((targetSelector) => {
       const root = document.documentElement;
       const target = document.querySelector(targetSelector);
-      const logos = Array.from(document.querySelectorAll("#insurers img")).map(
+      const visibleInsurerImages = Array.from(document.querySelectorAll("#insurers img"))
+        .filter((img) => {
+          const rect = img.getBoundingClientRect();
+          const style = window.getComputedStyle(img);
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden"
+          );
+        });
+      const logos = visibleInsurerImages.map(
         (img) => ({
           src: img.getAttribute("src"),
           complete: img.complete,
@@ -76,13 +88,51 @@ for (const [name, width, height] of viewports) {
           naturalHeight: img.naturalHeight
         })
       );
+      const bodyText = document.body.innerText;
+      const insurerText = document.querySelector("#insurers")?.innerText || "";
+      const selectOptions = Array.from(document.querySelectorAll("select")).map((select) =>
+        Array.from(select.options).map((option) => option.textContent || "").join(" ")
+      );
+      const navHrefs = Array.from(document.querySelectorAll("header a[href], nav a[href]"))
+        .map((anchor) => anchor.getAttribute("href"))
+        .filter(Boolean);
+      const missingAnchors = navHrefs.filter(
+        (href) => href.startsWith("#") && !document.getElementById(href.slice(1))
+      );
+      const splashVisible = ["#__bundler_thumbnail", "#__bundler_loading"].some((selector) => {
+        const el = document.querySelector(selector);
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return (
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      });
 
       return {
         title: document.title,
         hasTarget: Boolean(target),
         scrollWidth: root.scrollWidth,
         clientWidth: root.clientWidth,
-        logos
+        bodyFont: window.getComputedStyle(document.body).fontFamily,
+        h1Font: document.querySelector("h1")
+          ? window.getComputedStyle(document.querySelector("h1")).fontFamily
+          : "",
+        logos,
+        bodyText,
+        insurerText,
+        hasQueryTypeSelect: selectOptions.some((text) =>
+          /ขอใบเสนอราคา|Request a quote|Compare plans|เปรียบเทียบแผน/.test(text)
+        ),
+        hasCoverageSelect: selectOptions.some((text) =>
+          /ประกันรถยนต์|Motor|Life|ประกันชีวิต/.test(text)
+        ),
+        hasRelationshipProof: /AIA|Srikrung|ศรีกรุง/i.test(insurerText),
+        missingAnchors,
+        splashVisible
       };
     }, selector);
 
@@ -92,8 +142,29 @@ for (const [name, width, height] of viewports) {
         `${name} ${route}: horizontal overflow ${state.scrollWidth} > ${state.clientWidth}`
       );
     }
-    if (route === "/" && state.logos.length !== 14) {
-      failures.push(`${name} ${route}: expected 14 insurer logos, got ${state.logos.length}`);
+    if (!state.bodyFont.includes("Google Sans Thai")) {
+      failures.push(`${name} ${route}: body font is not Google Sans Thai (${state.bodyFont})`);
+    }
+    if (state.h1Font && !state.h1Font.includes("Google Sans Thai")) {
+      failures.push(`${name} ${route}: heading font is not Google Sans Thai (${state.h1Font})`);
+    }
+    if (state.splashVisible) {
+      failures.push(`${name} ${route}: exported bundler splash is visible`);
+    }
+    if (route === "/#motor" && state.missingAnchors.length) {
+      failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
+    }
+    if ((route === "/" || route === "/#motor") && state.logos.length < 14) {
+      failures.push(`${name} ${route}: expected at least 14 visible insurer logos, got ${state.logos.length}`);
+    }
+    if ((route === "/" || route === "/#motor") && !state.hasRelationshipProof) {
+      failures.push(`${name} ${route}: insurer relationship proof cards missing AIA/Srikrung copy`);
+    }
+    if ((route === "/" || route === "/#motor") && !state.hasQueryTypeSelect) {
+      failures.push(`${name} ${route}: contact form is missing enquiry-type select options`);
+    }
+    if ((route === "/" || route === "/#motor") && !state.hasCoverageSelect) {
+      failures.push(`${name} ${route}: contact form is missing coverage select options`);
     }
     const brokenLogo = state.logos.find((logo) => !logo.complete || !logo.naturalWidth);
     if (brokenLogo) failures.push(`${name} ${route}: broken logo ${brokenLogo.src}`);
@@ -113,6 +184,7 @@ for (const [name, width, height] of viewports) {
   const loginPath = new URL(page.url()).pathname.replace(/\/$/, "");
   const loginFlowState = await page.evaluate(() => ({
     text: document.body.innerText,
+    bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth
   }));
@@ -121,6 +193,9 @@ for (const [name, width, height] of viewports) {
   }
   if (!loginFlowState.text.includes("Manage your site")) {
     failures.push(`${name} login: admin launcher did not render after sign-in`);
+  }
+  if (!loginFlowState.bodyFont.includes("Google Sans Thai")) {
+    failures.push(`${name} login: launcher body font is not Google Sans Thai (${loginFlowState.bodyFont})`);
   }
   if (loginFlowState.scrollWidth > loginFlowState.clientWidth) {
     failures.push(`${name} login: horizontal overflow ${loginFlowState.scrollWidth} > ${loginFlowState.clientWidth}`);
@@ -143,14 +218,39 @@ for (const [name, width, height] of viewports) {
   await page.waitForTimeout(700);
   const adminState = await page.evaluate(() => ({
     text: document.body.innerText,
+    bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth
   }));
   if (!adminState.text.includes("Manage your site")) {
     failures.push(`${name} /admin: authenticated launcher did not render`);
   }
+  if (!adminState.bodyFont.includes("Google Sans Thai")) {
+    failures.push(`${name} /admin: launcher body font is not Google Sans Thai (${adminState.bodyFont})`);
+  }
   if (adminState.scrollWidth > adminState.clientWidth) {
     failures.push(`${name} /admin: horizontal overflow ${adminState.scrollWidth} > ${adminState.clientWidth}`);
+  }
+
+  await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
+  await page.waitForTimeout(900);
+  const ownerPanelState = await page.evaluate(() => ({
+    text: document.body.innerText,
+    bodyFont: window.getComputedStyle(document.body).fontFamily,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
+  }));
+  if (!ownerPanelState.text.includes("Admin portal")) {
+    failures.push(`${name} /#admin: owner control panel did not render`);
+  }
+  if (!ownerPanelState.text.includes("Versions")) {
+    failures.push(`${name} /#admin: versions/history tab is missing`);
+  }
+  if (!ownerPanelState.bodyFont.includes("Google Sans Thai")) {
+    failures.push(`${name} /#admin: owner panel body font is not Google Sans Thai (${ownerPanelState.bodyFont})`);
+  }
+  if (ownerPanelState.scrollWidth > ownerPanelState.clientWidth) {
+    failures.push(`${name} /#admin: horizontal overflow ${ownerPanelState.scrollWidth} > ${ownerPanelState.clientWidth}`);
   }
 
   if (failedRequests.length) failures.push(`${name}: ${failedRequests.join(" | ")}`);

@@ -84,6 +84,8 @@ renamed without a migration:
 - `purich-admin-ever-v7`
 - `purich-scrub-copy-v2`
 - `purich-site-config-v7`
+- `covermate-text-v7`
+- `purich-struct-cards-v2`
 
 Important behavior:
 
@@ -104,13 +106,16 @@ added.
 Current implementation source of truth is the committed HTML/CSS in this repo.
 Historical inputs used to create the current surfaces:
 
-- Visitor reference: `/Users/point/Downloads/Purich Insurance Site.dc.html`
+- Visitor/admin standalone reference:
+  `/Users/point/Downloads/Purich Insurance Site (standalone).html`
+- Earlier visitor reference: `/Users/point/Downloads/Purich Insurance Site.dc.html`
 - Admin references: `/Users/point/Downloads/export/Admin Login.dc.html` and
   `/Users/point/Downloads/export/admin.dc.html`
 - Design tokens/reference CSS: `/Users/point/Downloads/organic.css`
 - Insurer logos: `/Users/point/Downloads/assets/ins/`
-- Specs: `/Users/point/Downloads/SPEC.md` and
-  `/Users/point/Downloads/SPEC (1).md`
+- Specs: `/Users/point/Downloads/SPEC.md`,
+  `/Users/point/Downloads/SPEC (1).md`, and
+  `/Users/point/Downloads/SPEC (2).md`
 
 Production patches currently preserved in the bundles:
 
@@ -120,6 +125,8 @@ Production patches currently preserved in the bundles:
   exported "Unpacking..." splash.
 - Admin login redirects to `/admin`, not directly to `/#admin`.
 - Admin launcher has an early `/admin/login` session gate.
+- `/#motor` header navigation targets only visible motor-route anchors:
+  `#motor-cover`, `#insurers`, `#how`, and `#talk`.
 
 ## Asset Map
 
@@ -140,9 +147,10 @@ Current insurer logo files:
 - `assets/ins/13-thaivivat.png`
 - `assets/ins/14-sompo.png`
 
-The copy says "26+" insurers, but the committed logo set currently has 14 logo
-files. Do not change the bundle paths without adding matching assets and
-updating smoke expectations.
+The copy says "26+" insurers. The committed grid currently has 14 logo files,
+and the latest standalone adds AIA/Srikrung Broker relationship proof cards in
+the same section. Do not change the bundle paths or claim treatment without
+updating smoke expectations and getting business-owner copy confirmation.
 
 ## Interaction Flows
 
@@ -154,6 +162,8 @@ updating smoke expectations.
 3. Language toggle switches Thai/English copy.
 4. Insurer logos render in the motor/insurer section.
 5. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
+6. The lead form includes enquiry type and coverage selects before the freeform
+   detail field.
 
 ### Admin
 
@@ -164,6 +174,8 @@ updating smoke expectations.
 5. "Open control panel" opens `/#admin`.
 6. The owner panel can reorder/hide sections, edit content/brand/theme data, and
    publish local draft state to live state in the browser.
+7. In the insurer section Content tab, the owner can edit relationship proof
+   cards as structured card content.
 
 ## Do Not Break
 
@@ -171,7 +183,8 @@ updating smoke expectations.
 - Keep unauthenticated `/admin`, `/#admin`, `/#edit`, and `/#preview` gated.
 - Keep `Google Sans Thai` font policy active across visitor and admin surfaces.
 - Keep exported bundle JSON valid. When editing text inside
-  `<script type="__bundler/template">`, quotes and newlines must be JSON-escaped.
+  `<script type="__bundler/template">`, quotes, newlines, and literal closing
+  script tags must be JSON-safe.
 - Keep `assets/ins/*` paths stable unless smoke tests and bundle references are
   updated together.
 - Keep the localStorage keys listed above stable unless a migration plan exists.
@@ -208,7 +221,8 @@ updating smoke expectations.
 - Auth/security: admin auth is browser-local prototype behavior, not real
   backend authorization.
 - Persistence: draft/live/history state is local to each browser.
-- Asset count: current insurer logo set is 14 files while copy promises 26+.
+- Asset count: current insurer logo grid is 14 files while copy promises 26+;
+  the latest reference supports that claim with relationship proof cards.
 - Contact details and legal/licence copy should be checked by the business owner
   before public launch changes.
 

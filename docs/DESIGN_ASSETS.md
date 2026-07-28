@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Visual Source
 
@@ -12,6 +12,7 @@ The current implementation reconciles these supplied references:
 - `/Users/point/Downloads/Purich Insurance Site.dc.html`
 - `/Users/point/Downloads/export/Admin Login.dc.html`
 - `/Users/point/Downloads/export/admin.dc.html`
+- `/Users/point/Downloads/Purich Insurance Site (standalone).html`
 - screenshots supplied in the Codex thread
 - `/Users/point/Downloads/assets/`
 
@@ -75,9 +76,17 @@ Committed insurer logo files:
 | `assets/ins/13-thaivivat.png` | Referenced by bundle |
 | `assets/ins/14-sompo.png` | Referenced by bundle |
 
-The section copy says "26+" insurers while the committed logo set currently has
-14 files. Add the remaining assets or adjust copy before treating the claim as
-visually complete.
+The section copy says "26+" insurers. The visible grid currently uses 14
+committed insurer logos, plus broker/agency proof cards for AIA and Srikrung
+Broker supplied by the latest standalone reference. Do not change the "26+"
+claim or logo treatment without reconciling the legal/business copy first.
+
+Relationship-card logo paths in the latest reference:
+
+| Path | Role |
+| --- | --- |
+| `assets/logos/aia-logo.png` | Life/health representative proof card |
+| `assets/logos/srikrung-logo.png` | Motor broker proof card |
 
 ## Logo Animation Contract
 
@@ -90,6 +99,8 @@ Animation requirements:
 - avoid layout shift when logos load
 - keep logos legible on mobile
 - do not blur, darken, crop, or mask logos in a way that makes them hard to read
+- keep the relationship proof cards below the animated logo grid visible on
+  desktop and mobile
 
 ## Screenshot QA
 

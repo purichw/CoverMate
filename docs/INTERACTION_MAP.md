@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Visitor Journey
 
@@ -11,6 +11,10 @@ Last updated: 2026-07-27
 3. Visitor starts contact through LINE, phone, email, or the lead form.
 4. Consultation and comparison continue outside the static site unless a backend
    lead flow is added later.
+
+`/#motor` is a focused motor-insurance variant. Its header navigation should
+target only sections present in that variant: motor coverage, insurers, process,
+and contact.
 
 ## Lead Form Contract
 
@@ -25,6 +29,16 @@ pipeline. Before relying on the form operationally, confirm one of these exists:
 
 Until then, treat the visible form as a prototype/contact prompt, not guaranteed
 data capture.
+
+The current form asks for:
+
+- name
+- LINE ID or phone
+- enquiry type
+- coverage area
+- freeform details
+
+The submitted summary should include enquiry type and coverage when selected.
 
 ## Admin Login Flow
 
@@ -66,6 +80,9 @@ fields.
    theme/data, export, restore, preview, and publish.
 4. Draft changes remain local until published.
 5. Published state updates live localStorage values used by the public site.
+
+For the insurer section, the Content tab also exposes relationship card editing
+for AIA and Srikrung Broker proof cards.
 
 ## Access Behavior
 
