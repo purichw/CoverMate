@@ -16,6 +16,10 @@ GitHub remote:
 
 `https://github.com/purichw/CoverMate.git`
 
+Production can lag behind this local workspace while the release guardrail is
+active. Treat production claims as deployed-state checks, not proof that local
+uncommitted changes are live.
+
 ## Release Permission Guardrail
 
 Do not commit, push, or deploy until the user explicitly says to do so in the
@@ -63,9 +67,15 @@ Minimum checks:
 - insurer logos render
 - insurer relationship proof cards render
 - contact form enquiry-type and coverage selects render
-- `/#motor` header links target visible motor-route sections
+- `/#motor` keeps the same global navbar as `/`, does not expose the hidden
+  motor-variant nav, and lands on `#insurers` below the sticky header
 - `/admin/login` loads
-- demo/Google login redirects to `/admin`
+- Firebase Auth login UI renders; real Google popup login is verified manually
+  with an allowlisted admin account before production release
+- Firestore Rules are published for project `covermate-purich` before relying on
+  real admin authorization
+- an owner UID exists at `admins/<uid>` with `active: true` before real admin
+  login acceptance is expected
 - `/admin` shows the "Manage your site" launcher
 - launcher links open `/#edit`, `/#admin`, and `/`
 - `/#admin` renders all admin tabs without clipping, including Content,
@@ -82,6 +92,18 @@ Minimum checks:
 - body/UI/form text uses the Google Sans family in both Thai and English
 - visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
   `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
+- Firestore live content hydrates before public/admin launcher rendering; stale
+  local cache must not override a successful `states/live` read
+- owner modes hydrate Firestore draft/version data as needed, and publish writes
+  `states/live`, `states/draft`, and a version document
+- `/`, including `/#motor`, remains indexable with canonical
+  `https://covermate.vercel.app/`
+- `/admin`, `/admin/login`, `/#admin`, `/#edit`, and `/#preview` remain
+  `noindex`
+- `robots.txt`, `sitemap.xml`, `site.webmanifest`, Open Graph/Twitter metadata,
+  and JSON-LD structured data render and parse
+- Firestore live content updates SEO title/description/JSON-LD after hydration;
+  stale local cache must not win
 - no horizontal overflow on covered viewports
 - admin controls meet mobile touch-target expectations on covered viewports
 
@@ -100,15 +122,18 @@ for (const file of ['index.html', 'admin/login/index.html', 'admin/index.html'])
     console.log(file, 'no embedded template');
     continue;
   }
-  const bodyStart = start + marker.length;
-  const end = html.indexOf('</script>', bodyStart);
-  JSON.parse(html.slice(bodyStart, end).trim());
+  const match = html.match(/<script type="__bundler\\/template">([\\s\\S]*?)<\\/script>/);
+  if (!match) throw new Error(`${file}: embedded template script missing`);
+  JSON.parse(match[1]);
   console.log(file, 'parse ok');
 }
 NODE
 ```
 
 ## Deploy
+
+Only run this section after the user explicitly approves commit, push, and
+deploy in the current task.
 
 Deploy production:
 
@@ -135,7 +160,8 @@ Run:
 git diff --check
 ```
 
-Then commit and push.
+Then commit and push only if the user explicitly approves that action in the
+current task.
 
 ## Rollback Guidance
 
@@ -155,6 +181,7 @@ For a bad production deploy:
 - relevant docs updated
 - storage key changes reflected in [DATA_CONTRACT.md](DATA_CONTRACT.md)
 - route/navigation changes reflected in [SITE_MAP.md](SITE_MAP.md)
+- SEO/indexing changes reflected in [SEO.md](SEO.md)
 - visual/font/asset changes reflected in [DESIGN_ASSETS.md](DESIGN_ASSETS.md)
 - local smoke run for code changes
 - production smoke run after deploy

@@ -7,12 +7,24 @@ Last updated: 2026-07-28
 | Route | Audience | Purpose | Source |
 | --- | --- | --- | --- |
 | `/` | Visitor | Main public landing page | `index.html` |
-| `/#motor` | Visitor | Motor-insurance focused section/variant | `index.html` |
+| `/#motor` | Visitor | Alias to the main site's motor-insurance / insurer section | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner | Post-login "Manage your site" launcher | `admin/index.html` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
 | `/#admin` | Owner | Control panel mode | `index.html` |
 | `/#preview` | Owner | Preview mode | `index.html` |
+
+## Indexing Map
+
+| URL | Indexing | Canonical |
+| --- | --- | --- |
+| `/` | `index,follow` | `https://covermate.vercel.app/` |
+| `/#motor` | Same document as `/`; do not sitemap hash URLs | `https://covermate.vercel.app/` |
+| `/admin/login` | `noindex,nofollow` | `https://covermate.vercel.app/admin/login/` |
+| `/admin` | `noindex,nofollow` | `https://covermate.vercel.app/admin/` |
+| `/#edit`, `/#admin`, `/#preview` | Runtime `noindex,nofollow` owner modes | `https://covermate.vercel.app/` |
+
+SEO implementation details live in [`SEO.md`](SEO.md).
 
 ## Visitor Sections
 
@@ -39,7 +51,7 @@ Expected visible sections:
 
 | Surface | Route | Role |
 | --- | --- | --- |
-| Login | `/admin/login` | Create a browser-local admin session. |
+| Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
 | Launcher | `/admin` | Choose between editing, arranging, or viewing the public site. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
@@ -49,9 +61,10 @@ Expected visible sections:
 Visitor navigation should move through coverage, motor, calculator, steps, FAQ,
 and contact sections.
 
-`/#motor` uses its own compact navigation. Its links must resolve to
-`#motor-cover`, `#insurers`, `#how`, and `#talk`; do not reuse whole-site header
-anchors if those sections are hidden in the motor variant.
+`/#motor` currently keeps the same global navigation as `/` and re-aims to
+`#insurers` after hydration. The older focused motor variant is preserved in
+the bundle behind `ENABLE_MOTOR_VARIANT = false`; do not expose its compact nav
+unless a separate `/motor` or campaign route is intentionally restored.
 
 Admin login must land on `/admin` after sign-in.
 
@@ -89,5 +102,6 @@ The bundle currently expects these numbered filenames. Do not rename them
 without updating bundle references and smoke expectations together.
 
 The latest standalone reference also renders relationship proof cards in the
-insurer section using `assets/logos/aia-logo.png` and
-`assets/logos/srikrung-logo.png` through the exported asset runtime.
+insurer section. `assets/logos/aia-logo.png` is present as a loose repo file and
+embedded in the bundle. `assets/logos/srikrung-logo.png` is present in the
+embedded bundle resource map, but is not currently present as a loose repo file.

@@ -6,6 +6,8 @@ and safely edit in later sessions.
 Current state: this repo is a Vercel-hosted static export. The UI is built from
 Claude Design `.dc.html` bundles, with small production patches applied in the
 wrapper and embedded bundle strings. There is no backend API in this repo.
+Firebase Auth/Firestore admin login changes are local workspace state until the
+user explicitly authorizes commit, push, and deploy.
 
 ## How To Run / Verify
 
@@ -21,9 +23,10 @@ wrapper and embedded bundle strings. There is no backend API in this repo.
 
 `scripts/smoke.mjs` covers desktop/tablet/mobile routes, first-paint placeholder
 cloaking, insurer logos, horizontal overflow, unauthenticated admin redirects,
-demo login to `/admin`, authenticated admin launcher rendering, `/#admin` tab
+Firebase login UI rendering, authenticated admin launcher rendering, `/#admin` tab
 visibility/content, admin drawer close/reopen behavior, `/#edit` editable-mode
-rendering, edit-mode exit cleanup, and `Log out` redirects.
+rendering, edit-mode exit cleanup, SEO metadata/structured-data contracts, and
+`Log out` redirects.
 
 ## Document Set
 
@@ -33,6 +36,8 @@ Detailed project documents:
 - [`docs/SITE_MAP.md`](docs/SITE_MAP.md)
 - [`docs/INTERACTION_MAP.md`](docs/INTERACTION_MAP.md)
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)
+- [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md)
+- [`docs/SEO.md`](docs/SEO.md)
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 - [`docs/HANDOFF.md`](docs/HANDOFF.md)
@@ -41,13 +46,23 @@ Detailed project documents:
 
 | Path | Purpose / ownership |
 | --- | --- |
-| `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. |
-| `admin/login/index.html` | Admin login surface. Demo/Google sign-in writes `covermate-admin-session` and redirects to `/admin`. |
+| `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. `#motor` is currently an alias into the main site, not a separate page. |
+| `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private admin launcher: "Edit the words" and "Arrange & customise". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
+| `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, and version history. |
+| `firestore.rules` | Firestore access rules for admin allowlist, site state, versions, and contact leads. |
+| `firebase.json` | Firebase CLI mapping for Firestore rules deploys. |
 | `assets/ins/*.png` | Insurer logo assets used by the `#insurers` section. Current bundle expects `assets/ins/NN-name.png`. |
+| `assets/logos/aia-logo.png` | Loose AIA logo PNG used for the AIA proof-card replacement and embedded into the current bundle resource map. |
+| `assets/covermate-og.svg` / `assets/covermate-og.png` | Editable source and 1200x630 Open Graph image for social previews and structured-data image references. |
+| `assets/apple-touch-icon.png`, `assets/icon-192.png`, `assets/icon-512.png` | Browser/mobile icon assets referenced by the manifest and page head. |
+| `favicon.svg` / `favicon.ico` | CoverMate shield browser icons. SVG is referenced in page heads; ICO covers legacy browser probes. |
+| `robots.txt` | Public crawler policy. Allows the visitor site, disallows `/admin`, and points to the production sitemap. |
+| `sitemap.xml` | Production canonical sitemap. Includes only `https://covermate.vercel.app/`; hash aliases and admin routes must stay out. |
+| `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness with local/runtime Playwright fallback. |
-| `vercel.json` | Static Vercel settings, clean URLs, and long-lived cache headers for `/assets/*`. |
+| `vercel.json` | Static Vercel settings, clean URLs, `/favicon.ico` rewrite, and long-lived cache headers for `/assets/*`. |
 | `.image-slots.state.json` | Empty file kept to satisfy the exported image-slot runtime request. |
 | `.gitignore` | Ignores `.vercel/` local project config. |
 
@@ -67,7 +82,11 @@ flowchart LR
 Route contracts:
 
 - `/` is the public visitor site.
-- `/#motor` is the visitor motor-insurance route/anchor.
+- `/#motor` is a visitor anchor alias for the main site's motor-insurance /
+  insurer section (`#insurers`). It must keep the same global navbar as `/`.
+- The old focused motor landing-page variant is preserved behind
+  `ENABLE_MOTOR_VARIANT = false` inside `index.html`; keep it hidden until a
+  deliberate `/motor` or campaign route is approved.
 - `/#admin`, `/#edit`, and `/#preview` are owner modes inside `index.html`.
 - `/admin/login` is the owner auth gate.
 - `/admin` is the private admin launcher and must remain reachable after login.
@@ -76,9 +95,11 @@ Route contracts:
 
 ## Data / Auth / Storage Flow
 
-The current prototype persists all admin/session/site data in browser
-`localStorage`. These keys are part of the product contract and must not be
-renamed without a migration:
+Admin identity is Firebase-backed. The approved admin session is cached in
+browser `localStorage`. CMS content is Firestore-first under
+`sites/covermate/*`; localStorage keeps last-known live/draft/text/history
+fallback caches and must not override a successful remote read. These keys are
+part of the product contract and must not be renamed without a migration:
 
 - `covermate-admin-session`
 - `purich-live-config-v3`
@@ -94,21 +115,25 @@ renamed without a migration:
 
 Important behavior:
 
-- Admin login currently supports demo mode unless a real Google Client ID is
-  configured in the bundle props.
-- The session expires after 7 days based on the `exp` timestamp in
-  `covermate-admin-session`.
-- `/admin` reads live brand config from `purich-live-config-v3`.
-- Visitor owner modes use the same browser-local draft/live/history store as the
-  admin surfaces.
-
-Current limitation: this is not server-backed auth or server-backed CMS
-persistence. Treat it as a static/localStorage prototype until a backend is
-added.
+- Admin login uses Firebase Auth project `covermate-purich`, then checks
+  Firestore `admins/{uid}` with `active: true`.
+- The browser-local admin session expires after 7 days based on the `exp`
+  timestamp in `covermate-admin-session`.
+- `/`, `/admin`, and `/admin/login` hydrate Firestore `states/live` before
+  rendering cache-backed brand/public content.
+- `/#admin`, `/#edit`, and `/#preview` additionally hydrate Firestore draft and
+  version history as needed.
+- Save draft writes `sites/covermate/states/draft`; publish/restore writes
+  `states/live`, `states/draft`, and a new `versions/*` document.
+- Public SEO metadata starts from static fallbacks in `index.html`, then runtime
+  sync updates title, description, Open Graph/Twitter, and JSON-LD from the
+  hydrated live state. Admin routes and owner modes must remain `noindex`.
 
 ## Design Source Of Truth
 
-Current implementation source of truth is the committed HTML/CSS in this repo.
+Current implementation source of truth is the workspace HTML/CSS in this repo;
+check `git status` before assuming a local change has been committed or
+deployed.
 Historical inputs used to create the current surfaces:
 
 - Visitor/admin standalone reference:
@@ -146,8 +171,9 @@ Production patches currently preserved in the bundles:
 - `covermate-responsive-touch-policy` raises mobile controls, form fields,
   owner-tool buttons, drawer controls, and nav/footer links to 44px-class touch
   targets without changing desktop density.
-- `/#motor` header navigation targets only visible motor-route anchors:
-  `#motor-cover`, `#insurers`, `#how`, and `#talk`.
+- `/#motor` keeps the global visitor navigation (`#cover`, `#insurers`, `#fit`,
+  `#how`, `#faq`) and re-aims the hash to `#insurers` after hydration so the
+  sticky header does not cover the section title.
 
 ## Asset Map
 
@@ -173,8 +199,10 @@ and the latest standalone adds AIA/Srikrung Broker relationship proof cards in
 the same section. Do not change the bundle paths or claim treatment without
 updating smoke expectations and getting business-owner copy confirmation.
 
-`assets/logos/aia-logo.png` is the committed source for the AIA proof-card logo
-and is also embedded into the current `index.html` bundle resource map.
+`assets/logos/aia-logo.png` is the committed loose source for the AIA proof-card
+logo and is also embedded into the current `index.html` bundle resource map.
+`assets/logos/srikrung-logo.png` is present in the embedded bundle resource map,
+but is not currently present as a loose repository file.
 
 ## Interaction Flows
 
@@ -192,8 +220,9 @@ and is also embedded into the current `index.html` bundle resource map.
 ### Admin
 
 1. Owner opens `/admin/login`.
-2. Demo/Google sign-in writes `covermate-admin-session`.
-3. Successful sign-in lands on `/admin`.
+2. Firebase Google sign-in checks Firestore `admins/{uid}`.
+3. Successful allowlisted sign-in writes `covermate-admin-session` and lands on
+   `/admin`.
 4. "Edit the words" opens `/#edit`.
 5. "Open control panel" opens `/#admin`.
 6. The owner panel can reorder/hide sections, edit content/brand/theme data, and
@@ -258,8 +287,8 @@ and is also embedded into the current `index.html` bundle resource map.
 
 - Static bundle maintainability: current HTML files are large exported bundles.
   Future source extraction to ordinary components would make edits safer.
-- Auth/security: admin auth is browser-local prototype behavior, not real
-  backend authorization.
+- Auth/security: Firebase Auth and Firestore allowlist are active for admin
+  login, but CMS content persistence is still browser-local.
 - Persistence: draft/live/history state is local to each browser.
 - Asset count: current insurer logo grid is 14 files while copy promises 26+;
   the latest reference supports that claim with relationship proof cards.

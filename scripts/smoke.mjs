@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import vm from "node:vm";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -30,12 +32,208 @@ const routes = [
   ["/admin/login", "main"]
 ];
 
+function extractDefaultSiteConfig() {
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const templateMatch = html.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
+  if (!templateMatch) throw new Error("index.html: embedded template missing");
+  const template = JSON.parse(templateMatch[1]);
+  const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
+  if (!scriptMatch) throw new Error("index.html: text/x-dc script missing");
+  const defaultsEnd = scriptMatch[1].indexOf("const SCHEMA =");
+  if (defaultsEnd < 0) throw new Error("index.html: DEFAULTS boundary missing");
+  const sandbox = { result: null };
+  vm.runInNewContext(`${scriptMatch[1].slice(0, defaultsEnd)}\nresult = DEFAULTS;`, sandbox);
+  return sandbox.result;
+}
+
+const defaultSiteConfig = extractDefaultSiteConfig();
+
+function renamedConfig(name) {
+  const config = structuredClone(defaultSiteConfig);
+  config.brand.name = { th: name, en: name };
+  config.brand.fullName = { th: name, en: name };
+  return config;
+}
+
+function remoteContentMock(remoteConfig, remoteText = {}) {
+  return `
+    const remoteConfig = ${JSON.stringify(remoteConfig)};
+    const remoteText = ${JSON.stringify(remoteText)};
+    window.CoverMateFirebase = {
+      hydrateLocalContent: async (opts = {}) => {
+        window.__covermateHydrateOpts = opts;
+        window.localStorage.setItem("purich-live-config-v3", JSON.stringify(remoteConfig));
+        window.localStorage.setItem("purich-live-text-v3", JSON.stringify(remoteText));
+        if (opts.draft === true) {
+          window.localStorage.setItem("purich-draft-config-v3", JSON.stringify(remoteConfig));
+          window.localStorage.setItem("purich-draft-text-v3", JSON.stringify(remoteText));
+        }
+        if (opts.versions === true) {
+          window.localStorage.setItem("purich-history-v3", JSON.stringify([
+            { id: "remote-smoke-version", ts: Date.now(), config: remoteConfig, text: remoteText }
+          ]));
+        }
+        window.__covermateRemoteContent = {
+          live: true,
+          draft: opts.draft === true,
+          versions: opts.versions === true,
+          source: "remote-smoke"
+        };
+        return window.__covermateRemoteContent;
+      },
+      signOut: async () => {}
+    };
+    window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
+    export {};
+  `;
+}
+
+async function waitForBodyText(page, pattern, timeout = 30000) {
+  await page.waitForFunction(
+    ({ source, flags }) => new RegExp(source, flags).test(document.body.innerText || ""),
+    { source: pattern.source, flags: pattern.flags },
+    { timeout }
+  );
+}
+
 const browser = await chromium.launch({
   headless: true,
   executablePath: chromePath
 });
 
 const failures = [];
+
+async function verifyRemoteHydrationContract() {
+  const remoteName = "Remote Live Smoke";
+  const staleName = "Stale Cache Smoke";
+  const remoteConfig = renamedConfig(remoteName);
+  const staleConfig = renamedConfig(staleName);
+
+  const publicPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
+  await publicPage.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: remoteContentMock(remoteConfig)
+    })
+  );
+  await publicPage.addInitScript(({ config }) => {
+    window.localStorage.setItem("purich-live-config-v3", JSON.stringify(config));
+    window.localStorage.setItem("purich-live-text-v3", JSON.stringify({}));
+  }, { config: staleConfig });
+  await publicPage.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(publicPage, new RegExp(remoteName));
+  const publicState = await publicPage.evaluate(() => ({
+    text: document.body.innerText,
+    cachedBrand: JSON.parse(window.localStorage.getItem("purich-live-config-v3") || "{}")?.brand?.name?.th || "",
+    opts: window.__covermateHydrateOpts || null,
+    seoTitle: document.title,
+    seoJsonName: (() => {
+      try {
+        const data = JSON.parse(document.getElementById("covermate-jsonld")?.textContent || "{}");
+        const org = (data["@graph"] || []).find((entry) =>
+          Array.isArray(entry["@type"]) && entry["@type"].includes("InsuranceAgency")
+        );
+        return org?.name || "";
+      } catch {
+        return "";
+      }
+    })()
+  }));
+  if (!publicState.text.includes(remoteName) || publicState.text.includes(staleName)) {
+    failures.push("remote hydration: public route did not let Firestore live content override stale local cache");
+  }
+  if (publicState.cachedBrand !== remoteName) {
+    failures.push(`remote hydration: local live cache was not rewritten from remote (${publicState.cachedBrand})`);
+  }
+  if (!publicState.opts || publicState.opts.draft === true || publicState.opts.versions === true) {
+    failures.push("remote hydration: public route fetched draft/version data unnecessarily");
+  }
+  if (!publicState.seoTitle.includes(remoteName) || publicState.seoJsonName !== remoteName) {
+    failures.push("remote hydration: SEO metadata did not sync from remote live content");
+  }
+  await publicPage.close();
+
+  const ownerPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
+  await ownerPage.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: remoteContentMock(remoteConfig)
+    })
+  );
+  await ownerPage.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+  });
+  await ownerPage.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(ownerPage, /Admin portal/);
+  const ownerState = await ownerPage.evaluate(() => ({
+    text: document.body.innerText,
+    opts: window.__covermateHydrateOpts || null,
+    history: JSON.parse(window.localStorage.getItem("purich-history-v3") || "[]")
+  }));
+  if (!ownerState.text.includes("Admin portal")) {
+    failures.push("remote hydration: owner route did not render admin panel under mocked remote content");
+  }
+  if (!ownerState.opts || ownerState.opts.draft !== true || ownerState.opts.versions !== true) {
+    failures.push("remote hydration: owner route did not request draft and versions");
+  }
+  if (!Array.isArray(ownerState.history) || ownerState.history[0]?.id !== "remote-smoke-version") {
+    failures.push("remote hydration: owner route did not cache remote version history");
+  }
+  await ownerPage.close();
+}
+
+async function verifyStaticSeoFiles() {
+  const robotsResponse = await fetch(new URL("/robots.txt", baseUrl));
+  const robots = await robotsResponse.text();
+  if (!robotsResponse.ok) failures.push(`seo /robots.txt: HTTP ${robotsResponse.status}`);
+  if (!/Sitemap:\s*https:\/\/covermate\.vercel\.app\/sitemap\.xml/.test(robots)) {
+    failures.push("seo /robots.txt: missing production sitemap directive");
+  }
+  if (!/Disallow:\s*\/admin\/?/.test(robots)) {
+    failures.push("seo /robots.txt: admin routes are not disallowed");
+  }
+
+  const sitemapResponse = await fetch(new URL("/sitemap.xml", baseUrl));
+  const sitemap = await sitemapResponse.text();
+  if (!sitemapResponse.ok) failures.push(`seo /sitemap.xml: HTTP ${sitemapResponse.status}`);
+  const locs = Array.from(sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)).map((match) => match[1]);
+  if (!locs.includes("https://covermate.vercel.app/")) {
+    failures.push("seo /sitemap.xml: missing canonical public root");
+  }
+  if (locs.some((loc) => /#|\/admin/.test(loc))) {
+    failures.push("seo /sitemap.xml: sitemap includes hash or admin URLs");
+  }
+
+  const manifestResponse = await fetch(new URL("/site.webmanifest", baseUrl));
+  const manifest = await manifestResponse.json().catch(() => null);
+  if (!manifestResponse.ok) failures.push(`seo /site.webmanifest: HTTP ${manifestResponse.status}`);
+  if (!manifest || manifest.name !== "CoverMate" || manifest.start_url !== "/") {
+    failures.push("seo /site.webmanifest: invalid name or start_url");
+  }
+  const manifestIcons = Array.isArray(manifest?.icons) ? manifest.icons.map((icon) => icon.src) : [];
+  for (const icon of ["/favicon.svg", "/assets/icon-192.png", "/assets/icon-512.png"]) {
+    if (!manifestIcons.includes(icon)) failures.push(`seo /site.webmanifest: missing icon ${icon}`);
+  }
+
+  for (const asset of ["/favicon.ico", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
+    const response = await fetch(new URL(asset, baseUrl));
+    if (!response.ok) failures.push(`seo ${asset}: HTTP ${response.status}`);
+  }
+}
+
+await verifyStaticSeoFiles();
+await verifyRemoteHydrationContract();
 
 for (const [name, width, height] of viewports) {
   const page = await browser.newPage({
@@ -51,11 +249,21 @@ for (const [name, width, height] of viewports) {
     const failureText = request.failure()?.errorText || "failed";
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
-    if (url.includes("%7B%7B") || url.includes("{{")) return;
+    if (failureText === "net::ERR_ABORTED" && url.includes("firestore.googleapis.com/google.firestore")) {
+      return;
+    }
     if (failureText === "net::ERR_ABORTED" && (url.startsWith("blob:") || url.includes("/admin/login"))) {
       return;
     }
     failedRequests.push(`${url} :: ${failureText}`);
+  });
+  page.on("response", (response) => {
+    const url = response.url();
+    const status = response.status();
+    if (status < 400) return;
+    if (url.endsWith("/favicon.ico")) return;
+    if (url.endsWith("/.image-slots.state.json")) return;
+    failedRequests.push(`${url} :: HTTP ${status}`);
   });
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
@@ -95,8 +303,60 @@ for (const [name, width, height] of viewports) {
         `${name} ${route}: raw template is visible on first paint (${firstPaintState.visibleText})`
       );
     }
-    await page.waitForLoadState("networkidle", { timeout: 30000 });
+    await page.waitForFunction(
+      (targetSelector) => Boolean(document.querySelector(targetSelector)) && (document.body.innerText || "").trim().length > 40,
+      selector,
+      { timeout: 30000 }
+    );
     await page.waitForTimeout(600);
+    if (route === "/#motor") {
+      const motorAliasState = await page.evaluate(() => {
+        const header = document.querySelector("header");
+        const insurers = document.getElementById("insurers");
+        const headerRect = header ? header.getBoundingClientRect() : null;
+        const insurersRect = insurers ? insurers.getBoundingClientRect() : null;
+        const navHrefs = Array.from(document.querySelectorAll("header nav a[href]"))
+          .map((anchor) => anchor.getAttribute("href"))
+          .filter(Boolean);
+        const navText = Array.from(document.querySelectorAll("header nav a[href]"))
+          .map((anchor) => (anchor.textContent || "").trim())
+          .filter(Boolean)
+          .join(" | ");
+        return {
+          navHrefs,
+          navText,
+          bodyText: document.body.innerText,
+          headerBottom: headerRect ? headerRect.bottom : 0,
+          insurersTop: insurersRect ? insurersRect.top : null,
+          viewportHeight: window.innerHeight,
+          insurersScrollMarginTop: insurers ? window.getComputedStyle(insurers).scrollMarginTop : ""
+        };
+      });
+      const expectedMainNav = ["#cover", "#insurers", "#fit", "#how", "#faq"];
+      const missingMainNav = expectedMainNav.filter((href) => !motorAliasState.navHrefs.includes(href));
+      if (missingMainNav.length) {
+        failures.push(`${name} ${route}: #motor should keep main nav, missing ${missingMainNav.join(", ")}`);
+      }
+      if (motorAliasState.navHrefs.includes("#motor-cover")) {
+        failures.push(`${name} ${route}: #motor exposed hidden motor-variant nav`);
+      }
+      if (/เบี้ยรถคันเดิม|One car, every insurer compared/.test(motorAliasState.bodyText)) {
+        failures.push(`${name} ${route}: hidden motor landing variant rendered`);
+      }
+      if (
+        motorAliasState.insurersTop == null ||
+        motorAliasState.insurersTop < motorAliasState.headerBottom + 4 ||
+        motorAliasState.insurersTop > motorAliasState.viewportHeight * 0.72
+      ) {
+        failures.push(
+          `${name} ${route}: #motor did not land on the main insurers section below the sticky header ` +
+            `(top=${motorAliasState.insurersTop}, headerBottom=${motorAliasState.headerBottom})`
+        );
+      }
+      if (!motorAliasState.insurersScrollMarginTop || motorAliasState.insurersScrollMarginTop === "0px") {
+        failures.push(`${name} ${route}: insurers anchor is missing scroll-margin-top`);
+      }
+    }
     if (route === "/" || route === "/#motor") {
       const insurers = page.locator("#insurers");
       if (await insurers.count()) {
@@ -138,6 +398,13 @@ for (const [name, width, height] of viewports) {
       const missingAnchors = navHrefs.filter(
         (href) => href.startsWith("#") && !document.getElementById(href.slice(1))
       );
+      const jsonLdText = document.getElementById("covermate-jsonld")?.textContent || "";
+      let jsonLd = null;
+      try {
+        jsonLd = jsonLdText ? JSON.parse(jsonLdText) : null;
+      } catch {
+        jsonLd = null;
+      }
       const splashVisible = ["#__bundler_thumbnail", "#__bundler_loading"].some((selector) => {
         const el = document.querySelector(selector);
         if (!el) return false;
@@ -172,7 +439,21 @@ for (const [name, width, height] of viewports) {
         ),
         hasRelationshipProof: /AIA|Srikrung|ศรีกรุง/i.test(insurerText),
         missingAnchors,
-        splashVisible
+        splashVisible,
+        seo: {
+          htmlLang: document.documentElement.lang,
+          description: document.querySelector('meta[name="description"]')?.getAttribute("content") || "",
+          robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || "",
+          canonical: document.querySelector('link[rel="canonical"]')?.getAttribute("href") || "",
+          ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute("content") || "",
+          ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute("content") || "",
+          ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "",
+          twitterCard: document.querySelector('meta[name="twitter:card"]')?.getAttribute("content") || "",
+          jsonLdValid: Boolean(jsonLd && Array.isArray(jsonLd["@graph"])),
+          jsonLdTypes: jsonLd && Array.isArray(jsonLd["@graph"])
+            ? jsonLd["@graph"].flatMap((entry) => Array.isArray(entry["@type"]) ? entry["@type"] : [entry["@type"]]).filter(Boolean)
+            : []
+        }
       };
     }, selector);
 
@@ -190,6 +471,40 @@ for (const [name, width, height] of viewports) {
     }
     if (state.splashVisible) {
       failures.push(`${name} ${route}: exported bundler splash is visible`);
+    }
+    if (route === "/" || route === "/#motor") {
+      if (!/^th($|-TH$)/i.test(state.seo.htmlLang)) {
+        failures.push(`${name} ${route}: missing Thai html lang (${state.seo.htmlLang})`);
+      }
+      if (!state.title.includes("CoverMate") || state.title.length > 70) {
+        failures.push(`${name} ${route}: SEO title is missing or too long (${state.title})`);
+      }
+      if (state.seo.description.length < 70 || state.seo.description.length > 170) {
+        failures.push(`${name} ${route}: SEO description length is out of range (${state.seo.description.length})`);
+      }
+      if (!/^index,follow/.test(state.seo.robots)) {
+        failures.push(`${name} ${route}: public route is not indexable (${state.seo.robots})`);
+      }
+      if (state.seo.canonical !== "https://covermate.vercel.app/") {
+        failures.push(`${name} ${route}: canonical is not production root (${state.seo.canonical})`);
+      }
+      if (!state.seo.ogTitle || !state.seo.ogDescription || state.seo.ogImage !== "https://covermate.vercel.app/assets/covermate-og.png") {
+        failures.push(`${name} ${route}: Open Graph metadata incomplete`);
+      }
+      if (state.seo.twitterCard !== "summary_large_image") {
+        failures.push(`${name} ${route}: Twitter summary_large_image card missing`);
+      }
+      for (const type of ["WebSite", "WebPage", "InsuranceAgency", "Service"]) {
+        if (!state.seo.jsonLdTypes.includes(type)) {
+          failures.push(`${name} ${route}: JSON-LD missing ${type}`);
+        }
+      }
+      if (!state.seo.jsonLdValid) {
+        failures.push(`${name} ${route}: JSON-LD is missing or invalid`);
+      }
+    }
+    if (route === "/admin/login" && !/^noindex/.test(state.seo.robots)) {
+      failures.push(`${name} ${route}: admin login route is not noindex (${state.seo.robots})`);
     }
     if (state.bodyText.includes("[object Object]")) {
       failures.push(`${name} ${route}: rendered object placeholder text`);
@@ -214,19 +529,19 @@ for (const [name, width, height] of viewports) {
   }
 
   const adminUrl = new URL("/admin", baseUrl).toString();
-  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
+  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await page.evaluate(() => {
     window.localStorage.removeItem("covermate-admin-session");
     window.localStorage.removeItem("purich-admin-ever-v7");
   });
-  await page.goto(adminUrl, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(500);
+  await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
+  await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
   }
   for (const ownerRoute of ["/#admin", "/#edit", "/#preview"]) {
-    await page.goto(new URL(ownerRoute, baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
-    await page.waitForTimeout(500);
+    await page.goto(new URL(ownerRoute, baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+    await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
     if (!page.url().includes("/admin/login")) {
       failures.push(
         `${name} ${ownerRoute}: expected unauthenticated redirect to /admin/login, got ${page.url()}`
@@ -234,22 +549,24 @@ for (const [name, width, height] of viewports) {
     }
   }
 
-  await page.goto(new URL("/admin/login", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
+  await page.goto(new URL("/admin/login", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Sign in with Google/);
   await page.evaluate(() => window.localStorage.removeItem("covermate-admin-session"));
-  await page.getByText("Sign in with Google").click();
-  await page.waitForTimeout(900);
-  const loginPath = new URL(page.url()).pathname.replace(/\/$/, "");
   const loginFlowState = await page.evaluate(() => ({
     text: document.body.innerText,
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth
+    clientWidth: document.documentElement.clientWidth,
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (loginPath !== "/admin") {
-    failures.push(`${name} login: expected redirect to /admin, got ${page.url()}`);
+  if (!loginFlowState.text.includes("Sign in with Google")) {
+    failures.push(`${name} login: Google sign-in button did not render`);
   }
-  if (!loginFlowState.text.includes("Manage your site")) {
-    failures.push(`${name} login: admin launcher did not render after sign-in`);
+  if (!loginFlowState.text.includes("Firebase Auth")) {
+    failures.push(`${name} login: Firebase Auth allowlist copy is missing`);
+  }
+  if (/Failed to resolve module|Firebase could not initialise|Firebase sign-in could not start/.test(loginFlowState.text)) {
+    failures.push(`${name} login: Firebase module/load error is visible`);
   }
   if (loginFlowState.text.includes("[object Object]")) {
     failures.push(`${name} login: rendered object placeholder text`);
@@ -260,8 +577,11 @@ for (const [name, width, height] of viewports) {
   if (loginFlowState.scrollWidth > loginFlowState.clientWidth) {
     failures.push(`${name} login: horizontal overflow ${loginFlowState.scrollWidth} > ${loginFlowState.clientWidth}`);
   }
+  if (!/^noindex/.test(loginFlowState.robots)) {
+    failures.push(`${name} login: admin login metadata is not noindex (${loginFlowState.robots})`);
+  }
 
-  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
+  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await page.evaluate(() => {
     window.localStorage.setItem(
       "covermate-admin-session",
@@ -274,13 +594,14 @@ for (const [name, width, height] of viewports) {
       })
     );
   });
-  await page.goto(adminUrl, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(700);
+  await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Manage your site/);
   const adminState = await page.evaluate(() => ({
     text: document.body.innerText,
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth
+    clientWidth: document.documentElement.clientWidth,
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
   if (!adminState.text.includes("Manage your site")) {
     failures.push(`${name} /admin: authenticated launcher did not render`);
@@ -294,9 +615,12 @@ for (const [name, width, height] of viewports) {
   if (adminState.scrollWidth > adminState.clientWidth) {
     failures.push(`${name} /admin: horizontal overflow ${adminState.scrollWidth} > ${adminState.clientWidth}`);
   }
+  if (!/^noindex/.test(adminState.robots)) {
+    failures.push(`${name} /admin: admin launcher metadata is not noindex (${adminState.robots})`);
+  }
 
-  await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(900);
+  await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Admin portal/);
   const ownerPanelState = await page.evaluate(() => ({
     text: document.body.innerText,
     bodyFont: window.getComputedStyle(document.body).fontFamily,
@@ -316,7 +640,8 @@ for (const [name, width, height] of viewports) {
         width: rect.width,
         height: rect.height
       };
-    })
+    }),
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
   if (!ownerPanelState.text.includes("Admin portal")) {
     failures.push(`${name} /#admin: owner control panel did not render`);
@@ -344,6 +669,9 @@ for (const [name, width, height] of viewports) {
   }
   if (ownerPanelState.scrollWidth > ownerPanelState.clientWidth) {
     failures.push(`${name} /#admin: horizontal overflow ${ownerPanelState.scrollWidth} > ${ownerPanelState.clientWidth}`);
+  }
+  if (!/^noindex/.test(ownerPanelState.robots)) {
+    failures.push(`${name} /#admin: owner panel metadata is not noindex (${ownerPanelState.robots})`);
   }
   if (
     !ownerPanelState.text.includes("Edit text") ||
@@ -423,8 +751,8 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /#admin reopen: owner bar did not reopen the control panel`);
   }
 
-  await page.goto(new URL("/#edit", baseUrl).toString(), { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(900);
+  await page.goto(new URL("/#edit", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Text edit/);
   const editState = await page.evaluate(() => ({
     text: document.body.innerText,
     bodyFont: window.getComputedStyle(document.body).fontFamily,
@@ -432,7 +760,8 @@ for (const [name, width, height] of viewports) {
     clientWidth: document.documentElement.clientWidth,
     editableCount: document.querySelectorAll('[contenteditable="true"], textarea, input').length,
     contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
-    toolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]'))
+    toolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
   if (!editState.text.includes("Text edit")) {
     failures.push(`${name} /#edit: edit mode toolbar did not render`);
@@ -462,6 +791,9 @@ for (const [name, width, height] of viewports) {
   }
   if (editState.scrollWidth > editState.clientWidth) {
     failures.push(`${name} /#edit: horizontal overflow ${editState.scrollWidth} > ${editState.clientWidth}`);
+  }
+  if (!/^noindex/.test(editState.robots)) {
+    failures.push(`${name} /#edit: edit mode metadata is not noindex (${editState.robots})`);
   }
 
   await page.getByRole("button", { name: "Done" }).click();
@@ -499,8 +831,8 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /#edit done: horizontal overflow ${exitEditState.scrollWidth} > ${exitEditState.clientWidth}`);
   }
 
-  await page.goto(adminUrl, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(500);
+  await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Manage your site/);
   await page.getByRole("button", { name: "Log out" }).click();
   await page.waitForTimeout(500);
   if (!page.url().includes("/admin/login")) {

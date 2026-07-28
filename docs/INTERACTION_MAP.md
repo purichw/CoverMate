@@ -12,9 +12,11 @@ Last updated: 2026-07-28
 4. Consultation and comparison continue outside the static site unless a backend
    lead flow is added later.
 
-`/#motor` is a focused motor-insurance variant. Its header navigation should
-target only sections present in that variant: motor coverage, insurers, process,
-and contact.
+`/#motor` is currently an alias into the main visitor site, not a separate page
+variant. It keeps the same global navbar as `/` and re-aims to the `#insurers`
+motor-insurance section after hydration. The earlier focused motor landing-page
+variant remains in the bundle behind `ENABLE_MOTOR_VARIANT = false` and should
+stay hidden until a deliberate `/motor` or campaign route is approved.
 
 ## Lead Form Contract
 
@@ -43,11 +45,17 @@ The submitted summary should include enquiry type and coverage when selected.
 ## Admin Login Flow
 
 1. Owner opens `/admin/login`.
-2. Owner signs in through the available Google/demo flow.
-3. Login writes `covermate-admin-session` to localStorage.
-4. Login redirects to `/admin`.
-5. `/admin` checks the session early.
-6. If the session is missing or expired, `/admin` redirects to `/admin/login`.
+2. Owner signs in with Firebase Google Auth.
+3. Login checks Firestore `admins/{uid}` for `active: true`.
+4. Login writes `covermate-admin-session` to localStorage as a 7-day cache.
+5. Login redirects to `/admin`.
+6. `/admin` checks the session early.
+7. If the session is missing or expired, `/admin` redirects to `/admin/login`.
+
+If the Google account is not allowlisted yet, Firebase Auth may still create the
+user under Authentication, but the app does not create an admin session. Copy
+that user's UID from Firebase Console and create `admins/<uid>` with
+`active: true`, then sign in again.
 
 ## Admin Launcher Flow
 
@@ -71,7 +79,8 @@ This page is an intentional admin step and should not disappear after login.
 1. Owner opens `/#edit`.
 2. The public site loads with editable copy affordances.
 3. Owner edits headings, body copy, labels, and related text.
-4. Draft/live text values are saved in browser-local storage.
+4. Text values are saved to Firestore draft state, with localStorage updated as
+   a last-known fallback cache.
 5. The edit toolbar lets the owner open the control panel, finish editing, or
    log out.
 6. Finishing edit mode removes all `contenteditable` affordances and shows the
@@ -88,8 +97,11 @@ fields.
 2. Control panel appears over the site.
 3. Owner can reorder/hide sections, edit content, adjust brand/chrome, adjust
    theme/data, export, restore, preview, and publish.
-4. Draft changes remain local until published.
-5. Published state updates live localStorage values used by the public site.
+4. Draft changes write to Firestore `states/draft`, with local cache as
+   fallback.
+5. Publish writes Firestore `states/live`, updates `states/draft`, and creates
+   a version document. Public visitors hydrate the latest `states/live` before
+   rendering.
 6. The drawer close button only closes the drawer. It does not sign out.
 7. After the drawer closes, the compact owner bar provides four recovery
    actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, or

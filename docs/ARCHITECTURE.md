@@ -9,8 +9,10 @@ tools are bundled into HTML files generated from Claude Design `.dc.html`
 references, with small production patches applied in the wrapper and embedded
 bundle strings.
 
-There is no backend API, server-side auth, database, or remote CMS in this repo.
-Admin/session/content state is browser-local.
+There is no backend API in this repo. Admin identity is backed by Firebase Auth
+plus Firestore `admins/{uid}` allowlist checks, and CMS content is
+Firestore-first through `sites/covermate/*` documents. The static bundle keeps
+browser-local caches only as last-known fallback state.
 
 ```mermaid
 flowchart TD
@@ -18,8 +20,13 @@ flowchart TD
   Vercel --> Public["/ index.html"]
   Vercel --> Login["/admin/login/index.html"]
   Vercel --> Launcher["/admin/index.html"]
-  Public <--> Store["localStorage: live/draft/history/text/config"]
-  Login --> Session["localStorage: covermate-admin-session"]
+  Browser --> Firebase["Firebase Auth + Firestore"]
+  Public --> Live["Firestore: states/live"]
+  Public --> Store["localStorage fallback cache"]
+  PublicAdmin --> Draft["Firestore: states/draft"]
+  PublicAdmin --> Versions["Firestore: versions/*"]
+  Login --> Firebase
+  Firebase --> Session["localStorage cache: covermate-admin-session"]
   Launcher --> Session
   Launcher --> PublicEdit["/#edit"]
   Launcher --> PublicAdmin["/#admin"]
@@ -35,8 +42,19 @@ flowchart TD
 - `/#admin`
 - `/#preview`
 
-`admin/login/index.html` owns the admin sign-in surface. Demo/Google sign-in
-writes `covermate-admin-session` and redirects to `/admin`.
+`/#motor` is currently an alias into the main site, re-aimed to the `#insurers`
+section after hydration while preserving the global navbar. The earlier focused
+motor landing-page variant is still present in the bundle but hidden behind
+`ENABLE_MOTOR_VARIANT = false`.
+
+`admin/login/index.html` owns the admin sign-in surface. Firebase Google sign-in
+checks Firestore `admins/{uid}` before writing the browser-local
+`covermate-admin-session` cache and redirecting to `/admin`.
+
+`covermate-firebase.js` owns Firebase SDK loading, Google popup sign-in,
+Firestore admin allowlist checks, Firebase sign-out, live/draft hydration,
+draft saves, publish/restore writes, and version-history reads. The visitor page
+loads only the live CMS state; owner modes additionally load draft and versions.
 
 `admin/index.html` owns the private post-login launcher. It is the required
 "Manage your site" page shown before choosing inline editing or the control
@@ -50,19 +68,36 @@ assets through the bundle runtime.
 
 `scripts/smoke.mjs` owns the current Playwright smoke contract.
 
-`vercel.json` owns clean URLs and static cache behavior.
+`favicon.svg` and `favicon.ico` own the CoverMate browser icons. `vercel.json`
+owns clean URLs and static cache behavior.
+
+`robots.txt`, `sitemap.xml`, `site.webmanifest`, and `assets/covermate-og.*`
+own the static SEO/crawler/social-preview layer. The public page also carries
+SEO metadata in both the outer shell head and the embedded template head.
 
 ## Runtime Data
 
-The app stores admin and CMS-like state in `localStorage`. See
-[DATA_CONTRACT.md](DATA_CONTRACT.md) for the key
-contract and migration rules.
+The app treats Firestore as the source of truth for CMS state:
 
-Because this storage is browser-local:
+- public render: hydrate `sites/covermate/states/live`
+- owner edit/control modes: hydrate `states/live`, `states/draft`, and
+  `versions/*`
+- save draft: write `states/draft`
+- publish or restore: atomically write `states/live`, `states/draft`, and a new
+  version document
 
-- edits do not sync across devices
-- clearing browser data removes draft/live local state
-- the session gate is prototype behavior, not real backend authorization
+`localStorage` stores last-known copies of live/draft/text/history so the static
+bundle can render a fallback if Firestore is unreachable. A successful remote
+read always rewrites the local cache before the embedded app reads it; hard-coded
+defaults are cold-start fallback only. Admin sign-in is Firebase backed, but
+`/admin` and owner hash modes also consume the approved
+`covermate-admin-session` cache for fast static routing. See
+[DATA_CONTRACT.md](DATA_CONTRACT.md) for the full contract.
+
+After the embedded app reads hydrated live content, it syncs SEO title,
+description, Open Graph/Twitter tags, canonical URL, robots meta, `html[lang]`,
+and `script#covermate-jsonld` from the current live state. Static metadata is
+only the non-rendering crawler/link-preview fallback.
 
 ## Deployment
 
@@ -108,6 +143,12 @@ buttons, form fields, drawer actions, owner bars, and navigation/footer links at
 
 Do not rename localStorage keys without a migration.
 
+Do not let local defaults, one-off local migrations, or stale localStorage cache
+override a successfully hydrated Firestore live document.
+
+Do not let static SEO fallbacks, stale localStorage, or placeholder contact
+fields override live SEO metadata or structured data after Firestore hydration.
+
 Do not redirect successful login directly to `/#admin`; keep `/admin` as the
 post-login launcher.
 
@@ -139,6 +180,9 @@ embedded JSON valid.
 Do not let literal `</script>` strings appear inside the JSON script body.
 Escaped `<\/script>` or `<\u002Fscript>` text is required so the browser does
 not terminate the template early.
+
+Do not add admin routes, hash aliases, draft/preview URLs, or owner modes to
+`sitemap.xml`.
 
 ## Future Architecture Options
 

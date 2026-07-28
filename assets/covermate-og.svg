@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">CoverMate social preview</title>
+  <desc id="desc">CoverMate insurance advisory for life, health, and motor cover.</desc>
+  <rect width="1200" height="630" fill="#f5ead8"/>
+  <circle cx="1045" cy="86" r="268" fill="#dce9c4"/>
+  <circle cx="66" cy="590" r="232" fill="#f6ddcf"/>
+  <rect x="96" y="88" width="1008" height="454" rx="48" fill="#ebddc5"/>
+  <circle cx="188" cy="184" r="48" fill="#dce9c4"/>
+  <text x="188" y="202" text-anchor="middle" font-family="Georgia, serif" font-size="54" font-weight="700" fill="#2a3324">C</text>
+  <text x="260" y="176" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="800" fill="#201e1d">CoverMate</text>
+  <text x="263" y="218" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="6" fill="#9a5126">INSURANCE ADVISORY</text>
+  <text x="130" y="330" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="800" fill="#201e1d">Life, health and motor cover</text>
+  <text x="130" y="392" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="500" fill="#5b5145">AIA life and health representative.</text>
+  <text x="130" y="432" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="500" fill="#5b5145">Motor insurance compared across 26+ insurers.</text>
+  <rect x="130" y="476" width="242" height="58" rx="29" fill="#c67139"/>
+  <text x="251" y="514" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="800" fill="#fff7ed">Free consultation</text>
+  <rect x="392" y="476" width="228" height="58" rx="29" fill="#dce9c4"/>
+  <text x="506" y="514" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="800" fill="#3b4a31">Bangkok, Thailand</text>
+</svg>

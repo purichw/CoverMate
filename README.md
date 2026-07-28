@@ -5,6 +5,10 @@ Static CoverMate visitor and admin surfaces for Vercel.
 Start with [`PROJECT_MAP.md`](PROJECT_MAP.md) for the route, data, admin,
 asset, deployment, and verification map.
 
+Current workspace state can be ahead of production. Check `git status` and the
+release guardrail in [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
+before assuming changes are live.
+
 ## Project Documents
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - static/export architecture,
@@ -15,6 +19,10 @@ asset, deployment, and verification map.
   launcher, edit, panel, auth, language, and first-paint flows
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) - localStorage keys,
   ownership, migration rules, and limitations
+- [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) - Firebase Auth,
+  Firestore allowlist, and Firestore Rules setup
+- [`docs/SEO.md`](docs/SEO.md) - canonical URL, noindex boundaries,
+  metadata/JSON-LD contract, social assets, and SEO smoke checks
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md) - visual references, font
   policy, organic CSS, logo assets, and screenshot QA expectations
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) - local verification,
@@ -24,9 +32,12 @@ asset, deployment, and verification map.
 
 Routes:
 
-- `/` public visitor site plus owner modes `#admin`, `#edit`, and `#preview`
+- `/` public visitor site
+- `/#motor` visitor alias into the main motor-insurance / insurer section
+- `/#admin`, `/#edit`, and `/#preview` owner modes inside the visitor bundle
 - `/admin/login` owner auth gate
 - `/admin` owner launcher
 
-The three surfaces share the same browser-local draft/live/history store defined
-in the project specification.
+Admin sign-in uses Firebase Auth and a Firestore `admins/{uid}` allowlist. CMS
+draft/live/history content is Firestore-first under `sites/covermate/*`;
+browser-local storage is only a last-known fallback cache.

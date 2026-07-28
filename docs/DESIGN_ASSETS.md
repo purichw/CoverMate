@@ -103,7 +103,31 @@ Relationship-card logo paths in the latest reference:
 | Path | Role |
 | --- | --- |
 | `assets/logos/aia-logo.png` | Life/health representative proof card; committed PNG with transparent background and embedded into the bundle resource map. |
-| `assets/logos/srikrung-logo.png` | Motor broker proof card |
+| `assets/logos/srikrung-logo.png` | Motor broker proof card; currently embedded in the bundle resource map, not present as a loose repo file. |
+
+## Favicon
+
+`favicon.svg` is the current CoverMate shield browser icon referenced by page
+heads. `favicon.ico` is also generated from the same source so browsers that
+probe the legacy icon URL do not hit a 404.
+
+## Social And App Icons
+
+The Open Graph/social preview image is:
+
+- `assets/covermate-og.svg` - editable source
+- `assets/covermate-og.png` - rendered 1200 x 630 PNG referenced by page
+  metadata and JSON-LD
+
+Browser/app icons:
+
+- `assets/apple-touch-icon.png`
+- `assets/icon-192.png`
+- `assets/icon-512.png`
+- `site.webmanifest`
+
+When changing these assets, visually inspect `assets/covermate-og.png` so text
+does not crop in social previews.
 
 ## Logo Animation Contract
 
