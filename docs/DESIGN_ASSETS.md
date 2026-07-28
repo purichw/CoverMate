@@ -33,7 +33,12 @@ or decorative illustration-first landing page.
 
 ## Font Policy
 
-Thai text everywhere must use Google Sans Thai.
+Body text, UI controls, forms, and admin tools must use the Google Sans family
+across both Thai and English versions.
+
+Admin chrome/action labels are intentionally English-only so owner controls do
+not mix Thai and English. Keep labels like `Main`, `Publish`, `Success`, and
+`Log out` in English even when the public site is viewing Thai copy.
 
 This includes:
 
@@ -45,8 +50,20 @@ This includes:
 - control panel
 - form fields, buttons, tabs, footers, and legal text
 
-The current HTML bundles include a `covermate-thai-font-policy` patch. Keep it
-unless replacing it with equivalent source-level CSS coverage.
+The current stack is Google Sans, Google Sans Thai, Noto Sans Thai, then system
+fallbacks. Headings/logo text may use the project display face where it remains
+harmonious with the body system; do not let display typography leak into dense
+admin controls or form text.
+
+The current HTML bundles include a historical `covermate-thai-font-policy`
+patch. Keep it unless replacing it with equivalent source-level CSS coverage.
+
+## Mobile Touch Policy
+
+The current HTML bundles also include `covermate-responsive-touch-policy` in
+every surface. On mobile/coarse-pointer contexts it raises controls, form
+fields, owner/admin tools, and navigation/footer links to 44px-class touch
+targets while leaving desktop density intact.
 
 ## Reference Stylesheet
 
@@ -85,7 +102,7 @@ Relationship-card logo paths in the latest reference:
 
 | Path | Role |
 | --- | --- |
-| `assets/logos/aia-logo.png` | Life/health representative proof card |
+| `assets/logos/aia-logo.png` | Life/health representative proof card; committed PNG with transparent background and embedded into the bundle resource map. |
 | `assets/logos/srikrung-logo.png` | Motor broker proof card |
 
 ## Logo Animation Contract

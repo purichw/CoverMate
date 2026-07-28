@@ -58,6 +58,11 @@ Launcher actions:
 - Start editing text -> `/#edit`
 - Open control panel -> `/#admin`
 - View public site -> `/`
+- `Log out` -> clears local admin session and returns to `/admin/login`
+
+Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
+`Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
+stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
 
@@ -67,7 +72,12 @@ This page is an intentional admin step and should not disappear after login.
 2. The public site loads with editable copy affordances.
 3. Owner edits headings, body copy, labels, and related text.
 4. Draft/live text values are saved in browser-local storage.
-5. Owner can preview or publish through the owner tools.
+5. The edit toolbar lets the owner open the control panel, finish editing, or
+   log out.
+6. Finishing edit mode removes all `contenteditable` affordances and shows the
+   compact owner bar for reopening admin tools.
+7. The edit toolbar also links back to `/admin` via `Main` when the
+   owner wants to choose between modes again.
 
 Thai and English copy are separate where the bundle supports separate language
 fields.
@@ -80,6 +90,14 @@ fields.
    theme/data, export, restore, preview, and publish.
 4. Draft changes remain local until published.
 5. Published state updates live localStorage values used by the public site.
+6. The drawer close button only closes the drawer. It does not sign out.
+7. After the drawer closes, the compact owner bar provides four recovery
+   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, or
+   `Log out`.
+8. The action bar inside the drawer keeps editing/navigation/session actions
+   separate from save, preview, and publish actions.
+9. The drawer action bar keeps direct access to text-edit mode and `Main` so
+   owners do not need to bounce through the launcher for common switching.
 
 For the insurer section, the Content tab also exposes relationship card editing
 for AIA and Srikrung Broker proof cards.
@@ -96,7 +114,10 @@ for AIA and Srikrung Broker proof cards.
 
 ## Language And Font Behavior
 
-Thai UI text must render with Google Sans Thai on visitor and admin surfaces.
+Body text, UI controls, forms, and admin tools must render with the Google Sans
+family on both Thai and English surfaces. The stack is Google Sans, Google Sans
+Thai, then system fallbacks. Headings and logo text may keep the display face
+where it still harmonizes with the Google Sans body system.
 
 The current bundles include a `covermate-thai-font-policy` patch for this.
 
@@ -106,6 +127,8 @@ The exported bundle includes placeholder UI. The project hides:
 
 - `#__bundler_thumbnail`
 - `#__bundler_loading`
+- raw `<x-dc>` template content
 
 If those selectors become visible, users may briefly see an exported loading
-state such as "Unpacking..." on visitor or admin pages.
+state such as "Unpacking..." or raw template placeholders on visitor or admin
+pages.

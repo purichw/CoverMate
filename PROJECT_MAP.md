@@ -9,6 +9,9 @@ wrapper and embedded bundle strings. There is no backend API in this repo.
 
 ## How To Run / Verify
 
+- Release guardrail: do not commit, push, or deploy until the user explicitly
+  says to do so in the current task. See
+  [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md).
 - Local static server: `python3 -m http.server 4177`
 - Local smoke: `npm run smoke`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
@@ -16,9 +19,11 @@ wrapper and embedded bundle strings. There is no backend API in this repo.
 - Vercel project: `covermate`
 - GitHub remote: `https://github.com/purichw/CoverMate.git`
 
-`scripts/smoke.mjs` covers desktop/tablet/mobile routes, insurer logos,
-horizontal overflow, unauthenticated admin redirects, demo login to `/admin`,
-and authenticated admin launcher rendering.
+`scripts/smoke.mjs` covers desktop/tablet/mobile routes, first-paint placeholder
+cloaking, insurer logos, horizontal overflow, unauthenticated admin redirects,
+demo login to `/admin`, authenticated admin launcher rendering, `/#admin` tab
+visibility/content, admin drawer close/reopen behavior, `/#edit` editable-mode
+rendering, edit-mode exit cleanup, and `Log out` redirects.
 
 ## Document Set
 
@@ -119,12 +124,28 @@ Historical inputs used to create the current surfaces:
 
 Production patches currently preserved in the bundles:
 
-- `covermate-thai-font-policy` enforces `Google Sans Thai` first for body text,
-  controls, and admin panel surfaces, with `Google Sans Thai` as heading fallback.
-- `#__bundler_thumbnail` and `#__bundler_loading` are hidden to remove the
-  exported "Unpacking..." splash.
+- `covermate-thai-font-policy` is the historical policy hook for the current
+  Google Sans family stack. Body text, controls, forms, and admin tools use
+  Google Sans/Google Sans Thai for both Thai and English; display headings/logo
+  text may use the project display face when it remains visually aligned.
+- Visible Admin chrome/action labels are English-only to avoid mixed-language
+  owner controls. Keep labels such as `Panel`, `Edit text`, `Main`, `Done`,
+  `Save draft`, `Preview`, `Publish`, `Success`, and `Log out` stable unless the
+  product owner approves a wording change.
+- `#__bundler_thumbnail`, `#__bundler_loading`, and raw `<x-dc>` template content
+  are hidden before hydration to remove the exported "Unpacking..." splash and
+  first-load template flash.
 - Admin login redirects to `/admin`, not directly to `/#admin`.
 - Admin launcher has an early `/admin/login` session gate.
+- Admin owner modes include a close/reopen contract: closing the `/#admin`
+  drawer returns to the public page with an owner bar for reopening the control
+  panel, entering edit mode, returning to `Main` (`/admin`), or logging out.
+- Inline edit mode has its own owner toolbar with links back to the control
+  panel and `Main` (`/admin`), a done action that removes `contenteditable`, and
+  `Log out`.
+- `covermate-responsive-touch-policy` raises mobile controls, form fields,
+  owner-tool buttons, drawer controls, and nav/footer links to 44px-class touch
+  targets without changing desktop density.
 - `/#motor` header navigation targets only visible motor-route anchors:
   `#motor-cover`, `#insurers`, `#how`, and `#talk`.
 
@@ -152,6 +173,9 @@ and the latest standalone adds AIA/Srikrung Broker relationship proof cards in
 the same section. Do not change the bundle paths or claim treatment without
 updating smoke expectations and getting business-owner copy confirmation.
 
+`assets/logos/aia-logo.png` is the committed source for the AIA proof-card logo
+and is also embedded into the current `index.html` bundle resource map.
+
 ## Interaction Flows
 
 ### Visitor
@@ -176,12 +200,28 @@ updating smoke expectations and getting business-owner copy confirmation.
    publish local draft state to live state in the browser.
 7. In the insurer section Content tab, the owner can edit relationship proof
    cards as structured card content.
+8. Closing the control panel does not log out; it leaves a compact owner bar so
+   the admin can reopen `Panel`, switch to `Edit text`, return to `Main`, or
+   `Log out`.
 
 ## Do Not Break
 
 - Keep `/admin` as the post-login launcher.
 - Keep unauthenticated `/admin`, `/#admin`, `/#edit`, and `/#preview` gated.
-- Keep `Google Sans Thai` font policy active across visitor and admin surfaces.
+- Keep the Google Sans family font policy active across visitor and admin
+  surfaces. Body/UI/form text should stay on Google Sans/Google Sans Thai;
+  headings/logo text can keep the display face only where it harmonizes.
+- Keep the first-paint cloak for `#__bundler_thumbnail`, `#__bundler_loading`,
+  and raw `<x-dc>` template content active on visitor and admin pages.
+- Keep a reachable admin return path after closing the `/#admin` drawer.
+- Keep `Log out` available from `/admin`, `/#admin`, and `/#edit`; do not leave it
+  as a lone ambiguous "ออก" control in the drawer header.
+- Keep direct mode switching and `Main` recovery available from owner modes:
+  `/#admin` must link to `Edit text` and `Main`; `/#edit` must link to `Panel`
+  and `Main`; the post-close owner bar must expose both modes, `Main`, and
+  `Log out`.
+- Keep mobile touch targets at 44px-class sizing for visitor, admin login,
+  admin launcher, admin drawer, and edit toolbar controls.
 - Keep exported bundle JSON valid. When editing text inside
   `<script type="__bundler/template">`, quotes, newlines, and literal closing
   script tags must be JSON-safe.
@@ -233,4 +273,5 @@ updating smoke expectations and getting business-owner copy confirmation.
 3. For code/UI changes, inspect the target bundle and avoid unescaped edits inside
    JSON template strings.
 4. Run the relevant verification from the matrix.
-5. Push to GitHub and deploy to Vercel only when production behavior changes.
+5. Commit, push, or deploy only after the user explicitly says to do so in the
+   current task.

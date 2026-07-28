@@ -16,6 +16,13 @@ GitHub remote:
 
 `https://github.com/purichw/CoverMate.git`
 
+## Release Permission Guardrail
+
+Do not commit, push, or deploy until the user explicitly says to do so in the
+current task. Local fixes, local verification, screenshots, and documentation
+updates are allowed while this guardrail is active, but GitHub and Vercel must
+stay untouched until the user gives a direct release instruction.
+
 ## Local Verification
 
 Install dependencies:
@@ -49,7 +56,10 @@ COVERMATE_URL=https://covermate.vercel.app npm run smoke
 Minimum checks:
 
 - `/` loads public visitor site
-- first paint does not show exported placeholder UI
+- first paint does not show exported placeholder UI or raw `<x-dc>` template
+  content
+- no rendered `[object Object]` placeholder text appears on visitor or admin
+  surfaces
 - insurer logos render
 - insurer relationship proof cards render
 - contact form enquiry-type and coverage selects render
@@ -58,9 +68,22 @@ Minimum checks:
 - demo/Google login redirects to `/admin`
 - `/admin` shows the "Manage your site" launcher
 - launcher links open `/#edit`, `/#admin`, and `/`
+- `/#admin` renders all admin tabs without clipping, including Content,
+  Brand & chrome, Theme & data, and Versions
+- `/#admin` close button hides the drawer and exposes an owner bar that can
+  reopen `Panel`, enter `Edit text`, return to `Main`, or `Log out`
+- `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
+  "ออก" control
+- `/#edit` renders click-to-edit mode with editable text fields
+- `/#edit` toolbar can open `Panel`, return to `Main`, finish editing with
+  `Done`, and `Log out`
+- finishing edit mode removes `contenteditable` affordances
 - unauthenticated owner routes redirect to `/admin/login`
-- Thai text uses Google Sans Thai
+- body/UI/form text uses the Google Sans family in both Thai and English
+- visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
+  `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
 - no horizontal overflow on covered viewports
+- admin controls meet mobile touch-target expectations on covered viewports
 
 ## Bundle Parse Check
 

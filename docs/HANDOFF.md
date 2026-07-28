@@ -20,14 +20,28 @@ admin launcher, inline editing mode, and control panel mode.
 ## Recent Important Fixes
 
 The exported bundler placeholder is hidden on first paint so users do not see an
-"Unpacking..." state.
+"Unpacking..." state or raw template content.
 
 Admin login redirects to `/admin`, preserving the required "Manage your site"
 launcher after login.
 
-The admin launcher has an early session gate.
+The admin launcher has an early session gate and its own sign-out action.
 
-Thai text across visitor and admin surfaces uses Google Sans Thai.
+The `/#admin` drawer no longer uses a standalone ambiguous "ออก" button in the
+header. Closing the drawer now shows a compact owner bar with reopen, edit,
+`Main`, and `Log out` actions.
+
+The `/#edit` mode now has its own owner toolbar with `Panel`, `Main`, `Done`,
+and `Log out` actions. The done action removes `contenteditable` state
+before returning to the public page.
+
+Body/UI/form text across visitor and admin surfaces uses the Google Sans family
+for Thai and English. Display headings/logo text may keep the project display
+face where it still harmonizes.
+
+Visible Admin chrome/action labels are intentionally English-only: `Panel`,
+`Edit text`, `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and
+`Log out`.
 
 Insurer logos are present under `assets/ins`.
 
@@ -87,6 +101,13 @@ the business owner.
 
 The embedded exported bundle is hard to maintain by hand. Run parse checks and
 visual smoke checks after bundle edits.
+
+Admin drawer controls are intentionally at mobile touch-target size. Keep the
+section reorder buttons, toggles, and tab/action controls reachable at iPhone SE
+width.
+
+The global mobile touch policy is embedded in all three HTML bundle templates;
+preserve it when replacing or regenerating bundle HTML.
 
 Lead-form submission behavior should be verified before relying on it
 operationally.

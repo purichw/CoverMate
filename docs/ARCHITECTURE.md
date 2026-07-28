@@ -86,6 +86,24 @@ after login.
 The `/#admin` hash mode owns the actual control panel for sections, content,
 brand/chrome, theme/data, export, restore, draft, preview, and publish behavior.
 
+The owner hash modes also own the admin continuation UI:
+
+- closing the `/#admin` drawer removes the hash and shows a compact owner bar
+  instead of trapping the owner on a public page with no way back;
+- `/#edit` shows its own owner toolbar for returning to the control panel,
+  returning to `Main` (`/admin`), ending edit mode, or logging out;
+- sign out clears both `covermate-admin-session` and the admin-ever marker, then
+  returns to `/admin/login`.
+
+Visible Admin chrome/action labels are English-only. The stable owner labels are
+`Panel`, `Edit text`, `Main`, `Done`, `Save draft`, `Preview`, `Publish`,
+`Success`, and `Log out`.
+
+The mobile interaction contract is enforced by a template-level
+`covermate-responsive-touch-policy` patch on all three HTML surfaces. It keeps
+buttons, form fields, drawer actions, owner bars, and navigation/footer links at
+44px-class touch targets on narrow or coarse-pointer devices.
+
 ## Do Not Break
 
 Do not rename localStorage keys without a migration.
@@ -98,15 +116,29 @@ Do not remove the early `/admin/login` session gate from `/admin`.
 Do not remove the splash-hiding rules for `#__bundler_thumbnail` and
 `#__bundler_loading`.
 
-Do not remove the Google Sans Thai font policy from any visitor or admin
-surface.
+Do not remove the `covermate-template-cloak` rules that hide raw `<x-dc>`
+template content before hydration on visitor and admin pages.
+
+Do not remove the owner reopen bar after the admin drawer closes. It must keep
+reopen `Panel`, `Edit text`, `Main`, and `Log out` actions reachable.
+
+Do not reintroduce an ambiguous drawer-header-only sign-out button. Sign-out
+must remain reachable from `/admin`, the `/#admin` owner tools, and the `/#edit`
+owner toolbar.
+
+Do not reduce mobile controls below 44px-class touch targets.
+
+Do not remove the Google Sans family font policy from any visitor or admin
+surface. Body/UI/form text should stay on Google Sans/Google Sans Thai in both
+Thai and English; headings/logo text may use the display face only when it stays
+visually aligned with that stack.
 
 Do not edit JSON inside `<script type="__bundler/template">` without keeping the
 embedded JSON valid.
 
 Do not let literal `</script>` strings appear inside the JSON script body.
-Escaped `<\u002Fscript>` text is required so the browser does not terminate the
-template early.
+Escaped `<\/script>` or `<\u002Fscript>` text is required so the browser does
+not terminate the template early.
 
 ## Future Architecture Options
 
