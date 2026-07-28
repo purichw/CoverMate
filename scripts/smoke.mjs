@@ -226,7 +226,7 @@ async function verifyStaticSeoFiles() {
     if (!manifestIcons.includes(icon)) failures.push(`seo /site.webmanifest: missing icon ${icon}`);
   }
 
-  for (const asset of ["/favicon.ico", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
+  for (const asset of ["/favicon.ico", "/favicon.svg", "/covermate-firebase.js", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
     const response = await fetch(new URL(asset, baseUrl));
     if (!response.ok) failures.push(`seo ${asset}: HTTP ${response.status}`);
   }
@@ -249,6 +249,12 @@ for (const [name, width, height] of viewports) {
     const failureText = request.failure()?.errorText || "failed";
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
+    if (
+      failureText === "net::ERR_ABORTED" &&
+      (url.endsWith("/favicon.svg") || url.endsWith("/covermate-firebase.js"))
+    ) {
+      return;
+    }
     if (failureText === "net::ERR_ABORTED" && url.includes("firestore.googleapis.com/google.firestore")) {
       return;
     }
@@ -852,3 +858,4 @@ if (failures.length) {
 }
 
 console.log(`CoverMate smoke passed for ${baseUrl}`);
+process.exit(0);
