@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Production
 
@@ -44,6 +44,7 @@ python3 -m http.server 4177
 Run smoke checks against local:
 
 ```bash
+npm run check:bundles
 COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 ```
 
@@ -67,6 +68,8 @@ Minimum checks:
 - insurer logos render
 - insurer relationship proof cards render
 - contact form enquiry-type and coverage selects render
+- contact form lead-submit code is present and does not send personal contact
+  details to GA event parameters
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
   motor-variant nav, and lands on `#insurers` below the sticky header
 - `/admin/login` loads
@@ -77,7 +80,11 @@ Minimum checks:
 - an owner UID exists at `admins/<uid>` with `active: true` before real admin
   login acceptance is expected
 - `/admin` shows the "Manage your site" launcher
-- launcher links open `/#edit`, `/#admin`, and `/`
+- launcher links open `/#edit`, `/#admin`, `/admin/analytics`, and `/`
+- `/admin/analytics` renders private analytics without loading visitor GA
+  scripts and without horizontal overflow
+- `/admin/analytics` recent leads remain readable on mobile as labeled cards,
+  not a clipped horizontal table
 - `/#admin` renders all admin tabs without clipping, including Content,
   Brand & chrome, Theme & data, and Versions
 - `/#admin` close button hides the drawer and exposes an owner bar that can
@@ -104,6 +111,13 @@ Minimum checks:
   and JSON-LD structured data render and parse
 - Firestore live content updates SEO title/description/JSON-LD after hydration;
   stale local cache must not win
+- `covermate-analytics.js` loads as a static asset, uses GA4 measurement ID
+  `G-5TF3C235EF`, runs only on `covermate.vercel.app`, and suppresses owner
+  hashes/admin sessions
+- `admin/session.js`, `admin/analytics-data.js`, and `scripts/validate-bundles.mjs`
+  parse as source-authored refactor helpers
+- Vercel security headers are present in `vercel.json`; CSP remains Report-Only
+  until exported inline/blob bundle requirements are removed
 - no horizontal overflow on covered viewports
 - admin controls meet mobile touch-target expectations on covered viewports
 
@@ -112,9 +126,15 @@ Minimum checks:
 Before deploying manual edits to exported HTML bundles, run:
 
 ```bash
+npm run check:bundles
+```
+
+The historical inline parse snippet is still useful for debugging:
+
+```bash
 node - <<'NODE'
 const fs = require('fs');
-for (const file of ['index.html', 'admin/login/index.html', 'admin/index.html']) {
+for (const file of ['index.html', 'admin/login/index.html', 'admin/index.html', 'admin/analytics/index.html']) {
   const html = fs.readFileSync(file, 'utf8');
   const marker = '<script type="__bundler/template">';
   const start = html.indexOf(marker);

@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Routes
 
@@ -10,6 +10,7 @@ Last updated: 2026-07-28
 | `/#motor` | Visitor | Alias to the main site's motor-insurance / insurer section | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner | Post-login "Manage your site" launcher | `admin/index.html` |
+| `/admin/analytics` | Owner | Private analytics dashboard for leads and GA4 reporting readiness | `admin/analytics/index.html` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
 | `/#admin` | Owner | Control panel mode | `index.html` |
 | `/#preview` | Owner | Preview mode | `index.html` |
@@ -22,6 +23,7 @@ Last updated: 2026-07-28
 | `/#motor` | Same document as `/`; do not sitemap hash URLs | `https://covermate.vercel.app/` |
 | `/admin/login` | `noindex,nofollow` | `https://covermate.vercel.app/admin/login/` |
 | `/admin` | `noindex,nofollow` | `https://covermate.vercel.app/admin/` |
+| `/admin/analytics` | `noindex,nofollow` | `https://covermate.vercel.app/admin/analytics/` |
 | `/#edit`, `/#admin`, `/#preview` | Runtime `noindex,nofollow` owner modes | `https://covermate.vercel.app/` |
 
 SEO implementation details live in [`SEO.md`](SEO.md).
@@ -52,7 +54,8 @@ Expected visible sections:
 | Surface | Route | Role |
 | --- | --- | --- |
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
-| Launcher | `/admin` | Choose between editing, arranging, or viewing the public site. |
+| Launcher | `/admin` | Choose between editing, arranging, analytics, or viewing the public site. |
+| Analytics | `/admin/analytics` | Owner-only Firestore lead reporting plus GA4 Data API/export readiness view. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
 
@@ -72,10 +75,11 @@ The `/admin` launcher actions must stay aligned with the reference:
 
 - "Edit the words" opens `/#edit`
 - "Arrange & customise" opens `/#admin`
+- "Analytics" opens `/admin/analytics`
 - "View public site" opens `/`
 
-Unauthenticated direct access to `/admin`, `/#edit`, `/#admin`, and `/#preview`
-must redirect to `/admin/login`.
+Unauthenticated direct access to `/admin`, `/admin/analytics`, `/#edit`,
+`/#admin`, and `/#preview` must redirect to `/admin/login`.
 
 ## Insurer Assets
 

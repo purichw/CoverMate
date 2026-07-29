@@ -1,6 +1,6 @@
 # CoverMate Firebase Setup
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Project
 
@@ -8,8 +8,10 @@ Last updated: 2026-07-28
 - Console overview:
   `https://console.firebase.google.com/u/0/project/covermate-purich/overview`
 - Web config is embedded in `/covermate-firebase.js`.
+- Google Analytics/Firebase measurement ID: `G-5TF3C235EF`.
 - Current role: real admin identity, Firestore allowlist, and Firestore-backed
-  CMS live/draft/version persistence.
+  CMS live/draft/version persistence, contact lead capture, and private lead
+  analytics reads.
 
 ## Console URLs
 
@@ -123,3 +125,31 @@ the embedded defaults or the last-known local cache. After the first successful
 publish, Firestore becomes the canonical live source. A successful Firestore
 read always overwrites local cache before rendering; local cache must not
 override live remote content.
+
+## Lead Capture
+
+The public consultation form writes to:
+
+```text
+contactLeads/<auto-id>
+```
+
+Public creates are allowed only when the submitted document matches the field
+allowlist, length caps, enum values, `status: "new"`, `read: false`, and
+Firestore server timestamp checks in `firestore.rules`.
+
+Admin users can read, update, or delete leads. `/admin/analytics` currently uses
+`CoverMateFirebase.loadContactLeads()` to render the latest lead analytics.
+
+## Analytics Summaries
+
+The path below is reserved for admin-only GA4/Data API summaries or scheduled
+exports:
+
+```text
+sites/covermate/analytics/<doc-id>
+```
+
+Do not put GA Data API service-account secrets in the static browser app. Use a
+serverless endpoint or scheduled export if real GA traffic metrics are needed in
+the private dashboard.

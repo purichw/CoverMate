@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Visual Source
 
@@ -46,6 +46,7 @@ This includes:
 - motor route/section
 - admin login
 - admin launcher
+- admin analytics
 - inline edit mode
 - control panel
 - form fields, buttons, tabs, footers, and legal text
@@ -57,6 +58,12 @@ admin controls or form text.
 
 The current HTML bundles include a historical `covermate-thai-font-policy`
 patch. Keep it unless replacing it with equivalent source-level CSS coverage.
+
+`/admin/analytics` is source-authored rather than exported from Claude Design.
+It keeps the CoverMate warm organic palette, rounded owner-tool language,
+Google Sans body stack, display heading treatment, 44px-class controls, and
+responsive admin dashboard density. Its charts should remain quiet
+operator-facing data views, not decorative fake metrics.
 
 ## Mobile Touch Policy
 

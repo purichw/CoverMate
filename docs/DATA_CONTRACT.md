@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Persistence Model
 
@@ -27,6 +27,8 @@ Implications:
 - Firestore Security Rules enforce remote admin data access and CMS writes
 - runtime SEO metadata and JSON-LD derive from the hydrated live state, so stale
   cache/defaults must not override live metadata either
+- public lead submissions write validated `contactLeads/*` documents; admin
+  analytics reads them only after an allowlisted admin session is active
 
 ## Known Keys
 
@@ -75,10 +77,33 @@ storage keys.
 | `sites/covermate/states/live` | Public read; admin write. | Canonical published visitor CMS state. |
 | `sites/covermate/states/draft` | Admin read/write. | Canonical working draft state for owner modes. |
 | `sites/covermate/versions/{versionId}` | Admin read/write. | Canonical publish/restore history, newest first by `ts`. |
-| `contactLeads/{leadId}` | Public create; admin read/update/delete. | Future lead capture store if the form is wired to Firestore. |
+| `contactLeads/{leadId}` | Validated public create; admin read/update/delete. | Canonical lead capture store for the public consultation form and Admin Analytics. |
+| `sites/covermate/analytics/{analyticsDoc}` | Admin read/write. | Reserved GA4/Data API summaries or scheduled analytics exports. |
 
 `covermate-firebase.js` owns Firestore hydration, draft save, publish, restore,
-and version-history reads.
+version-history reads, public lead submission, and admin lead reads.
+
+## Lead Document Shape
+
+Public creates under `contactLeads/*` must match the rules-validated shape:
+
+| Field | Type | Constraint |
+| --- | --- | --- |
+| `name` | string | Max 120 chars. |
+| `contact` | string | Required non-empty, max 160 chars. |
+| `topic` | string | Max 2000 chars. |
+| `qtype` | string | Empty, `quote`, `compare`, `general`, `review`, or `claim`. |
+| `coverage` | string | Empty, `life`, `health`, `motor`, `accident`, `savings`, or `unsure`. |
+| `language` | string | `th` or `en`. |
+| `summary` | string | Max 1200 chars. Must not be sent to GA. |
+| `sourcePath` | string | Max 220 chars. |
+| `status` | string | Public creates must be `new`. |
+| `read` | boolean | Public creates must be `false`. |
+| `createdAt` | timestamp | Must equal Firestore `request.time`. |
+| `updatedAt` | timestamp | Must equal Firestore `request.time`. |
+
+Admin users may update status/read fields later, but public visitors may only
+create new validated leads.
 
 ## Migration Rules
 

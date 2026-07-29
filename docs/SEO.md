@@ -1,6 +1,6 @@
 # CoverMate SEO Contract
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Canonical Indexing
 
@@ -16,6 +16,7 @@ Admin surfaces are private owner tools and must stay `noindex,nofollow`:
 
 - `/admin/login`
 - `/admin`
+- `/admin/analytics`
 - `/#admin`
 - `/#edit`
 - `/#preview`
@@ -102,3 +103,7 @@ The smoke harness verifies:
 - Open Graph, Twitter, and JSON-LD metadata exist and parse;
 - remote Firestore live content updates SEO metadata instead of stale local
   cache winning.
+- `covermate-analytics.js` loads as a public static asset; Analytics itself is
+  production-only and must not be added to admin-only HTML surfaces.
+- `/admin/analytics` is `noindex,nofollow`, is not in `sitemap.xml`, and does
+  not load visitor GA scripts.

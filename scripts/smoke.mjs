@@ -226,7 +226,7 @@ async function verifyStaticSeoFiles() {
     if (!manifestIcons.includes(icon)) failures.push(`seo /site.webmanifest: missing icon ${icon}`);
   }
 
-  for (const asset of ["/favicon.ico", "/favicon.svg", "/covermate-firebase.js", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
+  for (const asset of ["/favicon.ico", "/favicon.svg", "/covermate-firebase.js", "/covermate-analytics.js", "/admin/session.js", "/admin/analytics-data.js", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
     const response = await fetch(new URL(asset, baseUrl));
     if (!response.ok) failures.push(`seo ${asset}: HTTP ${response.status}`);
   }
@@ -535,6 +535,7 @@ for (const [name, width, height] of viewports) {
   }
 
   const adminUrl = new URL("/admin", baseUrl).toString();
+  const analyticsUrl = new URL("/admin/analytics", baseUrl).toString();
   await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await page.evaluate(() => {
     window.localStorage.removeItem("covermate-admin-session");
@@ -545,6 +546,12 @@ for (const [name, width, height] of viewports) {
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
   }
+  await page.goto(analyticsUrl, { waitUntil: "load", timeout: 30000 });
+  await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
+  if (!page.url().includes("/admin/login")) {
+    failures.push(`${name} /admin/analytics: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
+  }
+
   for (const ownerRoute of ["/#admin", "/#edit", "/#preview"]) {
     await page.goto(new URL(ownerRoute, baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
     await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
@@ -612,6 +619,9 @@ for (const [name, width, height] of viewports) {
   if (!adminState.text.includes("Manage your site")) {
     failures.push(`${name} /admin: authenticated launcher did not render`);
   }
+  if (!adminState.text.includes("Analytics") || !adminState.text.includes("Open analytics")) {
+    failures.push(`${name} /admin: analytics launcher card is missing`);
+  }
   if (adminState.text.includes("[object Object]")) {
     failures.push(`${name} /admin: rendered object placeholder text`);
   }
@@ -624,6 +634,92 @@ for (const [name, width, height] of viewports) {
   if (!/^noindex/.test(adminState.robots)) {
     failures.push(`${name} /admin: admin launcher metadata is not noindex (${adminState.robots})`);
   }
+
+  const leadNow = Math.floor(Date.now() / 1000);
+  const analyticsMock = `
+    window.CoverMateFirebase = {
+      loadContactLeads: async () => [
+        { id: "lead-1", name: "Ari", contact: "LINE ari", qtype: "quote", coverage: "motor", topic: "Motor quote", summary: "Motor quote", status: "new", read: false, createdAt: { seconds: ${leadNow} } },
+        { id: "lead-2", name: "Ben", contact: "088-000-0000", qtype: "compare", coverage: "health", topic: "Health compare", summary: "Health compare", status: "new", read: true, createdAt: { seconds: ${leadNow - 86400 * 3} } }
+      ],
+      signOut: async () => {}
+    };
+    export {};
+  `;
+  const analyticsPage = await browser.newPage({
+    viewport: { width, height },
+    deviceScaleFactor: 1
+  });
+  const analyticsFailedRequests = [];
+  const analyticsPageErrors = [];
+  analyticsPage.on("requestfailed", (request) => {
+    const url = request.url();
+    if (url.endsWith("/favicon.ico")) return;
+    analyticsFailedRequests.push(`${url} ${request.failure()?.errorText || "failed"}`);
+  });
+  analyticsPage.on("pageerror", (error) => analyticsPageErrors.push(error.message));
+  await analyticsPage.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({ status: 200, contentType: "application/javascript", body: analyticsMock })
+  );
+  await analyticsPage.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+  });
+  await analyticsPage.goto(analyticsUrl, { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(analyticsPage, /Analytics/);
+  await analyticsPage.waitForTimeout(900);
+  const analyticsState = await analyticsPage.evaluate(() => ({
+    text: document.body.innerText,
+    leadKpi: document.querySelector('[data-kpi="leads"]')?.textContent?.trim() || "",
+    leadNames: Array.from(document.querySelectorAll("#recent-leads td:nth-child(2)")).map((cell) =>
+      (cell.textContent || "").trim()
+    ),
+    bodyFont: window.getComputedStyle(document.body).fontFamily,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || "",
+    hasGtag: Boolean(document.querySelector('script[src*="googletagmanager"], script[src*="google-analytics"]')),
+    chartCount: document.querySelectorAll("svg[role='img']").length,
+    rows: document.querySelectorAll("#recent-leads tr").length
+  }));
+  await analyticsPage.close();
+  if (!analyticsState.text.includes("G-5TF3C235EF") || !analyticsState.text.includes("Visitor funnel") || !analyticsState.text.includes("Lead trend")) {
+    failures.push(`${name} /admin/analytics: analytics dashboard core sections missing`);
+  }
+  if (analyticsState.leadKpi !== "2" || !analyticsState.leadNames.includes("Ari") || !analyticsState.leadNames.includes("Ben")) {
+    failures.push(`${name} /admin/analytics: mocked Firestore lead data did not render`);
+  }
+  if (analyticsState.hasGtag) {
+    failures.push(`${name} /admin/analytics: admin analytics page loaded visitor GA scripts`);
+  }
+  if (analyticsState.chartCount < 2) {
+    failures.push(`${name} /admin/analytics: expected funnel and lead trend SVG charts`);
+  }
+  if (analyticsState.rows < 2) {
+    failures.push(`${name} /admin/analytics: recent leads table did not render mocked rows`);
+  }
+  if (analyticsState.text.includes("[object Object]")) {
+    failures.push(`${name} /admin/analytics: rendered object placeholder text`);
+  }
+  if (!analyticsState.bodyFont.includes("Google Sans Thai")) {
+    failures.push(`${name} /admin/analytics: body font is not Google Sans Thai (${analyticsState.bodyFont})`);
+  }
+  if (analyticsState.scrollWidth > analyticsState.clientWidth) {
+    failures.push(`${name} /admin/analytics: horizontal overflow ${analyticsState.scrollWidth} > ${analyticsState.clientWidth}`);
+  }
+  if (!/^noindex/.test(analyticsState.robots)) {
+    failures.push(`${name} /admin/analytics: analytics metadata is not noindex (${analyticsState.robots})`);
+  }
+  if (analyticsFailedRequests.length) failures.push(`${name} /admin/analytics: ${analyticsFailedRequests.join(" | ")}`);
+  if (analyticsPageErrors.length) failures.push(`${name} /admin/analytics: ${analyticsPageErrors.join(" | ")}`);
 
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);

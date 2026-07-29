@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Visitor Journey
 
@@ -9,8 +9,8 @@ Last updated: 2026-07-28
    process, insurer proof, testimonials, about/license copy, FAQ, and contact
    area.
 3. Visitor starts contact through LINE, phone, email, or the lead form.
-4. Consultation and comparison continue outside the static site unless a backend
-   lead flow is added later.
+4. Consultation requests submitted through the form are saved to Firestore
+   `contactLeads/*`; LINE, phone, and email CTAs still hand off directly.
 
 `/#motor` is currently an alias into the main visitor site, not a separate page
 variant. It keeps the same global navbar as `/` and re-aims to the `#insurers`
@@ -20,17 +20,9 @@ stay hidden until a deliberate `/motor` or campaign route is approved.
 
 ## Lead Form Contract
 
-The current static repo does not document a server-side lead submission
-pipeline. Before relying on the form operationally, confirm one of these exists:
-
-- LINE handoff
-- email service
-- serverless function
-- webhook
-- CRM integration
-
-Until then, treat the visible form as a prototype/contact prompt, not guaranteed
-data capture.
+The current form saves validated lead documents to Firestore through
+`CoverMateFirebase.submitContactLead()`. Public writes are limited by
+`firestore.rules`; admin users can read leads in `/admin/analytics`.
 
 The current form asks for:
 
@@ -65,6 +57,7 @@ Launcher actions:
 
 - Start editing text -> `/#edit`
 - Open control panel -> `/#admin`
+- Open analytics -> `/admin/analytics`
 - View public site -> `/`
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
@@ -114,12 +107,25 @@ fields.
 For the insurer section, the Content tab also exposes relationship card editing
 for AIA and Srikrung Broker proof cards.
 
+## Admin Analytics Flow
+
+1. Owner opens `/admin/analytics` from the launcher.
+2. The page checks `covermate-admin-session`; missing/expired sessions redirect
+   to `/admin/login`.
+3. The page loads recent Firestore leads through `covermate-firebase.js`.
+4. Lead KPIs, trend, enquiry mix, coverage mix, and recent leads render from
+   real Firestore data.
+5. GA4 traffic charts remain backend-ready placeholders until a server-side GA
+   Data API endpoint or scheduled Firestore export exists.
+6. The page does not load visitor Google Analytics scripts.
+
 ## Access Behavior
 
 | Entry | With session | Without session |
 | --- | --- | --- |
 | `/admin/login` | Login page remains available | Login page remains available |
 | `/admin` | Show launcher | Redirect to `/admin/login` |
+| `/admin/analytics` | Show analytics dashboard | Redirect to `/admin/login` |
 | `/#edit` | Show edit mode | Redirect to `/admin/login` |
 | `/#admin` | Show control panel | Redirect to `/admin/login` |
 | `/#preview` | Show preview mode | Redirect to `/admin/login` |

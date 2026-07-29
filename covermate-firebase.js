@@ -17,6 +17,11 @@ const DRAFT_CONFIG_KEY = "purich-draft-config-v3";
 const DRAFT_TEXT_KEY = "purich-draft-text-v3";
 const HISTORY_KEY = "purich-history-v3";
 const HISTORY_LIMIT = 20;
+const LEAD_LIMIT = 250;
+
+const LEAD_QTYPES = new Set(["", "quote", "compare", "general", "review", "claim"]);
+const LEAD_COVERAGES = new Set(["", "life", "health", "motor", "accident", "savings", "unsure"]);
+const LEAD_LANGS = new Set(["th", "en"]);
 
 const [
   appMod,
@@ -94,6 +99,16 @@ function removeKey(key) {
   } catch {
     // best effort only
   }
+}
+
+function cleanText(value, limit) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.slice(0, limit);
+}
+
+function cleanLeadChoice(value, allowed) {
+  const text = cleanText(value, 40);
+  return allowed.has(text) ? text : "";
 }
 
 function validStateDoc(doc) {
@@ -280,6 +295,42 @@ async function loadVersions(limitCount = HISTORY_LIMIT) {
   return snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
 }
 
+async function submitContactLead(input = {}) {
+  const sourcePath = cleanText(
+    input.sourcePath || window.location.pathname + window.location.search + window.location.hash,
+    220
+  );
+  const payload = {
+    name: cleanText(input.name, 120),
+    contact: cleanText(input.contact, 160),
+    topic: cleanText(input.topic, 2000),
+    qtype: cleanLeadChoice(input.qtype, LEAD_QTYPES),
+    coverage: cleanLeadChoice(input.coverage, LEAD_COVERAGES),
+    language: cleanLeadChoice(input.language, LEAD_LANGS) || "th",
+    summary: cleanText(input.summary, 1200),
+    sourcePath,
+    status: "new",
+    read: false,
+    createdAt: firestoreMod.serverTimestamp(),
+    updatedAt: firestoreMod.serverTimestamp()
+  };
+  const ref = await firestoreMod.addDoc(firestoreMod.collection(db, "contactLeads"), payload);
+  return { id: ref.id, ...payload };
+}
+
+async function loadContactLeads(limitCount = LEAD_LIMIT) {
+  const user = auth.currentUser || await waitForAuth();
+  const admin = await readAdmin(user);
+  if (!admin) throw new Error("Not authorized to read CoverMate leads.");
+  const q = firestoreMod.query(
+    firestoreMod.collection(db, "contactLeads"),
+    firestoreMod.orderBy("createdAt", "desc"),
+    firestoreMod.limit(Math.max(1, Math.min(LEAD_LIMIT, Number(limitCount) || LEAD_LIMIT)))
+  );
+  const snap = await firestoreMod.getDocs(q);
+  return snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
+}
+
 async function hydrateLocalContent(options = {}) {
   const mode = {
     draft: options.draft === true,
@@ -328,6 +379,8 @@ window.CoverMateFirebase = {
   appendVersion,
   publishSiteState,
   loadVersions,
+  submitContactLead,
+  loadContactLeads,
   hydrateLocalContent
 };
 

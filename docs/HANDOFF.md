@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Current State
 
@@ -8,18 +8,21 @@ CoverMate is live at:
 
 [https://covermate.vercel.app](https://covermate.vercel.app)
 
-The repo is a static Vercel site with three exported HTML surfaces:
+The repo is a static Vercel site with three exported HTML surfaces and one
+source-authored private analytics surface:
 
 - `index.html`
 - `admin/login/index.html`
 - `admin/index.html`
+- `admin/analytics/index.html`
 
 The site includes the visitor experience, motor-insurance section, admin login,
-admin launcher, inline editing mode, and control panel mode.
+admin launcher, admin analytics, inline editing mode, and control panel mode.
 
-Current local workspace may be ahead of production. Do not assume Firebase login
-or documentation changes are live at `covermate.vercel.app` until they have been
-committed, pushed, deployed, and production-smoked with explicit owner approval.
+Local workspace state can still be ahead of production between edits. Treat
+`covermate.vercel.app` as current only after the relevant commit is pushed,
+Vercel is deployed, Firestore Rules are deployed when rules changed, and
+production smoke passes.
 
 ## Recent Important Fixes
 
@@ -67,6 +70,19 @@ SEO is now wired for the public site. Static head fallbacks, `robots.txt`,
 image assets are present. Runtime SEO metadata syncs from hydrated live content,
 and admin/owner routes remain `noindex`.
 
+Visitor lead capture now writes validated `contactLeads/*` Firestore documents.
+Admin Analytics at `/admin/analytics` reads leads, renders KPI/trend/mix/recent
+lead views, and reserves GA4 traffic charts for a future secure Data API or
+Firestore export. Recent leads render as a desktop table and mobile labeled
+cards. The admin analytics page does not load visitor GA scripts.
+
+Security headers are configured in `vercel.json`; CSP is currently
+`Content-Security-Policy-Report-Only` because the exported bundle still depends
+on inline script/style and blob URLs.
+
+`npm run check:bundles` validates exported template JSON and source-authored
+runtime helpers before smoke.
+
 `favicon.svg` and `favicon.ico` are present as browser icons.
 
 ## Project Documents
@@ -79,6 +95,8 @@ Read these before changing the project:
 - [INTERACTION_MAP.md](INTERACTION_MAP.md)
 - [DATA_CONTRACT.md](DATA_CONTRACT.md)
 - [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
+- [ANALYTICS.md](ANALYTICS.md)
+- [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md)
 - [SEO.md](SEO.md)
 - [DESIGN_ASSETS.md](DESIGN_ASSETS.md)
 - [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md)
@@ -97,6 +115,7 @@ python3 -m http.server 4177
 Run smoke against local:
 
 ```bash
+npm run check:bundles
 COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 ```
 
@@ -142,8 +161,13 @@ width.
 The global mobile touch policy is embedded in all three HTML bundle templates;
 preserve it when replacing or regenerating bundle HTML.
 
-Lead-form submission behavior should be verified before relying on it
-operationally.
+Lead-form submission writes to Firestore. When `firestore.rules` changes, deploy
+Firestore Rules in the same release before relying on the tightened lead
+validation shape in production.
+
+Full GA traffic metrics in `/admin/analytics` still require a server-side GA4
+Data API endpoint or scheduled export into Firestore. The static browser app
+must not contain service-account credentials.
 
 Legal/license/contact copy should be reviewed by the site owner before paid
 traffic.

@@ -21,6 +21,10 @@ before assuming changes are live.
   ownership, migration rules, and limitations
 - [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) - Firebase Auth,
   Firestore allowlist, and Firestore Rules setup
+- [`docs/ANALYTICS.md`](docs/ANALYTICS.md) - GA4 event contract, private
+  analytics dashboard, and lead reporting data model
+- [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md) -
+  security, privacy, performance, accessibility, reliability, and release NFRs
 - [`docs/SEO.md`](docs/SEO.md) - canonical URL, noindex boundaries,
   metadata/JSON-LD contract, social assets, and SEO smoke checks
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md) - visual references, font
@@ -37,6 +41,7 @@ Routes:
 - `/#admin`, `/#edit`, and `/#preview` owner modes inside the visitor bundle
 - `/admin/login` owner auth gate
 - `/admin` owner launcher
+- `/admin/analytics` private owner analytics dashboard
 
 Admin sign-in uses Firebase Auth and a Firestore `admins/{uid}` allowlist. CMS
 draft/live/history content is Firestore-first under `sites/covermate/*`;

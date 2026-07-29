@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "check:bundles": "node scripts/validate-bundles.mjs",
     "smoke": "node scripts/smoke.mjs"
   }
 }

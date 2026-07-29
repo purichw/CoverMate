@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Current Shape
 
@@ -20,14 +20,18 @@ flowchart TD
   Vercel --> Public["/ index.html"]
   Vercel --> Login["/admin/login/index.html"]
   Vercel --> Launcher["/admin/index.html"]
+  Vercel --> Analytics["/admin/analytics/index.html"]
   Browser --> Firebase["Firebase Auth + Firestore"]
   Public --> Live["Firestore: states/live"]
+  Public --> Leads["Firestore: contactLeads/*"]
   Public --> Store["localStorage fallback cache"]
   PublicAdmin --> Draft["Firestore: states/draft"]
   PublicAdmin --> Versions["Firestore: versions/*"]
   Login --> Firebase
   Firebase --> Session["localStorage cache: covermate-admin-session"]
   Launcher --> Session
+  Analytics --> Session
+  Analytics --> Leads
   Launcher --> PublicEdit["/#edit"]
   Launcher --> PublicAdmin["/#admin"]
 ```
@@ -53,12 +57,26 @@ checks Firestore `admins/{uid}` before writing the browser-local
 
 `covermate-firebase.js` owns Firebase SDK loading, Google popup sign-in,
 Firestore admin allowlist checks, Firebase sign-out, live/draft hydration,
-draft saves, publish/restore writes, and version-history reads. The visitor page
-loads only the live CMS state; owner modes additionally load draft and versions.
+draft saves, publish/restore writes, version-history reads, public lead
+submission, and admin lead reads. The visitor page loads only the live CMS
+state; owner modes additionally load draft and versions.
+
+`covermate-analytics.js` owns Google Analytics 4 visitor tracking for production
+only. It uses measurement ID `G-5TF3C235EF`, loads only on
+`covermate.vercel.app`, suppresses owner hashes and active admin sessions, and
+never sends form field values or visitor contact details.
 
 `admin/index.html` owns the private post-login launcher. It is the required
-"Manage your site" page shown before choosing inline editing or the control
-panel.
+"Manage your site" page shown before choosing inline editing, the control
+panel, or analytics.
+
+`admin/analytics/index.html` owns the private analytics dashboard. It is
+source-authored rather than a Claude Design export, uses `admin/session.js` for
+session gating/sign-out, and uses `admin/analytics-data.js` to normalize
+Firestore lead data. It does not load the visitor GA script.
+
+`admin/session.js` and `admin/analytics-data.js` are the first source-level
+refactor seam around the exported admin bundles.
 
 `assets/ins/*.png` owns insurer logo media for the motor-insurance logo section.
 The exported reference also carries AIA/Srikrung Broker relationship-card logo
@@ -85,6 +103,9 @@ The app treats Firestore as the source of truth for CMS state:
 - save draft: write `states/draft`
 - publish or restore: atomically write `states/live`, `states/draft`, and a new
   version document
+- visitor lead submit: create a validated `contactLeads/*` document
+- admin analytics: read `contactLeads/*`; GA4 traffic metrics require a future
+  server-side Data API endpoint or Firestore export
 
 `localStorage` stores last-known copies of live/draft/text/history so the static
 bundle can render a fallback if Firestore is unreachable. A successful remote
@@ -118,6 +139,9 @@ The admin login surface owns only session entry and post-login redirect.
 The admin launcher owns post-login choice architecture. It should not be skipped
 after login.
 
+The private analytics page owns owner-only reporting for lead capture, funnel
+readiness, lead mix, recent leads, and GA4 Data API connection state.
+
 The `/#admin` hash mode owns the actual control panel for sections, content,
 brand/chrome, theme/data, export, restore, draft, preview, and publish behavior.
 
@@ -148,6 +172,10 @@ override a successfully hydrated Firestore live document.
 
 Do not let static SEO fallbacks, stale localStorage, or placeholder contact
 fields override live SEO metadata or structured data after Firestore hydration.
+
+Do not add Google Analytics to `/admin`, `/admin/login`, or `/admin/analytics`,
+and do not send visitor names, phone numbers, LINE IDs, emails, or message text
+as Analytics event parameters.
 
 Do not redirect successful login directly to `/#admin`; keep `/admin` as the
 post-login launcher.
@@ -183,6 +211,13 @@ not terminate the template early.
 
 Do not add admin routes, hash aliases, draft/preview URLs, or owner modes to
 `sitemap.xml`.
+
+Do not relax `contactLeads/*` public create rules without preserving explicit
+field allowlists, length caps, `status == "new"`, `read == false`, and server
+timestamp validation.
+
+Do not enforce CSP until the generated bundle's inline script/style/blob
+requirements are removed or explicitly hashed. Current CSP is Report-Only.
 
 ## Future Architecture Options
 

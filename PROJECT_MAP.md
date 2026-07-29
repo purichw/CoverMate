@@ -6,8 +6,9 @@ and safely edit in later sessions.
 Current state: this repo is a Vercel-hosted static export. The UI is built from
 Claude Design `.dc.html` bundles, with small production patches applied in the
 wrapper and embedded bundle strings. There is no backend API in this repo.
-Firebase Auth/Firestore admin login changes are local workspace state until the
-user explicitly authorizes commit, push, and deploy.
+Firebase Auth, Firestore CMS persistence, lead capture, and Admin Analytics are
+implemented locally and still require explicit owner approval before commit,
+push, deploy, or Firestore Rules deployment.
 
 ## How To Run / Verify
 
@@ -15,6 +16,7 @@ user explicitly authorizes commit, push, and deploy.
   says to do so in the current task. See
   [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md).
 - Local static server: `python3 -m http.server 4177`
+- Local bundle/source check: `npm run check:bundles`
 - Local smoke: `npm run smoke`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
 - Production URL: `https://covermate.vercel.app`
@@ -23,10 +25,10 @@ user explicitly authorizes commit, push, and deploy.
 
 `scripts/smoke.mjs` covers desktop/tablet/mobile routes, first-paint placeholder
 cloaking, insurer logos, horizontal overflow, unauthenticated admin redirects,
-Firebase login UI rendering, authenticated admin launcher rendering, `/#admin` tab
-visibility/content, admin drawer close/reopen behavior, `/#edit` editable-mode
-rendering, edit-mode exit cleanup, SEO metadata/structured-data contracts, and
-`Log out` redirects.
+Firebase login UI rendering, authenticated admin launcher rendering, private
+analytics rendering, `/#admin` tab visibility/content, admin drawer close/reopen
+behavior, `/#edit` editable-mode rendering, edit-mode exit cleanup, SEO
+metadata/structured-data contracts, and `Log out` redirects.
 
 ## Document Set
 
@@ -37,6 +39,8 @@ Detailed project documents:
 - [`docs/INTERACTION_MAP.md`](docs/INTERACTION_MAP.md)
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)
 - [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md)
+- [`docs/ANALYTICS.md`](docs/ANALYTICS.md)
+- [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [`docs/SEO.md`](docs/SEO.md)
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
@@ -48,9 +52,12 @@ Detailed project documents:
 | --- | --- |
 | `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. `#motor` is currently an alias into the main site, not a separate page. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
-| `admin/index.html` | Private admin launcher: "Edit the words" and "Arrange & customise". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
-| `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, and version history. |
-| `firestore.rules` | Firestore access rules for admin allowlist, site state, versions, and contact leads. |
+| `admin/index.html` | Private admin launcher: "Edit the words", "Arrange & customise", and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
+| `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
+| `admin/session.js` | Shared admin session helper for source-authored admin pages. |
+| `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
+| `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, version history, contact lead submission, and admin lead reads. |
+| `firestore.rules` | Firestore access rules for admin allowlist, site state, versions, analytics docs, and validated contact leads. |
 | `firebase.json` | Firebase CLI mapping for Firestore rules deploys. |
 | `assets/ins/*.png` | Insurer logo assets used by the `#insurers` section. Current bundle expects `assets/ins/NN-name.png`. |
 | `assets/logos/aia-logo.png` | Loose AIA logo PNG used for the AIA proof-card replacement and embedded into the current bundle resource map. |
@@ -62,7 +69,8 @@ Detailed project documents:
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness with local/runtime Playwright fallback. |
-| `vercel.json` | Static Vercel settings, clean URLs, `/favicon.ico` rewrite, and long-lived cache headers for `/assets/*`. |
+| `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
+| `vercel.json` | Static Vercel settings, clean URLs, `/favicon.ico` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
 | `.image-slots.state.json` | Empty file kept to satisfy the exported image-slot runtime request. |
 | `.gitignore` | Ignores `.vercel/` local project config. |
 
@@ -75,6 +83,7 @@ flowchart LR
   "Visitor /" --> "Owner #admin"
   "Visitor /" --> "Owner #preview"
   "Admin login /admin/login" --> "Admin launcher /admin"
+  "Admin launcher /admin" --> "Admin analytics /admin/analytics"
   "Admin launcher /admin" --> "Owner #edit"
   "Admin launcher /admin" --> "Owner #admin"
 ```
@@ -90,6 +99,8 @@ Route contracts:
 - `/#admin`, `/#edit`, and `/#preview` are owner modes inside `index.html`.
 - `/admin/login` is the owner auth gate.
 - `/admin` is the private admin launcher and must remain reachable after login.
+- `/admin/analytics` is the private owner analytics dashboard and must remain
+  out of `sitemap.xml`.
 - Direct unauthenticated access to `/admin` and owner modes must send the user to
   `/admin/login`.
 
@@ -128,6 +139,8 @@ Important behavior:
 - Public SEO metadata starts from static fallbacks in `index.html`, then runtime
   sync updates title, description, Open Graph/Twitter, and JSON-LD from the
   hydrated live state. Admin routes and owner modes must remain `noindex`.
+- Visitor lead submissions write validated documents to `contactLeads/*`.
+  Admin Analytics reads those leads through `covermate-firebase.js`.
 
 ## Design Source Of Truth
 
@@ -216,6 +229,8 @@ but is not currently present as a loose repository file.
 5. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
 6. The lead form includes enquiry type and coverage selects before the freeform
    detail field.
+7. Successful form submission writes a validated Firestore lead document and
+   fires only privacy-safe Analytics outcome/category events.
 
 ### Admin
 
@@ -225,18 +240,22 @@ but is not currently present as a loose repository file.
    `/admin`.
 4. "Edit the words" opens `/#edit`.
 5. "Open control panel" opens `/#admin`.
-6. The owner panel can reorder/hide sections, edit content/brand/theme data, and
+6. "Analytics" opens `/admin/analytics`.
+7. `/admin/analytics` renders Firestore lead analytics and GA4 reporting
+   readiness without loading visitor GA scripts.
+8. The owner panel can reorder/hide sections, edit content/brand/theme data, and
    publish local draft state to live state in the browser.
-7. In the insurer section Content tab, the owner can edit relationship proof
+9. In the insurer section Content tab, the owner can edit relationship proof
    cards as structured card content.
-8. Closing the control panel does not log out; it leaves a compact owner bar so
+10. Closing the control panel does not log out; it leaves a compact owner bar so
    the admin can reopen `Panel`, switch to `Edit text`, return to `Main`, or
    `Log out`.
 
 ## Do Not Break
 
 - Keep `/admin` as the post-login launcher.
-- Keep unauthenticated `/admin`, `/#admin`, `/#edit`, and `/#preview` gated.
+- Keep unauthenticated `/admin`, `/admin/analytics`, `/#admin`, `/#edit`, and
+  `/#preview` gated.
 - Keep the Google Sans family font policy active across visitor and admin
   surfaces. Body/UI/form text should stay on Google Sans/Google Sans Thai;
   headings/logo text can keep the display face only where it harmonizes.
@@ -257,6 +276,9 @@ but is not currently present as a loose repository file.
 - Keep `assets/ins/*` paths stable unless smoke tests and bundle references are
   updated together.
 - Keep the localStorage keys listed above stable unless a migration plan exists.
+- Keep public lead writes validated by Firestore Rules; do not make
+  `contactLeads/*` a free-form public write path.
+- Keep visitor GA off admin-only surfaces, including `/admin/analytics`.
 - Keep OIC licence link and licence copy intact unless the business owner
   supplies updated verified text.
 
@@ -265,6 +287,8 @@ but is not currently present as a loose repository file.
 | Change type | Minimum verification |
 | --- | --- |
 | HTML bundle route/auth/content changes | `npm run smoke`, plus targeted Playwright interaction for the changed flow. |
+| Source-authored admin pages | `npm run check:bundles`, `npm run smoke`, and desktop/mobile screenshot evidence. |
+| Firestore rules or lead data changes | Rules syntax/deploy planning, `npm run smoke`, and a scoped allow/deny review. |
 | Visual/font/responsive changes | `npm run smoke`, computed style or screenshot evidence, and desktop/mobile viewport checks. |
 | Insurer logo changes | `npm run smoke`, asset 4xx check, count expectation update if needed. |
 | Vercel/deploy changes | `vercel deploy --prod --yes`, then `COVERMATE_URL=https://covermate.vercel.app npm run smoke`. |
@@ -287,9 +311,10 @@ but is not currently present as a loose repository file.
 
 - Static bundle maintainability: current HTML files are large exported bundles.
   Future source extraction to ordinary components would make edits safer.
-- Auth/security: Firebase Auth and Firestore allowlist are active for admin
-  login, but CMS content persistence is still browser-local.
-- Persistence: draft/live/history state is local to each browser.
+- Auth/security: Firebase Auth, Firestore allowlist, CMS persistence, and lead
+  capture are active in code, but production requires deployed Firestore Rules.
+- Full GA traffic charts in `/admin/analytics` still need a server-side GA4 Data
+  API endpoint or scheduled export into Firestore.
 - Asset count: current insurer logo grid is 14 files while copy promises 26+;
   the latest reference supports that claim with relationship proof cards.
 - Contact details and legal/licence copy should be checked by the business owner
