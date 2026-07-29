@@ -113,6 +113,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function hydrateCoverMateContent() {
       if (!/^https?:$/.test(window.location.protocol)) return;
       const owner = ['#admin', '#edit', '#preview'].indexOf(window.location.hash) >= 0;
+      if (owner) {
+        try {
+          const raw = window.localStorage.getItem('covermate-admin-session');
+          const session = raw ? JSON.parse(raw) : null;
+          if (!session || Number(session.exp || 0) <= Date.now()) {
+            window.location.replace('/admin/login');
+            return new Promise(() => {});
+          }
+        } catch (err) {
+          window.location.replace('/admin/login');
+          return new Promise(() => {});
+        }
+      }
       const timeoutMs = owner ? 9000 : 5000;
       let timeoutId = 0;
       const timeout = new Promise((resolve) => {
