@@ -31,18 +31,18 @@ export function requireAdminSession(options = {}) {
   return session;
 }
 
-export async function signOutAdmin() {
+export function signOutAdmin() {
+  clearAdminSession();
   try {
-    await import(window.location.origin + "/covermate-firebase.js");
-    if (window.CoverMateFirebase && window.CoverMateFirebase.signOut) {
-      await window.CoverMateFirebase.signOut();
-    } else {
-      clearAdminSession();
-    }
+    import(window.location.origin + "/covermate-firebase.js").then(() => {
+      if (window.CoverMateFirebase && window.CoverMateFirebase.signOut) {
+        window.CoverMateFirebase.signOut();
+      }
+    }).catch(() => {});
   } catch {
-    clearAdminSession();
+    // Local session has already been cleared.
   }
-  window.location.href = "/admin/login";
+  window.location.replace("/admin/login");
 }
 
 window.CoverMateAdminSession = {

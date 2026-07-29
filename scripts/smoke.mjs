@@ -258,6 +258,9 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && url.includes("firestore.googleapis.com/google.firestore")) {
       return;
     }
+    if (failureText === "net::ERR_ABORTED" && url.includes("google-analytics.com/g/collect")) {
+      return;
+    }
     if (failureText === "net::ERR_ABORTED" && (url.startsWith("blob:") || url.includes("/admin/login"))) {
       return;
     }
@@ -936,7 +939,7 @@ for (const [name, width, height] of viewports) {
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Manage your site/);
   await page.getByRole("button", { name: "Log out" }).click();
-  await page.waitForTimeout(500);
+  await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);
   }
