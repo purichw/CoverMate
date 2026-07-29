@@ -7,8 +7,8 @@ Current state: this repo is a Vercel-hosted static export. The UI is built from
 Claude Design `.dc.html` bundles, with small production patches applied in the
 wrapper and embedded bundle strings. There is no backend API in this repo.
 Firebase Auth, Firestore CMS persistence, lead capture, and Admin Analytics are
-implemented locally and still require explicit owner approval before commit,
-push, deploy, or Firestore Rules deployment.
+implemented and deployed. Future commit, push, Vercel deploy, or Firestore Rules
+deploy actions still require explicit owner approval in the current task.
 
 ## How To Run / Verify
 
@@ -311,8 +311,9 @@ but is not currently present as a loose repository file.
 
 - Static bundle maintainability: current HTML files are large exported bundles.
   Future source extraction to ordinary components would make edits safer.
-- Auth/security: Firebase Auth, Firestore allowlist, CMS persistence, and lead
-  capture are active in code, but production requires deployed Firestore Rules.
+- Auth/security: Firebase Auth, Firestore allowlist, CMS persistence, lead
+  capture, and Firestore Rules are active in production. Redeploy Firestore
+  Rules deliberately whenever `firestore.rules` changes.
 - Full GA traffic charts in `/admin/analytics` still need a server-side GA4 Data
   API endpoint or scheduled export into Firestore.
 - Asset count: current insurer logo grid is 14 files while copy promises 26+;

@@ -24,6 +24,14 @@ Local workspace state can still be ahead of production between edits. Treat
 Vercel is deployed, Firestore Rules are deployed when rules changed, and
 production smoke passes.
 
+Last verified production release:
+
+- Date: 2026-07-29
+- Production alias: `https://covermate.vercel.app`
+- Firestore Rules: deployed to Firebase project `covermate-purich`
+- Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
+  passed
+
 ## Recent Important Fixes
 
 The exported bundler placeholder is hidden on first paint so users do not see an
