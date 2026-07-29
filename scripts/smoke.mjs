@@ -279,6 +279,7 @@ for (const [name, width, height] of viewports) {
   for (const [route, selector] of routes) {
     const url = new URL(route, baseUrl).toString();
     await page.goto(url, { waitUntil: "commit", timeout: 30000 });
+    await page.waitForFunction(() => Boolean(document.body), null, { timeout: 10000 });
     const firstPaintState = await page.evaluate(() => {
       const isVisible = (el) => {
         if (!el) return false;
