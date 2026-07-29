@@ -94,15 +94,31 @@ document.addEventListener('DOMContentLoaded', async function() {
     let template = JSON.parse(templateEl.textContent);
     async function hydrateCoverMateContent() {
       if (!/^https?:$/.test(window.location.protocol)) return;
-      try {
+      const timeoutMs = 5000;
+      let timeoutId = 0;
+      const timeout = new Promise((resolve) => {
+        timeoutId = window.setTimeout(() => resolve({ timedOut: true }), timeoutMs);
+      });
+      const remote = (async () => {
         setStatus('Loading latest content...');
         await import(window.location.origin + '/covermate-firebase.js');
         if (window.CoverMateFirebase && window.CoverMateFirebase.hydrateLocalContent) {
-          await window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
+          return window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
+        }
+        return null;
+      })();
+      try {
+        const result = await Promise.race([remote, timeout]);
+        if (result && result.timedOut) {
+          window.__covermateRemoteContent = { source: 'timeout', timeoutMs };
+          remote.catch(() => {});
+          console.warn('[covermate] Remote content still loading; rendering local fallback cache.');
         }
       } catch (err) {
         window.__covermateRemoteContent = { source: 'fallback', error: err && err.message ? err.message : String(err) };
         console.warn('[covermate] Remote content unavailable; using local fallback cache.', err);
+      } finally {
+        if (timeoutId) window.clearTimeout(timeoutId);
       }
     }
     await hydrateCoverMateContent();
