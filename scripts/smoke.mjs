@@ -121,7 +121,8 @@ async function verifyRemoteHydrationContract() {
     window.localStorage.setItem("purich-live-config-v3", JSON.stringify(config));
     window.localStorage.setItem("purich-live-text-v3", JSON.stringify({}));
   }, { config: staleConfig });
-  await publicPage.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await publicPage.goto(new URL("/", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await publicPage.waitForFunction(() => Boolean(document.body), null, { timeout: 10000 });
   await waitForBodyText(publicPage, new RegExp(remoteName));
   const publicState = await publicPage.evaluate(() => ({
     text: document.body.innerText,
@@ -174,7 +175,8 @@ async function verifyRemoteHydrationContract() {
       })
     );
   });
-  await ownerPage.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await ownerPage.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await ownerPage.waitForFunction(() => Boolean(document.body), null, { timeout: 10000 });
   await waitForBodyText(ownerPage, /Admin portal/);
   const ownerState = await ownerPage.evaluate(() => ({
     text: document.body.innerText,
