@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Routes
 
@@ -41,12 +41,18 @@ Expected visible sections:
 | Hero | Main offer, audience fit, and primary contact CTA. |
 | Trust bar | Fast credibility markers such as licensed broker, AIA care, LINE support, and insurer count. |
 | Coverage/products | Insurance categories and protection options. |
+| Policy review | Explains the free policy review offer and what visitors can send in. |
 | Fit/calculator | Helps visitors estimate or choose suitable coverage. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
 | Motor insurers | Shows insurer-logo animation, AIA/Srikrung proof cards, and broker/license proof. |
-| Testimonials | Customer proof and reassurance. |
+| Claim help | Explains accident/claim assistance and emergency support expectations. |
+| Renewal reminders | Lets visitors request renewal reminders without replacing the consultation form. |
+| Guides | Educational checklist cards for policy review, comparison, and claim readiness. |
+| Claim stories | Customer proof focused on realistic claim/support scenarios. |
 | About/license | Brand, owner/broker role, language support, and OIC verification. |
 | FAQ | Answers common objections. |
+| Fee transparency | Explains broker compensation and how recommendations should stay aligned with visitor needs. |
+| Privacy/PDPA | Explains what happens to submitted information and what is not sent to Analytics. |
 | Contact/footer | LINE, phone, email, location, form, and legal copy. |
 
 ## Admin Sections
@@ -61,8 +67,8 @@ Expected visible sections:
 
 ## Navigation Contracts
 
-Visitor navigation should move through coverage, motor, calculator, steps, FAQ,
-and contact sections.
+Visitor navigation should move through coverage, motor, claim help, calculator,
+steps, FAQ, and contact entry points.
 
 `/#motor` currently keeps the same global navigation as `/` and re-aims to
 `#insurers` after hydration. The older focused motor variant is preserved in

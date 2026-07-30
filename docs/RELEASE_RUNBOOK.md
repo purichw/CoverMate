@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Production
 
@@ -67,11 +67,16 @@ Minimum checks:
   surfaces
 - insurer logos render
 - insurer relationship proof cards render
+- policy review, claim help, renewal reminders, guides, fee transparency, and
+  privacy/PDPA sections render when present in the live schema
 - contact form enquiry-type and coverage selects render
+- renewal reminder form renders, validates required contact, and writes only
+  through the shared Firestore lead path
 - contact form lead-submit code is present and does not send personal contact
   details to GA event parameters
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
-  motor-variant nav, and lands on `#insurers` below the sticky header
+  motor-variant nav, includes the current `#claim` anchor, and lands on
+  `#insurers` below the sticky header
 - `/admin/login` loads
 - Firebase Auth login UI renders; real Google popup login is verified manually
   with an allowlisted admin account before production release
@@ -87,6 +92,8 @@ Minimum checks:
   not a clipped horizontal table
 - `/#admin` renders all admin tabs without clipping, including Content,
   Brand & chrome, Theme & data, and Versions
+- `/#admin` Content tab can edit structured card sets, including insurer
+  relationship cards, claim cards, and fee cards
 - `/#admin` close button hides the drawer and exposes an owner bar that can
   reopen `Panel`, enter `Edit text`, return to `Main`, or `Log out`
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header

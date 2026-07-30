@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Persistence Model
 
@@ -44,7 +44,7 @@ Implications:
 | `purich-scrub-copy-v2` | Public bundle | Copy-scrub/sanitization state used by the exported app. |
 | `purich-site-config-v7` | Public bundle | Site configuration namespace used by the exported app. |
 | `covermate-text-v7` | Public bundle | Legacy editable text namespace read during migration. |
-| `purich-struct-cards-v2` | Public bundle | Structural migration marker for insurer relationship cards and card fields. |
+| `purich-struct-cards-v3` | Public bundle | Structural migration marker for latest standalone-reference sections, insurer/claim/fee card fields, and read-time schema normalization. |
 
 `purich-history-v3` is capped by the exported bundle. The current reference keeps
 the latest 20 publish/restore snapshots.
@@ -77,7 +77,7 @@ storage keys.
 | `sites/covermate/states/live` | Public read; admin write. | Canonical published visitor CMS state. |
 | `sites/covermate/states/draft` | Admin read/write. | Canonical working draft state for owner modes. |
 | `sites/covermate/versions/{versionId}` | Admin read/write. | Canonical publish/restore history, newest first by `ts`. |
-| `contactLeads/{leadId}` | Validated public create; admin read/update/delete. | Canonical lead capture store for the public consultation form and Admin Analytics. |
+| `contactLeads/{leadId}` | Validated public create; admin read/update/delete. | Canonical lead capture store for the public consultation form, renewal reminder form, and Admin Analytics. |
 | `sites/covermate/analytics/{analyticsDoc}` | Admin read/write. | Reserved GA4/Data API summaries or scheduled analytics exports. |
 
 `covermate-firebase.js` owns Firestore hydration, draft save, publish, restore,
@@ -105,6 +105,13 @@ Public creates under `contactLeads/*` must match the rules-validated shape:
 Admin users may update status/read fields later, but public visitors may only
 create new validated leads.
 
+The main consultation form writes the visitor-entered name, contact, enquiry
+type, coverage area, details, and a derived summary. The renewal reminder form
+uses the same collection and validation shape; it requires only contact details,
+stores `qtype: "review"`, maps renewal kind to the nearest allowed `coverage`
+category, and keeps the selected renewal type/month in `topic` and `summary`.
+Neither form may send contact fields or freeform text to Google Analytics.
+
 ## Migration Rules
 
 Do not rename or remove a key without a migration.
@@ -113,9 +120,10 @@ When changing the schema stored under an existing key:
 
 1. Read the old value defensively.
 2. Validate the shape before use.
-3. Fill missing fields with defaults only for local fallback state.
-4. Never run local migrations over a successfully hydrated Firestore live
-   document.
+3. Normalize missing fields on read with defaults without overwriting existing
+   live or draft values.
+4. Never let local migrations or fallback caches override a successfully
+   hydrated Firestore live document.
 5. Keep a recovery path for malformed JSON.
 
 When adding a new key:

@@ -78,6 +78,15 @@ The visitor bundle has been reconciled with
 new contact form selects, insurer relationship proof cards, card editing in the
 admin content panel, and local structural migration key.
 
+The visitor bundle has also been reconciled with
+`/Users/point/Downloads/CoverMate Standalone (open this) (1).html`. The latest
+local bundle includes the expanded reference sections for policy review, claim
+help, renewal reminders, guides, fee transparency, and privacy/PDPA while
+preserving the production decisions for Firebase/Firestore, Admin Analytics, the
+three-card admin launcher, and the single-page `#motor` alias. This local work
+is ahead of the last verified production release until it is explicitly pushed
+and deployed.
+
 Admin login now uses Firebase Auth through `covermate-firebase.js` and checks
 Firestore `admins/{uid}` before creating `covermate-admin-session`.
 
@@ -96,6 +105,10 @@ Admin Analytics at `/admin/analytics` reads leads, renders KPI/trend/mix/recent
 lead views, and reserves GA4 traffic charts for a future secure Data API or
 Firestore export. Recent leads render as a desktop table and mobile labeled
 cards. The admin analytics page does not load visitor GA scripts.
+
+The renewal reminder form uses the same validated Firestore lead stream with
+`qtype: "review"` and no visitor contact/freeform values in GA event
+parameters.
 
 Security headers are configured in `vercel.json`; CSP is currently
 `Content-Security-Policy-Report-Only` because the exported bundle still depends

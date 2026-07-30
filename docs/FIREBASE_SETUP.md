@@ -1,6 +1,6 @@
 # CoverMate Firebase Setup
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Project
 
@@ -128,7 +128,7 @@ override live remote content.
 
 ## Lead Capture
 
-The public consultation form writes to:
+The public consultation form and renewal reminder form write to:
 
 ```text
 contactLeads/<auto-id>
@@ -137,6 +137,11 @@ contactLeads/<auto-id>
 Public creates are allowed only when the submitted document matches the field
 allowlist, length caps, enum values, `status: "new"`, `read: false`, and
 Firestore server timestamp checks in `firestore.rules`.
+
+The consultation form writes visitor name, contact, enquiry type, coverage, and
+details. The renewal reminder form uses the same validated collection with
+`qtype: "review"` and stores the selected insurance type/month in generated
+topic and summary fields.
 
 Admin users can read, update, or delete leads. `/admin/analytics` currently uses
 `CoverMateFirebase.loadContactLeads()` to render the latest lead analytics.

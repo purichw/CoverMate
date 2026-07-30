@@ -1,16 +1,18 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Visitor Journey
 
 1. Visitor lands on `/` or `/#motor`.
-2. Visitor scans the offer, credibility bar, coverage choices, calculator,
-   process, insurer proof, testimonials, about/license copy, FAQ, and contact
-   area.
-3. Visitor starts contact through LINE, phone, email, or the lead form.
-4. Consultation requests submitted through the form are saved to Firestore
-   `contactLeads/*`; LINE, phone, and email CTAs still hand off directly.
+2. Visitor scans the offer, credibility bar, coverage choices, policy-review
+   offer, calculator, process, insurer proof, claim help, renewal reminders,
+   guides, claim stories, about/license copy, FAQ, fee transparency,
+   privacy/PDPA copy, and contact area.
+3. Visitor starts contact through LINE, phone, email, the consultation lead
+   form, or the renewal reminder form.
+4. Public forms save validated Firestore `contactLeads/*` documents; LINE,
+   phone, and email CTAs still hand off directly.
 
 `/#motor` is currently an alias into the main visitor site, not a separate page
 variant. It keeps the same global navbar as `/` and re-aims to the `#insurers`
@@ -20,11 +22,11 @@ stay hidden until a deliberate `/motor` or campaign route is approved.
 
 ## Lead Form Contract
 
-The current form saves validated lead documents to Firestore through
+The current public forms save validated lead documents to Firestore through
 `CoverMateFirebase.submitContactLead()`. Public writes are limited by
 `firestore.rules`; admin users can read leads in `/admin/analytics`.
 
-The current form asks for:
+The main consultation form asks for:
 
 - name
 - LINE ID or phone
@@ -33,6 +35,16 @@ The current form asks for:
 - freeform details
 
 The submitted summary should include enquiry type and coverage when selected.
+
+The renewal reminder form asks for:
+
+- insurance type
+- renewal month
+- LINE ID or phone
+
+It writes the same rules-validated `contactLeads/*` shape, with `qtype:
+"review"` and a generated topic/summary. The reminder form must not bypass the
+shared validation path or send contact details to GA.
 
 ## Admin Login Flow
 
@@ -104,8 +116,10 @@ fields.
 9. The drawer action bar keeps direct access to text-edit mode and `Main` so
    owners do not need to bounce through the launcher for common switching.
 
-For the insurer section, the Content tab also exposes relationship card editing
-for AIA and Srikrung Broker proof cards.
+For sections that use structured cards, the Content tab exposes card editing
+instead of relying on hard-coded copy. Current editable card sets include the
+insurer relationship proof cards, claim hotline/support cards, and fee
+transparency cards.
 
 ## Admin Analytics Flow
 

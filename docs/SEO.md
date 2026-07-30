@@ -1,6 +1,6 @@
 # CoverMate SEO Contract
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Canonical Indexing
 
@@ -63,10 +63,10 @@ limited to facts represented by the public page:
 - `WebPage`
 - `Service`
 
-Do not add FAQ, review, rating, price, address, phone, or email structured data
-unless the same information is accurate, visible on the public page, and not a
-placeholder. The runtime intentionally omits placeholder phone/email values such
-as `08X-XXX-XXXX` and `purich@example.com`.
+Do not add FAQ, review, rating, price, address, phone, email, fee, or claim
+structured data unless the same information is accurate, visible on the public
+page, and not a placeholder. The runtime intentionally omits placeholder
+phone/email values such as `08X-XXX-XXXX` and `purich@example.com`.
 
 ## Social Assets
 
@@ -103,6 +103,9 @@ The smoke harness verifies:
 - Open Graph, Twitter, and JSON-LD metadata exist and parse;
 - remote Firestore live content updates SEO metadata instead of stale local
   cache winning.
+- the expanded public section set, including claim help, renewal reminders, fee
+  transparency, and privacy/PDPA, renders without creating separate indexable
+  hash URLs.
 - `covermate-analytics.js` loads as a public static asset; Analytics itself is
   production-only and must not be added to admin-only HTML surfaces.
 - `/admin/analytics` is `noindex,nofollow`, is not in `sitemap.xml`, and does

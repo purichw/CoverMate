@@ -1,6 +1,6 @@
 # CoverMate Analytics
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Surfaces
 
@@ -38,9 +38,9 @@ Implemented visitor events:
 | `email_click` | Visitor clicks a `mailto:` link | `link_type` |
 | `language_change` | Visitor taps `TH` or `EN` | `language` |
 | `calculator_interaction` | Visitor moves calculator range controls | `control_type` |
-| `form_start` | First visitor input in the consultation form | `form_type` |
+| `form_start` | First visitor input in a public lead form | `form_type` |
 | `quote_submit` | Form submit attempt | `form_type` |
-| `quote_submit_success` | Firestore lead save succeeds | `form_type`, `enquiry_type`, `coverage` |
+| `quote_submit_success` | Firestore lead save succeeds from the consultation or renewal reminder form | `form_type`, `enquiry_type`, `coverage` |
 | `quote_submit_error` | Firestore lead save fails | `form_type` |
 
 The success event intentionally uses category fields only. Do not add contact
@@ -48,7 +48,8 @@ details or freeform text to GA event parameters.
 
 ## Firestore Lead Analytics
 
-The public form writes validated lead documents to:
+The public consultation form and renewal reminder form write validated lead
+documents to:
 
 ```text
 contactLeads/<auto-id>
@@ -75,7 +76,9 @@ Current lead fields:
 | `updatedAt` | timestamp | Must equal Firestore `request.time`. |
 
 Security Rules validate this shape for public creates. Admin users may read,
-update, or delete leads.
+update, or delete leads. Renewal reminders are intentionally stored in this same
+operational lead stream with `qtype: "review"` so Admin Analytics and owner
+follow-up can stay unified.
 
 ## Dashboard Charts
 

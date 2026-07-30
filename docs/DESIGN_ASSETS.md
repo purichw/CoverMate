@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Visual Source
 
@@ -13,6 +13,9 @@ The current implementation reconciles these supplied references:
 - `/Users/point/Downloads/export/Admin Login.dc.html`
 - `/Users/point/Downloads/export/admin.dc.html`
 - `/Users/point/Downloads/Purich Insurance Site (standalone).html`
+- `/Users/point/Downloads/CoverMate Standalone (open this) (1).html`
+- `/Users/point/Downloads/SPEC (2).md`
+- `/Users/point/Downloads/SPEC (3).md`
 - screenshots supplied in the Codex thread
 - `/Users/point/Downloads/assets/`
 
@@ -156,8 +159,16 @@ For visual changes, capture at least:
 
 - desktop visitor site
 - mobile visitor site
+- visitor motor/insurer section
+- visitor claim, renewal, fee, and privacy/PDPA sections when those areas
+  change
 - admin login
 - admin launcher
 - admin control panel
+- admin inline edit mode
+- admin analytics
 
 Use snapshots or contact sheets when comparing against supplied references.
+Generated Claude-reference extraction/audit artifacts may live locally under
+`.claude-reference/`; that directory is ignored so heavy screenshot evidence
+does not get committed accidentally.

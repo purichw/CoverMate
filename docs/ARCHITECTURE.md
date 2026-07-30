@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Current Shape
 
@@ -8,6 +8,12 @@ CoverMate is a Vercel-hosted static export. The visitor site and owner/admin
 tools are bundled into HTML files generated from Claude Design `.dc.html`
 references, with small production patches applied in the wrapper and embedded
 bundle strings.
+
+The current visitor bundle has been reconciled against
+`/Users/point/Downloads/CoverMate Standalone (open this) (1).html` while
+preserving production product decisions that intentionally differ from that
+offline demo, including Firebase Auth/Firestore, Admin Analytics, and the
+single-page `#motor` anchor alias.
 
 There is no backend API in this repo. Admin identity is backed by Firebase Auth
 plus Firestore `admins/{uid}` allowlist checks, and CMS content is
@@ -114,6 +120,12 @@ defaults are cold-start fallback only. Admin sign-in is Firebase backed, but
 `/admin` and owner hash modes also consume the approved
 `covermate-admin-session` cache for fast static routing. See
 [DATA_CONTRACT.md](DATA_CONTRACT.md) for the full contract.
+
+Runtime config is normalized after Firestore/local reads to fill newly added
+sections and fields that older live documents do not yet contain. This
+normalization is additive only: it fills missing structure, preserves existing
+live/draft values, and must not replace admin-edited remote content with bundled
+fallback copy.
 
 After the embedded app reads hydrated live content, it syncs SEO title,
 description, Open Graph/Twitter tags, canonical URL, robots meta, `html[lang]`,

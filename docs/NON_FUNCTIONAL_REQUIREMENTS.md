@@ -1,6 +1,6 @@
 # CoverMate Non-Functional Requirements
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Security
 
@@ -28,6 +28,8 @@ Implemented:
 - Lead contact details are stored in Firestore, not Google Analytics.
 - GA events use only outcome/category parameters.
 - Admin Analytics does not load the visitor analytics script.
+- The public privacy/PDPA section explains the current handling of submitted
+  information at a page-content level.
 
 Before paid traffic:
 
@@ -77,6 +79,8 @@ Release checks should keep covering:
 Implemented:
 
 - Firestore live content wins over stale local cache after successful hydration.
+- Runtime schema normalization fills only missing fields/sections from defaults
+  and must preserve existing live/draft values.
 - Draft/live/version writes keep local fallback caches updated only after remote
   success or as fallback.
 - Publish creates version history.

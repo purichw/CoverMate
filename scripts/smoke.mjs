@@ -260,6 +260,9 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && url.includes("firestore.googleapis.com/google.firestore")) {
       return;
     }
+    if (failureText === "net::ERR_ABORTED" && url.includes("www.gstatic.com/firebasejs/")) {
+      return;
+    }
     if (failureText === "net::ERR_ABORTED" && url.includes("google-analytics.com/g/collect")) {
       return;
     }
@@ -344,7 +347,7 @@ for (const [name, width, height] of viewports) {
           insurersScrollMarginTop: insurers ? window.getComputedStyle(insurers).scrollMarginTop : ""
         };
       });
-      const expectedMainNav = ["#cover", "#insurers", "#fit", "#how", "#faq"];
+      const expectedMainNav = ["#cover", "#insurers", "#claim", "#fit", "#how", "#faq"];
       const missingMainNav = expectedMainNav.filter((href) => !motorAliasState.navHrefs.includes(href));
       if (missingMainNav.length) {
         failures.push(`${name} ${route}: #motor should keep main nav, missing ${missingMainNav.join(", ")}`);
@@ -535,6 +538,18 @@ for (const [name, width, height] of viewports) {
     }
     if ((route === "/" || route === "/#motor") && !state.hasCoverageSelect) {
       failures.push(`${name} ${route}: contact form is missing coverage select options`);
+    }
+    if ((route === "/" || route === "/#motor") && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
+      failures.push(`${name} ${route}: claim help section is missing`);
+    }
+    if ((route === "/" || route === "/#motor") && !/ไม่ต้องจำวันหมดอายุ|renewal dates/i.test(state.bodyText)) {
+      failures.push(`${name} ${route}: renewal reminder section is missing`);
+    }
+    if ((route === "/" || route === "/#motor") && !/ผมได้ค่าตอบแทน|commission comes from/i.test(state.bodyText)) {
+      failures.push(`${name} ${route}: fee transparency section is missing`);
+    }
+    if ((route === "/" || route === "/#motor") && !/ข้อมูลที่คุณส่งมา|What happens to/i.test(state.bodyText)) {
+      failures.push(`${name} ${route}: privacy / PDPA section is missing`);
     }
     const brokenLogo = state.logos.find((logo) => !logo.complete || !logo.naturalWidth);
     if (brokenLogo) failures.push(`${name} ${route}: broken logo ${brokenLogo.src}`);

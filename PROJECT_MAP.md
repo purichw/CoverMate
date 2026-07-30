@@ -30,11 +30,12 @@ explicitly reopens the product decision.
 - GitHub remote: `https://github.com/purichw/CoverMate.git`
 
 `scripts/smoke.mjs` covers desktop/tablet/mobile routes, first-paint placeholder
-cloaking, insurer logos, horizontal overflow, unauthenticated admin redirects,
-Firebase login UI rendering, authenticated admin launcher rendering, private
-analytics rendering, `/#admin` tab visibility/content, admin drawer close/reopen
-behavior, `/#edit` editable-mode rendering, edit-mode exit cleanup, SEO
-metadata/structured-data contracts, and `Log out` redirects.
+cloaking, insurer logos, expanded public sections, horizontal overflow,
+unauthenticated admin redirects, Firebase login UI rendering, authenticated
+admin launcher rendering, private analytics rendering, `/#admin` tab
+visibility/content, admin drawer close/reopen behavior, `/#edit` editable-mode
+rendering, edit-mode exit cleanup, SEO metadata/structured-data contracts, and
+`Log out` redirects.
 
 ## Document Set
 
@@ -128,7 +129,7 @@ part of the product contract and must not be renamed without a migration:
 - `purich-scrub-copy-v2`
 - `purich-site-config-v7`
 - `covermate-text-v7`
-- `purich-struct-cards-v2`
+- `purich-struct-cards-v3`
 
 Important behavior:
 
@@ -157,6 +158,8 @@ Historical inputs used to create the current surfaces:
 
 - Visitor/admin standalone reference:
   `/Users/point/Downloads/Purich Insurance Site (standalone).html`
+- Latest visitor/admin standalone reference:
+  `/Users/point/Downloads/CoverMate Standalone (open this) (1).html`
 - Earlier visitor reference: `/Users/point/Downloads/Purich Insurance Site.dc.html`
 - Admin references: `/Users/point/Downloads/export/Admin Login.dc.html` and
   `/Users/point/Downloads/export/admin.dc.html`
@@ -164,7 +167,8 @@ Historical inputs used to create the current surfaces:
 - Insurer logos: `/Users/point/Downloads/assets/ins/`
 - Specs: `/Users/point/Downloads/SPEC.md`,
   `/Users/point/Downloads/SPEC (1).md`, and
-  `/Users/point/Downloads/SPEC (2).md`
+  `/Users/point/Downloads/SPEC (2).md`, and
+  `/Users/point/Downloads/SPEC (3).md`
 
 Production patches currently preserved in the bundles:
 
@@ -190,9 +194,9 @@ Production patches currently preserved in the bundles:
 - `covermate-responsive-touch-policy` raises mobile controls, form fields,
   owner-tool buttons, drawer controls, and nav/footer links to 44px-class touch
   targets without changing desktop density.
-- `/#motor` keeps the global visitor navigation (`#cover`, `#insurers`, `#fit`,
-  `#how`, `#faq`) and re-aims the hash to `#insurers` after hydration so the
-  sticky header does not cover the section title.
+- `/#motor` keeps the global visitor navigation (`#cover`, `#insurers`,
+  `#claim`, `#fit`, `#how`, `#faq`) and re-aims the hash to `#insurers` after
+  hydration so the sticky header does not cover the section title.
 
 ## Asset Map
 
@@ -228,15 +232,19 @@ but is not currently present as a loose repository file.
 ### Visitor
 
 1. Visitor lands on `/`.
-2. Navigation anchors move through coverage, motor, calculator, steps, FAQ, and
-   contact sections.
+2. Navigation anchors move through coverage, motor, claim help, calculator,
+   steps, FAQ, and contact entry points.
 3. Language toggle switches Thai/English copy.
 4. Insurer logos render in the motor/insurer section.
-5. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
-6. The lead form includes enquiry type and coverage selects before the freeform
-   detail field.
-7. Successful form submission writes a validated Firestore lead document and
-   fires only privacy-safe Analytics outcome/category events.
+5. Policy review, claim help, renewal reminder, guide, fee transparency, and
+   privacy/PDPA sections render as part of the single visitor page.
+6. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
+7. The consultation lead form includes enquiry type and coverage selects before
+   the freeform detail field.
+8. The renewal reminder form writes to the same validated lead path with
+   `qtype: "review"`.
+9. Successful public form submission writes a validated Firestore lead document
+   and fires only privacy-safe Analytics outcome/category events.
 
 ### Admin
 
@@ -250,9 +258,9 @@ but is not currently present as a loose repository file.
 7. `/admin/analytics` renders Firestore lead analytics and GA4 reporting
    readiness without loading visitor GA scripts.
 8. The owner panel can reorder/hide sections, edit content/brand/theme data, and
-   publish local draft state to live state in the browser.
-9. In the insurer section Content tab, the owner can edit relationship proof
-   cards as structured card content.
+   publish draft state to Firestore live state.
+9. In structured-card sections, the Content tab can edit insurer relationship
+   cards, claim cards, and fee transparency cards.
 10. Closing the control panel does not log out; it leaves a compact owner bar so
    the admin can reopen `Panel`, switch to `Edit text`, return to `Main`, or
    `Log out`.
