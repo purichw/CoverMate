@@ -27,7 +27,7 @@ production smoke passes.
 Last verified production release:
 
 - Date: 2026-07-30
-- Commit: `71eb8b3`
+- Commit: `7be3274`
 - Production alias: `https://covermate.vercel.app`
 - Firestore Rules: deployed to Firebase project `covermate-purich`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
@@ -35,7 +35,7 @@ Last verified production release:
 
 ## Product Decision Checkpoint
 
-As of commit `71eb8b3`, the current visitor site, admin login, admin launcher,
+As of commit `7be3274`, the current visitor site, admin login, admin launcher,
 owner editing modes, analytics page, Firebase/Firestore content flow, SEO
 layer, typography policy, responsive behavior, performance bundle trimming, and
 Vercel deployment shape are accepted product decisions for the current release.
@@ -83,9 +83,8 @@ The visitor bundle has also been reconciled with
 local bundle includes the expanded reference sections for policy review, claim
 help, renewal reminders, guides, fee transparency, and privacy/PDPA while
 preserving the production decisions for Firebase/Firestore, Admin Analytics, the
-three-card admin launcher, and the single-page `#motor` alias. This local work
-is ahead of the last verified production release until it is explicitly pushed
-and deployed.
+three-card admin launcher, and the single-page `#motor` alias. This reference
+reconciliation is included in production release `7be3274`.
 
 Admin login now uses Firebase Auth through `covermate-firebase.js` and checks
 Firestore `admins/{uid}` before creating `covermate-admin-session`.
