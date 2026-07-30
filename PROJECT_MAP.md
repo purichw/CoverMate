@@ -10,6 +10,12 @@ Firebase Auth, Firestore CMS persistence, lead capture, and Admin Analytics are
 implemented and deployed. Future commit, push, Vercel deploy, or Firestore Rules
 deploy actions still require explicit owner approval in the current task.
 
+Product decision checkpoint: as of production commit `71eb8b3`, the current
+visitor/admin surfaces, owner flows, Firestore-first CMS model, SEO/analytics
+boundaries, font policy, responsive behavior, and deployment shape are accepted
+product decisions. Future bugs should be fixed as defects unless the owner
+explicitly reopens the product decision.
+
 ## How To Run / Verify
 
 - Release guardrail: do not commit, push, or deploy until the user explicitly

@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Current State
 
@@ -26,11 +26,24 @@ production smoke passes.
 
 Last verified production release:
 
-- Date: 2026-07-29
+- Date: 2026-07-30
+- Commit: `71eb8b3`
 - Production alias: `https://covermate.vercel.app`
 - Firestore Rules: deployed to Firebase project `covermate-purich`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
   passed
+
+## Product Decision Checkpoint
+
+As of commit `71eb8b3`, the current visitor site, admin login, admin launcher,
+owner editing modes, analytics page, Firebase/Firestore content flow, SEO
+layer, typography policy, responsive behavior, performance bundle trimming, and
+Vercel deployment shape are accepted product decisions for the current release.
+
+Future bugs or regressions should be treated as defects or follow-up fixes. They
+do not automatically reopen the approved product decisions unless the product
+owner explicitly asks to change the behavior, IA, visual direction, copy policy,
+data contract, or release contract.
 
 ## Recent Important Fixes
 
