@@ -173,9 +173,9 @@ Historical inputs used to create the current surfaces:
 Production patches currently preserved in the bundles:
 
 - `covermate-thai-font-policy` is the historical policy hook for the current
-  Google Sans family stack. Body text, controls, forms, and admin tools use
-  Google Sans/Google Sans Thai for both Thai and English; display headings/logo
-  text may use the project display face when it remains visually aligned.
+  Google Sans family stack. Visitor text, headings, logo text, controls, forms,
+  admin tools, analytics, and English/Thai copy all use Google Sans first, then
+  Google Sans Thai/Noto Sans Thai fallbacks.
 - Visible Admin chrome/action labels are English-only to avoid mixed-language
   owner controls. Keep labels such as `Panel`, `Edit text`, `Main`, `Done`,
   `Save draft`, `Preview`, `Publish`, `Success`, and `Log out` stable unless the
@@ -271,8 +271,9 @@ but is not currently present as a loose repository file.
 - Keep unauthenticated `/admin`, `/admin/analytics`, `/#admin`, `/#edit`, and
   `/#preview` gated.
 - Keep the Google Sans family font policy active across visitor and admin
-  surfaces. Body/UI/form text should stay on Google Sans/Google Sans Thai;
-  headings/logo text can keep the display face only where it harmonizes.
+  surfaces. Headings, logo text, body, UI controls, forms, admin tools, and
+  English/Thai copy should stay on Google Sans first, with Google Sans Thai and
+  Noto Sans Thai as script fallbacks.
 - Keep the first-paint cloak for `#__bundler_thumbnail`, `#__bundler_loading`,
   and raw `<x-dc>` template content active on visitor and admin pages.
 - Keep a reachable admin return path after closing the `/#admin` drawer.

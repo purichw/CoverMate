@@ -37,8 +37,8 @@
       --shadow: 0 12px 32px color-mix(in srgb, #2e2b25 14%, transparent);
       --radius: 24px;
       --wrap: 1180px;
-      --font-body: "Google Sans Thai", "Google Sans", "Noto Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-display: "Caprasimo", "Google Sans Thai", "Google Sans", "Noto Sans Thai", sans-serif;
+      --font-body: "Google Sans", "Google Sans Thai", "Noto Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: "Google Sans", "Google Sans Thai", "Noto Sans Thai", ui-sans-serif, system-ui, sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -62,7 +62,7 @@
     }
 
     a { color: inherit; }
-    button, input, select { font: inherit; }
+    button, input, select, code, kbd, pre, samp { font: inherit; }
     :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 72%, white); outline-offset: 3px; }
 
     .shell {
@@ -97,6 +97,7 @@
       color: #3d472b;
       font-family: var(--font-display);
       font-size: 23px;
+      font-weight: 700;
       line-height: 1;
       padding-bottom: 2px;
       flex: none;
@@ -112,7 +113,7 @@
     .brand-name strong {
       font-family: var(--font-display);
       font-size: clamp(20px, 3vw, 25px);
-      font-weight: 400;
+      font-weight: 700;
       white-space: nowrap;
     }
 
@@ -166,7 +167,7 @@
       font-family: var(--font-display);
       font-size: clamp(40px, 7vw, 72px);
       line-height: .98;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0;
       text-wrap: balance;
     }

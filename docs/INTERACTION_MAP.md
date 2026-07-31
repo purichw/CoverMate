@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 ## Visitor Journey
 
@@ -146,10 +146,10 @@ transparency cards.
 
 ## Language And Font Behavior
 
-Body text, UI controls, forms, and admin tools must render with the Google Sans
-family on both Thai and English surfaces. The stack is Google Sans, Google Sans
-Thai, then system fallbacks. Headings and logo text may keep the display face
-where it still harmonizes with the Google Sans body system.
+All visible visitor and admin text must render with the Google Sans family on
+both Thai and English surfaces. The stack is Google Sans, Google Sans Thai, Noto
+Sans Thai, then system fallbacks. This includes headings, logo text, body copy,
+buttons, form controls, admin chrome, analytics, and inline-edit affordances.
 
 The current bundles include a `covermate-thai-font-policy` patch for this.
 

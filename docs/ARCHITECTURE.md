@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 ## Current Shape
 
@@ -210,9 +210,9 @@ owner toolbar.
 Do not reduce mobile controls below 44px-class touch targets.
 
 Do not remove the Google Sans family font policy from any visitor or admin
-surface. Body/UI/form text should stay on Google Sans/Google Sans Thai in both
-Thai and English; headings/logo text may use the display face only when it stays
-visually aligned with that stack.
+surface. Headings, logo text, body/UI/form text, admin tools, analytics, and
+English/Thai copy should stay on Google Sans first, with Google Sans Thai and
+Noto Sans Thai as script fallbacks.
 
 Do not edit JSON inside `<script type="__bundler/template">` without keeping the
 embedded JSON valid.

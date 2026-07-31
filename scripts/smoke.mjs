@@ -330,20 +330,24 @@ for (const [name, width, height] of viewports) {
         const insurers = document.getElementById("insurers");
         const headerRect = header ? header.getBoundingClientRect() : null;
         const insurersRect = insurers ? insurers.getBoundingClientRect() : null;
-        const navHrefs = Array.from(document.querySelectorAll("header nav a[href]"))
-          .map((anchor) => anchor.getAttribute("href"))
-          .filter(Boolean);
-        const navText = Array.from(document.querySelectorAll("header nav a[href]"))
-          .map((anchor) => (anchor.textContent || "").trim())
-          .filter(Boolean)
-          .join(" | ");
-        return {
-          navHrefs,
-          navText,
-          bodyText: document.body.innerText,
-          headerBottom: headerRect ? headerRect.bottom : 0,
-          insurersTop: insurersRect ? insurersRect.top : null,
-          viewportHeight: window.innerHeight,
+      const navHrefs = Array.from(document.querySelectorAll("header nav a[href]"))
+        .map((anchor) => anchor.getAttribute("href"))
+        .filter(Boolean);
+      const navText = Array.from(document.querySelectorAll("header nav a[href]"))
+        .map((anchor) => (anchor.textContent || "").trim())
+        .filter(Boolean)
+        .join(" | ");
+      const navLabels = Array.from(document.querySelectorAll("header nav a[href]"))
+        .map((anchor) => (anchor.textContent || "").trim())
+        .filter(Boolean);
+      return {
+        navHrefs,
+        navText,
+        navLabels,
+        bodyText: document.body.innerText,
+        headerBottom: headerRect ? headerRect.bottom : 0,
+        insurersTop: insurersRect ? insurersRect.top : null,
+        viewportHeight: window.innerHeight,
           insurersScrollMarginTop: insurers ? window.getComputedStyle(insurers).scrollMarginTop : ""
         };
       });
@@ -354,6 +358,12 @@ for (const [name, width, height] of viewports) {
       }
       if (motorAliasState.navHrefs.includes("#motor-cover")) {
         failures.push(`${name} ${route}: #motor exposed hidden motor-variant nav`);
+      }
+      const duplicateNavLabels = motorAliasState.navLabels.filter(
+        (label, index, labels) => labels.indexOf(label) !== index
+      );
+      if (duplicateNavLabels.length) {
+        failures.push(`${name} ${route}: duplicate header nav labels ${duplicateNavLabels.join(", ")}`);
       }
       if (/เบี้ยรถคันเดิม|One car, every insurer compared/.test(motorAliasState.bodyText)) {
         failures.push(`${name} ${route}: hidden motor landing variant rendered`);
@@ -410,6 +420,9 @@ for (const [name, width, height] of viewports) {
       const navHrefs = Array.from(document.querySelectorAll("header a[href], nav a[href]"))
         .map((anchor) => anchor.getAttribute("href"))
         .filter(Boolean);
+      const headerNavLabels = Array.from(document.querySelectorAll("header nav a[href]"))
+        .map((anchor) => (anchor.textContent || "").trim())
+        .filter(Boolean);
       const missingAnchors = navHrefs.filter(
         (href) => href.startsWith("#") && !document.getElementById(href.slice(1))
       );
@@ -454,6 +467,9 @@ for (const [name, width, height] of viewports) {
         ),
         hasRelationshipProof: /AIA|Srikrung|ศรีกรุง/i.test(insurerText),
         missingAnchors,
+        duplicateHeaderNavLabels: headerNavLabels.filter(
+          (label, index, labels) => labels.indexOf(label) !== index
+        ),
         splashVisible,
         seo: {
           htmlLang: document.documentElement.lang,
@@ -526,6 +542,11 @@ for (const [name, width, height] of viewports) {
     }
     if (route === "/#motor" && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
+    }
+    if ((route === "/" || route === "/#motor") && state.duplicateHeaderNavLabels.length) {
+      failures.push(
+        `${name} ${route}: duplicate header nav labels ${state.duplicateHeaderNavLabels.join(", ")}`
+      );
     }
     if ((route === "/" || route === "/#motor") && state.logos.length < 14) {
       failures.push(`${name} ${route}: expected at least 14 visible insurer logos, got ${state.logos.length}`);

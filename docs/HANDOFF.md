@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 ## Current State
 
@@ -63,9 +63,9 @@ The `/#edit` mode now has its own owner toolbar with `Panel`, `Main`, `Done`,
 and `Log out` actions. The done action removes `contenteditable` state
 before returning to the public page.
 
-Body/UI/form text across visitor and admin surfaces uses the Google Sans family
-for Thai and English. Display headings/logo text may keep the project display
-face where it still harmonizes.
+All visible visitor and admin text uses the Google Sans family for Thai and
+English, including headings, logo text, controls, forms, owner tools, and
+analytics.
 
 Visible Admin chrome/action labels are intentionally English-only: `Panel`,
 `Edit text`, `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and

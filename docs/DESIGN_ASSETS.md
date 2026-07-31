@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 ## Visual Source
 
@@ -36,8 +36,8 @@ or decorative illustration-first landing page.
 
 ## Font Policy
 
-Body text, UI controls, forms, and admin tools must use the Google Sans family
-across both Thai and English versions.
+All visible website text must use the Google Sans family across both Thai and
+English versions.
 
 Admin chrome/action labels are intentionally English-only so owner controls do
 not mix Thai and English. Keep labels like `Main`, `Publish`, `Success`, and
@@ -55,16 +55,15 @@ This includes:
 - form fields, buttons, tabs, footers, and legal text
 
 The current stack is Google Sans, Google Sans Thai, Noto Sans Thai, then system
-fallbacks. Headings/logo text may use the project display face where it remains
-harmonious with the body system; do not let display typography leak into dense
-admin controls or form text.
+fallbacks. Headings, logo text, admin controls, analytics charts, form text,
+footer/legal copy, and English UI labels should all stay on that same family.
 
 The current HTML bundles include a historical `covermate-thai-font-policy`
 patch. Keep it unless replacing it with equivalent source-level CSS coverage.
 
 `/admin/analytics` is source-authored rather than exported from Claude Design.
 It keeps the CoverMate warm organic palette, rounded owner-tool language,
-Google Sans body stack, display heading treatment, 44px-class controls, and
+Google Sans type stack, 44px-class controls, and
 responsive admin dashboard density. Its charts should remain quiet
 operator-facing data views, not decorative fake metrics.
 
