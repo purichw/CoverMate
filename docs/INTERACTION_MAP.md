@@ -70,7 +70,7 @@ Launcher actions:
 - Start editing text -> `/#edit`
 - Open control panel -> `/#admin`
 - Open analytics -> `/admin/analytics`
-- View public site -> `/`
+- View public site -> `/?view=public`
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
@@ -78,19 +78,25 @@ Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
 stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
+The public-site link intentionally carries a short-lived `view=public` flag so
+the visitor page opens without the owner-reopen bar, then cleans the URL back to
+`/`.
 
 ## Inline Editing Flow
 
 1. Owner opens `/#edit`.
 2. The public site loads with editable copy affordances.
 3. Owner edits headings, body copy, labels, and related text.
-4. Text values are saved to Firestore draft state, with localStorage updated as
+4. Owner can also activate editable image affordances for supported dynamic
+   image fields, currently the advisor proof logo stored as `brand.advisorLogo`.
+5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
-5. The edit toolbar lets the owner open the control panel, finish editing, or
+6. The edit toolbar lets the owner open the control panel, save draft, preview,
+   publish, finish editing, or
    log out.
-6. Finishing edit mode removes all `contenteditable` affordances and shows the
+7. Finishing edit mode removes all `contenteditable` and image-edit affordances and shows the
    compact owner bar for reopening admin tools.
-7. The edit toolbar also links back to `/admin` via `Main` when the
+8. The edit toolbar also links back to `/admin` via `Main` when the
    owner wants to choose between modes again.
 
 Thai and English copy are separate where the bundle supports separate language
@@ -108,9 +114,9 @@ fields.
    a version document. Public visitors hydrate the latest `states/live` before
    rendering.
 6. The drawer close button only closes the drawer. It does not sign out.
-7. After the drawer closes, the compact owner bar provides four recovery
-   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, or
-   `Log out`.
+7. After the drawer closes, the compact owner bar provides recovery and publish
+   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, `Save
+   draft`, `Preview`, `Publish`, or `Log out`.
 8. The action bar inside the drawer keeps editing/navigation/session actions
    separate from save, preview, and publish actions.
 9. The drawer action bar keeps direct access to text-edit mode and `Main` so

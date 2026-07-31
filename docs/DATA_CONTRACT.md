@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 ## Persistence Model
 
@@ -65,6 +65,29 @@ remote reads or successful remote writes.
 
 Public visitor rendering should not depend on the user already having admin
 storage keys.
+
+When an admin intentionally opens the live public site from private admin
+surfaces, links use `/?view=public`. The public bundle consumes that flag, cleans
+the URL back to `/`, and removes the owner-reopen marker
+`purich-admin-ever-v7` so admin chrome does not appear on the visitor view.
+
+## Editable Site Config Fields
+
+The embedded CMS owns the full nested config shape. Important dynamic brand
+fields include:
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `brand.initial` | string | Circular brand monogram in public/admin chrome. |
+| `brand.name.th/en` | string | Short display brand name. |
+| `brand.fullName.th/en` | string | Longer brand/advisor display name. |
+| `brand.role.th/en` | string | Role line under the brand. |
+| `brand.credential.th/en` | string | Advisor credential line. |
+| `brand.advisorLogo` | string | Path or URL for the personal advisor proof logo; defaults to `assets/logos/aia-logo.png`. |
+
+`brand.advisorLogo` is editable in the Brand & chrome panel and directly from
+`/#edit` by activating the logo image. It is part of the draft/live config and
+must follow the same Firestore-first cache rules as other CMS content.
 
 ## Firestore Collections
 

@@ -132,6 +132,7 @@ Brand fields:
 - English role: `Insurance Advisory`
 - Thai credential: `ตัวแทน AIA · นายหน้าประกันรถยนต์ · ดูแลถึงการเคลม`
 - English credential: `AIA agent · motor broker · support through claims`
+- Advisor proof logo path: `assets/logos/aia-logo.png`
 
 Licensing copy must remain present in admin and footer surfaces:
 
@@ -532,6 +533,10 @@ Required elements:
   - `Log out`
 - Tip about `/admin` and Firestore/export backup.
 
+`View public site` links use `/?view=public`, then the public bundle cleans the
+URL back to `/` and suppresses admin owner chrome for that visitor-view
+navigation.
+
 Layout:
 
 - Desktop: three cards in one row with equal visual weight.
@@ -549,8 +554,12 @@ Purpose: click-to-type text editing over the public page.
 Behavior:
 
 - Editable text fields become tappable/clickable.
+- Supported dynamic image fields become tappable/clickable. The current
+  supported image field is the advisor proof logo stored at
+  `brand.advisorLogo`, defaulting to `assets/logos/aia-logo.png`.
 - Edits support Thai and English separately.
-- Owner bar should provide a route back to `Main`, switch to `Panel`, and `Log out`.
+- Owner bar should provide a route back to `Main`, switch to `Panel`, `Save
+  draft`, `Preview`, `Publish`, finish the mode, and `Log out`.
 - Drafts save to Firestore/local working state according to the data contract.
 - Visitor styling should remain close to the live site while edit affordances are visible.
 
@@ -569,6 +578,9 @@ Required capabilities:
 - Draft save, preview, publish, status/success feedback.
 - Closing the drawer should not trap the owner. A reopen owner bar must stay available.
 - Must include a way to switch to edit mode and return to Main.
+- The compact owner-reopen bar should also preserve direct `Save draft`,
+  `Preview`, and `Publish` controls so closing the drawer does not hide the
+  publishing path.
 - `Log out` should be available consistently from owner surfaces.
 
 Admin panel labels should be English even when public language is Thai.
@@ -610,6 +622,8 @@ Firestore-first behavior:
 
 - Public live content reads from `sites/covermate/states/live`.
 - Draft content reads/writes `sites/covermate/states/draft`.
+- Brand/config fields such as `brand.advisorLogo` are draft/live CMS values, not
+  hard-coded public-only constants.
 - Publish/restore history writes `sites/covermate/versions/{versionId}`.
 - Public lead submissions write `contactLeads/{leadId}`.
 - Reserved analytics summaries may live under `sites/covermate/analytics/{analyticsDoc}`.
