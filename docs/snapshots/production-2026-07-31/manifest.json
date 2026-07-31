@@ -1,0 +1,1481 @@
+{
+  "site": "CoverMate",
+  "capturedAt": "2026-07-31T12:49:31.062Z",
+  "baseUrl": "https://covermate.vercel.app",
+  "productionCommit": "97181c7",
+  "browser": "chromium",
+  "imageType": "jpeg",
+  "quality": 82,
+  "notes": [
+    "Captured from production for design/release evidence.",
+    "Signed-in admin and owner-hash captures use a mocked localStorage admin session because this run has no interactive Google login.",
+    "No production lead success submissions were made; success states that require writes are marked missing."
+  ],
+  "captures": [
+    {
+      "id": "contact-success-or-safe-mock",
+      "status": "missing",
+      "reason": "Skipped: no production lead success submission was authorised for this snapshot run.",
+      "requestedUrl": "https://covermate.vercel.app/#talk"
+    },
+    {
+      "id": "renew-success-or-safe-mock",
+      "status": "missing",
+      "reason": "Skipped: no production renewal success submission was authorised for this snapshot run.",
+      "requestedUrl": "https://covermate.vercel.app/#renew"
+    },
+    {
+      "id": "public-home-full",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-home-full-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": true,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502172912&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=891508679.1785502173&frm=0&ngs=1&pscdl=noapi&rcb=6&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938469~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502173&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=798",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502172912&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=891508679.1785502173&frm=0&ngs=1&pscdl=noapi&rcb=6&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938469~118897920~118897930~119896802&sid=1785502173&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5805",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 1004324
+    },
+    {
+      "id": "public-home-full",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-home-full-tablet.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "tablet",
+        "width": 834,
+        "height": 1112
+      },
+      "fullPage": true,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502202046&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1699694425.1785502203&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=834x1112&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616986~115938466~115938469~118395335~118897920~118897930~119527020~119791748~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502203&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1975",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502202046&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1699694425.1785502203&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=834x1112&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616986~115938466~115938469~118395335~118897920~118897930~119527020~119791748~119896803&sid=1785502203&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6980",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 818305
+    },
+    {
+      "id": "public-home-full",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-home-full-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": true,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502230875&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=382498908.1785502232&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938465~115938469~118897920~118897930~119896802~120222308&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502231&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1715",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=iJiVTC2y-v6Gf17KyyYr1O9W3UF6sX3Qlfw2GxEN2A-RBJIRMktZYA&VER=8&database=projects%2Fcovermate-purich%2Fdatabases%2F(default)&RID=rpc&SID=4HGTNOZ5nR6dnpD8bEK4VQ&AID=0&CI=0&TYPE=xmlhttp&zx=yg2forxki6gy&t=1",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=iJiVTC2y-v6Gf17KyyYr1O9W3UF6sX3Qlfw2GxEN2A-RBJIRMktZYA&VER=8&database=projects%2Fcovermate-purich%2Fdatabases%2F(default)&RID=rpc&SID=4HGTNOZ5nR6dnpD8bEK4VQ&AID=8&CI=1&TYPE=xmlhttp&zx=etcjdhtu3r4g&t=1",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502230875&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=382498908.1785502232&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938465~115938469~118897920~118897930~119896802~120222308&sid=1785502231&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6721",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 785682
+    },
+    {
+      "id": "public-cover-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-cover-anchor-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#cover",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#cover",
+      "scrollY": 874,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785502259750&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1794915376.1785502261&frm=0&ngs=1&pscdl=noapi&rcb=17&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118897920~118897930~119896803~120222307&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23cover&dp=%2F%23cover&sid=1785502260&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1749",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785502259750&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1794915376.1785502261&frm=0&ngs=1&pscdl=noapi&rcb=17&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118897920~118897930~119896803~120222307&sid=1785502260&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=2&tfd=6754",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 69507
+    },
+    {
+      "id": "public-cover-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-cover-anchor-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#cover",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#cover",
+      "scrollY": 936,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502288421&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1647039005.1785502289&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938468~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23cover&dp=%2F%23cover&sid=1785502288&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1427",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502288421&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1647039005.1785502289&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938468~118897920~118897930~119896802&sid=1785502288&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=2&tfd=6433",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 43993
+    },
+    {
+      "id": "public-fit-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-fit-anchor-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#fit",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#fit",
+      "scrollY": 2691,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502316985&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=826931260.1785502318&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118395335~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23fit&dp=%2F%23fit&sid=1785502317&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1330",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502316985&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=826931260.1785502318&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118395335~118897920~118897930~119896802&sid=1785502317&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=6336",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 63985
+    },
+    {
+      "id": "public-fit-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-fit-anchor-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#fit",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#fit",
+      "scrollY": 3051,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502345899&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1005226999.1785502346&frm=0&ngs=1&pscdl=noapi&rcb=4&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938468~118897920~118897930~119527019~119896803~120222309&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23fit&dp=%2F%23fit&sid=1785502346&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1804",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502345899&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1005226999.1785502346&frm=0&ngs=1&pscdl=noapi&rcb=4&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938468~118897920~118897930~119527019~119896803~120222309&sid=1785502346&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6810",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 38758
+    },
+    {
+      "id": "public-insurers-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-insurers-anchor-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#insurers",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#insurers",
+      "scrollY": 4424,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502374027&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1669748312.1785502374&frm=0&ngs=1&pscdl=noapi&rcb=0&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938466~115938468~118395333~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23insurers&dp=%2F%23insurers&sid=1785502374&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=726",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502374027&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1669748312.1785502374&frm=0&ngs=1&pscdl=noapi&rcb=0&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938466~115938468~118395333~118897920~118897930~119896802&sid=1785502374&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5732",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 91631
+    },
+    {
+      "id": "public-insurers-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-insurers-anchor-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#insurers",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#insurers",
+      "scrollY": 4879,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502402698&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=217159856.1785502403&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938469~118897920~118897930~119896803~120222309&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23insurers&dp=%2F%23insurers&sid=1785502403&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1560",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502402698&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=217159856.1785502403&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938469~118897920~118897930~119896803~120222309&sid=1785502403&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6566",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 45647
+    },
+    {
+      "id": "public-motor-alias",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-motor-alias-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#motor",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#motor",
+      "scrollY": 4424,
+      "motorAlias": {
+        "hash": "#motor",
+        "scrollY": 4424,
+        "insurersRect": {
+          "top": 73,
+          "left": 0,
+          "width": 1440,
+          "height": 1041
+        },
+        "visibleHeading": "ประกันรถยนต์ · ในฐานะนายหน้า / ประกันรถยนต์ / เทียบได้กว่า 26 เจ้า"
+      },
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502430769&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=979979753.1785502431&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938466~115938469~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23motor&dp=%2F%23motor&sid=1785502431&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=862",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502430769&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=979979753.1785502431&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938466~115938469~118897920~118897930~119896802&sid=1785502431&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5868",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 91631
+    },
+    {
+      "id": "public-motor-alias",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-motor-alias-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#motor",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#motor",
+      "scrollY": 4879,
+      "motorAlias": {
+        "hash": "#motor",
+        "scrollY": 4879,
+        "insurersRect": {
+          "top": 82,
+          "left": 0,
+          "width": 390,
+          "height": 1256
+        },
+        "visibleHeading": "ประกันรถยนต์ · ในฐานะนายหน้า / ประกันรถยนต์ / เทียบได้กว่า 26 เจ้า"
+      },
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785502458953&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=160076459.1785502459&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616986~115938466~115938468~118395334~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23motor&dp=%2F%23motor&sid=1785502459&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=911",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785502458953&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=160076459.1785502459&frm=0&ngs=1&pscdl=noapi&rcb=14&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616986~115938466~115938468~118395334~118897920~118897930~119896802&sid=1785502459&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5917",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 45647
+    },
+    {
+      "id": "public-claim-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-claim-anchor-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#claim",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#claim",
+      "scrollY": 5465,
+      "console": [
+        {
+          "type": "warning",
+          "text": "[covermate] Remote content still loading; rendering local fallback cache."
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502488124&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=176917590.1785502493&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938465~115938468~118897920~118897930~119381664~119404701~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23claim&dp=%2F%23claim&sid=1785502493&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=6421",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502488124&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=176917590.1785502493&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938465~115938468~118897920~118897930~119381664~119404701~119896802&sid=1785502493&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=11427",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 81777
+    },
+    {
+      "id": "public-claim-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-claim-anchor-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#claim",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#claim",
+      "scrollY": 6134,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502516199&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=777355116.1785502517&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23claim&dp=%2F%23claim&sid=1785502516&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=874",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502516199&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=777355116.1785502517&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118897920~118897930~119896803&sid=1785502516&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5881",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 41687
+    },
+    {
+      "id": "public-talk-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-talk-anchor-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#talk",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#talk",
+      "scrollY": 12775,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502544330&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1512117592.1785502545&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118897920~118897930~119527019~119896802~120125304&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23talk&dp=%2F%23talk&sid=1785502544&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=992",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502544330&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1512117592.1785502545&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118897920~118897930~119527019~119896802~120125304&sid=1785502544&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5998",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 76152
+    },
+    {
+      "id": "public-talk-anchor",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-talk-anchor-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#talk",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#talk",
+      "scrollY": 14899,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785502572367&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1938879823.1785502573&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118395333~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23talk&dp=%2F%23talk&sid=1785502572&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=707",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785502572367&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1938879823.1785502573&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118395333~118897920~118897930~119896802&sid=1785502572&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5714",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 40106
+    },
+    {
+      "id": "public-home-en-full",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-home-en-full-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": true,
+      "authState": "signed-out",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "languageAction": "clicked EN segment",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502600550&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=396197574.1785502601&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938468~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502601&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1037",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502600550&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=396197574.1785502601&frm=0&ngs=1&pscdl=noapi&rcb=11&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938468~118897920~118897930~119896803&sid=1785502601&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6043",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 1132002
+    },
+    {
+      "id": "public-home-en-full",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-home-en-full-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": true,
+      "authState": "signed-out",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "languageAction": "clicked EN segment",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502630116&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=967814656.1785502631&frm=0&ngs=1&pscdl=noapi&rcb=8&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938468~118395333~118897920~118897930~119896802~120222308&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502630&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=896",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502630116&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=967814656.1785502631&frm=0&ngs=1&pscdl=noapi&rcb=8&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938468~118395333~118897920~118897930~119896802~120222308&sid=1785502630&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5903",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 901183
+    },
+    {
+      "id": "public-nav-en",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-nav-en-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "languageAction": "clicked EN segment",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502658489&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1178399129.1785502659&frm=0&ngs=1&pscdl=noapi&rcb=4&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938465~115938469~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502659&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=941",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502658489&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1178399129.1785502659&frm=0&ngs=1&pscdl=noapi&rcb=4&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938465~115938469~118897920~118897930~119896803&sid=1785502659&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=5948",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 64397
+    },
+    {
+      "id": "public-nav-en",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/public-nav-en-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "languageAction": "clicked EN segment",
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502686653&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=333899320.1785502687&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785502687&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=904",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502686653&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=333899320.1785502687&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118897920~118897930~119896802&sid=1785502687&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5911",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 42483
+    },
+    {
+      "id": "contact-empty",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/contact-empty-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#talk",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "formState": "empty",
+      "finalUrl": "https://covermate.vercel.app/#talk",
+      "scrollY": 6602,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502715074&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1051776759.1785502715&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118395334~118897920~118897930~119793972~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23talk&dp=%2F%23talk&sid=1785502715&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1007",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502715074&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1051776759.1785502715&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118395334~118897920~118897930~119793972~119896802&sid=1785502715&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6012",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 86923
+    },
+    {
+      "id": "contact-empty",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/contact-empty-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#talk",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "formState": "empty",
+      "finalUrl": "https://covermate.vercel.app/#talk",
+      "scrollY": 8231,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502743774&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1556980057.1785502744&frm=0&ngs=1&pscdl=noapi&rcb=12&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938465~115938468~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23talk&dp=%2F%23talk&sid=1785502744&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=820",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502743774&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1556980057.1785502744&frm=0&ngs=1&pscdl=noapi&rcb=12&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938465~115938468~118897920~118897930~119896803&sid=1785502744&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=5827",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 39069
+    },
+    {
+      "id": "contact-validation",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/contact-validation-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#talk",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "formState": "validation",
+      "finalUrl": "https://covermate.vercel.app/#talk",
+      "scrollY": 13136,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502773044&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1375446982.1785502774&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938465~115938468~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23talk&dp=%2F%23talk&sid=1785502773&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1510",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502773044&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1375446982.1785502774&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938465~115938468~118897920~118897930~119896803&sid=1785502773&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6516",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 67238
+    },
+    {
+      "id": "contact-validation",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/contact-validation-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#talk",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "formState": "validation",
+      "finalUrl": "https://covermate.vercel.app/#talk",
+      "scrollY": 15826,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502802527&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=356556700.1785502803&frm=0&ngs=1&pscdl=noapi&rcb=9&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23talk&dp=%2F%23talk&sid=1785502803&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=809",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502802527&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=356556700.1785502803&frm=0&ngs=1&pscdl=noapi&rcb=9&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118897920~118897930~119896803&sid=1785502803&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5818",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 34077
+    },
+    {
+      "id": "renew-empty",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/renew-empty-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#renew",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "formState": "empty",
+      "finalUrl": "https://covermate.vercel.app/#renew",
+      "scrollY": 6601,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502832082&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1523839398.1785502833&frm=0&ngs=1&pscdl=noapi&rcb=8&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938468~118897920~118897930~119527020~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23renew&dp=%2F%23renew&sid=1785502832&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=855",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502832082&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1523839398.1785502833&frm=0&ngs=1&pscdl=noapi&rcb=8&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938468~118897920~118897930~119527020~119896802&sid=1785502832&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5861",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 86318
+    },
+    {
+      "id": "renew-empty",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/renew-empty-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#renew",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "formState": "empty",
+      "finalUrl": "https://covermate.vercel.app/#renew",
+      "scrollY": 8073,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502860931&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=2144013230.1785502861&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23renew&dp=%2F%23renew&sid=1785502861&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=884",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502860931&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=2144013230.1785502861&frm=0&ngs=1&pscdl=noapi&rcb=13&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118897920~118897930~119896803&sid=1785502861&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=2&tfd=5889",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 44485
+    },
+    {
+      "id": "renew-validation",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/renew-validation-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#renew",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "validationClick": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button, a, [role=\"button\"]').filter({ hasText: /ตั้งเตือน|Remind/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-dc-tpl=\"407\" class=\"scpd scp3\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    10 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "formState": "validation-or-disabled-empty",
+      "finalUrl": "https://covermate.vercel.app/#renew",
+      "scrollY": 6601,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1h1v9259650113za200zd9259650113&_p=1785502890023&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=2029985468.1785502890&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938468~118897920~118897930~119793973~119896803~120222307&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23renew&dp=%2F%23renew&sid=1785502890&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=997",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1h1v9259650113za200zd9259650113&_p=1785502890023&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=2029985468.1785502890&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938468~118897920~118897930~119793973~119896803~120222307&sid=1785502890&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6004",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 86318
+    },
+    {
+      "id": "renew-validation",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/renew-validation-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#renew",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "validationClick": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button, a, [role=\"button\"]').filter({ hasText: /ตั้งเตือน|Remind/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-dc-tpl=\"407\" class=\"scpd scp3\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    10 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "formState": "validation-or-disabled-empty",
+      "finalUrl": "https://covermate.vercel.app/#renew",
+      "scrollY": 8073,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502924740&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1594776603.1785502925&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118897920~118897930~119896802~120222309&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F%23renew&dp=%2F%23renew&sid=1785502925&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=874",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785502924740&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1594776603.1785502925&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118897920~118897930~119896802~120222309&sid=1785502925&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5879",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 44485
+    },
+    {
+      "id": "admin-login",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-login-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin/login",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out-clear",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin/login",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 36682
+    },
+    {
+      "id": "admin-login",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-login-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin/login",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out-clear",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin/login",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 26875
+    },
+    {
+      "id": "admin-redirect",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-redirect-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "signed-out-clear",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin/login",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://covermate.vercel.app/covermate-firebase.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 36682
+    },
+    {
+      "id": "admin-redirect",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-redirect-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "signed-out-clear",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin/login",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 26875
+    },
+    {
+      "id": "admin-launcher",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-launcher-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 82335
+    },
+    {
+      "id": "admin-launcher",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-launcher-tablet.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin",
+      "viewport": {
+        "name": "tablet",
+        "width": 834,
+        "height": 1112
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 76688
+    },
+    {
+      "id": "admin-launcher",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-launcher-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "en",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 46486
+    },
+    {
+      "id": "admin-analytics",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-analytics-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin/analytics",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": true,
+      "authState": "mock-admin-session",
+      "language": "en",
+      "dataState": "production-live-or-unverified",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin/analytics",
+      "scrollY": 0,
+      "console": [
+        {
+          "type": "warning",
+          "text": "[covermate] analytics data unavailable: Error: Not authorized to read CoverMate leads.\n    at Object.loadContactLeads (https://covermate.vercel.app/covermate-firebase.js:324:21)\n    at async load (https://covermate.vercel.app/admin/analytics:861:23)"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 183991
+    },
+    {
+      "id": "admin-analytics",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/admin-analytics-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/admin/analytics",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": true,
+      "authState": "mock-admin-session",
+      "language": "en",
+      "dataState": "production-live-or-unverified",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/admin/analytics",
+      "scrollY": 0,
+      "console": [
+        {
+          "type": "warning",
+          "text": "[covermate] analytics data unavailable: Error: Not authorized to read CoverMate leads.\n    at Object.loadContactLeads (https://covermate.vercel.app/covermate-firebase.js:324:21)\n    at async load (https://covermate.vercel.app/admin/analytics:861:23)"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtag/js?id=G-5TF3C235EF",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 149150
+    },
+    {
+      "id": "owner-edit",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-edit-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#edit",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#edit",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503170241&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=540766291.1785503171&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503170&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=812",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503170241&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=540766291.1785503171&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118897920~118897930~119896803&sid=1785503170&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=5819",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 82324
+    },
+    {
+      "id": "owner-edit",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-edit-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#edit",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#edit",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785503198513&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=994638539.1785503199&frm=0&ngs=1&pscdl=noapi&rcb=5&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503199&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1339",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67u0h2v9259650113za200zd9259650113&_p=1785503198513&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=994638539.1785503199&frm=0&ngs=1&pscdl=noapi&rcb=5&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118897920~118897930~119896803&sid=1785503199&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=6347",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 50743
+    },
+    {
+      "id": "owner-panel-sections",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-sections-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503226769&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1839038829.1785503227&frm=0&ngs=1&pscdl=noapi&rcb=17&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938469~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503227&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1109",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503226769&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1839038829.1785503227&frm=0&ngs=1&pscdl=noapi&rcb=17&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938469~118897920~118897930~119896803&sid=1785503227&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=5&tfd=6116",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 88930
+    },
+    {
+      "id": "owner-panel-sections",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-sections-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503255616&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=930806635.1785503256&frm=0&ngs=1&pscdl=noapi&rcb=9&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938468~118395335~118897920~118897930~119381664~119793974~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503256&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1860",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503255616&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=930806635.1785503256&frm=0&ngs=1&pscdl=noapi&rcb=9&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938468~118395335~118897920~118897930~119381664~119793974~119896802&sid=1785503256&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=6867",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 26800
+    },
+    {
+      "id": "owner-panel-content",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-content-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "panelTab": "Content",
+      "finalUrl": "https://covermate.vercel.app/#admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503284951&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=690843897.1785503286&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616986~115938465~115938469~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503285&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=2338",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503284951&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=690843897.1785503286&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616986~115938465~115938469~118897920~118897930~119896803&sid=1785503285&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=2&tfd=7343",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 95215
+    },
+    {
+      "id": "owner-panel-brand",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-brand-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "panelTab": "Brand & chrome",
+      "finalUrl": "https://covermate.vercel.app/#admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503313560&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=303392673.1785503314&frm=0&ngs=1&pscdl=noapi&rcb=18&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938466~115938468~118395334~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503313&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=1199",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503313560&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=303392673.1785503314&frm=0&ngs=1&pscdl=noapi&rcb=18&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938466~115938468~118395334~118897920~118897930~119896802&sid=1785503313&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=6205",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 90556
+    },
+    {
+      "id": "owner-panel-theme",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-theme-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "panelTab": "Theme & data",
+      "finalUrl": "https://covermate.vercel.app/#admin",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503342744&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=959348118.1785503344&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938465~115938469~118897920~118897930~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503343&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=2381",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503342744&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=959348118.1785503344&frm=0&ngs=1&pscdl=noapi&rcb=10&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938465~115938469~118897920~118897930~119896802&sid=1785503343&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=7387",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 93515
+    },
+    {
+      "id": "owner-panel-closed-reopen",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-closed-reopen-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "closedPanel": true,
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503372486&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=757865449.1785503374&frm=0&ngs=1&pscdl=noapi&rcb=17&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616986~115938466~115938469~118897920~118897930~119527019~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503373&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=2992",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503372486&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=757865449.1785503374&frm=0&ngs=1&pscdl=noapi&rcb=17&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616986~115938466~115938469~118897920~118897930~119527019~119896802&sid=1785503373&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=4&tfd=7999",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 69265
+    },
+    {
+      "id": "owner-panel-closed-reopen",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-panel-closed-reopen-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#admin",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "closedPanel": true,
+      "finalUrl": "https://covermate.vercel.app/",
+      "scrollY": 0,
+      "console": [
+        {
+          "type": "warning",
+          "text": "[covermate] Remote content still loading; rendering local fallback cache."
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503403059&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=43509551.1785503407&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118395334~118897920~118897930~119896803~120222307&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503407&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=6115",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503403059&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=43509551.1785503407&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118395334~118897920~118897930~119896803~120222307&sid=1785503407&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=11121",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 43289
+    },
+    {
+      "id": "owner-preview",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-preview-desktop.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#preview",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#preview",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503435173&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=931217181.1785503437&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115938466~115938469~118395333~118897920~118897930~119896803&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503436&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=4765",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503435173&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=931217181.1785503437&frm=0&ngs=1&pscdl=noapi&rcb=7&sr=1440x900&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115938466~115938469~118395333~118897920~118897930~119896803&sid=1785503436&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=9771",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 62554
+    },
+    {
+      "id": "owner-preview",
+      "path": "/Users/point/CoverMate/docs/snapshots/production-2026-07-31/owner-preview-mobile.jpg",
+      "requestedUrl": "https://covermate.vercel.app/#preview",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "authState": "mock-admin-session",
+      "language": "th",
+      "dataState": "remote",
+      "status": "captured",
+      "finalUrl": "https://covermate.vercel.app/#preview",
+      "scrollY": 0,
+      "failedRequests": [
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503463261&gcd=13l3l3l3l3l1&npa=1&dma=0&are=1&cid=1998488608.1785503464&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=1&tag_exp=115616985~115938466~115938469~118395334~118897920~118897930~119527020~119896802&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dp=%2F&sid=1785503463&sct=1&seg=0&_tu=QAg&en=page_view&_fv=1&_nsi=1&_ss=1&_ee=1&ep.transport_type=beacon&tfd=875",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-5TF3C235EF&gtm=45je67t1v9259650113za200zd9259650113&_p=1785503463261&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEAAAAQ&ae=a&are=1&cid=1998488608.1785503464&frm=0&ngs=1&pscdl=noapi&rcb=1&sr=390x844&uaa=arm&uab=64&uafvl=Not%253BA%253DBrand%3B8.0.0.0%7CChromium%3B150.0.7871.187%7CGoogle%2520Chrome%3B150.0.7871.187&uam=&uamb=0&uap=macOS&uapv=26.5.2&uaw=0&ul=en-us&_s=2&tag_exp=115616985~115938466~115938469~118395334~118897920~118897930~119527020~119896802&sid=1785503463&sct=1&seg=0&dl=https%3A%2F%2Fcovermate.vercel.app%2F&dt=CoverMate%20%7C%20%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9B%E0%B8%A3%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%20AIA%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A3%E0%B8%96%E0%B8%A2%E0%B8%99%E0%B8%95%E0%B9%8C&_tu=QAg&en=scroll&ep.transport_type=beacon&epn.percent_scrolled=90&_et=3&tfd=5881",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "bytes": 37946
+    }
+  ]
+}
