@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-07-30
+Last updated: 2026-08-02
 
 ## Production
 
@@ -65,8 +65,10 @@ Minimum checks:
   content
 - no rendered `[object Object]` placeholder text appears on visitor or admin
   surfaces
-- insurer logos render
+- insurer logos render from editable insurer items, including background-image
+  logo tiles
 - insurer relationship proof cards render
+- motor tier comparison renders as a desktop table and mobile stacked cards
 - policy review, claim help, renewal reminders, guides, fee transparency, and
   privacy/PDPA sections render when present in the live schema
 - contact form enquiry-type and coverage selects render

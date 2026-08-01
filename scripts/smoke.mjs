@@ -393,25 +393,28 @@ for (const [name, width, height] of viewports) {
     const state = await page.evaluate((targetSelector) => {
       const root = document.documentElement;
       const target = document.querySelector(targetSelector);
-      const visibleInsurerImages = Array.from(document.querySelectorAll("#insurers img"))
-        .filter((img) => {
-          const rect = img.getBoundingClientRect();
-          const style = window.getComputedStyle(img);
-          return (
-            rect.width > 0 &&
-            rect.height > 0 &&
-            style.display !== "none" &&
-            style.visibility !== "hidden"
-          );
-        });
-      const logos = visibleInsurerImages.map(
-        (img) => ({
-          src: img.getAttribute("src"),
-          complete: img.complete,
-          naturalWidth: img.naturalWidth,
-          naturalHeight: img.naturalHeight
-        })
-      );
+      const visibleInsurerLogoEls = Array.from(
+        document.querySelectorAll("#insurers img, #insurers [role='img']")
+      ).filter((el) => {
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== "none" &&
+          style.visibility !== "hidden"
+        );
+      });
+      const logos = visibleInsurerLogoEls.map((el) => {
+        const style = window.getComputedStyle(el);
+        const isImg = el.tagName === "IMG";
+        return {
+          src: isImg ? el.getAttribute("src") : style.backgroundImage,
+          complete: isImg ? el.complete : style.backgroundImage !== "none",
+          naturalWidth: isImg ? el.naturalWidth : Math.round(el.getBoundingClientRect().width),
+          naturalHeight: isImg ? el.naturalHeight : Math.round(el.getBoundingClientRect().height)
+        };
+      });
       const bodyText = document.body.innerText;
       const insurerText = document.querySelector("#insurers")?.innerText || "";
       const selectOptions = Array.from(document.querySelectorAll("select")).map((select) =>

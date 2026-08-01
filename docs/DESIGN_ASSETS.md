@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 ## Visual Source
 
@@ -104,8 +104,10 @@ Committed insurer logo files:
 
 The section copy says "26+" insurers. The visible grid currently uses 14
 committed insurer logos, plus broker/agency proof cards for AIA and Srikrung
-Broker supplied by the latest standalone reference. Do not change the "26+"
-claim or logo treatment without reconciling the legal/business copy first.
+Broker supplied by the latest standalone reference. The renderer is data-driven
+from `insurers.items[]`; `item.logo` is preferred and older/stale names resolve
+through the built-in logo map. Do not change the "26+" claim or logo treatment
+without reconciling the legal/business copy first.
 
 Relationship-card logo paths in the latest reference:
 
@@ -145,6 +147,8 @@ The motor-insurance section should show insurer logos in a calm animation area.
 Animation requirements:
 
 - never leave the logo strip blank after load
+- keep the logo list editable through the Admin Content tab rather than a
+  parallel hard-coded grid
 - support reduced-motion users gracefully
 - avoid layout shift when logos load
 - keep logos legible on mobile

@@ -10,11 +10,12 @@ Firebase Auth, Firestore CMS persistence, lead capture, and Admin Analytics are
 implemented and deployed. Future commit, push, Vercel deploy, or Firestore Rules
 deploy actions still require explicit owner approval in the current task.
 
-Product decision checkpoint: as of production commit `7be3274`, the current
-visitor/admin surfaces, owner flows, Firestore-first CMS model, SEO/analytics
-boundaries, font policy, responsive behavior, and deployment shape are accepted
-product decisions. Future bugs should be fixed as defects unless the owner
-explicitly reopens the product decision.
+Product decision checkpoint: as of the 2026-08-02 SPEC (5) reconciliation, the
+current visitor/admin surfaces, owner flows, Firestore-first CMS model,
+SEO/analytics boundaries, font policy, responsive behavior, motor tier
+comparison, and deployment shape are accepted product decisions. Future bugs
+should be fixed as defects unless the owner explicitly reopens the product
+decision.
 
 ## How To Run / Verify
 
@@ -129,7 +130,7 @@ part of the product contract and must not be renamed without a migration:
 - `purich-scrub-copy-v2`
 - `purich-site-config-v7`
 - `covermate-text-v7`
-- `purich-struct-cards-v3`
+- `purich-struct-cards-v4`
 
 Important behavior:
 
@@ -218,9 +219,10 @@ Current insurer logo files:
 - `assets/ins/14-sompo.png`
 
 The copy says "26+" insurers. The committed grid currently has 14 logo files,
-and the latest standalone adds AIA/Srikrung Broker relationship proof cards in
-the same section. Do not change the bundle paths or claim treatment without
-updating smoke expectations and getting business-owner copy confirmation.
+is rendered from the editable `insurers.items` content array, and includes
+AIA/Srikrung Broker relationship proof cards in the same section. Do not change
+the bundle paths or claim treatment without updating smoke expectations and
+getting business-owner copy confirmation.
 
 `assets/logos/aia-logo.png` is the committed loose source for the AIA proof-card
 logo and is also embedded into the current `index.html` bundle resource map.
@@ -235,15 +237,16 @@ but is not currently present as a loose repository file.
 2. Navigation anchors move through coverage, motor, claim help, calculator,
    steps, FAQ, and contact entry points.
 3. Language toggle switches Thai/English copy.
-4. Insurer logos render in the motor/insurer section.
-5. Policy review, claim help, renewal reminder, guide, fee transparency, and
+4. Insurer logos render from editable content in the motor/insurer section.
+5. Motor tier comparison renders as a desktop table and mobile stacked cards.
+6. Policy review, claim help, renewal reminder, guide, fee transparency, and
    privacy/PDPA sections render as part of the single visitor page.
-6. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
-7. The consultation lead form includes enquiry type and coverage selects before
+7. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
+8. The consultation lead form includes enquiry type and coverage selects before
    the freeform detail field.
-8. The renewal reminder form writes to the same validated lead path with
+9. The renewal reminder form writes to the same validated lead path with
    `qtype: "review"`.
-9. Successful public form submission writes a validated Firestore lead document
+10. Successful public form submission writes a validated Firestore lead document
    and fires only privacy-safe Analytics outcome/category events.
 
 ### Admin
@@ -260,7 +263,8 @@ but is not currently present as a loose repository file.
 8. The owner panel can reorder/hide sections, edit content/brand/theme data, and
    publish draft state to Firestore live state.
 9. In structured-card sections, the Content tab can edit insurer relationship
-   cards, claim cards, and fee transparency cards.
+   cards, insurer item logo paths, claim cards, fee transparency cards, and the
+   motor tier comparison table/cell states.
 10. Closing the control panel does not log out; it leaves a compact owner bar so
    the admin can reopen `Panel`, switch to `Edit text`, return to `Main`, or
    `Log out`.

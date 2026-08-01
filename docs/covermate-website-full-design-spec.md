@@ -1,10 +1,11 @@
 # CoverMate Website Full Design Spec For Claude
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 Production baseline: `https://covermate.vercel.app`
 
-Implementation baseline: git commit `97181c7` (`Polish visitor and admin release`)
+Implementation baseline: current production bundle in this repository. Use the
+latest git commit/deployment record for the exact deployed revision.
 
 Audience: Claude Design or any design partner updating the corresponding website/admin designs.
 
@@ -231,7 +232,7 @@ Guardrails:
 
 ## Visitor Section Order
 
-The current public page has 16 live sections:
+The current public page has 17 live sections:
 
 | Order | ID | Type | Background | Columns | Content Count |
 | --- | --- | --- | --- | --- | --- |
@@ -241,16 +242,17 @@ The current public page has 16 live sections:
 | 4 | `review` | Policy review | cream | 3 | 3 review steps |
 | 5 | `fit` | Coverage calculator | dark | 2 | interactive calculator |
 | 6 | `how` | Process steps | cream | 4 | 4 steps |
-| 7 | `insurers` | Motor insurers | sage | 4 | 14 logo items + 2 credential cards |
-| 8 | `claim` | Claims help | dark | 4 | 4 steps + 4 proof metrics/cards |
-| 9 | `renew` | Renewal reminder | sage | 3 | reminder form + 3 benefits |
-| 10 | `guides` | Buying guides | surface | 2 | 4 FAQ-style guide rows |
-| 11 | `voices` | Customer stories | cream | 3 | 3 story cards |
-| 12 | `about` | About/licence | surface | 2 | 4 credential bullets |
-| 13 | `faq` | FAQ | cream | 1 | 5 FAQ rows |
-| 14 | `fees` | Fee transparency | surface | 3 | 3 fee cards + 4 notes |
-| 15 | `privacy` | PDPA/privacy | cream | 2 | 5 privacy bullets |
-| 16 | `talk` | Contact | dark | 2 | contact panel + lead form |
+| 7 | `insurers` | Motor insurers | sage | 4 | 14 data-driven logo items + 2 credential cards |
+| 8 | `tiers` | Motor class comparison | cream | 1 | 5 rows x 5 coverage axes |
+| 9 | `claim` | Claims help | dark | 4 | 4 steps + 4 proof metrics/cards |
+| 10 | `renew` | Renewal reminder | sage | 3 | reminder form + 3 benefits |
+| 11 | `guides` | Buying guides | surface | 2 | 4 FAQ-style guide rows |
+| 12 | `voices` | Customer stories | cream | 3 | 3 story cards |
+| 13 | `about` | About/licence | surface | 2 | 4 credential bullets |
+| 14 | `faq` | FAQ | cream | 1 | 5 FAQ rows |
+| 15 | `fees` | Fee transparency | surface | 3 | 3 fee cards + 4 notes |
+| 16 | `privacy` | PDPA/privacy | cream | 2 | 5 privacy bullets |
+| 17 | `talk` | Contact | dark | 2 | contact panel + lead form |
 
 Claude designs should include all sections. Do not stop at the older shorter reference page.
 
@@ -345,7 +347,8 @@ Structure:
 
 - Sage/green band.
 - Centered heading: motor insurance can be compared across more than 26 insurers.
-- Logo grid in a warm rounded panel.
+- Logo grid in a warm rounded panel. The grid is generated from the
+  `insurers.items` content array, not a separate hard-coded logo list.
 - Credential cards for AIA and Srikrung Broker.
 - Small check note below.
 
@@ -360,6 +363,30 @@ Guardrails:
 - Logo grid should not be empty or placeholder-only.
 - The first two lines in credential cards, logo and company/category row, are centered.
 - Do not create a separate motor page in nav. This is the `#insurers` anchor.
+
+### Motor Tier Comparison
+
+Purpose: explain the practical difference between motor insurance classes
+without sending visitors to a separate comparison page.
+
+Structure:
+
+- Section ID/type: `tiers`.
+- Desktop renders a table with 5 rows (`ชั้น 1`, `ชั้น 2+`, `ชั้น 2`,
+  `ชั้น 3+`, `ชั้น 3`) and 5 coverage axes.
+- Mobile renders stacked class cards so the visitor does not horizontally
+  scroll.
+- Cell states are data-driven: `y` covered, `p` conditional, `n` not covered.
+- The admin Content tab can edit headings, rows, row notes, cell states, add
+  columns, and add tiers.
+
+Guardrails:
+
+- Keep this as part of the main public page. Do not expose a second motor nav
+  item.
+- Missing cell states must render as not covered instead of breaking layout.
+- Keep section copy advisory and plain-language, not a legal substitute for
+  policy wording.
 
 ### Claims Help
 
@@ -743,10 +770,12 @@ Public visitor:
 
 - Header has one motor nav item and no duplicate `ประกันรถยนต์`.
 - `#motor` is represented as an alias to the motor insurer section, not a separate surface.
-- All 16 sections are represented in the design.
+- All 17 sections are represented in the design, including motor tier comparison.
 - Hero first viewport matches the current warm organic direction.
 - AIA logo appears with the current transparent red asset.
-- Motor insurer logo grid is present and credible.
+- Motor insurer logo grid is present, credible, and driven by editable
+  `insurers.items`.
+- Motor tier table/cards render correctly on desktop and mobile.
 - Coverage calculator cards have centered icon/title treatment.
 - Fee cards do not clip text or decorative numbers.
 - Contact heading Thai `ขอรับคำปรึกษา` fits as one line on desktop.

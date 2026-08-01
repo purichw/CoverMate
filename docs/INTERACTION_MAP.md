@@ -1,13 +1,13 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 ## Visitor Journey
 
 1. Visitor lands on `/` or `/#motor`.
 2. Visitor scans the offer, credibility bar, coverage choices, policy-review
-   offer, calculator, process, insurer proof, claim help, renewal reminders,
-   guides, claim stories, about/license copy, FAQ, fee transparency,
+   offer, calculator, process, insurer proof, motor tier comparison, claim
+   help, renewal reminders, guides, claim stories, about/license copy, FAQ, fee transparency,
    privacy/PDPA copy, and contact area.
 3. Visitor starts contact through LINE, phone, email, the consultation lead
    form, or the renewal reminder form.
@@ -125,7 +125,8 @@ fields.
 For sections that use structured cards, the Content tab exposes card editing
 instead of relying on hard-coded copy. Current editable card sets include the
 insurer relationship proof cards, claim hotline/support cards, and fee
-transparency cards.
+transparency cards. The Content tab also exposes insurer item logo paths and
+the motor tier comparison rows/coverage columns/cell states.
 
 ## Admin Analytics Flow
 

@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 ## Persistence Model
 
@@ -44,10 +44,30 @@ Implications:
 | `purich-scrub-copy-v2` | Public bundle | Copy-scrub/sanitization state used by the exported app. |
 | `purich-site-config-v7` | Public bundle | Site configuration namespace used by the exported app. |
 | `covermate-text-v7` | Public bundle | Legacy editable text namespace read during migration. |
-| `purich-struct-cards-v3` | Public bundle | Structural migration marker for latest standalone-reference sections, insurer/claim/fee card fields, and read-time schema normalization. |
+| `purich-struct-cards-v4` | Public bundle | Structural migration marker for latest standalone-reference sections, insurer/claim/fee/tier fields, logo backfill, and read-time schema normalization. |
 
 `purich-history-v3` is capped by the exported bundle. The current reference keeps
 the latest 20 publish/restore snapshots.
+
+## CMS Section Shape Notes
+
+The public and owner surfaces render from the same `config.sections` array.
+Runtime normalization fills missing sections and fields from `DEFAULTS` without
+overwriting edited copy.
+
+Current section types include `hero`, `trust`, `products`, `review`, `fit`,
+`steps`, `insurers`, `tiers`, `claim`, `renew`, `guides`, `stories`, `about`,
+`faq`, `fees`, `pdpa`, and `contact`.
+
+Important dynamic fields:
+
+- `insurers.items[]` is the source of truth for the public insurer logo grid.
+  Each item may carry `logo`; stale items resolve through the built-in logo map
+  and exact legacy `LMG` names render as Chubb Samaggi.
+- `tiers.heads[]` defines motor comparison columns.
+- `tiers.items[]` defines class rows. Each tier row uses `st[]` states aligned
+  to `heads[]`, where `y` means covered, `p` means conditional, and `n` means
+  not covered. Missing/invalid states normalize to `n`.
 
 ## Ownership Rules
 

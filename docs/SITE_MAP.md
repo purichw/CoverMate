@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-07-30
+Last updated: 2026-08-02
 
 ## Routes
 
@@ -45,6 +45,7 @@ Expected visible sections:
 | Fit/calculator | Helps visitors estimate or choose suitable coverage. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
 | Motor insurers | Shows insurer-logo animation, AIA/Srikrung proof cards, and broker/license proof. |
+| Motor tier comparison | Explains Class 1, 2+, 2, 3+, and 3 across five coverage axes with desktop table and mobile cards. |
 | Claim help | Explains accident/claim assistance and emergency support expectations. |
 | Renewal reminders | Lets visitors request renewal reminders without replacing the consultation form. |
 | Guides | Educational checklist cards for policy review, comparison, and claim readiness. |
