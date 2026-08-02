@@ -442,6 +442,89 @@ async function verifyAdminActionWorkflow() {
   await page.close();
 }
 
+async function verifyPublicRouteSuppressesStaleOwnerChrome() {
+  const remoteConfig = renamedConfig("Public Chrome Guard Smoke");
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: remoteContentMock(remoteConfig)
+    })
+  );
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+    window.localStorage.setItem("purich-admin-ever-v7", "1");
+  });
+
+  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Public Chrome Guard Smoke/);
+  const stalePublicState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    visibleOwnerBars: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).filter((el) => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
+    }).length,
+    text: document.body.innerText
+  }));
+  if (stalePublicState.route !== "/" || stalePublicState.visibleOwnerBars || stalePublicState.marker) {
+    failures.push(`public chrome guard: stale admin marker leaked owner chrome on / (${JSON.stringify(stalePublicState)})`);
+  }
+  if (/Admin\s+Panel|Text edit|Save draft|Publish/.test(stalePublicState.text)) {
+    failures.push("public chrome guard: owner action text was visible on a clean public route");
+  }
+
+  await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Admin portal/);
+  await page.getByLabel("Close admin panel").click();
+  await page.waitForTimeout(500);
+  const closedState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    hasReopen: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
+    text: document.body.innerText
+  }));
+  if (closedState.route !== "/" || !closedState.hasReopen || !closedState.text.includes("Public site")) {
+    failures.push(`public chrome guard: closing #admin did not leave the in-session owner reopen bar (${JSON.stringify(closedState)})`);
+  }
+
+  await page.getByRole("button", { name: "Public site" }).click();
+  await page.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const publicReturnState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    text: document.body.innerText
+  }));
+  if (publicReturnState.route !== "/" || publicReturnState.hasOwnerBar || publicReturnState.marker) {
+    failures.push(`public chrome guard: Public site action did not clear owner chrome (${JSON.stringify(publicReturnState)})`);
+  }
+
+  await page.reload({ waitUntil: "load", timeout: 30000 });
+  await page.waitForTimeout(500);
+  const reloadState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    text: document.body.innerText
+  }));
+  if (reloadState.route !== "/" || reloadState.hasOwnerBar || reloadState.marker || /Admin\s+Panel|Text edit|Save draft|Publish/.test(reloadState.text)) {
+    failures.push(`public chrome guard: clean public reload restored owner chrome (${JSON.stringify(reloadState)})`);
+  }
+  await page.close();
+}
+
 async function verifyStaticSeoFiles() {
   const robotsResponse = await fetch(new URL("/robots.txt", baseUrl));
   const robots = await robotsResponse.text();
@@ -484,6 +567,7 @@ async function verifyStaticSeoFiles() {
 await verifyStaticSeoFiles();
 await verifyRemoteHydrationContract();
 await verifyAdminActionWorkflow();
+await verifyPublicRouteSuppressesStaleOwnerChrome();
 
 for (const [name, width, height] of viewports) {
   const page = await browser.newPage({

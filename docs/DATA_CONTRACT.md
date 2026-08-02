@@ -40,7 +40,7 @@ Implications:
 | `purich-draft-config-v3` | Owner modes | Last-known cache of Firestore `states/draft.config`. |
 | `purich-draft-text-v3` | Owner modes | Last-known cache of Firestore `states/draft.text`. |
 | `purich-history-v3` | Owner modes | Last-known cache of Firestore version history. |
-| `purich-admin-ever-v7` | Public bundle | Tracks whether admin tools have been opened. |
+| `purich-admin-ever-v7` | Public bundle | Legacy/transient owner marker. Public routes must clear or ignore it so a signed-in admin session alone never shows owner chrome to visitors. |
 | `purich-scrub-copy-v2` | Public bundle | Copy-scrub/sanitization state used by the exported app. |
 | `purich-site-config-v7` | Public bundle | Site configuration namespace used by the exported app. |
 | `covermate-text-v7` | Public bundle | Legacy editable text namespace read during migration. |
@@ -104,6 +104,9 @@ When an admin intentionally opens the live public site from private admin
 surfaces, links use `/?view=public`. The public bundle consumes that flag, cleans
 the URL back to `/`, and removes the owner-reopen marker
 `purich-admin-ever-v7` so admin chrome does not appear on the visitor view.
+The compact owner-reopen bar is allowed only as in-session recovery immediately
+after closing `/#admin` or finishing `/#edit`; a clean `/` load or reload must
+not resurrect it from localStorage.
 
 The public/admin CMS normalizes known legacy values that conflict with current
 product decisions before rendering, caching, saving, or publishing. This is a

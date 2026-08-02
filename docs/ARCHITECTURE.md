@@ -219,7 +219,12 @@ Do not remove the `covermate-template-cloak` rules that hide raw `<x-dc>`
 template content before hydration on visitor and admin pages.
 
 Do not remove the owner reopen bar after the admin drawer closes. It must keep
-reopen `Panel`, `Edit text`, `Main`, and `Log out` actions reachable.
+reopen `Panel`, `Edit text`, `Main`, and `Log out` actions reachable during the
+same owner workspace session.
+
+Do not let a stored admin session or stale `purich-admin-ever-v7` marker show
+owner chrome on a clean visitor `/` route. Admin authentication and visible
+owner workspace mode are separate states.
 
 Do not make ordinary visitor navbar anchor clicks rebuild the visitor DOM or
 rehydrate the page as if they were owner routes. Same-page anchors should scroll

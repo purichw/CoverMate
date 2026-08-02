@@ -94,6 +94,8 @@ Minimum checks:
 - launcher links open `/#edit`, `/#admin`, `/admin/analytics`, and `/`
 - admin `Public site` actions use `/?view=public`, clear the owner marker, and
   return to `/` without showing `[data-admin-owner-bar]`
+- a signed-in browser with a stale `purich-admin-ever-v7` marker can load `/`
+  and reload `/` without showing owner chrome
 - `/admin/analytics` renders private analytics without loading visitor GA
   scripts and without horizontal overflow
 - `/admin/analytics` recent leads remain readable on mobile as labeled cards,

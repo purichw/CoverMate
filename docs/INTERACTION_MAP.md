@@ -87,6 +87,8 @@ This page is an intentional admin step and should not disappear after login.
 The public-site link intentionally carries a short-lived `view=public` flag so
 the visitor page opens without the owner-reopen bar, then cleans the URL back to
 `/`.
+Being signed in as an admin is not itself a visible mode. A clean public route
+must not show owner chrome, even if stale local owner markers exist.
 
 ## Inline Editing Flow
 
@@ -103,6 +105,9 @@ the visitor page opens without the owner-reopen bar, then cleans the URL back to
    compact owner bar for reopening admin tools.
 8. `Public site` uses `/?view=public`, clears the owner marker, and returns to
    the clean visitor route without owner chrome.
+9. Reloading `/` after that remains a visitor view; owner chrome must stay
+   hidden until the owner intentionally opens `#admin`, `#edit`, `#preview`, or
+   `/admin`.
 
 Thai and English copy are separate where the bundle supports separate language
 fields.
@@ -134,6 +139,8 @@ fields.
    owners do not need to bounce through the launcher for common switching.
 13. `Public site` must clear `purich-admin-ever-v7`; staying signed in should
     not by itself reveal owner chrome on the visitor route.
+14. A stale `purich-admin-ever-v7` marker on `/` must be cleared or ignored
+    during public route setup.
 
 For sections that use structured cards, the Content tab exposes card editing
 instead of relying on hard-coded copy. Current editable card sets include the

@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-08-02T10:28:55.060Z",
+  "baseUrl": "http://localhost:4177",
+  "commit": "working-tree",
+  "captures": [
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard/public-root-stale-marker-desktop.png",
+      "route": "/",
+      "viewport": "1440x900",
+      "authState": "mock-admin-session + stale owner marker",
+      "expectation": "No visible owner bar; stale marker cleared."
+    },
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard/admin-closed-reopen-bar-desktop.png",
+      "route": "/#admin then close",
+      "viewport": "1440x900",
+      "authState": "mock-admin-session",
+      "expectation": "In-session owner reopen bar is still visible after closing panel."
+    },
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard/public-after-public-site-desktop.png",
+      "route": "/?view=public cleaned to /",
+      "viewport": "1440x900",
+      "authState": "mock-admin-session after Public site action",
+      "expectation": "No visible owner bar after choosing Public site."
+    }
+  ],
+  "finalState": {
+    "route": "/",
+    "ownerBars": 0,
+    "marker": null
+  }
+}

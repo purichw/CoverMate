@@ -50,6 +50,14 @@ stability:
   `Publish` success toast with 30-second `Undo`, and mobile admin drawer
   stacking/action-bar spacing.
 
+Latest local regression evidence for public/admin chrome separation:
+
+- Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard`
+- Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard/manifest.json`
+- Includes a clean public `/` route with a mocked admin session and stale owner
+  marker, the in-session owner reopen bar after closing `/#admin`, and the
+  clean visitor view after clicking `Public site`.
+
 The following screenshots are historical ad-hoc visual evidence from production. They are useful for the exported spec context, but they are not a complete production snapshot suite:
 
 - Public desktop: `/tmp/covermate-spec-home-desktop.png`
@@ -124,6 +132,8 @@ Update the corresponding Claude designs to reflect the current product decisions
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear the owner marker and return to the
   public visitor route without showing owner chrome.
+- A signed-in admin session is not a visible public-page mode. A clean `/` load
+  or reload must hide owner chrome even if stale local owner markers exist.
 - All visible Thai and English text uses the Google Sans family. Headings and logo text may use heavier Google Sans weights, but do not reintroduce unrelated serif/display fonts.
 - The AIA logo asset is the transparent red mark at `assets/logos/aia-logo.png`.
 - Contact heading Thai `ขอรับคำปรึกษา` must remain one line on desktop and should avoid awkward word breaks elsewhere.
@@ -628,6 +638,9 @@ Required elements:
 `View public site` links use `/?view=public`, then the public bundle cleans the
 URL back to `/` and suppresses admin owner chrome for that visitor-view
 navigation.
+Clean public loads must also clear or ignore stale owner markers; the owner
+reopen bar is an in-session recovery affordance after closing admin tools, not a
+persistent admin badge on the visitor site.
 
 Layout:
 
@@ -677,6 +690,8 @@ Required capabilities:
 - `Undo` after publish restores the previous live snapshot by publishing it
   back to Firestore.
 - Closing the drawer should not trap the owner. A reopen owner bar must stay available.
+- That reopen bar is in-session only. It must not appear on a fresh or reloaded
+  public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - The compact owner-reopen bar should also preserve direct `Save draft`,
   `Preview`, and `Publish` controls so closing the drawer does not hide the

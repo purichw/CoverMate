@@ -215,6 +215,9 @@ Production patches currently preserved in the bundles:
   drawer returns to the public page with an owner bar for reopening the control
   panel, entering edit mode, returning to `Main` (`/admin`), opening
   `Public site` (`/?view=public`), or logging out.
+- That owner bar is not a persistent public-page admin badge. A clean `/` load
+  or reload must clear/ignore stale owner markers and hide owner chrome even
+  when `covermate-admin-session` is still valid.
 - Inline edit mode has its own owner toolbar with links back to the control
   panel, `Main` (`/admin`), `Public site` (`/?view=public`), a done action that
   removes `contenteditable`, and `Log out`.
