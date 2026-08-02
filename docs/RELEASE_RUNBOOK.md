@@ -119,8 +119,11 @@ Minimum checks:
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
   "ออก" control
 - `/#edit` renders click-to-edit mode with editable text fields
-- `/#edit` toolbar can open `Panel`, return to `Main`, open `Public site`,
-  finish editing with `Done`, and `Log out`
+- `/#edit` owner dock is compact by default: `Mode · Text edit`, `Tools`, and
+  `Done` stay visible; expanding `Tools` opens the warm-ink command palette with
+  `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`, `Main`,
+  `Public site`, `Log out`) groups. `Publish` is the only terracotta-filled
+  dock action
 - finishing edit mode removes `contenteditable` affordances
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English

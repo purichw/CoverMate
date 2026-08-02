@@ -232,9 +232,11 @@ Production patches currently preserved in the bundles:
 - That owner bar is not a persistent public-page admin badge. A clean `/` load
   or reload must clear/ignore stale owner markers and hide owner chrome even
   when `covermate-admin-session` is still valid.
-- Inline edit mode has its own owner toolbar with links back to the control
-  panel, `Main` (`/admin`), `Public site` (`/?view=public`), a done action that
-  removes `contenteditable`, and `Log out`.
+- Inline edit mode has its own warm-ink owner dock. The default row keeps
+  `Mode · Text edit`, `Tools`, and `Done` visible; expanding `Tools` reveals a
+  single dark command palette grouped into `Draft` (`Save draft`, `Preview`,
+  `Publish`) and `Go to` (`Panel`, `Main`, `Public site`, `Log out`). `Publish`
+  is the only terracotta-filled action in this surface.
 - Explicit owner `Save draft` and `Publish` actions use custom confirmation
   dialogs, wait for successful Firestore writes, then show dismissible success
   toasts with a 30-second `Undo`. Save undo restores the previous draft; publish

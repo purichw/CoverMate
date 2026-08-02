@@ -73,9 +73,13 @@ The `/#admin` drawer no longer uses a standalone ambiguous "ออก" button in
 header. Closing the drawer now shows a compact owner bar with reopen, edit,
 `Main`, and `Log out` actions.
 
-The `/#edit` mode now has its own owner toolbar with `Panel`, `Main`, `Done`,
-and `Log out` actions. The done action removes `contenteditable` state
-before returning to the public page.
+The `/#edit` mode now uses the warm-ink owner dock from the Claude owner-dock
+reference. The collapsed dock keeps `Mode · Text edit`, `Tools`, and `Done`
+available; expanding `Tools` opens a single dark-ink command palette grouped
+into `Draft` and `Go to` actions. `Publish` is the only terracotta-filled action
+inside the dock; `Save draft`, `Preview`, `Panel`, `Main`, `Public site`, and
+`Log out` stay quiet cream actions. The done action removes `contenteditable`
+state before returning to the public page.
 
 Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
 successful Firestore writes, then show dismissible success toasts with

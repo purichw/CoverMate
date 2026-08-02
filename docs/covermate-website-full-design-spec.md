@@ -721,6 +721,13 @@ Required capabilities:
 - That reopen bar is in-session only. It must not appear on a fresh or reloaded
   public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
+- `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
+  The default state shows only `Mode · Text edit`, `Tools`, and `Done`; `Tools`
+  expands a single dark-ink command palette above the dock. Desktop uses two
+  groups, `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`,
+  `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
+  scrollable column with a 460px cap when viewport height allows. `Publish` is
+  the only terracotta-filled dock action.
 - The compact owner-reopen bar should also preserve direct `Save draft`,
   `Preview`, and `Publish` controls so closing the drawer does not hide the
   publishing path.

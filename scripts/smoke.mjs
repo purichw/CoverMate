@@ -591,7 +591,9 @@ for (const [name, width, height] of viewports) {
     }
     if (
       url.includes("firestore.googleapis.com/google.firestore") &&
-      (failureText === "net::ERR_ABORTED" || failureText.startsWith("net::ERR_QUIC_PROTOCOL_ERROR"))
+      (failureText === "net::ERR_ABORTED" ||
+        failureText === "net::ERR_NETWORK_CHANGED" ||
+        failureText.startsWith("net::ERR_QUIC_PROTOCOL_ERROR"))
     ) {
       return;
     }
@@ -1292,6 +1294,7 @@ for (const [name, width, height] of viewports) {
   await waitForBodyText(page, /Text edit/);
   const editState = await page.evaluate(() => ({
     text: document.body.innerText,
+    toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
@@ -1307,13 +1310,38 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /#edit: owner edit toolbar is missing`);
   }
   if (
-    !editState.text.includes("Panel") ||
-    !editState.text.includes("Main") ||
-    !editState.text.includes("Public site") ||
-    !editState.text.includes("Log out") ||
-    !editState.text.includes("Done")
+    !editState.toolbarText.includes("Text edit") ||
+    !editState.toolbarText.includes("Tools") ||
+    !editState.toolbarText.includes("Done")
   ) {
-    failures.push(`${name} /#edit: edit toolbar owner actions are missing`);
+    failures.push(`${name} /#edit: compact edit toolbar controls are missing`);
+  }
+  await page.locator('[data-admin-owner-bar="edit"] .cm-owner-dock__summary').click();
+  await page.waitForTimeout(150);
+  const editToolsState = await page.evaluate(() => {
+    const bar = document.querySelector('[data-admin-owner-bar="edit"]');
+    const toggle = bar?.querySelector("#covermate-owner-tools-toggle");
+    const panel = bar?.querySelector("#covermate-owner-tools-panel");
+    const panelStyle = panel ? window.getComputedStyle(panel) : null;
+    return {
+      open: Boolean(toggle?.checked) && panelStyle?.visibility !== "hidden" && panelStyle?.opacity !== "0",
+      toolbarText: bar?.innerText || ""
+    };
+  });
+  if (!editToolsState.open) {
+    failures.push(`${name} /#edit: edit toolbar tools did not expand`);
+  }
+  if (
+    !editToolsState.toolbarText.includes("Panel") ||
+    !editToolsState.toolbarText.includes("Main") ||
+    !editToolsState.toolbarText.includes("Public site") ||
+    !editToolsState.toolbarText.includes("Save draft") ||
+    !editToolsState.toolbarText.includes("Preview") ||
+    !editToolsState.toolbarText.includes("Publish") ||
+    !editToolsState.toolbarText.includes("Log out") ||
+    !editToolsState.toolbarText.includes("Done")
+  ) {
+    failures.push(`${name} /#edit: expanded edit toolbar owner actions are missing`);
   }
   if (editState.contentEditableCount < 20) {
     failures.push(`${name} /#edit: expected editable page text, got ${editState.contentEditableCount}`);

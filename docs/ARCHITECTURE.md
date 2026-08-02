@@ -179,8 +179,11 @@ The owner hash modes also own the admin continuation UI:
 
 - closing the `/#admin` drawer removes the hash and shows a compact owner bar
   instead of trapping the owner on a public page with no way back;
-- `/#edit` shows its own owner toolbar for returning to the control panel,
-  returning to `Main` (`/admin`), ending edit mode, or logging out;
+- `/#edit` shows its own warm-ink owner dock: the collapsed row keeps
+  `Mode · Text edit`, `Tools`, and `Done` visible, while `Tools` expands a
+  single dark-ink command palette grouped into `Draft` and `Go to` actions.
+  `Publish` is the only terracotta-filled action; the other owner commands stay
+  quiet cream/outline actions;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 

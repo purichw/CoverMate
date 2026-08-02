@@ -99,8 +99,11 @@ must not show owner chrome, even if stale local owner markers exist.
    image fields, currently the advisor proof logo stored as `brand.advisorLogo`.
 5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
-6. The edit toolbar lets the owner open the control panel, return to `Main`,
-   open `Public site`, save draft, preview, publish, finish editing, or log out.
+6. The edit toolbar is a warm-ink owner dock and is compact by default: it
+   shows `Mode · Text edit`, `Tools`, and `Done`. `Tools` expands a single
+   dark-ink command palette with `Draft` actions (`Save draft`, `Preview`,
+   `Publish`) and `Go to` actions (`Panel`, `Main`, `Public site`, `Log out`).
+   `Publish` is the only terracotta-filled dock action.
 7. Finishing edit mode removes all `contenteditable` and image-edit affordances and shows the
    compact owner bar for reopening admin tools.
 8. `Public site` uses `/?view=public`, clears the owner marker, and returns to

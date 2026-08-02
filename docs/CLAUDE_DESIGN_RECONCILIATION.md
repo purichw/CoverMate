@@ -168,6 +168,11 @@ Must preserve:
   Arrange & customise, Analytics.
 - Admin labels are English: Main, Public site, Log out, Panel, Edit text,
   Save draft, Preview, Publish, Success.
+- Inline edit uses the warm-ink owner dock from `owner-dock-spec.md`. Keep
+  `Mode · Text edit`, `Tools`, and `Done` visible by default; put `Save draft`,
+  `Preview`, and `Publish` under `Draft`, and `Panel`, `Main`, `Public site`,
+  and `Log out` under `Go to`. Do not reintroduce the black/white alternating
+  toolbar; `Publish` is the only terracotta-filled dock action.
 - Public site action clears owner chrome. A signed-in admin session is not a
   visible public-page mode.
 - Save draft and Publish require custom confirmation dialogs, successful
