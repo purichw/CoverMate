@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 ## Current Shape
 
@@ -10,10 +10,19 @@ references, with small production patches applied in the wrapper and embedded
 bundle strings.
 
 The current visitor bundle has been reconciled against
-`/Users/point/Downloads/CoverMate Standalone (open this) (1).html` while
-preserving production product decisions that intentionally differ from that
-offline demo, including Firebase Auth/Firestore, Admin Analytics, and the
-single-page `#motor` anchor alias.
+`/Users/point/Downloads/CoverMate Standalone.html`,
+`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`,
+and `SPEC (5)` while
+preserving production product decisions that intentionally differ from offline
+demos, including Firebase Auth/Firestore, Admin Analytics, split admin routes,
+real lead submission paths, and the one-page `#motor` alias behavior.
+
+Downloaded Claude HTML is not automatically a portable standalone. Some exports
+still depend on sidecar runtime files such as `support.js`, `image-slot.js`, and
+`_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw
+template placeholders like `{{ brandName }}`. Treat those files as design
+references until they are compiled into self-contained HTML or shipped with a
+complete dependency folder.
 
 There is no backend API in this repo. Admin identity is backed by Firebase Auth
 plus Firestore `admins/{uid}` allowlist checks, and CMS content is
@@ -48,14 +57,17 @@ flowchart TD
 
 - `/`
 - `/#motor`
+- `/#life`
+- `/#motor-focus`
+- `/#life-focus`
 - `/#edit`
 - `/#admin`
 - `/#preview`
 
-`/#motor` is currently an alias into the main site, re-aimed to the `#insurers`
-section after hydration while preserving the global navbar. The earlier focused
-motor landing-page variant is still present in the bundle but hidden behind
-`ENABLE_MOTOR_VARIANT = false`.
+`/#motor` and `/#life` are aliases into the main site, re-aimed to `#insurers`
+and `#cover` after hydration while preserving the global navbar.
+`/#motor-focus` and `/#life-focus` render unexposed campaign variants from the
+latest reference and must stay out of the header nav and sitemap.
 
 `admin/login/index.html` owns the admin sign-in surface. Firebase Google sign-in
 checks Firestore `admins/{uid}` before writing the browser-local

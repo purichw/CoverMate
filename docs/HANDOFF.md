@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 ## Current State
 
@@ -24,21 +24,23 @@ Local workspace state can still be ahead of production between edits. Treat
 Vercel is deployed, Firestore Rules are deployed when rules changed, and
 production smoke passes.
 
-Last verified production release:
+Previous verified production baseline before this update:
 
-- Date: 2026-07-30
-- Commit: `7be3274`
+- Date: 2026-08-02
+- Commit: `7fee3a3`
 - Production alias: `https://covermate.vercel.app`
-- Firestore Rules: deployed to Firebase project `covermate-purich`
+- Firestore Rules: no new rules change in this release; existing rules are
+  deployed to Firebase project `covermate-purich`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
   passed
 
 ## Product Decision Checkpoint
 
-As of commit `7be3274`, the current visitor site, admin login, admin launcher,
+As of the 2026-08-02 verified production baseline, the current visitor site, admin login, admin launcher,
 owner editing modes, analytics page, Firebase/Firestore content flow, SEO
-layer, typography policy, responsive behavior, performance bundle trimming, and
-Vercel deployment shape are accepted product decisions for the current release.
+layer, typography policy, responsive behavior, motor tier comparison,
+performance bundle trimming, and Vercel deployment shape are accepted product
+decisions for the current release.
 
 Future bugs or regressions should be treated as defects or follow-up fixes. They
 do not automatically reopen the approved product decisions unless the product
@@ -79,12 +81,28 @@ new contact form selects, insurer relationship proof cards, card editing in the
 admin content panel, and local structural migration key.
 
 The visitor bundle has also been reconciled with
-`/Users/point/Downloads/CoverMate Standalone (open this) (1).html`. The latest
-local bundle includes the expanded reference sections for policy review, claim
-help, renewal reminders, guides, fee transparency, and privacy/PDPA while
-preserving the production decisions for Firebase/Firestore, Admin Analytics, the
-three-card admin launcher, and the single-page `#motor` alias. This reference
-reconciliation is included in production release `7be3274`.
+`/Users/point/Downloads/CoverMate Standalone.html`. The latest local bundle
+includes the expanded reference sections for policy review, claim help, renewal
+reminders, guides, fee transparency, privacy/PDPA, the main-site `#motor` /
+`#life` aliases, and unexposed `#motor-focus` / `#life-focus` campaign variants
+while preserving the production decisions for Firebase/Firestore, Admin
+Analytics, the three-card admin launcher, and real public lead submission paths.
+
+The SPEC (5) reconciliation added the motor tier comparison section after the
+insurer-logo section. It renders as a desktop comparison table and mobile
+stacked cards, with editable tier heads/items/cell states in the Admin Content
+tab.
+
+`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
+is the runtime-dependent Claude build source. When opened alone from
+`/Downloads`, it can show raw `{{ ... }}` placeholders because required sidecar
+files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js` are
+absent. Treat it as reference material only unless Claude exports a
+self-contained HTML or complete folder bundle. The candidate packaged demo is
+`/Users/point/Downloads/CoverMate Standalone.html`; a 2026-08-02 quick check
+found no visible raw template markers there, but it still logs a `file://`
+`.image-slots.state.json` fetch error, so it is not yet fully validated as a
+portable evidence artifact.
 
 Admin login now uses Firebase Auth through `covermate-firebase.js` and checks
 Firestore `admins/{uid}` before creating `covermate-admin-session`.
@@ -186,6 +204,12 @@ the business owner.
 
 The embedded exported bundle is hard to maintain by hand. Run parse checks and
 visual smoke checks after bundle edits.
+
+Downloaded standalone/reference HTML may be incomplete. If it renders raw
+`{{ ... }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`, do not treat it as
+the production source of truth or a valid portable demo. Use the production
+site, repository implementation, docs, Firestore live state, and snapshot suite
+instead.
 
 Admin drawer controls are intentionally at mobile touch-target size. Keep the
 section reorder buttons, toggles, and tab/action controls reachable at iPhone SE

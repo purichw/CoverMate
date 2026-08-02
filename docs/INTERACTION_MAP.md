@@ -4,7 +4,7 @@ Last updated: 2026-08-02
 
 ## Visitor Journey
 
-1. Visitor lands on `/` or `/#motor`.
+1. Visitor lands on `/`, `/#motor`, `/#life`, or an unexposed campaign hash.
 2. Visitor scans the offer, credibility bar, coverage choices, policy-review
    offer, calculator, process, insurer proof, motor tier comparison, claim
    help, renewal reminders, guides, claim stories, about/license copy, FAQ, fee transparency,
@@ -14,11 +14,13 @@ Last updated: 2026-08-02
 4. Public forms save validated Firestore `contactLeads/*` documents; LINE,
    phone, and email CTAs still hand off directly.
 
-`/#motor` is currently an alias into the main visitor site, not a separate page
-variant. It keeps the same global navbar as `/` and re-aims to the `#insurers`
-motor-insurance section after hydration. The earlier focused motor landing-page
-variant remains in the bundle behind `ENABLE_MOTOR_VARIANT = false` and should
-stay hidden until a deliberate `/motor` or campaign route is approved.
+`/#motor` and `/#life` are aliases into the main visitor site, not separate page
+variants. They keep the same global navbar as `/`; `/#motor` re-aims to
+`#insurers`, while `/#life` re-aims to `#cover` after hydration.
+
+`/#motor-focus` and `/#life-focus` are unexposed campaign variants from the
+latest Claude reference. They are live hash states for campaign use, but they
+must not appear in the header navigation or sitemap.
 
 ## Lead Form Contract
 

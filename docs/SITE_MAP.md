@@ -8,6 +8,9 @@ Last updated: 2026-08-02
 | --- | --- | --- | --- |
 | `/` | Visitor | Main public landing page | `index.html` |
 | `/#motor` | Visitor | Alias to the main site's motor-insurance / insurer section | `index.html` |
+| `/#life` | Visitor | Alias to the main site's coverage section | `index.html` |
+| `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the latest reference | `index.html` |
+| `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the latest reference | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner | Post-login "Manage your site" launcher | `admin/index.html` |
 | `/admin/analytics` | Owner | Private analytics dashboard for leads and GA4 reporting readiness | `admin/analytics/index.html` |
@@ -21,6 +24,8 @@ Last updated: 2026-08-02
 | --- | --- | --- |
 | `/` | `index,follow` | `https://covermate.vercel.app/` |
 | `/#motor` | Same document as `/`; do not sitemap hash URLs | `https://covermate.vercel.app/` |
+| `/#life` | Same document as `/`; do not sitemap hash URLs | `https://covermate.vercel.app/` |
+| `/#motor-focus`, `/#life-focus` | Same document as `/`; unexposed campaign hash states, not sitemap URLs | `https://covermate.vercel.app/` |
 | `/admin/login` | `noindex,nofollow` | `https://covermate.vercel.app/admin/login/` |
 | `/admin` | `noindex,nofollow` | `https://covermate.vercel.app/admin/` |
 | `/admin/analytics` | `noindex,nofollow` | `https://covermate.vercel.app/admin/analytics/` |
@@ -71,10 +76,11 @@ Expected visible sections:
 Visitor navigation should move through coverage, motor, claim help, calculator,
 steps, FAQ, and contact entry points.
 
-`/#motor` currently keeps the same global navigation as `/` and re-aims to
-`#insurers` after hydration. The older focused motor variant is preserved in
-the bundle behind `ENABLE_MOTOR_VARIANT = false`; do not expose its compact nav
-unless a separate `/motor` or campaign route is intentionally restored.
+`/#motor` keeps the same global navigation as `/` and re-aims to `#insurers`
+after hydration. `/#life` behaves the same way and re-aims to `#cover`.
+
+`/#motor-focus` and `/#life-focus` render focused campaign variants from the
+latest Claude reference. They stay unexposed in the header nav and sitemap.
 
 Admin login must land on `/admin` after sign-in.
 

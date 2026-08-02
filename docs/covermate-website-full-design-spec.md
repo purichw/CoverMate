@@ -17,13 +17,21 @@ This spec exports the current product and visual contract so design updates can 
 
 ## Snapshot Evidence
 
-Current complete production suite:
+Most recent complete production suite:
 
 - Snapshot folder: `/Users/point/CoverMate/docs/snapshots/production-2026-07-31`
 - Manifest: `/Users/point/CoverMate/docs/snapshots/production-2026-07-31/manifest.json`
 - Captured screenshots: 47
 - Intentionally missing states: contact and renewal success states, because this run did not submit real production lead data.
 - Signed-in admin and owner-hash captures use a mocked `covermate-admin-session`; the manifest labels these as `mock-admin-session`.
+
+Latest SPEC (5) release evidence is narrower than the complete production suite
+above and should be treated as targeted proof for the motor tier reconciliation:
+
+- Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-spec5`
+- Includes public home desktop, public tiers desktop/mobile, public `#motor`
+  alias desktop, and admin Content tab tier editing.
+- Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-spec5/manifest.json`
 
 The following screenshots are historical ad-hoc visual evidence from production. They are useful for the exported spec context, but they are not a complete production snapshot suite:
 
@@ -51,13 +59,41 @@ If this spec is being read from the bundled skill, follow `references/snapshot-s
 
 Use this precedence order:
 
-1. Production site at `https://covermate.vercel.app`, currently commit `97181c7`.
+1. Production site at `https://covermate.vercel.app`; verify the deployed commit for the current release in Vercel or `git log`.
 2. Repository implementation in `/Users/point/CoverMate`.
 3. Project docs in `/Users/point/CoverMate/docs`.
 4. Firestore live CMS state when present: `sites/covermate/states/live`.
 5. Earlier Claude/standalone/screenshots only as visual calibration.
 
 If older references conflict with this spec or the live site, this spec and the live implementation win.
+
+## Standalone And Claude Export Guardrail
+
+Claude/standalone HTML files are reference artifacts, not production source of
+truth. Use them for visual calibration and design handoff only after checking
+whether they are truly portable.
+
+A valid portable standalone must:
+
+- open directly from `file://` without a dev server;
+- include or inline every runtime dependency;
+- avoid missing-file console errors for `support.js`, `image-slot.js`, or
+  `_ds/*/_ds_bundle.js`;
+- render no visible raw template markers such as `{{ brandName }}`,
+  `{{ n.label }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`;
+- render public, `#admin`, `#edit`, and relevant hash states after reload.
+
+Known reference caveat:
+`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
+is runtime-dependent when opened alone from `/Downloads`. It can display raw
+`{{ ... }}` placeholders if its sidecar runtime files are absent. Treat it as a
+Claude reference input, not a valid self-contained deliverable. The candidate
+packaged demo is `/Users/point/Downloads/CoverMate Standalone.html`, but it must
+still pass the standalone validation checklist before being shared as evidence;
+a 2026-08-02 quick check found no visible raw template markers but did find a
+`file://` `.image-slots.state.json` fetch error.
+If a standalone demo is required, ask Claude to produce a single self-contained
+HTML file or a complete folder bundle with an explicit `open-this.html`.
 
 ## Claude Update Brief
 
@@ -116,6 +152,9 @@ Supporting docs:
 | --- | --- | --- | --- |
 | `/` | Public visitor site | Prospective customers | Indexable |
 | `/#motor` | Alias into public `#insurers` section | Prospective motor customers | Same page, no separate surface |
+| `/#life` | Alias into public `#cover` section | Prospective life/health customers | Same page, no separate surface |
+| `/#motor-focus` | Unexposed motor campaign variant | Campaign visitors when explicitly linked | Same page, no sitemap/nav exposure |
+| `/#life-focus` | Unexposed life/health campaign variant | Campaign visitors when explicitly linked | Same page, no sitemap/nav exposure |
 | `/#edit` | Owner click-to-edit text mode | Admin only | No separate index route |
 | `/#admin` | Owner arrange/customise drawer over public page | Admin only | No separate index route |
 | `/#preview` | Owner preview of draft | Admin only | No separate index route |
@@ -506,6 +545,9 @@ Visitor interactions:
 - Language toggle updates visible text between Thai and English.
 - Header nav scrolls to anchors on the same page.
 - `/#motor` normalizes to the motor insurer anchor behavior.
+- `/#life` normalizes to the coverage anchor behavior.
+- `/#motor-focus` and `/#life-focus` render unexposed campaign variants and
+  must not appear in the public header nav or sitemap.
 - Product/FAQ/guide rows can expand/collapse when configured.
 - Calculator updates estimate live.
 - Lead form writes validated Firestore data.

@@ -17,6 +17,14 @@ comparison, and deployment shape are accepted product decisions. Future bugs
 should be fixed as defects unless the owner explicitly reopens the product
 decision.
 
+Standalone/export checkpoint: downloaded Claude standalone HTML files are
+design/reference artifacts only. They are not source of truth for production,
+and they are not valid "standalone" deliverables unless they open from `file://`
+without missing runtime files and without rendering raw placeholders such as
+`{{ brandName }}`. If a Claude export depends on `support.js`, `image-slot.js`,
+or `_ds/*/_ds_bundle.js`, keep it as a reference bundle input and ask Claude to
+produce a self-contained export before treating it as a portable demo.
+
 ## How To Run / Verify
 
 - Release guardrail: do not commit, push, or deploy until the user explicitly
@@ -101,9 +109,11 @@ Route contracts:
 - `/` is the public visitor site.
 - `/#motor` is a visitor anchor alias for the main site's motor-insurance /
   insurer section (`#insurers`). It must keep the same global navbar as `/`.
-- The old focused motor landing-page variant is preserved behind
-  `ENABLE_MOTOR_VARIANT = false` inside `index.html`; keep it hidden until a
-  deliberate `/motor` or campaign route is approved.
+- `/#life` is a visitor anchor alias for the main site's coverage section
+  (`#cover`). It must keep the same global navbar as `/`.
+- `/#motor-focus` and `/#life-focus` are unexposed campaign variants preserved
+  from the latest Claude reference. They are public hash states in `index.html`,
+  but must not appear in the header nav or `sitemap.xml`.
 - `/#admin`, `/#edit`, and `/#preview` are owner modes inside `index.html`.
 - `/admin/login` is the owner auth gate.
 - `/admin` is the private admin launcher and must remain reachable after login.
@@ -160,16 +170,31 @@ Historical inputs used to create the current surfaces:
 - Visitor/admin standalone reference:
   `/Users/point/Downloads/Purich Insurance Site (standalone).html`
 - Latest visitor/admin standalone reference:
-  `/Users/point/Downloads/CoverMate Standalone (open this) (1).html`
+  `/Users/point/Downloads/CoverMate Standalone.html`
+- Latest Claude runtime-dependent reference:
+  `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
 - Earlier visitor reference: `/Users/point/Downloads/Purich Insurance Site.dc.html`
 - Admin references: `/Users/point/Downloads/export/Admin Login.dc.html` and
   `/Users/point/Downloads/export/admin.dc.html`
 - Design tokens/reference CSS: `/Users/point/Downloads/organic.css`
 - Insurer logos: `/Users/point/Downloads/assets/ins/`
 - Specs: `/Users/point/Downloads/SPEC.md`,
-  `/Users/point/Downloads/SPEC (1).md`, and
-  `/Users/point/Downloads/SPEC (2).md`, and
-  `/Users/point/Downloads/SPEC (3).md`
+  `/Users/point/Downloads/SPEC (1).md`,
+  `/Users/point/Downloads/SPEC (2).md`,
+  `/Users/point/Downloads/SPEC (3).md`,
+  `/Users/point/Downloads/SPEC (4).md`, and
+  `/Users/point/Downloads/SPEC (5).md`
+
+Reference/export rules:
+
+- Production, the repository implementation, current docs, and Firestore live
+  CMS state outrank older Claude/standalone files.
+- A Claude/standalone HTML file that shows raw `{{ ... }}`, `sc-if`, `sc-for`,
+  `x-dc`, or `[object Object]` in the browser is an incomplete export, not a
+  valid implementation target.
+- A portable standalone demo must include or inline every runtime dependency,
+  load correctly from `file://`, and pass a visible-text check for raw template
+  markers before it is shared.
 
 Production patches currently preserved in the bundles:
 

@@ -29,8 +29,15 @@ const viewports = [
 const routes = [
   ["/", "main"],
   ["/#motor", "main"],
+  ["/#life", "main"],
+  ["/#motor-focus", "main"],
+  ["/#life-focus", "main"],
   ["/admin/login", "main"]
 ];
+
+const mainVisitorRoutes = new Set(["/", "/#motor", "/#life"]);
+const motorSectionRoutes = new Set(["/", "/#motor", "/#motor-focus"]);
+const visitorRoutes = new Set(["/", "/#motor", "/#life", "/#motor-focus", "/#life-focus"]);
 
 function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -324,12 +331,12 @@ for (const [name, width, height] of viewports) {
       { timeout: 30000 }
     );
     await page.waitForTimeout(600);
-    if (route === "/#motor") {
-      const motorAliasState = await page.evaluate(() => {
+    if (route === "/#motor" || route === "/#life") {
+      const aliasState = await page.evaluate((targetId) => {
         const header = document.querySelector("header");
-        const insurers = document.getElementById("insurers");
+        const target = document.getElementById(targetId);
         const headerRect = header ? header.getBoundingClientRect() : null;
-        const insurersRect = insurers ? insurers.getBoundingClientRect() : null;
+        const targetRect = target ? target.getBoundingClientRect() : null;
       const navHrefs = Array.from(document.querySelectorAll("header nav a[href]"))
         .map((anchor) => anchor.getAttribute("href"))
         .filter(Boolean);
@@ -346,43 +353,43 @@ for (const [name, width, height] of viewports) {
         navLabels,
         bodyText: document.body.innerText,
         headerBottom: headerRect ? headerRect.bottom : 0,
-        insurersTop: insurersRect ? insurersRect.top : null,
+        targetTop: targetRect ? targetRect.top : null,
         viewportHeight: window.innerHeight,
-          insurersScrollMarginTop: insurers ? window.getComputedStyle(insurers).scrollMarginTop : ""
+          targetScrollMarginTop: target ? window.getComputedStyle(target).scrollMarginTop : ""
         };
-      });
+      }, route === "/#motor" ? "insurers" : "cover");
       const expectedMainNav = ["#cover", "#insurers", "#claim", "#fit", "#how", "#faq"];
-      const missingMainNav = expectedMainNav.filter((href) => !motorAliasState.navHrefs.includes(href));
+      const missingMainNav = expectedMainNav.filter((href) => !aliasState.navHrefs.includes(href));
       if (missingMainNav.length) {
-        failures.push(`${name} ${route}: #motor should keep main nav, missing ${missingMainNav.join(", ")}`);
+        failures.push(`${name} ${route}: alias should keep main nav, missing ${missingMainNav.join(", ")}`);
       }
-      if (motorAliasState.navHrefs.includes("#motor-cover")) {
-        failures.push(`${name} ${route}: #motor exposed hidden motor-variant nav`);
+      if (aliasState.navHrefs.includes("#motor-cover") || aliasState.navHrefs.includes("#life-cover")) {
+        failures.push(`${name} ${route}: alias exposed hidden focus-variant nav`);
       }
-      const duplicateNavLabels = motorAliasState.navLabels.filter(
+      const duplicateNavLabels = aliasState.navLabels.filter(
         (label, index, labels) => labels.indexOf(label) !== index
       );
       if (duplicateNavLabels.length) {
         failures.push(`${name} ${route}: duplicate header nav labels ${duplicateNavLabels.join(", ")}`);
       }
-      if (/เบี้ยรถคันเดิม|One car, every insurer compared/.test(motorAliasState.bodyText)) {
-        failures.push(`${name} ${route}: hidden motor landing variant rendered`);
+      if (/เบี้ยรถคันเดิม|One car, every insurer compared|ตอนที่ต้องใช้จริง|Nobody reads the policy/.test(aliasState.bodyText)) {
+        failures.push(`${name} ${route}: hidden focus landing variant rendered`);
       }
       if (
-        motorAliasState.insurersTop == null ||
-        motorAliasState.insurersTop < motorAliasState.headerBottom + 4 ||
-        motorAliasState.insurersTop > motorAliasState.viewportHeight * 0.72
+        aliasState.targetTop == null ||
+        aliasState.targetTop < aliasState.headerBottom + 4 ||
+        aliasState.targetTop > aliasState.viewportHeight * 0.72
       ) {
         failures.push(
-          `${name} ${route}: #motor did not land on the main insurers section below the sticky header ` +
-            `(top=${motorAliasState.insurersTop}, headerBottom=${motorAliasState.headerBottom})`
+          `${name} ${route}: alias did not land on the intended main section below the sticky header ` +
+            `(top=${aliasState.targetTop}, headerBottom=${aliasState.headerBottom})`
         );
       }
-      if (!motorAliasState.insurersScrollMarginTop || motorAliasState.insurersScrollMarginTop === "0px") {
-        failures.push(`${name} ${route}: insurers anchor is missing scroll-margin-top`);
+      if (!aliasState.targetScrollMarginTop || aliasState.targetScrollMarginTop === "0px") {
+        failures.push(`${name} ${route}: alias target anchor is missing scroll-margin-top`);
       }
     }
-    if (route === "/" || route === "/#motor") {
+    if (motorSectionRoutes.has(route)) {
       const insurers = page.locator("#insurers");
       if (await insurers.count()) {
         await insurers.scrollIntoViewIfNeeded();
@@ -453,6 +460,11 @@ for (const [name, width, height] of viewports) {
       return {
         title: document.title,
         hasTarget: Boolean(target),
+        sectionIds: Array.from(document.querySelectorAll("section[id]")).map((section) => section.id),
+        h1Text: Array.from(document.querySelectorAll("h1")).map((heading) =>
+          (heading.textContent || "").trim()
+        ).join(" | "),
+        contactHeadingText: document.querySelector("#talk h2")?.textContent || "",
         scrollWidth: root.scrollWidth,
         clientWidth: root.clientWidth,
         bodyFont: window.getComputedStyle(document.body).fontFamily,
@@ -506,7 +518,7 @@ for (const [name, width, height] of viewports) {
     if (state.splashVisible) {
       failures.push(`${name} ${route}: exported bundler splash is visible`);
     }
-    if (route === "/" || route === "/#motor") {
+    if (mainVisitorRoutes.has(route)) {
       if (!/^th($|-TH$)/i.test(state.seo.htmlLang)) {
         failures.push(`${name} ${route}: missing Thai html lang (${state.seo.htmlLang})`);
       }
@@ -543,37 +555,66 @@ for (const [name, width, height] of viewports) {
     if (state.bodyText.includes("[object Object]")) {
       failures.push(`${name} ${route}: rendered object placeholder text`);
     }
-    if (route === "/#motor" && state.missingAnchors.length) {
+    if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
     }
-    if ((route === "/" || route === "/#motor") && state.duplicateHeaderNavLabels.length) {
+    if (visitorRoutes.has(route) && state.duplicateHeaderNavLabels.length) {
       failures.push(
         `${name} ${route}: duplicate header nav labels ${state.duplicateHeaderNavLabels.join(", ")}`
       );
     }
-    if ((route === "/" || route === "/#motor") && state.logos.length < 14) {
+    if (route === "/#motor-focus") {
+      for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "how", "talk"]) {
+        if (!state.sectionIds.includes(id)) {
+          failures.push(`${name} ${route}: missing focused motor section #${id}`);
+        }
+      }
+      if (!/เบี้ยรถคันเดิม|One car, every insurer compared/.test(state.h1Text)) {
+        failures.push(`${name} ${route}: focused motor hero did not render`);
+      }
+      if (state.sectionIds.includes("hero") || state.sectionIds.includes("cover")) {
+        failures.push(`${name} ${route}: focused motor route leaked main hero/cover sections`);
+      }
+    }
+    if (route === "/#life-focus") {
+      for (const id of ["life", "life-trust", "life-cover", "fit", "review", "how", "faq", "talk", "privacy"]) {
+        if (!state.sectionIds.includes(id)) {
+          failures.push(`${name} ${route}: missing focused life section #${id}`);
+        }
+      }
+      if (!/ตอนที่ต้องใช้จริง|Nobody reads the policy/.test(state.h1Text)) {
+        failures.push(`${name} ${route}: focused life hero did not render`);
+      }
+      if (state.sectionIds.includes("hero") || state.sectionIds.includes("insurers")) {
+        failures.push(`${name} ${route}: focused life route leaked main hero/insurers sections`);
+      }
+    }
+    if (motorSectionRoutes.has(route) && state.logos.length < 14) {
       failures.push(`${name} ${route}: expected at least 14 visible insurer logos, got ${state.logos.length}`);
     }
-    if ((route === "/" || route === "/#motor") && !state.hasRelationshipProof) {
+    if (motorSectionRoutes.has(route) && !state.hasRelationshipProof) {
       failures.push(`${name} ${route}: insurer relationship proof cards missing AIA/Srikrung copy`);
     }
-    if ((route === "/" || route === "/#motor") && !state.hasQueryTypeSelect) {
+    if (visitorRoutes.has(route) && !state.hasQueryTypeSelect) {
       failures.push(`${name} ${route}: contact form is missing enquiry-type select options`);
     }
-    if ((route === "/" || route === "/#motor") && !state.hasCoverageSelect) {
+    if (visitorRoutes.has(route) && !state.hasCoverageSelect) {
       failures.push(`${name} ${route}: contact form is missing coverage select options`);
     }
-    if ((route === "/" || route === "/#motor") && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: claim help section is missing`);
     }
-    if ((route === "/" || route === "/#motor") && !/ไม่ต้องจำวันหมดอายุ|renewal dates/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/ไม่ต้องจำวันหมดอายุ|renewal dates/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: renewal reminder section is missing`);
     }
-    if ((route === "/" || route === "/#motor") && !/ผมได้ค่าตอบแทน|commission comes from/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/ผมได้ค่าตอบแทน|commission comes from/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: fee transparency section is missing`);
     }
-    if ((route === "/" || route === "/#motor") && !/ข้อมูลที่คุณส่งมา|What happens to/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/ข้อมูลที่คุณส่งมา|What happens to/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: privacy / PDPA section is missing`);
+    }
+    if (mainVisitorRoutes.has(route) && /ขอรับ\s*\n\s*คำปรึกษา|Request a\s*\n\s*consultation/.test(state.contactHeadingText)) {
+      failures.push(`${name} ${route}: contact heading uses a forced line break instead of the one-line product copy`);
     }
     const brokenLogo = state.logos.find((logo) => !logo.complete || !logo.naturalWidth);
     if (brokenLogo) failures.push(`${name} ${route}: broken logo ${brokenLogo.src}`);

@@ -63,6 +63,8 @@ Minimum checks:
 - `/` loads public visitor site
 - first paint does not show exported placeholder UI or raw `<x-dc>` template
   content
+- no visible raw Claude template markers such as `{{ brandName }}`,
+  `{{ n.label }}`, `sc-if`, or `sc-for` appear after hydration
 - no rendered `[object Object]` placeholder text appears on visitor or admin
   surfaces
 - insurer logos render from editable insurer items, including background-image
@@ -158,6 +160,30 @@ for (const file of ['index.html', 'admin/login/index.html', 'admin/index.html', 
 }
 NODE
 ```
+
+## Standalone / Claude Export Check
+
+The production site does not require a portable standalone artifact. Treat
+downloaded Claude standalone HTML as reference material unless the current task
+explicitly asks for a shareable offline demo.
+
+If a standalone demo is requested, validate it separately from production:
+
+1. Open it directly from `file://`, not only through a local server.
+2. Reload `/`, `#admin`, `#edit`, and any requested hash states.
+3. Confirm the browser console has no missing-file errors for `support.js`,
+   `image-slot.js`, or `_ds/*/_ds_bundle.js`.
+4. Search visible body text for raw template markers:
+
+```js
+document.body.innerText.match(/\{\{[^}]+\}\}|sc-if|sc-for|x-dc|\[object Object\]/g)
+```
+
+The expression should return `null`.
+
+5. If the file renders raw `{{ ... }}` placeholders, do not patch production
+   around it. Ask Claude to compile/export a self-contained HTML file or provide
+   a complete folder bundle with every runtime dependency.
 
 ## Deploy
 

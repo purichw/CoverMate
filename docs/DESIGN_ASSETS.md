@@ -13,11 +13,43 @@ The current implementation reconciles these supplied references:
 - `/Users/point/Downloads/export/Admin Login.dc.html`
 - `/Users/point/Downloads/export/admin.dc.html`
 - `/Users/point/Downloads/Purich Insurance Site (standalone).html`
-- `/Users/point/Downloads/CoverMate Standalone (open this) (1).html`
+- `/Users/point/Downloads/CoverMate Standalone.html`
+- `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
 - `/Users/point/Downloads/SPEC (2).md`
 - `/Users/point/Downloads/SPEC (3).md`
+- `/Users/point/Downloads/SPEC (4).md`
+- `/Users/point/Downloads/SPEC (5).md`
 - screenshots supplied in the Codex thread
 - `/Users/point/Downloads/assets/`
+
+## Standalone / Claude Export Policy
+
+Standalone Claude HTML files are useful as visual references, archival demos,
+or Claude Design handoff inputs, but the production repository and this document
+set remain the source of truth.
+
+A file is a valid portable standalone only when all of these are true:
+
+- it opens directly from `file://` without a dev server
+- all required runtime files are embedded or shipped beside the HTML
+- the console has no missing-file errors for `support.js`, `image-slot.js`, or
+  `_ds/*/_ds_bundle.js`
+- the visible page never shows raw template markers such as `{{ brandName }}`,
+  `{{ n.label }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`
+- `#admin`, `#edit`, and relevant public hash states render after reload
+
+`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
+is the runtime-dependent Claude build source. When opened alone from
+`/Downloads`, it can show raw `{{ ... }}` placeholders because its sidecar
+runtime files are absent. Treat that file as reference source material only.
+`/Users/point/Downloads/CoverMate Standalone.html` is the candidate packaged
+standalone demo, but it still needs the standalone validation checklist before
+being shared as evidence. A 2026-08-02 quick check found no visible raw template
+markers in that packaged file, but Chrome still reports a `file://` fetch error
+for `.image-slots.state.json`; resolve or explicitly waive that before calling
+it fully portable. If a new portable standalone is needed, ask Claude to
+compile/export a self-contained HTML or provide a complete folder manifest with
+every dependency.
 
 ## Brand Direction
 
