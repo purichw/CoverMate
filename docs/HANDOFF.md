@@ -65,6 +65,14 @@ The `/#edit` mode now has its own owner toolbar with `Panel`, `Main`, `Done`,
 and `Log out` actions. The done action removes `contenteditable` state
 before returning to the public page.
 
+Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
+successful Firestore writes, then show dismissible success toasts with
+30-second `Undo`. Save undo restores the previous draft; publish undo
+republishes the previous live visitor snapshot.
+
+Public navbar anchors such as `#how` scroll in place without rebuilding the
+visitor DOM. This is the current anti-flicker contract for same-page navigation.
+
 All visible visitor and admin text uses the Google Sans family for Thai and
 English, including headings, logo text, controls, forms, owner tools, and
 analytics.

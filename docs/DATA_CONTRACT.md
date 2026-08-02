@@ -83,6 +83,20 @@ may write draft state, publish live state, and restore versions through
 `covermate-firebase.js`. It may update local keys only as cache/fallback after
 remote reads or successful remote writes.
 
+Explicit owner actions have recoverability requirements:
+
+- `Save draft` must ask for confirmation, complete the `states/draft` Firestore
+  write, and only then show a success toast.
+- `Publish` must ask for confirmation, complete the `states/live`,
+  `states/draft`, and version-history writes, and only then show a success
+  toast.
+- Both success toasts must be dismissible and include a 30-second `Undo`.
+- Undo after `Save draft` restores the previous draft snapshot to
+  `states/draft`.
+- Undo after `Publish` republishes the previous live snapshot and records the
+  undo in version history.
+- Native browser confirmation dialogs are not part of the product contract.
+
 Public visitor rendering should not depend on the user already having admin
 storage keys.
 
@@ -90,6 +104,17 @@ When an admin intentionally opens the live public site from private admin
 surfaces, links use `/?view=public`. The public bundle consumes that flag, cleans
 the URL back to `/`, and removes the owner-reopen marker
 `purich-admin-ever-v7` so admin chrome does not appear on the visitor view.
+
+The public/admin CMS normalizes known legacy values that conflict with current
+product decisions before rendering, caching, saving, or publishing. This is a
+guardrail for stale Firestore/live-draft data, not a general content override:
+
+- `#motor` nav entries normalize to `#insurers` and duplicate motor nav entries
+  are removed.
+- legacy insurer count overrides that say `14` or `20` companies normalize back
+  to the current `26` / `26+` motor-insurer copy.
+- legacy contact headings with forced line breaks normalize to
+  `ขอรับคำปรึกษา` / `Request a consultation`.
 
 ## Editable Site Config Fields
 

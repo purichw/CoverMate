@@ -115,16 +115,101 @@ function validStateDoc(doc) {
   return Boolean(doc && doc.config && Array.isArray(doc.config.sections));
 }
 
+function cloneJSON(value) {
+  return JSON.parse(JSON.stringify(value || {}));
+}
+
+function sanitizeMotorCountText(text) {
+  const next = cloneJSON(text || {});
+  Object.keys(next).forEach((key) => {
+    const value = String(next[key] || "");
+    const isInsurerInlineText = /^insurers:\d+:(th|en)$/.test(key);
+    const isContactTitleText = /^talk:\d+:(th|en)$/.test(key);
+    if (isInsurerInlineText && (
+      /เทียบได้กว่า\s*(14|20)\s*เจ้า/.test(value) ||
+      /บริษัทกว่า\s*(14|20)\s*เจ้า/.test(value) ||
+      /compared across\s*(14|20)\+?/i.test(value) ||
+      /through\s*(14|20)\+?\s*insurers/i.test(value)
+    )) {
+      delete next[key];
+    }
+    if (isContactTitleText &&
+      (/ขอรับ\s*\n\s*คำปรึกษา/.test(value) || /Request a\s*\n\s*consultation/i.test(value))
+    ) {
+      delete next[key];
+    }
+  });
+  return next;
+}
+
+function sanitizeMotorCountConfig(config) {
+  const next = cloneJSON(config || {});
+  if (next.header && Array.isArray(next.header.nav)) {
+    const seen = new Set();
+    next.header.nav = next.header.nav.reduce((items, item) => {
+      if (!item) return items;
+      const normalized = cloneJSON(item);
+      if (normalized.href === "#motor") normalized.href = "#insurers";
+      const key = normalized.href || JSON.stringify(normalized.label || {});
+      if (seen.has(key)) return items;
+      seen.add(key);
+      items.push(normalized);
+      return items;
+    }, []);
+  }
+  if (Array.isArray(next.sections)) {
+    next.sections.forEach((section) => {
+      if (!section || (section.id !== "insurers" && section.type !== "insurers")) return;
+      if (section.th) {
+        if (/เทียบได้กว่า\s*(14|20)\s*เจ้า/.test(String(section.th.title || ""))) {
+          section.th.title = "ประกันรถยนต์\nเทียบได้กว่า 26 เจ้า";
+        }
+        if (/บริษัทกว่า\s*(14|20)\s*เจ้า/.test(String(section.th.body || ""))) {
+          section.th.body = "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ";
+        }
+      }
+      if (section.en) {
+        if (/compared across\s*(14|20)\+?/i.test(String(section.en.title || ""))) {
+          section.en.title = "Motor insurance\ncompared across 26+";
+        }
+        if (/through\s*(14|20)\+?\s*insurers/i.test(String(section.en.body || ""))) {
+          section.en.body = "For motor insurance I place through 26+ insurers and recommend what suits you. Life and health I represent AIA exclusively.";
+        }
+      }
+    });
+    next.sections.forEach((section) => {
+      if (!section || (section.id !== "talk" && section.type !== "contact")) return;
+      if (section.th && /ขอรับ\s*\n\s*คำปรึกษา/.test(String(section.th.title || ""))) {
+        section.th.title = "ขอรับคำปรึกษา";
+      }
+      if (section.en && /Request a\s*\n\s*consultation/i.test(String(section.en.title || ""))) {
+        section.en.title = "Request a consultation";
+      }
+    });
+  }
+  return next;
+}
+
+function sanitizeStateDoc(state) {
+  if (!state || !state.config) return state;
+  return {
+    ...state,
+    config: sanitizeMotorCountConfig(state.config),
+    text: sanitizeMotorCountText(state.text || {})
+  };
+}
+
 function cacheState(name, state) {
-  if (!validStateDoc(state)) return false;
+  const clean = sanitizeStateDoc(state);
+  if (!validStateDoc(clean)) return false;
   if (name === "live") {
-    writeJSON(LIVE_CONFIG_KEY, state.config);
-    writeJSON(LIVE_TEXT_KEY, state.text || {});
+    writeJSON(LIVE_CONFIG_KEY, clean.config);
+    writeJSON(LIVE_TEXT_KEY, clean.text || {});
     return true;
   }
   if (name === "draft") {
-    writeJSON(DRAFT_CONFIG_KEY, state.config);
-    writeJSON(DRAFT_TEXT_KEY, state.text || {});
+    writeJSON(DRAFT_CONFIG_KEY, clean.config);
+    writeJSON(DRAFT_TEXT_KEY, clean.text || {});
     return true;
   }
   return false;
@@ -206,9 +291,11 @@ async function saveSiteState(name, config, text) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to save CoverMate content.");
+  const cleanConfig = sanitizeMotorCountConfig(config);
+  const cleanText = sanitizeMotorCountText(text || {});
   const payload = {
-    config,
-    text: text || {},
+    config: cleanConfig,
+    text: cleanText,
     updatedAt: firestoreMod.serverTimestamp(),
     updatedBy: {
       uid: user.uid,
@@ -228,10 +315,12 @@ async function appendVersion(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to publish CoverMate content.");
+  const cleanConfig = sanitizeMotorCountConfig(config);
+  const cleanText = sanitizeMotorCountText(text || {});
   const ref = versionRef();
   const version = {
-    config,
-    text: text || {},
+    config: cleanConfig,
+    text: cleanText,
     ts: Date.now(),
     createdAt: firestoreMod.serverTimestamp(),
     createdBy: {
@@ -249,6 +338,8 @@ async function publishSiteState(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to publish CoverMate content.");
+  const cleanConfig = sanitizeMotorCountConfig(config);
+  const cleanText = sanitizeMotorCountText(text || {});
   const ref = versionRef();
   const ts = Date.now();
   const by = {
@@ -257,14 +348,14 @@ async function publishSiteState(config, text, metadata = {}) {
     role: admin.role || "admin"
   };
   const livePayload = {
-    config,
-    text: text || {},
+    config: cleanConfig,
+    text: cleanText,
     updatedAt: firestoreMod.serverTimestamp(),
     updatedBy: by
   };
   const version = {
-    config,
-    text: text || {},
+    config: cleanConfig,
+    text: cleanText,
     ts,
     createdAt: firestoreMod.serverTimestamp(),
     createdBy: by,

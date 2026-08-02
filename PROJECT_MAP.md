@@ -213,16 +213,23 @@ Production patches currently preserved in the bundles:
 - Admin launcher has an early `/admin/login` session gate.
 - Admin owner modes include a close/reopen contract: closing the `/#admin`
   drawer returns to the public page with an owner bar for reopening the control
-  panel, entering edit mode, returning to `Main` (`/admin`), or logging out.
+  panel, entering edit mode, returning to `Main` (`/admin`), opening
+  `Public site` (`/?view=public`), or logging out.
 - Inline edit mode has its own owner toolbar with links back to the control
-  panel and `Main` (`/admin`), a done action that removes `contenteditable`, and
-  `Log out`.
+  panel, `Main` (`/admin`), `Public site` (`/?view=public`), a done action that
+  removes `contenteditable`, and `Log out`.
+- Explicit owner `Save draft` and `Publish` actions use custom confirmation
+  dialogs, wait for successful Firestore writes, then show dismissible success
+  toasts with a 30-second `Undo`. Save undo restores the previous draft; publish
+  undo republishes the previous live snapshot.
 - `covermate-responsive-touch-policy` raises mobile controls, form fields,
   owner-tool buttons, drawer controls, and nav/footer links to 44px-class touch
   targets without changing desktop density.
 - `/#motor` keeps the global visitor navigation (`#cover`, `#insurers`,
   `#claim`, `#fit`, `#how`, `#faq`) and re-aims the hash to `#insurers` after
   hydration so the sticky header does not cover the section title.
+- Same-page visitor nav anchors, including `#how`, scroll in place without
+  rebuilding the main visitor DOM. This is the current anti-flicker contract.
 
 ## Asset Map
 
@@ -248,6 +255,13 @@ is rendered from the editable `insurers.items` content array, and includes
 AIA/Srikrung Broker relationship proof cards in the same section. Do not change
 the bundle paths or claim treatment without updating smoke expectations and
 getting business-owner copy confirmation.
+
+Legacy Firestore CMS data can contain older Claude-reference values such as
+`14/20` insurer count copy, duplicate `#motor` nav entries, or forced line
+breaks in the contact heading. The public bundle and `covermate-firebase.js`
+normalize those exact stale values on render, cache, draft save, and publish so
+current product decisions win without making Firestore/local cache a broader
+content override.
 
 `assets/logos/aia-logo.png` is the committed loose source for the AIA proof-card
 logo and is also embedded into the current `index.html` bundle resource map.
@@ -290,7 +304,9 @@ but is not currently present as a loose repository file.
 9. In structured-card sections, the Content tab can edit insurer relationship
    cards, insurer item logo paths, claim cards, fee transparency cards, and the
    motor tier comparison table/cell states.
-10. Closing the control panel does not log out; it leaves a compact owner bar so
+10. `Save draft` and `Publish` confirm before writing, then toast completion
+   with a 30-second undo window.
+11. Closing the control panel does not log out; it leaves a compact owner bar so
    the admin can reopen `Panel`, switch to `Edit text`, return to `Main`, or
    `Log out`.
 
@@ -314,6 +330,10 @@ but is not currently present as a loose repository file.
   `Log out`.
 - Keep mobile touch targets at 44px-class sizing for visitor, admin login,
   admin launcher, admin drawer, and edit toolbar controls.
+- Keep the admin drawer above the visitor sticky header on mobile; do not fade it
+  in over public header chrome.
+- Keep same-page visitor nav as anchor scrolling. Do not turn ordinary header
+  hash clicks into owner-route reloads or full DOM rebuilds.
 - Keep exported bundle JSON valid. When editing text inside
   `<script type="__bundler/template">`, quotes, newlines, and literal closing
   script tags must be JSON-safe.
@@ -362,6 +382,9 @@ but is not currently present as a loose repository file.
   API endpoint or scheduled export into Firestore.
 - Asset count: current insurer logo grid is 14 files while copy promises 26+;
   the latest reference supports that claim with relationship proof cards.
+- Firestore live/draft may still contain legacy stale fields until the owner
+  publishes a clean draft; runtime normalization keeps visitor/admin rendering
+  aligned with current product decisions in the meantime.
 - Contact details and legal/licence copy should be checked by the business owner
   before public launch changes.
 

@@ -1,0 +1,30 @@
+{
+  "capturedAt": "2026-08-02T08:24:54.645Z",
+  "baseUrl": "http://127.0.0.1:4177",
+  "files": [
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-actions/public-how-anchor-desktop.png",
+      "route": "/#how",
+      "viewport": "1440x900",
+      "note": "Public navbar anchor jump keeps the main site surface stable."
+    },
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-actions/admin-save-confirm-desktop.png",
+      "route": "/#admin",
+      "viewport": "1440x900",
+      "note": "Custom Save draft confirmation dialog."
+    },
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-actions/admin-published-toast-desktop.png",
+      "route": "/#admin",
+      "viewport": "1440x900",
+      "note": "Publish success toast with 30-second Undo and close action."
+    },
+    {
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-actions/admin-panel-mobile.png",
+      "route": "/#admin",
+      "viewport": "390x844",
+      "note": "Mobile admin drawer with action bar spacing, correct stacking, and no header fade-through."
+    }
+  ]
+}

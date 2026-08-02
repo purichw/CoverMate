@@ -169,6 +169,12 @@ readiness, lead mix, recent leads, and GA4 Data API connection state.
 The `/#admin` hash mode owns the actual control panel for sections, content,
 brand/chrome, theme/data, export, restore, draft, preview, and publish behavior.
 
+Explicit `Save draft` and `Publish` are recoverable owner actions. They use
+custom confirmation dialogs, wait for successful Firestore writes, and then show
+dismissible success toasts with a 30-second `Undo`. Undo for draft restores the
+previous draft state; undo for publish republishes the previous live state and
+records that undo in version history.
+
 The owner hash modes also own the admin continuation UI:
 
 - closing the `/#admin` drawer removes the hash and shows a compact owner bar
@@ -214,6 +220,10 @@ template content before hydration on visitor and admin pages.
 
 Do not remove the owner reopen bar after the admin drawer closes. It must keep
 reopen `Panel`, `Edit text`, `Main`, and `Log out` actions reachable.
+
+Do not make ordinary visitor navbar anchor clicks rebuild the visitor DOM or
+rehydrate the page as if they were owner routes. Same-page anchors should scroll
+in place to avoid visible flicker.
 
 Do not reintroduce an ambiguous drawer-header-only sign-out button. Sign-out
 must remain reachable from `/admin`, the `/#admin` owner tools, and the `/#edit`

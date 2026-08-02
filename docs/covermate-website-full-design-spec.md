@@ -33,6 +33,23 @@ above and should be treated as targeted proof for the motor tier reconciliation:
   alias desktop, and admin Content tab tier editing.
 - Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-spec5/manifest.json`
 
+Latest local regression evidence for admin/public mode sync and legacy
+Firestore content normalization:
+
+- Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync`
+- Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/manifest.json`
+- Includes public insurer section desktop/mobile, admin owner reopen bar with
+  `Public site`, and the public view after returning from admin.
+
+Latest local regression evidence for admin actions and anchor-navigation
+stability:
+
+- Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-actions`
+- Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-actions/manifest.json`
+- Includes public `#how` anchor jump, custom `Save draft` confirmation,
+  `Publish` success toast with 30-second `Undo`, and mobile admin drawer
+  stacking/action-bar spacing.
+
 The following screenshots are historical ad-hoc visual evidence from production. They are useful for the exported spec context, but they are not a complete production snapshot suite:
 
 - Public desktop: `/tmp/covermate-spec-home-desktop.png`
@@ -105,9 +122,14 @@ Update the corresponding Claude designs to reflect the current product decisions
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
 - Admin launcher has three primary cards: `Edit the words`, `Arrange & customise`, and `Analytics`.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
+- Admin `Public site` actions must clear the owner marker and return to the
+  public visitor route without showing owner chrome.
 - All visible Thai and English text uses the Google Sans family. Headings and logo text may use heavier Google Sans weights, but do not reintroduce unrelated serif/display fonts.
 - The AIA logo asset is the transparent red mark at `assets/logos/aia-logo.png`.
 - Contact heading Thai `ขอรับคำปรึกษา` must remain one line on desktop and should avoid awkward word breaks elsewhere.
+- Known stale Firestore CMS values that conflict with product decisions must be
+  normalized on render/save/publish: duplicate `#motor` nav entries, `14/20`
+  motor-insurer count copy, and forced-line-break contact headings.
 - All behavior described here is a product decision as of this release, excluding future bugs that have not appeared yet.
 
 ## Visual Direction
@@ -543,7 +565,8 @@ Structure:
 Visitor interactions:
 
 - Language toggle updates visible text between Thai and English.
-- Header nav scrolls to anchors on the same page.
+- Header nav scrolls to anchors on the same page without rebuilding the visitor
+  DOM or causing a visible flicker.
 - `/#motor` normalizes to the motor insurer anchor behavior.
 - `/#life` normalizes to the coverage anchor behavior.
 - `/#motor-focus` and `/#life-focus` render unexposed campaign variants and
@@ -645,12 +668,22 @@ Required capabilities:
 - Brand & chrome tab: edit brand/contact/footer/header/sticky settings.
 - Theme & data tab: accent selection, import/export, reset/restore.
 - Draft save, preview, publish, status/success feedback.
+- Explicit `Save draft` and `Publish` must open custom confirmation dialogs, not
+  native browser dialogs.
+- Successful `Save draft` waits for the Firestore draft write, then shows a
+  dismissible toast with `Undo` available for 30 seconds.
+- Successful `Publish` waits for Firestore live/draft/version writes, then shows
+  a dismissible toast with `Undo` available for 30 seconds.
+- `Undo` after publish restores the previous live snapshot by publishing it
+  back to Firestore.
 - Closing the drawer should not trap the owner. A reopen owner bar must stay available.
 - Must include a way to switch to edit mode and return to Main.
 - The compact owner-reopen bar should also preserve direct `Save draft`,
   `Preview`, and `Publish` controls so closing the drawer does not hide the
   publishing path.
 - `Log out` should be available consistently from owner surfaces.
+- The drawer must stack above visitor sticky header/navigation on mobile and
+  should not fade in over the public header.
 
 Admin panel labels should be English even when public language is Thai.
 

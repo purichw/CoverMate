@@ -18,6 +18,10 @@ Last updated: 2026-08-02
 variants. They keep the same global navbar as `/`; `/#motor` re-aims to
 `#insurers`, while `/#life` re-aims to `#cover` after hydration.
 
+Public navbar clicks are same-page anchor jumps, not route transitions. Clicking
+items such as `ขั้นตอน` / `#how` must scroll to the section without reloading or
+rebuilding the visitor DOM, which prevents a visible page flicker.
+
 `/#motor-focus` and `/#life-focus` are unexposed campaign variants from the
 latest Claude reference. They are live hash states for campaign use, but they
 must not appear in the header navigation or sitemap.
@@ -93,13 +97,12 @@ the visitor page opens without the owner-reopen bar, then cleans the URL back to
    image fields, currently the advisor proof logo stored as `brand.advisorLogo`.
 5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
-6. The edit toolbar lets the owner open the control panel, save draft, preview,
-   publish, finish editing, or
-   log out.
+6. The edit toolbar lets the owner open the control panel, return to `Main`,
+   open `Public site`, save draft, preview, publish, finish editing, or log out.
 7. Finishing edit mode removes all `contenteditable` and image-edit affordances and shows the
    compact owner bar for reopening admin tools.
-8. The edit toolbar also links back to `/admin` via `Main` when the
-   owner wants to choose between modes again.
+8. `Public site` uses `/?view=public`, clears the owner marker, and returns to
+   the clean visitor route without owner chrome.
 
 Thai and English copy are separate where the bundle supports separate language
 fields.
@@ -110,19 +113,27 @@ fields.
 2. Control panel appears over the site.
 3. Owner can reorder/hide sections, edit content, adjust brand/chrome, adjust
    theme/data, export, restore, preview, and publish.
-4. Draft changes write to Firestore `states/draft`, with local cache as
+4. Draft changes auto-save to Firestore `states/draft`, with local cache as
    fallback.
-5. Publish writes Firestore `states/live`, updates `states/draft`, and creates
-   a version document. Public visitors hydrate the latest `states/live` before
-   rendering.
-6. The drawer close button only closes the drawer. It does not sign out.
-7. After the drawer closes, the compact owner bar provides recovery and publish
-   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, `Save
-   draft`, `Preview`, `Publish`, or `Log out`.
-8. The action bar inside the drawer keeps editing/navigation/session actions
+5. Explicit `Save draft` opens a custom confirmation dialog, waits for the
+   Firestore draft write to complete, then shows a dismissible success toast.
+   The toast includes `Undo` for 30 seconds, which restores the previous draft.
+6. Explicit `Publish` opens a custom confirmation dialog, waits for Firestore to
+   update `states/live`, `states/draft`, and version history, then shows a
+   dismissible success toast. The toast includes `Undo` for 30 seconds, which
+   publishes the previous live snapshot back to the visitor site.
+7. Native browser `confirm()` dialogs are not used for owner CMS actions.
+8. Public visitors hydrate the latest `states/live` before rendering.
+9. The drawer close button only closes the drawer. It does not sign out.
+10. After the drawer closes, the compact owner bar provides recovery and publish
+   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, open
+   `Public site`, `Save draft`, `Preview`, `Publish`, or `Log out`.
+11. The action bar inside the drawer keeps editing/navigation/session actions
    separate from save, preview, and publish actions.
-9. The drawer action bar keeps direct access to text-edit mode and `Main` so
+12. The drawer action bar keeps direct access to text-edit mode and `Main` so
    owners do not need to bounce through the launcher for common switching.
+13. `Public site` must clear `purich-admin-ever-v7`; staying signed in should
+    not by itself reveal owner chrome on the visitor route.
 
 For sections that use structured cards, the Content tab exposes card editing
 instead of relying on hard-coded copy. Current editable card sets include the

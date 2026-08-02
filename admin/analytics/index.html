@@ -528,7 +528,7 @@
       </a>
       <nav class="actions" aria-label="Admin actions">
         <a class="btn" href="/admin">Main</a>
-        <a class="btn" href="/?view=public" target="_blank" rel="noopener">Public site</a>
+        <a class="btn" href="/?view=public" onclick="try{localStorage.removeItem('purich-admin-ever-v7')}catch(e){}" target="_blank" rel="noopener">Public site</a>
         <button class="btn btn-dark" id="logout" type="button">Log out</button>
       </nav>
     </header>

@@ -68,6 +68,7 @@ function remoteContentMock(remoteConfig, remoteText = {}) {
     const remoteText = ${JSON.stringify(remoteText)};
     window.CoverMateFirebase = {
       hydrateLocalContent: async (opts = {}) => {
+        window.__covermateHydrateCount = (window.__covermateHydrateCount || 0) + 1;
         window.__covermateHydrateOpts = opts;
         window.localStorage.setItem("purich-live-config-v3", JSON.stringify(remoteConfig));
         window.localStorage.setItem("purich-live-text-v3", JSON.stringify(remoteText));
@@ -95,6 +96,67 @@ function remoteContentMock(remoteConfig, remoteText = {}) {
   `;
 }
 
+function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftText = {}) {
+  return `
+    let liveConfig = ${JSON.stringify(liveConfig)};
+    let draftConfig = ${JSON.stringify(draftConfig)};
+    let liveText = ${JSON.stringify(liveText)};
+    let draftText = ${JSON.stringify(draftText)};
+    window.__covermateSaveCalls = [];
+    window.__covermatePublishCalls = [];
+    window.CoverMateFirebase = {
+      hydrateLocalContent: async (opts = {}) => {
+        window.__covermateHydrateOpts = opts;
+        window.localStorage.setItem("purich-live-config-v3", JSON.stringify(liveConfig));
+        window.localStorage.setItem("purich-live-text-v3", JSON.stringify(liveText));
+        if (opts.draft === true) {
+          window.localStorage.setItem("purich-draft-config-v3", JSON.stringify(draftConfig));
+          window.localStorage.setItem("purich-draft-text-v3", JSON.stringify(draftText));
+        }
+        if (opts.versions === true) {
+          window.localStorage.setItem("purich-history-v3", JSON.stringify([
+            { id: "mock-live-version", ts: Date.now() - 1000, config: liveConfig, text: liveText }
+          ]));
+        }
+        window.__covermateRemoteContent = {
+          live: true,
+          draft: opts.draft === true,
+          versions: opts.versions === true,
+          source: "admin-action-smoke"
+        };
+        return window.__covermateRemoteContent;
+      },
+      saveSiteState: async (name, config, text) => {
+        window.__covermateSaveCalls.push({ name, config, text, ts: Date.now() });
+        if (name === "draft") {
+          draftConfig = config;
+          draftText = text || {};
+          window.localStorage.setItem("purich-draft-config-v3", JSON.stringify(draftConfig));
+          window.localStorage.setItem("purich-draft-text-v3", JSON.stringify(draftText));
+        }
+        return { ok: true };
+      },
+      publishSiteState: async (config, text, metadata = {}) => {
+        const id = "mock-publish-" + (window.__covermatePublishCalls.length + 1);
+        const version = { id, ts: Date.now(), config, text: text || {}, ...metadata };
+        window.__covermatePublishCalls.push(version);
+        liveConfig = config;
+        draftConfig = config;
+        liveText = text || {};
+        draftText = text || {};
+        window.localStorage.setItem("purich-live-config-v3", JSON.stringify(liveConfig));
+        window.localStorage.setItem("purich-live-text-v3", JSON.stringify(liveText));
+        window.localStorage.setItem("purich-draft-config-v3", JSON.stringify(draftConfig));
+        window.localStorage.setItem("purich-draft-text-v3", JSON.stringify(draftText));
+        return version;
+      },
+      signOut: async () => {}
+    };
+    window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
+    export {};
+  `;
+}
+
 async function waitForBodyText(page, pattern, timeout = 30000) {
   await page.waitForFunction(
     ({ source, flags }) => new RegExp(source, flags).test(document.body.innerText || ""),
@@ -114,14 +176,22 @@ async function verifyRemoteHydrationContract() {
   const remoteName = "Remote Live Smoke";
   const staleName = "Stale Cache Smoke";
   const remoteConfig = renamedConfig(remoteName);
+  remoteConfig.header.nav.splice(3, 0, {
+    label: { th: "ประกันรถยนต์", en: "Motor" },
+    href: "#motor"
+  });
   const staleConfig = renamedConfig(staleName);
+  const staleRemoteText = {
+    "insurers:1:th": "ประกันรถยนต์\nเทียบได้กว่า 20 เจ้า",
+    "insurers:2:th": "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 14 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ"
+  };
 
   const publicPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
   await publicPage.route("**/covermate-firebase.js", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
-      body: remoteContentMock(remoteConfig)
+      body: remoteContentMock(remoteConfig, staleRemoteText)
     })
   );
   await publicPage.addInitScript(({ config }) => {
@@ -133,6 +203,8 @@ async function verifyRemoteHydrationContract() {
   await waitForBodyText(publicPage, new RegExp(remoteName));
   const publicState = await publicPage.evaluate(() => ({
     text: document.body.innerText,
+    insurerText: document.querySelector("#insurers")?.innerText || "",
+    navHrefs: Array.from(document.querySelectorAll("header nav a[href]")).map((a) => a.getAttribute("href")),
     cachedBrand: JSON.parse(window.localStorage.getItem("purich-live-config-v3") || "{}")?.brand?.name?.th || "",
     opts: window.__covermateHydrateOpts || null,
     seoTitle: document.title,
@@ -151,6 +223,19 @@ async function verifyRemoteHydrationContract() {
   if (!publicState.text.includes(remoteName) || publicState.text.includes(staleName)) {
     failures.push("remote hydration: public route did not let Firestore live content override stale local cache");
   }
+  if (
+    publicState.insurerText.includes("14 เจ้า") ||
+    publicState.insurerText.includes("20 เจ้า") ||
+    !publicState.insurerText.includes("26 เจ้า")
+  ) {
+    failures.push("remote hydration: stale insurer count overrides rendered instead of the 26-company product copy");
+  }
+  if (
+    publicState.navHrefs.includes("#motor") ||
+    publicState.navHrefs.filter((href) => href === "#insurers").length !== 1
+  ) {
+    failures.push(`remote hydration: motor nav alias was not normalized (${publicState.navHrefs.join(", ")})`);
+  }
   if (publicState.cachedBrand !== remoteName) {
     failures.push(`remote hydration: local live cache was not rewritten from remote (${publicState.cachedBrand})`);
   }
@@ -160,6 +245,27 @@ async function verifyRemoteHydrationContract() {
   if (!publicState.seoTitle.includes(remoteName) || publicState.seoJsonName !== remoteName) {
     failures.push("remote hydration: SEO metadata did not sync from remote live content");
   }
+  await publicPage.evaluate(() => {
+    const main = document.querySelector("main");
+    if (main) main.__covermateSmokeStable = true;
+  });
+  await publicPage.locator('header nav a[href="#how"]').first().click();
+  await publicPage.waitForTimeout(700);
+  const anchorState = await publicPage.evaluate(() => ({
+    hash: window.location.hash,
+    mainStable: document.querySelector("main")?.__covermateSmokeStable === true,
+    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    text: document.body.innerText
+  }));
+  if (anchorState.hash !== "#how") {
+    failures.push(`anchor navigation: expected #how after clicking ขั้นตอน, got ${anchorState.hash}`);
+  }
+  if (!anchorState.mainStable) {
+    failures.push("anchor navigation: main DOM was rebuilt during a same-page navbar jump");
+  }
+  if (anchorState.hasOwnerBar || /Admin portal|Text edit/.test(anchorState.text)) {
+    failures.push("anchor navigation: admin UI leaked while using public navbar anchors");
+  }
   await publicPage.close();
 
   const ownerPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
@@ -167,7 +273,7 @@ async function verifyRemoteHydrationContract() {
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
-      body: remoteContentMock(remoteConfig)
+      body: remoteContentMock(remoteConfig, staleRemoteText)
     })
   );
   await ownerPage.addInitScript(() => {
@@ -187,11 +293,19 @@ async function verifyRemoteHydrationContract() {
   await waitForBodyText(ownerPage, /Admin portal/);
   const ownerState = await ownerPage.evaluate(() => ({
     text: document.body.innerText,
+    insurerText: document.querySelector("#insurers")?.innerText || "",
     opts: window.__covermateHydrateOpts || null,
     history: JSON.parse(window.localStorage.getItem("purich-history-v3") || "[]")
   }));
   if (!ownerState.text.includes("Admin portal")) {
     failures.push("remote hydration: owner route did not render admin panel under mocked remote content");
+  }
+  if (
+    ownerState.insurerText.includes("14 เจ้า") ||
+    ownerState.insurerText.includes("20 เจ้า") ||
+    !ownerState.insurerText.includes("26 เจ้า")
+  ) {
+    failures.push("remote hydration: owner route rendered stale insurer count overrides");
   }
   if (!ownerState.opts || ownerState.opts.draft !== true || ownerState.opts.versions !== true) {
     failures.push("remote hydration: owner route did not request draft and versions");
@@ -200,6 +314,132 @@ async function verifyRemoteHydrationContract() {
     failures.push("remote hydration: owner route did not cache remote version history");
   }
   await ownerPage.close();
+}
+
+async function verifyAdminActionWorkflow() {
+  const liveConfig = renamedConfig("Live Action Smoke");
+  const draftConfig = renamedConfig("Draft Action Smoke");
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const nativeDialogs = [];
+  const pageErrors = [];
+  page.on("dialog", async (dialog) => {
+    nativeDialogs.push(dialog.message());
+    await dialog.dismiss().catch(() => {});
+  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: adminActionContentMock(liveConfig, draftConfig)
+    })
+  );
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+  });
+  await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Draft Action Smoke/);
+
+  const saveButton = page.locator("aside button").filter({ hasText: /^Save draft$/ }).last();
+  await saveButton.click();
+  await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
+  let dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
+  if (!dialogText.includes("Save draft?") || !dialogText.includes("Visitors will keep seeing")) {
+    failures.push("admin actions: Save draft did not open the custom confirmation dialog");
+  }
+  await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Cancel" }).click();
+  await page.waitForTimeout(200);
+  const saveAfterCancel = await page.evaluate(() => window.__covermateSaveCalls.length);
+  if (saveAfterCancel !== 0) {
+    failures.push("admin actions: cancelling Save draft still wrote to Firestore mock");
+  }
+
+  await saveButton.click();
+  await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
+  await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Save draft" }).click();
+  await waitForBodyText(page, /Draft saved/);
+  let actionState = await page.evaluate(() => ({
+    saveCalls: window.__covermateSaveCalls.length,
+    publishCalls: window.__covermatePublishCalls.length,
+    toastText: document.querySelector('[data-admin-toast="true"]')?.innerText || "",
+    confirmVisible: Boolean(document.querySelector('[data-admin-confirm="true"]'))
+  }));
+  if (actionState.confirmVisible) {
+    failures.push("admin actions: Save draft confirmation stayed visible after success");
+  }
+  if (actionState.saveCalls !== 1 || actionState.publishCalls !== 0) {
+    failures.push(`admin actions: Save draft expected 1 save and 0 publishes, got ${actionState.saveCalls}/${actionState.publishCalls}`);
+  }
+  if (!/Draft saved/.test(actionState.toastText) || !/Undo/.test(actionState.toastText)) {
+    failures.push("admin actions: Save draft success toast with Undo is missing");
+  }
+  await page.locator('[data-admin-toast="true"]').getByRole("button", { name: "Undo" }).click();
+  await waitForBodyText(page, /Draft restored/);
+  actionState = await page.evaluate(() => ({
+    saveCalls: window.__covermateSaveCalls.length,
+    toastText: document.querySelector('[data-admin-toast="true"]')?.innerText || ""
+  }));
+  if (actionState.saveCalls !== 2 || !/Draft restored/.test(actionState.toastText)) {
+    failures.push(`admin actions: Save draft undo did not restore the previous draft (${actionState.saveCalls}, ${actionState.toastText})`);
+  }
+  await page.getByLabel("Close notification").click();
+  await page.locator('[data-admin-toast="true"]').waitFor({ state: "detached", timeout: 5000 });
+
+  const publishButton = page.locator("aside button").filter({ hasText: /^Publish$/ }).last();
+  await publishButton.click();
+  await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
+  dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
+  if (!dialogText.includes("Publish changes?") || !dialogText.includes("live visitor site")) {
+    failures.push("admin actions: Publish did not open the custom confirmation dialog");
+  }
+  await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Publish" }).click();
+  await waitForBodyText(page, /Published/);
+  actionState = await page.evaluate(() => ({
+    saveCalls: window.__covermateSaveCalls.length,
+    publishCalls: window.__covermatePublishCalls.length,
+    toastText: document.querySelector('[data-admin-toast="true"]')?.innerText || "",
+    liveName: JSON.parse(window.localStorage.getItem("purich-live-config-v3") || "{}")?.brand?.name?.th || ""
+  }));
+  if (actionState.publishCalls !== 1 || actionState.liveName !== "Draft Action Smoke") {
+    failures.push(`admin actions: Publish did not update live mock content (${actionState.publishCalls}, ${actionState.liveName})`);
+  }
+  if (!/Published/.test(actionState.toastText) || !/Undo/.test(actionState.toastText)) {
+    failures.push("admin actions: Publish success toast with Undo is missing");
+  }
+  await page.locator('[data-admin-toast="true"]').getByRole("button", { name: "Undo" }).click();
+  await waitForBodyText(page, /Publish undone/);
+  actionState = await page.evaluate(() => ({
+    publishCalls: window.__covermatePublishCalls.length,
+    lastPublish: window.__covermatePublishCalls[window.__covermatePublishCalls.length - 1],
+    liveName: JSON.parse(window.localStorage.getItem("purich-live-config-v3") || "{}")?.brand?.name?.th || "",
+    toastText: document.querySelector('[data-admin-toast="true"]')?.innerText || ""
+  }));
+  if (actionState.publishCalls !== 2 || actionState.liveName !== "Live Action Smoke" || !actionState.lastPublish?.undoOf) {
+    failures.push(`admin actions: Publish undo did not restore previous live content (${JSON.stringify(actionState)})`);
+  }
+  if (!/Publish undone/.test(actionState.toastText)) {
+    failures.push("admin actions: Publish undo toast is missing");
+  }
+  await page.getByLabel("Close notification").click();
+  await page.locator('[data-admin-toast="true"]').waitFor({ state: "detached", timeout: 5000 });
+
+  if (nativeDialogs.length) {
+    failures.push(`admin actions: native browser dialogs were used (${nativeDialogs.join(" | ")})`);
+  }
+  if (pageErrors.length) {
+    failures.push(`admin actions: ${pageErrors.join(" | ")}`);
+  }
+  await page.close();
 }
 
 async function verifyStaticSeoFiles() {
@@ -243,6 +483,7 @@ async function verifyStaticSeoFiles() {
 
 await verifyStaticSeoFiles();
 await verifyRemoteHydrationContract();
+await verifyAdminActionWorkflow();
 
 for (const [name, width, height] of viewports) {
   const page = await browser.newPage({
@@ -264,7 +505,10 @@ for (const [name, width, height] of viewports) {
     ) {
       return;
     }
-    if (failureText === "net::ERR_ABORTED" && url.includes("firestore.googleapis.com/google.firestore")) {
+    if (
+      url.includes("firestore.googleapis.com/google.firestore") &&
+      (failureText === "net::ERR_ABORTED" || failureText.startsWith("net::ERR_QUIC_PROTOCOL_ERROR"))
+    ) {
       return;
     }
     if (failureText === "net::ERR_ABORTED" && url.includes("www.gstatic.com/firebasejs/")) {
@@ -864,6 +1108,7 @@ for (const [name, width, height] of viewports) {
   if (
     !ownerPanelState.text.includes("Edit text") ||
     !ownerPanelState.text.includes("Main") ||
+    !ownerPanelState.text.includes("Public site") ||
     !ownerPanelState.text.includes("Log out") ||
     !ownerPanelState.text.includes("Publish")
   ) {
@@ -926,6 +1171,7 @@ for (const [name, width, height] of viewports) {
     !closedAdminState.text.includes("Panel") ||
     !closedAdminState.text.includes("Edit text") ||
     !closedAdminState.text.includes("Main") ||
+    !closedAdminState.text.includes("Public site") ||
     !closedAdminState.text.includes("Log out")
   ) {
     failures.push(`${name} /#admin close: owner reopen actions are incomplete`);
@@ -937,6 +1183,25 @@ for (const [name, width, height] of viewports) {
   await page.waitForTimeout(500);
   if (!(await page.locator("aside").count())) {
     failures.push(`${name} /#admin reopen: owner bar did not reopen the control panel`);
+  }
+  await page.getByLabel("Close admin panel").click();
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: "Public site" }).click();
+  await page.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 5000 }).catch(() => {});
+  const publicReturnState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
+    text: document.body.innerText
+  }));
+  if (publicReturnState.route !== "/") {
+    failures.push(`${name} /#admin Public site: expected clean public route, got ${publicReturnState.route}`);
+  }
+  if (publicReturnState.hasOwnerBar || publicReturnState.adminMarker) {
+    failures.push(`${name} /#admin Public site: admin owner state leaked into the visitor route`);
+  }
+  if (/Admin portal|Text edit/.test(publicReturnState.text)) {
+    failures.push(`${name} /#admin Public site: admin UI text remained visible on the visitor route`);
   }
 
   await page.goto(new URL("/#edit", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
@@ -960,6 +1225,7 @@ for (const [name, width, height] of viewports) {
   if (
     !editState.text.includes("Panel") ||
     !editState.text.includes("Main") ||
+    !editState.text.includes("Public site") ||
     !editState.text.includes("Log out") ||
     !editState.text.includes("Done")
   ) {

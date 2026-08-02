@@ -1,0 +1,61 @@
+{
+  "capturedAt": "2026-08-02T08:04:16.992Z",
+  "base": "http://127.0.0.1:4177",
+  "results": {
+    "publicDesktop": {
+      "screenshot": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/public-insurers-desktop.png",
+      "state": {
+        "url": "http://127.0.0.1:4177/",
+        "insurerText": "ประกันรถยนต์ · ในฐานะนายหน้า\nประกันรถยนต์\nเทียบได้กว่า 26 เจ้า\n\nเฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ\n\nประกันชีวิต+สุขภาพ · ในฐานะตัวแทน\nตัวแทน AIA อย่างเป็นทางการ\nใบอนุญาตตัวแทนประกันชีวิตเลขที่ 6401006221 · ประกันชีวิตและสุขภาพผมดูแลในฐานะตัวแทน AIA โดยตรง กรมธรรม์ออกโดย AIA\nประกันรถยนต์ · ในฐานะนายหน้า\nศรีกรุงโบรคเกอร์ · Srikrung Broker\nใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · ผมเสนอและจัดเบี้ยประกันรถยนต์ในฐานะนายหน้าภายใต้ศรีกรุงโบรคเกอร์ กรมธรรม์ออกโดยบริษัทประกันที่คุณเลือก\nโลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้",
+        "talkHeadingText": "ขอรับคำปรึกษา",
+        "navHrefs": [
+          "#cover",
+          "#insurers",
+          "#claim",
+          "#fit",
+          "#how",
+          "#faq"
+        ],
+        "hasOwnerBar": false,
+        "adminMarker": null,
+        "bodyFont": "\"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif"
+      }
+    },
+    "publicMobile": {
+      "screenshot": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/public-insurers-mobile.png",
+      "state": {
+        "url": "http://127.0.0.1:4177/",
+        "insurerText": "ประกันรถยนต์ · ในฐานะนายหน้า\nประกันรถยนต์\nเทียบได้กว่า 26 เจ้า\n\nเฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ\n\nประกันชีวิต+สุขภาพ · ในฐานะตัวแทน\nตัวแทน AIA อย่างเป็นทางการ\nใบอนุญาตตัวแทนประกันชีวิตเลขที่ 6401006221 · ประกันชีวิตและสุขภาพผมดูแลในฐานะตัวแทน AIA โดยตรง กรมธรรม์ออกโดย AIA\nประกันรถยนต์ · ในฐานะนายหน้า\nศรีกรุงโบรคเกอร์ · Srikrung Broker\nใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · ผมเสนอและจัดเบี้ยประกันรถยนต์ในฐานะนายหน้าภายใต้ศรีกรุงโบรคเกอร์ กรมธรรม์ออกโดยบริษัทประกันที่คุณเลือก\nโลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้",
+        "talkHeadingText": "ขอรับคำปรึกษา",
+        "navHrefs": [
+          "#cover",
+          "#insurers",
+          "#claim",
+          "#fit",
+          "#how",
+          "#faq"
+        ],
+        "hasOwnerBar": false,
+        "adminMarker": null,
+        "bodyFont": "\"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif"
+      }
+    },
+    "adminFlow": {
+      "adminBarShot": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/admin-reopen-bar-desktop.png",
+      "publicReturnShot": "/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/public-return-after-admin-desktop.png",
+      "beforePublic": {
+        "url": "http://127.0.0.1:4177/",
+        "hasOwnerBar": true,
+        "adminMarker": "1",
+        "ownerBarText": "Admin\nPanel\nEdit text\nMain\nPublic site\nSave draft\nPreview\nPublish\nLog out"
+      },
+      "afterPublic": {
+        "url": "http://127.0.0.1:4177/",
+        "hasOwnerBar": false,
+        "adminMarker": null,
+        "insurerText": "ประกันรถยนต์ · ในฐานะนายหน้า\nประกันรถยนต์\nเทียบได้กว่า 26 เจ้า\n\nเฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ\n\nประกันชีวิต+สุขภาพ · ในฐานะตัวแทน\nตัวแทน AIA อย่างเป็นทางการ\nใบอนุญาตตัวแทนประกันชีวิตเลขที่ 6401006221 · ประกันชีวิตและสุขภาพผมดูแลในฐานะตัวแทน AIA โดยตรง กรมธรรม์ออกโดย AIA\nประกันรถยนต์ · ในฐานะนายหน้า\nศรีกรุงโบรคเกอร์ · Srikrung Broker\nใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · ผมเสนอและจัดเบี้ยประกันรถยนต์ในฐานะนายหน้าภายใต้ศรีกรุงโบรคเกอร์ กรมธรรม์ออกโดยบริษัทประกันที่คุณเลือก\nโลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้",
+        "talkHeadingText": "ขอรับคำปรึกษา"
+      }
+    }
+  }
+}

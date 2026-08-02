@@ -81,6 +81,8 @@ Minimum checks:
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
   motor-variant nav, includes the current `#claim` anchor, and lands on
   `#insurers` below the sticky header
+- public navbar anchor jumps, including `#how`, scroll in-place without
+  rebuilding the main visitor DOM or flashing the page
 - `/admin/login` loads
 - Firebase Auth login UI renders; real Google popup login is verified manually
   with an allowlisted admin account before production release
@@ -90,6 +92,8 @@ Minimum checks:
   login acceptance is expected
 - `/admin` shows the "Manage your site" launcher
 - launcher links open `/#edit`, `/#admin`, `/admin/analytics`, and `/`
+- admin `Public site` actions use `/?view=public`, clear the owner marker, and
+  return to `/` without showing `[data-admin-owner-bar]`
 - `/admin/analytics` renders private analytics without loading visitor GA
   scripts and without horizontal overflow
 - `/admin/analytics` recent leads remain readable on mobile as labeled cards,
@@ -98,13 +102,23 @@ Minimum checks:
   Brand & chrome, Theme & data, and Versions
 - `/#admin` Content tab can edit structured card sets, including insurer
   relationship cards, claim cards, and fee cards
+- `/#admin` `Save draft` and `Publish` use custom confirmation dialogs, not
+  native browser dialogs
+- `Save draft` success waits for the Firestore draft write, then shows a
+  dismissible toast with a 30-second `Undo` that restores the previous draft
+- `Publish` success waits for the Firestore live/draft/version writes, then
+  shows a dismissible toast with a 30-second `Undo` that republishes the
+  previous live snapshot
 - `/#admin` close button hides the drawer and exposes an owner bar that can
-  reopen `Panel`, enter `Edit text`, return to `Main`, or `Log out`
+  reopen `Panel`, enter `Edit text`, return to `Main`, open `Public site`, or
+  `Log out`
+- `/#admin` drawer appears above visitor sticky header on mobile and must not
+  fade in over the header chrome
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
   "ออก" control
 - `/#edit` renders click-to-edit mode with editable text fields
-- `/#edit` toolbar can open `Panel`, return to `Main`, finish editing with
-  `Done`, and `Log out`
+- `/#edit` toolbar can open `Panel`, return to `Main`, open `Public site`,
+  finish editing with `Done`, and `Log out`
 - finishing edit mode removes `contenteditable` affordances
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English
@@ -112,6 +126,9 @@ Minimum checks:
   `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
 - Firestore live content hydrates before public/admin launcher rendering; stale
   local cache must not override a successful `states/live` read
+- legacy Firestore content that conflicts with product decisions is normalized
+  on render/save/publish: duplicate `#motor` nav, stale `14/20` motor-insurer
+  count copy, and forced-line-break contact headings
 - owner modes hydrate Firestore draft/version data as needed, and publish writes
   `states/live`, `states/draft`, and a version document
 - `/`, including `/#motor`, remains indexable with canonical
