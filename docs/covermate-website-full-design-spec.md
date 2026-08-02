@@ -58,6 +58,24 @@ Latest local regression evidence for public/admin chrome separation:
   marker, the in-session owner reopen bar after closing `/#admin`, and the
   clean visitor view after clicking `Public site`.
 
+Latest Claude Design reconciliation evidence:
+
+- Reconciliation doc:
+  `/Users/point/CoverMate/docs/CLAUDE_DESIGN_RECONCILIATION.md`
+- Snapshot folder:
+  `/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02`
+- Compared reference:
+  `/Users/point/Downloads/CoverMate Standalone (1).html`
+- Reference SHA-256:
+  `0bae1f0b89b43bf4836ae4ce81d3d3047cd6a256cc846baaee2679cfda853b73`
+- Main evidence images: `comparison-public-desktop.png`,
+  `comparison-public-mobile.png`, `comparison-admin-login.png`, and
+  `comparison-admin-analytics.png`.
+- Summary: the latest Claude HTML visually matches the public surface closely
+  and fixes raw-template visibility, but it remains a design/reference artifact
+  because admin auth/publish semantics are demo-oriented and the standalone
+  still logs a `file://` `.image-slots.state.json` fetch error.
+
 The following screenshots are historical ad-hoc visual evidence from production. They are useful for the exported spec context, but they are not a complete production snapshot suite:
 
 - Public desktop: `/tmp/covermate-spec-home-desktop.png`
@@ -88,7 +106,12 @@ Use this precedence order:
 2. Repository implementation in `/Users/point/CoverMate`.
 3. Project docs in `/Users/point/CoverMate/docs`.
 4. Firestore live CMS state when present: `sites/covermate/states/live`.
-5. Earlier Claude/standalone/screenshots only as visual calibration.
+5. The current external machine-readable handoff package at
+   `/Users/point/Downloads/Insurance Agent Poster Concepts.zip` for
+   implementation planning, schema/API/rules references, and Claude handoff
+   context. The filename is misleading; it contains a `handoff/` implementation
+   package, not only poster concepts.
+6. Earlier Claude/standalone/screenshots only as visual calibration.
 
 If older references conflict with this spec or the live site, this spec and the live implementation win.
 
@@ -113,10 +136,11 @@ Known reference caveat:
 is runtime-dependent when opened alone from `/Downloads`. It can display raw
 `{{ ... }}` placeholders if its sidecar runtime files are absent. Treat it as a
 Claude reference input, not a valid self-contained deliverable. The candidate
-packaged demo is `/Users/point/Downloads/CoverMate Standalone.html`, but it must
-still pass the standalone validation checklist before being shared as evidence;
-a 2026-08-02 quick check found no visible raw template markers but did find a
-`file://` `.image-slots.state.json` fetch error.
+packaged demo studied most recently is
+`/Users/point/Downloads/CoverMate Standalone (1).html`, but it must still pass
+the standalone validation checklist before being shared as evidence; the
+2026-08-02 reconciliation found no visible raw template markers after settle but
+did find a `file://` `.image-slots.state.json` fetch error.
 If a standalone demo is required, ask Claude to produce a single self-contained
 HTML file or a complete folder bundle with an explicit `open-this.html`.
 
@@ -124,6 +148,10 @@ HTML file or a complete folder bundle with an explicit `open-this.html`.
 
 Update the corresponding Claude designs to reflect the current product decisions:
 
+- First read
+  `/Users/point/CoverMate/docs/CLAUDE_DESIGN_RECONCILIATION.md`; it is the
+  current feedback loop between the latest Claude standalone and the production
+  product contract.
 - The public site is one continuous page. `/#motor` is only an alias that scrolls to `#insurers`; it must not become a separate-looking page.
 - The visitor navbar must show only one motor item: Thai `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`.
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.

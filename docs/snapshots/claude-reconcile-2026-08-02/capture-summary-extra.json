@@ -1,0 +1,100 @@
+[
+  {
+    "label": "reference-login-desktop",
+    "target": "file:///Users/point/Downloads/CoverMate%20Standalone%20(1).html#login",
+    "png": "/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02/reference-login-desktop.png",
+    "messages": [],
+    "summary": {
+      "url": "file:///Users/point/Downloads/CoverMate%20Standalone%20(1).html#login",
+      "title": "",
+      "text": "C CoverMate ADMIN · PRIVATE เข้าสู่ระบบผู้ดูแล Admin sign-in. Only the site owner can manage content and settings. Continue with your Google account. Sign in with Google Demo build. This copy has no server and no real sign-in — the button just opens the portal so you can walk the flow. The live site requires a Google account. A real session lasts 7 days in this browser. View the public site สลับหน้าจอ",
+      "buttons": [
+        "Sign in with Google",
+        "Toggle screen switcher"
+      ],
+      "h": [
+        "เข้าสู่ระบบผู้ดูแล"
+      ],
+      "hasDemo": true,
+      "hasFirestore": false,
+      "raw": false
+    }
+  },
+  {
+    "label": "production-login-desktop",
+    "target": "https://covermate.vercel.app/admin/login?reconcile=1785678859519",
+    "png": "/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02/production-login-desktop.png",
+    "messages": [],
+    "summary": {
+      "url": "https://covermate.vercel.app/admin/login?reconcile=1785678859519",
+      "title": "CoverMate Admin Login",
+      "text": "C CoverMate ADMIN · PRIVATE เข้าสู่ระบบผู้ดูแล Admin sign-in. Only the site owner can manage content and settings. Continue with your Google account. Sign in with Google Firebase Auth. Google sign-in is active. Access opens only for accounts listed in Firestore at admins/{uid}. Your session is kept in this browser for 7 days. View the public site →",
+      "buttons": [
+        "Sign in with Google"
+      ],
+      "h": [
+        "เข้าสู่ระบบผู้ดูแล"
+      ],
+      "hasDemo": false,
+      "hasFirestore": true,
+      "raw": false
+    }
+  },
+  {
+    "label": "reference-analytics-desktop",
+    "target": "file:///Users/point/Downloads/CoverMate%20Standalone%20(1).html#analytics",
+    "png": "/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02/reference-analytics-desktop.png",
+    "messages": [],
+    "summary": {
+      "url": "file:///Users/point/Downloads/CoverMate%20Standalone%20(1).html#analytics",
+      "title": "",
+      "text": "C CoverMate ADMIN · PRIVATE Main Public site Log out OWNER ANALYTICS Analytics A private operating view for traffic quality, consultation intent, and lead capture. Firestore leads render live when available. GA4 traffic charts are prepared for a server-side Data API or scheduled Firestore export. GA4 MEASUREMENT G-5TF3C235EF Installed DATA API Not connected Backend needed SESSIONS — Requires the GA4 Data API or a scheduled export. ACTIVE USERS — Deduplicated visitor count from GA4. LEADS SAVED 0 Firestore unavailable in this browser session. LEAD CONVERSION — Submissions divided by sessions. TRAFFIC TO CONSULTATION Visitor funnel Partial data Best read as counts by stage: page views, contact intent, form start, lead saved. Page views Connect GA4 Contact intent Connect GA4 Form start Connec",
+      "buttons": [
+        "Main",
+        "Public site",
+        "Log out",
+        "Toggle screen switcher"
+      ],
+      "h": [
+        "Analytics"
+      ],
+      "hasDemo": false,
+      "hasFirestore": true,
+      "raw": false
+    }
+  },
+  {
+    "label": "production-analytics-desktop",
+    "target": "https://covermate.vercel.app/admin/analytics?reconcile=1785678859519",
+    "png": "/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02/production-analytics-desktop.png",
+    "messages": [
+      {
+        "type": "warning",
+        "text": "[covermate] analytics data unavailable: Error: Not authorized to read CoverMate leads.\n    at Object.loadContactLeads (https://covermate.vercel.app/covermate-firebase.js:415:21)\n    at async load (https://covermate.verce"
+      }
+    ],
+    "summary": {
+      "url": "https://covermate.vercel.app/admin/analytics?reconcile=1785678859519",
+      "title": "CoverMate Analytics",
+      "text": "C CoverMate ADMIN · PRIVATE Main Public site Log out OWNER ANALYTICS Analytics A private operating view for traffic quality, consultation intent, and lead capture. Firestore leads render live when available. GA4 traffic charts are prepared for a server-side Data API or scheduled Firestore export. GA4 MEASUREMENT G-5TF3C235EF Installed DATA API Not connected Backend needed SESSIONS -- Requires GA4 Data API or export. ACTIVE USERS -- Deduplicated visitor count from GA4. LEADS SAVED 0 Firestore unavailable in this browser session. LEAD CONVERSION -- Submissions divided by sessions. TRAFFIC TO CONSULTATION Visitor funnel Best read as counts by stage: page views, contact intent, form start, lead saved. Partial data Page views Connect GA4 Contact intent Connect GA4 Form start Connect GA4 Lead sa",
+      "buttons": [
+        "Main",
+        "Public site",
+        "Log out"
+      ],
+      "h": [
+        "Analytics",
+        "Visitor funnel",
+        "Lead trend",
+        "Enquiry type",
+        "Product interest",
+        "Recent leads",
+        "Channel quality",
+        "What this page expects"
+      ],
+      "hasDemo": false,
+      "hasFirestore": true,
+      "raw": false
+    }
+  }
+]

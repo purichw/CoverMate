@@ -19,6 +19,18 @@ source-authored private analytics surface:
 The site includes the visitor experience, motor-insurance section, admin login,
 admin launcher, admin analytics, inline editing mode, and control panel mode.
 
+Current external handoff package:
+
+- `/Users/point/Downloads/Insurance Agent Poster Concepts.zip`
+- Despite the filename, this zip's contents are the machine-readable
+  implementation handoff under `handoff/`: `README.md`, OpenAPI, Firestore
+  rules, content defaults/schema/reference data/icons, source helpers for
+  store/migration/markup/routing/theme/calculator/analytics/validation, and
+  test stubs.
+- Use this zip, together with the latest SPEC, as the current handoff artifact
+  for Claude/implementation planning. Do not treat the filename as meaning the
+  package is poster-only.
+
 Local workspace state can still be ahead of production between edits. Treat
 `covermate.vercel.app` as current only after the relevant commit is pushed,
 Vercel is deployed, Firestore Rules are deployed when rules changed, and
@@ -101,14 +113,23 @@ insurer-logo section. It renders as a desktop comparison table and mobile
 stacked cards, with editable tier heads/items/cell states in the Admin Content
 tab.
 
+The latest studied Claude standalone is
+`/Users/point/Downloads/CoverMate Standalone (1).html`. The reconciliation
+ledger is now captured in
+[`CLAUDE_DESIGN_RECONCILIATION.md`](CLAUDE_DESIGN_RECONCILIATION.md), with
+snapshot evidence under
+`/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02`. Use that
+document as the feedback loop for future Claude exports so accepted production
+decisions are not reintroduced as conflicts.
+
 `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
 is the runtime-dependent Claude build source. When opened alone from
 `/Downloads`, it can show raw `{{ ... }}` placeholders because required sidecar
 files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js` are
 absent. Treat it as reference material only unless Claude exports a
-self-contained HTML or complete folder bundle. The candidate packaged demo is
-`/Users/point/Downloads/CoverMate Standalone.html`; a 2026-08-02 quick check
-found no visible raw template markers there, but it still logs a `file://`
+self-contained HTML or complete folder bundle. The latest studied packaged demo
+`/Users/point/Downloads/CoverMate Standalone (1).html` showed no visible raw
+template markers after settle, but it still logs a `file://`
 `.image-slots.state.json` fetch error, so it is not yet fully validated as a
 portable evidence artifact.
 
@@ -158,6 +179,7 @@ Read these before changing the project:
 - [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md)
 - [SEO.md](SEO.md)
 - [DESIGN_ASSETS.md](DESIGN_ASSETS.md)
+- [CLAUDE_DESIGN_RECONCILIATION.md](CLAUDE_DESIGN_RECONCILIATION.md)
 - [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md)
 
 ## Common Commands

@@ -59,6 +59,7 @@ Detailed project documents:
 - [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [`docs/SEO.md`](docs/SEO.md)
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
+- [`docs/CLAUDE_DESIGN_RECONCILIATION.md`](docs/CLAUDE_DESIGN_RECONCILIATION.md)
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 - [`docs/HANDOFF.md`](docs/HANDOFF.md)
 
@@ -167,10 +168,23 @@ check `git status` before assuming a local change has been committed or
 deployed.
 Historical inputs used to create the current surfaces:
 
+- Current machine-readable implementation handoff package:
+  `/Users/point/Downloads/Insurance Agent Poster Concepts.zip`. The filename
+  is misleading: the zip contains `handoff/README.md`, content defaults/schema,
+  OpenAPI, Firestore rules, source helper modules, theme data, and spec test
+  stubs. Use this artifact for handoff work instead of assuming it is only a
+  poster concept archive.
+- Latest Claude/Product reconciliation note:
+  `/Users/point/CoverMate/docs/CLAUDE_DESIGN_RECONCILIATION.md`. Read this
+  before asking Claude to export a new design or standalone file; it records
+  which Claude reference changes are accepted, which production decisions must
+  prevail, and which standalone behaviors are demo-only.
 - Visitor/admin standalone reference:
   `/Users/point/Downloads/Purich Insurance Site (standalone).html`
 - Latest visitor/admin standalone reference:
   `/Users/point/Downloads/CoverMate Standalone.html`
+- Latest studied Claude standalone reference:
+  `/Users/point/Downloads/CoverMate Standalone (1).html`
 - Latest Claude runtime-dependent reference:
   `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
 - Earlier visitor reference: `/Users/point/Downloads/Purich Insurance Site.dc.html`
