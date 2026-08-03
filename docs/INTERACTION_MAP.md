@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Visitor Journey
 
@@ -39,6 +39,7 @@ The main consultation form asks for:
 - enquiry type
 - coverage area
 - freeform details
+- consent for contact/data use
 
 The submitted summary should include enquiry type and coverage when selected.
 
@@ -47,6 +48,7 @@ The renewal reminder form asks for:
 - insurance type
 - renewal month
 - LINE ID or phone
+- consent for renewal follow-up/data use
 
 It writes the same rules-validated `contactLeads/*` shape, with `qtype:
 "review"` and a generated topic/summary. The reminder form must not bypass the

@@ -16,6 +16,7 @@ try {
 const { chromium } = playwright;
 
 const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";
+const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
 const chromePath =
   process.env.CHROME_PATH ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -163,6 +164,60 @@ async function waitForBodyText(page, pattern, timeout = 30000) {
     { source: pattern.source, flags: pattern.flags },
     { timeout }
   );
+}
+
+async function readDraftSection(page, id) {
+  return page.evaluate((sectionId) => {
+    try {
+      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+      return (config.sections || []).find((section) => section.id === sectionId) || null;
+    } catch {
+      return null;
+    }
+  }, id);
+}
+
+async function clickAdminTab(page, label) {
+  await page.getByRole("button", { name: label, exact: true }).click();
+  await page.waitForTimeout(180);
+}
+
+async function selectAdminSection(page, id) {
+  await clickAdminTab(page, "Sections");
+  const sectionButton = page.locator("aside button").filter({ hasText: new RegExp(`#${id}\\b`) }).first();
+  await sectionButton.scrollIntoViewIfNeeded();
+  await sectionButton.click();
+  await page.waitForFunction(
+    (sectionId) => (document.querySelector("aside")?.innerText || "").includes(`#${sectionId}`),
+    id,
+    { timeout: 5000 }
+  );
+}
+
+async function clickSectionColumnControl(page, id, direction) {
+  await clickAdminTab(page, "Sections");
+  await page.waitForFunction(
+    (sectionId) =>
+      Array.from(document.querySelectorAll("aside button")).some((button) =>
+        (button.textContent || "").includes(`#${sectionId}`)
+      ),
+    id,
+    { timeout: 5000 }
+  );
+  const clicked = await page.evaluate(({ sectionId, direction }) => {
+    const sectionButton = Array.from(document.querySelectorAll("aside button")).find((button) =>
+      (button.textContent || "").includes(`#${sectionId}`)
+    );
+    const row = sectionButton?.parentElement?.parentElement;
+    const targetText = direction === "increase" ? "+" : "−";
+    const target = Array.from(row?.querySelectorAll("button") || []).find(
+      (button) => (button.textContent || "").trim() === targetText
+    );
+    if (!target) return false;
+    target.click();
+    return true;
+  }, { sectionId: id, direction });
+  if (!clicked) throw new Error(`Could not find ${direction} columns control for #${id}`);
 }
 
 const browser = await chromium.launch({
@@ -442,6 +497,144 @@ async function verifyAdminActionWorkflow() {
   await page.close();
 }
 
+async function verifyAdminBuilderControls() {
+  const liveConfig = renamedConfig("Live Builder Smoke");
+  const draftConfig = renamedConfig("Draft Builder Smoke");
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: adminActionContentMock(liveConfig, draftConfig)
+    })
+  );
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+  });
+
+  await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Draft Builder Smoke/);
+
+  const coverBefore = await readDraftSection(page, "cover");
+  const coverColsExpected = Math.min(4, Number(coverBefore?.cols || 0) + 1);
+  await clickSectionColumnControl(page, "cover", "increase");
+  await page.waitForFunction(
+    ({ id, expected }) => {
+      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+      const section = (config.sections || []).find((item) => item.id === id);
+      return Number(section?.cols || 0) === expected;
+    },
+    { id: "cover", expected: coverColsExpected },
+    { timeout: 5000 }
+  ).catch(() => failures.push(`admin builder: #cover columns did not increase to ${coverColsExpected}`));
+
+  await selectAdminSection(page, "insurers");
+  const insurersBefore = await readDraftSection(page, "insurers");
+  const insurerCardCountBefore = (insurersBefore?.cards || []).length;
+  await page.locator("aside button").filter({ hasText: /^\+ Add relationship card$/ }).click();
+  await page.waitForFunction(
+    ({ id, expected }) => {
+      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+      const section = (config.sections || []).find((item) => item.id === id);
+      return (section?.cards || []).length === expected;
+    },
+    { id: "insurers", expected: insurerCardCountBefore + 1 },
+    { timeout: 5000 }
+  ).catch(() => failures.push("admin builder: + Add relationship card did not append an insurers card"));
+
+  await selectAdminSection(page, "tiers");
+  const tiersBefore = await readDraftSection(page, "tiers");
+  const tierHeadCountBefore = (tiersBefore?.heads || []).length;
+  const tierItemCountBefore = (tiersBefore?.items || []).length;
+  await page.locator("aside button").filter({ hasText: /^\+ Add column$/ }).click();
+  await page.waitForFunction(
+    ({ id, expected }) => {
+      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+      const section = (config.sections || []).find((item) => item.id === id);
+      const heads = section?.heads || [];
+      return heads.length === expected && (section?.items || []).every((item) => (item.st || []).length === expected);
+    },
+    { id: "tiers", expected: tierHeadCountBefore + 1 },
+    { timeout: 5000 }
+  ).catch(() => failures.push("admin builder: + Add column did not sync coverage cells across all tier rows"));
+
+  await page.locator("aside button").filter({ hasText: /^\+ Add tier$/ }).click();
+  await page.waitForFunction(
+    ({ id, expectedItems, expectedHeads }) => {
+      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+      const section = (config.sections || []).find((item) => item.id === id);
+      const items = section?.items || [];
+      return (
+        items.length === expectedItems &&
+        (items[items.length - 1]?.st || []).length === expectedHeads
+      );
+    },
+    { id: "tiers", expectedItems: tierItemCountBefore + 1, expectedHeads: tierHeadCountBefore + 1 },
+    { timeout: 5000 }
+  ).catch(() => failures.push("admin builder: + Add tier did not append a row with coverage state cells"));
+
+  await page.waitForTimeout(900);
+  const builderState = await page.evaluate(() => {
+    const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+    const section = (id) => (config.sections || []).find((item) => item.id === id) || {};
+    const tiers = section("tiers");
+    const lastSave = window.__covermateSaveCalls[window.__covermateSaveCalls.length - 1] || null;
+    const lastSaveSection = (id) => (lastSave?.config?.sections || []).find((item) => item.id === id) || {};
+    return {
+      text: document.body.innerText || "",
+      coverCols: section("cover").cols,
+      insurerCards: (section("insurers").cards || []).length,
+      tierHeads: (tiers.heads || []).length,
+      tierItems: (tiers.items || []).length,
+      tierCellsSynced: (tiers.items || []).every((item) => (item.st || []).length === (tiers.heads || []).length),
+      saveCalls: window.__covermateSaveCalls.length,
+      lastSaveName: lastSave?.name || "",
+      lastSaveCoverCols: lastSaveSection("cover").cols,
+      lastSaveInsurerCards: (lastSaveSection("insurers").cards || []).length,
+      lastSaveTierHeads: (lastSaveSection("tiers").heads || []).length,
+      lastSaveTierItems: (lastSaveSection("tiers").items || []).length
+    };
+  });
+  if (builderState.text.includes("[object Object]")) {
+    failures.push("admin builder: rendered object placeholder text after builder mutations");
+  }
+  if (builderState.coverCols !== coverColsExpected) {
+    failures.push(`admin builder: expected #cover cols ${coverColsExpected}, got ${builderState.coverCols}`);
+  }
+  if (builderState.insurerCards !== insurerCardCountBefore + 1) {
+    failures.push(`admin builder: expected insurers cards ${insurerCardCountBefore + 1}, got ${builderState.insurerCards}`);
+  }
+  if (builderState.tierHeads !== tierHeadCountBefore + 1 || builderState.tierItems !== tierItemCountBefore + 1 || !builderState.tierCellsSynced) {
+    failures.push(`admin builder: tier rows/columns ended inconsistent (${JSON.stringify(builderState)})`);
+  }
+  if (
+    builderState.saveCalls < 1 ||
+    builderState.lastSaveName !== "draft" ||
+    builderState.lastSaveCoverCols !== coverColsExpected ||
+    builderState.lastSaveInsurerCards !== insurerCardCountBefore + 1 ||
+    builderState.lastSaveTierHeads !== tierHeadCountBefore + 1 ||
+    builderState.lastSaveTierItems !== tierItemCountBefore + 1
+  ) {
+    failures.push(`admin builder: debounced draft save did not include final builder mutations (${JSON.stringify(builderState)})`);
+  }
+  if (pageErrors.length) {
+    failures.push(`admin builder: ${pageErrors.join(" | ")}`);
+  }
+  await page.close();
+}
+
 async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   const remoteConfig = renamedConfig("Public Chrome Guard Smoke");
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -564,9 +757,21 @@ async function verifyStaticSeoFiles() {
   }
 }
 
+if (smokeSuite === "admin-builder") {
+  await verifyAdminBuilderControls();
+  await browser.close();
+  if (failures.length) {
+    console.error(failures.join("\n"));
+    process.exit(1);
+  }
+  console.log(`CoverMate admin builder smoke passed for ${baseUrl}`);
+  process.exit(0);
+}
+
 await verifyStaticSeoFiles();
 await verifyRemoteHydrationContract();
 await verifyAdminActionWorkflow();
+await verifyAdminBuilderControls();
 await verifyPublicRouteSuppressesStaleOwnerChrome();
 
 for (const [name, width, height] of viewports) {
@@ -810,6 +1015,8 @@ for (const [name, width, height] of viewports) {
         hasCoverageSelect: selectOptions.some((text) =>
           /ประกันรถยนต์|Motor|Life|ประกันชีวิต/.test(text)
         ),
+        requiredConsentCheckboxCount:
+          document.querySelectorAll('form input[type="checkbox"][aria-required="true"]').length,
         hasRelationshipProof: /AIA|Srikrung|ศรีกรุง/i.test(insurerText),
         missingAnchors,
         duplicateHeaderNavLabels: headerNavLabels.filter(
@@ -930,6 +1137,12 @@ for (const [name, width, height] of viewports) {
     }
     if (visitorRoutes.has(route) && !state.hasCoverageSelect) {
       failures.push(`${name} ${route}: contact form is missing coverage select options`);
+    }
+    const expectedConsentCheckboxes = mainVisitorRoutes.has(route) ? 2 : 1;
+    if (visitorRoutes.has(route) && state.requiredConsentCheckboxCount < expectedConsentCheckboxes) {
+      failures.push(
+        `${name} ${route}: public lead forms are missing required consent checkboxes (${state.requiredConsentCheckboxCount}/${expectedConsentCheckboxes})`
+      );
     }
     if (mainVisitorRoutes.has(route) && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: claim help section is missing`);

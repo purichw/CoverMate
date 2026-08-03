@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Production
 
@@ -45,10 +45,13 @@ Run smoke checks against local:
 
 ```bash
 npm run check:bundles
+npm run smoke:admin-builder
 COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 ```
 
 `npm run smoke` defaults to `http://localhost:4177`.
+`npm run smoke:admin-builder` runs only the dedicated Admin builder flow for
+section columns, relationship cards, coverage columns, and tier rows.
 
 ## Production Smoke
 
@@ -104,6 +107,10 @@ Minimum checks:
   Brand & chrome, Theme & data, and Versions
 - `/#admin` Content tab can edit structured card sets, including insurer
   relationship cards, claim cards, and fee cards
+- `/#admin` builder controls can increase section columns, add insurer
+  relationship cards, add coverage table columns, add tier rows, keep tier cell
+  state aligned to the coverage headers, and persist the final mutation to the
+  debounced draft save path
 - `/#admin` `Save draft` and `Publish` use custom confirmation dialogs, not
   native browser dialogs
 - `Save draft` success waits for the Firestore draft write, then shows a
@@ -215,8 +222,13 @@ deploy in the current task.
 Deploy production:
 
 ```bash
+firebase deploy --only firestore:rules
 vercel deploy --prod --yes
 ```
+
+When a change touches public lead payloads or `firestore.rules`, deploy the
+Firestore rules before the Vercel production deploy so the browser payload and
+remote validator stay in lockstep.
 
 Inspect production deployment:
 
@@ -257,6 +269,7 @@ For a bad production deploy:
 - `git status` reviewed
 - relevant docs updated
 - storage key changes reflected in [DATA_CONTRACT.md](DATA_CONTRACT.md)
+- Firestore rules deployed when lead/CMS payload validation changes
 - route/navigation changes reflected in [SITE_MAP.md](SITE_MAP.md)
 - SEO/indexing changes reflected in [SEO.md](SEO.md)
 - visual/font/asset changes reflected in [DESIGN_ASSETS.md](DESIGN_ASSETS.md)

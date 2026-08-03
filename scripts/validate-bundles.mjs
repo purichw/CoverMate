@@ -14,7 +14,29 @@ const jsFiles = [
   "admin/analytics-data.js"
 ];
 
+const cssFiles = [
+  "organic.css",
+  "assets/fonts/covermate-fonts.css"
+];
+
 const failures = [];
+
+const forbiddenPatterns = [
+  { pattern: /--space-(5|7)\b/, message: "forbidden spacing token --space-5/--space-7" },
+  { pattern: /letter-spacing\s*:\s*-\d/i, message: "negative letter-spacing" },
+  { pattern: /\b(Caprasimo|Chonburi|Figtree)\b/, message: "non-product font reference" }
+];
+
+function checkSource(file, source, label = "source") {
+  if (/\[object Object\]/.test(source)) {
+    failures.push(`${file}: literal [object Object] found in ${label}`);
+  }
+  for (const rule of forbiddenPatterns) {
+    if (rule.pattern.test(source)) {
+      failures.push(`${file}: ${rule.message} found in ${label}`);
+    }
+  }
+}
 
 for (const file of htmlFiles) {
   const html = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
@@ -32,20 +54,22 @@ for (const file of htmlFiles) {
       if (!template.includes("<!DOCTYPE html>")) {
         failures.push(`${file}: embedded template does not look like HTML`);
       }
+      checkSource(file, template, "embedded template");
     } catch (error) {
       failures.push(`${file}: template JSON parse failed: ${error.message}`);
     }
   }
-  if (/\[object Object\]/.test(html)) {
-    failures.push(`${file}: literal [object Object] found in source`);
-  }
+  checkSource(file, html);
 }
 
 for (const file of jsFiles) {
   const source = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
-  if (/\[object Object\]/.test(source)) {
-    failures.push(`${file}: literal [object Object] found in source`);
-  }
+  checkSource(file, source);
+}
+
+for (const file of cssFiles) {
+  const source = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+  checkSource(file, source);
 }
 
 if (failures.length) {
@@ -53,4 +77,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Validated ${htmlFiles.length} HTML surfaces and ${jsFiles.length} scripts.`);
+console.log(`Validated ${htmlFiles.length} HTML surfaces, ${jsFiles.length} scripts, and ${cssFiles.length} CSS files.`);

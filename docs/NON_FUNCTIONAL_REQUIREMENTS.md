@@ -35,7 +35,7 @@ Before paid traffic:
 
 - Publish a privacy policy and analytics disclosure.
 - Define lead retention, deletion, and export expectations.
-- Confirm whether PDPA consent copy needs an explicit checkbox.
+- Public consultation and renewal reminder forms must require explicit consent before Firestore lead creation.
 
 ## Performance
 

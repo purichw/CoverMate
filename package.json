@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "check:bundles": "node scripts/validate-bundles.mjs",
+    "smoke:admin-builder": "COVERMATE_SMOKE_SUITE=admin-builder node scripts/smoke.mjs",
     "smoke": "node scripts/smoke.mjs"
   }
 }

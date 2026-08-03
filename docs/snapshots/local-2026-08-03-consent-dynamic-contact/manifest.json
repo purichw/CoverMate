@@ -1,0 +1,78 @@
+{
+  "capturedAt": "2026-08-03T13:40:01.267Z",
+  "baseUrl": "http://localhost:4177",
+  "shots": [
+    {
+      "name": "public-contact-consent-desktop",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/public-contact-consent-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "route": "http://localhost:4177/#talk"
+    },
+    {
+      "name": "public-contact-consent-mobile",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/public-contact-consent-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "route": "http://localhost:4177/#talk"
+    },
+    {
+      "name": "public-renew-consent-mobile",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/public-renew-consent-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "route": "http://localhost:4177/#renew"
+    },
+    {
+      "name": "admin-brand-contact-fields-desktop",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/admin-brand-contact-fields-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "route": "http://localhost:4177/#admin"
+    },
+    {
+      "name": "public-contact-consent-lower-mobile",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/public-contact-consent-lower-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "route": "http://localhost:4177/#talk"
+    },
+    {
+      "name": "public-renew-consent-lower-mobile",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/public-renew-consent-lower-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "route": "http://localhost:4177/#renew"
+    },
+    {
+      "name": "admin-contact-fields-desktop",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/admin-contact-fields-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "route": "http://localhost:4177/#admin"
+    },
+    {
+      "name": "admin-contact-fields-visible-desktop",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-03-consent-dynamic-contact/admin-contact-fields-visible-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "route": "http://localhost:4177/#admin"
+    }
+  ]
+}

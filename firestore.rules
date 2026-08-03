@@ -23,6 +23,7 @@ service cloud.firestore {
           "topic",
           "qtype",
           "coverage",
+          "consent",
           "language",
           "summary",
           "sourcePath",
@@ -39,6 +40,7 @@ service cloud.firestore {
         && request.resource.data.qtype in ["", "quote", "compare", "general", "review", "claim"]
         && validLeadString(request.resource.data.coverage, 40)
         && request.resource.data.coverage in ["", "life", "health", "motor", "accident", "savings", "unsure"]
+        && request.resource.data.consent == true
         && request.resource.data.language in ["th", "en"]
         && validLeadString(request.resource.data.summary, 1200)
         && validLeadString(request.resource.data.sourcePath, 220)

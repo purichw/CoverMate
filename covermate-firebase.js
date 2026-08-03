@@ -397,6 +397,7 @@ async function submitContactLead(input = {}) {
     topic: cleanText(input.topic, 2000),
     qtype: cleanLeadChoice(input.qtype, LEAD_QTYPES),
     coverage: cleanLeadChoice(input.coverage, LEAD_COVERAGES),
+    consent: input.consent === true,
     language: cleanLeadChoice(input.language, LEAD_LANGS) || "th",
     summary: cleanText(input.summary, 1200),
     sourcePath,

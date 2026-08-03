@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Persistence Model
 
@@ -137,6 +137,20 @@ fields include:
 `/#edit` by activating the logo image. It is part of the draft/live config and
 must follow the same Firestore-first cache rules as other CMS content.
 
+Important dynamic contact fields include:
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `contact.lineId` | string | Public LINE display handle. |
+| `contact.lineUrl` | string | Header, hero, contact, and footer LINE CTA target. |
+| `contact.facebookName` | string | Optional public Facebook display label. |
+| `contact.facebookUrl` | string | Optional public Facebook link and SEO `sameAs` value. |
+| `contact.whatsapp` | string | Optional WhatsApp/contact value reserved for admin-managed contact data. |
+| `contact.phone` | string | Public phone display and `tel:` target. |
+| `contact.email` | string | Public email display and `mailto:` target. |
+| `contact.hours.th/en` | string | Public service-hours copy. |
+| `contact.area.th/en` | string | Public service-area copy. |
+
 ## Firestore Collections
 
 `firestore.rules` is the repository source of truth for Firestore access.
@@ -165,6 +179,7 @@ Public creates under `contactLeads/*` must match the rules-validated shape:
 | `topic` | string | Max 2000 chars. |
 | `qtype` | string | Empty, `quote`, `compare`, `general`, `review`, or `claim`. |
 | `coverage` | string | Empty, `life`, `health`, `motor`, `accident`, `savings`, or `unsure`. |
+| `consent` | boolean | Required `true`; visitor confirmed contact/data-use consent before submission. |
 | `language` | string | `th` or `en`. |
 | `summary` | string | Max 1200 chars. Must not be sent to GA. |
 | `sourcePath` | string | Max 220 chars. |
@@ -177,11 +192,12 @@ Admin users may update status/read fields later, but public visitors may only
 create new validated leads.
 
 The main consultation form writes the visitor-entered name, contact, enquiry
-type, coverage area, details, and a derived summary. The renewal reminder form
-uses the same collection and validation shape; it requires only contact details,
-stores `qtype: "review"`, maps renewal kind to the nearest allowed `coverage`
-category, and keeps the selected renewal type/month in `topic` and `summary`.
-Neither form may send contact fields or freeform text to Google Analytics.
+type, coverage area, details, consent confirmation, and a derived summary. The
+renewal reminder form uses the same collection and validation shape; it requires
+contact details and consent, stores `qtype: "review"`, maps renewal kind to the
+nearest allowed `coverage` category, and keeps the selected renewal type/month
+in `topic` and `summary`. Neither form may send contact fields or freeform text
+to Google Analytics.
 
 ## Migration Rules
 
