@@ -1,3 +1,22 @@
+import {
+  DRAFT_CONFIG_KEY,
+  DRAFT_TEXT_KEY,
+  HISTORY_KEY,
+  HISTORY_LIMIT,
+  cacheSiteState as cacheState,
+  cacheVersions,
+  cleanLeadChoice,
+  cleanText,
+  clearAdminSession as clearSession,
+  readAdminSession as readSession,
+  readJSON,
+  removeKey,
+  sanitizeMotorCountConfig,
+  sanitizeMotorCountText,
+  validStateDoc,
+  writeAdminSession as writeSession
+} from "./covermate-contract.js";
+
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM",
   authDomain: "covermate-purich.firebaseapp.com",
@@ -9,14 +28,6 @@ const FIREBASE_CONFIG = {
 };
 
 const FIREBASE_VERSION = "12.16.0";
-const SESSION_KEY = "covermate-admin-session";
-const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
-const LIVE_CONFIG_KEY = "purich-live-config-v3";
-const LIVE_TEXT_KEY = "purich-live-text-v3";
-const DRAFT_CONFIG_KEY = "purich-draft-config-v3";
-const DRAFT_TEXT_KEY = "purich-draft-text-v3";
-const HISTORY_KEY = "purich-history-v3";
-const HISTORY_LIMIT = 20;
 const LEAD_LIMIT = 250;
 
 const LEAD_QTYPES = new Set(["", "quote", "compare", "general", "review", "claim"]);
@@ -40,186 +51,6 @@ const auth = authMod.getAuth(app);
 const db = firestoreMod.getFirestore(app);
 const provider = new authMod.GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
-
-function readSession() {
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    const session = raw ? JSON.parse(raw) : null;
-    if (!session || session.exp <= Date.now()) return null;
-    return session;
-  } catch {
-    return null;
-  }
-}
-
-function writeSession(user, admin) {
-  const session = {
-    firebase: true,
-    uid: user.uid,
-    email: user.email || "",
-    name: user.displayName || "",
-    pic: user.photoURL || "",
-    role: admin.role || "admin",
-    ts: Date.now(),
-    exp: Date.now() + SESSION_MS
-  };
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  return session;
-}
-
-function clearSession() {
-  try {
-    window.localStorage.removeItem(SESSION_KEY);
-    window.localStorage.removeItem("purich-admin-ever-v7");
-  } catch {
-    // best effort only
-  }
-}
-
-function readJSON(key) {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeJSON(key, value) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // best effort only; remote state remains the source of truth
-  }
-}
-
-function removeKey(key) {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // best effort only
-  }
-}
-
-function cleanText(value, limit) {
-  const text = String(value || "").replace(/\s+/g, " ").trim();
-  return text.slice(0, limit);
-}
-
-function cleanLeadChoice(value, allowed) {
-  const text = cleanText(value, 40);
-  return allowed.has(text) ? text : "";
-}
-
-function validStateDoc(doc) {
-  return Boolean(doc && doc.config && Array.isArray(doc.config.sections));
-}
-
-function cloneJSON(value) {
-  return JSON.parse(JSON.stringify(value || {}));
-}
-
-function sanitizeMotorCountText(text) {
-  const next = cloneJSON(text || {});
-  Object.keys(next).forEach((key) => {
-    const value = String(next[key] || "");
-    const isInsurerInlineText = /^insurers:\d+:(th|en)$/.test(key);
-    const isContactTitleText = /^talk:\d+:(th|en)$/.test(key);
-    if (isInsurerInlineText && (
-      /เทียบได้กว่า\s*(14|20)\s*เจ้า/.test(value) ||
-      /บริษัทกว่า\s*(14|20)\s*เจ้า/.test(value) ||
-      /compared across\s*(14|20)\+?/i.test(value) ||
-      /through\s*(14|20)\+?\s*insurers/i.test(value)
-    )) {
-      delete next[key];
-    }
-    if (isContactTitleText &&
-      (/ขอรับ\s*\n\s*คำปรึกษา/.test(value) || /Request a\s*\n\s*consultation/i.test(value))
-    ) {
-      delete next[key];
-    }
-  });
-  return next;
-}
-
-function sanitizeMotorCountConfig(config) {
-  const next = cloneJSON(config || {});
-  if (next.header && Array.isArray(next.header.nav)) {
-    const seen = new Set();
-    next.header.nav = next.header.nav.reduce((items, item) => {
-      if (!item) return items;
-      const normalized = cloneJSON(item);
-      if (normalized.href === "#motor") normalized.href = "#insurers";
-      const key = normalized.href || JSON.stringify(normalized.label || {});
-      if (seen.has(key)) return items;
-      seen.add(key);
-      items.push(normalized);
-      return items;
-    }, []);
-  }
-  if (Array.isArray(next.sections)) {
-    next.sections.forEach((section) => {
-      if (!section || (section.id !== "insurers" && section.type !== "insurers")) return;
-      if (section.th) {
-        if (/เทียบได้กว่า\s*(14|20)\s*เจ้า/.test(String(section.th.title || ""))) {
-          section.th.title = "ประกันรถยนต์\nเทียบได้กว่า 26 เจ้า";
-        }
-        if (/บริษัทกว่า\s*(14|20)\s*เจ้า/.test(String(section.th.body || ""))) {
-          section.th.body = "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ";
-        }
-      }
-      if (section.en) {
-        if (/compared across\s*(14|20)\+?/i.test(String(section.en.title || ""))) {
-          section.en.title = "Motor insurance\ncompared across 26+";
-        }
-        if (/through\s*(14|20)\+?\s*insurers/i.test(String(section.en.body || ""))) {
-          section.en.body = "For motor insurance I place through 26+ insurers and recommend what suits you. Life and health I represent AIA exclusively.";
-        }
-      }
-    });
-    next.sections.forEach((section) => {
-      if (!section || (section.id !== "talk" && section.type !== "contact")) return;
-      if (section.th && /ขอรับ\s*\n\s*คำปรึกษา/.test(String(section.th.title || ""))) {
-        section.th.title = "ขอรับคำปรึกษา";
-      }
-      if (section.en && /Request a\s*\n\s*consultation/i.test(String(section.en.title || ""))) {
-        section.en.title = "Request a consultation";
-      }
-    });
-  }
-  return next;
-}
-
-function sanitizeStateDoc(state) {
-  if (!state || !state.config) return state;
-  return {
-    ...state,
-    config: sanitizeMotorCountConfig(state.config),
-    text: sanitizeMotorCountText(state.text || {})
-  };
-}
-
-function cacheState(name, state) {
-  const clean = sanitizeStateDoc(state);
-  if (!validStateDoc(clean)) return false;
-  if (name === "live") {
-    writeJSON(LIVE_CONFIG_KEY, clean.config);
-    writeJSON(LIVE_TEXT_KEY, clean.text || {});
-    return true;
-  }
-  if (name === "draft") {
-    writeJSON(DRAFT_CONFIG_KEY, clean.config);
-    writeJSON(DRAFT_TEXT_KEY, clean.text || {});
-    return true;
-  }
-  return false;
-}
-
-function cacheVersions(versions) {
-  if (!Array.isArray(versions)) return false;
-  writeJSON(HISTORY_KEY, versions.slice(0, HISTORY_LIMIT));
-  return true;
-}
 
 function adminRef(uid) {
   return firestoreMod.doc(db, "admins", uid);

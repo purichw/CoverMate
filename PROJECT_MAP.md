@@ -73,6 +73,7 @@ Detailed project documents:
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
+| `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
 | `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, version history, contact lead submission, and admin lead reads. |
 | `firestore.rules` | Firestore access rules for admin allowlist, site state, versions, analytics docs, and validated contact leads. |
 | `firebase.json` | Firebase CLI mapping for Firestore rules deploys. |
@@ -129,7 +130,8 @@ Admin identity is Firebase-backed. The approved admin session is cached in
 browser `localStorage`. CMS content is Firestore-first under
 `sites/covermate/*`; localStorage keeps last-known live/draft/text/history
 fallback caches and must not override a successful remote read. These keys are
-part of the product contract and must not be renamed without a migration:
+part of the product contract, are centralized in `covermate-contract.js`, and
+must not be renamed without a migration:
 
 - `covermate-admin-session`
 - `purich-live-config-v3`
@@ -359,6 +361,9 @@ but is not currently present as a loose repository file.
 - Keep `assets/ins/*` paths stable unless smoke tests and bundle references are
   updated together.
 - Keep the localStorage keys listed above stable unless a migration plan exists.
+- Keep owner hash checks, admin-session parsing, and CMS fallback cache writes
+  routed through `covermate-contract.js` instead of reintroducing duplicate
+  constants in page-specific files.
 - Keep public lead writes validated by Firestore Rules; do not make
   `contactLeads/*` a free-form public write path.
 - Keep visitor GA off admin-only surfaces, including `/admin/analytics`.

@@ -8,6 +8,7 @@ const htmlFiles = [
 ];
 
 const jsFiles = [
+  "covermate-contract.js",
   "covermate-firebase.js",
   "covermate-analytics.js",
   "admin/session.js",

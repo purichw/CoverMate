@@ -32,6 +32,7 @@
   <meta name="twitter:description" content="ปรึกษาประกันชีวิต สุขภาพ AIA และประกันรถยนต์เทียบเบี้ยกว่า 26 บริษัท ดูแลตั้งแต่เลือกแผนถึงเคลม โดยไม่มีค่าใช้จ่าย">
   <meta name="twitter:image" content="https://covermate.vercel.app/assets/covermate-og.png">
   <script type="application/ld+json" id="covermate-jsonld">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://covermate.vercel.app/#website","url":"https://covermate.vercel.app/","name":"CoverMate","inLanguage":["th-TH","en"],"publisher":{"@id":"https://covermate.vercel.app/#organization"}},{"@type":["Organization","InsuranceAgency"],"@id":"https://covermate.vercel.app/#organization","name":"CoverMate","url":"https://covermate.vercel.app/","logo":{"@type":"ImageObject","url":"https://covermate.vercel.app/assets/covermate-og.png","width":1200,"height":630},"areaServed":{"@type":"AdministrativeArea","name":"Bangkok Metropolitan Region, Thailand"},"knowsAbout":["AIA life insurance","AIA health insurance","Motor insurance comparison","Insurance claims support"],"identifier":[{"@type":"PropertyValue","name":"Life agent licence","value":"6401006221"},{"@type":"PropertyValue","name":"Non-life broker licence","value":"6804008544"}]},{"@type":"WebPage","@id":"https://covermate.vercel.app/#webpage","url":"https://covermate.vercel.app/","name":"CoverMate | ที่ปรึกษาประกัน AIA และประกันรถยนต์","description":"ปรึกษาประกันชีวิต สุขภาพ AIA และประกันรถยนต์เทียบเบี้ยกว่า 26 บริษัท ดูแลตั้งแต่เลือกแผนถึงเคลม โดยไม่มีค่าใช้จ่าย","isPartOf":{"@id":"https://covermate.vercel.app/#website"},"about":{"@id":"https://covermate.vercel.app/#organization"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://covermate.vercel.app/assets/covermate-og.png","width":1200,"height":630},"inLanguage":["th-TH","en"]},{"@type":"Service","@id":"https://covermate.vercel.app/#insurance-advisory","name":"Life, health, and motor insurance advisory","serviceType":"Insurance advisory and motor insurance comparison","provider":{"@id":"https://covermate.vercel.app/#organization"},"areaServed":{"@type":"AdministrativeArea","name":"Bangkok Metropolitan Region, Thailand"},"audience":{"@type":"Audience","audienceType":"People comparing personal insurance in Thailand"}}]}</script>
+  <script type="module" src="/covermate-contract.js"></script>
   <script src="/covermate-analytics.js" defer></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -112,19 +113,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     let template = JSON.parse(templateEl.textContent);
     async function hydrateCoverMateContent() {
       if (!/^https?:$/.test(window.location.protocol)) return;
-      const owner = ['#admin', '#edit', '#preview'].indexOf(window.location.hash) >= 0;
+      const contract = window.CoverMateContract || {};
+      const owner = contract.isOwnerHash
+        ? contract.isOwnerHash(window.location.hash)
+        : ['#admin', '#edit', '#preview'].indexOf(window.location.hash) >= 0;
       if (owner) {
-        try {
-          const raw = window.localStorage.getItem('covermate-admin-session');
-          const session = raw ? JSON.parse(raw) : null;
-          if (!session || Number(session.exp || 0) <= Date.now()) {
-            window.location.replace('/admin/login');
-            return new Promise(() => {});
-          }
-        } catch (err) {
+        const session = contract.readAdminSession
+          ? contract.readAdminSession()
+          : (() => {
+              try {
+                const raw = window.localStorage.getItem('covermate-admin-session');
+                const parsed = raw ? JSON.parse(raw) : null;
+                return parsed && Number(parsed.exp || 0) > Date.now() ? parsed : null;
+              } catch (err) {
+                return null;
+              }
+            })();
+        if (!session) {
           window.location.replace('/admin/login');
           return new Promise(() => {});
         }
+      } else if (contract.clearAdminChromeState) {
+        contract.clearAdminChromeState();
       }
       const timeoutMs = owner ? 9000 : 5000;
       let timeoutId = 0;

@@ -1,25 +1,9 @@
-const SESSION_KEY = "covermate-admin-session";
-const ADMIN_EVER_KEY = "purich-admin-ever-v7";
+import {
+  clearAdminSession,
+  readAdminSession
+} from "../covermate-contract.js";
 
-export function readAdminSession() {
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    const session = raw ? JSON.parse(raw) : null;
-    if (!session || Number(session.exp || 0) <= Date.now()) return null;
-    return session;
-  } catch {
-    return null;
-  }
-}
-
-export function clearAdminSession() {
-  try {
-    window.localStorage.removeItem(SESSION_KEY);
-    window.localStorage.removeItem(ADMIN_EVER_KEY);
-  } catch {
-    // Local cleanup should never block navigation.
-  }
-}
+export { clearAdminSession, readAdminSession };
 
 export function requireAdminSession(options = {}) {
   const redirectTo = options.redirectTo || "/admin/login";

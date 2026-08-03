@@ -18,6 +18,10 @@ available, it rewrites the local live cache before the embedded app reads it.
 Hard-coded defaults are only a cold-start fallback when no remote live document
 and no local cache exist.
 
+The canonical runtime names and helpers for these keys live in
+`covermate-contract.js`. New source-authored runtime files should import that
+module instead of copying key strings or writing their own admin-session parser.
+
 Implications:
 
 - production and local development read the same Firestore live/draft documents

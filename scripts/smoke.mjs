@@ -740,7 +740,7 @@ async function verifyStaticSeoFiles() {
     if (!manifestIcons.includes(icon)) failures.push(`seo /site.webmanifest: missing icon ${icon}`);
   }
 
-  for (const asset of ["/favicon.ico", "/favicon.svg", "/covermate-firebase.js", "/covermate-analytics.js", "/admin/session.js", "/admin/analytics-data.js", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
+  for (const asset of ["/favicon.ico", "/favicon.svg", "/covermate-contract.js", "/covermate-firebase.js", "/covermate-analytics.js", "/admin/session.js", "/admin/analytics-data.js", "/assets/covermate-og.png", "/assets/apple-touch-icon.png", "/assets/icon-192.png", "/assets/icon-512.png"]) {
     const response = await fetch(new URL(asset, baseUrl));
     if (!response.ok) failures.push(`seo ${asset}: HTTP ${response.status}`);
   }

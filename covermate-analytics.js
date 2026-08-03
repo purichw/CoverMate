@@ -27,10 +27,14 @@
   }
 
   function ownerHash() {
+    var contract = window.CoverMateContract;
+    if (contract && contract.isOwnerHash) return contract.isOwnerHash(window.location.hash);
     return !!OWNER_HASHES[window.location.hash];
   }
 
   function ownerSession() {
+    var contract = window.CoverMateContract;
+    if (contract && contract.readAdminSession) return !!contract.readAdminSession();
     try {
       var raw = window.localStorage.getItem("covermate-admin-session");
       if (!raw) return false;

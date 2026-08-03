@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Current Shape
 
@@ -37,6 +37,10 @@ flowchart TD
   Vercel --> Launcher["/admin/index.html"]
   Vercel --> Analytics["/admin/analytics/index.html"]
   Browser --> Firebase["Firebase Auth + Firestore"]
+  Public --> Contract["covermate-contract.js"]
+  Login --> Contract
+  Launcher --> Contract
+  Analytics --> Contract
   Public --> Live["Firestore: states/live"]
   Public --> Leads["Firestore: contactLeads/*"]
   Public --> Store["localStorage fallback cache"]
@@ -79,6 +83,12 @@ draft saves, publish/restore writes, version-history reads, public lead
 submission, and admin lead reads. The visitor page loads only the live CMS
 state; owner modes additionally load draft and versions.
 
+`covermate-contract.js` owns shared runtime constants and defensive helpers for
+admin session storage, owner hash detection, Firestore cache keys, state
+sanitization, and local fallback caching. The visitor shell, Firebase adapter,
+and source-authored admin pages must consume this contract rather than
+duplicating storage keys or session parsing.
+
 `covermate-analytics.js` owns Google Analytics 4 visitor tracking for production
 only. It uses measurement ID `G-5TF3C235EF`, loads only on
 `covermate.vercel.app`, suppresses owner hashes and active admin sessions, and
@@ -93,8 +103,9 @@ source-authored rather than a Claude Design export, uses `admin/session.js` for
 session gating/sign-out, and uses `admin/analytics-data.js` to normalize
 Firestore lead data. It does not load the visitor GA script.
 
-`admin/session.js` and `admin/analytics-data.js` are the first source-level
-refactor seam around the exported admin bundles.
+`admin/session.js` and `admin/analytics-data.js` are source-level refactor seams
+around the exported admin bundles. `admin/session.js` delegates storage/session
+behavior to `covermate-contract.js`.
 
 `assets/ins/*.png` owns insurer logo media for the motor-insurance logo section.
 The exported reference also carries AIA/Srikrung Broker relationship-card logo
@@ -199,6 +210,9 @@ buttons, form fields, drawer actions, owner bars, and navigation/footer links at
 ## Do Not Break
 
 Do not rename localStorage keys without a migration.
+
+Do not duplicate owner hashes, admin-session parsing, or CMS cache key names in
+new runtime files; use `covermate-contract.js`.
 
 Do not let local defaults, one-off local migrations, or stale localStorage cache
 override a successfully hydrated Firestore live document.
