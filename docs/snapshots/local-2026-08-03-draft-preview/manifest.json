@@ -1,0 +1,25 @@
+{
+  "baseUrl": "http://127.0.0.1:4177",
+  "capturedAt": "2026-08-03T15:18:14.628Z",
+  "previewState": {
+    "url": "http://127.0.0.1:4177/#preview",
+    "hasPreview": true,
+    "hasEditDock": false,
+    "hasAside": false,
+    "text": "C\nCoverMate\nที่ปรึกษาประกันภัย\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nTH\nEN\nแอดไลน์\nปรึกษาฟรี ไม่มีค่าใช้จ่าย · กรุงเทพฯ\nความเสี่ยง\nไม่ต้องจัดการคนเดียว\n\nชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ ส่วนประกันรถยนต์เทียบเบี้ยได้กว่า 26 เจ้า แนะนำเท่าที่จำเป็น ไม่ขายเกิน\n\nแอดไลน์ ปรึกษาฟรี\nประเมิ"
+  },
+  "cleanState": {
+    "url": "http://127.0.0.1:4177/",
+    "hasOwnerBar": false,
+    "marker": null,
+    "hasAdminText": false
+  },
+  "mobileState": {
+    "url": "http://127.0.0.1:4177/#admin",
+    "hasSectionRows": 17,
+    "hasAdvanced": true,
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "errors": []
+}
