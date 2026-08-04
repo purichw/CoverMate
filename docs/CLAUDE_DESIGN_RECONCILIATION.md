@@ -91,7 +91,7 @@ production/dev line.
 | Public section set | Keep all 17 sections: hero, trust, cover, review, fit, how, insurers, tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk. |
 | Header nav | Header shows one motor item only: Thai `ประกันรถยนต์`, English `Motor`, href `#insurers`. |
 | Focus routes | `/#motor-focus` and `/#life-focus` may exist as unexposed campaign variants. They are not public nav or sitemap items. |
-| Admin launcher | `/admin` remains after login and has exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. |
+| Admin launcher | `/admin` remains after login and has exactly two primary cards: `Edit website` and `Analytics`. The control panel is opened from editor mode via `Tools -> Panel`. |
 | Admin labels | Owner/admin chrome labels are English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`. Do not reintroduce Thai `ออก` as an ambiguous action label. |
 | Public-site exit | `Public site` opens a new tab with `/?view=public`, clears owner markers in that visitor tab, and cleans the URL back to `/`. The current admin tab stays in owner mode. |
 | Admin close paths | Closing `/#admin` or `/#edit` returns to `/admin`, not to the visitor page. A signed-in admin session must not visibly alter the public visitor page. |
@@ -114,7 +114,7 @@ production/dev line.
 | Hero proof card | Reference can show placeholder image state in standalone due image-slot storage. | Production uses AIA red logo from `brand.advisorLogo`. | Hybrid. | Keep Claude layout but use real AIA logo asset/default and editable image field. |
 | Stories / voices | Reference heading implies real claim stories. | Product keeps "not filled yet" placeholder until compliant cases exist. | Product UX/compliance preserved. | Use placeholder/no-real-review state unless real approved stories are provided. |
 | Admin login | Reference says `Demo build`, no server, button opens portal. | Production uses Firebase Auth and Firestore `admins/{uid}` allowlist. | Behavior exception / product preserved. | Keep card geometry, but production design copy must say Firebase Auth/Firestore allowlist, not demo. |
-| Admin launcher | Reference has three cards including Analytics. | Production matches the three-card launcher and routes to real surfaces. | Claude adopted + product routing preserved. | Keep the three equal-weight cards. Do not bypass `/admin` after login. |
+| Admin launcher | Reference originally had separate Edit and Arrange cards. | Production now uses one unified `Edit website` entry plus `Analytics`; `Tools -> Panel` opens layout/customization inside editor mode. | Product decision supersedes reference. | Keep the two-card launcher. Do not bypass `/admin` after login. |
 | Admin panel close | Reference visible button says Thai `ออก`. | Production uses close semantics, not sign-out, and keeps `Log out` separate. | Product UX preserved. | Replace ambiguous `ออก` with icon/accessible close or English close semantics; do not imply logout. |
 | Owner action bar | Reference has Save/Preview/Publish but localStorage/demo flashes. | Production uses custom confirm dialogs, Firestore writes, toasts, Undo. | Product UX preserved. | Design confirm/toast/Undo states explicitly. Do not collapse to a short flash. |
 | Public-site action | Reference `goVisitor` sets hash empty. | Production must use `/?view=public` to clear owner marker and suppress admin chrome. | Product UX preserved. | Future exports must model `Public site` as a clean visitor-view transition, not just hash clear. |
@@ -164,12 +164,14 @@ Must preserve:
 - Header has one motor nav item only: TH "ประกันรถยนต์", EN "Motor", href #insurers.
 - Keep all 17 public sections: hero, trust, cover, review, fit, how, insurers,
   tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk.
-- Keep /admin launcher after login with exactly three cards: Edit the words,
-  Arrange & customise, Analytics.
+- Keep /admin launcher after login with exactly two cards: Edit website and
+  Analytics. Do not reintroduce a separate Arrange/control-panel card; the
+  panel lives inside editor mode under `Tools -> Panel`.
 - Admin labels are English: Main, Public site, Log out, Panel, Edit text,
   Save draft, Preview, Publish, Success.
 - Inline edit uses the warm-ink owner dock from `owner-dock-spec.md`. Keep
-  `Mode · Text edit`, `Tools`, and `Close` visible by default; put `Save draft`,
+  `Editing on page` and `Tools` visible by default; when the admin drawer is
+  open during text editing, show `Editing on page · Panel open`. Put `Save draft`,
   `Preview`, and `Publish` under `Draft`, and `Panel`, `Main`, `Public site`,
   and `Log out` under `Go to`. Do not reintroduce the black/white alternating
   toolbar; `Publish` is the only terracotta-filled dock action.

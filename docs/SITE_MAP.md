@@ -86,8 +86,8 @@ Admin login must land on `/admin` after sign-in.
 
 The `/admin` launcher actions must stay aligned with the reference:
 
-- "Edit the words" opens `/#edit`
-- "Arrange & customise" opens `/#admin`
+- "Edit website" opens `/#edit`
+- The control panel is available inside editor mode from `Tools -> Panel`
 - "Analytics" opens `/admin/analytics`
 - "View public site" opens `/`
 

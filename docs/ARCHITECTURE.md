@@ -196,20 +196,22 @@ The owner hash modes also own the admin continuation UI:
 
 - closing the `/#admin` drawer returns to `/admin`, keeping the owner in a
   private admin surface;
-- `/#edit` shows its own warm-ink owner dock: the collapsed row keeps
-  `Mode · Text edit`, `Tools`, and `Close` visible, while `Tools` expands a
-  single dark-ink command palette grouped into `Draft` and `Go to` actions.
-  `Publish` is the only terracotta-filled action; the other owner commands stay
-  quiet cream/outline actions;
-- `Close` in `/#edit` removes all inline-edit affordances and returns to
-  `/admin`;
+- `/#edit` shows its own warm-ink owner dock: the collapsed row keeps only
+  `Editing on page` and `Tools` visible. If the admin drawer is open while text
+  editing stays active, the status becomes `Editing on page · Panel open`, and
+  the Tools menu collapses after the Panel destination is chosen.
+  `Tools` expands a single dark-ink command palette grouped into `Draft` and
+  `Go to` actions. `Publish` is the only terracotta-filled action; the other
+  owner commands stay quiet cream/outline actions;
+- leaving `/#edit` is done through the `Tools` menu (`Main`, `Panel`,
+  `Public site`, or `Log out`); there is no separate collapsed `Close` button;
 - `Public site` opens a separate clean visitor tab and leaves the current admin
   tab in owner mode;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
 Visible Admin chrome/action labels are English-only. The stable owner labels are
-`Panel`, `Edit text`, `Main`, `Public site`, `Close`, `Save draft`, `Preview`,
+`Panel`, `Edit text`, `Main`, `Public site`, `Save draft`, `Preview`,
 `Publish`, `Success`, and `Log out`.
 
 The mobile interaction contract is enforced by a template-level

@@ -65,7 +65,7 @@ SEO/indexing, admin routing, or already-accepted component placement decisions.
 | Contact section defaults | Handoff `defaults.json` has a `talk` contact section without normal localized title/body fields. | Production contact heading/body/form copy must remain visible and editable through existing CMS paths. | Do not treat missing `talk` defaults as permission to empty or rebuild the contact section. |
 | Standalone portability | Latest standalone renders, but logs a `file://` `.image-slots.state.json` error. | A portable standalone should open cleanly without missing-file/helper fetch errors. | Inline/remove image-slot helper state or ship a complete folder bundle with a clear open-this file. |
 | Screen switcher | Standalone includes a screen switcher. | Screen switcher is demo-only. It must never appear in production public UI. | Keep screen switcher only in standalone review artifacts. |
-| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Mode · Text edit`, `Tools`, `Close`; expanded Draft/Go to palette; `Publish` is the only terracotta fill. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or the too-minimal `Close`-only footer. |
+| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Editing on page` plus `Tools`; if the admin drawer is open while text editing remains active, it reads `Editing on page · Panel open`. Expanded tools use the Draft/Go to palette; `Publish` is the only terracotta fill. There is no separate collapsed `Close` button. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or a `Close`-only footer. |
 
 ## Existing Component Placement And Micro-Layout Decisions
 
@@ -102,9 +102,9 @@ production decision unless the owner explicitly changes it.
 | Contact form | Name/contact/topic/coverage/detail/consent with clear spacing. | Do not remove consent or make form fields cramped. |
 | Footer | Dark footer after contact with brand, nav, contact, licence/OIC copy. | Do not put standalone screen switcher or admin edit outlines in production footer. |
 | Admin login | Centered breathable auth card on organic cream background. | Do not squeeze the central card or use demo/no-server copy in production. |
-| Admin launcher | `/admin` after login, with exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. Analytics is the third card. | Do not bypass the launcher after login. Do not remove Analytics. |
+| Admin launcher | `/admin` after login, with exactly two primary cards: `Edit website` and `Analytics`. The control panel is reached from editor mode through `Tools -> Panel`. | Do not bypass the launcher after login. Do not remove Analytics. Do not re-split Edit and Arrange into separate cards. |
 | Admin drawer / `#admin` | Right-side drawer/control panel, persistent publish path, English admin labels. | Do not make `Close` ambiguous with `Log out`. Do not hide Save/Preview/Publish after closing without a reopen path. |
-| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default; `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not use a `Close`-only footer that traps the owner away from publish actions. |
+| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default with `Editing on page` and `Tools`; `Tools → Panel` opens the drawer without disabling inline text editing, so the status becomes `Editing on page · Panel open`. `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not add a separate collapsed `Close` button; use `Tools → Main` to leave edit mode and `Tools → Panel` to open the drawer while staying in edit mode. |
 | Admin public exit | `Public site` clears owner markers via `/?view=public` then lands on clean `/`. | Do not leave admin chrome visible on the visitor page after Public site. |
 | Analytics | Private admin route with comfortable card spacing, Firestore lead data when available, GA4 Data API placeholders where not connected. | Do not compress mobile analytics cards. Do not show fake GA4 charts as real data. |
 | Toasts/dialogs | Save draft and Publish require custom confirmation, successful write, dismissible toast, and 30-second Undo. | Do not use native browser confirms or instantaneous visual flashes that appear before persistence completes. |
@@ -118,7 +118,7 @@ Run this checklist before returning any updated standalone/design:
 - Credential-card logo/company rows are centered.
 - Fee cards do not clip decorative numbers, headings, or body copy.
 - Contact heading Thai `ขอรับคำปรึกษา` stays one line on desktop.
-- Admin launcher still has three equal cards and Analytics is third.
+- Admin launcher has two clear cards: Edit website and Analytics.
 - Owner dock default is compact, with `Tools` expansion available.
 - `Public site` removes owner chrome from the visible public route.
 - Header has one motor nav item only.
@@ -147,7 +147,7 @@ CLAUDE_FEEDBACK_SPEC2_CONFLICTS.md. This includes small details: centered
 life-stage cards in #fit, centered first two lines in AIA/Srikrung credential
 cards, non-clipping fee cards, one-line desktop contact heading, single motor
 header nav item, #motor as an anchor alias, the warm-ink owner dock, English
-admin chrome, and the three-card admin launcher with Analytics as card 3.
+admin chrome, and the two-card admin launcher with Analytics preserved.
 
 Before returning the design/export, include a ledger:
 component | changed? | preserved production decision? | reason | risk.

@@ -1300,6 +1300,11 @@ for (const [name, width, height] of viewports) {
   await waitForBodyText(page, /Manage your site/);
   const adminState = await page.evaluate(() => ({
     text: document.body.innerText,
+    launcherCards: Array.from(document.querySelectorAll("[data-admin-launcher-card]")).map((el) => ({
+      kind: el.getAttribute("data-admin-launcher-card"),
+      text: el.innerText,
+      href: el.getAttribute("href")
+    })),
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
@@ -1308,8 +1313,23 @@ for (const [name, width, height] of viewports) {
   if (!adminState.text.includes("Manage your site")) {
     failures.push(`${name} /admin: authenticated launcher did not render`);
   }
+  if (!adminState.text.includes("Edit website") || !adminState.text.includes("Open editor")) {
+    failures.push(`${name} /admin: unified editor launcher card is missing`);
+  }
   if (!adminState.text.includes("Analytics") || !adminState.text.includes("Open analytics")) {
     failures.push(`${name} /admin: analytics launcher card is missing`);
+  }
+  if (adminState.text.includes("Edit the words") || adminState.text.includes("Arrange & customise") || adminState.text.includes("Open control panel")) {
+    failures.push(`${name} /admin: old split edit/control-panel launcher copy is still visible`);
+  }
+  if (adminState.launcherCards.length !== 2) {
+    failures.push(`${name} /admin: expected 2 primary launcher cards, got ${adminState.launcherCards.length}`);
+  }
+  if (!adminState.launcherCards.some((card) => card.kind === "editor" && card.href === "/#edit")) {
+    failures.push(`${name} /admin: unified editor card does not open /#edit`);
+  }
+  if (!adminState.launcherCards.some((card) => card.kind === "analytics" && card.href === "/admin/analytics")) {
+    failures.push(`${name} /admin: analytics card does not open /admin/analytics`);
   }
   if (adminState.text.includes("[object Object]")) {
     failures.push(`${name} /admin: rendered object placeholder text`);
@@ -1594,7 +1614,7 @@ for (const [name, width, height] of viewports) {
   }
 
   await page.goto(new URL("/#edit", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Text edit/);
+  await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 10000 });
   const editState = await page.evaluate(() => ({
     text: document.body.innerText,
     toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
@@ -1606,18 +1626,18 @@ for (const [name, width, height] of viewports) {
     toolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!editState.text.includes("Text edit")) {
-    failures.push(`${name} /#edit: edit mode toolbar did not render`);
-  }
   if (!editState.toolbarVisible) {
     failures.push(`${name} /#edit: owner edit toolbar is missing`);
   }
   if (
-    !editState.toolbarText.includes("Text edit") ||
+    !editState.toolbarText.includes("Editing") ||
+    editState.toolbarText.includes("Mode") ||
+    editState.toolbarText.includes("Text edit") ||
+    editState.toolbarText.includes("Panel open") ||
     !editState.toolbarText.includes("Tools") ||
-    !editState.toolbarText.includes("Close")
+    editState.toolbarText.includes("Close")
   ) {
-    failures.push(`${name} /#edit: compact edit toolbar controls are missing`);
+    failures.push(`${name} /#edit: compact edit toolbar should show Editing + Tools, without Mode/Text edit/Close`);
   }
   await page.locator('[data-admin-owner-bar="edit"] .cm-owner-dock__summary').click();
   await page.waitForTimeout(150);
@@ -1642,9 +1662,9 @@ for (const [name, width, height] of viewports) {
     !editToolsState.toolbarText.includes("Preview") ||
     !editToolsState.toolbarText.includes("Publish") ||
     !editToolsState.toolbarText.includes("Log out") ||
-    !editToolsState.toolbarText.includes("Close")
+    editToolsState.toolbarText.includes("Close")
   ) {
-    failures.push(`${name} /#edit: expanded edit toolbar owner actions are missing`);
+    failures.push(`${name} /#edit: expanded edit toolbar owner actions are missing or still show Close`);
   }
   if (editState.contentEditableCount < 20) {
     failures.push(`${name} /#edit: expected editable page text, got ${editState.contentEditableCount}`);
@@ -1665,7 +1685,53 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /#edit: edit mode metadata is not noindex (${editState.robots})`);
   }
 
-  await page.getByRole("button", { name: "Close text editor" }).click();
+  await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "Panel" }).click();
+  await page.waitForTimeout(400);
+  const editPanelState = await page.evaluate(() => ({
+    toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
+    hasAdminAside: Boolean(document.querySelector("aside")),
+    toolsOpen: Boolean(document.querySelector('[data-admin-owner-bar="edit"] #covermate-owner-tools-toggle')?.checked),
+    contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length
+  }));
+  if (!editPanelState.hasAdminAside) {
+    failures.push(`${name} /#edit panel: admin drawer did not open from Tools`);
+  }
+  if (!editPanelState.toolbarText.includes("Panel") || !editPanelState.toolbarText.includes("Editing")) {
+    failures.push(`${name} /#edit panel: owner dock did not show editing + panel status (${editPanelState.toolbarText})`);
+  }
+  if (editPanelState.toolsOpen) {
+    failures.push(`${name} /#edit panel: Tools menu stayed expanded after opening Panel`);
+  }
+  if (editPanelState.contentEditableCount < 20) {
+    failures.push(`${name} /#edit panel: text editing stopped while panel was open`);
+  }
+
+  await page.getByRole("button", { name: "Close admin panel" }).click();
+  await page.waitForTimeout(400);
+  const editPanelClosedState = await page.evaluate(() => ({
+    toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
+    hasAdminAside: Boolean(document.querySelector("aside")),
+    contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length
+  }));
+  if (editPanelClosedState.hasAdminAside) {
+    failures.push(`${name} /#edit panel close: admin drawer stayed open`);
+  }
+  if (!editPanelClosedState.toolbarText.includes("Editing") || editPanelClosedState.toolbarText.includes("Panel open")) {
+    failures.push(`${name} /#edit panel close: owner dock did not return to editing-only status (${editPanelClosedState.toolbarText})`);
+  }
+  if (editPanelClosedState.contentEditableCount < 20) {
+    failures.push(`${name} /#edit panel close: text editing stopped after closing panel`);
+  }
+
+  const toolsOpenBeforeMain = await page.evaluate(() => {
+    const bar = document.querySelector('[data-admin-owner-bar="edit"]');
+    return Boolean(bar?.querySelector("#covermate-owner-tools-toggle")?.checked);
+  });
+  if (!toolsOpenBeforeMain) {
+    await page.locator('[data-admin-owner-bar="edit"] .cm-owner-dock__summary').click();
+  }
+  await page.waitForTimeout(150);
+  await page.locator('[data-admin-owner-bar="edit"]').getByRole("link", { name: "Main" }).click();
   await page.waitForTimeout(500);
   const exitEditState = await page.evaluate(() => {
     return {
@@ -1681,20 +1747,20 @@ for (const [name, width, height] of viewports) {
     };
   });
   if (exitEditState.contentEditableCount !== 0) {
-    failures.push(`${name} /#edit close: contenteditable fields remained active`);
+    failures.push(`${name} /#edit main: contenteditable fields remained active`);
   }
   if (exitEditState.editToolbarVisible) {
-    failures.push(`${name} /#edit close: edit toolbar stayed visible`);
+    failures.push(`${name} /#edit main: edit toolbar stayed visible`);
   }
   const exitEditRoute = exitEditState.route.replace(/\/$/, "");
   if (exitEditRoute !== "/admin" || exitEditState.hasOwnerBar || exitEditState.hasAdminAside || !/Manage your site/.test(exitEditState.text)) {
-    failures.push(`${name} /#edit close: did not return to the admin launcher (${JSON.stringify(exitEditState)})`);
+    failures.push(`${name} /#edit main: did not return to the admin launcher (${JSON.stringify(exitEditState)})`);
   }
   if (/Admin portal|Text edit|Save draft/.test(exitEditState.text)) {
-    failures.push(`${name} /#edit close: owner editor text remained after closing`);
+    failures.push(`${name} /#edit main: owner editor text remained after leaving edit mode`);
   }
   if (exitEditState.scrollWidth > exitEditState.clientWidth) {
-    failures.push(`${name} /#edit close: horizontal overflow ${exitEditState.scrollWidth} > ${exitEditState.clientWidth}`);
+    failures.push(`${name} /#edit main: horizontal overflow ${exitEditState.scrollWidth} > ${exitEditState.clientWidth}`);
   }
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });

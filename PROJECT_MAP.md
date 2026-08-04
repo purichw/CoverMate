@@ -69,7 +69,7 @@ Detailed project documents:
 | --- | --- |
 | `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. `#motor` is currently an alias into the main site, not a separate page. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
-| `admin/index.html` | Private admin launcher: "Edit the words", "Arrange & customise", and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
+| `admin/index.html` | Private admin launcher: "Edit website" and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. The control panel is entered from the editor's `Tools -> Panel`, not as a separate main card. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
@@ -219,7 +219,7 @@ Production patches currently preserved in the bundles:
   admin tools, analytics, and English/Thai copy all use Google Sans first, then
   Google Sans Thai/Noto Sans Thai fallbacks.
 - Visible Admin chrome/action labels are English-only to avoid mixed-language
-  owner controls. Keep labels such as `Panel`, `Edit text`, `Main`, `Close`,
+  owner controls. Keep labels such as `Panel`, `Edit text`, `Main`,
   `Public site`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
   stable unless the product owner approves a wording change.
 - `#__bundler_thumbnail`, `#__bundler_loading`, and raw `<x-dc>` template content
@@ -234,11 +234,13 @@ Production patches currently preserved in the bundles:
 - A clean `/` load or reload must clear/ignore stale owner markers and hide
   owner chrome even when `covermate-admin-session` is still valid.
 - Inline edit mode has its own warm-ink owner dock. The default row keeps
-  `Mode · Text edit`, `Tools`, and `Close` visible; expanding `Tools` reveals a
-  single dark command palette grouped into `Draft` (`Save draft`, `Preview`,
-  `Publish`) and `Go to` (`Panel`, `Main`, `Public site`, `Log out`). `Publish`
-  is the only terracotta-filled action in this surface, and `Close` exits back
-  to `/admin`.
+  `Editing on page` and `Tools` visible; when the admin drawer is open while
+  editing remains active, the status becomes `Editing on page · Panel open`;
+  choosing `Tools → Panel` collapses the menu so the state is visible.
+  Expanding `Tools` reveals a single dark command palette grouped into `Draft`
+  (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`, `Main`,
+  `Public site`, `Log out`). `Publish` is the only terracotta-filled action in
+  this surface, and `Tools → Main` exits back to `/admin`.
 - Explicit owner `Save draft` and `Publish` actions use custom confirmation
   dialogs, wait for successful Firestore writes, then show dismissible success
   toasts with a 30-second `Undo`. Save undo restores the previous draft; publish
@@ -315,8 +317,8 @@ but is not currently present as a loose repository file.
 2. Firebase Google sign-in checks Firestore `admins/{uid}`.
 3. Successful allowlisted sign-in writes `covermate-admin-session` and lands on
    `/admin`.
-4. "Edit the words" opens `/#edit`.
-5. "Open control panel" opens `/#admin`.
+4. "Edit website" opens `/#edit`.
+5. The owner can open the control panel from the editor with `Tools -> Panel`.
 6. "Analytics" opens `/admin/analytics`.
 7. `/admin/analytics` renders Firestore lead analytics and GA4 reporting
    readiness without loading visitor GA scripts.

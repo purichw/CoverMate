@@ -125,17 +125,18 @@ Minimum checks:
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
   "ออก" control
 - `/#edit` renders click-to-edit mode with editable text fields
-- `/#edit` owner dock is compact by default: `Mode · Text edit`, `Tools`, and
-  `Close` stay visible; expanding `Tools` opens the warm-ink command palette with
-  `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`, `Main`,
-  `Public site`, `Log out`) groups. `Publish` is the only terracotta-filled
-  dock action
-- `Close` in edit mode removes `contenteditable` affordances and returns to
-  `/admin`
+- `/#edit` owner dock is compact by default: `Editing on page` and `Tools`
+  stay visible; opening `Tools → Panel` keeps text editing active and changes
+  the status to `Editing on page · Panel open`. Expanding `Tools` opens the
+  warm-ink command palette with `Draft` (`Save draft`, `Preview`, `Publish`) and
+  `Go to` (`Panel`, `Main`, `Public site`, `Log out`) groups. `Publish` is the
+  only terracotta-filled dock action
+- `Tools → Main` in edit mode removes `contenteditable` affordances and returns
+  to `/admin`
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English
 - visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
-  `Main`, `Public site`, `Close`, `Save draft`, `Preview`, `Publish`,
+  `Main`, `Public site`, `Save draft`, `Preview`, `Publish`,
   `Success`, and `Log out`
 - Firestore live content hydrates before public/admin launcher rendering; stale
   local cache must not override a successful `states/live` read

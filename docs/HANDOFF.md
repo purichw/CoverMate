@@ -74,12 +74,14 @@ header. Closing the drawer now returns to the private `/admin` launcher; it does
 not place an owner bar on the public visitor page.
 
 The `/#edit` mode now uses the warm-ink owner dock from the Claude owner-dock
-reference. The collapsed dock keeps `Mode · Text edit`, `Tools`, and `Close`
-available; expanding `Tools` opens a single dark-ink command palette grouped
-into `Draft` and `Go to` actions. `Publish` is the only terracotta-filled action
-inside the dock; `Save draft`, `Preview`, `Panel`, `Main`, `Public site`, and
-`Log out` stay quiet cream actions. The `Close` action removes
-`contenteditable` state before returning to `/admin`.
+reference. The collapsed dock keeps only `Editing on page` and `Tools`
+available; if the admin drawer is open at the same time, the status reads
+`Editing on page · Panel open`, and choosing `Panel` collapses the menu so the
+state remains visible. Expanding `Tools` opens a single dark-ink command
+palette grouped into `Draft` and `Go to` actions. `Publish` is the only
+terracotta-filled action inside the dock; `Save draft`, `Preview`, `Panel`,
+`Main`, `Public site`, and `Log out` stay quiet cream actions. `Tools → Main`
+removes `contenteditable` state before returning to `/admin`.
 
 Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
 successful Firestore writes, then show dismissible success toasts with
@@ -94,7 +96,7 @@ English, including headings, logo text, controls, forms, owner tools, and
 analytics.
 
 Visible Admin chrome/action labels are intentionally English-only: `Panel`,
-`Edit text`, `Main`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`, and
+`Edit text`, `Main`, `Save draft`, `Preview`, `Publish`, `Success`, and
 `Log out`.
 
 Insurer logos are present under `assets/ins`.
@@ -110,7 +112,7 @@ includes the expanded reference sections for policy review, claim help, renewal
 reminders, guides, fee transparency, privacy/PDPA, the main-site `#motor` /
 `#life` aliases, and unexposed `#motor-focus` / `#life-focus` campaign variants
 while preserving the production decisions for Firebase/Firestore, Admin
-Analytics, the three-card admin launcher, and real public lead submission paths.
+Analytics, the two-card admin launcher, and real public lead submission paths.
 
 The SPEC (5) reconciliation added the motor tier comparison section after the
 insurer-logo section. It renders as a desktop comparison table and mobile

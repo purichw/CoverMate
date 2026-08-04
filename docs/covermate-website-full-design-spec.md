@@ -156,7 +156,9 @@ Update the corresponding Claude designs to reflect the current product decisions
 - The visitor navbar must show only one motor item: Thai `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`.
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
-- Admin launcher has three primary cards: `Edit the words`, `Arrange & customise`, and `Analytics`.
+- Admin launcher has two primary cards: `Edit website` and `Analytics`. The
+  control panel is available inside editor mode through `Tools -> Panel`, not as
+  a separate launcher choice.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear the owner marker and return to the
   public visitor route without showing owner chrome.
@@ -654,9 +656,8 @@ Required elements:
 - OIC verify link.
 - H1: `Manage your site`.
 - Intro copy explaining that visitors never see this page.
-- Three equal-weight cards:
-  - `Edit the words`
-  - `Arrange & customise`
+- Two primary cards:
+  - `Edit website`
   - `Analytics`
 - Bottom actions:
   - `View public site`
@@ -719,8 +720,10 @@ Required capabilities:
 - No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
-  The default state shows only `Mode · Text edit`, `Tools`, and `Close`; `Tools`
-  expands a single dark-ink command palette above the dock. Desktop uses two
+  The default state shows only `Editing on page` and `Tools`; if the admin
+  drawer is open while inline editing remains active, the status becomes
+  `Editing on page · Panel open`. `Tools` expands a single dark-ink command
+  palette above the dock. Desktop uses two
   groups, `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`,
   `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
   scrollable column with a 460px cap when viewport height allows. `Publish` is
@@ -864,7 +867,7 @@ Do:
 - Preserve the current warm advisory brand.
 - Keep the public page continuous and anchor-based.
 - Keep admin private surfaces visually related but operationally clear.
-- Keep Analytics as the third admin launcher card.
+- Keep Analytics as the second admin launcher card.
 - Keep Google Sans family everywhere.
 - Keep Firestore-first live content behavior visible in design copy/states.
 - Add breathing room where cards or text are crowded.
@@ -905,7 +908,7 @@ Admin:
 
 - Login page shows Firebase Auth, not demo-only wording.
 - Admin launcher exists after login.
-- Launcher has exactly three primary cards: Edit, Arrange, Analytics.
+- Launcher has exactly two primary cards: Edit website, Analytics.
 - Owner/admin controls use English labels.
 - Logout and mode switching are reachable from edit and arrange flows.
 - Closing arrange panel leaves a visible way to reopen or go Main.

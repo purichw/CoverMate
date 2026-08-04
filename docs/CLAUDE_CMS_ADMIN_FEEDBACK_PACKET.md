@@ -234,7 +234,7 @@ SEO/indexing, admin routing, or already-accepted component placement decisions.
 | Contact section defaults | Handoff `defaults.json` has a `talk` contact section without normal localized title/body fields. | Production contact heading/body/form copy must remain visible and editable through existing CMS paths. | Do not treat missing `talk` defaults as permission to empty or rebuild the contact section. |
 | Standalone portability | Latest standalone renders, but logs a `file://` `.image-slots.state.json` error. | A portable standalone should open cleanly without missing-file/helper fetch errors. | Inline/remove image-slot helper state or ship a complete folder bundle with a clear open-this file. |
 | Screen switcher | Standalone includes a screen switcher. | Screen switcher is demo-only. It must never appear in production public UI. | Keep screen switcher only in standalone review artifacts. |
-| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Mode · Text edit`, `Tools`, `Close`; expanded Draft/Go to palette; `Publish` is the only terracotta fill. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or the too-minimal `Close`-only footer. |
+| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Editing on page` plus `Tools`; if the admin drawer is open while text editing remains active, it reads `Editing on page · Panel open`. Expanded tools use the Draft/Go to palette; `Publish` is the only terracotta fill. There is no separate collapsed `Close` button. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or a `Close`-only footer. |
 
 ## Existing Component Placement And Micro-Layout Decisions
 
@@ -271,9 +271,9 @@ production decision unless the owner explicitly changes it.
 | Contact form | Name/contact/topic/coverage/detail/consent with clear spacing. | Do not remove consent or make form fields cramped. |
 | Footer | Dark footer after contact with brand, nav, contact, licence/OIC copy. | Do not put standalone screen switcher or admin edit outlines in production footer. |
 | Admin login | Centered breathable auth card on organic cream background. | Do not squeeze the central card or use demo/no-server copy in production. |
-| Admin launcher | `/admin` after login, with exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. Analytics is the third card. | Do not bypass the launcher after login. Do not remove Analytics. |
+| Admin launcher | `/admin` after login, with exactly two primary cards: `Edit website` and `Analytics`. The control panel is reached from editor mode through `Tools -> Panel`. | Do not bypass the launcher after login. Do not remove Analytics. Do not re-split Edit and Arrange into separate cards. |
 | Admin drawer / `#admin` | Right-side drawer/control panel, persistent publish path, English admin labels. | Do not make `Close` ambiguous with `Log out`. Do not hide Save/Preview/Publish after closing without a reopen path. |
-| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default; `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not use a `Close`-only footer that traps the owner away from publish actions. |
+| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default with `Editing on page` and `Tools`; `Tools → Panel` opens the drawer without disabling inline text editing, so the status becomes `Editing on page · Panel open`. `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not add a separate collapsed `Close` button; use `Tools → Main` to leave edit mode and `Tools → Panel` to open the drawer while staying in edit mode. |
 | Admin public exit | `Public site` clears owner markers via `/?view=public` then lands on clean `/`. | Do not leave admin chrome visible on the visitor page after Public site. |
 | Analytics | Private admin route with comfortable card spacing, Firestore lead data when available, GA4 Data API placeholders where not connected. | Do not compress mobile analytics cards. Do not show fake GA4 charts as real data. |
 | Toasts/dialogs | Save draft and Publish require custom confirmation, successful write, dismissible toast, and 30-second Undo. | Do not use native browser confirms or instantaneous visual flashes that appear before persistence completes. |
@@ -287,7 +287,7 @@ Run this checklist before returning any updated standalone/design:
 - Credential-card logo/company rows are centered.
 - Fee cards do not clip decorative numbers, headings, or body copy.
 - Contact heading Thai `ขอรับคำปรึกษา` stays one line on desktop.
-- Admin launcher still has three equal cards and Analytics is third.
+- Admin launcher has two clear cards: Edit website and Analytics.
 - Owner dock default is compact, with `Tools` expansion available.
 - `Public site` removes owner chrome from the visible public route.
 - Header has one motor nav item only.
@@ -316,7 +316,7 @@ CLAUDE_FEEDBACK_SPEC2_CONFLICTS.md. This includes small details: centered
 life-stage cards in #fit, centered first two lines in AIA/Srikrung credential
 cards, non-clipping fee cards, one-line desktop contact heading, single motor
 header nav item, #motor as an anchor alias, the warm-ink owner dock, English
-admin chrome, and the three-card admin launcher with Analytics as card 3.
+admin chrome, and the two-card admin launcher with Analytics preserved.
 
 Before returning the design/export, include a ledger:
 component | changed? | preserved production decision? | reason | risk.
@@ -424,7 +424,7 @@ production/dev line.
 | Public section set | Keep all 17 sections: hero, trust, cover, review, fit, how, insurers, tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk. |
 | Header nav | Header shows one motor item only: Thai `ประกันรถยนต์`, English `Motor`, href `#insurers`. |
 | Focus routes | `/#motor-focus` and `/#life-focus` may exist as unexposed campaign variants. They are not public nav or sitemap items. |
-| Admin launcher | `/admin` remains after login and has exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. |
+| Admin launcher | `/admin` remains after login and has exactly two primary cards: `Edit website` and `Analytics`. The control panel is opened from editor mode via `Tools -> Panel`. |
 | Admin labels | Owner/admin chrome labels are English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`. Do not reintroduce Thai `ออก` as an ambiguous action label. |
 | Public-site exit | `Public site` opens a new tab with `/?view=public`, clears owner markers in that visitor tab, and cleans the URL back to `/`. The current admin tab stays in owner mode. |
 | Admin close paths | Closing `/#admin` or `/#edit` returns to `/admin`, not to the visitor page. A signed-in admin session must not visibly alter the public visitor page. |
@@ -447,7 +447,7 @@ production/dev line.
 | Hero proof card | Reference can show placeholder image state in standalone due image-slot storage. | Production uses AIA red logo from `brand.advisorLogo`. | Hybrid. | Keep Claude layout but use real AIA logo asset/default and editable image field. |
 | Stories / voices | Reference heading implies real claim stories. | Product keeps "not filled yet" placeholder until compliant cases exist. | Product UX/compliance preserved. | Use placeholder/no-real-review state unless real approved stories are provided. |
 | Admin login | Reference says `Demo build`, no server, button opens portal. | Production uses Firebase Auth and Firestore `admins/{uid}` allowlist. | Behavior exception / product preserved. | Keep card geometry, but production design copy must say Firebase Auth/Firestore allowlist, not demo. |
-| Admin launcher | Reference has three cards including Analytics. | Production matches the three-card launcher and routes to real surfaces. | Claude adopted + product routing preserved. | Keep the three equal-weight cards. Do not bypass `/admin` after login. |
+| Admin launcher | Reference originally had separate Edit and Arrange cards. | Production now uses one unified `Edit website` entry plus `Analytics`; `Tools -> Panel` opens layout/customization inside editor mode. | Product decision supersedes reference. | Keep the two-card launcher. Do not bypass `/admin` after login. |
 | Admin panel close | Reference visible button says Thai `ออก`. | Production uses close semantics, not sign-out, and keeps `Log out` separate. | Product UX preserved. | Replace ambiguous `ออก` with icon/accessible close or English close semantics; do not imply logout. |
 | Owner action bar | Reference has Save/Preview/Publish but localStorage/demo flashes. | Production uses custom confirm dialogs, Firestore writes, toasts, Undo. | Product UX preserved. | Design confirm/toast/Undo states explicitly. Do not collapse to a short flash. |
 | Public-site action | Reference `goVisitor` sets hash empty. | Production must use `/?view=public` to clear owner marker and suppress admin chrome. | Product UX preserved. | Future exports must model `Public site` as a clean visitor-view transition, not just hash clear. |
@@ -497,14 +497,17 @@ Must preserve:
 - Header has one motor nav item only: TH "ประกันรถยนต์", EN "Motor", href #insurers.
 - Keep all 17 public sections: hero, trust, cover, review, fit, how, insurers,
   tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk.
-- Keep /admin launcher after login with exactly three cards: Edit the words,
-  Arrange & customise, Analytics.
+- Keep /admin launcher after login with exactly two cards: Edit website and
+  Analytics. Do not reintroduce a separate Arrange/control-panel card; the
+  panel lives inside editor mode under `Tools -> Panel`.
 - Admin labels are English: Main, Public site, Log out, Panel, Edit text,
   Save draft, Preview, Publish, Success.
 - Inline edit uses the warm-ink owner dock from `owner-dock-spec.md`. Keep
-  `Mode · Text edit`, `Tools`, and `Close` visible by default; put `Save draft`,
+  `Editing on page` and `Tools` visible by default; when the admin drawer is
+  open during text editing, show `Editing on page · Panel open`. Put `Save draft`,
   `Preview`, and `Publish` under `Draft`, and `Panel`, `Main`, `Public site`,
-  and `Log out` under `Go to`. Do not reintroduce the black/white alternating
+  and `Log out` under `Go to`. Use `Tools → Main` or `Tools → Panel` to leave
+  edit mode; do not add a separate collapsed `Close` button. Do not reintroduce the black/white alternating
   toolbar; `Publish` is the only terracotta-filled dock action.
 - Public site action clears owner chrome. A signed-in admin session is not a
   visible public-page mode.
@@ -747,7 +750,9 @@ Update the corresponding Claude designs to reflect the current product decisions
 - The visitor navbar must show only one motor item: Thai `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`.
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
-- Admin launcher has three primary cards: `Edit the words`, `Arrange & customise`, and `Analytics`.
+- Admin launcher has two primary cards: `Edit website` and `Analytics`. The
+  control panel is available inside editor mode through `Tools -> Panel`, not as
+  a separate launcher choice.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear the owner marker and return to the
   public visitor route without showing owner chrome.
@@ -1246,8 +1251,7 @@ Required elements:
 - H1: `Manage your site`.
 - Intro copy explaining that visitors never see this page.
 - Three equal-weight cards:
-  - `Edit the words`
-  - `Arrange & customise`
+  - `Edit website`
   - `Analytics`
 - Bottom actions:
   - `View public site`
@@ -1310,11 +1314,14 @@ Required capabilities:
 - No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
-  The default state shows only `Mode · Text edit`, `Tools`, and `Close`; `Tools`
-  expands a single dark-ink command palette above the dock. Desktop uses two
+  The default state shows only `Editing on page` and `Tools`; if the admin
+  drawer is open while inline editing remains active, the status becomes
+  `Editing on page · Panel open`. `Tools` expands a single dark-ink command
+  palette above the dock. Desktop uses two
   groups, `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`,
   `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
-  scrollable column with a 460px cap when viewport height allows. `Publish` is
+  scrollable column with a 460px cap when viewport height allows. Use
+  `Tools → Main` or `Tools → Panel` to leave edit mode. `Publish` is
   the only terracotta-filled dock action.
 - Save/Preview/Publish remain available from `/#admin` and the inline-edit dock; closing the drawer returns to `/admin`.
 - `Log out` should be available consistently from owner surfaces.
@@ -1496,7 +1503,7 @@ Admin:
 
 - Login page shows Firebase Auth, not demo-only wording.
 - Admin launcher exists after login.
-- Launcher has exactly three primary cards: Edit, Arrange, Analytics.
+- Launcher has exactly two primary cards: Edit website, Analytics.
 - Owner/admin controls use English labels.
 - Logout and mode switching are reachable from edit and arrange flows.
 - Closing arrange panel leaves a visible way to reopen or go Main.
@@ -1861,8 +1868,9 @@ After login, `/admin` must show the "Manage your site" launcher.
 
 Launcher actions:
 
-- Start editing text -> `/#edit`
-- Open control panel -> `/#admin`
+- Open editor -> `/#edit`
+- Panel is opened from inside the editor through `Tools -> Panel`; it is not a
+  separate main launcher card.
 - Open analytics -> `/admin/analytics`
 - View public site -> `/?view=public`
 - `Log out` -> clears local admin session and returns to `/admin/login`
@@ -1888,12 +1896,15 @@ must not show owner chrome, even if stale local owner markers exist.
 5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
 6. The edit toolbar is a warm-ink owner dock and is compact by default: it
-   shows `Mode · Text edit`, `Tools`, and `Close`. `Tools` expands a single
-   dark-ink command palette with `Draft` actions (`Save draft`, `Preview`,
-   `Publish`) and `Go to` actions (`Panel`, `Main`, `Public site`, `Log out`).
-   `Publish` is the only terracotta-filled dock action.
-7. `Close` removes all `contenteditable` and image-edit affordances and returns
-   to `/admin`.
+   shows `Editing on page` and `Tools`. When `Tools → Panel` opens the admin
+   drawer without leaving text editing, the status reads
+   `Editing on page · Panel open`. `Tools` expands a single dark-ink command
+   palette with `Draft` actions (`Save draft`, `Preview`, `Publish`) and `Go to`
+   actions (`Panel`, `Main`, `Public site`, `Log out`). `Publish` is the only
+   terracotta-filled dock action.
+7. `Tools → Main` removes all `contenteditable` and image-edit affordances and
+   returns to `/admin`; `Tools → Panel` keeps the owner in admin workspace with
+   the control panel open.
 8. `Public site` opens a separate visitor tab through `/?view=public`, clears
    owner markers in that tab, and keeps the current admin tab in owner mode.
 9. Reloading `/` after that remains a visitor view; owner chrome must stay
@@ -2172,16 +2183,18 @@ The owner hash modes also own the admin continuation UI:
 
 - closing the `/#admin` drawer returns to `/admin`, keeping the owner in a private admin surface;
 - `/#edit` shows its own warm-ink owner dock: the collapsed row keeps
-  `Mode · Text edit`, `Tools`, and `Close` visible, while `Tools` expands a
-  single dark-ink command palette grouped into `Draft` and `Go to` actions.
+  `Editing on page` and `Tools` visible. If the admin drawer is open while text
+  editing stays active, the status becomes `Editing on page · Panel open`.
+  `Tools` expands a single dark-ink command palette grouped into `Draft` and
+  `Go to` actions.
   `Publish` is the only terracotta-filled action; the other owner commands stay
   quiet cream/outline actions;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
 Visible Admin chrome/action labels are English-only. The stable owner labels are
-`Panel`, `Edit text`, `Main`, `Close`, `Save draft`, `Preview`, `Publish`,
-`Success`, and `Log out`.
+`Panel`, `Edit text`, `Main`, `Save draft`, `Preview`, `Publish`, `Success`, and
+`Log out`.
 
 The mobile interaction contract is enforced by a template-level
 `covermate-responsive-touch-policy` patch on all three HTML surfaces. It keeps

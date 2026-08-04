@@ -75,8 +75,9 @@ After login, `/admin` must show the "Manage your site" launcher.
 
 Launcher actions:
 
-- Start editing text -> `/#edit`
-- Open control panel -> `/#admin`
+- Open editor -> `/#edit`
+- Panel is opened from inside the editor through `Tools -> Panel`; it is not a
+  separate main launcher card.
 - Open analytics -> `/admin/analytics`
 - View public site -> opens a new clean visitor tab via `/?view=public`
 - `Log out` -> clears local admin session and returns to `/admin/login`
@@ -102,12 +103,16 @@ must not show owner chrome, even if stale local owner markers exist.
 5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
 6. The edit toolbar is a warm-ink owner dock and is compact by default: it
-   shows `Mode · Text edit`, `Tools`, and `Close`. `Tools` expands a single
-   dark-ink command palette with `Draft` actions (`Save draft`, `Preview`,
-   `Publish`) and `Go to` actions (`Panel`, `Main`, `Public site`, `Log out`).
-   `Publish` is the only terracotta-filled dock action.
-7. `Close` removes all `contenteditable` and image-edit affordances and returns
-   to `/admin`.
+   shows `Editing on page` and `Tools`. When `Tools → Panel` opens the admin
+   drawer without leaving text editing, the status reads
+   `Editing on page · Panel open`, and the Tools menu collapses after the
+   Panel destination is chosen. `Tools` expands a single dark-ink command
+   palette with `Draft` actions (`Save draft`, `Preview`, `Publish`) and `Go to`
+   actions (`Panel`, `Main`, `Public site`, `Log out`). `Publish` is the only
+   terracotta-filled dock action.
+7. `Tools → Main` removes all `contenteditable` and image-edit affordances and
+   returns to `/admin`; `Tools → Panel` keeps the owner in the right-side
+   control panel.
 8. `Public site` opens a separate visitor tab through `/?view=public`, clears
    owner markers in that tab, and keeps the current admin tab in owner mode.
 9. Reloading `/` after that remains a visitor view; owner chrome must stay
