@@ -150,6 +150,12 @@ normalization is additive only: it fills missing structure, preserves existing
 live/draft values, and must not replace admin-edited remote content with bundled
 fallback copy.
 
+The only non-additive normalizations are explicit product-contract guardrails:
+duplicate legacy `#motor` nav entries collapse to the current `#insurers`
+anchor, insurer-count copy follows the visible logo count, and old forced
+contact-title line breaks become the current one-line title. Everything else
+lets the database version prevail over defaults and local fallback caches.
+
 After the embedded app reads hydrated live content, it syncs SEO title,
 description, Open Graph/Twitter tags, canonical URL, robots meta, `html[lang]`,
 and `script#covermate-jsonld` from the current live state. Static metadata is
@@ -188,19 +194,23 @@ records that undo in version history.
 
 The owner hash modes also own the admin continuation UI:
 
-- closing the `/#admin` drawer removes the hash and shows a compact owner bar
-  instead of trapping the owner on a public page with no way back;
+- closing the `/#admin` drawer returns to `/admin`, keeping the owner in a
+  private admin surface;
 - `/#edit` shows its own warm-ink owner dock: the collapsed row keeps
-  `Mode · Text edit`, `Tools`, and `Done` visible, while `Tools` expands a
+  `Mode · Text edit`, `Tools`, and `Close` visible, while `Tools` expands a
   single dark-ink command palette grouped into `Draft` and `Go to` actions.
   `Publish` is the only terracotta-filled action; the other owner commands stay
   quiet cream/outline actions;
+- `Close` in `/#edit` removes all inline-edit affordances and returns to
+  `/admin`;
+- `Public site` opens a separate clean visitor tab and leaves the current admin
+  tab in owner mode;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
 Visible Admin chrome/action labels are English-only. The stable owner labels are
-`Panel`, `Edit text`, `Main`, `Done`, `Save draft`, `Preview`, `Publish`,
-`Success`, and `Log out`.
+`Panel`, `Edit text`, `Main`, `Public site`, `Close`, `Save draft`, `Preview`,
+`Publish`, `Success`, and `Log out`.
 
 The mobile interaction contract is enforced by a template-level
 `covermate-responsive-touch-policy` patch on all three HTML surfaces. It keeps
@@ -235,9 +245,9 @@ Do not remove the splash-hiding rules for `#__bundler_thumbnail` and
 Do not remove the `covermate-template-cloak` rules that hide raw `<x-dc>`
 template content before hydration on visitor and admin pages.
 
-Do not remove the owner reopen bar after the admin drawer closes. It must keep
-reopen `Panel`, `Edit text`, `Main`, and `Log out` actions reachable during the
-same owner workspace session.
+Do not add an owner reopen bar to the visitor route. Closing admin or edit mode
+must return to `/admin`, where `Panel`, `Edit text`, `Analytics`, `Public site`,
+and `Log out` stay reachable.
 
 Do not let a stored admin session or stale `purich-admin-ever-v7` marker show
 owner chrome on a clean visitor `/` route. Admin authentication and visible
@@ -284,7 +294,7 @@ For a real production CMS, add server-backed auth and persistence.
 For maintainability, migrate the exported HTML bundles into source components
 while keeping the `.dc.html` references as visual fixtures.
 
-For the "26+" insurer claim, keep the visible 14-logo comparison grid plus
+For insurer-count copy, keep the visible 14-logo comparison grid plus
 AIA/Srikrung relationship proof cards aligned with the supplied reference unless
 the business owner supplies new insurer assets or revised copy.
 

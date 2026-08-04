@@ -93,8 +93,8 @@ production/dev line.
 | Focus routes | `/#motor-focus` and `/#life-focus` may exist as unexposed campaign variants. They are not public nav or sitemap items. |
 | Admin launcher | `/admin` remains after login and has exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. |
 | Admin labels | Owner/admin chrome labels are English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`. Do not reintroduce Thai `ออก` as an ambiguous action label. |
-| Public-site exit | `Public site` uses `/?view=public`, clears owner markers, then returns to clean `/`. A signed-in admin session must not visibly alter the public visitor page. |
-| Owner reopen bar | In-session recovery only after closing admin/edit tools. It must not survive a clean public `/` reload through stale localStorage. |
+| Public-site exit | `Public site` opens a new tab with `/?view=public`, clears owner markers in that visitor tab, and cleans the URL back to `/`. The current admin tab stays in owner mode. |
+| Admin close paths | Closing `/#admin` or `/#edit` returns to `/admin`, not to the visitor page. A signed-in admin session must not visibly alter the public visitor page. |
 | Save/Publish | Must use custom confirmation dialogs, wait for Firestore writes, then show dismissible success toasts with a 30-second `Undo`. |
 | CMS content | Firestore live content is canonical for visitors. Draft is private. Local fallback/cache may not override successfully loaded Firestore live content. |
 | Typography | Google Sans family everywhere. Do not reintroduce Caprasimo, Chonburi, or unrelated display/body fonts. |
@@ -169,12 +169,13 @@ Must preserve:
 - Admin labels are English: Main, Public site, Log out, Panel, Edit text,
   Save draft, Preview, Publish, Success.
 - Inline edit uses the warm-ink owner dock from `owner-dock-spec.md`. Keep
-  `Mode · Text edit`, `Tools`, and `Done` visible by default; put `Save draft`,
+  `Mode · Text edit`, `Tools`, and `Close` visible by default; put `Save draft`,
   `Preview`, and `Publish` under `Draft`, and `Panel`, `Main`, `Public site`,
   and `Log out` under `Go to`. Do not reintroduce the black/white alternating
   toolbar; `Publish` is the only terracotta-filled dock action.
-- Public site action clears owner chrome. A signed-in admin session is not a
-  visible public-page mode.
+- Public site action opens a separate clean visitor tab. A signed-in admin
+  session is not a visible public-page mode, and the current admin tab should
+  remain in owner mode.
 - Save draft and Publish require custom confirmation dialogs, successful
   Firestore writes, dismissible success toasts, and 30-second Undo.
 - Production login copy is Firebase Auth + Firestore admins/{uid} allowlist,

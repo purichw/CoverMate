@@ -78,17 +78,17 @@ Launcher actions:
 - Start editing text -> `/#edit`
 - Open control panel -> `/#admin`
 - Open analytics -> `/admin/analytics`
-- View public site -> `/?view=public`
+- View public site -> opens a new clean visitor tab via `/?view=public`
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
-`Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
-stable unless wording is explicitly changed by the owner.
+`Main`, `Public site`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`,
+and `Log out` stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
-The public-site link intentionally carries a short-lived `view=public` flag so
-the visitor page opens without the owner-reopen bar, then cleans the URL back to
-`/`.
+The public-site link intentionally opens a new tab with a short-lived
+`view=public` flag so the visitor page opens without owner chrome, then cleans
+the URL back to `/`. The current admin tab remains in admin mode.
 Being signed in as an admin is not itself a visible mode. A clean public route
 must not show owner chrome, even if stale local owner markers exist.
 
@@ -102,14 +102,14 @@ must not show owner chrome, even if stale local owner markers exist.
 5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
 6. The edit toolbar is a warm-ink owner dock and is compact by default: it
-   shows `Mode · Text edit`, `Tools`, and `Done`. `Tools` expands a single
+   shows `Mode · Text edit`, `Tools`, and `Close`. `Tools` expands a single
    dark-ink command palette with `Draft` actions (`Save draft`, `Preview`,
    `Publish`) and `Go to` actions (`Panel`, `Main`, `Public site`, `Log out`).
    `Publish` is the only terracotta-filled dock action.
-7. Finishing edit mode removes all `contenteditable` and image-edit affordances and shows the
-   compact owner bar for reopening admin tools.
-8. `Public site` uses `/?view=public`, clears the owner marker, and returns to
-   the clean visitor route without owner chrome.
+7. `Close` removes all `contenteditable` and image-edit affordances and returns
+   to `/admin`.
+8. `Public site` opens a separate visitor tab through `/?view=public`, clears
+   owner markers in that tab, and keeps the current admin tab in owner mode.
 9. Reloading `/` after that remains a visitor view; owner chrome must stay
    hidden until the owner intentionally opens `#admin`, `#edit`, `#preview`, or
    `/admin`.
@@ -134,10 +134,9 @@ fields.
    publishes the previous live snapshot back to the visitor site.
 7. Native browser `confirm()` dialogs are not used for owner CMS actions.
 8. Public visitors hydrate the latest `states/live` before rendering.
-9. The drawer close button only closes the drawer. It does not sign out.
-10. After the drawer closes, the compact owner bar provides recovery and publish
-   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, open
-   `Public site`, `Save draft`, `Preview`, `Publish`, or `Log out`.
+9. The drawer close button returns to `/admin`. It does not sign out.
+10. Owner draft/publish recovery remains available through `/admin`, `/#admin`,
+    and the inline-edit dock rather than a public-page owner bar.
 11. The action bar inside the drawer keeps editing/navigation/session actions
    separate from save, preview, and publish actions.
 12. The drawer action bar keeps direct access to text-edit mode and `Main` so

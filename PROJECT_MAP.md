@@ -219,26 +219,26 @@ Production patches currently preserved in the bundles:
   admin tools, analytics, and English/Thai copy all use Google Sans first, then
   Google Sans Thai/Noto Sans Thai fallbacks.
 - Visible Admin chrome/action labels are English-only to avoid mixed-language
-  owner controls. Keep labels such as `Panel`, `Edit text`, `Main`, `Done`,
-  `Save draft`, `Preview`, `Publish`, `Success`, and `Log out` stable unless the
-  product owner approves a wording change.
+  owner controls. Keep labels such as `Panel`, `Edit text`, `Main`, `Close`,
+  `Public site`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
+  stable unless the product owner approves a wording change.
 - `#__bundler_thumbnail`, `#__bundler_loading`, and raw `<x-dc>` template content
   are hidden before hydration to remove the exported "Unpacking..." splash and
   first-load template flash.
 - Admin login redirects to `/admin`, not directly to `/#admin`.
 - Admin launcher has an early `/admin/login` session gate.
-- Admin owner modes include a close/reopen contract: closing the `/#admin`
-  drawer returns to the public page with an owner bar for reopening the control
-  panel, entering edit mode, returning to `Main` (`/admin`), opening
-  `Public site` (`/?view=public`), or logging out.
-- That owner bar is not a persistent public-page admin badge. A clean `/` load
-  or reload must clear/ignore stale owner markers and hide owner chrome even
-  when `covermate-admin-session` is still valid.
+- Admin owner modes stay on private admin surfaces: closing the `/#admin`
+  drawer returns to `/admin`; closing `/#edit` also returns to `/admin`.
+  `Public site` opens a separate clean visitor tab through `/?view=public`
+  without replacing the current admin tab.
+- A clean `/` load or reload must clear/ignore stale owner markers and hide
+  owner chrome even when `covermate-admin-session` is still valid.
 - Inline edit mode has its own warm-ink owner dock. The default row keeps
-  `Mode · Text edit`, `Tools`, and `Done` visible; expanding `Tools` reveals a
+  `Mode · Text edit`, `Tools`, and `Close` visible; expanding `Tools` reveals a
   single dark command palette grouped into `Draft` (`Save draft`, `Preview`,
   `Publish`) and `Go to` (`Panel`, `Main`, `Public site`, `Log out`). `Publish`
-  is the only terracotta-filled action in this surface.
+  is the only terracotta-filled action in this surface, and `Close` exits back
+  to `/admin`.
 - Explicit owner `Save draft` and `Publish` actions use custom confirmation
   dialogs, wait for successful Firestore writes, then show dismissible success
   toasts with a 30-second `Undo`. Save undo restores the previous draft; publish
@@ -271,18 +271,18 @@ Current insurer logo files:
 - `assets/ins/13-thaivivat.png`
 - `assets/ins/14-sompo.png`
 
-The copy says "26+" insurers. The committed grid currently has 14 logo files,
-is rendered from the editable `insurers.items` content array, and includes
-AIA/Srikrung Broker relationship proof cards in the same section. Do not change
-the bundle paths or claim treatment without updating smoke expectations and
-getting business-owner copy confirmation.
+The insurer-count copy is aligned to the visible logo asset count. The committed
+grid currently has 14 logo files, is rendered from the editable
+`insurers.items` content array, and includes AIA/Srikrung Broker relationship
+proof cards in the same section. Do not reintroduce 26/26+ copy or a parallel
+hard-coded logo count without new assets and explicit business-owner approval.
 
 Legacy Firestore CMS data can contain older Claude-reference values such as
-`14/20` insurer count copy, duplicate `#motor` nav entries, or forced line
+`20/26` insurer count copy, duplicate `#motor` nav entries, or forced line
 breaks in the contact heading. The public bundle and `covermate-firebase.js`
-normalize those exact stale values on render, cache, draft save, and publish so
-current product decisions win without making Firestore/local cache a broader
-content override.
+normalize only those product-contract conflicts on render, cache, draft save,
+and publish. Firestore/live database content otherwise prevails over hard-coded
+defaults and local fallback caches.
 
 `assets/logos/aia-logo.png` is the committed loose source for the AIA proof-card
 logo and is also embedded into the current `index.html` bundle resource map.
@@ -327,9 +327,9 @@ but is not currently present as a loose repository file.
    motor tier comparison table/cell states.
 10. `Save draft` and `Publish` confirm before writing, then toast completion
    with a 30-second undo window.
-11. Closing the control panel does not log out; it leaves a compact owner bar so
-   the admin can reopen `Panel`, switch to `Edit text`, return to `Main`, or
-   `Log out`.
+11. Closing the control panel does not log out; it returns to `/admin`, where
+   the owner can reopen `Panel`, switch to `Edit text`, open `Analytics`, view
+   the public site in a new tab, or `Log out`.
 
 ## Do Not Break
 
@@ -347,8 +347,8 @@ but is not currently present as a loose repository file.
   as a lone ambiguous "ออก" control in the drawer header.
 - Keep direct mode switching and `Main` recovery available from owner modes:
   `/#admin` must link to `Edit text` and `Main`; `/#edit` must link to `Panel`
-  and `Main`; the post-close owner bar must expose both modes, `Main`, and
-  `Log out`.
+  and `Main`; closing either owner mode must land on `/admin`, not on the
+  visitor route.
 - Keep mobile touch targets at 44px-class sizing for visitor, admin login,
   admin launcher, admin drawer, and edit toolbar controls.
 - Keep the admin drawer above the visitor sticky header on mobile; do not fade it
@@ -404,8 +404,8 @@ but is not currently present as a loose repository file.
   Rules deliberately whenever `firestore.rules` changes.
 - Full GA traffic charts in `/admin/analytics` still need a server-side GA4 Data
   API endpoint or scheduled export into Firestore.
-- Asset count: current insurer logo grid is 14 files while copy promises 26+;
-  the latest reference supports that claim with relationship proof cards.
+- Asset count: current insurer logo grid and public copy are aligned at 14; the
+  latest reference supports that with relationship proof cards.
 - Firestore live/draft may still contain legacy stale fields until the owner
   publishes a clean draft; runtime normalization keeps visitor/admin rendering
   aligned with current product decisions in the meantime.

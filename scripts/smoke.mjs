@@ -39,6 +39,11 @@ const routes = [
 const mainVisitorRoutes = new Set(["/", "/#motor", "/#life"]);
 const motorSectionRoutes = new Set(["/", "/#motor", "/#motor-focus"]);
 const visitorRoutes = new Set(["/", "/#motor", "/#life", "/#motor-focus", "/#life-focus"]);
+const logoFixturePath = "/tmp/covermate-smoke-logo.svg";
+fs.writeFileSync(
+  logoFixturePath,
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#d7194a"/><text x="32" y="40" text-anchor="middle" font-size="20" font-family="Arial" fill="#fff">AIA</text></svg>'
+);
 
 function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -47,10 +52,12 @@ function extractDefaultSiteConfig() {
   const template = JSON.parse(templateMatch[1]);
   const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
   if (!scriptMatch) throw new Error("index.html: text/x-dc script missing");
-  const defaultsEnd = scriptMatch[1].indexOf("const SCHEMA =");
+  const scriptSource = scriptMatch[1];
+  new vm.Script(scriptSource, { filename: "index.html text/x-dc" });
+  const defaultsEnd = scriptSource.indexOf("const SCHEMA =");
   if (defaultsEnd < 0) throw new Error("index.html: DEFAULTS boundary missing");
   const sandbox = { result: null };
-  vm.runInNewContext(`${scriptMatch[1].slice(0, defaultsEnd)}\nresult = DEFAULTS;`, sandbox);
+  vm.runInNewContext(`${scriptSource.slice(0, defaultsEnd)}\nresult = DEFAULTS;`, sandbox);
   return sandbox.result;
 }
 
@@ -103,6 +110,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
     let draftConfig = ${JSON.stringify(draftConfig)};
     let liveText = ${JSON.stringify(liveText)};
     let draftText = ${JSON.stringify(draftText)};
+    const pause = () => new Promise((resolve) => setTimeout(resolve, 180));
     window.__covermateSaveCalls = [];
     window.__covermatePublishCalls = [];
     window.CoverMateFirebase = {
@@ -128,6 +136,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
         return window.__covermateRemoteContent;
       },
       saveSiteState: async (name, config, text) => {
+        await pause();
         window.__covermateSaveCalls.push({ name, config, text, ts: Date.now() });
         if (name === "draft") {
           draftConfig = config;
@@ -138,6 +147,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
         return { ok: true };
       },
       publishSiteState: async (config, text, metadata = {}) => {
+        await pause();
         const id = "mock-publish-" + (window.__covermatePublishCalls.length + 1);
         const version = { id, ts: Date.now(), config, text: text || {}, ...metadata };
         window.__covermatePublishCalls.push(version);
@@ -224,7 +234,7 @@ async function verifyRemoteHydrationContract() {
   const staleConfig = renamedConfig(staleName);
   const staleRemoteText = {
     "insurers:1:th": "ประกันรถยนต์\nเทียบได้กว่า 20 เจ้า",
-    "insurers:2:th": "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 14 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ"
+    "insurers:2:th": "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ"
   };
 
   const publicPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
@@ -265,11 +275,11 @@ async function verifyRemoteHydrationContract() {
     failures.push("remote hydration: public route did not let Firestore live content override stale local cache");
   }
   if (
-    publicState.insurerText.includes("14 เจ้า") ||
     publicState.insurerText.includes("20 เจ้า") ||
-    !publicState.insurerText.includes("26 เจ้า")
+    publicState.insurerText.includes("26 เจ้า") ||
+    !publicState.insurerText.includes("14 เจ้า")
   ) {
-    failures.push("remote hydration: stale insurer count overrides rendered instead of the 26-company product copy");
+    failures.push("remote hydration: insurer count did not normalize to the current 14-logo product copy");
   }
   if (
     publicState.navHrefs.includes("#motor") ||
@@ -342,11 +352,11 @@ async function verifyRemoteHydrationContract() {
     failures.push("remote hydration: owner route did not render admin panel under mocked remote content");
   }
   if (
-    ownerState.insurerText.includes("14 เจ้า") ||
     ownerState.insurerText.includes("20 เจ้า") ||
-    !ownerState.insurerText.includes("26 เจ้า")
+    ownerState.insurerText.includes("26 เจ้า") ||
+    !ownerState.insurerText.includes("14 เจ้า")
   ) {
-    failures.push("remote hydration: owner route rendered stale insurer count overrides");
+    failures.push("remote hydration: owner route did not normalize stale insurer copy to 14 logos");
   }
   if (!ownerState.opts || ownerState.opts.draft !== true || ownerState.opts.versions !== true) {
     failures.push("remote hydration: owner route did not request draft and versions");
@@ -408,6 +418,9 @@ async function verifyAdminActionWorkflow() {
   await saveButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Save draft" }).click();
+  await page.locator('[data-admin-progress="true"]').waitFor({ state: "visible", timeout: 3000 }).catch(() =>
+    failures.push("admin actions: Save draft did not show an in-progress status")
+  );
   await waitForBodyText(page, /Draft saved/);
   let actionState = await page.evaluate(() => ({
     saveCalls: window.__covermateSaveCalls.length,
@@ -444,6 +457,9 @@ async function verifyAdminActionWorkflow() {
     failures.push("admin actions: Publish did not open the custom confirmation dialog");
   }
   await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Publish" }).click();
+  await page.locator('[data-admin-progress="true"]').waitFor({ state: "visible", timeout: 3000 }).catch(() =>
+    failures.push("admin actions: Publish did not show an in-progress status")
+  );
   await waitForBodyText(page, /Published/);
   actionState = await page.evaluate(() => ({
     saveCalls: window.__covermateSaveCalls.length,
@@ -512,6 +528,33 @@ async function verifyAdminBuilderControls() {
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);
   await waitForBodyText(page, /Draft Builder Smoke/);
+
+  await clickAdminTab(page, "Sections");
+  const heroContentEditCount = await page.locator('[data-admin-section-row="hero"] [data-admin-section-edit="hero"]').count();
+  if (heroContentEditCount !== 0) {
+    failures.push("admin builder: hero still exposes structured Edit content even though hero copy is inline-edit only");
+  }
+
+  await clickAdminTab(page, "Brand & chrome");
+  const brandPanelText = await page.locator("aside").innerText();
+  if (/Advisor logo path|image URL/i.test(brandPanelText)) {
+    failures.push("admin builder: brand logo editor still asks for a path/URL instead of file upload");
+  }
+  await page.locator('[data-admin-logo-upload="true"] input[type="file"]').setInputFiles(logoFixturePath);
+  await waitForBodyText(page, /Logo uploaded/);
+  const uploadedLogoState = await page.evaluate(() => {
+    const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+    return {
+      logo: config?.brand?.advisorLogo || "",
+      toast: document.querySelector('[data-admin-toast="true"]')?.innerText || ""
+    };
+  });
+  if (!uploadedLogoState.logo.startsWith("data:image/svg+xml")) {
+    failures.push(`admin builder: uploaded advisor logo was not stored as a data image (${uploadedLogoState.logo.slice(0, 40)})`);
+  }
+  if (!/Logo uploaded/.test(uploadedLogoState.toast)) {
+    failures.push("admin builder: logo upload success toast is missing");
+  }
 
   const coverBefore = await readDraftSection(page, "cover");
   const coverColsExpected = Math.min(4, Number(coverBefore?.cols || 0) + 1);
@@ -674,25 +717,47 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     text: document.body.innerText
   }));
-  if (closedState.route !== "/" || closedState.hasReopen || closedState.marker || /Admin portal|Text edit|Save draft|Publish/.test(closedState.text)) {
-    failures.push(`public chrome guard: closing #admin did not return to a clean public route (${JSON.stringify(closedState)})`);
+  const closedRoute = closedState.route.replace(/\/$/, "");
+  if (closedRoute !== "/admin" || closedState.hasReopen || !/Manage your site/.test(closedState.text)) {
+    failures.push(`public chrome guard: closing #admin did not return to the admin launcher (${JSON.stringify(closedState)})`);
   }
 
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);
+  const popupPromise = page.context().waitForEvent("page", { timeout: 5000 });
   await page.getByRole("button", { name: "Public site" }).last().click();
-  await page.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 10000 }).catch(() => {});
+  const popup = await popupPromise.catch(() => null);
+  if (!popup) {
+    failures.push("public chrome guard: Public site did not open a new visitor tab");
+  } else {
+    await popup.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
+    await popup.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 10000 }).catch(() => {});
+  }
   await page.waitForTimeout(500);
   const publicReturnState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    hasAdminAside: Boolean(document.querySelector("aside")),
     text: document.body.innerText
   }));
-  if (publicReturnState.route !== "/" || publicReturnState.hasOwnerBar || publicReturnState.marker) {
-    failures.push(`public chrome guard: Public site action did not clear owner chrome (${JSON.stringify(publicReturnState)})`);
+  if (publicReturnState.route !== "/#admin" || (!publicReturnState.hasAdminAside && !/Admin portal/.test(publicReturnState.text))) {
+    failures.push(`public chrome guard: Public site should keep the current admin tab in owner mode (${JSON.stringify(publicReturnState)})`);
+  }
+  if (popup) {
+    const popupState = await popup.evaluate(() => ({
+      route: window.location.pathname + window.location.search + window.location.hash,
+      marker: window.localStorage.getItem("purich-admin-ever-v7"),
+      hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+      text: document.body.innerText
+    }));
+    if (popupState.route !== "/" || popupState.hasOwnerBar || /Admin portal|Text edit|Save draft|Publish/.test(popupState.text)) {
+      failures.push(`public chrome guard: Public site popup was not a clean visitor route (${JSON.stringify(popupState)})`);
+    }
+    await popup.close();
   }
 
+  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await page.reload({ waitUntil: "load", timeout: 30000 });
   await page.waitForTimeout(500);
   const reloadState = await page.evaluate(() => ({
@@ -1063,6 +1128,9 @@ for (const [name, width, height] of viewports) {
       if (!state.seo.ogTitle || !state.seo.ogDescription || state.seo.ogImage !== "https://covermate.vercel.app/assets/covermate-og.png") {
         failures.push(`${name} ${route}: Open Graph metadata incomplete`);
       }
+      if (/26/.test(state.seo.description) || /26/.test(state.seo.ogDescription)) {
+        failures.push(`${name} ${route}: SEO fallback still contains stale 26-insurer copy`);
+      }
       if (state.seo.twitterCard !== "summary_large_image") {
         failures.push(`${name} ${route}: Twitter summary_large_image card missing`);
       }
@@ -1117,6 +1185,9 @@ for (const [name, width, height] of viewports) {
     }
     if (motorSectionRoutes.has(route) && state.logos.length < 14) {
       failures.push(`${name} ${route}: expected at least 14 visible insurer logos, got ${state.logos.length}`);
+    }
+    if (motorSectionRoutes.has(route) && (!state.insurerText.includes("14 เจ้า") || state.insurerText.includes("26 เจ้า"))) {
+      failures.push(`${name} ${route}: insurer section count copy is not aligned to the 14 visible logos`);
     }
     if (motorSectionRoutes.has(route) && !state.hasRelationshipProof) {
       failures.push(`${name} ${route}: insurer relationship proof cards missing AIA/Srikrung copy`);
@@ -1454,33 +1525,48 @@ for (const [name, width, height] of viewports) {
   if (closedAdminState.hasAside) {
     failures.push(`${name} /#admin close: drawer stayed visible after X`);
   }
-  if (closedAdminState.hasBar || closedAdminState.barVisible || closedAdminState.adminMarker) {
+  if (closedAdminState.hasBar || closedAdminState.barVisible) {
     failures.push(`${name} /#admin close: owner chrome marker/bar leaked after closing (${JSON.stringify(closedAdminState)})`);
   }
-  if (/Admin portal|Text edit|Save draft|Publish/.test(closedAdminState.text)) {
-    failures.push(`${name} /#admin close: owner action text remained on the public route`);
+  const closedAdminRoute = closedAdminState.route.replace(/\/$/, "");
+  if (closedAdminRoute !== "/admin" || !/Manage your site/.test(closedAdminState.text) || /Admin portal|Text edit|Save draft/.test(closedAdminState.text)) {
+    failures.push(`${name} /#admin close: did not return to the admin launcher (${JSON.stringify(closedAdminState)})`);
   }
   if (closedAdminState.scrollWidth > closedAdminState.clientWidth) {
     failures.push(`${name} /#admin close: horizontal overflow ${closedAdminState.scrollWidth} > ${closedAdminState.clientWidth}`);
   }
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);
+  const publicPopupPromise = page.context().waitForEvent("page", { timeout: 5000 });
   await page.getByRole("button", { name: "Public site" }).last().click();
-  await page.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 5000 }).catch(() => {});
+  const publicPopup = await publicPopupPromise.catch(() => null);
+  if (!publicPopup) {
+    failures.push(`${name} /#admin Public site: did not open a new visitor tab`);
+  } else {
+    await publicPopup.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
+    await publicPopup.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 10000 }).catch(() => {});
+  }
   const publicReturnState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    hasAdminAside: Boolean(document.querySelector("aside")),
     adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
     text: document.body.innerText
   }));
-  if (publicReturnState.route !== "/") {
-    failures.push(`${name} /#admin Public site: expected clean public route, got ${publicReturnState.route}`);
+  if (publicReturnState.route !== "/#admin" || (!publicReturnState.hasAdminAside && !/Admin portal/.test(publicReturnState.text))) {
+    failures.push(`${name} /#admin Public site: current admin tab should remain in owner mode (${JSON.stringify(publicReturnState)})`);
   }
-  if (publicReturnState.hasOwnerBar || publicReturnState.adminMarker) {
-    failures.push(`${name} /#admin Public site: admin owner state leaked into the visitor route`);
-  }
-  if (/Admin portal|Text edit/.test(publicReturnState.text)) {
-    failures.push(`${name} /#admin Public site: admin UI text remained visible on the visitor route`);
+  if (publicPopup) {
+    const popupState = await publicPopup.evaluate(() => ({
+      route: window.location.pathname + window.location.search + window.location.hash,
+      hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+      adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
+      text: document.body.innerText
+    }));
+    if (popupState.route !== "/" || popupState.hasOwnerBar || /Admin portal|Text edit|Save draft|Publish/.test(popupState.text)) {
+      failures.push(`${name} /#admin Public site: visitor popup was not clean (${JSON.stringify(popupState)})`);
+    }
+    await publicPopup.close();
   }
 
   await page.goto(new URL("/#preview", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
@@ -1529,7 +1615,7 @@ for (const [name, width, height] of viewports) {
   if (
     !editState.toolbarText.includes("Text edit") ||
     !editState.toolbarText.includes("Tools") ||
-    !editState.toolbarText.includes("Done")
+    !editState.toolbarText.includes("Close")
   ) {
     failures.push(`${name} /#edit: compact edit toolbar controls are missing`);
   }
@@ -1556,7 +1642,7 @@ for (const [name, width, height] of viewports) {
     !editToolsState.toolbarText.includes("Preview") ||
     !editToolsState.toolbarText.includes("Publish") ||
     !editToolsState.toolbarText.includes("Log out") ||
-    !editToolsState.toolbarText.includes("Done")
+    !editToolsState.toolbarText.includes("Close")
   ) {
     failures.push(`${name} /#edit: expanded edit toolbar owner actions are missing`);
   }
@@ -1579,7 +1665,7 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /#edit: edit mode metadata is not noindex (${editState.robots})`);
   }
 
-  await page.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("button", { name: "Close text editor" }).click();
   await page.waitForTimeout(500);
   const exitEditState = await page.evaluate(() => {
     return {
@@ -1587,6 +1673,7 @@ for (const [name, width, height] of viewports) {
       adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
       contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
       editToolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+      hasAdminAside: Boolean(document.querySelector("aside")),
       hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
       text: document.body.innerText,
       scrollWidth: document.documentElement.scrollWidth,
@@ -1594,19 +1681,20 @@ for (const [name, width, height] of viewports) {
     };
   });
   if (exitEditState.contentEditableCount !== 0) {
-    failures.push(`${name} /#edit done: contenteditable fields remained active`);
+    failures.push(`${name} /#edit close: contenteditable fields remained active`);
   }
   if (exitEditState.editToolbarVisible) {
-    failures.push(`${name} /#edit done: edit toolbar stayed visible`);
+    failures.push(`${name} /#edit close: edit toolbar stayed visible`);
   }
-  if (exitEditState.route !== "/" || exitEditState.hasOwnerBar || exitEditState.adminMarker) {
-    failures.push(`${name} /#edit done: owner state leaked after returning to public route (${JSON.stringify(exitEditState)})`);
+  const exitEditRoute = exitEditState.route.replace(/\/$/, "");
+  if (exitEditRoute !== "/admin" || exitEditState.hasOwnerBar || exitEditState.hasAdminAside || !/Manage your site/.test(exitEditState.text)) {
+    failures.push(`${name} /#edit close: did not return to the admin launcher (${JSON.stringify(exitEditState)})`);
   }
-  if (/Admin portal|Text edit|Save draft|Publish/.test(exitEditState.text)) {
-    failures.push(`${name} /#edit done: owner action text remained on the public route`);
+  if (/Admin portal|Text edit|Save draft/.test(exitEditState.text)) {
+    failures.push(`${name} /#edit close: owner editor text remained after closing`);
   }
   if (exitEditState.scrollWidth > exitEditState.clientWidth) {
-    failures.push(`${name} /#edit done: horizontal overflow ${exitEditState.scrollWidth} > ${exitEditState.clientWidth}`);
+    failures.push(`${name} /#edit close: horizontal overflow ${exitEditState.scrollWidth} > ${exitEditState.clientWidth}`);
   }
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });

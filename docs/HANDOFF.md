@@ -70,16 +70,16 @@ launcher after login.
 The admin launcher has an early session gate and its own sign-out action.
 
 The `/#admin` drawer no longer uses a standalone ambiguous "ออก" button in the
-header. Closing the drawer now shows a compact owner bar with reopen, edit,
-`Main`, and `Log out` actions.
+header. Closing the drawer now returns to the private `/admin` launcher; it does
+not place an owner bar on the public visitor page.
 
 The `/#edit` mode now uses the warm-ink owner dock from the Claude owner-dock
-reference. The collapsed dock keeps `Mode · Text edit`, `Tools`, and `Done`
+reference. The collapsed dock keeps `Mode · Text edit`, `Tools`, and `Close`
 available; expanding `Tools` opens a single dark-ink command palette grouped
 into `Draft` and `Go to` actions. `Publish` is the only terracotta-filled action
 inside the dock; `Save draft`, `Preview`, `Panel`, `Main`, `Public site`, and
-`Log out` stay quiet cream actions. The done action removes `contenteditable`
-state before returning to the public page.
+`Log out` stay quiet cream actions. The `Close` action removes
+`contenteditable` state before returning to `/admin`.
 
 Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
 successful Firestore writes, then show dismissible success toasts with
@@ -94,7 +94,7 @@ English, including headings, logo text, controls, forms, owner tools, and
 analytics.
 
 Visible Admin chrome/action labels are intentionally English-only: `Panel`,
-`Edit text`, `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and
+`Edit text`, `Main`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`, and
 `Log out`.
 
 Insurer logos are present under `assets/ins`.
@@ -231,10 +231,10 @@ If Firestore `sites/covermate/states/live` is missing or unreachable, visitors
 fall back to embedded defaults or last-known local cache. Seed/publish live
 content before treating Admin Portal edits as production CMS content.
 
-The insurer-logo grid has 14 committed files while the copy says "26+"
-insurers. The latest reference supports this with additional AIA and Srikrung
-Broker proof cards below the grid; confirm any future claim/copy change with
-the business owner.
+The insurer-logo grid has 14 committed files and the public copy is aligned to
+that visible logo count. The latest reference supports this with additional AIA
+and Srikrung Broker proof cards below the grid; confirm any future count/copy
+change with the business owner and add matching logo assets first.
 
 The embedded exported bundle is hard to maintain by hand. Run parse checks and
 visual smoke checks after bundle edits.

@@ -102,24 +102,70 @@ export function cloneJSON(value) {
   return JSON.parse(JSON.stringify(value || {}));
 }
 
-export function sanitizeMotorCountText(text) {
+export const MOTOR_INSURER_LOGO_COUNT_FALLBACK = 14;
+
+export function motorInsurerLogoCount(config) {
+  const sections = Array.isArray(config && config.sections) ? config.sections : [];
+  const insurerSection = sections.find((section) =>
+    section && (section.id === "insurers" || section.type === "insurers")
+  );
+  const items = Array.isArray(insurerSection && insurerSection.items)
+    ? insurerSection.items
+    : [];
+  const count = items.filter((item) => item && item.on !== false && String(item.logo || "").trim()).length;
+  return count || MOTOR_INSURER_LOGO_COUNT_FALLBACK;
+}
+
+function normalizeMotorCountCopy(value, count = MOTOR_INSURER_LOGO_COUNT_FALLBACK) {
+  if (typeof value !== "string") return value;
+  const text = value;
+  const isMotorCountCopy =
+    /ประกันรถยนต์|บริษัท|นายหน้า|เทียบ|motor|insurer|broker|compare/i.test(text) &&
+    /(\d+\+?|\d+\s*เจ้า)/.test(text);
+  if (!isMotorCountCopy) return text;
+  return text
+    .replace(/กว่า\s*\d+\s*เจ้า/g, `กว่า ${count} เจ้า`)
+    .replace(/บริษัทกว่า\s*\d+\s*เจ้า/g, `บริษัทกว่า ${count} เจ้า`)
+    .replace(/เทียบได้กว่า\s*\d+\s*เจ้า/g, `เทียบได้กว่า ${count} เจ้า`)
+    .replace(/เทียบเบี้ยได้กว่า\s*\d+\s*เจ้า/g, `เทียบเบี้ยได้กว่า ${count} เจ้า`)
+    .replace(/กว่า\s*\d+\s*บริษัท/g, `กว่า ${count} บริษัท`)
+    .replace(/\b\d+\+\s*insurers?\b/gi, `${count} insurers`)
+    .replace(/\b\d+\s*insurers?\b/gi, `${count} insurers`)
+    .replace(/across\s*\d+\+?/gi, `across ${count}`)
+    .replace(/through\s*\d+\+?\s*insurers/gi, `through ${count} insurers`)
+    .replace(/compared across\s*\d+\+?/gi, `compared across ${count}`);
+}
+
+function normalizeLocalizedStrings(target, count) {
+  if (!target || typeof target !== "object") return;
+  Object.keys(target).forEach((key) => {
+    const value = target[key];
+    if (typeof value === "string") {
+      target[key] = normalizeMotorCountCopy(value, count);
+    } else if (value && typeof value === "object") {
+      normalizeLocalizedStrings(value, count);
+    }
+  });
+}
+
+export function sanitizeMotorCountText(text, configOrCount) {
   const next = cloneJSON(text || {});
+  const count = typeof configOrCount === "number"
+    ? configOrCount
+    : motorInsurerLogoCount(configOrCount || {});
   Object.keys(next).forEach((key) => {
     const value = String(next[key] || "");
     const isInsurerInlineText = /^insurers:\d+:(th|en)$/.test(key);
     const isContactTitleText = /^talk:\d+:(th|en)$/.test(key);
-    if (isInsurerInlineText && (
-      /เทียบได้กว่า\s*(14|20)\s*เจ้า/.test(value) ||
-      /บริษัทกว่า\s*(14|20)\s*เจ้า/.test(value) ||
-      /compared across\s*(14|20)\+?/i.test(value) ||
-      /through\s*(14|20)\+?\s*insurers/i.test(value)
-    )) {
-      delete next[key];
+    if (isInsurerInlineText) {
+      next[key] = normalizeMotorCountCopy(value, count);
     }
     if (isContactTitleText &&
       (/ขอรับ\s*\n\s*คำปรึกษา/.test(value) || /Request a\s*\n\s*consultation/i.test(value))
     ) {
-      delete next[key];
+      next[key] = value
+        .replace(/ขอรับ\s*\n\s*คำปรึกษา/g, "ขอรับคำปรึกษา")
+        .replace(/Request a\s*\n\s*consultation/gi, "Request a consultation");
     }
   });
   return next;
@@ -141,24 +187,13 @@ export function sanitizeMotorCountConfig(config) {
     }, []);
   }
   if (Array.isArray(next.sections)) {
+    const insurerCount = motorInsurerLogoCount(next);
     next.sections.forEach((section) => {
       if (!section || (section.id !== "insurers" && section.type !== "insurers")) return;
-      if (section.th) {
-        if (/เทียบได้กว่า\s*(14|20)\s*เจ้า/.test(String(section.th.title || ""))) {
-          section.th.title = "ประกันรถยนต์\nเทียบได้กว่า 26 เจ้า";
-        }
-        if (/บริษัทกว่า\s*(14|20)\s*เจ้า/.test(String(section.th.body || ""))) {
-          section.th.body = "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ";
-        }
-      }
-      if (section.en) {
-        if (/compared across\s*(14|20)\+?/i.test(String(section.en.title || ""))) {
-          section.en.title = "Motor insurance\ncompared across 26+";
-        }
-        if (/through\s*(14|20)\+?\s*insurers/i.test(String(section.en.body || ""))) {
-          section.en.body = "For motor insurance I place through 26+ insurers and recommend what suits you. Life and health I represent AIA exclusively.";
-        }
-      }
+      normalizeLocalizedStrings(section.th, insurerCount);
+      normalizeLocalizedStrings(section.en, insurerCount);
+      normalizeLocalizedStrings(section.items, insurerCount);
+      normalizeLocalizedStrings(section.cards, insurerCount);
     });
     next.sections.forEach((section) => {
       if (!section || (section.id !== "talk" && section.type !== "contact")) return;
@@ -175,10 +210,11 @@ export function sanitizeMotorCountConfig(config) {
 
 export function sanitizeStateDoc(state) {
   if (!state || !state.config) return state;
+  const config = sanitizeMotorCountConfig(state.config);
   return {
     ...state,
-    config: sanitizeMotorCountConfig(state.config),
-    text: sanitizeMotorCountText(state.text || {})
+    config,
+    text: sanitizeMotorCountText(state.text || {}, config)
   };
 }
 
@@ -228,6 +264,8 @@ const contract = {
   cleanLeadChoice,
   validStateDoc,
   cloneJSON,
+  MOTOR_INSURER_LOGO_COUNT_FALLBACK,
+  motorInsurerLogoCount,
   sanitizeMotorCountText,
   sanitizeMotorCountConfig,
   sanitizeStateDoc,

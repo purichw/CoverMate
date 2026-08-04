@@ -123,7 +123,7 @@ async function saveSiteState(name, config, text) {
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to save CoverMate content.");
   const cleanConfig = sanitizeMotorCountConfig(config);
-  const cleanText = sanitizeMotorCountText(text || {});
+  const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const payload = {
     config: cleanConfig,
     text: cleanText,
@@ -147,7 +147,7 @@ async function appendVersion(config, text, metadata = {}) {
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to publish CoverMate content.");
   const cleanConfig = sanitizeMotorCountConfig(config);
-  const cleanText = sanitizeMotorCountText(text || {});
+  const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const ref = versionRef();
   const version = {
     config: cleanConfig,
@@ -170,7 +170,7 @@ async function publishSiteState(config, text, metadata = {}) {
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to publish CoverMate content.");
   const cleanConfig = sanitizeMotorCountConfig(config);
-  const cleanText = sanitizeMotorCountText(text || {});
+  const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const ref = versionRef();
   const ts = Date.now();
   const by = {
@@ -282,6 +282,12 @@ async function hydrateLocalContent(options = {}) {
     result.versions = cacheVersions(await loadVersions(HISTORY_LIMIT));
   }
   window.__covermateRemoteContent = result;
+  try {
+    window.dispatchEvent(new CustomEvent("covermate:remote-content-ready", { detail: result }));
+  } catch {
+    // Non-browser test contexts may not support CustomEvent; cache writes above
+    // are still the authoritative hydration result.
+  }
   return result;
 }
 

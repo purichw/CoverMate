@@ -134,12 +134,12 @@ Committed insurer logo files:
 | `assets/ins/13-thaivivat.png` | Referenced by bundle |
 | `assets/ins/14-sompo.png` | Referenced by bundle |
 
-The section copy says "26+" insurers. The visible grid currently uses 14
-committed insurer logos, plus broker/agency proof cards for AIA and Srikrung
-Broker supplied by the latest standalone reference. The renderer is data-driven
-from `insurers.items[]`; `item.logo` is preferred and older/stale names resolve
-through the built-in logo map. Do not change the "26+" claim or logo treatment
-without reconciling the legal/business copy first.
+The section copy is aligned to 14 insurers because the visible grid currently
+uses 14 committed insurer logos, plus broker/agency proof cards for AIA and
+Srikrung Broker supplied by the latest standalone reference. The renderer is
+data-driven from `insurers.items[]`; `item.logo` is preferred and older/stale
+names resolve through the built-in logo map. Do not reintroduce 26+ copy or a
+separate hard-coded logo count without new assets and business-owner approval.
 
 Relationship-card logo paths in the latest reference:
 

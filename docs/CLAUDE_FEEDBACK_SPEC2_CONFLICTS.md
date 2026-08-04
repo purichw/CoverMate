@@ -65,7 +65,7 @@ SEO/indexing, admin routing, or already-accepted component placement decisions.
 | Contact section defaults | Handoff `defaults.json` has a `talk` contact section without normal localized title/body fields. | Production contact heading/body/form copy must remain visible and editable through existing CMS paths. | Do not treat missing `talk` defaults as permission to empty or rebuild the contact section. |
 | Standalone portability | Latest standalone renders, but logs a `file://` `.image-slots.state.json` error. | A portable standalone should open cleanly without missing-file/helper fetch errors. | Inline/remove image-slot helper state or ship a complete folder bundle with a clear open-this file. |
 | Screen switcher | Standalone includes a screen switcher. | Screen switcher is demo-only. It must never appear in production public UI. | Keep screen switcher only in standalone review artifacts. |
-| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Mode · Text edit`, `Tools`, `Done`; expanded Draft/Go to palette; `Publish` is the only terracotta fill. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or the too-minimal `Done`-only footer. |
+| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Mode · Text edit`, `Tools`, `Close`; expanded Draft/Go to palette; `Publish` is the only terracotta fill. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or the too-minimal `Close`-only footer. |
 
 ## Existing Component Placement And Micro-Layout Decisions
 
@@ -85,7 +85,7 @@ production decision unless the owner explicitly changes it.
 | Calculator controls | Inputs/sliders have stable dimensions and update estimate live. | Do not allow labels/icons/dynamic values to resize or shift the card layout. |
 | Process / `#how` | Four steps after calculator, horizontal on desktop and stacked on mobile. | Do not move process before calculator; do not compress step copy until it clips. |
 | Motor insurers / `#insurers` | Sage band. Centered heading, warm rounded logo grid, then AIA and Srikrung credential cards. | Do not split into a separate motor page. Do not hard-code a second logo list outside `insurers.items`. |
-| Insurer count | Copy says 26+/26 insurers compared, while the visible logo grid has 14 committed logo files. | Do not change copy to 14 just because there are 14 logo images. The 26+ claim is the broker panel claim. |
+| Insurer count | Copy says 14 insurers compared, and derives from the 14 visible committed logo files. | Keep copy aligned to the visible insurer logo count. With the current asset set, that count is 14. |
 | Credential cards | AIA and Srikrung proof cards sit below the logo grid. The first two lines, logo and company/category row, are centered. | Do not left-align the logo/category row or replace AIA with a placeholder. |
 | AIA logo | `assets/logos/aia-logo.png`, transparent red AIA mark, default for `brand.advisorLogo`. | Do not use old/generic icon assets. The image must remain editable in admin. |
 | Motor tiers | Immediately follows motor insurer proof. Desktop table, mobile stacked class cards. | Do not expose as a separate nav page. Do not force horizontal scroll on mobile. |
@@ -104,7 +104,7 @@ production decision unless the owner explicitly changes it.
 | Admin login | Centered breathable auth card on organic cream background. | Do not squeeze the central card or use demo/no-server copy in production. |
 | Admin launcher | `/admin` after login, with exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. Analytics is the third card. | Do not bypass the launcher after login. Do not remove Analytics. |
 | Admin drawer / `#admin` | Right-side drawer/control panel, persistent publish path, English admin labels. | Do not make `Close` ambiguous with `Log out`. Do not hide Save/Preview/Publish after closing without a reopen path. |
-| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default; `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not use a `Done`-only footer that traps the owner away from publish actions. |
+| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default; `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not use a `Close`-only footer that traps the owner away from publish actions. |
 | Admin public exit | `Public site` clears owner markers via `/?view=public` then lands on clean `/`. | Do not leave admin chrome visible on the visitor page after Public site. |
 | Analytics | Private admin route with comfortable card spacing, Firestore lead data when available, GA4 Data API placeholders where not connected. | Do not compress mobile analytics cards. Do not show fake GA4 charts as real data. |
 | Toasts/dialogs | Save draft and Publish require custom confirmation, successful write, dismissible toast, and 30-second Undo. | Do not use native browser confirms or instantaneous visual flashes that appear before persistence completes. |

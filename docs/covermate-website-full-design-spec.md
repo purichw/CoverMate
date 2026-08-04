@@ -38,8 +38,8 @@ Firestore content normalization:
 
 - Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync`
 - Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/manifest.json`
-- Includes public insurer section desktop/mobile, admin owner reopen bar with
-  `Public site`, and the public view after returning from admin.
+- Includes public insurer section desktop/mobile, admin-to-visitor new-tab behavior,
+  and the clean public view with owner chrome suppressed.
 
 Latest local regression evidence for admin actions and anchor-navigation
 stability:
@@ -55,8 +55,8 @@ Latest local regression evidence for public/admin chrome separation:
 - Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard`
 - Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard/manifest.json`
 - Includes a clean public `/` route with a mocked admin session and stale owner
-  marker, the in-session owner reopen bar after closing `/#admin`, and the
-  clean visitor view after clicking `Public site`.
+  marker, `/admin` return after closing `/#admin`, and the clean visitor popup
+  after clicking `Public site`.
 
 Latest Claude Design reconciliation evidence:
 
@@ -445,7 +445,7 @@ Purpose: prove motor-insurance comparison breadth.
 Structure:
 
 - Sage/green band.
-- Centered heading: motor insurance can be compared across more than 26 insurers.
+- Centered heading: motor insurance count derives from the visible insurer logo grid; current production copy says 14 insurers.
 - Logo grid in a warm rounded panel. The grid is generated from the
   `insurers.items` content array, not a separate hard-coded logo list.
 - Credential cards for AIA and Srikrung Broker.
@@ -666,9 +666,7 @@ Required elements:
 `View public site` links use `/?view=public`, then the public bundle cleans the
 URL back to `/` and suppresses admin owner chrome for that visitor-view
 navigation.
-Clean public loads must also clear or ignore stale owner markers; the owner
-reopen bar is an in-session recovery affordance after closing admin tools, not a
-persistent admin badge on the visitor site.
+Clean public loads must also clear or ignore stale owner markers. Owner controls live on `/admin`, `/#admin`, `/#edit`, and `/#preview`, not on the visitor site.
 
 Layout:
 
@@ -717,20 +715,17 @@ Required capabilities:
   a dismissible toast with `Undo` available for 30 seconds.
 - `Undo` after publish restores the previous live snapshot by publishing it
   back to Firestore.
-- Closing the drawer should not trap the owner. A reopen owner bar must stay available.
-- That reopen bar is in-session only. It must not appear on a fresh or reloaded
-  public `/` route just because the browser is signed in.
+- Closing the drawer should not trap the owner; it returns to `/admin`.
+- No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
-  The default state shows only `Mode · Text edit`, `Tools`, and `Done`; `Tools`
+  The default state shows only `Mode · Text edit`, `Tools`, and `Close`; `Tools`
   expands a single dark-ink command palette above the dock. Desktop uses two
   groups, `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`,
   `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
   scrollable column with a 460px cap when viewport height allows. `Publish` is
   the only terracotta-filled dock action.
-- The compact owner-reopen bar should also preserve direct `Save draft`,
-  `Preview`, and `Publish` controls so closing the drawer does not hide the
-  publishing path.
+- Save/Preview/Publish remain available from `/#admin` and the inline-edit dock; closing the drawer returns to `/admin`.
 - `Log out` should be available consistently from owner surfaces.
 - The drawer must stack above visitor sticky header/navigation on mobile and
   should not fade in over the public header.
@@ -775,7 +770,7 @@ Firestore-first behavior:
 - Public live content reads from `sites/covermate/states/live`.
 - Draft content reads/writes `sites/covermate/states/draft`.
 - Brand/config fields such as `brand.advisorLogo` are draft/live CMS values, not
-  hard-coded public-only constants.
+  hard-coded public-only constants or stale fallback counts.
 - Publish/restore history writes `sites/covermate/versions/{versionId}`.
 - Public lead submissions write `contactLeads/{leadId}`.
 - Reserved analytics summaries may live under `sites/covermate/analytics/{analyticsDoc}`.
@@ -883,7 +878,7 @@ Do not:
 - Hide logout in only one owner mode.
 - Remove switch paths between edit mode, arrange panel, and main admin launcher.
 - Replace live/dynamic CMS text with hard-coded design-only content.
-- Let fallback/cache states override live Firestore content.
+- Let fallback/cache states override live Firestore content or current logo-count normalization.
 - Send private visitor contact details to GA.
 - Use unrelated fonts for body/admin text.
 - Switch to a generic blue SaaS/dashboard theme.

@@ -16,7 +16,8 @@ Browser `localStorage` remains a last-known cache and offline/failure fallback.
 It must not win over a successful Firestore read. If Firestore live content is
 available, it rewrites the local live cache before the embedded app reads it.
 Hard-coded defaults are only a cold-start fallback when no remote live document
-and no local cache exist.
+and no local cache exist. They must not reset or replace live/draft database
+content after Firestore has produced a valid document.
 
 The canonical runtime names and helpers for these keys live in
 `covermate-contract.js`. New source-authored runtime files should import that
@@ -105,21 +106,22 @@ Public visitor rendering should not depend on the user already having admin
 storage keys.
 
 When an admin intentionally opens the live public site from private admin
-surfaces, links use `/?view=public`. The public bundle consumes that flag, cleans
-the URL back to `/`, and removes the owner-reopen marker
-`purich-admin-ever-v7` so admin chrome does not appear on the visitor view.
-The compact owner-reopen bar is allowed only as in-session recovery immediately
-after closing `/#admin` or finishing `/#edit`; a clean `/` load or reload must
-not resurrect it from localStorage.
+surfaces, `Public site` opens a new tab with `/?view=public`. The public bundle
+consumes that flag, cleans the URL back to `/`, and removes the owner marker
+`purich-admin-ever-v7` so admin chrome does not appear on the visitor view. The
+current admin tab remains in owner mode. Closing `/#admin` or `/#edit` returns
+to the private `/admin` launcher.
 
 The public/admin CMS normalizes known legacy values that conflict with current
 product decisions before rendering, caching, saving, or publishing. This is a
-guardrail for stale Firestore/live-draft data, not a general content override:
+guardrail for stale Firestore/live-draft data, not a general content override.
+Database content prevails except where a value directly conflicts with these
+product contracts:
 
 - `#motor` nav entries normalize to `#insurers` and duplicate motor nav entries
   are removed.
-- legacy insurer count overrides that say `14` or `20` companies normalize back
-  to the current `26` / `26+` motor-insurer copy.
+- legacy insurer count overrides such as `20`, `26`, or `26+` normalize to the
+  current visible insurer-logo count (`14` with the present asset set).
 - legacy contact headings with forced line breaks normalize to
   `ขอรับคำปรึกษา` / `Request a consultation`.
 
@@ -135,11 +137,13 @@ fields include:
 | `brand.fullName.th/en` | string | Longer brand/advisor display name. |
 | `brand.role.th/en` | string | Role line under the brand. |
 | `brand.credential.th/en` | string | Advisor credential line. |
-| `brand.advisorLogo` | string | Path or URL for the personal advisor proof logo; defaults to `assets/logos/aia-logo.png`. |
+| `brand.advisorLogo` | string | Uploaded data image or committed default file for the personal advisor proof logo; defaults to `assets/logos/aia-logo.png`. |
 
-`brand.advisorLogo` is editable in the Brand & chrome panel and directly from
-`/#edit` by activating the logo image. It is part of the draft/live config and
-must follow the same Firestore-first cache rules as other CMS content.
+`brand.advisorLogo` is editable through file upload in the Brand & chrome panel
+and directly from `/#edit` by activating the logo image. The admin UI should not
+ask owners to paste image URLs/paths for this field. It is part of the
+draft/live config and must follow the same Firestore-first cache rules as other
+CMS content.
 
 Important dynamic contact fields include:
 
@@ -240,7 +244,7 @@ Before deploying changes that affect storage shape or admin behavior:
 The exact nested config/text/history shape is owned by the embedded exported
 bundle. Inspect the bundle before making schema-level edits.
 
-The current insurer section includes both repeated insurer logo items and
+The current insurer section count is derived from visible insurer logo items. The section also includes
 separate broker/agency relationship cards. Treat those cards as structural
 content, not plain testimonial copy, because the admin panel exposes dedicated
 card editing for them.

@@ -24,7 +24,8 @@ Do not silently override production decisions. If a recommendation conflicts wit
 - Visitor site and Admin must be the same product, not separate websites.
 - `#motor` is an anchor/alias inside the same visitor page, not a standalone sub-site.
 - Visitor reads only published content. Admin edits draft content. Preview shows draft.
-- `Public site`, admin `X`, and edit `Done` must leave admin mode completely and land on clean `/`. Admin dock/panel must never appear on normal visitor mode just because the browser is signed in.
+- `Public site` opens a separate clean visitor tab. The current admin tab stays in owner mode.
+- Admin `X` and edit `Close` return to the private `/admin` launcher, not the visitor page. Admin dock/panel must never appear on normal visitor mode just because the browser is signed in.
 - Do not reintroduce an owner reopen bar on the public visitor route. Older embedded notes that mention an in-session reopen bar or `/?view=public` are superseded by this decision.
 - Draft preview is a private owner route at `/#preview`. It shows the draft page with only a top dark preview bar: `Draft preview · visitors don’t see this until you publish`, plus `Open editor` and `Publish`. It must not show the edit dock or admin drawer.
 - Admin menu/action labels should be English: `Main`, `Public site`, `Save draft`, `Preview`, `Publish`, `Log out`.
@@ -233,7 +234,7 @@ SEO/indexing, admin routing, or already-accepted component placement decisions.
 | Contact section defaults | Handoff `defaults.json` has a `talk` contact section without normal localized title/body fields. | Production contact heading/body/form copy must remain visible and editable through existing CMS paths. | Do not treat missing `talk` defaults as permission to empty or rebuild the contact section. |
 | Standalone portability | Latest standalone renders, but logs a `file://` `.image-slots.state.json` error. | A portable standalone should open cleanly without missing-file/helper fetch errors. | Inline/remove image-slot helper state or ship a complete folder bundle with a clear open-this file. |
 | Screen switcher | Standalone includes a screen switcher. | Screen switcher is demo-only. It must never appear in production public UI. | Keep screen switcher only in standalone review artifacts. |
-| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Mode · Text edit`, `Tools`, `Done`; expanded Draft/Go to palette; `Publish` is the only terracotta fill. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or the too-minimal `Done`-only footer. |
+| Owner dock | Latest standalone still shows a very reduced edit footer in some states. | Production owner dock is the warm-ink dock: compact `Mode · Text edit`, `Tools`, `Close`; expanded Draft/Go to palette; `Publish` is the only terracotta fill. | Preserve the production owner dock placement and hierarchy. Do not reintroduce cluttered full-width action bars or the too-minimal `Close`-only footer. |
 
 ## Existing Component Placement And Micro-Layout Decisions
 
@@ -253,7 +254,7 @@ production decision unless the owner explicitly changes it.
 | Calculator controls | Inputs/sliders have stable dimensions and update estimate live. | Do not allow labels/icons/dynamic values to resize or shift the card layout. |
 | Process / `#how` | Four steps after calculator, horizontal on desktop and stacked on mobile. | Do not move process before calculator; do not compress step copy until it clips. |
 | Motor insurers / `#insurers` | Sage band. Centered heading, warm rounded logo grid, then AIA and Srikrung credential cards. | Do not split into a separate motor page. Do not hard-code a second logo list outside `insurers.items`. |
-| Insurer count | Copy says 26+/26 insurers compared, while the visible logo grid has 14 committed logo files. | Do not change copy to 14 just because there are 14 logo images. The 26+ claim is the broker panel claim. |
+| Insurer count | Copy says 14 insurers compared, and derives from the 14 visible committed logo files. | Keep copy aligned to the visible insurer logo count. With the current asset set, that count is 14. |
 | Credential cards | AIA and Srikrung proof cards sit below the logo grid. The first two lines, logo and company/category row, are centered. | Do not left-align the logo/category row or replace AIA with a placeholder. |
 | AIA logo | `assets/logos/aia-logo.png`, transparent red AIA mark, default for `brand.advisorLogo`. | Do not use old/generic icon assets. The image must remain editable in admin. |
 | Motor tiers | Immediately follows motor insurer proof. Desktop table, mobile stacked class cards. | Do not expose as a separate nav page. Do not force horizontal scroll on mobile. |
@@ -272,7 +273,7 @@ production decision unless the owner explicitly changes it.
 | Admin login | Centered breathable auth card on organic cream background. | Do not squeeze the central card or use demo/no-server copy in production. |
 | Admin launcher | `/admin` after login, with exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. Analytics is the third card. | Do not bypass the launcher after login. Do not remove Analytics. |
 | Admin drawer / `#admin` | Right-side drawer/control panel, persistent publish path, English admin labels. | Do not make `Close` ambiguous with `Log out`. Do not hide Save/Preview/Publish after closing without a reopen path. |
-| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default; `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not use a `Done`-only footer that traps the owner away from publish actions. |
+| Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default; `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not use a `Close`-only footer that traps the owner away from publish actions. |
 | Admin public exit | `Public site` clears owner markers via `/?view=public` then lands on clean `/`. | Do not leave admin chrome visible on the visitor page after Public site. |
 | Analytics | Private admin route with comfortable card spacing, Firestore lead data when available, GA4 Data API placeholders where not connected. | Do not compress mobile analytics cards. Do not show fake GA4 charts as real data. |
 | Toasts/dialogs | Save draft and Publish require custom confirmation, successful write, dismissible toast, and 30-second Undo. | Do not use native browser confirms or instantaneous visual flashes that appear before persistence completes. |
@@ -425,8 +426,8 @@ production/dev line.
 | Focus routes | `/#motor-focus` and `/#life-focus` may exist as unexposed campaign variants. They are not public nav or sitemap items. |
 | Admin launcher | `/admin` remains after login and has exactly three primary cards: `Edit the words`, `Arrange & customise`, `Analytics`. |
 | Admin labels | Owner/admin chrome labels are English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`. Do not reintroduce Thai `ออก` as an ambiguous action label. |
-| Public-site exit | `Public site` uses `/?view=public`, clears owner markers, then returns to clean `/`. A signed-in admin session must not visibly alter the public visitor page. |
-| Owner reopen bar | In-session recovery only after closing admin/edit tools. It must not survive a clean public `/` reload through stale localStorage. |
+| Public-site exit | `Public site` opens a new tab with `/?view=public`, clears owner markers in that visitor tab, and cleans the URL back to `/`. The current admin tab stays in owner mode. |
+| Admin close paths | Closing `/#admin` or `/#edit` returns to `/admin`, not to the visitor page. A signed-in admin session must not visibly alter the public visitor page. |
 | Save/Publish | Must use custom confirmation dialogs, wait for Firestore writes, then show dismissible success toasts with a 30-second `Undo`. |
 | CMS content | Firestore live content is canonical for visitors. Draft is private. Local fallback/cache may not override successfully loaded Firestore live content. |
 | Typography | Google Sans family everywhere. Do not reintroduce Caprasimo, Chonburi, or unrelated display/body fonts. |
@@ -501,7 +502,7 @@ Must preserve:
 - Admin labels are English: Main, Public site, Log out, Panel, Edit text,
   Save draft, Preview, Publish, Success.
 - Inline edit uses the warm-ink owner dock from `owner-dock-spec.md`. Keep
-  `Mode · Text edit`, `Tools`, and `Done` visible by default; put `Save draft`,
+  `Mode · Text edit`, `Tools`, and `Close` visible by default; put `Save draft`,
   `Preview`, and `Publish` under `Draft`, and `Panel`, `Main`, `Public site`,
   and `Log out` under `Go to`. Do not reintroduce the black/white alternating
   toolbar; `Publish` is the only terracotta-filled dock action.
@@ -628,8 +629,8 @@ Firestore content normalization:
 
 - Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync`
 - Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-admin-sync/manifest.json`
-- Includes public insurer section desktop/mobile, admin owner reopen bar with
-  `Public site`, and the public view after returning from admin.
+- Includes public insurer section desktop/mobile, admin-to-visitor new-tab behavior,
+  and the clean public view with owner chrome suppressed.
 
 Latest local regression evidence for admin actions and anchor-navigation
 stability:
@@ -645,8 +646,8 @@ Latest local regression evidence for public/admin chrome separation:
 - Snapshot folder: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard`
 - Manifest: `/Users/point/CoverMate/docs/snapshots/local-2026-08-02-public-chrome-guard/manifest.json`
 - Includes a clean public `/` route with a mocked admin session and stale owner
-  marker, the in-session owner reopen bar after closing `/#admin`, and the
-  clean visitor view after clicking `Public site`.
+  marker, `/admin` return after closing `/#admin`, and the clean visitor popup
+  after clicking `Public site`.
 
 Latest Claude Design reconciliation evidence:
 
@@ -1035,7 +1036,7 @@ Purpose: prove motor-insurance comparison breadth.
 Structure:
 
 - Sage/green band.
-- Centered heading: motor insurance can be compared across more than 26 insurers.
+- Centered heading: motor insurance count derives from the visible insurer logo grid; current production copy says 14 insurers.
 - Logo grid in a warm rounded panel. The grid is generated from the
   `insurers.items` content array, not a separate hard-coded logo list.
 - Credential cards for AIA and Srikrung Broker.
@@ -1256,9 +1257,7 @@ Required elements:
 `View public site` links use `/?view=public`, then the public bundle cleans the
 URL back to `/` and suppresses admin owner chrome for that visitor-view
 navigation.
-Clean public loads must also clear or ignore stale owner markers; the owner
-reopen bar is an in-session recovery affordance after closing admin tools, not a
-persistent admin badge on the visitor site.
+Clean public loads must also clear or ignore stale owner markers. Owner controls live on `/admin`, `/#admin`, `/#edit`, and `/#preview`, not on the visitor site.
 
 Layout:
 
@@ -1307,20 +1306,17 @@ Required capabilities:
   a dismissible toast with `Undo` available for 30 seconds.
 - `Undo` after publish restores the previous live snapshot by publishing it
   back to Firestore.
-- Closing the drawer should not trap the owner. A reopen owner bar must stay available.
-- That reopen bar is in-session only. It must not appear on a fresh or reloaded
-  public `/` route just because the browser is signed in.
+- Closing the drawer should not trap the owner; it returns to `/admin`.
+- No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
-  The default state shows only `Mode · Text edit`, `Tools`, and `Done`; `Tools`
+  The default state shows only `Mode · Text edit`, `Tools`, and `Close`; `Tools`
   expands a single dark-ink command palette above the dock. Desktop uses two
   groups, `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`,
   `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
   scrollable column with a 460px cap when viewport height allows. `Publish` is
   the only terracotta-filled dock action.
-- The compact owner-reopen bar should also preserve direct `Save draft`,
-  `Preview`, and `Publish` controls so closing the drawer does not hide the
-  publishing path.
+- Save/Preview/Publish remain available from `/#admin` and the inline-edit dock; closing the drawer returns to `/admin`.
 - `Log out` should be available consistently from owner surfaces.
 - The drawer must stack above visitor sticky header/navigation on mobile and
   should not fade in over the public header.
@@ -1365,7 +1361,7 @@ Firestore-first behavior:
 - Public live content reads from `sites/covermate/states/live`.
 - Draft content reads/writes `sites/covermate/states/draft`.
 - Brand/config fields such as `brand.advisorLogo` are draft/live CMS values, not
-  hard-coded public-only constants.
+  hard-coded public-only constants or stale fallback counts.
 - Publish/restore history writes `sites/covermate/versions/{versionId}`.
 - Public lead submissions write `contactLeads/{leadId}`.
 - Reserved analytics summaries may live under `sites/covermate/analytics/{analyticsDoc}`.
@@ -1473,7 +1469,7 @@ Do not:
 - Hide logout in only one owner mode.
 - Remove switch paths between edit mode, arrange panel, and main admin launcher.
 - Replace live/dynamic CMS text with hard-coded design-only content.
-- Let fallback/cache states override live Firestore content.
+- Let fallback/cache states override live Firestore content or current logo-count normalization.
 - Send private visitor contact details to GA.
 - Use unrelated fonts for body/admin text.
 - Switch to a generic blue SaaS/dashboard theme.
@@ -1636,21 +1632,20 @@ Public visitor rendering should not depend on the user already having admin
 storage keys.
 
 When an admin intentionally opens the live public site from private admin
-surfaces, links use `/?view=public`. The public bundle consumes that flag, cleans
-the URL back to `/`, and removes the owner-reopen marker
-`purich-admin-ever-v7` so admin chrome does not appear on the visitor view.
-The compact owner-reopen bar is allowed only as in-session recovery immediately
-after closing `/#admin` or finishing `/#edit`; a clean `/` load or reload must
-not resurrect it from localStorage.
+surfaces, `Public site` opens a new tab with `/?view=public`. The public bundle
+consumes that flag, cleans the URL back to `/`, and removes the owner marker
+`purich-admin-ever-v7` so admin chrome does not appear on the visitor view. The
+current admin tab remains in owner mode. Closing `/#admin` or `/#edit` returns
+to the private `/admin` launcher.
 
 The public/admin CMS normalizes known legacy values that conflict with current
 product decisions before rendering, caching, saving, or publishing. This is a
-guardrail for stale Firestore/live-draft data, not a general content override:
+guardrail for stale Firestore/live-draft data, not a general content override. Database content otherwise prevails:
 
 - `#motor` nav entries normalize to `#insurers` and duplicate motor nav entries
   are removed.
-- legacy insurer count overrides that say `14` or `20` companies normalize back
-  to the current `26` / `26+` motor-insurer copy.
+- legacy insurer count overrides such as `20`, `26`, or `26+` normalize to the
+  current visible insurer-logo count (`14` with the present asset set).
 - legacy contact headings with forced line breaks normalize to
   `ขอรับคำปรึกษา` / `Request a consultation`.
 
@@ -1771,7 +1766,7 @@ Before deploying changes that affect storage shape or admin behavior:
 The exact nested config/text/history shape is owned by the embedded exported
 bundle. Inspect the bundle before making schema-level edits.
 
-The current insurer section includes both repeated insurer logo items and
+The current insurer section count is derived from visible insurer logo items. The section also includes
 separate broker/agency relationship cards. Treat those cards as structural
 content, not plain testimonial copy, because the admin panel exposes dedicated
 card editing for them.
@@ -1873,13 +1868,13 @@ Launcher actions:
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
-`Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
+`Main`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
 stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
-The public-site link intentionally carries a short-lived `view=public` flag so
-the visitor page opens without the owner-reopen bar, then cleans the URL back to
-`/`.
+The public-site link intentionally opens a new tab with a short-lived `view=public` flag so
+the visitor page opens without owner chrome, then cleans the URL back to `/`.
+The current admin tab remains in owner mode.
 Being signed in as an admin is not itself a visible mode. A clean public route
 must not show owner chrome, even if stale local owner markers exist.
 
@@ -1893,14 +1888,14 @@ must not show owner chrome, even if stale local owner markers exist.
 5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
 6. The edit toolbar is a warm-ink owner dock and is compact by default: it
-   shows `Mode · Text edit`, `Tools`, and `Done`. `Tools` expands a single
+   shows `Mode · Text edit`, `Tools`, and `Close`. `Tools` expands a single
    dark-ink command palette with `Draft` actions (`Save draft`, `Preview`,
    `Publish`) and `Go to` actions (`Panel`, `Main`, `Public site`, `Log out`).
    `Publish` is the only terracotta-filled dock action.
-7. Finishing edit mode removes all `contenteditable` and image-edit affordances and shows the
-   compact owner bar for reopening admin tools.
-8. `Public site` uses `/?view=public`, clears the owner marker, and returns to
-   the clean visitor route without owner chrome.
+7. `Close` removes all `contenteditable` and image-edit affordances and returns
+   to `/admin`.
+8. `Public site` opens a separate visitor tab through `/?view=public`, clears
+   owner markers in that tab, and keeps the current admin tab in owner mode.
 9. Reloading `/` after that remains a visitor view; owner chrome must stay
    hidden until the owner intentionally opens `#admin`, `#edit`, `#preview`, or
    `/admin`.
@@ -1925,10 +1920,9 @@ fields.
    publishes the previous live snapshot back to the visitor site.
 7. Native browser `confirm()` dialogs are not used for owner CMS actions.
 8. Public visitors hydrate the latest `states/live` before rendering.
-9. The drawer close button only closes the drawer. It does not sign out.
-10. After the drawer closes, the compact owner bar provides recovery and publish
-   actions: reopen `Panel`, enter `Edit text` mode, return to `Main`, open
-   `Public site`, `Save draft`, `Preview`, `Publish`, or `Log out`.
+9. The drawer close button returns to `/admin`. It does not sign out.
+10. Owner draft/publish recovery remains available through `/admin`, `/#admin`,
+    and the inline-edit dock rather than a public-page owner bar.
 11. The action bar inside the drawer keeps editing/navigation/session actions
    separate from save, preview, and publish actions.
 12. The drawer action bar keeps direct access to text-edit mode and `Main` so
@@ -2176,10 +2170,9 @@ records that undo in version history.
 
 The owner hash modes also own the admin continuation UI:
 
-- closing the `/#admin` drawer removes the hash and shows a compact owner bar
-  instead of trapping the owner on a public page with no way back;
+- closing the `/#admin` drawer returns to `/admin`, keeping the owner in a private admin surface;
 - `/#edit` shows its own warm-ink owner dock: the collapsed row keeps
-  `Mode · Text edit`, `Tools`, and `Done` visible, while `Tools` expands a
+  `Mode · Text edit`, `Tools`, and `Close` visible, while `Tools` expands a
   single dark-ink command palette grouped into `Draft` and `Go to` actions.
   `Publish` is the only terracotta-filled action; the other owner commands stay
   quiet cream/outline actions;
@@ -2187,7 +2180,7 @@ The owner hash modes also own the admin continuation UI:
   returns to `/admin/login`.
 
 Visible Admin chrome/action labels are English-only. The stable owner labels are
-`Panel`, `Edit text`, `Main`, `Done`, `Save draft`, `Preview`, `Publish`,
+`Panel`, `Edit text`, `Main`, `Close`, `Save draft`, `Preview`, `Publish`,
 `Success`, and `Log out`.
 
 The mobile interaction contract is enforced by a template-level
@@ -2220,9 +2213,9 @@ Do not remove the splash-hiding rules for `#__bundler_thumbnail` and
 Do not remove the `covermate-template-cloak` rules that hide raw `<x-dc>`
 template content before hydration on visitor and admin pages.
 
-Do not remove the owner reopen bar after the admin drawer closes. It must keep
-reopen `Panel`, `Edit text`, `Main`, and `Log out` actions reachable during the
-same owner workspace session.
+Do not add an owner reopen bar to the visitor route. Closing admin or edit mode
+must return to `/admin`, where `Panel`, `Edit text`, `Analytics`, `Public site`,
+and `Log out` stay reachable.
 
 Do not let a stored admin session or stale `purich-admin-ever-v7` marker show
 owner chrome on a clean visitor `/` route. Admin authentication and visible
@@ -2269,7 +2262,7 @@ For a real production CMS, add server-backed auth and persistence.
 For maintainability, migrate the exported HTML bundles into source components
 while keeping the `.dc.html` references as visual fixtures.
 
-For the "26+" insurer claim, keep the visible 14-logo comparison grid plus
+For insurer-count copy, keep the visible 14-logo comparison grid plus
 AIA/Srikrung relationship proof cards aligned with the supplied reference unless
 the business owner supplies new insurer assets or revised copy.
 

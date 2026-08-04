@@ -118,29 +118,30 @@ Minimum checks:
 - `Publish` success waits for the Firestore live/draft/version writes, then
   shows a dismissible toast with a 30-second `Undo` that republishes the
   previous live snapshot
-- `/#admin` close button hides the drawer and exposes an owner bar that can
-  reopen `Panel`, enter `Edit text`, return to `Main`, open `Public site`, or
-  `Log out`
+- `/#admin` close button returns to `/admin`; it does not expose owner chrome on
+  the visitor route
 - `/#admin` drawer appears above visitor sticky header on mobile and must not
   fade in over the header chrome
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
   "ออก" control
 - `/#edit` renders click-to-edit mode with editable text fields
 - `/#edit` owner dock is compact by default: `Mode · Text edit`, `Tools`, and
-  `Done` stay visible; expanding `Tools` opens the warm-ink command palette with
+  `Close` stay visible; expanding `Tools` opens the warm-ink command palette with
   `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`, `Main`,
   `Public site`, `Log out`) groups. `Publish` is the only terracotta-filled
   dock action
-- finishing edit mode removes `contenteditable` affordances
+- `Close` in edit mode removes `contenteditable` affordances and returns to
+  `/admin`
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English
 - visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
-  `Main`, `Done`, `Save draft`, `Preview`, `Publish`, `Success`, and `Log out`
+  `Main`, `Public site`, `Close`, `Save draft`, `Preview`, `Publish`,
+  `Success`, and `Log out`
 - Firestore live content hydrates before public/admin launcher rendering; stale
   local cache must not override a successful `states/live` read
 - legacy Firestore content that conflicts with product decisions is normalized
-  on render/save/publish: duplicate `#motor` nav, stale `14/20` motor-insurer
-  count copy, and forced-line-break contact headings
+  on render/save/publish: duplicate `#motor` nav, stale `20/26/26+`
+  motor-insurer count copy, and forced-line-break contact headings
 - owner modes hydrate Firestore draft/version data as needed, and publish writes
   `states/live`, `states/draft`, and a version document
 - `/`, including `/#motor`, remains indexable with canonical
