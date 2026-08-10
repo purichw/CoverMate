@@ -226,11 +226,15 @@ const failures = [];
 async function newSmokePage(options) {
   const page = await browser.newPage(options);
   await page.addInitScript(() => {
-    window.__covermateVisibleOwnerBarCount = () => Array.from(document.querySelectorAll("[data-admin-owner-bar]")).filter((el) => {
+    const isVisible = (el) => {
       const style = window.getComputedStyle(el);
       const rect = el.getBoundingClientRect();
       return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
-    }).length;
+    };
+    window.__covermateVisibleOwnerBarCount = () => Array.from(document.querySelectorAll("[data-admin-owner-bar]")).filter(isVisible).length;
+    window.__covermateVisibleAdminAside = () => Array.from(document.querySelectorAll("aside")).some((el) =>
+      isVisible(el) && /Admin portal/.test(el.innerText || "")
+    );
   });
   return page;
 }
@@ -756,7 +760,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
     route: window.location.pathname + window.location.search + window.location.hash,
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     text: document.body.innerText
   }));
   if (
@@ -804,6 +808,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
 
   await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await page.reload({ waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Public Chrome Guard Smoke/);
   await page.waitForTimeout(500);
   const reloadState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
@@ -865,7 +870,7 @@ async function verifyPreviewIsolationContract() {
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     hasPreviewBar: Boolean(document.querySelector("[data-admin-preview-bar]")),
     hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
     htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview")
   }));
@@ -898,7 +903,7 @@ async function verifyPreviewIsolationContract() {
     previewBarText: document.querySelector("[data-admin-preview-bar]")?.innerText || "",
     ownerBars: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).map((el) => el.getAttribute("data-admin-owner-bar")),
     hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
     htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
     bodyPaddingTop: window.getComputedStyle(document.body).paddingTop,
@@ -959,7 +964,7 @@ async function verifyPreviewIsolationContract() {
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     hasPreviewBar: Boolean(document.querySelector("[data-admin-preview-bar]")),
     hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
     htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview")
   }));
@@ -1283,7 +1288,7 @@ for (const [name, width, height] of viewports) {
         adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
         hasPreviewBar: Boolean(document.querySelector("[data-admin-preview-bar]")),
         hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
-        hasAdminAside: Boolean(document.querySelector("aside")),
+        hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
         hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
         htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
         requiredConsentCheckboxCount:
@@ -1593,12 +1598,13 @@ for (const [name, width, height] of viewports) {
     null,
     { timeout: 10000 }
   ).catch(() => {});
+  await waitForBodyText(page, /CoverMate/);
   await page.waitForTimeout(500);
   const launcherPublicState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     text: document.body.innerText
   }));
   if (
@@ -1793,13 +1799,14 @@ for (const [name, width, height] of viewports) {
     null,
     { timeout: 10000 }
   ).catch(() => {});
+  await waitForBodyText(page, /CoverMate/);
   await page.waitForTimeout(500);
   const closedAdminState = await page.evaluate(() => {
     const bar = document.querySelector('[data-admin-owner-bar="reopen"]');
     const rect = bar ? bar.getBoundingClientRect() : null;
     const style = bar ? window.getComputedStyle(bar) : null;
     return {
-      hasAside: Boolean(document.querySelector("aside")),
+      hasAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
       hasBar: Boolean(bar),
       barVisible: Boolean(
         bar &&
@@ -1840,11 +1847,12 @@ for (const [name, width, height] of viewports) {
     null,
     { timeout: 10000 }
   ).catch(() => {});
+  await waitForBodyText(page, /CoverMate/);
   await page.waitForTimeout(500);
   const publicReturnState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
     text: document.body.innerText
   }));
@@ -1869,7 +1877,7 @@ for (const [name, width, height] of viewports) {
     ownerBars: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).map((el) => el.getAttribute("data-admin-owner-bar")),
     hasPreviewBar: Boolean(document.querySelector('[data-admin-owner-bar="preview"], [data-admin-preview-bar]')),
     hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
     htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
     scrollWidth: document.documentElement.scrollWidth,
@@ -1977,7 +1985,7 @@ for (const [name, width, height] of viewports) {
   await page.waitForTimeout(400);
   const editPanelState = await page.evaluate(() => ({
     toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     toolsOpen: Boolean(document.querySelector('[data-admin-owner-bar="edit"] #covermate-owner-tools-toggle')?.checked),
     contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length
   }));
@@ -2000,13 +2008,14 @@ for (const [name, width, height] of viewports) {
     null,
     { timeout: 10000 }
   ).catch(() => {});
+  await waitForBodyText(page, /CoverMate/);
   await page.waitForTimeout(400);
   const editPanelClosedState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
     toolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
     hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
-    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
     text: document.body.innerText,
     scrollWidth: document.documentElement.scrollWidth,
