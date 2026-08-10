@@ -18,48 +18,180 @@ const outDir = process.env.COVERMATE_OPS_QA_DIR || "/tmp/covermate-ops-qa";
 
 const firebaseMock = `
   const session = () => JSON.parse(window.localStorage.getItem("covermate-admin-session") || "null");
+  const user = {
+    uid: "smoke-admin",
+    email: "purich@example.com",
+    displayName: "Purich N.",
+    getIdToken: async () => "ops-regression-token"
+  };
   window.CoverMateFirebase = {
-    waitForAuth: async () => ({ uid: "smoke-admin", email: "purich@example.com", displayName: "Purich N." }),
-    syncSessionFromCurrentUser: async () => ({ ok: true, session: session() }),
-    signOut: async () => {},
-    loadOperationalLeads: async () => ([
-      {
-        id: "abc1234",
-        name: "Live Lead A",
-        contact: "080-111-2222",
-        topic: "Need motor comparison from live contactLeads.",
-        qtype: "quote",
-        coverage: "motor",
-        consent: true,
-        language: "th",
-        summary: "Motor quote",
-        sourcePath: "/?utm_source=line",
-        status: "new",
-        read: false,
-        createdAt: { seconds: 1786320000 },
-        updatedAt: { seconds: 1786320000 }
-      },
-      {
-        id: "def5678",
-        name: "Live Lead B",
-        contact: "line-live-b",
-        topic: "Health review follow up.",
-        qtype: "review",
-        coverage: "health",
-        consent: true,
-        language: "en",
-        summary: "Health review",
-        sourcePath: "/contact",
-        status: "consultation",
-        read: true,
-        createdAt: { seconds: 1786233600 },
-        updatedAt: { seconds: 1786233600 }
-      }
-    ])
+    auth: { currentUser: user },
+    waitForAuth: async () => user,
+    syncSessionFromCurrentUser: async () => ({ ok: true, user, session: session() }),
+    signOut: async () => {}
   };
   window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
   export {};
 `;
+
+const apiState = {
+  leads: [
+    {
+      id: "lead-a",
+      displayId: "CL-LEADA",
+      name: "Live Lead A",
+      phone: "080-111-2222",
+      lineId: "live-a",
+      email: "",
+      contact: "080-111-2222",
+      source: "Website form",
+      interestKey: "motor",
+      interestLabel: "Motor",
+      status: "new",
+      message: "Need motor comparison from contactLeads.",
+      preferredContact: "Anytime",
+      assigneeName: "Purich N.",
+      consent: {
+        given: true,
+        method: "public form checkbox",
+        at: "2026-08-10T08:00:00.000Z",
+        source: "/contact",
+        purpose: "Insurance advice and quotation"
+      },
+      timeline: [
+        { id: "evt-a", kind: "created", text: "Lead captured", note: "", at: "2026-08-10T08:00:00.000Z", by: "System" }
+      ],
+      createdAt: "2026-08-10T08:00:00.000Z",
+      updatedAt: "2026-08-10T08:00:00.000Z"
+    },
+    {
+      id: "lead-b",
+      displayId: "CL-LEADB",
+      name: "Live Lead B",
+      phone: "",
+      lineId: "line-live-b",
+      email: "",
+      contact: "line-live-b",
+      source: "LINE",
+      interestKey: "health",
+      interestLabel: "Health",
+      status: "consultation",
+      message: "Health review follow up.",
+      assigneeName: "Purich N.",
+      consent: {
+        given: true,
+        method: "public form checkbox",
+        at: "2026-08-09T08:00:00.000Z",
+        source: "/",
+        purpose: "Insurance advice and quotation"
+      },
+      timeline: [],
+      createdAt: "2026-08-09T08:00:00.000Z",
+      updatedAt: "2026-08-09T08:00:00.000Z"
+    }
+  ],
+  tasks: [
+    {
+      id: "lead-a:firstContact",
+      leadId: "lead-a",
+      kind: "firstContact",
+      title: "First contact - Live Lead A",
+      dueAt: "2026-08-10T10:00:00.000Z",
+      priority: "High",
+      relatedLabel: "Lead CL-LEADA",
+      assigneeName: "Purich N.",
+      completed: false,
+      bucket: "today"
+    }
+  ],
+  audit: [
+    {
+      id: "aud-a",
+      kind: "Lead",
+      subject: "Lead CL-LEADA - Live Lead A",
+      from: "",
+      to: "Created",
+      actorName: "System",
+      at: "2026-08-10T08:00:00.000Z"
+    }
+  ]
+};
+
+function json(rows) {
+  return {
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(Array.isArray(rows) ? { rows, total: rows.length, source: "mock-api" } : rows)
+  };
+}
+
+async function fulfillApi(route) {
+  const request = route.request();
+  const url = new URL(request.url());
+  const path = url.pathname.replace(/^\/api\/ops\/?/, "").split("/").filter(Boolean);
+  const method = request.method();
+
+  if (method === "GET" && path[0] === "leads" && path.length === 1) return route.fulfill(json(apiState.leads));
+  if (method === "GET" && path[0] === "tasks" && path.length === 1) return route.fulfill(json(apiState.tasks));
+  if (method === "GET" && path[0] === "audit" && path.length === 1) return route.fulfill(json(apiState.audit));
+  if (method === "GET" && ["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"].includes(path[0])) {
+    return route.fulfill(json([]));
+  }
+  if (method === "POST" && path[0] === "leads" && path.length === 1) {
+    const input = request.postDataJSON();
+    const lead = {
+      id: "lead-created",
+      displayId: "CL-CREATED",
+      name: input.name,
+      phone: input.phone,
+      lineId: input.lineId || "",
+      email: input.email || "",
+      contact: input.phone || input.lineId || input.email,
+      source: input.source,
+      interestKey: input.interestKey,
+      interestLabel: "Motor",
+      status: "new",
+      message: input.message,
+      preferredContact: input.preferredContact || "",
+      assigneeName: "Purich N.",
+      consent: { given: true, method: "manual", at: "2026-08-11T02:00:00.000Z", source: "/admin/ops", purpose: "Insurance advice and quotation" },
+      timeline: [{ id: "evt-created", kind: "created", text: "Lead created", note: "", at: "2026-08-11T02:00:00.000Z", by: "Purich N." }],
+      createdAt: "2026-08-11T02:00:00.000Z",
+      updatedAt: "2026-08-11T02:00:00.000Z"
+    };
+    apiState.leads.unshift(lead);
+    apiState.tasks.unshift({
+      id: "lead-created:firstContact",
+      leadId: "lead-created",
+      kind: "firstContact",
+      title: `First contact - ${input.name}`,
+      dueAt: "2026-08-11T02:00:00.000Z",
+      priority: "High",
+      relatedLabel: "Lead CL-CREATED",
+      assigneeName: "Purich N.",
+      completed: false,
+      bucket: "today"
+    });
+    return route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({ lead, taskId: "lead-created:firstContact", audit: { id: "aud-created", kind: "Lead", subject: "Lead CL-CREATED", to: "Created", actorName: "Purich N.", at: "2026-08-11T02:00:00.000Z" } })
+    });
+  }
+  if (method === "PUT" && path[0] === "leads" && path[2] === "status") {
+    const input = request.postDataJSON();
+    const lead = apiState.leads.find((item) => item.id === path[1]);
+    if (lead) lead.status = input.status;
+    return route.fulfill(json({ audit: { id: "aud-status", kind: "Status", subject: path[1], from: "New", to: input.status, actorName: "Purich N.", at: "2026-08-11T02:10:00.000Z" } }));
+  }
+  if (method === "PATCH" && path[0] === "tasks") {
+    const input = request.postDataJSON();
+    const task = apiState.tasks.find((item) => item.id === decodeURIComponent(path[1]));
+    if (task) task.completed = input.completed;
+    return route.fulfill(json({ audit: { id: "aud-task", kind: "Task", subject: decodeURIComponent(path[1]), from: "Open", to: input.completed ? "Completed" : "Open", actorName: "Purich N.", at: "2026-08-11T02:10:00.000Z" } }));
+  }
+  return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not_found" }) });
+}
 
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -72,12 +204,9 @@ try {
 
   const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
   await page.route("**/covermate-firebase.js", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "text/javascript",
-      body: firebaseMock
-    });
+    await route.fulfill({ status: 200, contentType: "text/javascript", body: firebaseMock });
   });
+  await page.route("**/api/ops/**", fulfillApi);
   await page.addInitScript(() => {
     window.localStorage.setItem("covermate-admin-session", JSON.stringify({
       firebase: true,
@@ -92,6 +221,9 @@ try {
 
   await page.goto(`${baseUrl}/admin/ops/`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Dashboard" }).waitFor();
+  await page.locator("#dataMode", { hasText: "Backend connected" }).waitFor();
+  const bodyText = await page.locator("body").innerText();
+  if (/demo/i.test(bodyText)) throw new Error("Operations Portal rendered demo copy.");
   await page.screenshot({ path: `${outDir}/ops-dashboard-desktop.png`, fullPage: true });
 
   await page.getByRole("button", { name: /Leads/ }).first().click();
@@ -105,16 +237,16 @@ try {
   await page.getByText("1 records").waitFor();
 
   await page.getByRole("button", { name: /New lead/ }).click();
-  await page.getByLabel("Name").fill("Regression Local Lead");
-  await page.getByLabel("Phone or contact").fill("089-999-0000");
+  await page.getByLabel("Name").fill("Regression API Lead");
+  await page.getByLabel("Phone", { exact: true }).fill("089-999-0000");
   await page.getByLabel("Submitted message").fill("Created by ops portal regression check.");
   await page.getByLabel(/PDPA consent/).check();
   await page.getByRole("button", { name: "Create lead" }).click();
-  await page.getByRole("heading", { name: "Regression Local Lead" }).waitFor();
+  await page.getByRole("heading", { name: "Regression API Lead" }).waitFor();
 
   await page.getByRole("button", { name: /Tasks/ }).first().click();
   await page.getByRole("heading", { name: "Tasks and follow-ups" }).waitFor();
-  await page.getByText("First contact — Regression Local Lead").waitFor();
+  await page.getByText("First contact - Regression API Lead").waitFor();
 
   await page.getByLabel("Preview role").selectOption("readonly");
   const newLeadDisabled = await page.getByRole("button", { name: /New lead/ }).isDisabled();
@@ -122,12 +254,9 @@ try {
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.route("**/covermate-firebase.js", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "text/javascript",
-      body: firebaseMock
-    });
+    await route.fulfill({ status: 200, contentType: "text/javascript", body: firebaseMock });
   });
+  await mobile.route("**/api/ops/**", fulfillApi);
   await mobile.addInitScript(() => {
     window.localStorage.setItem("covermate-admin-session", JSON.stringify({
       firebase: true,
@@ -149,9 +278,10 @@ try {
     route: "/admin/ops/",
     unauthenticatedRedirect: true,
     desktopDashboard: true,
-    liveLeadRead: true,
+    apiLeadRead: true,
+    noDemoCopy: true,
     filterPreservedAfterDetail: true,
-    localNewLeadCreatesTask: true,
+    apiNewLeadCreatesTask: true,
     readonlyDisablesWrites: true,
     mobileOverflowPx: overflow,
     screenshots: outDir

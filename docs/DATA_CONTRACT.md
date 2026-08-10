@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-08-10
+Last updated: 2026-08-11
 
 ## Persistence Model
 
@@ -33,7 +33,10 @@ Implications:
 - runtime SEO metadata and JSON-LD derive from the hydrated live state, so stale
   cache/defaults must not override live metadata either
 - public lead submissions write validated `contactLeads/*` documents; admin
-  analytics reads them only after an allowlisted admin session is active
+  analytics and the Operations Portal read them only after an allowlisted admin
+  session is active
+- `/admin/ops` does not store lead, task, status, note, or audit state in
+  browser storage; those reads and writes go through `/api/ops/*`
 
 ## Known Keys
 
@@ -211,11 +214,18 @@ hydrate/save/publish:
 | `sites/covermate/states/live` | Public read; admin write. | Canonical published visitor CMS state. |
 | `sites/covermate/states/draft` | Admin read/write. | Canonical working draft state for owner modes. |
 | `sites/covermate/versions/{versionId}` | Admin read/write. | Canonical publish/restore history, newest first by `ts`. |
-| `contactLeads/{leadId}` | Validated public create; admin read/update/delete. | Canonical lead capture store for the public consultation form, renewal reminder form, and Admin Analytics. |
+| `contactLeads/{leadId}` | Validated public create; active admin read; owner/adviser/ops create/update; client delete blocked. | Canonical lead capture store for the public consultation form, renewal reminder form, Admin Analytics, and Operations Portal workflow state. |
 | `sites/covermate/analytics/{analyticsDoc}` | Admin read/write. | Reserved GA4/Data API summaries or scheduled analytics exports. |
 
 `covermate-firebase.js` owns Firestore hydration, draft save, publish, restore,
-version-history reads, public lead submission, and admin lead reads.
+version-history reads, public lead submission, and Firebase Auth session
+hydration.
+
+`/api/ops/*` owns Operations Portal reads and writes. The server receives a
+Firebase ID token, verifies it through Firebase Identity Toolkit, checks
+`admins/{uid}` through Firestore, applies the role permission matrix, then reads
+or updates Firestore through REST. The browser does not keep an operations data
+fallback.
 
 ## Lead Document Shape
 
@@ -239,6 +249,20 @@ Public creates under `contactLeads/*` must match the rules-validated shape:
 
 Admin users may update status/read fields later, but public visitors may only
 create new validated leads.
+
+The Operations Portal API may add admin-only fields after a lead exists:
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `ops.displayId` | string | Stable operator-facing lead label derived from the Firestore document id. |
+| `ops.phone` / `ops.lineId` / `ops.email` | string | Structured contact channels captured or split by the admin workflow. |
+| `ops.source` | string | Operational source label. |
+| `ops.interestKey` / `ops.interestLabel` | string | Normalized service taxonomy for filters and tables. |
+| `ops.assigneeId` / `ops.assigneeName` | string | Current adviser assignment. |
+| `ops.followUpAt` | date string | Next dated action. |
+| `ops.tasks` | map | Server-derived task state keyed by task kind; completion is written by `/api/ops/tasks/{id}`. |
+| `ops.audit[]` | array | Per-lead audit entries returned by write endpoints and shown in Settings > Audit trail. |
+| `timeline[]` | array | Lead communication and status history. Internal notes stay on the record; audit entries store note length rather than note text. |
 
 The main consultation form writes the visitor-entered name, contact, enquiry
 type, coverage area, details, consent confirmation, and a derived summary. The

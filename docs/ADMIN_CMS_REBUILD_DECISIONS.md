@@ -1,6 +1,6 @@
 # CoverMate Admin/CMS Rebuild Decisions
 
-Last updated: 2026-08-10
+Last updated: 2026-08-11
 
 This is the authoritative decision record for the next Admin/CMS rebuild. It
 records the latest owner-approved direction from the attached ChatGPT governance
@@ -28,7 +28,7 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
 | Admin launcher | Target is three cards: `Edit the words`, `Arrange & customise`, `Analytics`. | Ship in Phase 2. Operations is not a launcher card for this rebuild. |
-| Operations portal | Approved as a separate product surface on 2026-08-10. | `/admin/ops/` may ship independently from the launcher. Phase A is source-authored UI plus authenticated `contactLeads/*` reads; write-heavy flows remain local/demo until `/api/ops`, durable ops collections, and immutable audit exist. |
+| Operations portal | Approved as a separate product surface on 2026-08-10. | `/admin/ops/` ships independently from the launcher. The current implementation is API-backed: `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state on `contactLeads/*`. |
 | Public exit | New UI exits directly to clean `/`. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Owner close/public-exit actions leave owner mode and land on clean `/`. | Do not preserve an in-tab owner workspace after `Public site`, drawer X, or edit public-exit. |
@@ -37,7 +37,7 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 | Motor aliases | `#motor -> #insurers`; `#life -> #cover`. | One public page, no duplicated motor nav. |
 | Insurer count copy | `26+` describes Srikrung panel availability; visible logos may remain a 14-logo selection. | Reconcile existing 14-count normalization in a later content/sanitizer phase. |
 | Analytics | Preserve deployed event history; expand by adding safe parameters/events only. | Audit `covermate-analytics.js` before any event-name change. |
-| Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, `sites/covermate/states/live`, `states/draft`, `versions/*`, and `contactLeads/*`. | No Next/API, rules, or collection migration in this rebuild phase. |
+| Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, `sites/covermate/states/live`, `states/draft`, `versions/*`, and `contactLeads/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project and does not require a collection migration. |
 | CMS IA | Replace developer-like controls with owner-readable CMS. | Site structure rows, section editor, collapsed Advanced layout, stable repeatable IDs. |
 | Compliance | Licence/OIC, agent/broker, commission disclosure, and claim stories are protected. | No casual inline editing of regulated copy. |
 
@@ -71,13 +71,13 @@ Phase 6 adds media metadata, global contact controls, and guarded SEO editing.
 Phase 7 aligns analytics instrumentation/reporting without breaking event
 history or sending PII.
 
-Phase 8, the Operations portal, now has owner approval to begin as a separate
-route. Phase A creates `/admin/ops/`, reuses the admin session/Firebase allowlist,
-loads `contactLeads/*` for lead intake, and keeps non-backed workflow mutations
-local/demo with visible backend-required labels. Phase B still requires data
-model, permissions, audit, consent events, storage, retention, deletion, search,
-scheduler, `/api/ops`, and privacy/security review before replacing local/demo
-mutations with production writes.
+Phase 8, the Operations portal, has owner approval as a separate route.
+`/admin/ops/` now reuses the admin session/Firebase allowlist and calls
+`/api/ops/*` for lead reads, lead creation, status updates, notes, follow-up
+dates, task completion, and audit. The first backend pass stores operations
+state on `contactLeads/*` to avoid adding un-deployed collections. Later work may
+split customers, policies, documents, scheduler jobs, retention/deletion, and
+global audit into dedicated collections after privacy/security review.
 
 ## Non-Negotiables
 
@@ -91,5 +91,6 @@ mutations with production writes.
   values.
 - Do not commit, push, deploy, modify Firestore Rules, or add direct upload
   storage without explicit owner approval in the current task.
-- `/admin/ops/` must not pretend local/demo workflow mutations are persisted,
-  audited production operations until the backend/audit phase exists.
+- `/admin/ops/` must not ship browser-seeded operations data or local workflow
+  fallback. If the API cannot load a resource, the UI must show an API issue or
+  empty state rather than demo records.

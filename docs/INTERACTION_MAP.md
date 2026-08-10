@@ -206,18 +206,22 @@ JSON-LD claim boundaries stay code-owned.
 1. Owner or operator opens `/admin/ops` directly after signing in.
 2. The page checks `covermate-admin-session` as a fast local cache, then verifies
    the active Firebase user through `requireVerifiedAdminSession`.
-3. The Leads module reads real `contactLeads/*` through
-   `covermate-firebase.js.loadOperationalLeads`.
-4. Lead filters and global search remain in memory when a lead detail is opened
+3. The page requests a Firebase ID token from the active Firebase user and sends
+   it as a bearer token to `/api/ops/*`.
+4. The Operations API verifies the token, checks `admins/{uid}`, applies the
+   role permission matrix server-side, then reads or mutates Firestore.
+5. Lead lists and details render from real `contactLeads/*` API responses.
+   Modules whose backing collections are not populated render empty states, not
+   browser-seeded records.
+6. Lead filters and global search remain in memory when a lead detail is opened
    and closed.
-5. New lead, status change, task completion, and note interactions update local
-   Phase A state only and write visible local audit entries. They must become
-   server-side `/api/ops` writes with immutable `opsAudit/*` entries before they
-   are treated as production operations.
-6. Website content actions link back to the existing CMS routes (`/#edit`,
+7. New lead, status change, task completion, follow-up date, and internal note
+   interactions write through `/api/ops/*`. Write responses include the audit
+   entry produced by the server; the client does not synthesize audit history.
+8. Website content actions link back to the existing CMS routes (`/#edit`,
    `/#admin`, `/#preview`, `/admin/analytics`) instead of depending on the
    offline Claude standalone files.
-7. The page does not load visitor Google Analytics scripts.
+9. The page does not load visitor Google Analytics scripts.
 
 ## Access Behavior
 

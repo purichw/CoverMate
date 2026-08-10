@@ -44,9 +44,10 @@ Routes:
 - `/admin/login` owner auth gate
 - `/admin` owner launcher
 - `/admin/analytics` private owner analytics dashboard
-- `/admin/ops` private Phase A Operations Portal
+- `/admin/ops` private Operations Portal
 
 Admin sign-in uses Firebase Auth and a Firestore `admins/{uid}` allowlist. CMS
 draft/live/history content is Firestore-first under `sites/covermate/*`, and
-operations lead intake reads `contactLeads/*`; browser-local storage is only a
-last-known fallback cache or explicitly labelled Phase A demo state.
+operations lead intake and workflow mutations go through `/api/ops/*` against
+Firestore `contactLeads/*`; browser-local storage is only a session marker or
+last-known CMS cache.

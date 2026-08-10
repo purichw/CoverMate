@@ -3,13 +3,13 @@
 Purpose: make the static CoverMate visitor/admin site easy to navigate, verify,
 and safely edit in later sessions.
 
-Current state: this repo is a Vercel-hosted static export. The UI is built from
-Claude Design `.dc.html` bundles, with small production patches applied in the
-wrapper and embedded bundle strings. There is no backend API in this repo.
-Firebase Auth, Firestore CMS persistence, lead capture, Admin Analytics, and
-the source-authored Phase A Operations Portal route are implemented. Future
-commit, push, Vercel deploy, or Firestore Rules deploy actions still require
-explicit owner approval in the current task.
+Current state: this repo is a Vercel-hosted static export plus a narrow Vercel
+serverless Operations API. The UI is built from Claude Design `.dc.html`
+bundles, with small production patches applied in the wrapper and embedded
+bundle strings. Firebase Auth, Firestore CMS persistence, lead capture, Admin
+Analytics, and the source-authored Operations Portal route are implemented.
+Future commit, push, Vercel deploy, or Firestore Rules deploy actions still
+require explicit owner approval in the current task.
 
 Product decision checkpoint: the 2026-08-10 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
@@ -74,7 +74,9 @@ Detailed project documents:
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private admin launcher with exactly three primary cards: "Edit the words", "Arrange & customise", and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
-| `admin/ops/index.html` | Private Phase A Operations Portal. Reuses verified admin session, reads real `contactLeads/*` through `loadOperationalLeads`, preserves filter/detail state, and clearly marks local/demo workflow actions until `/api/ops` and immutable `opsAudit` exist. |
+| `admin/ops/index.html` | Private Operations Portal shell. Reuses verified admin session and loads `/admin/ops/app.js`; contains no browser-seeded operations data. |
+| `admin/ops/app.js` | Operations Portal controller. Calls `/api/ops/*` with the active Firebase ID token, renders empty states for unavailable resources, and sends workflow mutations to the server. |
+| `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes `contactLeads/*`, and returns server-produced audit entries. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
 | `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
@@ -92,7 +94,7 @@ Detailed project documents:
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness with local/runtime Playwright fallback. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
-| `vercel.json` | Static Vercel settings, clean URLs, `/favicon.ico` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
+| `vercel.json` | Vercel settings, clean URLs, `/api/ops/:path*` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
 | `.image-slots.state.json` | Empty file kept to satisfy the exported image-slot runtime request. |
 | `.gitignore` | Ignores `.vercel/` local project config. |
 
@@ -126,9 +128,8 @@ Route contracts:
 - `/admin` is the private admin launcher and must remain reachable after login.
 - `/admin/analytics` is the private owner analytics dashboard and must remain
   out of `sitemap.xml`.
-- `/admin/ops` is the private Phase A Operations Portal. It is reachable
-  directly after login but is intentionally not a launcher card in the current
-  CMS IA.
+- `/admin/ops` is the private Operations Portal. It is reachable directly after
+  login but is intentionally not a launcher card in the current CMS IA.
 - Direct unauthenticated access to `/admin`, `/admin/analytics`, `/admin/ops`,
   and owner modes must send the user to `/admin/login`.
 
@@ -171,8 +172,9 @@ Important behavior:
   sync updates title, description, Open Graph/Twitter, and JSON-LD from the
   hydrated live state. Admin routes and owner modes must remain `noindex`.
 - Visitor lead submissions write validated documents to `contactLeads/*`.
-  Admin Analytics and the Operations Portal read those leads through
-  `covermate-firebase.js`.
+  Admin Analytics reads those leads through `covermate-firebase.js`.
+  The Operations Portal reads and mutates them through `/api/ops/*`, which
+  re-verifies the Firebase user and role server-side before touching Firestore.
 
 ## Design Source Of Truth
 

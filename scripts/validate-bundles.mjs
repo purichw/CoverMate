@@ -13,7 +13,9 @@ const jsFiles = [
   "covermate-firebase.js",
   "covermate-analytics.js",
   "admin/session.js",
-  "admin/analytics-data.js"
+  "admin/analytics-data.js",
+  "admin/ops/app.js",
+  "api/ops.js"
 ];
 
 const cssFiles = [

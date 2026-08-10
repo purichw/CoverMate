@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-08-10
+Last updated: 2026-08-11
 
 ## Routes
 
@@ -14,7 +14,7 @@ Last updated: 2026-08-10
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner | Post-login "Manage your site" launcher | `admin/index.html` |
 | `/admin/analytics` | Owner | Private analytics dashboard for leads and GA4 reporting readiness | `admin/analytics/index.html` |
-| `/admin/ops` | Owner / operations | Separate Operations Portal Phase A for authenticated lead intake and workflow planning | `admin/ops/index.html` |
+| `/admin/ops` | Owner / operations | Separate Operations Portal for authenticated lead intake and workflow management | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
 | `/#admin` | Owner | Control panel mode | `index.html` |
 | `/#preview` | Owner | Preview mode | `index.html` |
@@ -70,7 +70,7 @@ Expected visible sections:
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
 | Launcher | `/admin` | Choose between editing, arranging, analytics, or viewing the public site. |
 | Analytics | `/admin/analytics` | Owner-only Firestore lead reporting plus GA4 Data API/export readiness view. |
-| Operations Portal | `/admin/ops` | Authenticated Phase A operations workspace. Reads real `contactLeads/*` for lead intake; customers, policies, renewals, documents, settings, and workflow mutations are marked backend-required until the ops data model and audit API ship. |
+| Operations Portal | `/admin/ops` | Authenticated operations workspace. Reads and mutates records through `/api/ops/*`; the API verifies Firebase admin identity, checks role permissions server-side, and stores lead workflow/audit state on `contactLeads/*`. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
 | Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |

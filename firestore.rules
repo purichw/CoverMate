@@ -12,6 +12,15 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
 
+    function adminRole() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role;
+    }
+
+    function canWriteOpsRecords() {
+      return isAdmin()
+        && adminRole() in ["owner", "admin", "administrator", "advisor", "adviser", "ops", "operations"];
+    }
+
     function validLeadString(value, max) {
       return value is string && value.size() <= max;
     }
@@ -69,8 +78,10 @@ service cloud.firestore {
     }
 
     match /contactLeads/{leadId} {
-      allow create: if validLeadCreate();
-      allow read, update, delete: if isAdmin();
+      allow create: if validLeadCreate() || canWriteOpsRecords();
+      allow read: if isAdmin();
+      allow update: if canWriteOpsRecords();
+      allow delete: if false;
     }
 
     match /sites/covermate/analytics/{analyticsDoc} {

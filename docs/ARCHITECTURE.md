@@ -107,6 +107,16 @@ normalize Firestore lead data. It does not load the visitor GA script.
 around the exported admin bundles. `admin/session.js` delegates storage/session
 behavior to `covermate-contract.js`.
 
+`admin/ops/index.html` and `admin/ops/app.js` own the private Operations Portal.
+The page has no browser-seeded operations data and no local workflow fallback.
+It obtains a Firebase ID token from the verified admin session and calls
+`/api/ops/*`.
+
+`api/ops.js` owns Operations Portal backend reads and writes on Vercel. It
+verifies the Firebase ID token, checks the Firestore `admins/{uid}` allowlist,
+applies role permissions server-side, reads `contactLeads/*`, and writes lead
+status, timeline, task, follow-up, and per-lead audit state back to Firestore.
+
 `assets/ins/*.png` owns insurer logo media for the motor-insurance logo section.
 The exported reference also carries AIA/Srikrung Broker relationship-card logo
 assets through the bundle runtime.
