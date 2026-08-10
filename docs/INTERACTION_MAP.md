@@ -75,21 +75,24 @@ After login, `/admin` must show the "Manage your site" launcher.
 
 Launcher actions:
 
-- Open editor -> `/#edit`
-- Panel is opened from inside the editor through `Tools -> Panel`; it is not a
-  separate main launcher card.
-- Open analytics -> `/admin/analytics`
-- View public site -> opens a new clean visitor tab via `/?view=public`
+- `Edit the words` -> `/#edit`
+- `Arrange & customise` -> `/#admin`
+- `Analytics` -> `/admin/analytics`
+- `Public site` -> clears owner markers and lands the current tab on clean `/`
 - `Log out` -> clears local admin session and returns to `/admin/login`
+
+The launcher is a private three-choice menu, not a dashboard. It must not show
+Operations, fake metrics, lead previews, CMS counters, or public-site editing
+controls directly on `/admin`.
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
 `Main`, `Public site`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`,
 and `Log out` stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
-The public-site link intentionally opens a new tab with a short-lived
-`view=public` flag so the visitor page opens without owner chrome, then cleans
-the URL back to `/`. The current admin tab remains in admin mode.
+The public-site link leaves owner mode completely and lands on clean `/`.
+Legacy incoming `/?view=public` links are still consumed and cleaned for
+compatibility, but new owner UI must not generate them.
 Being signed in as an admin is not itself a visible mode. A clean public route
 must not show owner chrome, even if stale local owner markers exist.
 
@@ -113,8 +116,8 @@ must not show owner chrome, even if stale local owner markers exist.
 7. `Tools → Main` removes all `contenteditable` and image-edit affordances and
    returns to `/admin`; `Tools → Panel` keeps the owner in the right-side
    control panel.
-8. `Public site` opens a separate visitor tab through `/?view=public`, clears
-   owner markers in that tab, and keeps the current admin tab in owner mode.
+8. `Public site` removes all owner/edit affordances, clears owner markers, and
+   navigates the current tab to clean `/`.
 9. Reloading `/` after that remains a visitor view; owner chrome must stay
    hidden until the owner intentionally opens `#admin`, `#edit`, `#preview`, or
    `/admin`.
@@ -139,7 +142,8 @@ fields.
    publishes the previous live snapshot back to the visitor site.
 7. Native browser `confirm()` dialogs are not used for owner CMS actions.
 8. Public visitors hydrate the latest `states/live` before rendering.
-9. The drawer close button returns to `/admin`. It does not sign out.
+9. The drawer close button exits owner mode and returns to clean `/`. It does
+   not sign out.
 10. Owner draft/publish recovery remains available through `/admin`, `/#admin`,
     and the inline-edit dock rather than a public-page owner bar.
 11. The action bar inside the drawer keeps editing/navigation/session actions
@@ -156,6 +160,19 @@ instead of relying on hard-coded copy. Current editable card sets include the
 insurer relationship proof cards, claim hotline/support cards, and fee
 transparency cards. The Content tab also exposes insurer item logo paths and
 the motor tier comparison rows/coverage columns/cell states.
+
+## Draft Preview Flow
+
+1. Owner opens `/#preview` from an authenticated owner surface.
+2. The route reads the saved draft state and renders the visitor page with no
+   inline-edit dock, control-panel drawer, mode switcher, public reopen bar, or
+   legacy owner marker.
+3. The only owner chrome is the fixed preview top bar: `Draft preview`,
+   `Open editor`, `Public site`, and `Publish`.
+4. `Open editor` returns to `/#edit`.
+5. `Public site` exits owner mode, clears transient owner chrome state, and
+   lands on clean `/` without generating `/?view=public`.
+6. Public `/` continues to read live content only.
 
 ## Admin Analytics Flow
 

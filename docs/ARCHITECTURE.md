@@ -194,8 +194,7 @@ records that undo in version history.
 
 The owner hash modes also own the admin continuation UI:
 
-- closing the `/#admin` drawer returns to `/admin`, keeping the owner in a
-  private admin surface;
+- closing the `/#admin` drawer clears owner markers and lands on clean `/`;
 - `/#edit` shows its own warm-ink owner dock: the collapsed row keeps only
   `Editing on page` and `Tools` visible. If the admin drawer is open while text
   editing stays active, the status becomes `Editing on page · Panel open`, and
@@ -205,8 +204,9 @@ The owner hash modes also own the admin continuation UI:
   owner commands stay quiet cream/outline actions;
 - leaving `/#edit` is done through the `Tools` menu (`Main`, `Panel`,
   `Public site`, or `Log out`); there is no separate collapsed `Close` button;
-- `Public site` opens a separate clean visitor tab and leaves the current admin
-  tab in owner mode;
+- `Public site` clears owner markers and navigates the current tab to clean `/`.
+  Legacy incoming `/?view=public` is still consumed and cleaned for
+  compatibility, but new UI must not generate it;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
@@ -247,9 +247,9 @@ Do not remove the splash-hiding rules for `#__bundler_thumbnail` and
 Do not remove the `covermate-template-cloak` rules that hide raw `<x-dc>`
 template content before hydration on visitor and admin pages.
 
-Do not add an owner reopen bar to the visitor route. Closing admin or edit mode
-must return to `/admin`, where `Panel`, `Edit text`, `Analytics`, `Public site`,
-and `Log out` stay reachable.
+Do not add an owner reopen bar to the visitor route. Closing admin mode or using
+the edit/public-site exit must land on clean `/`; reopen owner tools from the
+private `/admin` launcher.
 
 Do not let a stored admin session or stale `purich-admin-ever-v7` marker show
 owner chrome on a clean visitor `/` route. Admin authentication and visible

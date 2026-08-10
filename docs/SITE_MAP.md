@@ -70,6 +70,7 @@ Expected visible sections:
 | Analytics | `/admin/analytics` | Owner-only Firestore lead reporting plus GA4 Data API/export readiness view. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
+| Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |
 
 ## Navigation Contracts
 
@@ -86,13 +87,19 @@ Admin login must land on `/admin` after sign-in.
 
 The `/admin` launcher actions must stay aligned with the reference:
 
-- "Edit website" opens `/#edit`
-- The control panel is available inside editor mode from `Tools -> Panel`
+- "Edit the words" opens `/#edit`
+- "Arrange & customise" opens `/#admin`; the control panel also remains
+  reachable from editor mode through `Tools -> Panel`
 - "Analytics" opens `/admin/analytics`
-- "View public site" opens `/`
+- "Public site" opens `/`
 
 Unauthenticated direct access to `/admin`, `/admin/analytics`, `/#edit`,
 `/#admin`, and `/#preview` must redirect to `/admin/login`.
+
+`/#preview` renders draft content only after owner authentication. Its top bar
+contains `Open editor`, `Public site`, and `Publish`; edit docks, admin drawers,
+screen switchers, public reopen controls, and legacy owner markers must not
+appear there.
 
 ## Insurer Assets
 

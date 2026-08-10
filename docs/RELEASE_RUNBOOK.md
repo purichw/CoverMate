@@ -95,8 +95,8 @@ Minimum checks:
   login acceptance is expected
 - `/admin` shows the "Manage your site" launcher
 - launcher links open `/#edit`, `/#admin`, `/admin/analytics`, and `/`
-- admin `Public site` actions use `/?view=public`, clear the owner marker, and
-  return to `/` without showing `[data-admin-owner-bar]`
+- admin `Public site` actions clear owner markers and land on clean `/` without
+  generating `/?view=public` or showing `[data-admin-owner-bar]`
 - a signed-in browser with a stale `purich-admin-ever-v7` marker can load `/`
   and reload `/` without showing owner chrome
 - `/admin/analytics` renders private analytics without loading visitor GA
@@ -131,8 +131,8 @@ Minimum checks:
   warm-ink command palette with `Draft` (`Save draft`, `Preview`, `Publish`) and
   `Go to` (`Panel`, `Main`, `Public site`, `Log out`) groups. `Publish` is the
   only terracotta-filled dock action
-- `Tools → Main` in edit mode removes `contenteditable` affordances and returns
-  to `/admin`
+- `Tools → Public site` in edit mode removes `contenteditable` affordances and
+  lands on clean `/`
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English
 - visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
@@ -141,8 +141,9 @@ Minimum checks:
 - Firestore live content hydrates before public/admin launcher rendering; stale
   local cache must not override a successful `states/live` read
 - legacy Firestore content that conflicts with product decisions is normalized
-  on render/save/publish: duplicate `#motor` nav, stale `20/26/26+`
-  motor-insurer count copy, and forced-line-break contact headings
+  on render/save/publish: duplicate `#motor` nav and forced-line-break contact
+  headings. The 2026-08-10 rebuild target treats `26+` as Srikrung panel
+  availability plus a 14-logo visible selection
 - owner modes hydrate Firestore draft/version data as needed, and publish writes
   `states/live`, `states/draft`, and a version document
 - `/`, including `/#motor`, remains indexable with canonical

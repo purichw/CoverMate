@@ -13,6 +13,8 @@ before assuming changes are live.
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - static/export architecture,
   boundaries, deployment shape, and future options
+- [`docs/ADMIN_CMS_REBUILD_DECISIONS.md`](docs/ADMIN_CMS_REBUILD_DECISIONS.md) -
+  latest owner-approved Admin/CMS rebuild decisions and phase order
 - [`docs/SITE_MAP.md`](docs/SITE_MAP.md) - routes, visitor sections, admin
   surfaces, navigation contracts, and insurer assets
 - [`docs/INTERACTION_MAP.md`](docs/INTERACTION_MAP.md) - visitor, admin login,

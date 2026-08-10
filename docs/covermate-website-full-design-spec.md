@@ -1,6 +1,6 @@
 # CoverMate Website Full Design Spec For Claude
 
-Last updated: 2026-08-02
+Last updated: 2026-08-10
 
 Production baseline: `https://covermate.vercel.app`
 
@@ -149,27 +149,31 @@ HTML file or a complete folder bundle with an explicit `open-this.html`.
 Update the corresponding Claude designs to reflect the current product decisions:
 
 - First read
-  `/Users/point/CoverMate/docs/CLAUDE_DESIGN_RECONCILIATION.md`; it is the
-  current feedback loop between the latest Claude standalone and the production
-  product contract.
+  `/Users/point/CoverMate/docs/ADMIN_CMS_REBUILD_DECISIONS.md`; it is the
+  current Admin/CMS rebuild authority. Then read
+  `/Users/point/CoverMate/docs/CLAUDE_DESIGN_RECONCILIATION.md` as historical
+  reconciliation context.
 - The public site is one continuous page. `/#motor` is only an alias that scrolls to `#insurers`; it must not become a separate-looking page.
 - The visitor navbar must show only one motor item: Thai `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`.
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
-- Admin launcher has two primary cards: `Edit website` and `Analytics`. The
-  control panel is available inside editor mode through `Tools -> Panel`, not as
-  a separate launcher choice.
+- Admin launcher rebuild target has three primary cards: `Edit the words`,
+  `Arrange & customise`, and `Analytics`. Operations is deferred and must not
+  appear in this rebuild.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
-- Admin `Public site` actions must clear the owner marker and return to the
-  public visitor route without showing owner chrome.
+- Admin `Public site` actions must clear owner markers and land on clean `/`
+  without showing owner chrome. Legacy `/?view=public` may be consumed for
+  compatibility, but new UI must not generate it.
 - A signed-in admin session is not a visible public-page mode. A clean `/` load
   or reload must hide owner chrome even if stale local owner markers exist.
 - All visible Thai and English text uses the Google Sans family. Headings and logo text may use heavier Google Sans weights, but do not reintroduce unrelated serif/display fonts.
 - The AIA logo asset is the transparent red mark at `assets/logos/aia-logo.png`.
 - Contact heading Thai `ขอรับคำปรึกษา` must remain one line on desktop and should avoid awkward word breaks elsewhere.
 - Known stale Firestore CMS values that conflict with product decisions must be
-  normalized on render/save/publish: duplicate `#motor` nav entries, `14/20`
-  motor-insurer count copy, and forced-line-break contact headings.
+  normalized on render/save/publish: duplicate `#motor` nav entries and
+  forced-line-break contact headings. The rebuild target treats `26+` as
+  Srikrung panel availability while the visible logo grid may remain a 14-logo
+  selection.
 - All behavior described here is a product decision as of this release, excluding future bugs that have not appeared yet.
 
 ## Visual Direction
@@ -447,7 +451,8 @@ Purpose: prove motor-insurance comparison breadth.
 Structure:
 
 - Sage/green band.
-- Centered heading: motor insurance count derives from the visible insurer logo grid; current production copy says 14 insurers.
+- Centered heading: copy may state `26+` Srikrung panel availability while the
+  visible logo grid remains a curated 14-logo selection.
 - Logo grid in a warm rounded panel. The grid is generated from the
   `insurers.items` content array, not a separate hard-coded logo list.
 - Credential cards for AIA and Srikrung Broker.
@@ -656,17 +661,17 @@ Required elements:
 - OIC verify link.
 - H1: `Manage your site`.
 - Intro copy explaining that visitors never see this page.
-- Two primary cards:
-  - `Edit website`
+- Three primary cards:
+  - `Edit the words`
+  - `Arrange & customise`
   - `Analytics`
 - Bottom actions:
-  - `View public site`
+  - `Public site`
   - `Log out`
 - Tip about `/admin` and Firestore/export backup.
 
-`View public site` links use `/?view=public`, then the public bundle cleans the
-URL back to `/` and suppresses admin owner chrome for that visitor-view
-navigation.
+`Public site` links land directly on clean `/` after clearing owner markers.
+The public bundle may still consume old `/?view=public` links for compatibility.
 Clean public loads must also clear or ignore stale owner markers. Owner controls live on `/admin`, `/#admin`, `/#edit`, and `/#preview`, not on the visitor site.
 
 Layout:
@@ -694,6 +699,26 @@ Behavior:
   draft`, `Preview`, `Publish`, finish the mode, and `Log out`.
 - Drafts save to Firestore/local working state according to the data contract.
 - Visitor styling should remain close to the live site while edit affordances are visible.
+
+## Owner Draft Preview
+
+Route/hash: `/#preview`
+
+Purpose: authenticated preview of the saved draft as a visitor would see it.
+
+Behavior:
+
+- Reads draft content, not live content, as the normal preview source.
+- Shows exactly one top preview bar.
+- Preview bar actions are `Open editor`, `Public site`, and `Publish`.
+- `Open editor` returns to `/#edit`.
+- `Public site` clears transient owner state and lands on clean `/`.
+- Does not generate `/?view=public`.
+- Does not show the edit dock, admin drawer, screen switcher, public reopen bar,
+  or `purich-admin-ever-v7` marker.
+- Uses runtime `noindex,nofollow` metadata like other owner modes.
+- Mobile preview bar must wrap without horizontal overflow and should not cover
+  the visitor page's header/hero content.
 
 ## Owner Arrange Panel
 
@@ -867,7 +892,8 @@ Do:
 - Preserve the current warm advisory brand.
 - Keep the public page continuous and anchor-based.
 - Keep admin private surfaces visually related but operationally clear.
-- Keep Analytics as the second admin launcher card.
+- Keep Analytics as the third admin launcher card after `Edit the words` and
+  `Arrange & customise`.
 - Keep Google Sans family everywhere.
 - Keep Firestore-first live content behavior visible in design copy/states.
 - Add breathing room where cards or text are crowded.
@@ -879,7 +905,8 @@ Do not:
 - Make `#motor` a separate public website.
 - Remove `/admin` launcher after login.
 - Hide logout in only one owner mode.
-- Remove switch paths between edit mode, arrange panel, and main admin launcher.
+- Keep explicit paths between `/admin`, `/#edit`, and `/#admin`; public-exit
+  and close actions must land on clean `/`.
 - Replace live/dynamic CMS text with hard-coded design-only content.
 - Let fallback/cache states override live Firestore content or current logo-count normalization.
 - Send private visitor contact details to GA.
@@ -908,10 +935,12 @@ Admin:
 
 - Login page shows Firebase Auth, not demo-only wording.
 - Admin launcher exists after login.
-- Launcher has exactly two primary cards: Edit website, Analytics.
+- Launcher target has exactly three primary cards: Edit the words, Arrange &
+  customise, Analytics.
 - Owner/admin controls use English labels.
 - Logout and mode switching are reachable from edit and arrange flows.
-- Closing arrange panel leaves a visible way to reopen or go Main.
+- Closing arrange panel exits owner mode to clean `/`; reopen tools from
+  `/admin`.
 - Analytics page includes GA4 installed status, Data API placeholder, KPI cards, charts, and recent leads states.
 - Analytics mobile spacing is comfortable.
 

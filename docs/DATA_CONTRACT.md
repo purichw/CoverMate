@@ -106,11 +106,16 @@ Public visitor rendering should not depend on the user already having admin
 storage keys.
 
 When an admin intentionally opens the live public site from private admin
-surfaces, `Public site` opens a new tab with `/?view=public`. The public bundle
-consumes that flag, cleans the URL back to `/`, and removes the owner marker
-`purich-admin-ever-v7` so admin chrome does not appear on the visitor view. The
-current admin tab remains in owner mode. Closing `/#admin` or `/#edit` returns
-to the private `/admin` launcher.
+surfaces, current UI actions must clear owner markers and navigate the current
+tab to clean `/`. The public bundle still consumes legacy incoming
+`/?view=public` or `?public=1` requests and cleans the URL back to `/`, but new
+owner UI must not generate those URLs. Closing `/#admin` or using the owner
+public-site exit from `/#edit` also lands on clean `/`.
+
+`/#preview` is an authenticated draft-only render. It may request draft and
+version hydration, but it must not write the legacy `purich-admin-ever-v7`
+marker or expose edit/admin chrome. Its `Public site` exit clears owner state
+and returns to clean `/`, where live content remains the only normal source.
 
 The public/admin CMS normalizes known legacy values that conflict with current
 product decisions before rendering, caching, saving, or publishing. This is a
@@ -120,8 +125,10 @@ product contracts:
 
 - `#motor` nav entries normalize to `#insurers` and duplicate motor nav entries
   are removed.
-- legacy insurer count overrides such as `20`, `26`, or `26+` normalize to the
-  current visible insurer-logo count (`14` with the present asset set).
+- legacy insurer count overrides currently normalize to the visible insurer-logo
+  count (`14` with the present asset set). The 2026-08-10 rebuild target changes
+  the product copy model to `26+` panel availability plus a 14-logo selection;
+  reconcile this sanitizer in a later content/sanitizer phase.
 - legacy contact headings with forced line breaks normalize to
   `ขอรับคำปรึกษา` / `Request a consultation`.
 

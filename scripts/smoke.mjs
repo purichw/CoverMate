@@ -223,6 +223,18 @@ const browser = await chromium.launch({
 
 const failures = [];
 
+async function newSmokePage(options) {
+  const page = await browser.newPage(options);
+  await page.addInitScript(() => {
+    window.__covermateVisibleOwnerBarCount = () => Array.from(document.querySelectorAll("[data-admin-owner-bar]")).filter((el) => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
+    }).length;
+  });
+  return page;
+}
+
 async function verifyRemoteHydrationContract() {
   const remoteName = "Remote Live Smoke";
   const staleName = "Stale Cache Smoke";
@@ -237,7 +249,7 @@ async function verifyRemoteHydrationContract() {
     "insurers:2:th": "เฉพาะประกันรถยนต์ ผมจัดผ่านบริษัทกว่า 26 เจ้า จึงเสนอตามที่เหมาะกับคุณ ส่วนชีวิตและสุขภาพ ผมเป็นตัวแทน AIA โดยเฉพาะ"
   };
 
-  const publicPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
+  const publicPage = await newSmokePage({ viewport: { width: 1024, height: 800 } });
   await publicPage.route("**/covermate-firebase.js", (route) =>
     route.fulfill({
       status: 200,
@@ -305,7 +317,7 @@ async function verifyRemoteHydrationContract() {
   const anchorState = await publicPage.evaluate(() => ({
     hash: window.location.hash,
     mainStable: document.querySelector("main")?.__covermateSmokeStable === true,
-    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     text: document.body.innerText
   }));
   if (anchorState.hash !== "#how") {
@@ -319,7 +331,7 @@ async function verifyRemoteHydrationContract() {
   }
   await publicPage.close();
 
-  const ownerPage = await browser.newPage({ viewport: { width: 1024, height: 800 } });
+  const ownerPage = await newSmokePage({ viewport: { width: 1024, height: 800 } });
   await ownerPage.route("**/covermate-firebase.js", (route) =>
     route.fulfill({
       status: 200,
@@ -370,7 +382,7 @@ async function verifyRemoteHydrationContract() {
 async function verifyAdminActionWorkflow() {
   const liveConfig = renamedConfig("Live Action Smoke");
   const draftConfig = renamedConfig("Draft Action Smoke");
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
   const nativeDialogs = [];
   const pageErrors = [];
   page.on("dialog", async (dialog) => {
@@ -502,7 +514,7 @@ async function verifyAdminActionWorkflow() {
 async function verifyAdminBuilderControls() {
   const liveConfig = renamedConfig("Live Builder Smoke");
   const draftConfig = renamedConfig("Draft Builder Smoke");
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.route("**/covermate-firebase.js", (route) =>
@@ -666,7 +678,7 @@ async function verifyAdminBuilderControls() {
 
 async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   const remoteConfig = renamedConfig("Public Chrome Guard Smoke");
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
   await page.route("**/covermate-firebase.js", (route) =>
     route.fulfill({
       status: 200,
@@ -710,51 +722,84 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);
   await page.getByLabel("Close admin panel").click();
-  await page.waitForTimeout(500);
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
+  await waitForBodyText(page, /Public Chrome Guard Smoke/);
   const closedState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     hasReopen: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
     text: document.body.innerText
   }));
-  const closedRoute = closedState.route.replace(/\/$/, "");
-  if (closedRoute !== "/admin" || closedState.hasReopen || !/Manage your site/.test(closedState.text)) {
-    failures.push(`public chrome guard: closing #admin did not return to the admin launcher (${JSON.stringify(closedState)})`);
+  if (
+    closedState.route !== "/" ||
+    closedState.hasReopen ||
+    closedState.marker ||
+    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(closedState.text)
+  ) {
+    failures.push(`public chrome guard: closing #admin did not return to clean public / (${JSON.stringify(closedState)})`);
   }
 
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);
-  const popupPromise = page.context().waitForEvent("page", { timeout: 5000 });
   await page.getByRole("button", { name: "Public site" }).last().click();
-  const popup = await popupPromise.catch(() => null);
-  if (!popup) {
-    failures.push("public chrome guard: Public site did not open a new visitor tab");
-  } else {
-    await popup.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
-    await popup.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 10000 }).catch(() => {});
-  }
-  await page.waitForTimeout(500);
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
+  await waitForBodyText(page, /Public Chrome Guard Smoke/);
   const publicReturnState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
-    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     hasAdminAside: Boolean(document.querySelector("aside")),
     text: document.body.innerText
   }));
-  if (publicReturnState.route !== "/#admin" || (!publicReturnState.hasAdminAside && !/Admin portal/.test(publicReturnState.text))) {
-    failures.push(`public chrome guard: Public site should keep the current admin tab in owner mode (${JSON.stringify(publicReturnState)})`);
+  if (
+    publicReturnState.route !== "/" ||
+    publicReturnState.marker ||
+    publicReturnState.hasOwnerBar ||
+    publicReturnState.hasAdminAside ||
+    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(publicReturnState.text)
+  ) {
+    failures.push(`public chrome guard: Public site did not leave owner mode for clean public / (${JSON.stringify(publicReturnState)})`);
   }
-  if (popup) {
-    const popupState = await popup.evaluate(() => ({
-      route: window.location.pathname + window.location.search + window.location.hash,
-      marker: window.localStorage.getItem("purich-admin-ever-v7"),
-      hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
-      text: document.body.innerText
-    }));
-    if (popupState.route !== "/" || popupState.hasOwnerBar || /Admin portal|Text edit|Save draft|Publish/.test(popupState.text)) {
-      failures.push(`public chrome guard: Public site popup was not a clean visitor route (${JSON.stringify(popupState)})`);
+
+  await page.goto(new URL("/#edit", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Editing on page/);
+  await page.evaluate(() => {
+    const toggle = document.getElementById("covermate-owner-tools-toggle");
+    if (toggle) {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    await popup.close();
+  });
+  await page.getByRole("button", { name: "Public site" }).last().click();
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
+  await waitForBodyText(page, /Public Chrome Guard Smoke/);
+  const editPublicState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    editableCount: document.querySelectorAll("[contenteditable=true], .om-editable").length,
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
+    text: document.body.innerText
+  }));
+  if (
+    editPublicState.route !== "/" ||
+    editPublicState.marker ||
+    editPublicState.editableCount ||
+    editPublicState.hasOwnerBar ||
+    /Editing on page|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(editPublicState.text)
+  ) {
+    failures.push(`public chrome guard: Public site from #edit did not leave owner mode for clean public / (${JSON.stringify(editPublicState)})`);
   }
 
   await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
@@ -763,11 +808,176 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   const reloadState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
-    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     text: document.body.innerText
   }));
   if (reloadState.route !== "/" || reloadState.hasOwnerBar || reloadState.marker || /Admin\s+Panel|Text edit|Save draft|Publish/.test(reloadState.text)) {
     failures.push(`public chrome guard: clean public reload restored owner chrome (${JSON.stringify(reloadState)})`);
+  }
+  await page.close();
+
+  const unauthPreview = await newSmokePage({ viewport: { width: 1024, height: 800 } });
+  await unauthPreview.goto(new URL("/#preview", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await unauthPreview.waitForURL(/\/admin\/login(?:\/)?$/, { timeout: 10000 }).catch(() => {});
+  const previewGateState = await unauthPreview.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    text: document.body.innerText
+  }));
+  if (!/^\/admin\/login\/?$/.test(previewGateState.route)) {
+    failures.push(`public chrome guard: unauthenticated #preview did not redirect to /admin/login (${JSON.stringify(previewGateState)})`);
+  }
+  await unauthPreview.close();
+}
+
+async function verifyPreviewIsolationContract() {
+  const liveConfig = renamedConfig("Live Preview Smoke");
+  const draftConfig = renamedConfig("Draft Preview Smoke");
+  const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: adminActionContentMock(liveConfig, draftConfig)
+    })
+  );
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+    window.localStorage.removeItem("purich-admin-ever-v7");
+  });
+
+  await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await waitForBodyText(page, /Live Preview Smoke/);
+  const publicState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    text: document.body.innerText,
+    opts: window.__covermateHydrateOpts || null,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    hasPreviewBar: Boolean(document.querySelector("[data-admin-preview-bar]")),
+    hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
+    htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview")
+  }));
+  if (publicState.route !== "/" || !publicState.text.includes("Live Preview Smoke") || publicState.text.includes("Draft Preview Smoke")) {
+    failures.push(`preview isolation: public / did not render live-only content (${JSON.stringify(publicState)})`);
+  }
+  if (publicState.opts?.draft === true || publicState.opts?.versions === true) {
+    failures.push(`preview isolation: public / requested private draft/version hydration (${JSON.stringify(publicState.opts)})`);
+  }
+  if (
+    publicState.marker ||
+    publicState.hasPreviewBar ||
+    publicState.hasEditDock ||
+    publicState.hasAdminAside ||
+    publicState.hasReopenBar ||
+    publicState.htmlPreviewMode
+  ) {
+    failures.push(`preview isolation: public / leaked owner preview state (${JSON.stringify(publicState)})`);
+  }
+
+  await page.goto(new URL("/#preview", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await waitForBodyText(page, /Draft Preview Smoke/);
+  await page.locator("[data-admin-preview-bar]").waitFor({ state: "visible", timeout: 10000 });
+  const previewState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    text: document.body.innerText,
+    opts: window.__covermateHydrateOpts || null,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    previewBarCount: document.querySelectorAll("[data-admin-preview-bar]").length,
+    previewBarText: document.querySelector("[data-admin-preview-bar]")?.innerText || "",
+    ownerBars: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).map((el) => el.getAttribute("data-admin-owner-bar")),
+    hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
+    htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
+    bodyPaddingTop: window.getComputedStyle(document.body).paddingTop,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
+  }));
+  if (previewState.route !== "/#preview" || !previewState.text.includes("Draft Preview Smoke") || previewState.text.includes("Live Preview Smoke")) {
+    failures.push(`preview isolation: #preview did not render draft-only content (${JSON.stringify(previewState)})`);
+  }
+  if (!previewState.opts || previewState.opts.draft !== true || previewState.opts.versions !== true) {
+    failures.push(`preview isolation: #preview did not request draft/version hydration (${JSON.stringify(previewState.opts)})`);
+  }
+  if (
+    previewState.marker ||
+    previewState.previewBarCount !== 1 ||
+    previewState.hasEditDock ||
+    previewState.hasAdminAside ||
+    previewState.hasReopenBar ||
+    previewState.ownerBars.length ||
+    previewState.htmlPreviewMode !== "true"
+  ) {
+    failures.push(`preview isolation: #preview leaked editing/admin chrome or marker (${JSON.stringify(previewState)})`);
+  }
+  if (
+    !previewState.previewBarText.includes("Draft preview") ||
+    !previewState.previewBarText.includes("Open editor") ||
+    !previewState.previewBarText.includes("Public site") ||
+    !previewState.previewBarText.includes("Publish")
+  ) {
+    failures.push(`preview isolation: #preview top bar actions are incomplete (${JSON.stringify(previewState.previewBarText)})`);
+  }
+  if (previewState.scrollWidth > previewState.clientWidth) {
+    failures.push(`preview isolation: #preview horizontal overflow ${previewState.scrollWidth} > ${previewState.clientWidth}`);
+  }
+  if (!/^noindex/.test(previewState.robots)) {
+    failures.push(`preview isolation: #preview metadata is not noindex (${previewState.robots})`);
+  }
+
+  await page.locator("[data-admin-preview-bar]").getByRole("button", { name: "Open editor" }).click();
+  await page.waitForFunction(() => window.location.hash === "#edit", null, { timeout: 10000 }).catch(() => {});
+  await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 10000 }).catch(() =>
+    failures.push("preview isolation: Open editor did not resolve to #edit with edit dock")
+  );
+
+  await page.goto(new URL("/#preview", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+  await waitForBodyText(page, /Draft Preview Smoke/);
+  await page.locator("[data-admin-preview-bar]").getByRole("button", { name: "Public site" }).click();
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
+  await waitForBodyText(page, /Live Preview Smoke/);
+  const exitState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    text: document.body.innerText,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    hasPreviewBar: Boolean(document.querySelector("[data-admin-preview-bar]")),
+    hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+    hasAdminAside: Boolean(document.querySelector("aside")),
+    hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
+    htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview")
+  }));
+  if (
+    exitState.route !== "/" ||
+    !exitState.text.includes("Live Preview Smoke") ||
+    exitState.text.includes("Draft Preview Smoke") ||
+    exitState.marker ||
+    exitState.hasPreviewBar ||
+    exitState.hasEditDock ||
+    exitState.hasAdminAside ||
+    exitState.hasReopenBar ||
+    exitState.htmlPreviewMode
+  ) {
+    failures.push(`preview isolation: Public site from preview did not return to clean live / (${JSON.stringify(exitState)})`);
+  }
+  if (pageErrors.length) {
+    failures.push(`preview isolation: ${pageErrors.join(" | ")}`);
   }
   await page.close();
 }
@@ -827,9 +1037,10 @@ await verifyRemoteHydrationContract();
 await verifyAdminActionWorkflow();
 await verifyAdminBuilderControls();
 await verifyPublicRouteSuppressesStaleOwnerChrome();
+await verifyPreviewIsolationContract();
 
 for (const [name, width, height] of viewports) {
-  const page = await browser.newPage({
+  const page = await newSmokePage({
     viewport: { width, height },
     deviceScaleFactor: 1
   });
@@ -1069,6 +1280,12 @@ for (const [name, width, height] of viewports) {
         hasCoverageSelect: selectOptions.some((text) =>
           /ประกันรถยนต์|Motor|Life|ประกันชีวิต/.test(text)
         ),
+        adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
+        hasPreviewBar: Boolean(document.querySelector("[data-admin-preview-bar]")),
+        hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+        hasAdminAside: Boolean(document.querySelector("aside")),
+        hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
+        htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
         requiredConsentCheckboxCount:
           document.querySelectorAll('form input[type="checkbox"][aria-required="true"]').length,
         hasRelationshipProof: /AIA|Srikrung|ศรีกรุง/i.test(insurerText),
@@ -1156,6 +1373,24 @@ for (const [name, width, height] of viewports) {
       failures.push(
         `${name} ${route}: duplicate header nav labels ${state.duplicateHeaderNavLabels.join(", ")}`
       );
+    }
+    if (
+      visitorRoutes.has(route) &&
+      (state.adminMarker ||
+        state.hasPreviewBar ||
+        state.hasEditDock ||
+        state.hasAdminAside ||
+        state.hasReopenBar ||
+        state.htmlPreviewMode)
+    ) {
+      failures.push(`${name} ${route}: owner/admin chrome leaked into visitor route (${JSON.stringify({
+        marker: state.adminMarker,
+        hasPreviewBar: state.hasPreviewBar,
+        hasEditDock: state.hasEditDock,
+        hasAdminAside: state.hasAdminAside,
+        hasReopenBar: state.hasReopenBar,
+        htmlPreviewMode: state.htmlPreviewMode
+      })})`);
     }
     if (route === "/#motor-focus") {
       for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "how", "talk"]) {
@@ -1313,23 +1548,31 @@ for (const [name, width, height] of viewports) {
   if (!adminState.text.includes("Manage your site")) {
     failures.push(`${name} /admin: authenticated launcher did not render`);
   }
-  if (!adminState.text.includes("Edit website") || !adminState.text.includes("Open editor")) {
-    failures.push(`${name} /admin: unified editor launcher card is missing`);
+  const launcherLabels = adminState.launcherCards.map((card) => {
+    const firstLine = card.text.split("\n").map((part) => part.trim()).filter(Boolean)[0] || "";
+    return firstLine;
+  });
+  const expectedLauncherLabels = ["Edit the words", "Arrange & customise", "Analytics"];
+  if (JSON.stringify(launcherLabels) !== JSON.stringify(expectedLauncherLabels)) {
+    failures.push(`${name} /admin: expected launcher labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
   }
-  if (!adminState.text.includes("Analytics") || !adminState.text.includes("Open analytics")) {
-    failures.push(`${name} /admin: analytics launcher card is missing`);
+  if (adminState.launcherCards.length !== 3) {
+    failures.push(`${name} /admin: expected 3 primary launcher cards, got ${adminState.launcherCards.length}`);
   }
-  if (adminState.text.includes("Edit the words") || adminState.text.includes("Arrange & customise") || adminState.text.includes("Open control panel")) {
-    failures.push(`${name} /admin: old split edit/control-panel launcher copy is still visible`);
+  if (!adminState.launcherCards.some((card) => card.kind === "words" && card.href === "/#edit")) {
+    failures.push(`${name} /admin: Edit the words card does not open /#edit`);
   }
-  if (adminState.launcherCards.length !== 2) {
-    failures.push(`${name} /admin: expected 2 primary launcher cards, got ${adminState.launcherCards.length}`);
-  }
-  if (!adminState.launcherCards.some((card) => card.kind === "editor" && card.href === "/#edit")) {
-    failures.push(`${name} /admin: unified editor card does not open /#edit`);
+  if (!adminState.launcherCards.some((card) => card.kind === "arrange" && card.href === "/#admin")) {
+    failures.push(`${name} /admin: Arrange & customise card does not open /#admin`);
   }
   if (!adminState.launcherCards.some((card) => card.kind === "analytics" && card.href === "/admin/analytics")) {
-    failures.push(`${name} /admin: analytics card does not open /admin/analytics`);
+    failures.push(`${name} /admin: Analytics card does not open /admin/analytics`);
+  }
+  if (/Edit website|Open editor|Open control panel|Operations|\/admin\/ops/.test(adminState.text)) {
+    failures.push(`${name} /admin: forbidden legacy or Operations launcher copy is visible`);
+  }
+  if (!adminState.text.includes("Public site") || !adminState.text.includes("Log out")) {
+    failures.push(`${name} /admin: supporting Public site or Log out action is missing`);
   }
   if (adminState.text.includes("[object Object]")) {
     failures.push(`${name} /admin: rendered object placeholder text`);
@@ -1344,6 +1587,32 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin: admin launcher metadata is not noindex (${adminState.robots})`);
   }
 
+  await page.getByRole("link", { name: "Public site" }).click();
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
+  await page.waitForTimeout(500);
+  const launcherPublicState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
+    hasAdminAside: Boolean(document.querySelector("aside")),
+    text: document.body.innerText
+  }));
+  if (
+    launcherPublicState.route !== "/" ||
+    launcherPublicState.marker ||
+    launcherPublicState.hasOwnerBar ||
+    launcherPublicState.hasAdminAside ||
+    /Manage your site|Edit the words|Arrange & customise|Analytics|Admin portal|Save draft|Publish/.test(launcherPublicState.text)
+  ) {
+    failures.push(`${name} /admin Public site: did not leave owner mode for clean public / (${JSON.stringify(launcherPublicState)})`);
+  }
+  await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Manage your site/);
+
   const leadNow = Math.floor(Date.now() / 1000);
   const analyticsMock = `
     window.CoverMateFirebase = {
@@ -1355,7 +1624,7 @@ for (const [name, width, height] of viewports) {
     };
     export {};
   `;
-  const analyticsPage = await browser.newPage({
+  const analyticsPage = await newSmokePage({
     viewport: { width, height },
     deviceScaleFactor: 1
   });
@@ -1519,6 +1788,11 @@ for (const [name, width, height] of viewports) {
   }
 
   await page.getByLabel("Close admin panel").click();
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
   await page.waitForTimeout(500);
   const closedAdminState = await page.evaluate(() => {
     const bar = document.querySelector('[data-admin-owner-bar="reopen"]');
@@ -1548,45 +1822,40 @@ for (const [name, width, height] of viewports) {
   if (closedAdminState.hasBar || closedAdminState.barVisible) {
     failures.push(`${name} /#admin close: owner chrome marker/bar leaked after closing (${JSON.stringify(closedAdminState)})`);
   }
-  const closedAdminRoute = closedAdminState.route.replace(/\/$/, "");
-  if (closedAdminRoute !== "/admin" || !/Manage your site/.test(closedAdminState.text) || /Admin portal|Text edit|Save draft/.test(closedAdminState.text)) {
-    failures.push(`${name} /#admin close: did not return to the admin launcher (${JSON.stringify(closedAdminState)})`);
+  if (
+    closedAdminState.route !== "/" ||
+    closedAdminState.adminMarker ||
+    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(closedAdminState.text)
+  ) {
+    failures.push(`${name} /#admin close: did not return to clean public / (${JSON.stringify(closedAdminState)})`);
   }
   if (closedAdminState.scrollWidth > closedAdminState.clientWidth) {
     failures.push(`${name} /#admin close: horizontal overflow ${closedAdminState.scrollWidth} > ${closedAdminState.clientWidth}`);
   }
   await page.goto(new URL("/#admin", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin portal/);
-  const publicPopupPromise = page.context().waitForEvent("page", { timeout: 5000 });
   await page.getByRole("button", { name: "Public site" }).last().click();
-  const publicPopup = await publicPopupPromise.catch(() => null);
-  if (!publicPopup) {
-    failures.push(`${name} /#admin Public site: did not open a new visitor tab`);
-  } else {
-    await publicPopup.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
-    await publicPopup.waitForFunction(() => !window.location.search && !window.location.hash, null, { timeout: 10000 }).catch(() => {});
-  }
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
+  await page.waitForTimeout(500);
   const publicReturnState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
-    hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     hasAdminAside: Boolean(document.querySelector("aside")),
     adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
     text: document.body.innerText
   }));
-  if (publicReturnState.route !== "/#admin" || (!publicReturnState.hasAdminAside && !/Admin portal/.test(publicReturnState.text))) {
-    failures.push(`${name} /#admin Public site: current admin tab should remain in owner mode (${JSON.stringify(publicReturnState)})`);
-  }
-  if (publicPopup) {
-    const popupState = await publicPopup.evaluate(() => ({
-      route: window.location.pathname + window.location.search + window.location.hash,
-      hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
-      adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
-      text: document.body.innerText
-    }));
-    if (popupState.route !== "/" || popupState.hasOwnerBar || /Admin portal|Text edit|Save draft|Publish/.test(popupState.text)) {
-      failures.push(`${name} /#admin Public site: visitor popup was not clean (${JSON.stringify(popupState)})`);
-    }
-    await publicPopup.close();
+  if (
+    publicReturnState.route !== "/" ||
+    publicReturnState.hasOwnerBar ||
+    publicReturnState.hasAdminAside ||
+    publicReturnState.adminMarker ||
+    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(publicReturnState.text)
+  ) {
+    failures.push(`${name} /#admin Public site: did not leave owner mode for clean public / (${JSON.stringify(publicReturnState)})`);
   }
 
   await page.goto(new URL("/#preview", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
@@ -1594,19 +1863,38 @@ for (const [name, width, height] of viewports) {
   const previewState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     text: document.body.innerText,
+    marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    previewBarCount: document.querySelectorAll("[data-admin-preview-bar]").length,
+    previewBarText: document.querySelector("[data-admin-preview-bar]")?.innerText || "",
+    ownerBars: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).map((el) => el.getAttribute("data-admin-owner-bar")),
     hasPreviewBar: Boolean(document.querySelector('[data-admin-owner-bar="preview"], [data-admin-preview-bar]')),
     hasEditDock: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
     hasAdminAside: Boolean(document.querySelector("aside")),
+    hasReopenBar: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
+    htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth
   }));
   if (previewState.route !== "/#preview") {
     failures.push(`${name} /#preview: expected preview hash, got ${previewState.route}`);
   }
-  if (!previewState.text.includes("Draft preview · visitors don’t see this until you publish") || !previewState.text.includes("Open editor") || !previewState.text.includes("Publish")) {
+  if (
+    !previewState.text.includes("Draft preview · visitors don’t see this until you publish") ||
+    !previewState.text.includes("Open editor") ||
+    !previewState.text.includes("Public site") ||
+    !previewState.text.includes("Publish")
+  ) {
     failures.push(`${name} /#preview: draft preview top bar actions missing`);
   }
-  if (previewState.hasEditDock || previewState.hasAdminAside) {
+  if (
+    previewState.marker ||
+    previewState.previewBarCount !== 1 ||
+    previewState.hasEditDock ||
+    previewState.hasAdminAside ||
+    previewState.hasReopenBar ||
+    previewState.ownerBars.length ||
+    previewState.htmlPreviewMode !== "true"
+  ) {
     failures.push(`${name} /#preview: editor dock/admin drawer leaked into preview mode`);
   }
   if (previewState.scrollWidth > previewState.clientWidth) {
@@ -1707,60 +1995,38 @@ for (const [name, width, height] of viewports) {
   }
 
   await page.getByRole("button", { name: "Close admin panel" }).click();
+  await page.waitForFunction(
+    () => window.location.pathname === "/" && !window.location.search && !window.location.hash,
+    null,
+    { timeout: 10000 }
+  ).catch(() => {});
   await page.waitForTimeout(400);
   const editPanelClosedState = await page.evaluate(() => ({
-    toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
+    route: window.location.pathname + window.location.search + window.location.hash,
+    adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
+    toolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+    hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     hasAdminAside: Boolean(document.querySelector("aside")),
-    contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length
+    contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
+    text: document.body.innerText,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
   }));
-  if (editPanelClosedState.hasAdminAside) {
-    failures.push(`${name} /#edit panel close: admin drawer stayed open`);
+  if (editPanelClosedState.contentEditableCount !== 0) {
+    failures.push(`${name} /#edit panel close: contenteditable fields remained active`);
   }
-  if (!editPanelClosedState.toolbarText.includes("Editing") || editPanelClosedState.toolbarText.includes("Panel open")) {
-    failures.push(`${name} /#edit panel close: owner dock did not return to editing-only status (${editPanelClosedState.toolbarText})`);
+  if (
+    editPanelClosedState.route !== "/" ||
+    editPanelClosedState.adminMarker ||
+    editPanelClosedState.toolbarVisible ||
+    editPanelClosedState.hasOwnerBar ||
+    editPanelClosedState.hasAdminAside ||
+    /Editing on page|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(editPanelClosedState.text)
+  ) {
+    failures.push(`${name} /#edit panel close: did not exit to clean public / (${JSON.stringify(editPanelClosedState)})`);
   }
-  if (editPanelClosedState.contentEditableCount < 20) {
-    failures.push(`${name} /#edit panel close: text editing stopped after closing panel`);
-  }
-
-  const toolsOpenBeforeMain = await page.evaluate(() => {
-    const bar = document.querySelector('[data-admin-owner-bar="edit"]');
-    return Boolean(bar?.querySelector("#covermate-owner-tools-toggle")?.checked);
-  });
-  if (!toolsOpenBeforeMain) {
-    await page.locator('[data-admin-owner-bar="edit"] .cm-owner-dock__summary').click();
-  }
-  await page.waitForTimeout(150);
-  await page.locator('[data-admin-owner-bar="edit"]').getByRole("link", { name: "Main" }).click();
-  await page.waitForTimeout(500);
-  const exitEditState = await page.evaluate(() => {
-    return {
-      route: window.location.pathname + window.location.search + window.location.hash,
-      adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
-      contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
-      editToolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
-      hasAdminAside: Boolean(document.querySelector("aside")),
-      hasOwnerBar: Boolean(document.querySelector("[data-admin-owner-bar]")),
-      text: document.body.innerText,
-      scrollWidth: document.documentElement.scrollWidth,
-      clientWidth: document.documentElement.clientWidth
-    };
-  });
-  if (exitEditState.contentEditableCount !== 0) {
-    failures.push(`${name} /#edit main: contenteditable fields remained active`);
-  }
-  if (exitEditState.editToolbarVisible) {
-    failures.push(`${name} /#edit main: edit toolbar stayed visible`);
-  }
-  const exitEditRoute = exitEditState.route.replace(/\/$/, "");
-  if (exitEditRoute !== "/admin" || exitEditState.hasOwnerBar || exitEditState.hasAdminAside || !/Manage your site/.test(exitEditState.text)) {
-    failures.push(`${name} /#edit main: did not return to the admin launcher (${JSON.stringify(exitEditState)})`);
-  }
-  if (/Admin portal|Text edit|Save draft/.test(exitEditState.text)) {
-    failures.push(`${name} /#edit main: owner editor text remained after leaving edit mode`);
-  }
-  if (exitEditState.scrollWidth > exitEditState.clientWidth) {
-    failures.push(`${name} /#edit main: horizontal overflow ${exitEditState.scrollWidth} > ${exitEditState.clientWidth}`);
+  if (editPanelClosedState.scrollWidth > editPanelClosedState.clientWidth) {
+    failures.push(`${name} /#edit panel close: horizontal overflow ${editPanelClosedState.scrollWidth} > ${editPanelClosedState.clientWidth}`);
   }
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });

@@ -10,10 +10,9 @@ Firebase Auth, Firestore CMS persistence, lead capture, and Admin Analytics are
 implemented and deployed. Future commit, push, Vercel deploy, or Firestore Rules
 deploy actions still require explicit owner approval in the current task.
 
-Product decision checkpoint: as of the 2026-08-02 SPEC (5) reconciliation, the
-current visitor/admin surfaces, owner flows, Firestore-first CMS model,
-SEO/analytics boundaries, font policy, responsive behavior, motor tier
-comparison, and deployment shape are accepted product decisions. Future bugs
+Product decision checkpoint: the 2026-08-10 Admin/CMS rebuild decision record
+supersedes older reconciliation notes where they conflict with owner exit,
+launcher-card count, insurer-count copy, or Operations scope. Future bugs
 should be fixed as defects unless the owner explicitly reopens the product
 decision.
 
@@ -42,7 +41,7 @@ produce a self-contained export before treating it as a portable demo.
 cloaking, insurer logos, expanded public sections, horizontal overflow,
 unauthenticated admin redirects, Firebase login UI rendering, authenticated
 admin launcher rendering, private analytics rendering, `/#admin` tab
-visibility/content, admin drawer close/reopen behavior, `/#edit` editable-mode
+visibility/content, admin drawer clean-exit behavior, `/#edit` editable-mode
 rendering, edit-mode exit cleanup, SEO metadata/structured-data contracts, and
 `Log out` redirects.
 
@@ -58,6 +57,7 @@ Detailed project documents:
 - [`docs/ANALYTICS.md`](docs/ANALYTICS.md)
 - [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [`docs/SEO.md`](docs/SEO.md)
+- [`docs/ADMIN_CMS_REBUILD_DECISIONS.md`](docs/ADMIN_CMS_REBUILD_DECISIONS.md)
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
 - [`docs/CLAUDE_DESIGN_RECONCILIATION.md`](docs/CLAUDE_DESIGN_RECONCILIATION.md)
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
@@ -69,7 +69,7 @@ Detailed project documents:
 | --- | --- |
 | `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. `#motor` is currently an alias into the main site, not a separate page. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
-| `admin/index.html` | Private admin launcher: "Edit website" and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. The control panel is entered from the editor's `Tools -> Panel`, not as a separate main card. |
+| `admin/index.html` | Private admin launcher with exactly three primary cards: "Edit the words", "Arrange & customise", and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
@@ -227,10 +227,11 @@ Production patches currently preserved in the bundles:
   first-load template flash.
 - Admin login redirects to `/admin`, not directly to `/#admin`.
 - Admin launcher has an early `/admin/login` session gate.
-- Admin owner modes stay on private admin surfaces: closing the `/#admin`
-  drawer returns to `/admin`; closing `/#edit` also returns to `/admin`.
-  `Public site` opens a separate clean visitor tab through `/?view=public`
-  without replacing the current admin tab.
+- Owner public-exit actions leave owner mode completely: closing the `/#admin`
+  drawer returns to clean `/`, and `Public site` from owner surfaces navigates
+  the current tab to clean `/` after clearing owner markers. Legacy incoming
+  `/?view=public` is still consumed for compatibility, but new UI must not
+  generate it.
 - A clean `/` load or reload must clear/ignore stale owner markers and hide
   owner chrome even when `covermate-admin-session` is still valid.
 - Inline edit mode has its own warm-ink owner dock. The default row keeps
@@ -273,11 +274,12 @@ Current insurer logo files:
 - `assets/ins/13-thaivivat.png`
 - `assets/ins/14-sompo.png`
 
-The insurer-count copy is aligned to the visible logo asset count. The committed
-grid currently has 14 logo files, is rendered from the editable
-`insurers.items` content array, and includes AIA/Srikrung Broker relationship
-proof cards in the same section. Do not reintroduce 26/26+ copy or a parallel
-hard-coded logo count without new assets and explicit business-owner approval.
+The committed insurer grid currently has 14 logo files, is rendered from the
+editable `insurers.items` content array, and includes AIA/Srikrung Broker
+relationship proof cards in the same section. The rebuild decision is that
+`26+` describes Srikrung panel availability while the visible grid may remain a
+14-logo selection; reconcile the existing 14-count sanitizer in a later
+content/sanitizer phase.
 
 Legacy Firestore CMS data can contain older Claude-reference values such as
 `20/26` insurer count copy, duplicate `#motor` nav entries, or forced line
@@ -317,8 +319,9 @@ but is not currently present as a loose repository file.
 2. Firebase Google sign-in checks Firestore `admins/{uid}`.
 3. Successful allowlisted sign-in writes `covermate-admin-session` and lands on
    `/admin`.
-4. "Edit website" opens `/#edit`.
-5. The owner can open the control panel from the editor with `Tools -> Panel`.
+4. "Edit the words" opens `/#edit`.
+5. "Arrange & customise" opens `/#admin`; the owner can also open the control
+   panel from the editor with `Tools -> Panel`.
 6. "Analytics" opens `/admin/analytics`.
 7. `/admin/analytics` renders Firestore lead analytics and GA4 reporting
    readiness without loading visitor GA scripts.
@@ -329,9 +332,8 @@ but is not currently present as a loose repository file.
    motor tier comparison table/cell states.
 10. `Save draft` and `Publish` confirm before writing, then toast completion
    with a 30-second undo window.
-11. Closing the control panel does not log out; it returns to `/admin`, where
-   the owner can reopen `Panel`, switch to `Edit text`, open `Analytics`, view
-   the public site in a new tab, or `Log out`.
+11. Closing the control panel does not log out; it exits owner mode and lands on
+   clean `/`. The owner can reopen tools from `/admin`.
 
 ## Do Not Break
 

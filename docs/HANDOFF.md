@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-08-02
+Last updated: 2026-08-10
 
 ## Current State
 
@@ -48,11 +48,12 @@ Previous verified production baseline before this update:
 
 ## Product Decision Checkpoint
 
-As of the 2026-08-02 verified production baseline, the current visitor site, admin login, admin launcher,
-owner editing modes, analytics page, Firebase/Firestore content flow, SEO
-layer, typography policy, responsive behavior, motor tier comparison,
-performance bundle trimming, and Vercel deployment shape are accepted product
-decisions for the current release.
+As of the 2026-08-10 Admin/CMS rebuild brief, the latest owner-approved
+decisions live in
+[`ADMIN_CMS_REBUILD_DECISIONS.md`](ADMIN_CMS_REBUILD_DECISIONS.md). That file
+supersedes older reconciliation notes where they describe the previous
+two-card launcher target, `/?view=public` owner exit, public owner reopen bar,
+insurer-count copy model, or Operations as part of the current CMS rebuild.
 
 Future bugs or regressions should be treated as defects or follow-up fixes. They
 do not automatically reopen the approved product decisions unless the product
@@ -70,8 +71,8 @@ launcher after login.
 The admin launcher has an early session gate and its own sign-out action.
 
 The `/#admin` drawer no longer uses a standalone ambiguous "ออก" button in the
-header. Closing the drawer now returns to the private `/admin` launcher; it does
-not place an owner bar on the public visitor page.
+header. Closing the drawer now clears owner markers and lands on clean `/`; it
+does not place an owner bar on the public visitor page.
 
 The `/#edit` mode now uses the warm-ink owner dock from the Claude owner-dock
 reference. The collapsed dock keeps only `Editing on page` and `Tools`
@@ -80,8 +81,8 @@ available; if the admin drawer is open at the same time, the status reads
 state remains visible. Expanding `Tools` opens a single dark-ink command
 palette grouped into `Draft` and `Go to` actions. `Publish` is the only
 terracotta-filled action inside the dock; `Save draft`, `Preview`, `Panel`,
-`Main`, `Public site`, and `Log out` stay quiet cream actions. `Tools → Main`
-removes `contenteditable` state before returning to `/admin`.
+`Main`, `Public site`, and `Log out` stay quiet cream actions. `Public site`
+removes `contenteditable` state before landing on clean `/`.
 
 Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
 successful Firestore writes, then show dismissible success toasts with
@@ -112,7 +113,8 @@ includes the expanded reference sections for policy review, claim help, renewal
 reminders, guides, fee transparency, privacy/PDPA, the main-site `#motor` /
 `#life` aliases, and unexposed `#motor-focus` / `#life-focus` campaign variants
 while preserving the production decisions for Firebase/Firestore, Admin
-Analytics, the two-card admin launcher, and real public lead submission paths.
+Analytics, and real public lead submission paths. The Phase 2 launcher now has
+three primary cards: `Edit the words`, `Arrange & customise`, and `Analytics`.
 
 The SPEC (5) reconciliation added the motor tier comparison section after the
 insurer-logo section. It renders as a desktop comparison table and mobile
@@ -176,6 +178,7 @@ runtime helpers before smoke.
 Read these before changing the project:
 
 - [PROJECT_MAP.md](../PROJECT_MAP.md)
+- [ADMIN_CMS_REBUILD_DECISIONS.md](ADMIN_CMS_REBUILD_DECISIONS.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [SITE_MAP.md](SITE_MAP.md)
 - [INTERACTION_MAP.md](INTERACTION_MAP.md)
