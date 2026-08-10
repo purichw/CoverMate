@@ -1,0 +1,281 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+let playwright;
+try {
+  playwright = require("playwright");
+} catch {
+  playwright = require(
+    "/Users/point/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"
+  );
+}
+
+const { chromium } = playwright;
+const root = new URL("../", import.meta.url);
+const read = (path) => fs.readFileSync(new URL(path, root), "utf8");
+
+const analyticsHarness = `<!doctype html>
+<html>
+<head>
+  <title>CoverMate Analytics Harness</title>
+  <script type="module" src="/covermate-contract.js"></script>
+  <script src="/covermate-analytics.js" defer></script>
+</head>
+<body>
+  <a id="line" href="https://line.me/ti/p/~covermate" onclick="event.preventDefault()">LINE</a>
+  <a id="phone" href="tel:0891234567" onclick="event.preventDefault()">Phone</a>
+  <a id="email" href="mailto:owner@covermate.example" onclick="event.preventDefault()">Email</a>
+  <button id="lang-en" type="button">EN</button>
+  <input id="calc" type="range" min="0" max="10" value="4">
+  <section id="talk">
+    <form id="consultation" onsubmit="event.preventDefault()">
+      <input id="lead-name" name="name">
+      <input id="lead-contact" name="contact">
+      <textarea id="lead-topic" name="topic"></textarea>
+      <button type="submit">Submit consultation</button>
+    </form>
+  </section>
+  <section id="renew">
+    <form id="renewal" onsubmit="event.preventDefault()">
+      <input id="renew-contact" name="contact">
+      <button type="submit">Submit renewal</button>
+    </form>
+  </section>
+</body>
+</html>`;
+
+function eventRows(dataLayer) {
+  return dataLayer
+    .filter((row) => row && row[0] === "event")
+    .map((row) => ({ name: row[1], params: row[2] || {} }));
+}
+
+function countEvents(events, name) {
+  return events.filter((event) => event.name === name).length;
+}
+
+function assertNoPii(value, label) {
+  const text = JSON.stringify(value);
+  for (const pattern of [
+    /\bAri\b/i,
+    /\bBen\b/i,
+    /0891234567/,
+    /081-234-5678/,
+    /point@example\.com/i,
+    /lineid/i,
+    /secret freeform/i
+  ]) {
+    assert.equal(pattern.test(text), false, `${label} leaked PII/freeform value: ${pattern}`);
+  }
+}
+
+async function routeStatic(page, firebaseBody = "export {};") {
+  await page.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname === "www.googletagmanager.com") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: "" });
+    }
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      return route.fulfill({ status: 200, contentType: "text/html", body: analyticsHarness });
+    }
+    if (url.pathname === "/covermate-contract.js") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: read("covermate-contract.js") });
+    }
+    if (url.pathname === "/covermate-analytics.js") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: read("covermate-analytics.js") });
+    }
+    if (url.pathname === "/covermate-firebase.js") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: firebaseBody });
+    }
+    if (url.pathname === "/admin/session.js") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: read("admin/session.js") });
+    }
+    if (url.pathname === "/admin/analytics-data.js") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: read("admin/analytics-data.js") });
+    }
+    if (url.pathname === "/admin/analytics" || url.pathname === "/admin/analytics/") {
+      return route.fulfill({ status: 200, contentType: "text/html", body: read("admin/analytics/index.html") });
+    }
+    if (url.pathname === "/admin/login") {
+      return route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>Login</title><h1>Login</h1>" });
+    }
+    return route.fulfill({ status: 404, contentType: "text/plain", body: "not found" });
+  });
+}
+
+async function verifyPublicEvents(browser) {
+  const page = await browser.newPage();
+  await routeStatic(page);
+  await page.goto("https://covermate.vercel.app/?name=Ari&email=point@example.com&phone=0891234567", {
+    waitUntil: "domcontentloaded"
+  });
+  await page.waitForFunction(() =>
+    Array.isArray(window.dataLayer) && window.dataLayer.some((row) => row && row[0] === "event" && row[1] === "page_view")
+  );
+
+  await page.locator("#line").click();
+  await page.locator("#line").click();
+  await page.locator("#phone").click();
+  await page.locator("#email").click();
+  await page.locator("#lang-en").click();
+  await page.locator("#calc").evaluate((input) => {
+    input.value = "8";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await page.locator("#lead-name").fill("Ari Customer");
+  await page.locator("#lead-contact").fill("LINEID ari 081-234-5678");
+  await page.locator("#lead-topic").fill("secret freeform message");
+  await page.locator("#renew-contact").fill("Ben 0891234567");
+  await page.locator("#consultation").evaluate((form) => form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+  await page.locator("#renewal").evaluate((form) => form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+  await page.evaluate(() => {
+    window.CoverMateAnalytics.trackEvent("quote_submit_success", {
+      form_type: "consultation",
+      enquiry_type: "quote",
+      coverage: "motor",
+      name: "Ari Customer",
+      contact: "point@example.com 0891234567",
+      topic: "secret freeform message"
+    });
+    window.CoverMateAnalytics.trackEvent("quote_submit_error", {
+      form_type: "renewal_reminder",
+      error_message: "Ben 081-234-5678 lineid"
+    });
+    window.CoverMateAnalytics.trackEvent("custom_event", {
+      name: "Ari Customer",
+      contact: "point@example.com 0891234567"
+    });
+  });
+  await page.waitForTimeout(250);
+
+  const events = eventRows(await page.evaluate(() => window.dataLayer || []));
+  assert.equal(countEvents(events, "page_view"), 1, "page_view fires once");
+  assert.equal(countEvents(events, "line_click"), 1, "line_click is debounced");
+  assert.equal(countEvents(events, "phone_click"), 1, "phone_click fires");
+  assert.equal(countEvents(events, "email_click"), 1, "email_click fires");
+  assert.equal(countEvents(events, "language_change"), 1, "language_change fires");
+  assert.equal(countEvents(events, "calculator_interaction"), 1, "calculator_interaction fires");
+  assert.equal(countEvents(events, "custom_event"), 0, "unknown events are not forwarded");
+  assert.equal(
+    events.filter((event) => event.name === "form_start" && event.params.form_type === "consultation").length,
+    1,
+    "consultation form_start fires once"
+  );
+  assert.equal(
+    events.filter((event) => event.name === "form_start" && event.params.form_type === "renewal_reminder").length,
+    1,
+    "renewal form_start fires once"
+  );
+  assert.equal(
+    events.filter((event) => event.name === "quote_submit" && event.params.form_type === "consultation").length,
+    1,
+    "consultation quote_submit fires"
+  );
+  assert.equal(
+    events.filter((event) => event.name === "quote_submit" && event.params.form_type === "renewal_reminder").length,
+    1,
+    "renewal quote_submit fires"
+  );
+  const success = events.find((event) => event.name === "quote_submit_success");
+  assert.deepEqual(
+    Object.keys(success.params).sort(),
+    ["coverage", "enquiry_type", "form_type", "page_location", "page_path"].sort(),
+    "quote_submit_success keeps only safe parameters"
+  );
+  assert.equal(success.params.coverage, "motor");
+  assert.equal(success.params.enquiry_type, "quote");
+  const pageView = events.find((event) => event.name === "page_view");
+  assert.equal(pageView.params.page_location, "https://covermate.vercel.app/");
+  assert.equal(pageView.params.page_path, "/");
+  assertNoPii(events, "public analytics events");
+  await page.close();
+}
+
+async function verifyAnalyticsRouteAuth(browser) {
+  const validSession = {
+    email: "owner@example.com",
+    name: "Owner",
+    ts: Date.now(),
+    exp: Date.now() + 60 * 60 * 1000
+  };
+
+  async function openWith(firebaseBody, session = validSession) {
+    const page = await browser.newPage();
+    await routeStatic(page, firebaseBody);
+    if (session) {
+      await page.addInitScript((cached) => {
+        window.localStorage.setItem("covermate-admin-session", JSON.stringify(cached));
+      }, session);
+    }
+    await page.goto("https://covermate.vercel.app/admin/analytics", { waitUntil: "domcontentloaded" });
+    return page;
+  }
+
+  const signedOut = await openWith("export {};", null);
+  await signedOut.waitForURL(/\/admin\/login$/, { timeout: 5000 });
+  await signedOut.close();
+
+  const localOnly = await openWith(`
+    window.CoverMateFirebase = {
+      waitForAuth: async () => null,
+      syncSessionFromCurrentUser: async () => ({ ok: false }),
+      signOut: async () => {}
+    };
+    export {};
+  `);
+  await localOnly.waitForURL(/\/admin\/login$/, { timeout: 5000 });
+  assert.equal((await localOnly.locator("body").innerText()).includes("Recent leads"), false, "localStorage-only auth did not expose analytics shell");
+  await localOnly.close();
+
+  const unauthorized = await openWith(`
+    window.CoverMateFirebase = {
+      waitForAuth: async () => ({ uid: 'not-admin' }),
+      syncSessionFromCurrentUser: async () => ({ ok: false, reason: 'not-admin' }),
+      signOut: async () => {}
+    };
+    export {};
+  `);
+  await unauthorized.waitForURL(/\/admin\/login$/, { timeout: 5000 });
+  await unauthorized.close();
+
+  const authorized = await openWith(`
+    window.CoverMateFirebase = {
+      waitForAuth: async () => ({ uid: 'owner' }),
+      syncSessionFromCurrentUser: async () => ({ ok: true, session: { email: 'owner@example.com' } }),
+      loadContactLeads: async () => ([
+        { id: 'lead-a', name: 'Test Lead', contact: 'LINE test', qtype: 'quote', coverage: 'motor', read: false, status: 'new', createdAt: Date.now(), topic: 'secret freeform message', summary: 'secret freeform message' },
+        { id: 'lead-b', name: 'Second Lead', contact: 'Phone test', qtype: 'review', coverage: 'life', read: true, status: 'new', createdAt: Date.now() - 86400000, sourcePath: '/?email=point@example.com' }
+      ]),
+      signOut: async () => {}
+    };
+    export {};
+  `);
+  await authorized.getByRole("heading", { name: "Analytics" }).waitFor({ timeout: 5000 });
+  await authorized.getByText("Test Lead").waitFor({ timeout: 5000 });
+  const state = await authorized.evaluate(() => ({
+    text: document.body.innerText,
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || "",
+    hasVisitorGa: Boolean(document.querySelector('script[src*="googletagmanager"], script[src*="google-analytics"]')),
+    authState: document.body.getAttribute("data-auth-state"),
+    leadKpi: document.querySelector('[data-kpi="leads"]')?.textContent || ""
+  }));
+  assert.equal(state.authState, "ready");
+  assert.equal(state.leadKpi, "2");
+  assert.match(state.robots, /^noindex/);
+  assert.equal(state.hasVisitorGa, false, "admin analytics does not load visitor GA script");
+  assert.equal(/Operations|\/admin\/ops/.test(state.text), false, "admin analytics does not introduce Operations");
+  assertNoPii(state.text.replace(/Test Lead|Second Lead|LINE test|Phone test/g, ""), "admin analytics non-rendered fields");
+  await authorized.close();
+}
+
+const browser = await chromium.launch({ headless: true });
+try {
+  await verifyPublicEvents(browser);
+  await verifyAnalyticsRouteAuth(browser);
+} finally {
+  await browser.close();
+}
+
+console.log("CoverMate analytics regression check passed");

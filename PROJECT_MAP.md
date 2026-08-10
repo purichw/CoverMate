@@ -127,7 +127,9 @@ Route contracts:
 ## Data / Auth / Storage Flow
 
 Admin identity is Firebase-backed. The approved admin session is cached in
-browser `localStorage`. CMS content is Firestore-first under
+browser `localStorage` for routing convenience, but private analytics and lead
+reads must re-verify the active Firebase admin user. CMS content is
+Firestore-first under
 `sites/covermate/*`; localStorage keeps last-known live/draft/text/history
 fallback caches and must not override a successful remote read. These keys are
 part of the product contract, are centralized in `covermate-contract.js`, and

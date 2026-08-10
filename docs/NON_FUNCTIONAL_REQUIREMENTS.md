@@ -28,6 +28,8 @@ Implemented:
 - Lead contact details are stored in Firestore, not Google Analytics.
 - GA events use only outcome/category parameters.
 - Admin Analytics does not load the visitor analytics script.
+- Admin Analytics requires active Firebase admin verification; localStorage
+  alone is not authorization.
 - The public privacy/PDPA section explains the current handling of submitted
   information at a page-content level.
 

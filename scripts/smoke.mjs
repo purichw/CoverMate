@@ -39,11 +39,6 @@ const routes = [
 const mainVisitorRoutes = new Set(["/", "/#motor", "/#life"]);
 const motorSectionRoutes = new Set(["/", "/#motor", "/#motor-focus"]);
 const visitorRoutes = new Set(["/", "/#motor", "/#life", "/#motor-focus", "/#life-focus"]);
-const logoFixturePath = "/tmp/covermate-smoke-logo.svg";
-fs.writeFileSync(
-  logoFixturePath,
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#d7194a"/><text x="32" y="40" text-anchor="middle" font-size="20" font-family="Arial" fill="#fff">AIA</text></svg>'
-);
 
 function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -190,6 +185,19 @@ async function readDraftSection(page, id) {
 async function clickAdminTab(page, label) {
   await page.getByRole("button", { name: label, exact: true }).click();
   await page.waitForTimeout(180);
+}
+
+async function changeField(locator, value) {
+  const field = locator.first();
+  await field.scrollIntoViewIfNeeded();
+  await field.click();
+  await field.fill(value);
+  await field.press("Tab").catch(async () => {
+    await field.evaluate((el) => el.blur());
+  });
+  await field.evaluate((el) => {
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 }
 
 async function selectAdminSection(page, id) {
@@ -551,27 +559,91 @@ async function verifyAdminBuilderControls() {
     failures.push("admin builder: hero still exposes structured Edit content even though hero copy is inline-edit only");
   }
 
-  await clickAdminTab(page, "Brand & chrome");
+  await clickAdminTab(page, "Brand & contact");
   const brandPanelText = await page.locator("aside").innerText();
-  if (/Advisor logo path|image URL/i.test(brandPanelText)) {
-    failures.push("admin builder: brand logo editor still asks for a path/URL instead of file upload");
+  if (/Upload logo|Logo uploaded|file upload|drag .*logo/i.test(brandPanelText)) {
+    failures.push("admin builder: brand panel still exposes legacy upload language");
   }
-  await page.locator('[data-admin-logo-upload="true"] input[type="file"]').setInputFiles(logoFixturePath);
-  await waitForBodyText(page, /Logo uploaded/);
-  const uploadedLogoState = await page.evaluate(() => {
+  const legacyUploadControls = await page.locator('aside input[type="file"], aside [data-admin-logo-upload="true"]').count();
+  if (legacyUploadControls !== 0) {
+    failures.push(`admin builder: legacy binary upload controls are still rendered (${legacyUploadControls})`);
+  }
+  const complianceControlState = await page.evaluate(() => ({
+    credentialInputs: document.querySelectorAll('[data-admin-compliance-lock="brand-credential"] input, [data-admin-compliance-lock="brand-credential"] textarea').length,
+    footerLegalInputs: document.querySelectorAll('[data-admin-compliance-lock="footer-legal"] input, [data-admin-compliance-lock="footer-legal"] textarea').length,
+    mediaControls: document.querySelectorAll('[data-admin-media-control="advisor-logo"]').length,
+    seoGuards: document.querySelectorAll('[data-admin-seo-guard="true"]').length
+  }));
+  if (complianceControlState.credentialInputs || complianceControlState.footerLegalInputs) {
+    failures.push("admin builder: protected compliance/legal copy is still directly editable");
+  }
+  if (complianceControlState.mediaControls !== 1) {
+    failures.push("admin builder: advisor media metadata control is missing");
+  }
+
+  await changeField(page.locator('[data-admin-logo-path="true"]'), "data:image/svg+xml,bad");
+  await waitForBodyText(page, /Invalid media path/);
+  const rejectedLogoState = await page.evaluate(() => {
     const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
     return {
       logo: config?.brand?.advisorLogo || "",
       toast: document.querySelector('[data-admin-toast="true"]')?.innerText || ""
     };
   });
-  if (!uploadedLogoState.logo.startsWith("data:image/svg+xml")) {
-    failures.push(`admin builder: uploaded advisor logo was not stored as a data image (${uploadedLogoState.logo.slice(0, 40)})`);
+  if (rejectedLogoState.logo.startsWith("data:")) {
+    failures.push("admin builder: invalid data-image logo was stored in draft config");
   }
-  if (!/Logo uploaded/.test(uploadedLogoState.toast)) {
-    failures.push("admin builder: logo upload success toast is missing");
+  if (!/Invalid media path/.test(rejectedLogoState.toast)) {
+    failures.push("admin builder: invalid media path toast is missing");
+  }
+  await changeField(page.locator('[data-admin-logo-path="true"]'), "assets/logos/srikrung-logo.png");
+  await changeField(page.locator('[data-admin-logo-alt="true"]'), "Srikrung broker logo");
+  await changeField(page.locator("aside label").filter({ hasText: "LINE link" }).locator("input"), "http://bad.example");
+  await waitForBodyText(page, /Invalid contact link/);
+  await changeField(page.locator("aside label").filter({ hasText: "LINE link" }).locator("input"), "https://line.me/ti/p/~covermate-smoke");
+  await changeField(page.locator("aside label").filter({ hasText: "Email" }).locator("input"), "not-an-email");
+  await waitForBodyText(page, /Invalid email/);
+  await changeField(page.locator("aside label").filter({ hasText: "Email" }).locator("input"), "owner@covermate.example");
+  await clickAdminTab(page, "Theme & data");
+  await changeField(page.locator('[data-admin-seo-title="true"]'), "CoverMate smoke SEO title");
+  await changeField(page.locator('[data-admin-seo-description="true"]'), "Smoke-tested guarded SEO description for the CoverMate admin rebuild.");
+  const cmsControlState = await page.evaluate(() => {
+    const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+    return {
+      logo: config?.brand?.advisorLogo || "",
+      logoAlt: config?.brand?.advisorLogoAlt || "",
+      lineUrl: config?.contact?.lineUrl || "",
+      email: config?.contact?.email || "",
+      seoTitle: config?.seo?.title?.th || "",
+      seoDescription: config?.seo?.description?.th || "",
+      seoGuard: document.querySelector('[data-admin-seo-guard="true"]')?.innerText || "",
+      footerLegal: config?.footer?.legal?.th || "",
+      credential: config?.brand?.credential?.th || ""
+    };
+  });
+  if (cmsControlState.logo !== "assets/logos/srikrung-logo.png" || cmsControlState.logoAlt !== "Srikrung broker logo") {
+    failures.push(`admin builder: advisor logo metadata did not persist (${cmsControlState.logo} / ${cmsControlState.logoAlt})`);
+  }
+  if (cmsControlState.lineUrl !== "https://line.me/ti/p/~covermate-smoke" || cmsControlState.email !== "owner@covermate.example") {
+    failures.push(`admin builder: contact controls did not persist validated values (${cmsControlState.lineUrl} / ${cmsControlState.email})`);
+  }
+  if (
+    cmsControlState.seoTitle !== "CoverMate smoke SEO title" ||
+    cmsControlState.seoDescription !== "Smoke-tested guarded SEO description for the CoverMate admin rebuild."
+  ) {
+    failures.push("admin builder: guarded SEO title/description did not persist");
+  }
+  if (!cmsControlState.seoGuard.includes("Canonical: https://covermate.vercel.app/") || !/admin, edit, and preview stay noindex/i.test(cmsControlState.seoGuard)) {
+    failures.push("admin builder: SEO canonical/robots guard copy is missing");
+  }
+  if (!cmsControlState.footerLegal.includes("6401006221") || !cmsControlState.footerLegal.includes("6804008544") || !cmsControlState.footerLegal.includes("ว00287/2534")) {
+    failures.push("admin builder: protected footer legal identifiers are missing");
+  }
+  if (!cmsControlState.credential.includes("AIA") || !cmsControlState.credential.includes("นายหน้า")) {
+    failures.push("admin builder: protected brand credential was not preserved");
   }
 
+  await clickAdminTab(page, "Sections");
   const coverBefore = await readDraftSection(page, "cover");
   const coverColsExpected = Math.min(4, Number(coverBefore?.cols || 0) + 1);
   await clickSectionColumnControl(page, "cover", "increase");
@@ -1620,8 +1692,65 @@ for (const [name, width, height] of viewports) {
   await waitForBodyText(page, /Manage your site/);
 
   const leadNow = Math.floor(Date.now() / 1000);
+  const analyticsLocalOnlyMock = `
+    window.CoverMateFirebase = {
+      waitForAuth: async () => null,
+      syncSessionFromCurrentUser: async () => ({ ok: false }),
+      signOut: async () => {}
+    };
+    export {};
+  `;
+  const analyticsLocalOnlyPage = await newSmokePage({
+    viewport: { width, height },
+    deviceScaleFactor: 1
+  });
+  const analyticsLocalOnlyErrors = [];
+  analyticsLocalOnlyPage.on("pageerror", (error) => analyticsLocalOnlyErrors.push(error.message));
+  await analyticsLocalOnlyPage.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({ status: 200, contentType: "application/javascript", body: analyticsLocalOnlyMock })
+  );
+  await analyticsLocalOnlyPage.addInitScript(() => {
+    window.localStorage.setItem(
+      "covermate-admin-session",
+      JSON.stringify({
+        email: "owner@example.com",
+        name: "Owner",
+        pic: "",
+        ts: Date.now(),
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+    );
+  });
+  await analyticsLocalOnlyPage.goto(analyticsUrl, { waitUntil: "load", timeout: 30000 });
+  await analyticsLocalOnlyPage.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
+  const analyticsLocalOnlyState = {
+    url: analyticsLocalOnlyPage.url(),
+    text: await analyticsLocalOnlyPage.locator("body").innerText().catch(() => "")
+  };
+  await analyticsLocalOnlyPage.close();
+  if (!analyticsLocalOnlyState.url.includes("/admin/login")) {
+    failures.push(`${name} /admin/analytics: localStorage-only session was not rejected (${analyticsLocalOnlyState.url})`);
+  }
+  if (/Recent leads|Leads saved|Visitor funnel/.test(analyticsLocalOnlyState.text)) {
+    failures.push(`${name} /admin/analytics: localStorage-only session exposed analytics dashboard text`);
+  }
+  if (analyticsLocalOnlyErrors.length) {
+    failures.push(`${name} /admin/analytics localStorage-only auth: ${analyticsLocalOnlyErrors.join(" | ")}`);
+  }
+
   const analyticsMock = `
     window.CoverMateFirebase = {
+      waitForAuth: async () => ({ uid: "owner-smoke", email: "owner@example.com" }),
+      syncSessionFromCurrentUser: async () => ({
+        ok: true,
+        session: {
+          email: "owner@example.com",
+          name: "Owner",
+          pic: "",
+          ts: Date.now(),
+          exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+        }
+      }),
       loadContactLeads: async () => [
         { id: "lead-1", name: "Ari", contact: "LINE ari", qtype: "quote", coverage: "motor", topic: "Motor quote", summary: "Motor quote", status: "new", read: false, createdAt: { seconds: ${leadNow} } },
         { id: "lead-2", name: "Ben", contact: "088-000-0000", qtype: "compare", coverage: "health", topic: "Health compare", summary: "Health compare", status: "new", read: true, createdAt: { seconds: ${leadNow - 86400 * 3} } }
@@ -1712,7 +1841,7 @@ for (const [name, width, height] of viewports) {
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
-    adminTabs: ["Sections", "Content", "Brand & chrome", "Theme & data", "Versions"].map((label) => {
+    adminTabs: ["Sections", "Content", "Brand & contact", "Theme & data", "Versions"].map((label) => {
       const button = Array.from(document.querySelectorAll("button")).find(
         (el) => (el.textContent || "").trim() === label
       );
@@ -1770,9 +1899,9 @@ for (const [name, width, height] of viewports) {
   }
 
   for (const [tabName, expectedText] of [
-    ["Content", "รูปภาพทั้งหมดลากวาง"],
-    ["Brand & chrome", "IDENTITY"],
-    ["Theme & data", "BACKUP & RESTORE"],
+    ["Content", "ITEM 1"],
+    ["Brand & contact", "Credential line"],
+    ["Theme & data", "SEO"],
     ["Versions", "Every Publish is saved here"]
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();

@@ -15,6 +15,32 @@ export function requireAdminSession(options = {}) {
   return session;
 }
 
+export async function requireVerifiedAdminSession(options = {}) {
+  const redirectTo = options.redirectTo || "/admin/login";
+  const session = requireAdminSession({ redirectTo });
+  if (!session) return null;
+  try {
+    await import(window.location.origin + "/covermate-firebase.js");
+    const cm = window.CoverMateFirebase;
+    if (!cm || !cm.waitForAuth || !cm.syncSessionFromCurrentUser) {
+      throw new Error("Admin authorization helper unavailable.");
+    }
+    const user = await cm.waitForAuth();
+    if (!user) {
+      clearAdminSession();
+      window.location.replace(redirectTo);
+      return null;
+    }
+    const result = await cm.syncSessionFromCurrentUser();
+    if (result && result.ok) return result.session || session;
+  } catch {
+    // Authorization could not be verified; localStorage alone is not enough.
+  }
+  clearAdminSession();
+  window.location.replace(redirectTo);
+  return null;
+}
+
 export function signOutAdmin() {
   clearAdminSession();
   try {
@@ -33,5 +59,6 @@ window.CoverMateAdminSession = {
   readAdminSession,
   clearAdminSession,
   requireAdminSession,
+  requireVerifiedAdminSession,
   signOutAdmin
 };

@@ -691,9 +691,9 @@ Purpose: click-to-type text editing over the public page.
 Behavior:
 
 - Editable text fields become tappable/clickable.
-- Supported dynamic image fields become tappable/clickable. The current
-  supported image field is the advisor proof logo stored at
-  `brand.advisorLogo`, defaulting to `assets/logos/aia-logo.png`.
+- Media is not changed through inline binary upload. The advisor proof logo is
+  managed as metadata in the owner panel through `brand.advisorLogo` and
+  `brand.advisorLogoAlt`, defaulting to `assets/logos/aia-logo.png`.
 - Edits support Thai and English separately.
 - Owner bar should provide a route back to `Main`, switch to `Panel`, `Save
   draft`, `Preview`, `Publish`, finish the mode, and `Log out`.
@@ -730,7 +730,11 @@ Required capabilities:
 
 - Sections tab: reorder, hide/show, choose background tone, change columns.
 - Content tab: edit structured section content.
-- Brand & chrome tab: edit brand/contact/footer/header/sticky settings.
+- Brand & contact tab: edit brand text, advisor logo path/alt metadata,
+  contact links, guarded SEO title/description, footer copy, and
+  header/sticky visibility. It must not expose direct file upload, Firebase
+  Storage upload, base64/data-image storage, crop tools, or drag/drop image
+  processing.
 - Theme & data tab: accent selection, import/export, reset/restore.
 - Draft save, preview, publish, status/success feedback.
 - Explicit `Save draft` and `Publish` must open custom confirmation dialogs, not
@@ -772,6 +776,9 @@ Current state:
 - GA4 Data API is not connected in the static app yet.
 - Firestore leads render live when available.
 - Traffic charts are backend-ready placeholders until a GA4 Data API or scheduled Firestore export exists.
+- LocalStorage-only admin sessions must not reveal analytics data. The route
+  must verify active Firebase admin authorization before showing the private
+  dashboard.
 
 Required layout:
 
@@ -822,13 +829,19 @@ Public GA4:
 - Measurement ID: `G-5TF3C235EF`.
 - Loads only on `covermate.vercel.app`.
 - Suppresses owner hashes and active admin sessions.
-- Tracks aggregate events such as CTA clicks, quote success/error, renewal reminder success/error, calculator usage, and navigation engagement.
+- Tracks only the deployed aggregate event inventory:
+  `page_view`, `line_click`, `phone_click`, `email_click`, `language_change`,
+  `calculator_interaction`, `form_start`, `quote_submit`,
+  `quote_submit_success`, and `quote_submit_error`.
+- Drops query strings from `page_location` / `page_path` and rejects unknown
+  event names or unsafe event parameters.
 
 Private admin analytics:
 
 - Does not load the public GA script.
-- Reads Firestore leads when available.
-- Treats GA4 charts as placeholders until a backend/export is added.
+- Requires active Firebase admin authorization, not localStorage alone.
+- Reads only dashboard-needed Firestore lead fields when available.
+- Treats GA4 charts as honest placeholders until a backend/export is added.
 
 ## SEO Contract
 

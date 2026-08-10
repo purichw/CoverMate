@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "check:bundles": "node scripts/validate-bundles.mjs",
+    "check:analytics": "node scripts/analytics-regression-check.mjs",
+    "check:ids": "node scripts/repeatable-id-check.mjs",
+    "check:phase6": "node scripts/phase6-controls-check.mjs",
     "smoke:admin-builder": "COVERMATE_SMOKE_SUITE=admin-builder node scripts/smoke.mjs",
     "smoke": "node scripts/smoke.mjs"
   }

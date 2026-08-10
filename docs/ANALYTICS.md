@@ -1,6 +1,6 @@
 # CoverMate Analytics
 
-Last updated: 2026-07-30
+Last updated: 2026-08-10
 
 ## Surfaces
 
@@ -10,6 +10,8 @@ Visitor analytics is collected by `covermate-analytics.js` on production only:
 - owner hashes `#admin`, `#edit`, and `#preview` are suppressed
 - active `covermate-admin-session` suppresses tracking
 - no visitor name, phone, LINE ID, email, or message text is sent to GA4
+- page context sent to GA4 excludes query strings; only safe simple hashes are
+  retained
 
 Private owner analytics lives at:
 
@@ -17,8 +19,10 @@ Private owner analytics lives at:
 /admin/analytics
 ```
 
-That route is `noindex,nofollow`, guarded by `covermate-admin-session`, and does
-not load the visitor GA script.
+That route is `noindex,nofollow`, guarded by a verified Firebase active-admin
+session, and does not load the visitor GA script. `covermate-admin-session` is
+only a browser cache for fast static routing; it is not enough to authorize the
+analytics dashboard by itself.
 
 ## GA4
 
@@ -43,8 +47,10 @@ Implemented visitor events:
 | `quote_submit_success` | Firestore lead save succeeds from the consultation or renewal reminder form | `form_type`, `enquiry_type`, `coverage` |
 | `quote_submit_error` | Firestore lead save fails | `form_type` |
 
-The success event intentionally uses category fields only. Do not add contact
-details or freeform text to GA event parameters.
+The success event intentionally uses category fields only. `trackEvent()` drops
+unknown event names and strips parameters not listed above. Do not add contact
+details, URL query strings, error text, claim details, or freeform messages to
+GA event parameters.
 
 ## Firestore Lead Analytics
 
@@ -56,7 +62,8 @@ contactLeads/<auto-id>
 ```
 
 Admin Analytics reads the latest leads through
-`CoverMateFirebase.loadContactLeads()`.
+`CoverMateFirebase.loadContactLeads()` after Firebase confirms the current user
+is an active admin.
 
 Current lead fields:
 
@@ -80,6 +87,23 @@ update, or delete leads. Renewal reminders are intentionally stored in this same
 operational lead stream with `qtype: "review"` so Admin Analytics and owner
 follow-up can stay unified.
 
+The analytics dashboard does not need the full lead document. The browser helper
+returns only the rendered analytics fields:
+
+| Field | Notes |
+| --- | --- |
+| `id` | Firestore document id. |
+| `name` | Rendered in the private recent-leads view. |
+| `contact` | Rendered in the private recent-leads view. |
+| `qtype` | Category used for enquiry mix. |
+| `coverage` | Category used for coverage mix. |
+| `status` | Used to exclude archived/unread state. |
+| `read` | Used for unread lead count. |
+| `createdAt` | Used for timeline and recent sorting. |
+
+Fields such as `topic`, `summary`, and `sourcePath` stay out of
+`/admin/analytics` because they are not needed for aggregate reporting.
+
 ## Dashboard Charts
 
 `/admin/analytics` renders chart types aligned to actual data types:
@@ -92,8 +116,23 @@ follow-up can stay unified.
   while mobile switches to labeled lead cards to avoid horizontal clipping
 - acquisition table: reserved for GA4 channel/source data
 
-GA4 traffic metrics are shown as backend-ready placeholders until a secure Data
-API path exists.
+GA4 traffic metrics are shown as honest `N/A` or backend-ready placeholders
+until a secure Data API path exists. Do not substitute fake sessions, active
+users, conversion rates, or acquisition rows.
+
+## Regression Checks
+
+Run this before release when analytics, lead capture, admin auth, or dashboard
+rendering changes:
+
+```bash
+npm run check:analytics
+```
+
+The check preserves deployed event names, rejects unknown/unsafe GA events,
+asserts representative PII does not reach GA payloads, verifies
+`/admin/analytics` signed-out/localStorage-only/unauthorized/authorized states,
+and confirms admin analytics does not load visitor GA.
 
 ## Backend Needed For Full GA Dashboard
 

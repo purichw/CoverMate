@@ -399,6 +399,29 @@
       font-feature-settings: "tnum" 1;
     }
 
+    body[data-auth-state="checking"] .shell {
+      visibility: hidden;
+    }
+
+    .auth-check {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    body:not([data-auth-state="checking"]) .auth-check {
+      display: none;
+    }
+
     .stacked {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -516,7 +539,8 @@
     }
   </style>
 </head>
-<body>
+<body data-auth-state="checking">
+  <div class="auth-check" role="status" aria-live="polite">Checking admin access...</div>
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="/admin" aria-label="Back to CoverMate admin main">
@@ -564,13 +588,13 @@
     <section class="grid kpis" aria-label="Analytics KPIs">
       <article class="metric">
         <span>Sessions</span>
-        <strong class="mono" data-kpi="sessions">--</strong>
-        <small>Requires GA4 Data API or export.</small>
+        <strong class="mono" data-kpi="sessions">N/A</strong>
+        <small>GA4 Data API or export not connected.</small>
       </article>
       <article class="metric">
         <span>Active users</span>
-        <strong class="mono" data-kpi="users">--</strong>
-        <small>Deduplicated visitor count from GA4.</small>
+        <strong class="mono" data-kpi="users">N/A</strong>
+        <small>GA4 Data API or export not connected.</small>
       </article>
       <article class="metric">
         <span>Leads saved</span>
@@ -579,8 +603,8 @@
       </article>
       <article class="metric">
         <span>Lead conversion</span>
-        <strong class="mono" data-kpi="conversion">--</strong>
-        <small>Submissions divided by sessions.</small>
+        <strong class="mono" data-kpi="conversion">N/A</strong>
+        <small>Needs both Firestore leads and GA4 sessions.</small>
       </article>
     </section>
 
@@ -715,10 +739,10 @@
   </main>
 
   <script type="module">
-    import { requireAdminSession, signOutAdmin } from "/admin/session.js";
+    import { requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
     import { gaConnectionModel, summarizeLeads } from "/admin/analytics-data.js";
 
-    const session = requireAdminSession();
+    let session = null;
     const logout = document.getElementById("logout");
     if (logout) logout.addEventListener("click", signOutAdmin);
 
@@ -869,7 +893,14 @@
       }
     }
 
-    load();
+    async function boot() {
+      session = await requireVerifiedAdminSession();
+      if (!session) return;
+      document.body.setAttribute("data-auth-state", "ready");
+      await load();
+    }
+
+    boot();
   </script>
 </body>
 </html>

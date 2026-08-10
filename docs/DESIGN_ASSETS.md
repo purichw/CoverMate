@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-08-02
+Last updated: 2026-08-10
 
 ## Visual Source
 
@@ -147,7 +147,13 @@ Relationship-card logo paths in the latest reference:
 | Path | Role |
 | --- | --- |
 | `assets/logos/aia-logo.png` | Life/health representative proof card; committed PNG with transparent background and embedded into the bundle resource map. |
-| `assets/logos/srikrung-logo.png` | Motor broker proof card; currently embedded in the bundle resource map, not present as a loose repo file. |
+| `assets/logos/srikrung-logo.png` | Motor broker proof card; committed PNG with transparent background and embedded into the bundle resource map. |
+
+Admin media controls manage references and metadata only. Owners can set an
+existing `assets/...` path or HTTPS image URL and provide alt text where the CMS
+supports it. Direct binary upload, Firebase Storage upload, base64/data-image
+storage, drag/drop image processing, and media-library behavior are outside the
+approved CoverMate surface until explicitly approved.
 
 ## Favicon
 

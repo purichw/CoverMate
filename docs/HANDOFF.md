@@ -158,7 +158,8 @@ Visitor lead capture now writes validated `contactLeads/*` Firestore documents.
 Admin Analytics at `/admin/analytics` reads leads, renders KPI/trend/mix/recent
 lead views, and reserves GA4 traffic charts for a future secure Data API or
 Firestore export. Recent leads render as a desktop table and mobile labeled
-cards. The admin analytics page does not load visitor GA scripts.
+cards. The admin analytics page requires active Firebase admin verification and
+does not load visitor GA scripts.
 
 The renewal reminder form uses the same validated Firestore lead stream with
 `qtype: "review"` and no visitor contact/freeform values in GA event

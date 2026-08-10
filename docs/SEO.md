@@ -1,6 +1,6 @@
 # CoverMate SEO Contract
 
-Last updated: 2026-07-30
+Last updated: 2026-08-10
 
 ## Canonical Indexing
 
@@ -53,6 +53,23 @@ This keeps metadata aligned with Admin Portal edits to the live brand and hero
 copy. Firestore live content must win over stale browser cache, including SEO
 metadata.
 
+## Guarded Admin SEO Controls
+
+The Admin CMS can manage only:
+
+- `seo.title.th/en`
+- `seo.description.th/en`
+
+Those fields feed `document.title`, meta description, Open Graph title and
+description, and Twitter title and description after hydration. If the guarded
+fields are blank, the runtime falls back to the live brand and hero copy.
+
+The CMS must not expose arbitrary controls for canonical URL, robots directives,
+social image path, JSON-LD entity types, testimonials, ratings, reviews,
+addresses, PII, or unsupported licence/claim statements. Canonical remains
+locked to `https://covermate.vercel.app/`. Public `/` remains
+`index,follow`; owner/admin routes remain `noindex,nofollow`.
+
 ## Structured Data
 
 Structured data lives in `script#covermate-jsonld` and uses JSON-LD. It is
@@ -103,6 +120,8 @@ The smoke harness verifies:
 - Open Graph, Twitter, and JSON-LD metadata exist and parse;
 - remote Firestore live content updates SEO metadata instead of stale local
   cache winning.
+- guarded Admin SEO controls can persist title/description without exposing
+  canonical or robots editors.
 - the expanded public section set, including claim help, renewal reminders, fee
   transparency, and privacy/PDPA, renders without creating separate indexable
   hash URLs.

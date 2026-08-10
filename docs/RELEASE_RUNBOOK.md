@@ -104,9 +104,17 @@ Minimum checks:
 - `/admin/analytics` recent leads remain readable on mobile as labeled cards,
   not a clipped horizontal table
 - `/#admin` renders all admin tabs without clipping, including Content,
-  Brand & chrome, Theme & data, and Versions
+  Brand & contact, Theme & data, and Versions
 - `/#admin` Content tab can edit structured card sets, including insurer
   relationship cards, claim cards, and fee cards
+- `/#admin` Brand & contact tab manages advisor logo path/alt metadata and
+  global contact values without exposing binary upload, Firebase Storage upload,
+  base64/data-image storage, drag/drop image processing, or a media library
+- `/#admin` Brand & contact displays credential and footer legal identity copy
+  as protected owner-readable content, with required licence identifiers intact
+- `/#admin` Theme & data exposes guarded SEO title/description controls only;
+  canonical, robots, social image, JSON-LD claim boundaries, and owner-route
+  noindex behavior remain code-owned
 - `/#admin` builder controls can increase section columns, add insurer
   relationship cards, add coverage table columns, add tier rows, keep tier cell
   state aligned to the coverage headers, and persist the final mutation to the

@@ -122,7 +122,7 @@ async function saveSiteState(name, config, text) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to save CoverMate content.");
-  const cleanConfig = sanitizeMotorCountConfig(config);
+  const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
   const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const payload = {
     config: cleanConfig,
@@ -146,7 +146,7 @@ async function appendVersion(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to publish CoverMate content.");
-  const cleanConfig = sanitizeMotorCountConfig(config);
+  const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
   const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const ref = versionRef();
   const version = {
@@ -169,7 +169,7 @@ async function publishSiteState(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to publish CoverMate content.");
-  const cleanConfig = sanitizeMotorCountConfig(config);
+  const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
   const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const ref = versionRef();
   const ts = Date.now();
@@ -251,7 +251,19 @@ async function loadContactLeads(limitCount = LEAD_LIMIT) {
     firestoreMod.limit(Math.max(1, Math.min(LEAD_LIMIT, Number(limitCount) || LEAD_LIMIT)))
   );
   const snap = await firestoreMod.getDocs(q);
-  return snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
+  return snap.docs.map((docSnap) => {
+    const data = docSnap.data() || {};
+    return {
+      id: docSnap.id,
+      name: cleanText(data.name, 120),
+      contact: cleanText(data.contact, 160),
+      qtype: cleanLeadChoice(data.qtype, LEAD_QTYPES),
+      coverage: cleanLeadChoice(data.coverage, LEAD_COVERAGES),
+      status: cleanText(data.status, 40),
+      read: data.read === true,
+      createdAt: data.createdAt || null
+    };
+  });
 }
 
 async function hydrateLocalContent(options = {}) {

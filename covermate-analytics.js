@@ -7,11 +7,27 @@
   var ALLOWED_HOSTS = ["covermate.vercel.app"];
   var OWNER_HASHES = { "#admin": true, "#edit": true, "#preview": true };
   var EVENT_DEBOUNCE_MS = 800;
+  var LEAD_QTYPES = { quote: true, compare: true, general: true, review: true, claim: true, unspecified: true };
+  var LEAD_COVERAGES = { life: true, health: true, motor: true, accident: true, savings: true, unsure: true, unspecified: true };
+  var FORM_TYPES = { consultation: true, renewal_reminder: true };
+  var EVENT_NAMES = {
+    page_view: true,
+    line_click: true,
+    phone_click: true,
+    email_click: true,
+    language_change: true,
+    calculator_interaction: true,
+    form_start: true,
+    quote_submit: true,
+    quote_submit_success: true,
+    quote_submit_error: true
+  };
+  var SAFE_PARAM_RE = /^[a-z0-9_:-]{1,80}$/i;
   var state = {
     loaded: false,
     pageKey: "",
     lastEvent: Object.create(null),
-    formStarted: false
+    formStarted: Object.create(null)
   };
 
   window.CoverMateAnalytics = {
@@ -62,16 +78,61 @@
     return true;
   }
 
+  function safeHash() {
+    var hash = window.location.hash || "";
+    return /^#[A-Za-z0-9_-]+$/.test(hash) ? hash : "";
+  }
+
   function pageLocation() {
-    return window.location.origin + window.location.pathname + window.location.search + window.location.hash;
+    return window.location.origin + window.location.pathname + safeHash();
   }
 
   function pagePath() {
-    return window.location.pathname + window.location.search + window.location.hash;
+    return window.location.pathname + safeHash();
+  }
+
+  function cleanCategory(value, allowed, fallback) {
+    var text = String(value == null ? "" : value).trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "_");
+    text = text.replace(/^_+|_+$/g, "").slice(0, 80);
+    if (allowed && allowed[text]) return text;
+    return fallback || "";
+  }
+
+  function eventParamWhitelist(name, params) {
+    var source = params || {};
+    var safe = {};
+    if (name === "line_click" || name === "phone_click" || name === "email_click") {
+      var linkType = cleanCategory(source.link_type, { line: true, phone: true, email: true }, "");
+      if (linkType) safe.link_type = linkType;
+    }
+    if (name === "language_change") {
+      var language = cleanCategory(source.language, { th: true, en: true }, "");
+      if (language) safe.language = language;
+    }
+    if (name === "calculator_interaction") {
+      var controlType = cleanCategory(source.control_type, { range: true }, "");
+      if (controlType) safe.control_type = controlType;
+    }
+    if (name === "form_start" || name === "quote_submit" || name === "quote_submit_error") {
+      var formType = cleanCategory(source.form_type, FORM_TYPES, "consultation");
+      safe.form_type = formType;
+    }
+    if (name === "quote_submit_success") {
+      safe.form_type = cleanCategory(source.form_type, FORM_TYPES, "consultation");
+      safe.enquiry_type = cleanCategory(source.enquiry_type, LEAD_QTYPES, "unspecified");
+      safe.coverage = cleanCategory(source.coverage, LEAD_COVERAGES, "unsure");
+    }
+    return safe;
+  }
+
+  function cleanEventName(name) {
+    var eventName = String(name || "").trim();
+    return SAFE_PARAM_RE.test(eventName) && EVENT_NAMES[eventName] ? eventName : "";
   }
 
   function loadGoogleTag() {
-    if (state.loaded || !canTrack()) return false;
+    if (state.loaded) return canTrack();
+    if (!canTrack()) return false;
     state.loaded = true;
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function () {
@@ -106,15 +167,18 @@
   }
 
   function trackEvent(name, params) {
+    name = cleanEventName(name);
+    if (!name) return;
     if (!loadGoogleTag() || !canTrack() || !window.gtag) return;
+    var safeParams = eventParamWhitelist(name, params);
     var now = Date.now();
-    var key = name + ":" + JSON.stringify(params || {});
+    var key = name + ":" + JSON.stringify(safeParams);
     if (state.lastEvent[key] && now - state.lastEvent[key] < EVENT_DEBOUNCE_MS) return;
     state.lastEvent[key] = now;
     window.gtag("event", name, Object.assign({
       page_location: pageLocation(),
       page_path: pagePath()
-    }, params || {}));
+    }, safeParams));
   }
 
   window.CoverMateAnalytics.trackEvent = trackEvent;
@@ -145,6 +209,13 @@
     return { name: "calculator_interaction", params: { control_type: "range" } };
   }
 
+  function formTypeForTarget(target) {
+    var form = target && target.closest ? target.closest("form") : null;
+    if (!form) return "consultation";
+    if (form.closest("#renew")) return "renewal_reminder";
+    return "consultation";
+  }
+
   window.addEventListener("click", function (event) {
     var intent = linkIntent(event.target) || languageIntent(event.target);
     if (intent) trackEvent(intent.name, intent.params);
@@ -153,14 +224,17 @@
   window.addEventListener("input", function (event) {
     var intent = calculatorIntent(event.target);
     if (intent) trackEvent(intent.name, intent.params);
-    if (!state.formStarted && event.target && event.target.closest && event.target.closest("form")) {
-      state.formStarted = true;
-      trackEvent("form_start", { form_type: "consultation" });
+    if (event.target && event.target.closest && event.target.closest("form")) {
+      var formType = formTypeForTarget(event.target);
+      if (!state.formStarted[formType]) {
+        state.formStarted[formType] = true;
+        trackEvent("form_start", { form_type: formType });
+      }
     }
   }, true);
 
-  window.addEventListener("submit", function () {
-    trackEvent("quote_submit", { form_type: "consultation" });
+  window.addEventListener("submit", function (event) {
+    trackEvent("quote_submit", { form_type: formTypeForTarget(event.target) });
   }, true);
 
   window.addEventListener("hashchange", function () {

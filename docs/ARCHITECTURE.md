@@ -100,8 +100,8 @@ panel, or analytics.
 
 `admin/analytics/index.html` owns the private analytics dashboard. It is
 source-authored rather than a Claude Design export, uses `admin/session.js` for
-session gating/sign-out, and uses `admin/analytics-data.js` to normalize
-Firestore lead data. It does not load the visitor GA script.
+verified Firebase admin gating/sign-out, and uses `admin/analytics-data.js` to
+normalize Firestore lead data. It does not load the visitor GA script.
 
 `admin/session.js` and `admin/analytics-data.js` are source-level refactor seams
 around the exported admin bundles. `admin/session.js` delegates storage/session

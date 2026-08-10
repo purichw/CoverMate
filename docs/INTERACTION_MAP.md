@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-08-03
+Last updated: 2026-08-10
 
 ## Visitor Journey
 
@@ -101,9 +101,10 @@ must not show owner chrome, even if stale local owner markers exist.
 1. Owner opens `/#edit`.
 2. The public site loads with editable copy affordances.
 3. Owner edits headings, body copy, labels, and related text.
-4. Owner can also activate editable image affordances for supported dynamic
-   image fields, currently the advisor proof logo stored as `brand.advisorLogo`.
-5. Text and supported image/config values are saved to Firestore draft state, with localStorage updated as
+4. Media changes are not made through inline binary upload. Supported media
+   references, such as the advisor logo and insurer logos, are edited as
+   `assets/...` or HTTPS URL metadata with alt text in the control panel.
+5. Text and supported config values are saved to Firestore draft state, with localStorage updated as
    a last-known fallback cache.
 6. The edit toolbar is a warm-ink owner dock and is compact by default: it
    shows `Editing on page` and `Tools`. When `Tools → Panel` opens the admin
@@ -113,7 +114,7 @@ must not show owner chrome, even if stale local owner markers exist.
    palette with `Draft` actions (`Save draft`, `Preview`, `Publish`) and `Go to`
    actions (`Panel`, `Main`, `Public site`, `Log out`). `Publish` is the only
    terracotta-filled dock action.
-7. `Tools → Main` removes all `contenteditable` and image-edit affordances and
+7. `Tools → Main` removes all `contenteditable` affordances and
    returns to `/admin`; `Tools → Panel` keeps the owner in the right-side
    control panel.
 8. `Public site` removes all owner/edit affordances, clears owner markers, and
@@ -129,8 +130,8 @@ fields.
 
 1. Owner opens `/#admin`.
 2. Control panel appears over the site.
-3. Owner can reorder/hide sections, edit content, adjust brand/chrome, adjust
-   theme/data, export, restore, preview, and publish.
+3. Owner can reorder/hide sections, edit content, adjust Brand & contact,
+   manage guarded SEO/theme/data settings, export, restore, preview, and publish.
 4. Draft changes auto-save to Firestore `states/draft`, with local cache as
    fallback.
 5. Explicit `Save draft` opens a custom confirmation dialog, waits for the
@@ -159,7 +160,19 @@ For sections that use structured cards, the Content tab exposes card editing
 instead of relying on hard-coded copy. Current editable card sets include the
 insurer relationship proof cards, claim hotline/support cards, and fee
 transparency cards. The Content tab also exposes insurer item logo paths and
-the motor tier comparison rows/coverage columns/cell states.
+the motor tier comparison rows/coverage columns/cell states. Repeatable items,
+cards, and tier headers carry durable CMS IDs so editing, adding, duplicating,
+deleting, and supported reorder controls keep identity with the intended
+logical item. Tier coverage states still follow the existing `items[].st[]` to
+`heads[]` index alignment.
+
+The Brand & contact tab owns global brand identity, advisor logo reference/alt
+metadata, and contact values. It must not expose direct file upload, Firebase
+Storage upload, base64/data-image storage, or drag/drop image processing.
+Credential and footer legal identity copy are visible for owner context but
+locked against casual editing. The Theme & data tab owns guarded SEO
+title/description controls; canonical, robots, admin noindex, social image, and
+JSON-LD claim boundaries stay code-owned.
 
 ## Draft Preview Flow
 
@@ -177,14 +190,16 @@ the motor tier comparison rows/coverage columns/cell states.
 ## Admin Analytics Flow
 
 1. Owner opens `/admin/analytics` from the launcher.
-2. The page checks `covermate-admin-session`; missing/expired sessions redirect
-   to `/admin/login`.
-3. The page loads recent Firestore leads through `covermate-firebase.js`.
-4. Lead KPIs, trend, enquiry mix, coverage mix, and recent leads render from
+2. The page checks `covermate-admin-session` only as a fast local cache;
+   missing/expired sessions redirect to `/admin/login`.
+3. Before showing the dashboard, the page verifies the current Firebase user is
+   an active admin. A localStorage-only session redirects to `/admin/login`.
+4. The page loads recent Firestore leads through `covermate-firebase.js`.
+5. Lead KPIs, trend, enquiry mix, coverage mix, and recent leads render from
    real Firestore data.
-5. GA4 traffic charts remain backend-ready placeholders until a server-side GA
+6. GA4 traffic charts remain backend-ready placeholders until a server-side GA
    Data API endpoint or scheduled Firestore export exists.
-6. The page does not load visitor Google Analytics scripts.
+7. The page does not load visitor Google Analytics scripts.
 
 ## Access Behavior
 

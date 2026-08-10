@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-08-03
+Last updated: 2026-08-10
 
 ## Persistence Model
 
@@ -66,13 +66,22 @@ Current section types include `hero`, `trust`, `products`, `review`, `fit`,
 
 Important dynamic fields:
 
+- Repeatable CMS arrays under sections (`items[]`, `cards[]`, and
+  `heads[]` where present) may carry an additive durable `id` string on each
+  item. The ID belongs to the shared logical item object that also contains
+  `th` and `en`; Thai and English copy do not get separate identities.
+  Firestore writes add missing IDs once and preserve valid existing IDs so
+  repeatable content can survive edit, reorder, draft save, publish, reload,
+  and version snapshots without relying on array position or mutable copy.
 - `insurers.items[]` is the source of truth for the public insurer logo grid.
   Each item may carry `logo`; stale items resolve through the built-in logo map
   and exact legacy `LMG` names render as Chubb Samaggi.
 - `tiers.heads[]` defines motor comparison columns.
 - `tiers.items[]` defines class rows. Each tier row uses `st[]` states aligned
-  to `heads[]`, where `y` means covered, `p` means conditional, and `n` means
-  not covered. Missing/invalid states normalize to `n`.
+  to `heads[]` by array index, where `y` means covered, `p` means conditional,
+  and `n` means not covered. Missing/invalid states normalize to `n`. Durable
+  IDs on tier rows and heads are identity metadata only; they do not change the
+  existing coverage-state index semantics.
 
 ## Ownership Rules
 
@@ -143,14 +152,16 @@ fields include:
 | `brand.name.th/en` | string | Short display brand name. |
 | `brand.fullName.th/en` | string | Longer brand/advisor display name. |
 | `brand.role.th/en` | string | Role line under the brand. |
-| `brand.credential.th/en` | string | Advisor credential line. |
-| `brand.advisorLogo` | string | Uploaded data image or committed default file for the personal advisor proof logo; defaults to `assets/logos/aia-logo.png`. |
+| `brand.credential.th/en` | string | Protected advisor credential line; admin displays it read-only. |
+| `brand.advisorLogo` | string | Existing `assets/...` path or HTTPS URL for the personal advisor proof logo; defaults to `assets/logos/aia-logo.png`. |
+| `brand.advisorLogoAlt` | string | Alt text for the advisor proof logo. |
 
-`brand.advisorLogo` is editable through file upload in the Brand & chrome panel
-and directly from `/#edit` by activating the logo image. The admin UI should not
-ask owners to paste image URLs/paths for this field. It is part of the
-draft/live config and must follow the same Firestore-first cache rules as other
-CMS content.
+`brand.advisorLogo` is editable only as media metadata in the Brand & contact
+panel: an existing committed `assets/...` path or an HTTPS image URL, plus alt
+text. Direct binary upload, Firebase Storage upload, base64/data-image storage,
+drag/drop image processing, and inline `/#edit` image replacement are not
+approved. The value is part of draft/live config and must follow the same
+Firestore-first cache rules as other CMS content.
 
 Important dynamic contact fields include:
 
@@ -165,6 +176,29 @@ Important dynamic contact fields include:
 | `contact.email` | string | Public email display and `mailto:` target. |
 | `contact.hours.th/en` | string | Public service-hours copy. |
 | `contact.area.th/en` | string | Public service-area copy. |
+
+Important guarded SEO fields include:
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `seo.title.th/en` | string | Optional public page title override, sanitized to a short title. |
+| `seo.description.th/en` | string | Optional public meta/social description override. |
+
+The owner can edit only title and description. Canonical URL, robots directives,
+social image path, JSON-LD entity types, and admin noindex policy are locked in
+code. Public `/` remains indexable. `/admin`, `/admin/analytics`, `/#admin`,
+`/#edit`, and `/#preview` remain `noindex`. Do not add arbitrary canonical,
+robots, testimonial/review/rating, PII, or unsupported claim controls.
+
+Sanitizers in `covermate-contract.js` protect Phase 6 CMS fields on
+hydrate/save/publish:
+
+- media references allow only `assets/...` or `https://...`;
+- contact URLs must be HTTPS and email must pass basic address validation;
+- compliance/legal identifiers remain owner-readable but not freely editable;
+- legacy Srikrung licence `5704011570` is normalized to `ว00287/2534`;
+- invalid media, contact, or SEO values fall back to approved defaults instead
+  of being written through to draft/live state.
 
 ## Firestore Collections
 
