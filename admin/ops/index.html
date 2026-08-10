@@ -1,0 +1,2754 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>CoverMate Operations Portal</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4eadb;
+      --bg-strong: #eee0cb;
+      --surface: #fbf7f0;
+      --surface-soft: #f1e7d7;
+      --surface-warm: #f8efe3;
+      --line: #dfd1bd;
+      --line-strong: #cabaa2;
+      --text: #25221f;
+      --muted: #766d62;
+      --faint: #9a9082;
+      --sidebar: #2c281f;
+      --sidebar-muted: #c7bdad;
+      --accent: #cf7135;
+      --accent-strong: #a4511d;
+      --accent-soft: #ffe1cf;
+      --sage: #60724a;
+      --sage-soft: #dfedcb;
+      --warning: #a25a1f;
+      --warning-soft: #ffe8d9;
+      --neutral-soft: #e6dccb;
+      --shadow: 0 16px 36px rgba(88, 68, 39, 0.08);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --sidebar-w: 292px;
+      --topbar-h: 86px;
+      --font: "Google Sans", "Noto Sans Thai", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+      font-family: var(--font);
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    body[data-boot="pending"] .app {
+      visibility: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+      cursor: not-allowed;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 22px 18px;
+      overflow-y: auto;
+      color: #f6efe5;
+      background: var(--sidebar);
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 0 10px 4px;
+      text-decoration: none;
+    }
+
+    .brand-mark,
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .brand-name {
+      display: block;
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .brand-sub {
+      display: block;
+      margin-top: 3px;
+      color: #e8a06b;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .2em;
+    }
+
+    .nav {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav-button {
+      width: 100%;
+      min-height: 42px;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--sidebar-muted);
+      background: transparent;
+      text-align: left;
+      font-weight: 800;
+    }
+
+    .nav-button:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .nav-button.active {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .nav-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      color: currentColor;
+    }
+
+    .nav-icon svg,
+    .search svg,
+    .round-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .badge {
+      min-width: 25px;
+      height: 25px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      padding: 0 8px;
+      background: var(--accent-strong);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .nav-button.active .badge {
+      background: #fff;
+      color: var(--accent-strong);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #a99f8f;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .role-select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 0 14px;
+      color: #fff;
+      background: #474137;
+      font-weight: 800;
+    }
+
+    .user {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+      color: #fff;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      background: var(--sage);
+      font-size: 15px;
+    }
+
+    .user strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .user span {
+      display: block;
+      color: #a99f8f;
+      font-size: 12px;
+    }
+
+    .logout {
+      min-height: 44px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 12px;
+      color: var(--sidebar-muted);
+      background: transparent;
+      font-weight: 800;
+    }
+
+    .logout:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .workspace {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: var(--topbar-h) 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) auto auto;
+      gap: 14px;
+      align-items: center;
+      padding: 17px 32px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 247, 240, 0.93);
+      backdrop-filter: blur(18px);
+    }
+
+    .search {
+      position: relative;
+    }
+
+    .search span {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      color: var(--muted);
+      transform: translateY(-50%);
+    }
+
+    .search input {
+      width: 100%;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 18px 0 48px;
+      color: var(--text);
+      background: var(--surface-soft);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      outline: none;
+    }
+
+    .search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(207, 113, 53, 0.15);
+    }
+
+    .pill,
+    .chip,
+    .ghost-button,
+    .primary-button,
+    .danger-button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 0 16px;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .pill {
+      border: 1px solid transparent;
+      background: var(--sage-soft);
+      color: #344427;
+      font-size: 14px;
+    }
+
+    .pill.warn {
+      border-color: #ffb58f;
+      background: #fff6ed;
+      color: #79421e;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      flex: none;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .primary-button {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+    }
+
+    .primary-button:hover {
+      background: #bd6129;
+    }
+
+    .ghost-button,
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: #4f4940;
+    }
+
+    .ghost-button:hover,
+    .chip:hover {
+      border-color: var(--line-strong);
+      background: #fffaf4;
+    }
+
+    .ghost-button:disabled,
+    .primary-button:disabled,
+    .danger-button:disabled,
+    .chip:disabled {
+      border-color: var(--line);
+      background: #ddd5c8;
+      color: #8e8375;
+      box-shadow: none;
+    }
+
+    .chip {
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 14px;
+    }
+
+    .chip.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .chip.sage.active {
+      border-color: var(--sage);
+      background: var(--sage);
+    }
+
+    .danger-button {
+      border: 1px solid #e2a27f;
+      background: #fff3eb;
+      color: #914917;
+    }
+
+    .mobilebar {
+      display: none;
+    }
+
+    .screen {
+      width: min(100%, 1600px);
+      padding: 42px 36px 70px;
+    }
+
+    .page-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .kicker {
+      margin: 0 0 8px;
+      color: var(--accent-strong);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: clamp(34px, 4vw, 48px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.metrics {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid.two {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card,
+    .panel,
+    .filterbar,
+    .table-shell {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+    }
+
+    .card,
+    .panel {
+      padding: 24px;
+    }
+
+    .metric {
+      min-height: 176px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .metric .label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--accent-strong);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .metric .value {
+      font-size: 46px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .metric p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .metric a {
+      align-self: end;
+      color: var(--accent-strong);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .filterbar {
+      display: grid;
+      gap: 14px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-label {
+      margin-right: 6px;
+      color: var(--faint);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .record-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .table-shell {
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th {
+      height: 54px;
+      padding: 0 22px;
+      color: var(--muted);
+      background: var(--bg-strong);
+      text-align: left;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    td {
+      min-height: 70px;
+      padding: 18px 22px;
+      border-top: 1px solid #eadfce;
+      vertical-align: middle;
+      font-size: 16px;
+    }
+
+    tr[data-open-lead],
+    tr[data-open-customer],
+    tr[data-open-policy] {
+      cursor: pointer;
+    }
+
+    tr[data-open-lead]:hover td,
+    tr[data-open-customer]:hover td,
+    tr[data-open-policy]:hover td {
+      background: #fff8f0;
+    }
+
+    tr:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    select:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(207, 113, 53, 0.45);
+      outline-offset: 2px;
+    }
+
+    .cell-title {
+      display: block;
+      color: #111;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .cell-meta {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .status {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 12px;
+      background: var(--neutral-soft);
+      color: #4b443b;
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status.new,
+    .status.contacting,
+    .status.awaiting,
+    .status.renewal-pending,
+    .status.overdue {
+      background: var(--warning-soft);
+      color: #6f3715;
+    }
+
+    .status.consultation,
+    .status.converted,
+    .status.active,
+    .status.completed {
+      background: var(--sage-soft);
+      color: #344427;
+    }
+
+    .status.draft {
+      background: #e7eed9;
+      color: #344427;
+    }
+
+    .status.dim {
+      background: #e3d8c8;
+      color: #655d52;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 18px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .timeline li {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .timeline li::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 6px;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--sage);
+    }
+
+    .timeline li::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 20px;
+      bottom: -20px;
+      width: 2px;
+      background: var(--line);
+    }
+
+    .timeline li:last-child::after {
+      display: none;
+    }
+
+    .timeline strong {
+      display: block;
+      line-height: 1.3;
+    }
+
+    .timeline li > span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .timeline .status {
+      display: inline-flex;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .progress-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .progress-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) minmax(160px, 2fr) 76px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--neutral-soft);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .bar.sage span {
+      background: var(--sage);
+    }
+
+    .note {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(330px, .95fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px 28px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .field-value {
+      font-size: 17px;
+      font-weight: 850;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: var(--text);
+      background: var(--surface-soft);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+    }
+
+    .checkbox {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      align-items: center;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .checkbox input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .empty {
+      padding: 36px 22px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .module-card {
+      min-height: 190px;
+    }
+
+    .module-card .round-icon {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .permission-table .yes,
+    .permission-table .no {
+      display: inline-grid;
+      place-items: center;
+      width: 31px;
+      height: 31px;
+      border-radius: 999px;
+      font-weight: 900;
+    }
+
+    .permission-table .yes {
+      background: var(--sage-soft);
+      color: #344427;
+    }
+
+    .permission-table .no {
+      background: var(--neutral-soft);
+      color: var(--muted);
+    }
+
+    .notice {
+      border: 1px solid #ffbd98;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      background: #fff5ee;
+      color: #70401f;
+      line-height: 1.5;
+    }
+
+    .notice.sage {
+      border-color: #c8d8b1;
+      background: #f0f8e5;
+      color: #354828;
+    }
+
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(37, 34, 31, 0.46);
+    }
+
+    .modal-root.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(720px, 100%);
+      max-height: min(760px, calc(100vh - 44px));
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-head,
+    .modal-body,
+    .modal-actions {
+      padding: 22px 24px;
+    }
+
+    .modal-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      border-top: 1px solid var(--line);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 1260px) {
+      .grid.metrics,
+      .grid.four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .split,
+      .grid.three {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1039px) {
+      :root {
+        --topbar-h: auto;
+      }
+
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .mobilebar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: grid;
+        grid-template-columns: 1fr minmax(180px, 45%);
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        background: var(--sidebar);
+        color: #fff;
+      }
+
+      .mobilebar .brand {
+        padding: 0;
+        grid-template-columns: 40px 1fr;
+      }
+
+      .mobilebar .brand-mark {
+        width: 40px;
+        height: 40px;
+        font-size: 19px;
+      }
+
+      .mobilebar .brand-name {
+        font-size: 17px;
+      }
+
+      .module-select {
+        min-height: 42px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        padding: 0 12px;
+        color: #fff;
+        background: #474137;
+        font-weight: 800;
+      }
+
+      .workspace {
+        display: block;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px 16px;
+      }
+
+      .topbar .primary-button,
+      .topbar .pill {
+        width: 100%;
+      }
+
+      .screen {
+        padding: 28px 16px 56px;
+      }
+
+      .page-head {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .grid.metrics,
+      .grid.two,
+      .grid.four {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-shell {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      table,
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 12px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        background: var(--surface);
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: minmax(104px, 34%) 1fr;
+        gap: 12px;
+        min-height: auto;
+        padding: 13px 16px;
+        border-top: 1px solid #eadfce;
+      }
+
+      td:first-child {
+        border-top: 0;
+      }
+
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+
+      .progress-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-boot="pending">
+  <script>
+    (function () {
+      try {
+        var raw = window.localStorage.getItem("covermate-admin-session");
+        var session = raw ? JSON.parse(raw) : null;
+        if (!session || Number(session.exp || 0) <= Date.now()) {
+          window.location.replace("/admin/login");
+        }
+      } catch (error) {
+        window.location.replace("/admin/login");
+      }
+    })();
+  </script>
+  <div class="app">
+    <aside class="sidebar" aria-label="Operations navigation">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+        <span class="brand-mark">C</span>
+        <span>
+          <span class="brand-name">CoverMate</span>
+          <span class="brand-sub">OPERATIONS</span>
+        </span>
+      </a>
+      <nav class="nav" id="sideNav"></nav>
+      <div class="sidebar-footer">
+        <p class="eyebrow">Signed in as · role</p>
+        <select class="role-select" id="roleSelect" aria-label="Preview role">
+          <option value="owner">Owner / Administrator</option>
+          <option value="advisor">Adviser</option>
+          <option value="ops">Operations</option>
+          <option value="readonly">Read-only</option>
+        </select>
+        <div class="user">
+          <span class="avatar" id="userAvatar">PN</span>
+          <span>
+            <strong id="userName">Purich N.</strong>
+            <span id="userMeta">Verified session</span>
+          </span>
+        </div>
+        <button class="logout" type="button" data-action="logout">Log out</button>
+      </div>
+    </aside>
+
+    <div class="mobilebar">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+        <span class="brand-mark">C</span>
+        <span>
+          <span class="brand-name">CoverMate</span>
+          <span class="brand-sub">OPS</span>
+        </span>
+      </a>
+      <select class="module-select" id="mobileModuleSelect" aria-label="Choose operations module"></select>
+    </div>
+
+    <main class="workspace">
+      <header class="topbar">
+        <label class="search" for="globalSearch">
+          <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></span>
+          <input id="globalSearch" type="search" autocomplete="off" placeholder="Search records, phone, LINE, policy" />
+        </label>
+        <span class="pill warn" id="dataMode"><span class="dot"></span>Backend required</span>
+        <button class="primary-button" type="button" id="newLeadButton" data-action="open-new-lead">+ New lead</button>
+      </header>
+      <section class="screen" id="screen" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <div class="modal-root" id="modalRoot" role="presentation"></div>
+
+  <script type="module">
+    import { requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
+
+    const LOCAL_KEY = "covermate-ops-local-v1";
+    const today = new Date("2026-08-10T09:00:00+07:00");
+    const fallbackDate = today.getTime();
+
+    const leadStatuses = [
+      ["all", "All"],
+      ["new", "New"],
+      ["contacting", "Contacting"],
+      ["contacted", "Contacted"],
+      ["consultation", "Consultation"],
+      ["quotation", "Quotation"],
+      ["considering", "Considering"],
+      ["converted", "Converted"],
+      ["follow-up-later", "Follow-up later"],
+      ["not-interested", "Not interested"],
+      ["lost", "Lost"]
+    ];
+
+    const interests = [
+      ["all", "All"],
+      ["motor", "Motor"],
+      ["life", "Life"],
+      ["health", "Health"],
+      ["accident", "Accident"],
+      ["savings", "Savings"]
+    ];
+
+    const modules = [
+      { id: "dashboard", label: "Dashboard", icon: "home" },
+      { id: "leads", label: "Leads", icon: "users", count: () => leadCounts().needsContact },
+      { id: "customers", label: "Customers", icon: "user" },
+      { id: "consultations", label: "Consultations", icon: "message" },
+      { id: "quotes", label: "Quotes", icon: "file" },
+      { id: "policies", label: "Policies", icon: "shield" },
+      { id: "renewals", label: "Renewals", icon: "refresh", count: () => renewalRows().filter((item) => item.days <= 30).length },
+      { id: "tasks", label: "Tasks", icon: "check", count: () => taskRows().filter((item) => !item.completed && item.priority !== "Low").length },
+      { id: "documents", label: "Documents", icon: "folder" },
+      { id: "content", label: "Website content", icon: "edit" },
+      { id: "insurers", label: "Insurers", icon: "building" },
+      { id: "analytics", label: "Analytics", icon: "chart" },
+      { id: "settings", label: "Settings", icon: "settings" }
+    ];
+
+    const seed = {
+      leads: [
+        {
+          id: "L-1042",
+          displayId: "L-1042",
+          name: "สมชาย ก. · Somchai K.",
+          phone: "081-234-5678",
+          email: "",
+          line: "somchai.k",
+          source: "LINE",
+          status: "new",
+          interest: "motor",
+          nextAction: "First contact today",
+          nextDate: "2026-08-10T18:00:00+07:00",
+          assigned: "Purich N.",
+          priority: "High",
+          submittedMessage: "ต้องการเทียบประกันรถยนต์ชั้น 1 สำหรับต่ออายุเดือนนี้",
+          createdAt: new Date("2026-08-10T07:10:00+07:00").getTime(),
+          consent: true,
+          demo: true
+        },
+        {
+          id: "L-1041",
+          displayId: "L-1041",
+          name: "ปิยะนุช ว. · Piyanuch W.",
+          phone: "082-345-6789",
+          email: "piyanuch.demo@example.com",
+          line: "nuch.w",
+          source: "Website form",
+          status: "contacting",
+          interest: "life",
+          nextAction: "Call attempt 2 — today 16:00",
+          nextDate: "2026-08-10T16:00:00+07:00",
+          assigned: "Purich N.",
+          priority: "High",
+          submittedMessage: "สนใจประกันชีวิตแบบสะสมทรัพย์ค่ะ อายุ 34 ปี ยังไม่เคยทำประกันมาก่อน อยากทราบว่าควรเริ่มยังไง",
+          createdAt: new Date("2026-08-09T15:40:00+07:00").getTime(),
+          consent: true,
+          demo: true
+        },
+        {
+          id: "L-1039",
+          displayId: "L-1039",
+          name: "Anan T.",
+          phone: "083-456-7890",
+          email: "anan.demo@example.com",
+          line: "",
+          source: "Referral",
+          status: "consultation",
+          interest: "health",
+          nextAction: "Needs review — 8 Aug 14:00",
+          nextDate: "2026-08-08T14:00:00+07:00",
+          assigned: "Purich N.",
+          priority: "Medium",
+          submittedMessage: "Needs a health-policy review before renewing.",
+          createdAt: new Date("2026-08-07T09:35:00+07:00").getTime(),
+          consent: true,
+          demo: true
+        },
+        {
+          id: "L-1038",
+          displayId: "L-1038",
+          name: "วรรถณา ส. · Wanna S.",
+          phone: "084-567-8901",
+          email: "",
+          line: "wanna.s",
+          source: "LINE",
+          status: "quotation",
+          interest: "motor",
+          nextAction: "Chase decision — 9 Aug",
+          nextDate: "2026-08-09T10:00:00+07:00",
+          assigned: "Purich N.",
+          priority: "High",
+          submittedMessage: "Already received a four-insurer motor comparison.",
+          createdAt: new Date("2026-08-05T12:15:00+07:00").getTime(),
+          consent: true,
+          demo: true
+        }
+      ],
+      customers: [
+        { id: "C-0044", name: "Malee P. · มาลี พ.", phone: "086-789-0123", policies: 1, holds: "Health", renewal: "22 Jul 2027", premium: "฿28,400", since: "Jul 2026" },
+        { id: "C-0038", name: "Somsak L. · สมศักดิ์ ล.", phone: "089-012-3456", policies: 3, holds: "Motor, Life, Health", renewal: "14 Sep 2026", premium: "฿61,200", since: "Mar 2025" },
+        { id: "C-0036", name: "Ratree S. · ราตรี ส.", phone: "090-123-4567", policies: 2, holds: "Motor, Life", renewal: "30 Aug 2026", premium: "฿34,900", since: "Nov 2024" },
+        { id: "C-0032", name: "Chaiwat P. · ชัยวัฒน์ พ.", phone: "091-234-5678", policies: 1, holds: "Motor", renewal: "19 Aug 2026", premium: "฿19,800", since: "Aug 2024" },
+        { id: "C-0027", name: "Pensri T. · เพ็ญศรี ท.", phone: "092-345-6789", policies: 2, holds: "Life, Health", renewal: "11 Feb 2027", premium: "฿47,500", since: "Feb 2024" }
+      ],
+      consultations: [
+        { name: "Anan T.", note: "Health — needs review", state: "Booked", when: "8 Aug 2026, 14:00", mode: "LINE call", ref: "CS-0219" },
+        { name: "วรรถณา ส.", note: "Motor — class 1 vs 2+", state: "Completed", when: "3 Aug 2026, 15:00", mode: "In person", ref: "CS-0217" },
+        { name: "ธนพล จ.", note: "Life — family protection", state: "Completed", when: "31 Jul 2026, 19:00", mode: "LINE call", ref: "CS-0214" },
+        { name: "Malee P.", note: "Health — OPD options", state: "Completed", when: "16 Jul 2026, 10:30", mode: "In person", ref: "CS-0210" }
+      ],
+      quotes: [
+        { quote: "วรรถณา ส. · Motor", id: "Q-0341", state: "Awaiting decision", wait: "waiting 2 days", insurers: 4, best: "Viriyah · ฿14,200", sent: "5 Aug 2026" },
+        { quote: "ธนพล จ. · Life", id: "Q-0338", state: "Awaiting decision", wait: "waiting 6 days", insurers: 3, best: "FWD · ฿26,000/yr", sent: "1 Aug 2026" },
+        { quote: "Anan T. · Health", id: "Q-0334", state: "Draft", wait: "", insurers: 5, best: "Muang Thai · ฿24,800", sent: "—" },
+        { quote: "Malee P. · Health", id: "Q-0329", state: "Accepted", wait: "", insurers: 4, best: "Bangkok Life · ฿28,400", sent: "17 Jul 2026" }
+      ],
+      policies: [
+        { id: "POL-2026-0188", owner: "Malee P.", type: "Health", status: "Active", insurer: "Bangkok Life", plan: "Health Plus OPD", expires: "22 Jul 2027", days: 349, premium: "฿28,400", cycle: "Annual" },
+        { id: "POL-2025-0142", owner: "Somsak L.", type: "Motor", status: "Renewal pending", insurer: "Viriyah", plan: "Class 1 — ทุน 550,000", expires: "14 Sep 2026", days: 38, premium: "฿18,900", cycle: "Annual" },
+        { id: "POL-2025-0119", owner: "Ratree S.", type: "Motor", status: "Renewal pending", insurer: "Dhipaya", plan: "Class 2+ — ทุน 300,000", expires: "30 Aug 2026", days: 23, premium: "฿11,200", cycle: "Annual" },
+        { id: "POL-2025-0103", owner: "Chaiwat P.", type: "Motor", status: "Renewal pending", insurer: "Srikrung / Viriyah", plan: "Class 1 — ทุน 400,000", expires: "19 Aug 2026", days: 12, premium: "฿19,800", cycle: "Annual" },
+        { id: "POL-2024-0091", owner: "Somsak L.", type: "Life", status: "Active", insurer: "AIA", plan: "Endowment 15/10", expires: "03 Mar 2040", days: 208, premium: "฿34,200", cycle: "Annual" },
+        { id: "POL-2024-0077", owner: "Pensri T.", type: "Health", status: "Active", insurer: "Muang Thai Life", plan: "Elite Health", expires: "11 Feb 2027", days: 188, premium: "฿31,500", cycle: "Semi-annual" }
+      ],
+      tasks: [
+        { id: "T-201", task: "First contact — สมชาย ก.", due: "Today 18:00", dueDate: "2026-08-10T18:00:00+07:00", priority: "High", related: "Lead L-1042", owner: "Purich N." },
+        { id: "T-202", task: "Call attempt 2 — ปิยะนุช ว.", due: "Today 16:00", dueDate: "2026-08-10T16:00:00+07:00", priority: "High", related: "Lead L-1041", owner: "Purich N." },
+        { id: "T-203", task: "Chase quote decision — ธนพล จ.", due: "5 Aug 2026", dueDate: "2026-08-05T10:00:00+07:00", priority: "High", related: "Quote Q-0338", owner: "Purich N." },
+        { id: "T-204", task: "Send renewal comparison — Chaiwat P.", due: "6 Aug 2026", dueDate: "2026-08-06T12:00:00+07:00", priority: "Medium", related: "Policy POL-2025-0103", owner: "Purich N." },
+        { id: "T-205", task: "Needs review call — Anan T.", due: "8 Aug 2026 14:00", dueDate: "2026-08-08T14:00:00+07:00", priority: "Medium", related: "Consultation CS-0219", owner: "Purich N." },
+        { id: "T-206", task: "Chase quote decision — วรรถณา ส.", due: "9 Aug 2026", dueDate: "2026-08-09T10:00:00+07:00", priority: "Medium", related: "Quote Q-0341", owner: "Purich N." },
+        { id: "T-207", task: "Renewal reminder — Ratree S.", due: "12 Aug 2026", dueDate: "2026-08-12T10:00:00+07:00", priority: "Medium", related: "Policy POL-2025-0119", owner: "Purich N." },
+        { id: "T-208", task: "Policy documents sent — Malee P.", due: "23 Jul 2026", dueDate: "2026-07-23T16:00:00+07:00", priority: "Low", related: "Policy POL-2026-0188", owner: "Purich N.", completed: true }
+      ],
+      documents: [
+        { file: "POL-2026-0188 — policy schedule.pdf", category: "Existing policy", customer: "Malee P.", related: "POL-2026-0188", uploaded: "23 Jul 2026" },
+        { file: "Health application — signed.pdf", category: "Application", customer: "Malee P.", related: "POL-2026-0188", uploaded: "18 Jul 2026" },
+        { file: "Motor comparison — 4 insurers.pdf", category: "Quotation", customer: "วรรถณา ส.", related: "Q-0341", uploaded: "5 Aug 2026" },
+        { file: "Previous motor schedule.pdf", category: "Existing policy", customer: "Chaiwat P.", related: "POL-2025-0103", uploaded: "19 Aug 2025" },
+        { file: "Proposal — family protection.pdf", category: "Proposal", customer: "ธนพล จ.", related: "Q-0338", uploaded: "1 Aug 2026" }
+      ],
+      insurers: [
+        { name: "Viriyah", code: "VRY", relation: "Non-life · via Srikrung", products: ["Motor class 1", "Motor 2+", "Motor 3+"], active: "3 live policies" },
+        { name: "Dhipaya", code: "DHP", relation: "Non-life · via Srikrung", products: ["Motor class 1", "Motor 2+"], active: "1 live policy" },
+        { name: "AIA", code: "AIA", relation: "Life · direct agency", products: ["Endowment", "Term", "Whole life"], active: "1 live policy" },
+        { name: "Bangkok Life", code: "BLA", relation: "Life · direct agency", products: ["Health", "Endowment"], active: "1 live policy" },
+        { name: "Muang Thai Life", code: "MTL", relation: "Life · direct agency", products: ["Elite Health", "Term"], active: "1 live policy" },
+        { name: "FWD", code: "FWD", relation: "Life · direct agency", products: ["Term 20", "Unit linked"], active: "1 live policy" }
+      ]
+    };
+
+    const state = {
+      module: hashModule() || "dashboard",
+      recordId: null,
+      query: "",
+      session: null,
+      remoteLeads: [],
+      remoteState: "loading",
+      remoteError: "",
+      local: readLocal(),
+      filters: {
+        leadStatus: "all",
+        leadInterest: "all",
+        customerHold: "all",
+        policyStatus: "all",
+        policyType: "all",
+        renewalWindow: "all",
+        taskView: "all",
+        documentCategory: "all",
+        analyticsTab: "overview",
+        settingsTab: "roles"
+      },
+      role: "owner"
+    };
+
+    const screen = document.getElementById("screen");
+    const sideNav = document.getElementById("sideNav");
+    const roleSelect = document.getElementById("roleSelect");
+    const mobileModuleSelect = document.getElementById("mobileModuleSelect");
+    const globalSearch = document.getElementById("globalSearch");
+    const modalRoot = document.getElementById("modalRoot");
+    const dataMode = document.getElementById("dataMode");
+
+    init();
+
+    async function init() {
+      try {
+        state.session = await requireVerifiedAdminSession({ redirectTo: "/admin/login" });
+        if (!state.session) return;
+      } finally {
+        document.body.dataset.boot = "ready";
+      }
+      applySessionChrome();
+      bindEvents();
+      renderChrome();
+      await loadRemoteLeads();
+      render();
+    }
+
+    function applySessionChrome() {
+      const name = state.session && (state.session.name || state.session.email) || "CoverMate admin";
+      const initials = name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "CM";
+      document.getElementById("userName").textContent = name;
+      document.getElementById("userAvatar").textContent = initials;
+      document.getElementById("userMeta").textContent = `${state.session.role || "admin"} · verified`;
+    }
+
+    async function loadRemoteLeads() {
+      state.remoteState = "loading";
+      renderTopStatus();
+      try {
+        if (!window.CoverMateFirebase || !window.CoverMateFirebase.loadOperationalLeads) {
+          throw new Error("Operational lead reader is unavailable.");
+        }
+        const rows = await window.CoverMateFirebase.loadOperationalLeads(120);
+        state.remoteLeads = rows.map(normalizeRemoteLead);
+        state.remoteState = "live";
+      } catch (error) {
+        state.remoteLeads = [];
+        state.remoteState = "fallback";
+        state.remoteError = error && error.message ? error.message : "Could not load contactLeads.";
+      }
+      renderTopStatus();
+    }
+
+    function bindEvents() {
+      document.addEventListener("click", handleClick);
+      document.addEventListener("submit", handleSubmit);
+      document.addEventListener("keydown", handleKeydown);
+      document.addEventListener("input", handleInput);
+      roleSelect.addEventListener("change", () => {
+        state.role = roleSelect.value;
+        render();
+      });
+      mobileModuleSelect.addEventListener("change", () => setModule(mobileModuleSelect.value));
+      globalSearch.addEventListener("input", () => {
+        state.query = globalSearch.value.trim().toLowerCase();
+        state.recordId = null;
+        renderScreen();
+      });
+      window.addEventListener("hashchange", () => {
+        const next = hashModule();
+        if (next && next !== state.module) {
+          state.module = next;
+          state.recordId = null;
+          render();
+        }
+      });
+    }
+
+    function handleClick(event) {
+      const actionEl = event.target.closest("[data-action]");
+      if (actionEl) {
+        const action = actionEl.dataset.action;
+        if (action === "logout") signOutAdmin();
+        if (action === "open-new-lead") openNewLeadModal();
+        if (action === "close-modal") closeModal();
+        if (action === "module") setModule(actionEl.dataset.module);
+        if (action === "back-leads") {
+          state.recordId = null;
+          renderScreen();
+        }
+        if (action === "lead-filter") {
+          state.filters[actionEl.dataset.filter] = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "status-change") {
+          setLeadStatus(actionEl.dataset.id, actionEl.dataset.status);
+        }
+        if (action === "add-note") addLeadNote(actionEl.dataset.id);
+        if (action === "task-filter") {
+          state.filters.taskView = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "complete-task") completeTask(actionEl.dataset.id);
+        if (action === "reopen-task") reopenTask(actionEl.dataset.id);
+        if (action === "settings-tab") {
+          state.filters.settingsTab = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "analytics-tab") {
+          state.filters.analyticsTab = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "policy-filter") {
+          state.filters[actionEl.dataset.filter] = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "renewal-filter") {
+          state.filters.renewalWindow = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "document-filter") {
+          state.filters.documentCategory = actionEl.dataset.value;
+          renderScreen();
+        }
+        if (action === "customer-filter") {
+          state.filters.customerHold = actionEl.dataset.value;
+          renderScreen();
+        }
+      }
+
+      const leadRow = event.target.closest("[data-open-lead]");
+      if (leadRow && !event.target.closest("button, a, input, select, textarea")) {
+        openLead(leadRow.dataset.openLead);
+      }
+    }
+
+    function handleSubmit(event) {
+      const form = event.target.closest("[data-form]");
+      if (!form) return;
+      event.preventDefault();
+      if (form.dataset.form === "new-lead") saveNewLead(form);
+    }
+
+    function handleKeydown(event) {
+      const row = event.target.closest("[data-open-lead]");
+      if (row && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        openLead(row.dataset.openLead);
+      }
+      if (event.key === "Escape" && modalRoot.classList.contains("open")) {
+        closeModal();
+      }
+    }
+
+    function handleInput(event) {
+      if (event.target.matches("[data-note]")) {
+        const id = event.target.dataset.note;
+        state.local.drafts[id] = event.target.value;
+        writeLocal();
+      }
+    }
+
+    function render() {
+      renderChrome();
+      renderTopStatus();
+      renderScreen();
+    }
+
+    function renderChrome() {
+      sideNav.innerHTML = modules.map((item) => {
+        const count = item.count ? Number(item.count() || 0) : 0;
+        return `
+          <button class="nav-button ${item.id === state.module ? "active" : ""}" type="button" data-action="module" data-module="${item.id}">
+            <span class="nav-icon" aria-hidden="true">${iconSvg(item.icon)}</span>
+            <span>${escapeHTML(item.label)}</span>
+            ${count ? `<span class="badge">${count}</span>` : ""}
+          </button>
+        `;
+      }).join("");
+      mobileModuleSelect.innerHTML = modules.map((item) => `<option value="${item.id}" ${item.id === state.module ? "selected" : ""}>${escapeHTML(item.label)}</option>`).join("");
+      roleSelect.value = state.role;
+      document.getElementById("newLeadButton").disabled = !canWrite();
+      document.getElementById("newLeadButton").title = canWrite() ? "Create a local Phase A lead" : "Read-only preview role cannot create leads";
+    }
+
+    function renderTopStatus() {
+      const text = state.remoteState === "live"
+        ? `Live contactLeads · ${state.remoteLeads.length}`
+        : state.remoteState === "loading"
+          ? "Loading live leads"
+          : "Demo fallback · backend required";
+      const warn = state.remoteState === "live" ? "" : " warn";
+      dataMode.className = `pill${warn}`;
+      dataMode.innerHTML = `<span class="dot"></span>${escapeHTML(text)}`;
+    }
+
+    function renderScreen() {
+      if (state.module === "dashboard") return renderDashboard();
+      if (state.module === "leads") return state.recordId ? renderLeadDetail(state.recordId) : renderLeads();
+      if (state.module === "customers") return renderCustomers();
+      if (state.module === "consultations") return renderConsultations();
+      if (state.module === "quotes") return renderQuotes();
+      if (state.module === "policies") return renderPolicies();
+      if (state.module === "renewals") return renderRenewals();
+      if (state.module === "tasks") return renderTasks();
+      if (state.module === "documents") return renderDocuments();
+      if (state.module === "content") return renderContent();
+      if (state.module === "insurers") return renderInsurers();
+      if (state.module === "analytics") return renderAnalytics();
+      if (state.module === "settings") return renderSettings();
+    }
+
+    function renderDashboard() {
+      const counts = leadCounts();
+      const overdue = taskRows().filter((task) => !task.completed && isOverdue(task.dueDate)).length;
+      const awaiting = quoteRows().filter((quote) => quote.state === "Awaiting decision").length;
+      const renewals = renewalRows().filter((item) => item.days <= 30).length;
+      screen.innerHTML = `
+        ${pageHead("Dashboard", "What needs a decision today, and where the pipeline is losing time.", livePill())}
+        <div class="grid metrics">
+          ${metric("Needs first contact", counts.needsContact, "Enquiries that arrived with nobody replying yet.", "Open leads", "leads")}
+          ${metric("Overdue follow-ups", overdue, "Dated actions that have passed without being completed.", "Open tasks", "tasks")}
+          ${metric("Awaiting decision", awaiting, "Quotes sent, no answer yet. The oldest waits six days.", "Open quotes", "quotes", true)}
+          ${metric("Renewals in 30 days", renewals, "Motor renewals lapse quietly. These need a comparison sent.", "Open renewals", "renewals", true)}
+        </div>
+        <div class="grid two" style="margin-top:16px;">
+          <section class="panel">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+              <h2>Today</h2>
+              <button class="ghost-button" type="button" data-action="module" data-module="tasks">All tasks</button>
+            </div>
+            <ul class="timeline">
+              ${taskRows().filter((task) => !task.completed).slice(0, 5).map((task) => `
+                <li>
+                  <strong>${escapeHTML(task.task)} <span class="status ${isOverdue(task.dueDate) ? "overdue" : "dim"}">${escapeHTML(task.due)}</span></strong>
+                  <span>${escapeHTML(task.related)} · ${escapeHTML(task.priority)} priority</span>
+                </li>
+              `).join("")}
+            </ul>
+          </section>
+          <section class="panel">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+              <h2>Pipeline this month</h2>
+              <span class="cell-meta">${state.remoteState === "live" ? "Live lead count" : "Demo figures"}</span>
+            </div>
+            <div class="progress-list">
+              ${pipelineRow("Enquiries", allLeads().length, 100)}
+              ${pipelineRow("Contacted", counts.contacted, percent(counts.contacted, allLeads().length))}
+              ${pipelineRow("Consultation", counts.consultation, percent(counts.consultation, allLeads().length))}
+              ${pipelineRow("Quoted", counts.quoted, percent(counts.quoted, allLeads().length))}
+              ${pipelineRow("Converted", counts.converted, percent(counts.converted, allLeads().length), true)}
+            </div>
+            <p class="note">Conversion counts a lead as converted only when a policy record exists against it. The Phase A route keeps anonymous website analytics separate from known CoverMate records.</p>
+          </section>
+          <section class="panel">
+            <h2>Renewals at risk</h2>
+            <ul class="timeline">
+              ${renewalRows().slice(0, 4).map((item) => `
+                <li>
+                  <strong>${escapeHTML(item.policy)} <span class="status ${item.days <= 14 ? "overdue" : item.days <= 30 ? "new" : "completed"}">${item.days}d</span></strong>
+                  <span>${escapeHTML(item.meta)} · expires ${escapeHTML(item.expires)}</span>
+                </li>
+              `).join("")}
+            </ul>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderLeads() {
+      const rows = filteredLeads();
+      screen.innerHTML = `
+        ${pageHead("Leads", "Every website enquiry becomes a record here. Filters and search preserve their state when a record is opened.", livePill())}
+        ${filterBar([
+          ["Status", "leadStatus", leadStatuses],
+          ["Interest", "leadInterest", interests]
+        ], rows.length)}
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:28%;">Lead</th>
+                <th style="width:15%;">Status</th>
+                <th style="width:17%;">Interest</th>
+                <th style="width:18%;">Last interaction</th>
+                <th>Next action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.length ? rows.map((lead) => leadRow(lead)).join("") : emptyRow("No leads match the current filters.")}
+            </tbody>
+          </table>
+        </div>
+        <p class="note">${state.remoteState === "live" ? "Lead rows come from contactLeads. Detail writes are local in Phase A until /api/ops and opsAudit are added." : `Using prototype fallback rows because live contactLeads could not load${state.remoteError ? `: ${escapeHTML(state.remoteError)}` : "."}`}</p>
+      `;
+    }
+
+    function renderLeadDetail(id) {
+      const lead = allLeads().find((item) => item.id === id);
+      if (!lead) {
+        state.recordId = null;
+        return renderLeads();
+      }
+      const localNote = state.local.drafts[id] || "";
+      const history = leadHistory(lead);
+      screen.innerHTML = `
+        <button class="ghost-button" type="button" data-action="back-leads">← All leads</button>
+        <div class="page-head" style="margin-top:18px;">
+          <div>
+            <h1>${escapeHTML(lead.name)}</h1>
+            <p class="lede">${escapeHTML(lead.displayId)} · ${interestLabel(lead.interest)} · from ${escapeHTML(lead.source || "Unknown source")}</p>
+          </div>
+          ${livePill(lead.demo ? "Demo record" : "Live contactLeads")}
+        </div>
+        <div class="split">
+          <div class="grid">
+            <section class="panel">
+              <h2>Contact</h2>
+              <div class="detail-grid">
+                ${field("Phone", lead.phone || lead.contact || "—")}
+                ${field("LINE ID", lead.line || "—")}
+                ${field("Email", lead.email || "—")}
+                ${field("Preferred time", lead.preferredTime || "Not captured")}
+                ${field("Source", lead.source || "Unknown")}
+                ${field("Assigned", lead.assigned || "Purich N.")}
+              </div>
+              <div class="actions">
+                <a class="primary-button" href="${lead.phone ? `tel:${escapeHTML(lead.phone)}` : "#"}" ${lead.phone ? "" : "aria-disabled=\"true\""}>Call ${escapeHTML(lead.phone || "phone")}</a>
+                <a class="ghost-button" href="https://line.me/R/ti/p/${encodeURIComponent(lead.line || "")}" target="_blank" rel="noreferrer">Open in LINE</a>
+                <button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="add-note" data-id="${escapeHTML(lead.id)}">Log interaction</button>
+              </div>
+            </section>
+            <section class="panel">
+              <h2>Submitted message</h2>
+              <p style="line-height:1.7;">${escapeHTML(lead.submittedMessage || "No message stored on this lead.")}</p>
+              <p class="note">Captured from ${escapeHTML(lead.source || "the public site")} · ${relativeTime(lead.createdAt)}</p>
+            </section>
+            <section class="panel">
+              <h2>Communication history</h2>
+              <ul class="timeline">
+                ${history.map((item) => `
+                  <li>
+                    <strong>${escapeHTML(item.title)}</strong>
+                    <span>${escapeHTML(item.meta)}</span>
+                  </li>
+                `).join("")}
+              </ul>
+              <label style="margin-top:24px;">
+                Add an internal note <span class="cell-meta">not visible to the customer</span>
+                <textarea data-note="${escapeHTML(lead.id)}" placeholder="What was discussed, what happens next">${escapeHTML(localNote)}</textarea>
+              </label>
+              <div class="actions">
+                <button class="primary-button" type="button" ${canWrite() ? "" : "disabled"} data-action="add-note" data-id="${escapeHTML(lead.id)}">Add to history</button>
+                <span class="cell-meta">Saved locally in Phase A; backend audit comes next.</span>
+              </div>
+            </section>
+          </div>
+          <div class="grid">
+            <section class="panel">
+              <h2>Status</h2>
+              <div class="filter-row">
+                ${leadStatuses.filter(([value]) => value !== "all").map(([value, label]) => `
+                  <button class="chip ${effectiveLeadStatus(lead) === value ? "active" : ""}" type="button" ${canWrite() ? "" : "disabled"} data-action="status-change" data-id="${escapeHTML(lead.id)}" data-status="${value}">${escapeHTML(label)}</button>
+                `).join("")}
+              </div>
+              <p class="note">Status changes are recorded locally here so the UI flow can be tested without pretending an audit-backed backend already exists.</p>
+            </section>
+            <section class="panel">
+              <h2>Next action</h2>
+              <div class="form-grid">
+                <label>
+                  Follow-up date
+                  <input type="date" value="${toDateInput(lead.nextDate)}" disabled title="Requires /api/ops audit backend" />
+                </label>
+                <label>
+                  Assigned adviser
+                  <select disabled title="Requires /api/ops audit backend">
+                    <option>${escapeHTML(lead.assigned || "Purich N.")}</option>
+                  </select>
+                </label>
+              </div>
+              <p class="note">Changing dated work needs a server-side audit entry with previous value, new value, actor and timestamp.</p>
+            </section>
+            <section class="panel" style="background:#f0f8e5;">
+              <h2>Consent · PDPA</h2>
+              <div class="detail-grid" style="grid-template-columns:1fr 1fr;">
+                ${field("Given", lead.consent ? "Yes" : "No / not captured")}
+                ${field("Source", lead.source || "Unknown")}
+                ${field("Purpose", "Insurance advice and quotation")}
+                ${field("Timestamp", formatDateTime(lead.createdAt))}
+              </div>
+              <p class="note">Consent records should be append-only. Withdrawal must become a new event, not an edit in place.</p>
+            </section>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCustomers() {
+      const rows = seed.customers.filter((row) => {
+        const hold = state.filters.customerHold;
+        return hold === "all" || row.holds.toLowerCase().includes(hold);
+      }).filter(matchesSearch);
+      screen.innerHTML = `
+        ${pageHead("Customers", "People who hold at least one policy. Open a future Phase B record for the full 360 view.", backendPill())}
+        ${filterBar([["Holds", "customerHold", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]], rows.length)}
+        ${simpleTable(["Customer", "Policies", "Next renewal", "Annual premium", "Customer since"], rows.map((row) => [
+          titleMeta(row.name, row.phone),
+          titleMeta(String(row.policies), row.holds),
+          row.renewal,
+          row.premium,
+          row.since
+        ]))}
+        <p class="note">Identification numbers and health information stay out of list screens. Customer graph storage is a Phase B backend task.</p>
+      `;
+    }
+
+    function renderConsultations() {
+      screen.innerHTML = `
+        ${pageHead("Consultations", "Free advice sessions, booked or completed, and what came out of each.", backendPill("Proposed · backend required"))}
+        ${simpleInfoBar("Newest first. Each consultation belongs to the lead or customer it was held with.", seed.consultations.length)}
+        ${simpleTable(["Consultation", "State", "When", "Mode", "Reference"], seed.consultations.map((row) => [
+          titleMeta(row.name, row.note),
+          status(row.state),
+          row.when,
+          row.mode,
+          row.ref
+        ]))}
+        <p class="note">Advice given at no charge is still recorded because it is evidence that the comparison happened.</p>
+      `;
+    }
+
+    function renderQuotes() {
+      screen.innerHTML = `
+        ${pageHead("Quotes", "Comparisons sent and the decisions still outstanding.", backendPill("Proposed · backend required"))}
+        ${simpleInfoBar("Newest first. Open one later to see the record it was quoted against.", seed.quotes.length)}
+        ${simpleTable(["Quote", "State", "Insurers compared", "Best option", "Sent"], quoteRows().map((row) => [
+          titleMeta(row.quote, row.id),
+          titleMeta(status(row.state), row.wait),
+          row.insurers,
+          row.best,
+          row.sent
+        ]))}
+        <p class="note">A quote is indicative until the insurer confirms. Nothing here is a binding premium.</p>
+      `;
+    }
+
+    function renderPolicies() {
+      let rows = seed.policies.slice();
+      if (state.filters.policyStatus !== "all") rows = rows.filter((row) => slug(row.status) === state.filters.policyStatus);
+      if (state.filters.policyType !== "all") rows = rows.filter((row) => row.type.toLowerCase() === state.filters.policyType);
+      rows = rows.filter(matchesSearch);
+      screen.innerHTML = `
+        ${pageHead("Policies", "What each customer actually holds, with whom, and until when.", backendPill("Proposed · backend required"))}
+        ${filterBar([
+          ["Status", "policyStatus", [["all", "All"], ["active", "Active"], ["renewal-pending", "Renewal pending"], ["expired", "Expired"]]],
+          ["Type", "policyType", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]
+        ], rows.length)}
+        ${simpleTable(["Policy", "Status", "Insurer / plan", "Expires", "Premium"], rows.map((row) => [
+          titleMeta(row.id, `${row.owner} · ${row.type}`),
+          status(row.status),
+          titleMeta(row.insurer, row.plan),
+          titleMeta(row.expires, `${row.days} days`),
+          titleMeta(row.premium, row.cycle)
+        ]))}
+      `;
+    }
+
+    function renderRenewals() {
+      let rows = renewalRows();
+      const windowValue = state.filters.renewalWindow;
+      if (windowValue !== "all") rows = rows.filter((row) => row.days <= Number(windowValue));
+      screen.innerHTML = `
+        ${pageHead("Renewals", "Policies approaching expiry, grouped by how much time is left. Motor is the operationally urgent one.", backendPill("Proposed · backend required"))}
+        ${renewalFilterBar(rows.length)}
+        ${simpleTable(["Policy", "Time left", "Renewal status", "Last contact", "Decision"], rows.map((row) => [
+          titleMeta(row.policy, row.meta),
+          `<span class="status ${row.days <= 14 ? "overdue" : row.days <= 30 ? "new" : "completed"}">${row.days} days</span>`,
+          titleMeta(row.renewalStatus, `Expires ${row.expires}`),
+          row.lastContact,
+          titleMeta(row.decision, "No renewal quote yet")
+        ]))}
+      `;
+    }
+
+    function renderTasks() {
+      const rows = filteredTasks();
+      screen.innerHTML = `
+        ${pageHead("Tasks and follow-ups", "Anything with a date attached, connected to the record it came from.", backendPill("Local actions · backend required"))}
+        <div class="filterbar">
+          <div class="filter-row">
+            <span class="filter-label">View</span>
+            ${[["all", "All"], ["today", "Today"], ["upcoming", "Upcoming"], ["overdue", "Overdue"], ["completed", "Completed"]].map(([value, label]) => `
+              <button class="chip ${state.filters.taskView === value ? "active" : ""}" type="button" data-action="task-filter" data-value="${value}">${label}</button>
+            `).join("")}
+            <span class="record-count">${rows.length} records</span>
+          </div>
+        </div>
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th style="width:16%;">Due</th>
+                <th style="width:14%;">Priority</th>
+                <th style="width:18%;">Related record</th>
+                <th style="width:14%;">Assigned</th>
+                <th style="width:130px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.length ? rows.map((task) => `
+                <tr>
+                  <td data-label="Task"><span class="cell-title">${escapeHTML(task.task)}</span></td>
+                  <td data-label="Due"><span class="status ${task.completed ? "dim" : isOverdue(task.dueDate) ? "overdue" : "completed"}">${escapeHTML(task.due)}</span></td>
+                  <td data-label="Priority"><strong>${escapeHTML(task.priority)}</strong></td>
+                  <td data-label="Related">${escapeHTML(task.related)}</td>
+                  <td data-label="Assigned">${escapeHTML(task.owner)}</td>
+                  <td data-label="Action">
+                    ${task.completed
+                      ? `<button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="reopen-task" data-id="${escapeHTML(task.id)}">Reopen</button>`
+                      : `<button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="complete-task" data-id="${escapeHTML(task.id)}">Complete</button>`}
+                  </td>
+                </tr>
+              `).join("") : emptyRow("No tasks match this view.")}
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Completing tasks in Phase A updates local demo state only. The backend phase must write task transitions to opsAudit.</p>
+      `;
+    }
+
+    function renderDocuments() {
+      let rows = seed.documents.slice();
+      if (state.filters.documentCategory !== "all") rows = rows.filter((row) => slug(row.category) === state.filters.documentCategory);
+      screen.innerHTML = `
+        ${pageHead("Documents", "Organised around the customer and the policy or quotation they belong to.", backendPill("Proposed · backend required"))}
+        ${filterBar([["Category", "documentCategory", [["all", "All"], ["existing-policy", "Existing policy"], ["quotation", "Quotation"], ["proposal", "Proposal"], ["application", "Application"]]]], rows.length)}
+        ${simpleTable(["File", "Category", "Customer", "Related record", "Uploaded"], rows.map((row) => [
+          row.file,
+          status(row.category),
+          row.customer,
+          row.related,
+          titleMeta(row.uploaded, "Purich N.")
+        ]))}
+        <p class="note">Identification documents must be role-gated and every open/download should be written to the audit trail.</p>
+      `;
+    }
+
+    function renderContent() {
+      const editDisabled = state.role === "readonly";
+      screen.innerHTML = `
+        ${pageHead("Website content", "The existing CMS remains the source of truth for public-site copy, sections, preview and publish.", livePill("Live today"))}
+        <div class="grid four">
+          ${contentCard("Edit the words", "Opens the live-site editor where existing headings, paragraphs and labels are editable in place.", "/#edit", editDisabled)}
+          ${contentCard("Arrange and customise", "Use the current admin launcher for section order, visibility, brand details, footer, backup and restore.", "/admin", editDisabled)}
+          ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", "/#preview", false)}
+          ${contentCard("Published versions", "Version history and restore tools stay in the existing control panel until the ops API is built.", "/#admin", editDisabled)}
+        </div>
+        <section class="panel" style="margin-top:18px;">
+          <h2>What the operator may edit</h2>
+          ${simpleTable(["Surface", "Phase A access"], [
+            ["FAQ questions and answers", status("Editable")],
+            ["Adviser information and photograph", status("Editable")],
+            ["Service descriptions", status("Editable")],
+            ["Contact details and office hours", status("Editable")],
+            ["Homepage announcement", status("Editable")],
+            ["Insurer logos on the panel", status("Editable")],
+            ["Section order, visibility and colour", status("Editable")],
+            ["Layout, spacing, components", status("Code only")],
+            ["Licence numbers and agent/broker wording", status("Locked — legal surface")],
+            ["Commission disclosure and claim-story rules", status("Locked — legal surface")],
+            ["Customer testimonials", status("Off — no claim stories published")]
+          ], true)}
+        </section>
+      `;
+    }
+
+    function renderInsurers() {
+      screen.innerHTML = `
+        ${pageHead("Insurers and products", "Who is on the panel, through which relationship, and what is placed with them.", backendPill("Proposed · backend required"))}
+        <div class="grid four">
+          ${seed.insurers.map((item) => `
+            <section class="card">
+              <div style="display:grid; grid-template-columns:58px 1fr; gap:14px; align-items:center;">
+                <span class="brand-mark" style="width:56px;height:56px;background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);font-size:16px;">${escapeHTML(item.code)}</span>
+                <div>
+                  <h2 style="margin-bottom:3px;">${escapeHTML(item.name)}</h2>
+                  <p class="cell-meta">${escapeHTML(item.relation)}</p>
+                </div>
+              </div>
+              <div class="filter-row" style="margin-top:16px;">${item.products.map((product) => `<span class="status dim">${escapeHTML(product)}</span>`).join("")}</div>
+              <p class="note" style="border-top:1px solid var(--line); padding-top:14px;"><span class="dot" style="display:inline-block;color:var(--sage);"></span> Active — ${escapeHTML(item.active)}</p>
+            </section>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderAnalytics() {
+      const counts = leadCounts();
+      const tab = state.filters.analyticsTab;
+      const known = allLeads().length;
+      screen.innerHTML = `
+        ${pageHead("Analytics", "Google Analytics answers where visitors came from. CoverMate answers which of them became known records.", backendPill())}
+        <div class="filterbar">
+          <div class="filter-row">
+            ${["overview", "acquisition", "conversion-funnel", "services", "leads", "cta-performance", "renewals"].map((value) => `
+              <button class="chip ${tab === value ? "active" : ""}" type="button" data-action="analytics-tab" data-value="${value}">${titleCase(value.replace(/-/g, " "))}</button>
+            `).join("")}
+            <a class="ghost-button" href="/admin/analytics">Open owner analytics view</a>
+          </div>
+        </div>
+        <div class="grid four">
+          ${analyticMetric("Website sessions", "—", "GA4 Data API credential not provisioned")}
+          ${analyticMetric("Website users", "—", "GA4 Data API credential not provisioned")}
+          ${analyticMetric("LINE intent", "—", "GA4 event stream only, never counted as a lead")}
+          ${analyticMetric("Known leads", known, state.remoteState === "live" ? "From contactLeads" : "Demo fallback")}
+          ${analyticMetric("Consultations", counts.consultation, "First-party operational stage")}
+          ${analyticMetric("Quotes", counts.quoted, "First-party operational stage")}
+          ${analyticMetric("Policies issued", counts.converted, "Confirmed policy records only")}
+        </div>
+        <section class="panel" style="margin-top:18px;">
+          <h2>Visitor to policy</h2>
+          <div class="progress-list">
+            ${pipelineRow("Website sessions", "—", 0)}
+            ${pipelineRow("Intent actions", "—", 0)}
+            ${pipelineRow("Known leads", known, 100)}
+            ${pipelineRow("Contacted", counts.contacted, percent(counts.contacted, known))}
+            ${pipelineRow("Consultations", counts.consultation, percent(counts.consultation, known))}
+            ${pipelineRow("Quotes", counts.quoted, percent(counts.quoted, known))}
+            ${pipelineRow("Policies issued", counts.converted, percent(counts.converted, known), true)}
+          </div>
+          <p class="note">The grey stages are GA4 territory and carry no lead denominator. First-party stages are measured against known leads.</p>
+        </section>
+      `;
+    }
+
+    function renderSettings() {
+      const tab = state.filters.settingsTab;
+      const tabs = [
+        ["roles", "Roles & permissions"],
+        ["statuses", "Lead statuses"],
+        ["consent", "PDPA & consent"],
+        ["audit", "Audit trail"]
+      ];
+      screen.innerHTML = `
+        ${pageHead("Settings", "Roles, statuses, data protection and the audit trail.", livePill("Live today"))}
+        <div class="tabs">
+          ${tabs.map(([value, label]) => `<button class="chip ${tab === value ? "active" : ""}" type="button" data-action="settings-tab" data-value="${value}">${escapeHTML(label)}</button>`).join("")}
+        </div>
+        ${tab === "roles" ? settingsRoles() : ""}
+        ${tab === "statuses" ? settingsStatuses() : ""}
+        ${tab === "consent" ? settingsConsent() : ""}
+        ${tab === "audit" ? settingsAudit() : ""}
+      `;
+    }
+
+    function settingsRoles() {
+      return `
+        <section class="panel">
+          <h2>Roles and permissions</h2>
+          <p class="lede" style="font-size:16px;margin-bottom:20px;">The role selector previews what the interface offers. Server-side authorization must still enforce every operation.</p>
+          <div class="table-shell permission-table">
+            <table>
+              <thead><tr><th>Operation</th><th>Owner</th><th>Adviser</th><th>Ops</th><th>Read-only</th></tr></thead>
+              <tbody>
+                ${[
+                  ["View leads and customers", 1, 1, 1, 1],
+                  ["Create and edit records", 1, 1, 1, 0],
+                  ["Change lead or policy status", 1, 1, 1, 0],
+                  ["View identification documents", 1, 1, 0, 0],
+                  ["Edit or withdraw consent records", 1, 0, 0, 0],
+                  ["Export customer data", 1, 0, 0, 0],
+                  ["Delete records", 1, 0, 0, 0],
+                  ["Manage users and roles", 1, 0, 0, 0],
+                  ["Edit website content", 1, 0, 0, 0],
+                  ["Edit compliance copy", 0, 0, 0, 0]
+                ].map((row) => `<tr>${row.map((cell, index) => index ? `<td data-label="${["Owner", "Adviser", "Ops", "Read-only"][index - 1]}">${cell ? "<span class=\"yes\">✓</span>" : "<span class=\"no\">−</span>"}</td>` : `<td data-label="Operation"><strong>${escapeHTML(cell)}</strong></td>`).join("")}</tr>`).join("")}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    function settingsStatuses() {
+      return `
+        <section class="panel">
+          <h2>Lead statuses</h2>
+          ${simpleTable(["Status", "Meaning", "Allowed next statuses"], leadStatuses.filter(([id]) => id !== "all").map(([id, label]) => [
+            status(label),
+            statusMeaning(id),
+            nextStatuses(id).map(([value, name]) => name).join(", ")
+          ]), true)}
+        </section>
+      `;
+    }
+
+    function settingsConsent() {
+      return `
+        <section class="panel">
+          <h2>PDPA and consent</h2>
+          <div class="notice sage">Consent is append-only in the target model. Editing or withdrawing consent must create a new consent event with actor, source, purpose and timestamp.</div>
+          ${simpleTable(["Event", "Stored fields"], [
+            ["Given from public form", "leadId, purpose, sourcePath, timestamp, language"],
+            ["Manual consent", "customerId, purpose, actor, timestamp, evidence note"],
+            ["Withdrawal", "customerId, previous consent id, actor, timestamp, reason"]
+          ], true)}
+        </section>
+      `;
+    }
+
+    function settingsAudit() {
+      const rows = state.local.audit.slice(0, 20);
+      return `
+        <section class="panel">
+          <h2>Audit trail</h2>
+          <div class="notice">These are local Phase A audit events for prototype verification. The production backend should write immutable opsAudit documents server-side.</div>
+          ${rows.length ? simpleTable(["When", "Actor", "Action", "Record"], rows.map((row) => [
+            formatDateTime(row.ts),
+            row.actor,
+            titleMeta(row.action, row.detail),
+            row.record
+          ]), true) : `<div class="empty">No local audit events yet.</div>`}
+        </section>
+      `;
+    }
+
+    function openNewLeadModal() {
+      if (!canWrite()) return;
+      modalRoot.classList.add("open");
+      modalRoot.innerHTML = `
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newLeadTitle">
+          <div class="modal-head">
+            <div>
+              <h2 id="newLeadTitle">New lead</h2>
+              <p class="note" style="margin-top:0;">Creates a Phase A local record and first-contact task. Backend writes move to /api/ops.</p>
+            </div>
+            <button class="ghost-button" type="button" data-action="close-modal">Close</button>
+          </div>
+          <form data-form="new-lead">
+            <div class="modal-body">
+              <div class="form-grid">
+                <label>Name<input name="name" required autocomplete="name" placeholder="Customer name" /></label>
+                <label>Phone or contact<input name="contact" required autocomplete="tel" placeholder="08X-XXX-XXXX or LINE ID" /></label>
+                <label>Interest
+                  <select name="interest">
+                    <option value="motor">Motor</option>
+                    <option value="life">Life</option>
+                    <option value="health">Health</option>
+                    <option value="accident">Accident</option>
+                    <option value="savings">Savings</option>
+                  </select>
+                </label>
+                <label>Source
+                  <select name="source">
+                    <option>LINE</option>
+                    <option>Website form</option>
+                    <option>Referral</option>
+                    <option>Google search</option>
+                  </select>
+                </label>
+              </div>
+              <label style="margin-top:14px;">Submitted message<textarea name="message" placeholder="What the customer asked for"></textarea></label>
+              <label class="checkbox" style="margin-top:14px;"><input name="consent" type="checkbox" required /> PDPA consent was given for insurance advice and quotation</label>
+            </div>
+            <div class="modal-actions">
+              <button class="ghost-button" type="button" data-action="close-modal">Cancel</button>
+              <button class="primary-button" type="submit">Create lead</button>
+            </div>
+          </form>
+        </div>
+      `;
+      modalRoot.querySelector("input[name='name']").focus();
+    }
+
+    function closeModal() {
+      modalRoot.classList.remove("open");
+      modalRoot.innerHTML = "";
+    }
+
+    function saveNewLead(form) {
+      const data = new FormData(form);
+      const now = Date.now();
+      const id = `local-${now}`;
+      const lead = {
+        id,
+        displayId: `LOCAL-${String(state.local.leads.length + 1).padStart(3, "0")}`,
+        name: clean(data.get("name")),
+        phone: clean(data.get("contact")),
+        email: "",
+        line: "",
+        source: clean(data.get("source")),
+        status: "new",
+        interest: clean(data.get("interest")),
+        nextAction: "First contact task created",
+        nextDate: new Date(now + 2 * 60 * 60 * 1000).toISOString(),
+        assigned: state.session && state.session.name || "CoverMate admin",
+        priority: "High",
+        submittedMessage: clean(data.get("message")) || "No message recorded.",
+        createdAt: now,
+        consent: data.get("consent") === "on",
+        local: true
+      };
+      state.local.leads.unshift(lead);
+      state.local.tasks.unshift({
+        id: `task-${now}`,
+        task: `First contact — ${lead.name}`,
+        due: "Today",
+        dueDate: lead.nextDate,
+        priority: "High",
+        related: `Lead ${lead.displayId}`,
+        owner: lead.assigned,
+        local: true
+      });
+      audit("Lead created", lead.displayId, "Local Phase A record plus first-contact task");
+      writeLocal();
+      closeModal();
+      state.module = "leads";
+      state.recordId = lead.id;
+      render();
+    }
+
+    function openLead(id) {
+      state.module = "leads";
+      state.recordId = id;
+      history.replaceState(null, "", "#leads");
+      render();
+    }
+
+    function setModule(moduleId) {
+      if (!modules.some((item) => item.id === moduleId)) return;
+      state.module = moduleId;
+      state.recordId = null;
+      history.replaceState(null, "", `#${moduleId}`);
+      render();
+    }
+
+    function setLeadStatus(id, next) {
+      if (!canWrite()) return;
+      const lead = allLeads().find((item) => item.id === id);
+      if (!lead) return;
+      state.local.leadStatus[id] = next;
+      audit("Lead status changed", lead.displayId, `${labelFor(leadStatuses, effectiveLeadStatus(lead))} → ${labelFor(leadStatuses, next)}`);
+      writeLocal();
+      renderScreen();
+      renderChrome();
+    }
+
+    function addLeadNote(id) {
+      if (!canWrite()) return;
+      const lead = allLeads().find((item) => item.id === id);
+      const text = clean(state.local.drafts[id] || "");
+      if (!lead || !text) return;
+      state.local.notes[id] = state.local.notes[id] || [];
+      state.local.notes[id].unshift({
+        title: text,
+        meta: `Just now · ${state.session && state.session.name || "CoverMate admin"}`
+      });
+      state.local.drafts[id] = "";
+      audit("Interaction note added", lead.displayId, text);
+      writeLocal();
+      renderScreen();
+    }
+
+    function completeTask(id) {
+      if (!canWrite()) return;
+      state.local.taskState[id] = "completed";
+      audit("Task completed", id, "Marked complete in Phase A local state");
+      writeLocal();
+      render();
+    }
+
+    function reopenTask(id) {
+      if (!canWrite()) return;
+      state.local.taskState[id] = "open";
+      audit("Task reopened", id, "Reopened in Phase A local state");
+      writeLocal();
+      render();
+    }
+
+    function allLeads() {
+      const base = state.remoteState === "live" ? state.remoteLeads : seed.leads;
+      return state.local.leads.concat(base).map((lead) => ({
+        ...lead,
+        status: state.local.leadStatus[lead.id] || lead.status
+      }));
+    }
+
+    function filteredLeads() {
+      return allLeads().filter((lead) => {
+        const statusPass = state.filters.leadStatus === "all" || effectiveLeadStatus(lead) === state.filters.leadStatus;
+        const interestPass = state.filters.leadInterest === "all" || lead.interest === state.filters.leadInterest;
+        return statusPass && interestPass && matchesSearch(lead);
+      }).sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    }
+
+    function effectiveLeadStatus(lead) {
+      return state.local.leadStatus[lead.id] || lead.status || "new";
+    }
+
+    function leadCounts() {
+      const rows = allLeads();
+      return {
+        needsContact: rows.filter((lead) => ["new", "contacting"].includes(effectiveLeadStatus(lead))).length,
+        contacted: rows.filter((lead) => !["new"].includes(effectiveLeadStatus(lead))).length,
+        consultation: rows.filter((lead) => ["consultation", "quotation", "considering", "converted"].includes(effectiveLeadStatus(lead))).length,
+        quoted: rows.filter((lead) => ["quotation", "considering", "converted"].includes(effectiveLeadStatus(lead))).length,
+        converted: rows.filter((lead) => effectiveLeadStatus(lead) === "converted").length
+      };
+    }
+
+    function taskRows() {
+      return state.local.tasks.concat(seed.tasks).map((task) => ({
+        ...task,
+        completed: state.local.taskState[task.id] === "completed" || (state.local.taskState[task.id] !== "open" && task.completed === true)
+      }));
+    }
+
+    function filteredTasks() {
+      const view = state.filters.taskView;
+      return taskRows().filter((task) => {
+        if (view === "completed") return task.completed;
+        if (task.completed) return view === "all";
+        if (view === "today") return sameDay(task.dueDate, today);
+        if (view === "upcoming") return !isOverdue(task.dueDate) && !sameDay(task.dueDate, today);
+        if (view === "overdue") return isOverdue(task.dueDate);
+        return matchesSearch(task);
+      }).filter(matchesSearch);
+    }
+
+    function renewalRows() {
+      return seed.policies
+        .filter((policy) => policy.status === "Renewal pending" || policy.days <= 365)
+        .sort((a, b) => a.days - b.days)
+        .map((policy) => ({
+          policy: `${policy.owner} · ${policy.type}`,
+          meta: `${policy.id} · ${policy.insurer}`,
+          days: policy.days,
+          expires: policy.expires,
+          renewalStatus: policy.days <= 14 ? "Comparison overdue" : policy.days <= 30 ? "Comparison due" : "Not started",
+          lastContact: policy.days <= 14 ? "19 days ago" : "—",
+          decision: "Awaiting customer"
+        }));
+    }
+
+    function quoteRows() {
+      return seed.quotes.slice();
+    }
+
+    function normalizeRemoteLead(item, index) {
+      const createdAt = timestampMs(item.createdAt) || timestampMs(item.updatedAt) || fallbackDate - index * 3600000;
+      const source = item.sourcePath ? sourceLabel(item.sourcePath) : "Public form";
+      return {
+        id: `remote-${item.id}`,
+        remoteId: item.id,
+        displayId: `CL-${String(item.id || "").slice(0, 7).toUpperCase()}`,
+        name: item.name || "Unnamed lead",
+        phone: item.contact || "",
+        contact: item.contact || "",
+        email: "",
+        line: "",
+        source,
+        status: safeStatus(item.status, item.read),
+        interest: item.coverage || item.qtype || "unsure",
+        nextAction: item.read ? "Review record" : "First contact",
+        nextDate: new Date(createdAt + 2 * 60 * 60 * 1000).toISOString(),
+        assigned: "CoverMate admin",
+        priority: item.read ? "Medium" : "High",
+        submittedMessage: item.topic || item.summary || "No submitted message stored.",
+        createdAt,
+        updatedAt: timestampMs(item.updatedAt),
+        consent: item.consent === true,
+        language: item.language || "th",
+        live: true
+      };
+    }
+
+    function leadHistory(lead) {
+      const local = state.local.notes[lead.id] || [];
+      return local.concat([
+        { title: lead.live ? "Lead loaded from contactLeads" : "Lead created", meta: `${formatDateTime(lead.createdAt)} · ${lead.source || "System"}` },
+        { title: lead.consent ? "Consent captured" : "Consent not captured", meta: lead.consent ? "Public form checkbox · insurance advice and quotation" : "Needs follow-up before advice or quotation" }
+      ]);
+    }
+
+    function pageHead(title, description, aside = "") {
+      return `
+        <div class="page-head">
+          <div>
+            <h1>${escapeHTML(title)}</h1>
+            <p class="lede">${escapeHTML(description)}</p>
+          </div>
+          <div>${aside}</div>
+        </div>
+      `;
+    }
+
+    function livePill(text) {
+      return `<span class="pill"><span class="dot"></span>${escapeHTML(text || (state.remoteState === "live" ? "Live contactLeads" : "Local demo"))}</span>`;
+    }
+
+    function backendPill(text) {
+      return `<span class="pill warn"><span class="dot"></span>${escapeHTML(text || "UI ready · backend required")}</span>`;
+    }
+
+    function metric(label, value, copy, cta, moduleId, sage = false) {
+      return `
+        <section class="card metric">
+          <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
+          <span class="value">${escapeHTML(String(value))}</span>
+          <p>${escapeHTML(copy)}</p>
+          <a href="#${moduleId}" data-action="module" data-module="${moduleId}">${escapeHTML(cta)} →</a>
+        </section>
+      `;
+    }
+
+    function analyticMetric(label, value, copy) {
+      return `
+        <section class="card">
+          <span class="field-label">${escapeHTML(label)}</span>
+          <strong style="display:block;font-size:34px;line-height:1.1;margin:10px 0;">${escapeHTML(String(value))}</strong>
+          <p class="note" style="margin:0;">${escapeHTML(copy)}</p>
+        </section>
+      `;
+    }
+
+    function pipelineRow(label, value, pct, sage = false) {
+      const width = Number.isFinite(Number(pct)) ? Math.max(0, Math.min(100, Number(pct))) : 0;
+      const meta = value === "—" ? "—" : `${value} · ${Math.round(width)}%`;
+      return `
+        <div class="progress-row">
+          <strong>${escapeHTML(label)}</strong>
+          <span class="bar ${sage ? "sage" : ""}"><span style="width:${width}%;"></span></span>
+          <span class="cell-meta">${escapeHTML(meta)}</span>
+        </div>
+      `;
+    }
+
+    function filterBar(groups, count) {
+      return `
+        <div class="filterbar">
+          ${groups.map(([label, key, values]) => `
+            <div class="filter-row">
+              <span class="filter-label">${escapeHTML(label)}</span>
+              ${values.map(([value, text]) => {
+                const action = key.startsWith("policy") ? "policy-filter" : key === "documentCategory" ? "document-filter" : key === "customerHold" ? "customer-filter" : "lead-filter";
+                return `<button class="chip ${state.filters[key] === value ? "active" : ""}" type="button" data-action="${action}" data-filter="${key}" data-value="${value}">${escapeHTML(text)}</button>`;
+              }).join("")}
+              ${label === groups[0][0] ? `<span class="record-count">${count} records</span>` : ""}
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renewalFilterBar(count) {
+      return `
+        <div class="filterbar">
+          <div class="filter-row">
+            <span class="filter-label">Expiring within</span>
+            ${[["7", "7 days"], ["14", "14 days"], ["30", "30 days"], ["60", "60 days"], ["90", "90 days"], ["all", "All"]].map(([value, label]) => `
+              <button class="chip ${state.filters.renewalWindow === value ? "active" : ""}" type="button" data-action="renewal-filter" data-value="${value}">${label}</button>
+            `).join("")}
+            <span class="record-count">${count} records</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function simpleInfoBar(text, count) {
+      return `<div class="filterbar"><div class="filter-row"><span>${escapeHTML(text)}</span><span class="record-count">${count} records</span></div></div>`;
+    }
+
+    function leadRow(lead) {
+      const statusValue = effectiveLeadStatus(lead);
+      return `
+        <tr data-open-lead="${escapeHTML(lead.id)}" tabindex="0" role="button" aria-label="Open ${escapeHTML(lead.name)}">
+          <td data-label="Lead">${titleMeta(lead.name, `${lead.phone || lead.contact || "No phone"} · ${lead.source || "Unknown"}`)}</td>
+          <td data-label="Status">${status(labelFor(leadStatuses, statusValue), statusValue)}</td>
+          <td data-label="Interest"><strong>${interestLabel(lead.interest)}</strong></td>
+          <td data-label="Last interaction"><strong>${relativeTime(lead.createdAt)}</strong></td>
+          <td data-label="Next action">${titleMeta(lead.nextAction || "—", lead.assigned || "Unassigned")}</td>
+        </tr>
+      `;
+    }
+
+    function simpleTable(headers, rows, raw = false) {
+      return `
+        <div class="table-shell">
+          <table>
+            <thead><tr>${headers.map((head) => `<th>${escapeHTML(head)}</th>`).join("")}</tr></thead>
+            <tbody>
+              ${rows.length ? rows.map((cells) => `
+                <tr>${cells.map((cell, index) => `<td data-label="${escapeHTML(headers[index])}">${raw ? cell : String(cell).includes("<") ? cell : escapeHTML(String(cell))}</td>`).join("")}</tr>
+              `).join("") : emptyRow("No records.")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function emptyRow(text) {
+      return `<tr><td colspan="8"><div class="empty">${escapeHTML(text)}</div></td></tr>`;
+    }
+
+    function contentCard(title, copy, href, disabled) {
+      return `
+        <section class="card module-card">
+          <span class="round-icon" aria-hidden="true">${iconSvg("edit")}</span>
+          <h2>${escapeHTML(title)}</h2>
+          <p class="note" style="margin:0 0 18px;">${escapeHTML(copy)}</p>
+          ${disabled
+            ? `<button class="ghost-button" type="button" disabled title="Read-only preview role cannot edit website content">Read-only</button>`
+            : `<a class="ghost-button" href="${escapeHTML(href)}" target="_blank" rel="noreferrer">Open</a>`}
+        </section>
+      `;
+    }
+
+    function field(label, value) {
+      return `<div><span class="field-label">${escapeHTML(label)}</span><span class="field-value">${escapeHTML(String(value || "—"))}</span></div>`;
+    }
+
+    function titleMeta(title, meta) {
+      return `<span class="cell-title">${escapeHTML(String(title))}</span>${meta ? `<span class="cell-meta">${escapeHTML(String(meta))}</span>` : ""}`;
+    }
+
+    function status(label, value) {
+      const className = value || slug(label);
+      return `<span class="status ${escapeHTML(className)}">${escapeHTML(label)}</span>`;
+    }
+
+    function readLocal() {
+      try {
+        const raw = localStorage.getItem(LOCAL_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        return {
+          leads: Array.isArray(parsed && parsed.leads) ? parsed.leads : [],
+          tasks: Array.isArray(parsed && parsed.tasks) ? parsed.tasks : [],
+          leadStatus: parsed && parsed.leadStatus && typeof parsed.leadStatus === "object" ? parsed.leadStatus : {},
+          taskState: parsed && parsed.taskState && typeof parsed.taskState === "object" ? parsed.taskState : {},
+          notes: parsed && parsed.notes && typeof parsed.notes === "object" ? parsed.notes : {},
+          drafts: parsed && parsed.drafts && typeof parsed.drafts === "object" ? parsed.drafts : {},
+          audit: Array.isArray(parsed && parsed.audit) ? parsed.audit : []
+        };
+      } catch {
+        return { leads: [], tasks: [], leadStatus: {}, taskState: {}, notes: {}, drafts: {}, audit: [] };
+      }
+    }
+
+    function writeLocal() {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(state.local));
+    }
+
+    function audit(action, record, detail) {
+      state.local.audit.unshift({
+        ts: Date.now(),
+        actor: state.session && (state.session.name || state.session.email) || "CoverMate admin",
+        action,
+        record,
+        detail
+      });
+      state.local.audit = state.local.audit.slice(0, 80);
+    }
+
+    function canWrite() {
+      return state.role !== "readonly";
+    }
+
+    function hashModule() {
+      const id = (location.hash || "").replace("#", "");
+      return modules.some((item) => item.id === id) ? id : "";
+    }
+
+    function matchesSearch(row) {
+      if (!state.query) return true;
+      return JSON.stringify(row).toLowerCase().includes(state.query);
+    }
+
+    function clean(value) {
+      return String(value || "").replace(/\s+/g, " ").trim().slice(0, 600);
+    }
+
+    function escapeHTML(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function iconSvg(name) {
+      const paths = {
+        home: '<path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V20h14v-9.5"></path><path d="M9 20v-6h6v6"></path>',
+        users: '<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.9"></path><path d="M16 3.2a4 4 0 0 1 0 7.6"></path>',
+        user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',
+        message: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>',
+        file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h6"></path>',
+        shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path>',
+        refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path><path d="M3 21v-5h5"></path>',
+        check: '<path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>',
+        folder: '<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>',
+        edit: '<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path>',
+        building: '<path d="M4 21V8l8-5 8 5v13"></path><path d="M9 21v-6h6v6"></path><path d="M9 10h.01"></path><path d="M15 10h.01"></path>',
+        chart: '<path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 16v-5"></path><path d="M12 16V8"></path><path d="M16 16v-3"></path>',
+        settings: '<path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3h.1A1.7 1.7 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path>'
+      };
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.home}</svg>`;
+    }
+
+    function slug(value) {
+      return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    }
+
+    function safeStatus(statusValue, read) {
+      const value = slug(statusValue || "");
+      return leadStatuses.some(([statusId]) => statusId === value) ? value : read ? "contacted" : "new";
+    }
+
+    function labelFor(list, value) {
+      const found = list.find(([id]) => id === value);
+      return found ? found[1] : titleCase(String(value || "").replace(/-/g, " "));
+    }
+
+    function titleCase(value) {
+      return String(value || "").replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function interestLabel(value) {
+      const found = interests.find(([id]) => id === value);
+      return found ? (found[0] === "all" ? "All" : found[1]) : titleCase(value || "unsure");
+    }
+
+    function sourceLabel(path) {
+      if (/line/i.test(path)) return "LINE";
+      if (/referral/i.test(path)) return "Referral";
+      if (/google/i.test(path)) return "Google search";
+      return "Website form";
+    }
+
+    function timestampMs(value) {
+      if (!value) return 0;
+      if (typeof value === "number") return value;
+      if (value instanceof Date) return value.getTime();
+      if (typeof value.toMillis === "function") return value.toMillis();
+      if (typeof value.seconds === "number") return value.seconds * 1000;
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function sameDay(value, date) {
+      const a = new Date(value);
+      return a.getFullYear() === date.getFullYear() && a.getMonth() === date.getMonth() && a.getDate() === date.getDate();
+    }
+
+    function isOverdue(value) {
+      const ms = timestampMs(value);
+      return ms > 0 && ms < today.getTime();
+    }
+
+    function relativeTime(value) {
+      const ms = timestampMs(value);
+      if (!ms) return "Unknown";
+      const delta = Math.max(0, today.getTime() - ms);
+      const hours = Math.floor(delta / 3600000);
+      if (hours < 1) return "Just now";
+      if (hours < 24) return `${hours} hours ago`;
+      const days = Math.floor(hours / 24);
+      if (days === 1) return "Yesterday";
+      if (days < 7) return `${days} days ago`;
+      if (days < 35) return `${Math.floor(days / 7)} weeks ago`;
+      return formatDate(ms);
+    }
+
+    function formatDate(value) {
+      const ms = timestampMs(value);
+      if (!ms) return "—";
+      return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(ms);
+    }
+
+    function formatDateTime(value) {
+      const ms = timestampMs(value);
+      if (!ms) return "—";
+      return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(ms);
+    }
+
+    function toDateInput(value) {
+      const ms = timestampMs(value);
+      if (!ms) return "";
+      return new Date(ms).toISOString().slice(0, 10);
+    }
+
+    function percent(value, total) {
+      return total > 0 ? value / total * 100 : 0;
+    }
+
+    function statusMeaning(value) {
+      const meanings = {
+        new: "Arrived but no outbound contact has happened.",
+        contacting: "A first contact attempt is underway.",
+        contacted: "Customer has replied or spoken with CoverMate.",
+        consultation: "Advice session is booked or completed.",
+        quotation: "A comparison or proposal is being prepared or sent.",
+        considering: "Customer is deciding after receiving options.",
+        converted: "Policy record exists.",
+        "follow-up-later": "Customer asked to pause until a future date.",
+        "not-interested": "Customer declined for now.",
+        lost: "Closed without a policy."
+      };
+      return meanings[value] || "";
+    }
+
+    function nextStatuses(value) {
+      const map = {
+        new: ["contacting", "not-interested", "lost"],
+        contacting: ["contacted", "follow-up-later", "not-interested"],
+        contacted: ["consultation", "quotation", "follow-up-later"],
+        consultation: ["quotation", "considering", "lost"],
+        quotation: ["considering", "converted", "lost"],
+        considering: ["converted", "follow-up-later", "lost"],
+        converted: ["follow-up-later"],
+        "follow-up-later": ["contacting", "lost"],
+        "not-interested": ["follow-up-later", "lost"],
+        lost: ["follow-up-later"]
+      };
+      return (map[value] || []).map((id) => [id, labelFor(leadStatuses, id)]);
+    }
+  </script>
+</body>
+</html>

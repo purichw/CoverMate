@@ -201,6 +201,24 @@ JSON-LD claim boundaries stay code-owned.
    Data API endpoint or scheduled Firestore export exists.
 7. The page does not load visitor Google Analytics scripts.
 
+## Operations Portal Flow
+
+1. Owner or operator opens `/admin/ops` directly after signing in.
+2. The page checks `covermate-admin-session` as a fast local cache, then verifies
+   the active Firebase user through `requireVerifiedAdminSession`.
+3. The Leads module reads real `contactLeads/*` through
+   `covermate-firebase.js.loadOperationalLeads`.
+4. Lead filters and global search remain in memory when a lead detail is opened
+   and closed.
+5. New lead, status change, task completion, and note interactions update local
+   Phase A state only and write visible local audit entries. They must become
+   server-side `/api/ops` writes with immutable `opsAudit/*` entries before they
+   are treated as production operations.
+6. Website content actions link back to the existing CMS routes (`/#edit`,
+   `/#admin`, `/#preview`, `/admin/analytics`) instead of depending on the
+   offline Claude standalone files.
+7. The page does not load visitor Google Analytics scripts.
+
 ## Access Behavior
 
 | Entry | With session | Without session |
@@ -208,6 +226,7 @@ JSON-LD claim boundaries stay code-owned.
 | `/admin/login` | Login page remains available | Login page remains available |
 | `/admin` | Show launcher | Redirect to `/admin/login` |
 | `/admin/analytics` | Show analytics dashboard | Redirect to `/admin/login` |
+| `/admin/ops` | Show Operations Portal | Redirect to `/admin/login` |
 | `/#edit` | Show edit mode | Redirect to `/admin/login` |
 | `/#admin` | Show control panel | Redirect to `/admin/login` |
 | `/#preview` | Show preview mode | Redirect to `/admin/login` |

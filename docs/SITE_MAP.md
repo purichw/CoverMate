@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-08-02
+Last updated: 2026-08-10
 
 ## Routes
 
@@ -14,6 +14,7 @@ Last updated: 2026-08-02
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner | Post-login "Manage your site" launcher | `admin/index.html` |
 | `/admin/analytics` | Owner | Private analytics dashboard for leads and GA4 reporting readiness | `admin/analytics/index.html` |
+| `/admin/ops` | Owner / operations | Separate Operations Portal Phase A for authenticated lead intake and workflow planning | `admin/ops/index.html` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
 | `/#admin` | Owner | Control panel mode | `index.html` |
 | `/#preview` | Owner | Preview mode | `index.html` |
@@ -29,6 +30,7 @@ Last updated: 2026-08-02
 | `/admin/login` | `noindex,nofollow` | `https://covermate.vercel.app/admin/login/` |
 | `/admin` | `noindex,nofollow` | `https://covermate.vercel.app/admin/` |
 | `/admin/analytics` | `noindex,nofollow` | `https://covermate.vercel.app/admin/analytics/` |
+| `/admin/ops` | `noindex,nofollow` | `https://covermate.vercel.app/admin/ops/` |
 | `/#edit`, `/#admin`, `/#preview` | Runtime `noindex,nofollow` owner modes | `https://covermate.vercel.app/` |
 
 SEO implementation details live in [`SEO.md`](SEO.md).
@@ -68,6 +70,7 @@ Expected visible sections:
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
 | Launcher | `/admin` | Choose between editing, arranging, analytics, or viewing the public site. |
 | Analytics | `/admin/analytics` | Owner-only Firestore lead reporting plus GA4 Data API/export readiness view. |
+| Operations Portal | `/admin/ops` | Authenticated Phase A operations workspace. Reads real `contactLeads/*` for lead intake; customers, policies, renewals, documents, settings, and workflow mutations are marked backend-required until the ops data model and audit API ship. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
 | Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |
@@ -93,8 +96,8 @@ The `/admin` launcher actions must stay aligned with the reference:
 - "Analytics" opens `/admin/analytics`
 - "Public site" opens `/`
 
-Unauthenticated direct access to `/admin`, `/admin/analytics`, `/#edit`,
-`/#admin`, and `/#preview` must redirect to `/admin/login`.
+Unauthenticated direct access to `/admin`, `/admin/analytics`, `/admin/ops`,
+`/#edit`, `/#admin`, and `/#preview` must redirect to `/admin/login`.
 
 `/#preview` renders draft content only after owner authentication. Its top bar
 contains `Open editor`, `Public site`, and `Publish`; edit docks, admin drawers,

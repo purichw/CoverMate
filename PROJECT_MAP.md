@@ -6,13 +6,16 @@ and safely edit in later sessions.
 Current state: this repo is a Vercel-hosted static export. The UI is built from
 Claude Design `.dc.html` bundles, with small production patches applied in the
 wrapper and embedded bundle strings. There is no backend API in this repo.
-Firebase Auth, Firestore CMS persistence, lead capture, and Admin Analytics are
-implemented and deployed. Future commit, push, Vercel deploy, or Firestore Rules
-deploy actions still require explicit owner approval in the current task.
+Firebase Auth, Firestore CMS persistence, lead capture, Admin Analytics, and
+the source-authored Phase A Operations Portal route are implemented. Future
+commit, push, Vercel deploy, or Firestore Rules deploy actions still require
+explicit owner approval in the current task.
 
 Product decision checkpoint: the 2026-08-10 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
-launcher-card count, insurer-count copy, or Operations scope. Future bugs
+launcher-card count, insurer-count copy, or Operations scope. Operations is now
+approved only as a separate `/admin/ops/` surface; it must not become an
+`/admin` launcher card unless that product decision is reopened. Future bugs
 should be fixed as defects unless the owner explicitly reopens the product
 decision.
 
@@ -71,6 +74,7 @@ Detailed project documents:
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private admin launcher with exactly three primary cards: "Edit the words", "Arrange & customise", and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
+| `admin/ops/index.html` | Private Phase A Operations Portal. Reuses verified admin session, reads real `contactLeads/*` through `loadOperationalLeads`, preserves filter/detail state, and clearly marks local/demo workflow actions until `/api/ops` and immutable `opsAudit` exist. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
 | `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
@@ -104,6 +108,7 @@ flowchart LR
   "Admin launcher /admin" --> "Admin analytics /admin/analytics"
   "Admin launcher /admin" --> "Owner #edit"
   "Admin launcher /admin" --> "Owner #admin"
+  "Admin login /admin/login" --> "Operations /admin/ops"
 ```
 
 Route contracts:
@@ -121,15 +126,18 @@ Route contracts:
 - `/admin` is the private admin launcher and must remain reachable after login.
 - `/admin/analytics` is the private owner analytics dashboard and must remain
   out of `sitemap.xml`.
-- Direct unauthenticated access to `/admin` and owner modes must send the user to
-  `/admin/login`.
+- `/admin/ops` is the private Phase A Operations Portal. It is reachable
+  directly after login but is intentionally not a launcher card in the current
+  CMS IA.
+- Direct unauthenticated access to `/admin`, `/admin/analytics`, `/admin/ops`,
+  and owner modes must send the user to `/admin/login`.
 
 ## Data / Auth / Storage Flow
 
 Admin identity is Firebase-backed. The approved admin session is cached in
-browser `localStorage` for routing convenience, but private analytics and lead
-reads must re-verify the active Firebase admin user. CMS content is
-Firestore-first under
+browser `localStorage` for routing convenience, but private analytics,
+Operations, and lead reads must re-verify the active Firebase admin user. CMS
+content is Firestore-first under
 `sites/covermate/*`; localStorage keeps last-known live/draft/text/history
 fallback caches and must not override a successful remote read. These keys are
 part of the product contract, are centralized in `covermate-contract.js`, and
@@ -163,7 +171,8 @@ Important behavior:
   sync updates title, description, Open Graph/Twitter, and JSON-LD from the
   hydrated live state. Admin routes and owner modes must remain `noindex`.
 - Visitor lead submissions write validated documents to `contactLeads/*`.
-  Admin Analytics reads those leads through `covermate-firebase.js`.
+  Admin Analytics and the Operations Portal read those leads through
+  `covermate-firebase.js`.
 
 ## Design Source Of Truth
 

@@ -4,7 +4,8 @@ const htmlFiles = [
   "index.html",
   "admin/index.html",
   "admin/login/index.html",
-  "admin/analytics/index.html"
+  "admin/analytics/index.html",
+  "admin/ops/index.html"
 ];
 
 const jsFiles = [

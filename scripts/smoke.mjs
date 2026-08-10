@@ -187,6 +187,10 @@ async function clickAdminTab(page, label) {
   await page.waitForTimeout(180);
 }
 
+function adminAsideLocator(page) {
+  return page.locator("aside").filter({ hasText: "Admin portal" }).last();
+}
+
 async function changeField(locator, value) {
   const field = locator.first();
   await field.scrollIntoViewIfNeeded();
@@ -206,7 +210,8 @@ async function selectAdminSection(page, id) {
   await row.scrollIntoViewIfNeeded();
   await row.locator(`[data-admin-section-edit="${id}"]`).click();
   await page.waitForFunction(
-    (sectionId) => (document.querySelector("aside")?.innerText || "").includes(`#${sectionId}`),
+    (sectionId) => Array.from(document.querySelectorAll("aside"))
+      .some((aside) => /Admin portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${sectionId}`)),
     id,
     { timeout: 5000 }
   );
@@ -425,7 +430,8 @@ async function verifyAdminActionWorkflow() {
   await waitForBodyText(page, /Admin portal/);
   await waitForBodyText(page, /Draft Action Smoke/);
 
-  const saveButton = page.locator("aside button").filter({ hasText: /^Save draft$/ }).last();
+  const actionAdminAside = adminAsideLocator(page);
+  const saveButton = actionAdminAside.locator("button").filter({ hasText: /^Save draft$/ }).last();
   await saveButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   let dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
@@ -473,7 +479,7 @@ async function verifyAdminActionWorkflow() {
   await page.getByLabel("Close notification").click();
   await page.locator('[data-admin-toast="true"]').waitFor({ state: "detached", timeout: 5000 });
 
-  const publishButton = page.locator("aside button").filter({ hasText: /^Publish$/ }).last();
+  const publishButton = actionAdminAside.locator("button").filter({ hasText: /^Publish$/ }).last();
   await publishButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
@@ -560,11 +566,12 @@ async function verifyAdminBuilderControls() {
   }
 
   await clickAdminTab(page, "Brand & contact");
-  const brandPanelText = await page.locator("aside").innerText();
+  const adminAside = adminAsideLocator(page);
+  const brandPanelText = await adminAside.innerText();
   if (/Upload logo|Logo uploaded|file upload|drag .*logo/i.test(brandPanelText)) {
     failures.push("admin builder: brand panel still exposes legacy upload language");
   }
-  const legacyUploadControls = await page.locator('aside input[type="file"], aside [data-admin-logo-upload="true"]').count();
+  const legacyUploadControls = await adminAside.locator('input[type="file"], [data-admin-logo-upload="true"]').count();
   if (legacyUploadControls !== 0) {
     failures.push(`admin builder: legacy binary upload controls are still rendered (${legacyUploadControls})`);
   }
@@ -598,12 +605,12 @@ async function verifyAdminBuilderControls() {
   }
   await changeField(page.locator('[data-admin-logo-path="true"]'), "assets/logos/srikrung-logo.png");
   await changeField(page.locator('[data-admin-logo-alt="true"]'), "Srikrung broker logo");
-  await changeField(page.locator("aside label").filter({ hasText: "LINE link" }).locator("input"), "http://bad.example");
+  await changeField(adminAside.locator("label").filter({ hasText: "LINE link" }).locator("input"), "http://bad.example");
   await waitForBodyText(page, /Invalid contact link/);
-  await changeField(page.locator("aside label").filter({ hasText: "LINE link" }).locator("input"), "https://line.me/ti/p/~covermate-smoke");
-  await changeField(page.locator("aside label").filter({ hasText: "Email" }).locator("input"), "not-an-email");
+  await changeField(adminAside.locator("label").filter({ hasText: "LINE link" }).locator("input"), "https://line.me/ti/p/~covermate-smoke");
+  await changeField(adminAside.locator("label").filter({ hasText: "Email" }).locator("input"), "not-an-email");
   await waitForBodyText(page, /Invalid email/);
-  await changeField(page.locator("aside label").filter({ hasText: "Email" }).locator("input"), "owner@covermate.example");
+  await changeField(adminAside.locator("label").filter({ hasText: "Email" }).locator("input"), "owner@covermate.example");
   await clickAdminTab(page, "Theme & data");
   await changeField(page.locator('[data-admin-seo-title="true"]'), "CoverMate smoke SEO title");
   await changeField(page.locator('[data-admin-seo-description="true"]'), "Smoke-tested guarded SEO description for the CoverMate admin rebuild.");
@@ -660,7 +667,7 @@ async function verifyAdminBuilderControls() {
   await selectAdminSection(page, "insurers");
   const insurersBefore = await readDraftSection(page, "insurers");
   const insurerCardCountBefore = (insurersBefore?.cards || []).length;
-  await page.locator("aside button").filter({ hasText: /^\+ Add insurer card$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ Add insurer card$/ }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -675,7 +682,7 @@ async function verifyAdminBuilderControls() {
   const tiersBefore = await readDraftSection(page, "tiers");
   const tierHeadCountBefore = (tiersBefore?.heads || []).length;
   const tierItemCountBefore = (tiersBefore?.items || []).length;
-  await page.locator("aside button").filter({ hasText: /^\+ Add column$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ Add column$/ }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -687,7 +694,7 @@ async function verifyAdminBuilderControls() {
     { timeout: 5000 }
   ).catch(() => failures.push("admin builder: + Add column did not sync coverage cells across all tier rows"));
 
-  await page.locator("aside button").filter({ hasText: /^\+ Add tier$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ Add tier$/ }).click();
   await page.waitForFunction(
     ({ id, expectedItems, expectedHeads }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");

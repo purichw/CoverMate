@@ -266,6 +266,37 @@ async function loadContactLeads(limitCount = LEAD_LIMIT) {
   });
 }
 
+async function loadOperationalLeads(limitCount = LEAD_LIMIT) {
+  const user = auth.currentUser || await waitForAuth();
+  const admin = await readAdmin(user);
+  if (!admin) throw new Error("Not authorized to read CoverMate operational leads.");
+  const q = firestoreMod.query(
+    firestoreMod.collection(db, "contactLeads"),
+    firestoreMod.orderBy("createdAt", "desc"),
+    firestoreMod.limit(Math.max(1, Math.min(LEAD_LIMIT, Number(limitCount) || LEAD_LIMIT)))
+  );
+  const snap = await firestoreMod.getDocs(q);
+  return snap.docs.map((docSnap) => {
+    const data = docSnap.data() || {};
+    return {
+      id: docSnap.id,
+      name: cleanText(data.name, 120),
+      contact: cleanText(data.contact, 160),
+      topic: cleanText(data.topic, 2000),
+      qtype: cleanLeadChoice(data.qtype, LEAD_QTYPES),
+      coverage: cleanLeadChoice(data.coverage, LEAD_COVERAGES),
+      consent: data.consent === true,
+      language: cleanLeadChoice(data.language, LEAD_LANGS) || "th",
+      summary: cleanText(data.summary, 1200),
+      sourcePath: cleanText(data.sourcePath, 220),
+      status: cleanText(data.status, 40),
+      read: data.read === true,
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null
+    };
+  });
+}
+
 async function hydrateLocalContent(options = {}) {
   const mode = {
     draft: options.draft === true,
@@ -322,6 +353,7 @@ window.CoverMateFirebase = {
   loadVersions,
   submitContactLead,
   loadContactLeads,
+  loadOperationalLeads,
   hydrateLocalContent
 };
 

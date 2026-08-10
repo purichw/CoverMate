@@ -6,7 +6,8 @@ This is the authoritative decision record for the next Admin/CMS rebuild. It
 records the latest owner-approved direction from the attached ChatGPT governance
 brief and supersedes older reconciliation notes where they describe the previous
 two-card launcher, `/?view=public` exit flow, public owner reopen bar, or
-Operations as part of the current CMS rebuild.
+Operations as a launcher-card concern. On 2026-08-10 the owner separately
+approved starting the Operations portal as its own `/admin/ops/` surface.
 
 ## Source Precedence
 
@@ -27,7 +28,7 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
 | Admin launcher | Target is three cards: `Edit the words`, `Arrange & customise`, `Analytics`. | Ship in Phase 2. Operations is not a launcher card for this rebuild. |
-| Operations portal | Deferred as a separate product. | Do not create `/admin/ops` or expose sample operational data. |
+| Operations portal | Approved as a separate product surface on 2026-08-10. | `/admin/ops/` may ship independently from the launcher. Phase A is source-authored UI plus authenticated `contactLeads/*` reads; write-heavy flows remain local/demo until `/api/ops`, durable ops collections, and immutable audit exist. |
 | Public exit | New UI exits directly to clean `/`. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Owner close/public-exit actions leave owner mode and land on clean `/`. | Do not preserve an in-tab owner workspace after `Public site`, drawer X, or edit public-exit. |
@@ -70,9 +71,13 @@ Phase 6 adds media metadata, global contact controls, and guarded SEO editing.
 Phase 7 aligns analytics instrumentation/reporting without breaking event
 history or sending PII.
 
-Phase 8, the Operations portal, requires separate owner approval, data model,
-permissions, audit, consent, storage, retention, deletion, search, scheduler,
-and privacy/security review.
+Phase 8, the Operations portal, now has owner approval to begin as a separate
+route. Phase A creates `/admin/ops/`, reuses the admin session/Firebase allowlist,
+loads `contactLeads/*` for lead intake, and keeps non-backed workflow mutations
+local/demo with visible backend-required labels. Phase B still requires data
+model, permissions, audit, consent events, storage, retention, deletion, search,
+scheduler, `/api/ops`, and privacy/security review before replacing local/demo
+mutations with production writes.
 
 ## Non-Negotiables
 
@@ -84,5 +89,7 @@ and privacy/security review.
 - Local cache never overrides a successful Firestore live read.
 - Schema migrations are additive/idempotent and must not overwrite owner-edited
   values.
-- Do not commit, push, deploy, modify Firestore Rules, add direct upload
-  storage, or ship Operations without explicit owner approval.
+- Do not commit, push, deploy, modify Firestore Rules, or add direct upload
+  storage without explicit owner approval in the current task.
+- `/admin/ops/` must not pretend local/demo workflow mutations are persisted,
+  audited production operations until the backend/audit phase exists.
