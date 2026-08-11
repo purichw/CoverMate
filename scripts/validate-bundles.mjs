@@ -31,6 +31,37 @@ const forbiddenPatterns = [
   { pattern: /\b(Caprasimo|Chonburi|Figtree)\b/, message: "non-product font reference" }
 ];
 
+const inlineEventPattern = /\son[a-z]+\s*=/gi;
+
+function readBundlerTemplate(html) {
+  const open = '<script type="__bundler/template">';
+  const start = html.indexOf(open);
+  if (start < 0) return null;
+
+  const jsonStart = start + open.length;
+  if (html[jsonStart] !== '"') {
+    throw new Error("template content is not a JSON string");
+  }
+
+  let escaped = false;
+  for (let i = jsonStart + 1; i < html.length; i += 1) {
+    const ch = html[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      return html.slice(jsonStart, i + 1);
+    }
+  }
+
+  throw new Error("unterminated template JSON string");
+}
+
 function checkSource(file, source, label = "source") {
   if (/\[object Object\]/.test(source)) {
     failures.push(`${file}: literal [object Object] found in ${label}`);
@@ -45,18 +76,18 @@ function checkSource(file, source, label = "source") {
 for (const file of htmlFiles) {
   const html = fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
   if (/<script type="__bundler\/template">/.test(html)) {
-    const match = html.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
-    if (!match) {
-      failures.push(`${file}: embedded template tag is malformed`);
-      continue;
-    }
     try {
-      const template = JSON.parse(match[1]);
-      if (/<\/script/i.test(match[1].replace(/<\\\/script/gi, ""))) {
+      const templateJson = readBundlerTemplate(html);
+      const template = JSON.parse(templateJson);
+      if (/<\/script/i.test(templateJson.replace(/<\\\/script/gi, ""))) {
         failures.push(`${file}: unescaped closing script marker inside template JSON`);
       }
       if (!template.includes("<!DOCTYPE html>")) {
         failures.push(`${file}: embedded template does not look like HTML`);
+      }
+      const inlineEvents = template.match(inlineEventPattern) || [];
+      if (inlineEvents.length) {
+        failures.push(`${file}: inline event handler(s) found in embedded template: ${[...new Set(inlineEvents.map(v => v.trim().replace(/\s*=.*/, "")))].join(", ")}`);
       }
       checkSource(file, template, "embedded template");
     } catch (error) {

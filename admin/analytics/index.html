@@ -555,7 +555,7 @@
       </a>
       <nav class="actions" aria-label="Admin actions">
         <a class="btn" href="/admin">Main</a>
-        <a class="btn" href="/" onclick="try{localStorage.removeItem('purich-admin-ever-v7')}catch(e){}">Public site</a>
+        <a class="btn" href="/" id="public-site-link">Public site</a>
         <button class="btn btn-dark" id="logout" type="button">Log out</button>
       </nav>
     </header>
@@ -748,6 +748,14 @@
     let session = null;
     const logout = document.getElementById("logout");
     if (logout) logout.addEventListener("click", signOutAdmin);
+    const publicSiteLink = document.getElementById("public-site-link");
+    if (publicSiteLink) {
+      publicSiteLink.addEventListener("click", () => {
+        try {
+          window.localStorage.removeItem("purich-admin-ever-v7");
+        } catch (error) {}
+      });
+    }
 
     const fmt = new Intl.NumberFormat("en-US");
     const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
