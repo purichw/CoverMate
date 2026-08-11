@@ -1,0 +1,138 @@
+{
+  "capturedAt": "2026-08-11T14:57:38.568Z",
+  "route": "http://127.0.0.1:4177/",
+  "shots": [
+    {
+      "name": "desktop-hero-after",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-11-footer-hero-scale/desktop-hero-after.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "target": "hero",
+      "metrics": {
+        "url": "http://127.0.0.1:4177/",
+        "scrollY": 0,
+        "footer": {
+          "x": 0,
+          "y": 14051,
+          "width": 1440,
+          "height": 504
+        },
+        "heroAside": {
+          "x": 756,
+          "y": 287,
+          "width": 494,
+          "height": 280
+        },
+        "h1": {
+          "x": 190,
+          "y": 256,
+          "width": 468,
+          "height": 202
+        },
+        "bodyTextStart": "ที่ปรึกษาประกันภัย\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nTH\nEN\nแอดไลน์\nปรึกษาฟรี ไม่มีค่าใช"
+      },
+      "consoleErrors": []
+    },
+    {
+      "name": "desktop-footer-after",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-11-footer-hero-scale/desktop-footer-after.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "target": "footer",
+      "metrics": {
+        "url": "http://127.0.0.1:4177/",
+        "scrollY": 13641,
+        "footer": {
+          "x": 0,
+          "y": 396,
+          "width": 1440,
+          "height": 504
+        },
+        "heroAside": {
+          "x": 756,
+          "y": -13368,
+          "width": 494,
+          "height": 280
+        },
+        "h1": {
+          "x": 190,
+          "y": -13399,
+          "width": 468,
+          "height": 202
+        },
+        "bodyTextStart": "ที่ปรึกษาประกันภัย\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nTH\nEN\nแอดไลน์\nปรึกษาฟรี ไม่มีค่าใช"
+      },
+      "consoleErrors": []
+    },
+    {
+      "name": "mobile-hero-after",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-11-footer-hero-scale/mobile-hero-after.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "target": "hero",
+      "metrics": {
+        "url": "http://127.0.0.1:4177/",
+        "scrollY": 0,
+        "footer": {
+          "x": 0,
+          "y": 18150,
+          "width": 390,
+          "height": 1555
+        },
+        "heroAside": {
+          "x": 20,
+          "y": 651,
+          "width": 350,
+          "height": 264
+        },
+        "h1": {
+          "x": 20,
+          "y": 208,
+          "width": 290,
+          "height": 125
+        },
+        "bodyTextStart": "ที่ปรึกษาประกันภัย\nTH\nEN\nแอดไลน์\nปรึกษาฟรี ไม่มีค่าใช้จ่าย · กรุงเทพฯ\nความเสี่ยง\nไม่ต้องจัดการคนเดียว\n\nชีวิตและสุขภาพ ผม"
+      },
+      "consoleErrors": []
+    },
+    {
+      "name": "mobile-footer-after",
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-11-footer-hero-scale/mobile-footer-after.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "target": "footer",
+      "metrics": {
+        "url": "http://127.0.0.1:4177/",
+        "scrollY": 18491,
+        "footer": {
+          "x": 0,
+          "y": -355,
+          "width": 390,
+          "height": 1555
+        },
+        "heroAside": {
+          "x": 20,
+          "y": -17854,
+          "width": 350,
+          "height": 264
+        },
+        "h1": {
+          "x": 20,
+          "y": -18297,
+          "width": 290,
+          "height": 125
+        },
+        "bodyTextStart": "ที่ปรึกษาประกันภัย\nTH\nEN\nแอดไลน์\nปรึกษาฟรี ไม่มีค่าใช้จ่าย · กรุงเทพฯ\nความเสี่ยง\nไม่ต้องจัดการคนเดียว\n\nชีวิตและสุขภาพ ผม"
+      },
+      "consoleErrors": []
+    }
+  ]
+}
