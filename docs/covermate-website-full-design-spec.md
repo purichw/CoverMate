@@ -337,27 +337,30 @@ Guardrails:
 
 ## Visitor Section Order
 
-The current public page has 17 live sections:
+The current public page has 16 visible live sections plus one embedded `cover`
+data source. `cover` is no longer a standalone public/Admin section; its
+product details render inside the hero coverage accordion cluster, and the
+`#cover` anchor lands there for existing nav and `/#life` compatibility.
 
 | Order | ID | Type | Background | Columns | Content Count |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `hero` | Hero | cream | 2 | brand/value proposition |
 | 2 | `trust` | Trust bar | cream | 4 | 4 trust chips |
-| 3 | `cover` | Products | surface | 3 | 6 insurance product rows |
-| 4 | `review` | Policy review | cream | 3 | 3 review steps |
-| 5 | `fit` | Coverage calculator | dark | 2 | interactive calculator |
-| 6 | `how` | Process steps | cream | 4 | 4 steps |
-| 7 | `insurers` | Motor insurers | sage | 4 | 14 data-driven logo items + 2 credential cards |
-| 8 | `tiers` | Motor class comparison | cream | 1 | 5 rows x 5 coverage axes |
-| 9 | `claim` | Claims help | dark | 4 | 4 steps + 4 proof metrics/cards |
-| 10 | `renew` | Renewal reminder | sage | 3 | reminder form + 3 benefits |
-| 11 | `guides` | Buying guides | surface | 2 | 4 FAQ-style guide rows |
-| 12 | `voices` | Customer stories | cream | 3 | 3 story cards |
-| 13 | `about` | About/licence | surface | 2 | 4 credential bullets |
-| 14 | `faq` | FAQ | cream | 1 | 5 FAQ rows |
-| 15 | `fees` | Fee transparency | surface | 3 | 3 fee cards + 4 notes |
-| 16 | `privacy` | PDPA/privacy | cream | 2 | 5 privacy bullets |
-| 17 | `talk` | Contact | dark | 2 | contact panel + lead form |
+| embedded | `cover` | Hero coverage accordions | hero | auto | 6 insurance product accordions |
+| 3 | `review` | Policy review | cream | 3 | 3 review steps |
+| 4 | `fit` | Coverage calculator | dark | 2 | interactive calculator |
+| 5 | `how` | Process steps | cream | 4 | 4 steps |
+| 6 | `insurers` | Motor insurers | sage | 4 | 14 data-driven logo items + 2 credential cards |
+| 7 | `tiers` | Motor class comparison | cream | 1 | 5 rows x 5 coverage axes |
+| 8 | `claim` | Claims help | dark | 4 | 4 steps + 4 proof metrics/cards |
+| 9 | `renew` | Renewal reminder | sage | 3 | reminder form + 3 benefits |
+| 10 | `guides` | Buying guides | surface | 2 | 4 FAQ-style guide rows |
+| 11 | `voices` | Customer stories | cream | 3 | 3 story cards |
+| 12 | `about` | About/licence | surface | 2 | 4 credential bullets |
+| 13 | `faq` | FAQ | cream | 1 | 5 FAQ rows |
+| 14 | `fees` | Fee transparency | surface | 3 | 3 fee cards + 4 notes |
+| 15 | `privacy` | PDPA/privacy | cream | 2 | 5 privacy bullets |
+| 16 | `talk` | Contact | dark | 2 | contact panel + lead form |
 
 Claude designs should include all sections. Do not stop at the older shorter reference page.
 
@@ -391,16 +394,19 @@ Structure:
 
 Keep pills stable and readable across widths.
 
-### Coverage Products
+### Hero Coverage Accordions
 
 Purpose: show coverage categories the advisor can help with.
 
 Structure:
 
-- Warm surface band.
-- Centered section heading.
-- Product rows/cards with circular icon chips, title, short subtitle, and expand affordance.
+- Embedded in the hero assist-card cluster under the coverage prompt.
+- `#cover` is an anchor on this cluster, not on a standalone section.
+- Product cards use circular icon chips, title, short subtitle, and accordion expand affordance.
 - Product types currently include life, health, disease/critical illness, personal accident, home, and motor.
+- Expanded details use the existing `cover.items[*].b1/b2/b3/note` data.
+- The Admin Sections list must not show `#cover`; owners edit this copy inline
+  where it appears on the page.
 
 Rows should feel like actionable advisory categories, not commodity cards.
 
@@ -941,7 +947,9 @@ Public visitor:
 
 - Header has one motor nav item and no duplicate `ประกันรถยนต์`.
 - `#motor` is represented as an alias to the motor insurer section, not a separate surface.
-- All 17 sections are represented in the design, including motor tier comparison.
+- All visible sections are represented in the design, including motor tier
+  comparison, while `cover` is represented as hero accordions rather than a
+  standalone band.
 - Hero first viewport matches the current warm organic direction.
 - AIA logo appears with the current transparent red asset.
 - Motor insurer logo grid is present, credible, and driven by editable

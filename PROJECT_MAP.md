@@ -120,7 +120,7 @@ Route contracts:
 - `/` is the public visitor site.
 - `/#motor` is a visitor anchor alias for the main site's motor-insurance /
   insurer section (`#insurers`). It must keep the same global navbar as `/`.
-- `/#life` is a visitor anchor alias for the main site's coverage section
+- `/#life` is a visitor anchor alias for the hero coverage accordion cluster
   (`#cover`). It must keep the same global navbar as `/`.
 - `/#motor-focus` and `/#life-focus` are unexposed campaign variants preserved
   from the latest Claude reference. They are public hash states in `index.html`,

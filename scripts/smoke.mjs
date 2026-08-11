@@ -683,18 +683,36 @@ async function verifyAdminBuilderControls() {
   }
 
   await clickAdminTab(page, "Sections");
-  const coverBefore = await readDraftSection(page, "cover");
-  const coverColsExpected = Math.min(4, Number(coverBefore?.cols || 0) + 1);
-  await clickSectionColumnControl(page, "cover", "increase");
+  const coverageAccordionState = await page.evaluate(() => {
+    const anchor = document.querySelector("#cover");
+    return {
+      adminCoverRows: document.querySelectorAll('[data-admin-section-row="cover"]').length,
+      standaloneCoverSections: document.querySelectorAll("section#cover").length,
+      anchorTag: anchor?.tagName || "",
+      accordionCount: document.querySelectorAll("[data-hero-cover-card]").length
+    };
+  });
+  if (coverageAccordionState.adminCoverRows !== 0) {
+    failures.push("admin builder: embedded #cover still appears as a standalone admin section");
+  }
+  if (coverageAccordionState.standaloneCoverSections !== 0 || coverageAccordionState.anchorTag !== "DIV") {
+    failures.push(`admin builder: #cover should be the hero accordion anchor, not a standalone section (${JSON.stringify(coverageAccordionState)})`);
+  }
+  if (coverageAccordionState.accordionCount < 6) {
+    failures.push(`admin builder: hero coverage accordions are missing (${coverageAccordionState.accordionCount})`);
+  }
+  const firstCoverageAccordion = page.locator("[data-hero-cover-card]").first();
+  await firstCoverageAccordion.scrollIntoViewIfNeeded();
+  await firstCoverageAccordion.locator("summary").click();
   await page.waitForFunction(
-    ({ id, expected }) => {
-      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
-      const section = (config.sections || []).find((item) => item.id === id);
-      return Number(section?.cols || 0) === expected;
-    },
-    { id: "cover", expected: coverColsExpected },
+    () => Boolean(document.querySelector("[data-hero-cover-card]")?.open),
+    null,
     { timeout: 5000 }
-  ).catch(() => failures.push(`admin builder: #cover columns did not increase to ${coverColsExpected}`));
+  ).catch(() => failures.push("admin builder: first hero coverage accordion did not open"));
+  const firstCoverageText = await firstCoverageAccordion.innerText();
+  if (!/แบบตลอดชีพ|Whole-life/.test(firstCoverageText) || !/ยูนิตลิงก์|Unit-linked/.test(firstCoverageText)) {
+    failures.push("admin builder: hero coverage accordion did not render the coverage details from #cover data");
+  }
 
   await selectAdminSection(page, "insurers");
   const insurersBefore = await readDraftSection(page, "insurers");
@@ -750,14 +768,12 @@ async function verifyAdminBuilderControls() {
     const lastSaveSection = (id) => (lastSave?.config?.sections || []).find((item) => item.id === id) || {};
     return {
       text: document.body.innerText || "",
-      coverCols: section("cover").cols,
       insurerCards: (section("insurers").cards || []).length,
       tierHeads: (tiers.heads || []).length,
       tierItems: (tiers.items || []).length,
       tierCellsSynced: (tiers.items || []).every((item) => (item.st || []).length === (tiers.heads || []).length),
       saveCalls: window.__covermateSaveCalls.length,
       lastSaveName: lastSave?.name || "",
-      lastSaveCoverCols: lastSaveSection("cover").cols,
       lastSaveInsurerCards: (lastSaveSection("insurers").cards || []).length,
       lastSaveTierHeads: (lastSaveSection("tiers").heads || []).length,
       lastSaveTierItems: (lastSaveSection("tiers").items || []).length
@@ -765,9 +781,6 @@ async function verifyAdminBuilderControls() {
   });
   if (builderState.text.includes("[object Object]")) {
     failures.push("admin builder: rendered object placeholder text after builder mutations");
-  }
-  if (builderState.coverCols !== coverColsExpected) {
-    failures.push(`admin builder: expected #cover cols ${coverColsExpected}, got ${builderState.coverCols}`);
   }
   if (builderState.insurerCards !== insurerCardCountBefore + 1) {
     failures.push(`admin builder: expected insurers cards ${insurerCardCountBefore + 1}, got ${builderState.insurerCards}`);
@@ -778,7 +791,6 @@ async function verifyAdminBuilderControls() {
   if (
     builderState.saveCalls < 1 ||
     builderState.lastSaveName !== "draft" ||
-    builderState.lastSaveCoverCols !== coverColsExpected ||
     builderState.lastSaveInsurerCards !== insurerCardCountBefore + 1 ||
     builderState.lastSaveTierHeads !== tierHeadCountBefore + 1 ||
     builderState.lastSaveTierItems !== tierItemCountBefore + 1

@@ -88,7 +88,7 @@ production/dev line.
 | Area | Decision |
 | --- | --- |
 | Public site structure | One continuous page. `/#motor` is an alias to `#insurers`, not a second motor website. |
-| Public section set | Keep all 17 sections: hero, trust, cover, review, fit, how, insurers, tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk. |
+| Public section set | Keep the continuous visitor page. `cover` data is embedded into hero accordions, so the visible standalone order is: hero, trust, review, fit, how, insurers, tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk. |
 | Header nav | Header shows one motor item only: Thai `ประกันรถยนต์`, English `Motor`, href `#insurers`. |
 | Focus routes | `/#motor-focus` and `/#life-focus` may exist as unexposed campaign variants. They are not public nav or sitemap items. |
 | Admin launcher | `/admin` remains after login and has exactly two primary cards: `Edit website` and `Analytics`. The control panel is opened from editor mode via `Tools -> Panel`. |
@@ -107,7 +107,7 @@ production/dev line.
 
 | Surface / component | Claude HTML says / shows | Product reality | Decision | Claude next-export rule |
 | --- | --- | --- | --- | --- |
-| Public visitor root | Warm organic page with 17 sections. | Production also has 17 sections and similar rhythm. | Claude adopted / matched. | Keep this public structure and section order. |
+| Public visitor root | Warm organic page with separate coverage products section. | Production keeps the warm organic rhythm, but coverage details now live inside hero accordions and the standalone `#cover` section/Admin row is retired. | Product UX updated. | Keep `#cover` as a hero accordion anchor; do not export a separate coverage-products band unless the owner explicitly reverses this decision. |
 | Mobile visitor | Reference includes demo screen switcher bottom-left. | Production has no screen switcher and keeps mobile CTA unobstructed. | Product UX preserved. | Screen switcher is standalone demo-only; never include in production public design. |
 | Header nav | Same public nav list, but footer links can be captured too. | Header has one motor item; footer may repeat nav. | Product UX preserved. | Design/QA should check header nav separately from footer nav. |
 | `#motor` | Reference includes normal public route anchors. | Production aliases `#motor` to `#insurers`; no separate page chrome. | Product UX preserved. | Do not design a separate-looking motor page unless owner explicitly reopens this decision. |

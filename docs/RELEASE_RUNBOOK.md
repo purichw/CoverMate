@@ -51,7 +51,8 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 
 `npm run smoke` defaults to `http://localhost:4177`.
 `npm run smoke:admin-builder` runs only the dedicated Admin builder flow for
-section columns, relationship cards, coverage columns, and tier rows.
+section structure, embedded hero coverage accordions, relationship cards,
+insurer logo items, and tier rows/columns.
 
 ## Production Smoke
 

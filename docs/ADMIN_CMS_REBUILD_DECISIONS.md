@@ -33,8 +33,8 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Owner close/public-exit actions leave owner mode and land on clean `/`. | Do not preserve an in-tab owner workspace after `Public site`, drawer X, or edit public-exit. |
 | Draft preview | Private `/#preview`, draft data only, one top preview bar. | No edit dock, drawer, screen switcher, or public admin marker. |
-| Public site | Keep all 17 sections in canonical order. | Do not replace current public page with the shorter standalone. |
-| Motor aliases | `#motor -> #insurers`; `#life -> #cover`. | One public page, no duplicated motor nav. |
+| Public site | Keep the canonical continuous page, but `cover` is now embedded in the hero accordion cluster rather than a standalone section. | Do not replace current public page with the shorter standalone or reintroduce a separate coverage-products band. |
+| Motor/life aliases | `#motor -> #insurers`; `#life -> #cover` where `#cover` is the hero accordion cluster. | One public page, no duplicated motor nav and no separate life/coverage page. |
 | Insurer count copy | `26+` describes Srikrung panel availability; visible logos may remain a 14-logo selection. | Reconcile existing 14-count normalization in a later content/sanitizer phase. |
 | Analytics | Preserve deployed event history; expand by adding safe parameters/events only. | Audit `covermate-analytics.js` before any event-name change. |
 | Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, `sites/covermate/states/live`, `states/draft`, `versions/*`, and `contactLeads/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project and does not require a collection migration. |

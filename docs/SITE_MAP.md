@@ -8,7 +8,7 @@ Last updated: 2026-08-11
 | --- | --- | --- | --- |
 | `/` | Visitor | Main public landing page | `index.html` |
 | `/#motor` | Visitor | Alias to the main site's motor-insurance / insurer section | `index.html` |
-| `/#life` | Visitor | Alias to the main site's coverage section | `index.html` |
+| `/#life` | Visitor | Alias to the hero coverage accordion cluster | `index.html` |
 | `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the latest reference | `index.html` |
 | `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the latest reference | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
@@ -47,7 +47,7 @@ Expected visible sections:
 | --- | --- |
 | Hero | Main offer, audience fit, and primary contact CTA. |
 | Trust bar | Fast credibility markers such as licensed broker, AIA care, LINE support, and insurer count. |
-| Coverage/products | Insurance categories and protection options. |
+| Hero coverage accordions | Insurance categories and protection details embedded inside the hero assist-card cluster. The `#cover` anchor lands here; it is not a standalone public band. |
 | Policy review | Explains the free policy review offer and what visitors can send in. |
 | Fit/calculator | Helps visitors estimate or choose suitable coverage. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
@@ -77,11 +77,12 @@ Expected visible sections:
 
 ## Navigation Contracts
 
-Visitor navigation should move through coverage, motor, claim help, calculator,
-steps, FAQ, and contact entry points.
+Visitor navigation should move through the hero coverage accordions, motor,
+claim help, calculator, steps, FAQ, and contact entry points.
 
 `/#motor` keeps the same global navigation as `/` and re-aims to `#insurers`
-after hydration. `/#life` behaves the same way and re-aims to `#cover`.
+after hydration. `/#life` behaves the same way and re-aims to the hero
+accordion cluster at `#cover`.
 
 `/#motor-focus` and `/#life-focus` render focused campaign variants from the
 latest Claude reference. They stay unexposed in the header nav and sitemap.

@@ -5,8 +5,8 @@ Last updated: 2026-08-10
 ## Visitor Journey
 
 1. Visitor lands on `/`, `/#motor`, `/#life`, or an unexposed campaign hash.
-2. Visitor scans the offer, credibility bar, coverage choices, policy-review
-   offer, calculator, process, insurer proof, motor tier comparison, claim
+2. Visitor scans the offer, credibility bar, hero coverage accordions,
+   policy-review offer, calculator, process, insurer proof, motor tier comparison, claim
    help, renewal reminders, guides, claim stories, about/license copy, FAQ, fee transparency,
    privacy/PDPA copy, and contact area.
 3. Visitor starts contact through LINE, phone, email, the consultation lead
@@ -16,7 +16,8 @@ Last updated: 2026-08-10
 
 `/#motor` and `/#life` are aliases into the main visitor site, not separate page
 variants. They keep the same global navbar as `/`; `/#motor` re-aims to
-`#insurers`, while `/#life` re-aims to `#cover` after hydration.
+`#insurers`, while `/#life` re-aims to the hero coverage accordion cluster at
+`#cover` after hydration.
 
 Public navbar clicks are same-page anchor jumps, not route transitions. Clicking
 items such as `ขั้นตอน` / `#how` must scroll to the section without reloading or
@@ -168,6 +169,11 @@ cards, and tier headers carry durable CMS IDs so editing, adding, duplicating,
 deleting, and supported reorder controls keep identity with the intended
 logical item. Tier coverage states still follow the existing `items[].st[]` to
 `heads[]` index alignment.
+
+The `cover` data source is embedded into the hero coverage accordions instead
+of rendered as a standalone public/Admin section. The Admin Sections list must
+not show `#cover`; the copy remains editable where it appears on the page in
+inline text-edit mode.
 
 The Brand & contact tab owns global brand identity, advisor logo reference/alt
 metadata, and contact values. It must not expose direct file upload, Firebase
