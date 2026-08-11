@@ -117,12 +117,22 @@ const apiState = {
   ]
 };
 
-function json(rows) {
+function json(rows, meta = {}) {
   return {
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify(Array.isArray(rows) ? { rows, total: rows.length, source: "mock-api" } : rows)
+    body: JSON.stringify(Array.isArray(rows) ? { rows, total: rows.length, source: meta.source || "mock-api", ...meta } : rows)
   };
+}
+
+function planned(resource) {
+  return json([], {
+    source: "not_wired",
+    status: "planned",
+    resource,
+    label: `${resource} records`,
+    message: `${resource} records are not wired to a production Operations API endpoint yet.`
+  });
 }
 
 async function fulfillApi(route) {
@@ -135,7 +145,7 @@ async function fulfillApi(route) {
   if (method === "GET" && path[0] === "tasks" && path.length === 1) return route.fulfill(json(apiState.tasks));
   if (method === "GET" && path[0] === "audit" && path.length === 1) return route.fulfill(json(apiState.audit));
   if (method === "GET" && ["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"].includes(path[0])) {
-    return route.fulfill(json([]));
+    return route.fulfill(planned(path[0]));
   }
   if (method === "POST" && path[0] === "leads" && path.length === 1) {
     const input = request.postDataJSON();
@@ -221,10 +231,22 @@ try {
 
   await page.goto(`${baseUrl}/admin/ops/`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Dashboard" }).waitFor();
-  await page.locator("#dataMode", { hasText: "Backend connected" }).waitFor();
+  await page.locator("#dataMode", { hasText: "Live: leads/tasks/audit" }).waitFor();
   const bodyText = await page.locator("body").innerText();
   if (/demo/i.test(bodyText)) throw new Error("Operations Portal rendered demo copy.");
+  if (!bodyText.includes("Current data boundary") || !bodyText.includes("Planned modules stay labeled")) {
+    throw new Error("Dashboard did not disclose the current live/planned data boundary.");
+  }
   await page.screenshot({ path: `${outDir}/ops-dashboard-desktop.png`, fullPage: true });
+
+  await page.getByRole("button", { name: /Customers/ }).first().click();
+  await page.getByRole("heading", { name: "Customers", exact: true }).waitFor();
+  await page.getByText("Not wired yet").first().waitFor();
+  const customersText = await page.locator("body").innerText();
+  if (!customersText.includes("No fake records are shown here")) {
+    throw new Error("Planned customer module did not explain that no fake records are shown.");
+  }
+  await page.screenshot({ path: `${outDir}/ops-customers-planned-desktop.png`, fullPage: true });
 
   await page.getByRole("button", { name: /Leads/ }).first().click();
   await page.getByRole("heading", { name: "Leads" }).waitFor();

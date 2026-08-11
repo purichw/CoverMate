@@ -52,8 +52,9 @@ As of the 2026-08-10 Admin/CMS rebuild brief, the latest owner-approved
 decisions live in
 [`ADMIN_CMS_REBUILD_DECISIONS.md`](ADMIN_CMS_REBUILD_DECISIONS.md). That file
 supersedes older reconciliation notes where they describe the previous
-two-card launcher target, `/?view=public` owner exit, public owner reopen bar,
-insurer-count copy model, or Operations as part of the current CMS rebuild.
+two-card/three-card launcher target, `/?view=public` owner exit, public owner
+reopen bar, insurer-count copy model, or Operations as deferred from the admin
+home.
 
 Future bugs or regressions should be treated as defects or follow-up fixes. They
 do not automatically reopen the approved product decisions unless the product
@@ -65,8 +66,8 @@ data contract, or release contract.
 The exported bundler placeholder is hidden on first paint so users do not see an
 "Unpacking..." state or raw template content.
 
-Admin login redirects to `/admin`, preserving the required "Manage your site"
-launcher after login.
+Admin login redirects to `/admin`, the private Admin Portal Home. The home has
+four primary modules: Operations, Website content, Analytics, and Settings.
 
 The admin launcher has an early session gate and its own sign-out action.
 
@@ -113,8 +114,9 @@ includes the expanded reference sections for policy review, claim help, renewal
 reminders, guides, fee transparency, privacy/PDPA, the main-site `#motor` /
 `#life` aliases, and unexposed `#motor-focus` / `#life-focus` campaign variants
 while preserving the production decisions for Firebase/Firestore, Admin
-Analytics, and real public lead submission paths. The Phase 2 launcher now has
-three primary cards: `Edit the words`, `Arrange & customise`, and `Analytics`.
+Analytics, and real public lead submission paths. The current Admin Portal Home
+opens the existing CMS controls for website content and the source-authored
+Operations Portal for live lead/task/audit work.
 
 The SPEC (5) reconciliation added the motor tier comparison section after the
 insurer-logo section. It renders as a desktop comparison table and mobile
@@ -265,6 +267,11 @@ validation shape in production.
 Full GA traffic metrics in `/admin/analytics` still require a server-side GA4
 Data API endpoint or scheduled export into Firestore. The static browser app
 must not contain service-account credentials.
+
+The Operations Portal is live for Leads, Tasks, and Audit. Customers,
+Consultations, Quotes, Policies, Renewals, Documents, and Insurers are
+deliberately labeled as not wired until dedicated production data contracts are
+implemented.
 
 Legal/license/contact copy should be reviewed by the site owner before paid
 traffic.

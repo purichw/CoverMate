@@ -27,7 +27,7 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
-| Admin launcher | Target is three cards: `Edit the words`, `Arrange & customise`, `Analytics`. | Ship in Phase 2. Operations is not a launcher card for this rebuild. |
+| Admin Portal Home | `/admin` is now the unified private gateway for `Operations`, `Website content`, `Analytics`, and `Settings`. | Updated after Operations became API-backed. The old three-card "Manage your site" launcher is retired. |
 | Operations portal | Approved as a separate product surface on 2026-08-10. | `/admin/ops/` ships independently from the launcher. The current implementation is API-backed: `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state on `contactLeads/*`. |
 | Public exit | New UI exits directly to clean `/`. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
@@ -48,10 +48,11 @@ Phase 0 records decisions and captures/keeps baseline evidence.
 Phase 1 hardens route, admin-mode, public-chrome, public-exit, and preview
 contracts before CMS UI work.
 
-Phase 2 updates `/admin` to the three-card launcher:
-`Edit the words`, `Arrange & customise`, and `Analytics`. The launcher is a
-private decision surface, not a dashboard; it must not show Operations,
-invented metrics, CMS counters, or destination-surface controls.
+Phase 2 originally shipped `/admin` as a three-card CMS launcher. After the
+Operations backend was connected, `/admin` became the Admin Portal Home: a
+shared admin shell with primary modules for Operations, Website content,
+Analytics, and Settings. It remains a gateway, so records and mutations stay in
+their destination surfaces rather than being duplicated on the home screen.
 
 Phase 3 isolates `/#preview` as a private draft render with only the preview
 bar. Local implementation is complete as of 2026-08-10: preview requests
@@ -78,6 +79,9 @@ dates, task completion, and audit. The first backend pass stores operations
 state on `contactLeads/*` to avoid adding un-deployed collections. Later work may
 split customers, policies, documents, scheduler jobs, retention/deletion, and
 global audit into dedicated collections after privacy/security review.
+Until those contracts exist, Customers, Consultations, Quotes, Policies,
+Renewals, Documents, and Insurers must be labeled as not wired and must not show
+demo or browser-seeded records.
 
 ## Non-Negotiables
 
@@ -93,4 +97,4 @@ global audit into dedicated collections after privacy/security review.
   storage without explicit owner approval in the current task.
 - `/admin/ops/` must not ship browser-seeded operations data or local workflow
   fallback. If the API cannot load a resource, the UI must show an API issue or
-  empty state rather than demo records.
+  explicit not-wired/empty state rather than demo records.

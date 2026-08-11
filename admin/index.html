@@ -1,441 +1,870 @@
 <!DOCTYPE html>
-<html lang="th-TH">
+<html lang="th">
 <head>
-  <meta charset="utf-8">
-  <title>CoverMate Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="googlebot" content="noindex,nofollow,noarchive">
-  <meta name="theme-color" content="#c67139">
-  <link rel="canonical" href="https://covermate.vercel.app/admin/">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="googlebot" content="noindex, nofollow, noarchive" />
+  <meta name="theme-color" content="#c67139" />
+  <title>CoverMate Admin Portal</title>
+  <link rel="canonical" href="https://covermate.vercel.app/admin/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css" />
   <script>
     (function () {
       try {
-        var raw = window.localStorage.getItem('covermate-admin-session');
+        var raw = window.localStorage.getItem("covermate-admin-session");
         var session = raw ? JSON.parse(raw) : null;
-        if (!session || session.exp <= Date.now()) window.location.replace('/admin/login');
+        if (!session || Number(session.exp || 0) <= Date.now()) {
+          window.location.replace("/admin/login");
+        }
       } catch (error) {
-        window.location.replace('/admin/login');
+        window.location.replace("/admin/login");
       }
     })();
   </script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { min-height: 100%; background: #f5ead8; }
-    body { min-height: 100vh; font-family: "Google Sans", "Google Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
-    #__bundler_thumbnail,
-    #__bundler_loading,
-    #__bundler_placeholder {
+    :root {
+      color-scheme: light;
+      --bg: #f4eadb;
+      --bg-strong: #eee0cb;
+      --surface: #fbf7f0;
+      --surface-soft: #f1e7d7;
+      --line: #dfd1bd;
+      --line-strong: #cabaa2;
+      --text: #25221f;
+      --muted: #766d62;
+      --faint: #9a9082;
+      --sidebar: #2c281f;
+      --sidebar-muted: #c7bdad;
+      --accent: #cf7135;
+      --accent-strong: #a4511d;
+      --accent-soft: #ffe1cf;
+      --sage: #60724a;
+      --sage-soft: #dfedcb;
+      --neutral-soft: #e6dccb;
+      --danger: #8f2f1f;
+      --danger-soft: #ffe7e1;
+      --shadow: 0 16px 36px rgba(88, 68, 39, 0.08);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --sidebar-w: 292px;
+      --topbar-h: 86px;
+      --font: "Google Sans", "Google Sans Thai", "Noto Sans Thai", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      text-rendering: optimizeLegibility;
+    }
+
+    body[data-boot="pending"] .app {
+      visibility: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid rgba(207, 113, 53, 0.45);
+      outline-offset: 2px;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 22px 18px;
+      overflow-y: auto;
+      color: #f6efe5;
+      background: var(--sidebar);
+    }
+
+    .brand {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 0 10px 6px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .brand-logo-plate {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: min(186px, 100%);
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: #f6efe5;
+      box-shadow: inset 0 0 0 1px rgba(46, 43, 37, 0.08);
+    }
+
+    .brand-logo {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .brand-sub {
+      display: block;
+      color: #e8a06b;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .2em;
+    }
+
+    .nav {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav-link {
+      width: 100%;
+      min-height: 42px;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--sidebar-muted);
+      text-align: left;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .nav-link.active {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .nav-icon,
+    .round-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: currentColor;
+    }
+
+    .nav-icon svg,
+    .round-icon svg,
+    .search svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .badge {
+      min-width: 25px;
+      height: 25px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      padding: 0 8px;
+      background: var(--accent-strong);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #a99f8f;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .role-pill {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 0 14px;
+      color: #fff;
+      background: #474137;
+      font-weight: 800;
+    }
+
+    .user {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+      color: #fff;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      background: var(--sage);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .user strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .user span span {
+      display: block;
+      color: #a99f8f;
+      font-size: 12px;
+    }
+
+    .logout {
+      min-height: 44px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 12px;
+      color: var(--sidebar-muted);
+      background: transparent;
+      font-weight: 800;
+    }
+
+    .logout:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .workspace {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: var(--topbar-h) 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) auto auto;
+      gap: 14px;
+      align-items: center;
+      padding: 17px 32px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 247, 240, 0.93);
+      backdrop-filter: blur(18px);
+    }
+
+    .search {
+      position: relative;
+    }
+
+    .search span {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      color: var(--muted);
+      transform: translateY(-50%);
+    }
+
+    .search input {
+      width: 100%;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 18px 0 48px;
+      color: var(--text);
+      background: var(--surface-soft);
+      outline: none;
+    }
+
+    .pill,
+    .ghost-button,
+    .primary-button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .pill {
+      background: var(--sage-soft);
+      color: #344427;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      flex: none;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .primary-button {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .primary-button:hover {
+      background: #bd6129;
+    }
+
+    .ghost-button {
+      border-color: var(--line);
+      background: var(--surface);
+      color: #4f4940;
+    }
+
+    .ghost-button:hover {
+      border-color: var(--line-strong);
+      background: #fffaf4;
+    }
+
+    .screen {
+      width: min(100%, 1600px);
+      padding: 42px 36px 70px;
+    }
+
+    .page-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: clamp(34px, 4vw, 48px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .lede,
+    .note {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .lede {
+      margin-bottom: 0;
+      font-size: 18px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.modules {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid.two {
+      grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr);
+    }
+
+    .card,
+    .panel,
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+    }
+
+    .card,
+    .panel,
+    .notice {
+      padding: 24px;
+    }
+
+    .module-card {
+      min-height: 238px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--text);
+      text-decoration: none;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .module-card:hover {
+      border-color: var(--line-strong);
+      background: #fffaf4;
+      transform: translateY(-2px);
+    }
+
+    .module-card .round-icon {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .module-card.sage .round-icon {
+      background: var(--sage);
+    }
+
+    .module-card.ink .round-icon {
+      background: var(--sidebar);
+    }
+
+    .module-card p {
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .module-status {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 30px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 11px;
+      background: var(--sage-soft);
+      color: #344427;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .module-status.partial,
+    .module-status.planned {
+      background: #eee5d6;
+      color: #5f564a;
+    }
+
+    .module-action {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: auto;
+      color: var(--accent-strong);
+      font-weight: 900;
+    }
+
+    .module-card.sage .module-action {
+      color: #41552f;
+    }
+
+    .module-card.ink .module-action {
+      color: #4d463d;
+    }
+
+    .rail-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rail-list a,
+    .rail-row {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: var(--surface-soft);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 850;
+    }
+
+    .rail-list a:hover {
+      background: #fffaf4;
+    }
+
+    .rail-list span,
+    .rail-row span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .mobilebar {
+      display: none;
+    }
+
+    [hidden] {
       display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
     }
-    #__bundler_thumbnail { position: fixed; inset: 0; width: 100%; height: 100%; background: #f5ead8; z-index: -1; }
-    #__bundler_thumbnail svg { width: 0; height: 0; }
+
+    @media (max-width: 1260px) {
+      .grid.modules {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.two {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1039px) {
+      :root {
+        --topbar-h: auto;
+      }
+
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .mobilebar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        background: var(--sidebar);
+        color: #fff;
+      }
+
+      .mobilebar .brand {
+        padding: 0;
+      }
+
+      .workspace {
+        display: block;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px 16px;
+      }
+
+      .topbar .primary-button,
+      .topbar .pill {
+        width: 100%;
+      }
+
+      .screen {
+        padding: 28px 16px 56px;
+      }
+
+      .page-head {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .grid.modules {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
-  <noscript>
-    <style>#__bundler_loading { display: none; }</style>
-    <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 &quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
-      This page requires JavaScript to display.
-    </div>
-  </noscript>
 </head>
-<body>
-  <div id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" sc-camel-view-box="0 0 100 100"><rect width="100" height="100" fill="#7a8a5e"></rect><g fill="none" stroke="#f5ead8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M40 70h30"></path><path d="M55 32a7 7 0 0 1 10 10L40 66l-13 3 3-13z"></path></g></svg></div>
-  <div id="__bundler_loading">Unpacking...</div>
+<body data-boot="pending">
+  <div class="app">
+    <aside class="sidebar" aria-label="Admin navigation">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+        <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-wordmark.png" alt="CoverMate"></span>
+        <span class="brand-sub">ADMIN PORTAL</span>
+      </a>
+      <nav class="nav" aria-label="Admin sections">
+        <a class="nav-link active" href="/admin" aria-current="page">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg></span>
+          Home
+        </a>
+        <a class="nav-link" href="/admin/ops">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+          Operations
+        </a>
+        <a class="nav-link" href="/#admin">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M2 14h4"></path><path d="M10 8h4"></path><path d="M18 16h4"></path></svg></span>
+          Website content
+        </a>
+        <a class="nav-link" href="/admin/analytics">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M7 16v-5"></path><path d="M12 16V7"></path><path d="M17 16v-8"></path></svg></span>
+          Analytics
+        </a>
+        <a class="nav-link" href="/admin/ops#settings">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1.07V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.07-.4H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1.07V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.37.36.7.6 1 .31.26.68.4 1.07.4H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></span>
+          Settings
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <p class="eyebrow">Signed in as · role</p>
+        <div class="role-pill" id="rolePill">Verifying</div>
+        <div class="user">
+          <span class="avatar" id="userAvatar">CM</span>
+          <span>
+            <strong id="userName">CoverMate admin</strong>
+            <span id="userMeta">Verifying session</span>
+          </span>
+        </div>
+        <button class="logout" type="button" id="logoutButton">Log out</button>
+      </div>
+    </aside>
 
-  <script>
+    <div class="mobilebar">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+        <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-wordmark.png" alt="CoverMate"></span>
+        <span class="brand-sub">ADMIN</span>
+      </a>
+      <a class="ghost-button" href="/admin/ops">Operations</a>
+    </div>
 
-document.addEventListener('DOMContentLoaded', async function() {
-  const loading = document.getElementById('__bundler_loading');
-  function setStatus(msg) { if (loading) loading.textContent = msg; }
+    <main class="workspace">
+      <header class="topbar">
+        <label class="search" for="globalSearch">
+          <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></span>
+          <input id="globalSearch" type="search" autocomplete="off" placeholder="Search opens in Operations" />
+        </label>
+        <span class="pill" id="sessionPill"><span class="dot"></span>Verifying admin</span>
+        <a class="primary-button" href="/admin/ops">Open operations</a>
+      </header>
 
-  const FONT_MIME = /^(font[/]|application[/](x-)?font-|application[/]vnd\.ms-fontobject)/i;
-  const MIME_TOKEN = /^[\w.+-]+[/][\w.+-]+$/;
-  function toBase64(bytes) {
-    let bin = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      <section class="screen" aria-labelledby="adminHomeTitle">
+        <div class="page-head">
+          <div>
+            <h1 id="adminHomeTitle">Admin Portal</h1>
+            <p class="lede">A single private entry point for operations, website content, analytics, and admin settings.</p>
+          </div>
+          <a class="ghost-button" href="/" id="publicSiteLink">Public site</a>
+        </div>
+
+        <div class="grid modules">
+          <a class="card module-card" href="/admin/ops" data-admin-home-card="operations">
+            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+            <h2>Operations</h2>
+            <span class="module-status">Live: leads/tasks/audit</span>
+            <p>Lead intake, follow-ups, task completion, lead notes, status changes, and audit trail run through the Operations API.</p>
+            <span class="module-action">Open workspace -></span>
+          </a>
+
+          <a class="card module-card sage" href="/#admin" data-admin-home-card="content">
+            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path><path d="M3 7h5"></path><path d="M3 12h3"></path></svg></span>
+            <h2>Website content</h2>
+            <span class="module-status">Live CMS</span>
+            <p>Live copy, section order, visibility, contact details, brand settings, media, preview, and publish remain in the Firestore CMS.</p>
+            <span class="module-action">Open controls -></span>
+          </a>
+
+          <a class="card module-card ink" href="/admin/analytics" data-admin-home-card="analytics">
+            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M7 16v-5"></path><path d="M12 16V7"></path><path d="M17 16v-8"></path></svg></span>
+            <h2>Analytics</h2>
+            <span class="module-status partial">Partial: GA4 API pending</span>
+            <p>First-party lead reporting is live. GA4 traffic charts stay labeled until a secure Data API or scheduled export exists.</p>
+            <span class="module-action">Open analytics -></span>
+          </a>
+
+          <a class="card module-card sage" href="/admin/ops#settings" data-admin-home-card="settings">
+            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1.07V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.07-.4H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1.07V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.37.36.7.6 1 .31.26.68.4 1.07.4H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></span>
+            <h2>Settings</h2>
+            <span class="module-status partial">Reference · API enforced</span>
+            <p>Roles, lead statuses, PDPA consent rules, permissions reference, and audit visibility. The API still enforces real permissions.</p>
+            <span class="module-action">Open settings -></span>
+          </a>
+        </div>
+
+        <div class="grid two" style="margin-top:18px">
+          <section class="panel" aria-labelledby="quickActionsTitle">
+            <h2 id="quickActionsTitle">Quick actions</h2>
+            <ul class="rail-list">
+              <li><a href="/#edit">Edit public-page words <span>Inline copy editor</span></a></li>
+              <li><a href="/#preview">Preview website draft <span>Private draft view</span></a></li>
+              <li><a href="/admin/ops#leads">Review lead intake <span>Operations list</span></a></li>
+              <li><a href="/admin/ops#tasks">Open follow-ups <span>Task queue</span></a></li>
+            </ul>
+          </section>
+
+          <section class="panel" aria-labelledby="statusTitle">
+            <h2 id="statusTitle">System status</h2>
+            <div class="rail-list">
+              <div class="rail-row">Firebase admin session <span id="authStatus">Checking</span></div>
+              <div class="rail-row">Operations backend <span>Leads, tasks, audit live through /api/ops</span></div>
+              <div class="rail-row">Customer/policy modules <span>Not wired yet; labeled in Operations</span></div>
+              <div class="rail-row">Website CMS <span>Firestore draft/live</span></div>
+              <div class="rail-row">GA4 Data API <span>Pending backend/export</span></div>
+            </div>
+            <div class="quick-actions">
+              <a class="ghost-button" href="https://smart.oic.or.th/eservice/Menu1" target="_blank" rel="noopener">Verify licence</a>
+              <button class="ghost-button" type="button" id="logoutButtonInline">Log out</button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
+
+    const K_ADMIN_EVER = "purich-admin-ever-v7";
+    const sessionPill = document.getElementById("sessionPill");
+    const rolePill = document.getElementById("rolePill");
+    const userAvatar = document.getElementById("userAvatar");
+    const userName = document.getElementById("userName");
+    const userMeta = document.getElementById("userMeta");
+    const authStatus = document.getElementById("authStatus");
+    const globalSearch = document.getElementById("globalSearch");
+    const publicSiteLink = document.getElementById("publicSiteLink");
+
+    function initialsFrom(name) {
+      return String(name || "CoverMate admin")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "CM";
     }
-    return btoa(bin);
-  }
 
-  // Error sink persists across replaceWith since it's on window, not the DOM.
-  window.addEventListener('error', function(e) {
-    // Failed resource loads (CSP-blocked links, scripts, images) fire plain
-    // events at the element — warn only; real JS errors carry message/error.
-    if (!e.message && !e.error && e.target && e.target !== window) {
-      console.warn('[bundle] resource failed to load:',
-        e.target.tagName, String(e.target.src || e.target.href || ''));
-      return;
-    }
-    var p = document.body || document.documentElement;
-    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
-    d.id = '__bundler_err';
-    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 "Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
-    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
-      '[bundle] ' + (e.message || e.type) +
-      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
-  }, true);
-
-  try {
-    const manifestEl = document.querySelector('script[type="__bundler/manifest"]');
-    const templateEl = document.querySelector('script[type="__bundler/template"]');
-    if (!manifestEl || !templateEl) {
-      setStatus('Error: missing bundle data');
-      console.error('[bundler] Missing script tags — manifestEl:', !!manifestEl, 'templateEl:', !!templateEl);
-      return;
+    function displayRole(role) {
+      const map = {
+        owner: "Owner / Administrator",
+        admin: "Owner / Administrator",
+        advisor: "Adviser",
+        ops: "Operations",
+        readonly: "Read-only"
+      };
+      return map[role] || role || "Admin";
     }
 
-    const manifest = JSON.parse(manifestEl.textContent);
-    let template = JSON.parse(templateEl.textContent);
-    async function hydrateCoverMateContent() {
-      if (!/^https?:$/.test(window.location.protocol)) return;
-      const timeoutMs = 5000;
-      let timeoutId = 0;
-      const timeout = new Promise((resolve) => {
-        timeoutId = window.setTimeout(() => resolve({ timedOut: true }), timeoutMs);
+    function clearOwnerMarker() {
+      try {
+        window.localStorage.removeItem(K_ADMIN_EVER);
+      } catch {
+        // Public navigation still proceeds.
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById("logoutButton").addEventListener("click", signOutAdmin);
+      document.getElementById("logoutButtonInline").addEventListener("click", signOutAdmin);
+      publicSiteLink.addEventListener("click", clearOwnerMarker);
+      globalSearch.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        const query = globalSearch.value.trim();
+        const suffix = query ? `?q=${encodeURIComponent(query)}#leads` : "#leads";
+        window.location.href = `/admin/ops${suffix}`;
       });
-      const remote = (async () => {
-        setStatus('Loading latest content...');
-        await import(window.location.origin + '/covermate-firebase.js');
-        if (window.CoverMateFirebase && window.CoverMateFirebase.hydrateLocalContent) {
-          return window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
-        }
-        return null;
-      })();
-      try {
-        const result = await Promise.race([remote, timeout]);
-        if (result && result.timedOut) {
-          window.__covermateRemoteContent = { source: 'timeout', timeoutMs };
-          remote.then((lateResult) => {
-            if (!lateResult || (!lateResult.live && !lateResult.draft)) return;
-            window.__covermateLateRemoteContent = lateResult;
-            window.dispatchEvent(new CustomEvent('covermate:remote-content-ready', { detail: lateResult }));
-          }).catch(() => {});
-          console.warn('[covermate] Remote content still loading; rendering temporary local cache.');
-        }
-      } catch (err) {
-        window.__covermateRemoteContent = { source: 'fallback', error: err && err.message ? err.message : String(err) };
-        console.warn('[covermate] Remote content unavailable; using local cold-start cache.', err);
-      } finally {
-        if (timeoutId) window.clearTimeout(timeoutId);
-      }
-    }
-    await hydrateCoverMateContent();
-
-    // Nested page bundles (iframe targets). Each ships ONCE, in the ROOT
-    // document's manifest; frame srcs carry an about:blank#<uuid> marker
-    // instead of a substitutable uuid. Every document mints the blobs for
-    // its OWN frames — from local text at the root, or text obtained from
-    // its DIRECT parent over the relay protocol below — so each frame
-    // navigation stays same-origin with its initiator and a deduped page
-    // loads at any depth on any host, including a file:// download's
-    // opaque origins (where a blob minted by one document cannot be
-    // navigated to by another).
-    const pageOrderEl = document.querySelector('script[type="__bundler/page_order"]');
-    const pageOrder = pageOrderEl ? JSON.parse(pageOrderEl.textContent) : [];
-    const pageSet = new Set(pageOrder);
-    const pageTexts = {};
-
-    // ── Nested-page text protocol (parent-chain relay) ──
-    // Page bundles ship once, in the ROOT document's manifest. Every
-    // document mints the blobs for its OWN frames, obtaining page text
-    // through a strict parent-chain relay: a document only ever SENDS to
-    // its direct parent (which, for every document the publisher's own
-    // runtime minted, is another publisher document) and only ACCEPTS
-    // text from that direct parent; requests from below are honored only
-    // for the document's own child frames, and the ROOT never sends
-    // upward at all. That last rule is load-bearing: the artifact host's
-    // frame-ancestors allows claude.ai (and friends) to frame an
-    // artifact, so window.top can be a FOREIGN document — a top-addressed
-    // protocol would hand page uuids to that ancestor and accept forged
-    // "page text" from it, minting attacker HTML as an artifact-origin
-    // blob document. The chain never touches the ancestor: requests stop
-    // at the root, replies are origin-addressed per hop (never '*' when
-    // an origin exists), and both directions are origin-gated (on https
-    // a foreign sender's origin can never equal this document's; in
-    // opaque contexts — file:// — everything serializes as 'null', where
-    // an embedded EXTERNAL frame still fails the gate by carrying its
-    // own real origin, and a sandboxed child of such a frame is excluded
-    // by the own-child-frames check plus uuid unguessability). Shape is
-    // deny-by-default: one request form, one reply form, no error
-    // replies.
-    // window.origin is the SERIALIZED SECURITY origin ('null' in opaque
-    // contexts such as a sandboxed preview iframe) — location.origin is
-    // computed from the URL and stays 'https://…' even when the document
-    // is sandboxed, which would misgate every opaque chain.
-    const OWN_TARGET = /^https?:[/][/]/.test(window.origin || '')
-      ? window.origin
-      : '*';
-    function trustedOrigin(e) {
-      if (e.origin === window.origin) return true; // https chains; opaque==opaque
-      // file:// trees: Chrome serializes the file document's origin as
-      // 'file://' while the blob: documents it mints serialize as 'null',
-      // so the two legitimate shapes can never string-match — accept the
-      // pair in both directions. https origins never serialize as either,
-      // and sender identity (own child frame / direct parent) is checked
-      // separately.
-      return (
-        (e.origin === 'null' &&
-          (window.origin === 'file://' ||
-            window.location.protocol === 'file:')) ||
-        (/^file:/.test(e.origin) && window.origin === 'null')
-      );
-    }
-    // Non-empty only in the root document (nested bundles ship an empty
-    // island), so it doubles as the root marker: the root answers from
-    // local text and treats a miss as authoritative — never relaying to
-    // its (possibly foreign) parent.
-    const isPageRoot = pageOrder.length > 0;
-    const blobUrls = {};
-    const resourceBlobs = {};
-    const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-    const pendingFrames = {}; // uuid -> [{el, frag}] awaiting text for own frames
-    const pendingRelays = {}; // uuid -> [childWindow] awaiting text to pass down
-    function mountPage(el, frag, text) {
-      const pageBlob = new Blob([text], { type: 'text/html' });
-      const u = URL.createObjectURL(pageBlob);
-      resourceBlobs[u] = pageBlob;
-      el.src = u + frag;
-    }
-    function deliverPage(uuid, text) {
-      const frames = pendingFrames[uuid];
-      delete pendingFrames[uuid];
-      if (frames) for (const f of frames) mountPage(f.el, f.frag, text);
-      const relays = pendingRelays[uuid];
-      delete pendingRelays[uuid];
-      if (relays) {
-        for (const cw of relays) {
-          try { cw.postMessage({ __bundler_page: uuid, __bundler_text: text }, OWN_TARGET); } catch (err) { /* gone */ }
-        }
-      }
-    }
-    function ownFrameWindows() {
-      const out = [];
-      for (const f of Array.from(document.querySelectorAll('iframe'))) {
-        try { if (f.contentWindow) out.push(f.contentWindow); } catch (err) { /* detached */ }
-      }
-      return out;
-    }
-    window.addEventListener('message', function (e) {
-      const d = e.data;
-      if (!d || typeof d !== 'object' || !e.source) return;
-      // Origin gate first; the structural checks below (own-child-frames
-      // for requests, direct-parent + solicited-uuid for replies, the
-      // root's never-relay rule) are what hold in fully opaque chains
-      // where origin strings can't discriminate — a sandboxed root's
-      // FOREIGN wrapper still fails all three even though both serialize
-      // as real-vs-'null' rather than matching.
-      if (!trustedOrigin(e)) return;
-      if (typeof d.__bundler_need === 'string' && UUID_SHAPE.test(d.__bundler_need)) {
-        // Requests are honored only for this document's own child frames.
-        if (ownFrameWindows().indexOf(e.source) < 0) return;
-        const uuid = d.__bundler_need;
-        const text = pageTexts[uuid];
-        if (typeof text === 'string') {
-          try { e.source.postMessage({ __bundler_page: uuid, __bundler_text: text }, OWN_TARGET); } catch (err) { /* gone */ }
-          return;
-        }
-        if (isPageRoot || window.parent === window) return; // authoritative miss
-        const waiting = pendingRelays[uuid];
-        if (waiting) {
-          if (waiting.indexOf(e.source) < 0) waiting.push(e.source);
-          return;
-        }
-        // Never-answered uuids would otherwise accumulate forever under a
-        // request spray; past the cap (far above any real page count) new
-        // relays are dropped rather than remembered.
-        if (Object.keys(pendingRelays).length >= 128) return;
-        pendingRelays[uuid] = [e.source];
-        window.parent.postMessage({ __bundler_need: uuid }, OWN_TARGET);
-      } else if (
-        typeof d.__bundler_page === 'string' &&
-        UUID_SHAPE.test(d.__bundler_page) &&
-        typeof d.__bundler_text === 'string'
-      ) {
-        // The shape test is load-bearing beyond tidiness: the solicited
-        // check below uses the in operator, which matches prototype keys
-        // ('__proto__', 'constructor') — an unshaped key would reach
-        // deliverPage and throw, painting the error banner.
-        // Text is accepted only from the direct parent — the document
-        // that minted this one.
-        if (e.source !== window.parent || window.parent === window) return;
-        if (!(d.__bundler_page in pendingFrames) && !(d.__bundler_page in pendingRelays)) return;
-        deliverPage(d.__bundler_page, d.__bundler_text);
-      }
-    });
-
-    const uuids = Object.keys(manifest);
-    setStatus('Unpacking ' + uuids.length + ' assets...');
-
-    await Promise.all(uuids.map(async (uuid) => {
-      const entry = manifest[uuid];
-      try {
-        const binaryStr = atob(entry.data);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-
-        let finalBytes = bytes;
-        if (entry.compressed) {
-          if (typeof DecompressionStream !== 'undefined') {
-            const ds = new DecompressionStream('gzip');
-            const writer = ds.writable.getWriter();
-            const reader = ds.readable.getReader();
-            writer.write(bytes);
-            writer.close();
-            const chunks = [];
-            let totalLen = 0;
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              chunks.push(value);
-              totalLen += value.length;
-            }
-            finalBytes = new Uint8Array(totalLen);
-            let offset = 0;
-            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
-          } else {
-            console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
-          }
-        }
-
-        if (pageSet.has(uuid)) {
-          pageTexts[uuid] = new TextDecoder().decode(finalBytes);
-          return;
-        }
-        if (FONT_MIME.test(entry.mime) && MIME_TOKEN.test(entry.mime)) {
-          // Strict artifact hosts allow font-src data: but not blob:.
-          blobUrls[uuid] = 'data:' + entry.mime + ';base64,' +
-            (entry.compressed ? toBase64(finalBytes) : entry.data);
-        } else {
-          const blob = new Blob([finalBytes], { type: entry.mime });
-          blobUrls[uuid] = URL.createObjectURL(blob);
-          resourceBlobs[blobUrls[uuid]] = blob;
-        }
-      } catch (err) {
-        console.error('Failed to decode asset ' + uuid + ':', err);
-        const blob = new Blob([], { type: entry.mime });
-        blobUrls[uuid] = URL.createObjectURL(blob);
-        resourceBlobs[blobUrls[uuid]] = blob;
-      }
-    }));
-
-    const extResEl = document.querySelector('script[type="__bundler/ext_resources"]');
-    const extResources = extResEl ? JSON.parse(extResEl.textContent) : [];
-    const resourceMap = {};
-    for (const entry of extResources) {
-      if (blobUrls[entry.uuid]) resourceMap[entry.id] = blobUrls[entry.uuid];
     }
 
-    // Artifact-host CSP (connect-src 'self') refuses fetch() of blob: URLs —
-    // consumers read these Blobs directly. Survives the swap like the error sink.
-    window.__resourceBlobs = resourceBlobs;
-
-    setStatus('Rendering...');
-    // Page uuids have no blob here — they ride inside about:blank#<uuid>
-    // frame markers the pass below resolves after the swap.
-    for (const uuid of uuids) {
-      if (pageSet.has(uuid)) continue;
-      template = template.split(uuid).join(blobUrls[uuid]);
+    try {
+      const session = await requireVerifiedAdminSession({ redirectTo: "/admin/login" });
+      if (!session) throw new Error("Missing verified admin session.");
+      const name = session.name || session.email || "CoverMate admin";
+      const role = displayRole(session.role);
+      userAvatar.textContent = initialsFrom(name);
+      userName.textContent = name;
+      userMeta.textContent = `${session.role || "admin"} · verified`;
+      rolePill.textContent = role;
+      sessionPill.innerHTML = '<span class="dot"></span>Admin verified';
+      authStatus.textContent = `${role} · verified`;
+      bindEvents();
+      document.body.dataset.boot = "ready";
+    } catch (error) {
+      sessionPill.innerHTML = '<span class="dot"></span>Session issue';
+      sessionPill.style.background = "var(--danger-soft)";
+      sessionPill.style.color = "var(--danger)";
+      document.body.dataset.boot = "ready";
     }
-
-    // Strip integrity + crossorigin — blob URLs from a file:// document inherit
-    // a null origin, so crossorigin forces a CORS fetch that SRI then rejects.
-    // The manifest bytes are ours; SRI protects against CDN compromise, not this.
-    template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
-
-    const resourceScript = '<script>window.__resources = ' +
-      JSON.stringify(resourceMap).replace(/<\//g, '<\\/') +
-      ';</' + 'script>';
-    // Inject after <head> so the DOCTYPE stays first; prepending the script
-    // would push the parser into quirks mode. DOMParser always emits a <head>
-    // (synthesizing one if the source HTML omitted it) but may carry
-    // attributes through, so match the full opening tag. slice() rather than
-    // replace() keeps us clear of $-pattern substitution in resourceScript.
-    const headOpen = template.match(/<head[^>]*>/i);
-    if (headOpen) {
-      const i = headOpen.index + headOpen[0].length;
-      template = template.slice(0, i) + resourceScript + template.slice(i);
-    }
-
-    // Parse the template and swap the root element. Scripts inserted via
-    // DOMParser/replaceWith are inert per spec — re-create each with
-    // createElement so they execute, awaiting onload for src scripts to
-    // preserve ordering (React before ReactDOM before Babel before text/babel).
-    const doc = new DOMParser().parseFromString(template, 'text/html');
-    document.documentElement.replaceWith(doc.documentElement);
-
-    // Resolve page-frame markers: mint this document's own blob for each
-    // framed page — from local text when this is the root, otherwise by
-    // asking the direct parent over the relay protocol above. An
-    // unanswered request leaves the frame on about:blank, the same
-    // degraded state as a refused embed.
-    {
-      const MARKER = /^about:blank#([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(#.*)?$/;
-      const needed = [];
-      for (const el of Array.from(document.querySelectorAll('iframe'))) {
-        const m = MARKER.exec(el.getAttribute('src') || '');
-        if (!m) continue;
-        const text = pageTexts[m[1]];
-        if (typeof text === 'string') {
-          mountPage(el, m[2] || '', text);
-        } else if (window.parent !== window && !isPageRoot) {
-          const had = pendingFrames[m[1]];
-          (pendingFrames[m[1]] = had || []).push({ el: el, frag: m[2] || '' });
-          if (!had) needed.push(m[1]);
-        }
-      }
-      for (const uuid of needed) {
-        window.parent.postMessage({ __bundler_need: uuid }, OWN_TARGET);
-      }
-    }
-
-    const dead = Array.from(document.scripts);
-    for (const old of dead) {
-      const s = document.createElement('script');
-      for (const a of old.attributes) s.setAttribute(a.name, a.value);
-      s.textContent = old.textContent;
-      // text/babel scripts with a src: read and inline. transformScriptTags
-      // does XHR against the src, but blob:null/ from a file:// origin is
-      // silently dropped. Inlining makes it a plain inline babel script,
-      // which transformScriptTags handles unconditionally.
-      if ((s.type === 'text/babel' || s.type === 'text/jsx') && s.src) {
-        const pre = resourceBlobs[s.src.split('#')[0]];
-        s.textContent = pre ? await pre.text() : await (await fetch(s.src)).text();
-        s.removeAttribute('src');
-      }
-      const p = s.src ? new Promise(function(r) { s.onload = s.onerror = r; }) : null;
-      old.replaceWith(s);
-      if (p) await p;
-    }
-    // Babel standalone auto-transforms type=text/babel on DOMContentLoaded,
-    // which fired before we swapped the document. Trigger manually if present.
-    if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
-      window.Babel.transformScriptTags();
-    }
-  } catch (err) {
-    setStatus('Error unpacking: ' + err.message);
-    console.error('Bundle unpack error:', err);
-  }
-});
-
   </script>
-
-  <script type="__bundler/manifest">{"1947ed56-d198-4c53-90ac-5c462a20dc14":{"mime":"application/javascript","compressed":true,"data":"H4sIAAAAAAAAE22OQWrDMBBF9zrFMCs5uMmmKxuXbgrd5QAhCFWetgZ7RmhsEpB19+A2m9CuBh7/vz+HHbz2+vSxcD9SAxk/JU1+xua5RvYTafSBsMFj+vI8BCc/F2sMMkVh4lmxOZ1rVFlSoHev36TY5FLjwOPA1L9dZ0rsx3tuYbpG0Y1HSb/tAruDMdZW0L1ANiYI6wzO9epYoQN7GbiXy/7xCejgf76ukEvVPng0SCToIJfWGHtX752jlCRtG3/QusLpvFlKZavW3ADHTx6jKQEAAA=="},"17e3218f-9363-44be-b3b0-2d345b885307":{"mime":"text/javascript","compressed":true,"data":"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"}}</script>
-
-  <script type="__bundler/ext_resources">
-[{"id":"https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js","uuid":"354b5cb3-e724-4b56-b463-fa201883c50a"},{"id":"https://unpkg.com/react@18.3.1/umd/react.production.min.js","uuid":"d4509482-dd3e-4aad-93d6-ff32ac6c62c4"}]
-  </script>
-
-  <script type="__bundler/page_order">
-[]
-  </script>
-
-  <script type="__bundler/template">"<!DOCTYPE html>\n<html lang=\"th-TH\"><head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<title>CoverMate Admin</title>\n  <meta name=\"robots\" content=\"noindex,nofollow,noarchive\">\n  <meta name=\"googlebot\" content=\"noindex,nofollow,noarchive\">\n  <meta name=\"theme-color\" content=\"#c67139\">\n  <link rel=\"canonical\" href=\"https://covermate.vercel.app/admin/\">\n  <link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">\n  <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"any\">\n<script src=\"17e3218f-9363-44be-b3b0-2d345b885307\"><\/script>\n<style id=\"covermate-template-cloak\">html,body{min-height:100%;background:#f5ead8}x-dc{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}</style>\n<style id=\"covermate-responsive-touch-policy\">\n@media (max-width: 700px), (pointer: coarse) {\n  button,\n  input,\n  select,\n  textarea,\n  [role=\"button\"] {\n    min-height: 44px !important;\n  }\n\n  button,\n  [role=\"button\"] {\n    min-width: 44px !important;\n  }\n\n  input,\n  select,\n  textarea {\n    font-size: 16px !important;\n  }\n\n  header a[href],\n  nav a[href],\n  footer a[href],\n  aside a[href],\n  main > a[href],\n  [data-admin-owner-bar] a[href] {\n    display: inline-flex !important;\n    align-items: center !important;\n    min-height: 44px !important;\n  }\n}\n</style>\n<link rel=\"stylesheet\" href=\"/assets/fonts/covermate-fonts.css\">\n</head>\n<body>\n<x-dc>\n<helmet>\n<style>/* Organic — design-system tokens and component classes. This file is the source of truth for the system's look; retune it here and see readme.md. */\n:root {\n  --color-bg: #f5ead8;\n  --color-surface: #ebddc5;\n  --color-text: #201e1d;\n  --color-accent: #c67139;\n  --color-accent-2: #7a8a5e;\n  --color-divider: color-mix(in srgb, #201e1d 16%, transparent);\n\n  /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the\n     same step of any role matches the others in visual value. */\n  --color-neutral-100: #f9f4ed;\n  --color-neutral-200: #eee7db;\n  --color-neutral-300: #dcd3c4;\n  --color-neutral-400: #c0b6a5;\n  --color-neutral-500: #a19786;\n  --color-neutral-600: #82796a;\n  --color-neutral-700: #645c50;\n  --color-neutral-800: #474238;\n  --color-neutral-900: #2e2b25;\n\n  --color-accent-100: #fff2eb;\n  --color-accent-200: #ffe1d0;\n  --color-accent-300: #ffc6a5;\n  --color-accent-400: #f6a06b;\n  --color-accent-500: #d67f48;\n  --color-accent-600: #b2622d;\n  --color-accent-700: #8c491a;\n  --color-accent-800: #643312;\n  --color-accent-900: #402310;\n\n  --color-accent-2-100: #f0fae1;\n  --color-accent-2-200: #e1eecc;\n  --color-accent-2-300: #ccdbb2;\n  --color-accent-2-400: #aebf92;\n  --color-accent-2-500: #8fa073;\n  --color-accent-2-600: #728157;\n  --color-accent-2-700: #56633f;\n  --color-accent-2-800: #3d472b;\n  --color-accent-2-900: #272e1b;\n\n  --font-heading: \"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif;\n  --font-heading-weight: 700;\n  --font-body: \"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif;\n\n  --space-1: 4.4px;\n  --space-2: 8.8px;\n  --space-3: 13.2px;\n  --space-4: 17.6px;\n  --space-6: 26.4px;\n  --space-8: 35.2px;\n\n  --radius-sm: 8px;\n  --radius-md: 16px;\n  --radius-lg: 28px;\n\n  /* Elevation — derived from the ground: soft ink-tinted shadows on a\n     light theme, a hairline edge + ambient darkness on a dark one. */\n  --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);\n  --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);\n  --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);\n}\n\nbody {\n  background: var(--color-bg);\n  color: var(--color-text);\n  font-family: var(--font-body);\n}\nh1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }\n\n.washed{filter:saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94)}\n\n/* ══════════════════════════════════════════════════════════════════════════\n   Components — built with the tokens above. Plain CSS\n   on plain HTML: no JavaScript, no build step. Each class is documented in\n   readme.md and demonstrated in foundations/ and components/.\n   ══════════════════════════════════════════════════════════════════════ */\n\n*, *::before, *::after { box-sizing: border-box; }\nbody { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 400; }\nh1, h2, h3, h4, h5, h6 {\n  font-family: var(--font-heading); font-weight: var(--font-heading-weight);\n  line-height: 1.12; letter-spacing: 0; margin: 0 0 var(--space-2);\n}\nh1 { font-size: 42px; }\nh2 { font-size: 32px; }\nh3 { font-size: 25px; }\nh4 { font-size: 20px; }\nh5 { font-size: 16px; }\nh6 { font-size: 13px; }\nh6 { letter-spacing: 0.08em; text-transform: uppercase; }\np { margin: 0 0 var(--space-3); }\na { color: var(--color-accent); text-underline-offset: 3px; }\nimg { display: block; max-width: 100%; }\nfigure { margin: 0; }\nfigcaption {\n  font-size: 11px; margin-top: var(--space-1);\n  color: color-mix(in srgb, var(--color-text) 55%, transparent);\n}\n.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }\n:focus { outline: none; }\n:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }\n::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }\n\n/* — rules — */\n.hr {\n  height: 1px; border: 0; margin: var(--space-4) 0;\n  background: var(--color-divider);\n}\n\n/* — buttons — */\n.btn {\n  display: inline-flex; align-items: center; justify-content: center; gap: 6px;\n  cursor: pointer; text-decoration: none;\n  font-family: var(--font-heading); font-weight: var(--font-heading-weight);\n  font-size: 14px; line-height: 1.2; color: var(--color-text); /* matches the .input's 14px —\n     the pair sits side by side in sign-up rows */\n  background: transparent; border: 1px solid transparent;\n  padding: var(--space-2) calc(var(--space-3) * 1.2);\n  border-radius: var(--radius-md);\n}\n.btn svg { display: block; }\n.btn:disabled { opacity: 0.45; cursor: not-allowed; }\n.btn-primary { background: var(--color-accent); color: var(--color-bg); }\n.btn-primary:hover { background: var(--color-accent-600); }\n.btn-primary:active { background: var(--color-accent-700); }\n.btn-secondary { border-color: var(--color-divider); }\n.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }\n.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }\n.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }\n.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }\n.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }\n.btn-icon { width: 36px; height: 36px; padding: 0; }\n.btn-block { width: 100%; margin-top: var(--space-2); }\n\n/* — forms — */\n.field > label {\n  display: block; font-size: 12px; margin-bottom: 5px;\n  color: color-mix(in srgb, var(--color-text) 70%, transparent);\n}\n.input {\n  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;\n  font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);\n  background: var(--color-surface);\n  border: 1px solid var(--color-divider); border-radius: var(--radius-md);\n}\n.input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }\n.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }\ntextarea.input { min-height: 90px; resize: vertical; }\n.radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }\n.radio input, .seg-opt input {\n  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;\n}\n.radio .dot {\n  width: 16px; height: 16px; flex: none; border-radius: 50%;\n  border: 1.5px solid var(--color-divider);\n}\n.radio:hover .dot { border-color: var(--color-accent); }\n.radio input:checked + .dot {\n  border-color: var(--color-accent); background: var(--color-accent);\n  box-shadow: inset 0 0 0 4px var(--color-bg);\n}\n.radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }\n.seg {\n  display: inline-flex; overflow: hidden;\n  border: 1px solid var(--color-divider); border-radius: var(--radius-md);\n}\n.seg-opt {\n  display: inline-flex; align-items: center; gap: 6px;\n  padding: 7px 12px; font-size: 13px; cursor: pointer;\n}\n.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }\n.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }\n.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }\n.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }\n\n/* — cards — */\n.card {\n  display: flex; flex-direction: column; gap: var(--space-2);\n  padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface);\n}\n.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }\n.card-title {\n  font-family: var(--font-heading); font-weight: var(--font-heading-weight);\n  font-size: 17px; line-height: 1.2;\n}\n.card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }\n.card-meta {\n  display: flex; align-items: center; gap: 6px; font-size: 11px;\n  color: color-mix(in srgb, var(--color-text) 50%, transparent);\n}\n.elev-sm { box-shadow: var(--shadow-sm); }\n.elev-md { box-shadow: var(--shadow-md); }\n.elev-lg { box-shadow: var(--shadow-lg); }\n\n/* — tags — */\n.tag {\n  display: inline-flex; align-items: center; font-size: 11px;\n  letter-spacing: 0.02em; padding: 3px 10px;\n  border-radius: calc(var(--radius-md) * 0.75);\n}\n.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }\n.tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }\n.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }\n.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }\n\n/* — navigation — */\n.nav {\n  display: flex; align-items: center; gap: var(--space-4);\n  padding: var(--space-3) var(--space-4);\n  border-bottom: none;\n}\n.nav-brand {\n  font-family: var(--font-heading); font-weight: var(--font-heading-weight);\n  font-size: 18px; margin-right: auto;\n}\n.nav a { color: inherit; text-decoration: none; font-size: 14px; }\n.nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }\n\n/* — tables — */\n.table { width: 100%; border-collapse: collapse; font-size: 14px; }\n.table th {\n  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;\n  color: color-mix(in srgb, var(--color-text) 60%, transparent);\n  padding: var(--space-2); border-bottom: 1px solid var(--color-divider);\n}\n.table td {\n  padding: var(--space-2);\n  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);\n}\n.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }\n\n/* — dialog — */\n.dialog-backdrop {\n  position: fixed; inset: 0; display: grid; place-items: center;\n  padding: var(--space-4);\n  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);\n}\n.dialog {\n  width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3);\n  padding: var(--space-4); border-radius: var(--radius-lg);\n  background: var(--color-surface); box-shadow: var(--shadow-lg);\n}\n.dialog-title {\n  font-family: var(--font-heading); font-weight: var(--font-heading-weight);\n  font-size: 20px;\n}\n.dialog-body { font-size: 14px; opacity: 0.85; }\n.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }\n\n/* — rounded frame: everything softens, small controls go pill — */\n.card, .dialog { border-radius: calc(var(--radius-lg) * 1.15); }\n.btn, .tag, .seg, .input { border-radius: 999px; }\n.input { padding-inline: 14px; }\n\n</style>\n<script src=\"1947ed56-d198-4c53-90ac-5c462a20dc14\"><\/script>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin=\"\">\n<style></style>\n<style>\n  body { margin:0; background: var(--color-bg); color: var(--color-text);\n         font-family: \"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }\n  a { text-decoration: none; color: var(--color-accent-700); }\n  a:hover { color: var(--color-accent-600); }\n  *:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 999px; }\n</style>\n<style id=\"covermate-thai-font-policy\">\n  :root {\n    --font-body: \"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif !important;\n    --font-heading: \"Google Sans\", \"Google Sans Thai\", \"Noto Sans Thai\", system-ui, sans-serif !important;\n    font-family: var(--font-body) !important;\n  }\n\n  html,\n  body,\n  button,\n  input,\n  textarea,\n  select,\n  option,\n  label,\n  a,\n  [contenteditable=\"true\"],\n  code,\n  kbd,\n  pre,\n  samp {\n    font-family: var(--font-body) !important;\n  }\n\n  h1,\n  h2,\n  h3,\n  h4,\n  h5,\n  h6,\n  .brand-word,\n  .font-serif,\n  [class*=\"font-serif\"] {\n    font-family: var(--font-heading) !important;\n  }\n</style>\n</helmet>\n\n<main style=\"min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(24px,4vw,40px);padding:clamp(28px,6vw,72px)\">\n\n  <div style=\"display:flex;flex-direction:column;align-items:center;gap:var(--space-3);text-align:center;max-width:52ch\">\n    <div style=\"display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0\">\n      <img sc-camel-src=\"{{ brandWordmarkLogo }}\" alt=\"{{ brandLogoAlt }}\" style=\"width:min(214px,100%);height:auto;display:block;object-fit:contain\">\n      <span style=\"font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent-700);padding-left:3px\">Admin · private</span>\n    </div>\n    <div style=\"font-size:11.5px;line-height:1.5;color:var(--color-neutral-700)\">ตัวแทนประกันชีวิต (Life agent) No. 6401006221 · นายหน้าประกันวินาศภัย (Non-life broker) No. 6804008544 · ประกันรถยนต์ผ่านศรีกรุงโบรคเกอร์ (Srikrung Broker) No. 5704011570</div>\n    <a href=\"https://smart.oic.or.th/eservice/Menu1\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 12px;border-radius:999px;font-size:11.8px;font-weight:700;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px\" style-hover=\"background:var(--color-neutral-200);color:var(--color-accent-800)\">ตรวจสอบใบอนุญาต (Verify licence · OIC) →</a>\n    <h1 style=\"margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(28px,5vw,42px);line-height:1.18;text-wrap:pretty\">Manage your site</h1>\n    <p style=\"margin:0;font-size:16px;line-height:1.6;color:var(--color-neutral-800);text-wrap:pretty\">This page is only for you — visitors never see it. Choose whether to edit the words, arrange the site, or review analytics.</p>\n  </div>\n\n  <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:var(--space-4);width:100%;max-width:1080px;align-items:stretch\">\n\n    <a href=\"/#edit\" data-admin-launcher-card=\"words\" aria-label=\"Open Edit the words\" style=\"min-height:260px;display:flex;flex-direction:column;gap:var(--space-3);padding:clamp(23px,2.6vw,32px);border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-sm);transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s ease\" style-hover=\"transform:translateY(-3px);box-shadow:var(--shadow-md);color:var(--color-text)\">\n      <span style=\"width:52px;height:52px;border-radius:999px;background:{{ accentBase }};color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center\">\n        <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M12 20h9\"></path><path d=\"M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z\"></path><path d=\"M3 7h5\"></path><path d=\"M3 12h3\"></path></svg>\n      </span>\n      <span style=\"font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.25\">Edit the words</span>\n      <span style=\"font-size:14.5px;line-height:1.6;color:var(--color-neutral-800)\">Update Thai and English website copy, section text, FAQs, buttons, and repeatable editorial content without touching layout settings.</span>\n      <span style=\"display:inline-flex;align-items:center;gap:8px;margin-top:auto;font-size:14px;font-weight:700;color:{{ accentText }}\">Open text editor\n        <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M5 12h14\"></path><path d=\"m12 5 7 7-7 7\"></path></svg>\n      </span>\n    </a>\n\n    <a href=\"/#admin\" data-admin-launcher-card=\"arrange\" aria-label=\"Open Arrange and customise\" style=\"min-height:260px;display:flex;flex-direction:column;gap:var(--space-3);padding:clamp(23px,2.6vw,32px);border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-sm);transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s ease\" style-hover=\"transform:translateY(-3px);box-shadow:var(--shadow-md);color:var(--color-text)\">\n      <span style=\"width:52px;height:52px;border-radius:999px;background:var(--color-accent-2);color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center\">\n        <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M3 6h18\"></path><path d=\"M7 12h10\"></path><path d=\"M10 18h4\"></path><path d=\"M5 4v4\"></path><path d=\"M19 4v4\"></path><path d=\"M8 10v4\"></path><path d=\"M16 10v4\"></path><path d=\"M11 16v4\"></path><path d=\"M13 16v4\"></path></svg>\n      </span>\n      <span style=\"font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.25\">Arrange & customise</span>\n      <span style=\"font-size:14.5px;line-height:1.6;color:var(--color-neutral-800)\">Manage section order, visibility, brand/contact settings, theme, media, versions, and advanced site configuration.</span>\n      <span style=\"display:inline-flex;align-items:center;gap:8px;margin-top:auto;font-size:14px;font-weight:700;color:var(--color-accent-2-800)\">Open site controls\n        <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M5 12h14\"></path><path d=\"m12 5 7 7-7 7\"></path></svg>\n      </span>\n    </a>\n\n    <a href=\"/admin/analytics\" data-admin-launcher-card=\"analytics\" aria-label=\"Open Analytics\" style=\"min-height:260px;display:flex;flex-direction:column;gap:var(--space-3);padding:clamp(23px,2.6vw,32px);border-radius:var(--radius-lg);background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-sm);transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s ease\" style-hover=\"transform:translateY(-3px);box-shadow:var(--shadow-md);color:var(--color-text)\">\n      <span style=\"width:52px;height:52px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center\">\n        <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M3 3v18h18\"></path><rect x=\"7\" y=\"12\" width=\"3\" height=\"5\" rx=\"1\"></rect><rect x=\"12\" y=\"8\" width=\"3\" height=\"9\" rx=\"1\"></rect><rect x=\"17\" y=\"5\" width=\"3\" height=\"12\" rx=\"1\"></rect></svg>\n      </span>\n      <span style=\"font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.25\">Analytics</span>\n      <span style=\"font-size:14.5px;line-height:1.6;color:var(--color-neutral-800)\">Review real lead capture, enquiry mix, coverage interest, and honest GA4 reporting readiness in the private analytics surface.</span>\n      <span style=\"display:inline-flex;align-items:center;gap:8px;margin-top:auto;font-size:14px;font-weight:700;color:var(--color-neutral-800)\">Open analytics\n        <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M5 12h14\"></path><path d=\"m12 5 7 7-7 7\"></path></svg>\n      </span>\n    </a>\n  </div>\n  <div style=\"display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:center;justify-content:center\">\n    <a href=\"/\" sc-camel-on-click=\"{{ goPublicSite }}\" style=\"display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 calc(var(--space-4) * 1.25);border-radius:999px;background:transparent;border:2px solid var(--color-neutral-400);color:var(--color-text);font-size:14.5px;font-weight:700;text-decoration:none\" style-hover=\"background:var(--color-neutral-200);color:var(--color-text)\">\n      <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M15 3h6v6\"></path><path d=\"M10 14 21 3\"></path><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"></path></svg>\n      Public site\n    </a>\n    <button type=\"button\" sc-camel-on-click=\"{{ signOut }}\" style=\"display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 calc(var(--space-4) * 1.25);border-radius:999px;background:var(--color-neutral-900);border:2px solid var(--color-neutral-900);color:var(--color-neutral-100);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer\" style-hover=\"background:var(--color-neutral-800);border-color:var(--color-neutral-800)\">\n      <svg sc-camel-view-box=\"0 0 24 24\" style=\"width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"></path><path d=\"m16 17 5-5-5-5\"></path><path d=\"M21 12H9\"></path></svg>\n      Log out\n    </button>\n  </div>\n\n  <p style=\"margin:0;font-size:12.5px;line-height:1.55;color:var(--color-neutral-700);max-width:50ch;text-align:center\">Tip: keep this page’s address (…/admin) to yourself. Content and settings sync through Firestore from the editor and site controls.</p>\n</main>\n\n</x-dc>\n<script type=\"text/x-dc\" data-dc-script=\"\" data-props=\"{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:860}}\">\nconst K_LIVE = 'purich-live-config-v3';\nconst K_SESSION = 'covermate-admin-session';\nconst K_ADMIN_EVER = 'purich-admin-ever-v7';\nconst ACCENTS = {\n  terracotta: { base: 'var(--color-accent)', deep: 'var(--color-accent-900)', text: 'var(--color-accent-700)' },\n  sage: { base: 'var(--color-accent-2)', deep: 'var(--color-accent-2-900)', text: 'var(--color-accent-2-800)' },\n  ink: { base: 'var(--color-neutral-800)', deep: 'var(--color-neutral-900)', text: 'var(--color-neutral-800)' }\n};\nclass Component extends DCLogic {\n  live() { try { return JSON.parse(window.localStorage.getItem(K_LIVE) || 'null'); } catch (e) { return null; } }\n  renderVals() {\n    const c = this.live() || {};\n    const b = c.brand || {};\n    const pick = (v, d) => { if (v == null) return d; if (typeof v === 'object') return v.en || v.th || d; return v; };\n    const A = ACCENTS[(c.theme && c.theme.accent)] || ACCENTS.terracotta;\n    return {\n      brandInitial: b.initial || 'C',\n      brandName: pick(b.name, 'CoverMate'),\n      brandLogoAlt: pick(b.fullName || b.name, 'CoverMate'),\n      brandWordmarkLogo: '/assets/brand/covermate-wordmark.png',\n      accentBase: A.base, accentText: A.text,\n      goPublicSite: (event) => { if (event && event.preventDefault) event.preventDefault(); try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (err) {} window.location.replace('/'); },\n      signOut: () => { try { window.localStorage.removeItem(K_SESSION); window.localStorage.removeItem(K_ADMIN_EVER); } catch (err) {} try { import(window.location.origin + '/covermate-firebase.js').then(() => { if (window.CoverMateFirebase) window.CoverMateFirebase.signOut(); }).catch(() => {}); } catch (e) {} window.location.replace('/admin/login'); }\n    };\n  }\n}\n<\/script>\n\n\n</body></html>"</script>
 </body>
 </html>

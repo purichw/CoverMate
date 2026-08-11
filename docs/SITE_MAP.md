@@ -12,7 +12,7 @@ Last updated: 2026-08-11
 | `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the latest reference | `index.html` |
 | `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the latest reference | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
-| `/admin` | Owner | Post-login "Manage your site" launcher | `admin/index.html` |
+| `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Analytics, and Settings | `admin/index.html` |
 | `/admin/analytics` | Owner | Private analytics dashboard for leads and GA4 reporting readiness | `admin/analytics/index.html` |
 | `/admin/ops` | Owner / operations | Separate Operations Portal for authenticated lead intake and workflow management | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
@@ -68,9 +68,9 @@ Expected visible sections:
 | Surface | Route | Role |
 | --- | --- | --- |
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
-| Launcher | `/admin` | Choose between editing, arranging, analytics, or viewing the public site. |
+| Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Analytics, Settings, public-site exit, and log out. |
 | Analytics | `/admin/analytics` | Owner-only Firestore lead reporting plus GA4 Data API/export readiness view. |
-| Operations Portal | `/admin/ops` | Authenticated operations workspace. Reads and mutates records through `/api/ops/*`; the API verifies Firebase admin identity, checks role permissions server-side, and stores lead workflow/audit state on `contactLeads/*`. |
+| Operations Portal | `/admin/ops` | Authenticated operations workspace. Leads, Tasks, and Audit are live through `/api/ops/*`; Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers are visibly labeled as not wired until real API contracts exist. The API verifies Firebase admin identity, checks role permissions server-side, and stores supported lead workflow/audit state on `contactLeads/*`. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
 | Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |
@@ -88,13 +88,17 @@ latest Claude reference. They stay unexposed in the header nav and sitemap.
 
 Admin login must land on `/admin` after sign-in.
 
-The `/admin` launcher actions must stay aligned with the reference:
+The `/admin` home actions must stay aligned with the live admin product:
 
-- "Edit the words" opens `/#edit`
-- "Arrange & customise" opens `/#admin`; the control panel also remains
-  reachable from editor mode through `Tools -> Panel`
+- "Operations" opens `/admin/ops`
+- "Website content" opens `/#admin`; the inline text editor remains reachable
+  as a quick action through `/#edit`
 - "Analytics" opens `/admin/analytics`
-- "Public site" opens `/`
+- "Settings" opens `/admin/ops#settings`
+- "Public site" clears owner markers and opens clean `/`
+
+Inside `/admin/ops`, planned modules must stay labeled as not wired and must not
+show fake records or browser-local workflow data.
 
 Unauthenticated direct access to `/admin`, `/admin/analytics`, `/admin/ops`,
 `/#edit`, `/#admin`, and `/#preview` must redirect to `/admin/login`.

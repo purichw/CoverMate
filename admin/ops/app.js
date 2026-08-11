@@ -61,7 +61,31 @@ const DATA_RESOURCES = [
   "audit"
 ];
 
+const LIVE_RESOURCES = new Set(["leads", "tasks", "audit"]);
+const PLANNED_RESOURCES = new Set(["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"]);
+const MODULE_RESOURCE = {
+  leads: "leads",
+  customers: "customers",
+  consultations: "consultations",
+  quotes: "quotes",
+  policies: "policies",
+  renewals: "renewals",
+  tasks: "tasks",
+  documents: "documents",
+  insurers: "insurers"
+};
+const PLANNED_RESOURCE_COPY = {
+  customers: "Customer 360 needs a customer aggregate model before it can show real policy relationships.",
+  consultations: "Consultation scheduling and outcomes are still represented only through lead notes/statuses.",
+  quotes: "Quote comparison records need their own API and Firestore contract before decisions can be tracked here.",
+  policies: "Issued policy records are not yet separate from lead status and uploaded documents.",
+  renewals: "Renewal workflows need policy expiry records before this queue can become operational.",
+  documents: "Document metadata and secure open/view actions are not wired to an Operations API endpoint yet.",
+  insurers: "The insurer/product catalogue still comes from public CMS content, not an Operations data model."
+};
+
 const EMPTY_DATA = Object.fromEntries(DATA_RESOURCES.map((key) => [key, []]));
+const EMPTY_META = Object.fromEntries(DATA_RESOURCES.map((key) => [key, {}]));
 
 const state = {
   module: hashModule() || "dashboard",
@@ -69,10 +93,12 @@ const state = {
   query: "",
   session: null,
   data: structuredClone(EMPTY_DATA),
+  meta: structuredClone(EMPTY_META),
   loading: new Set(DATA_RESOURCES),
   errors: {},
   pending: "",
   role: "owner",
+  sessionRole: "owner",
   filters: {
     leadStatus: "all",
     leadInterest: "all",
@@ -107,7 +133,8 @@ async function init() {
     document.body.dataset.boot = "ready";
   }
 
-  state.role = normalizeRole(state.session.role || "owner");
+  state.sessionRole = normalizeRole(state.session.role || "owner");
+  state.role = state.sessionRole;
   applySessionChrome();
   bindEvents();
   render();
@@ -157,9 +184,17 @@ async function loadResource(resource) {
   renderTopStatus();
   try {
     const response = await apiFetch(resource);
+    state.meta[resource] = Array.isArray(response) ? { source: "legacy" } : {
+      source: response.source || "",
+      status: response.status || "",
+      message: response.message || "",
+      label: response.label || "",
+      resource: response.resource || resource
+    };
     state.data[resource] = Array.isArray(response) ? response : Array.isArray(response.rows) ? response.rows : [];
   } catch (error) {
     state.data[resource] = [];
+    state.meta[resource] = {};
     state.errors[resource] = error.message || "Could not load this resource.";
   } finally {
     state.loading.delete(resource);
@@ -294,11 +329,16 @@ function render() {
 function renderChrome() {
   sideNav.innerHTML = MODULES.map((item) => {
     const count = item.count ? Number(item.count() || 0) : 0;
+    const navBadge = count
+      ? `<span class="badge">${count}</span>`
+      : isPlannedModule(item.id)
+        ? `<span class="badge planned">Planned</span>`
+        : "";
     return `
       <button class="nav-button ${item.id === state.module ? "active" : ""}" type="button" data-action="module" data-module="${item.id}">
         <span class="nav-icon" aria-hidden="true">${iconSvg(item.icon)}</span>
         <span>${escapeHTML(item.label)}</span>
-        ${count ? `<span class="badge">${count}</span>` : ""}
+        ${navBadge}
       </button>
     `;
   }).join("");
@@ -316,7 +356,7 @@ function renderTopStatus() {
     ? "Loading records"
     : errorCount
       ? `${errorCount} API issue${errorCount === 1 ? "" : "s"}`
-      : `Backend connected · ${leadCount} leads`;
+      : `Live: leads/tasks/audit · ${leadCount} leads`;
   dataMode.className = `pill${errorCount ? " error" : loading ? " warn" : ""}`;
   dataMode.innerHTML = `<span class="dot"></span>${escapeHTML(text)}`;
 }
@@ -344,16 +384,23 @@ function renderDashboard() {
   const overdue = tasks.filter((task) => !task.completed && isOverdue(task.dueAt || task.dueDate)).length;
   const awaiting = rowsFor("quotes").filter((quote) => /awaiting|sent|considering/i.test(String(quote.state || quote.status || ""))).length;
   const renewals = rowsFor("renewals").filter((item) => Number(item.daysToExpiry ?? item.days ?? 9999) <= 30).length;
+  const quotesPlanned = isPlannedResource("quotes") && !rowsFor("quotes").length;
+  const renewalsPlanned = isPlannedResource("renewals") && !rowsFor("renewals").length;
   const activeTasks = tasks.filter((task) => !task.completed).slice(0, 5);
   const audit = rowsFor("audit").slice(0, 6);
   screen.innerHTML = `
-    ${pageHead("Dashboard", "What needs a decision today, and where the pipeline is losing time.", connectionPill())}
+    ${pageHead("Dashboard", "What needs a decision today, and where the live Operations data is reliable.", connectionPill())}
     ${errorNotice()}
+    ${plannedSummaryNotice()}
     <div class="grid metrics">
       ${metric("Needs first contact", counts.needsContact, "Enquiries that have not moved beyond first contact.", "Open leads", "leads")}
       ${metric("Overdue follow-ups", overdue, "Dated actions that have passed without being completed.", "Open tasks", "tasks")}
-      ${metric("Awaiting decision", awaiting, "Quotes sent or under consideration.", "Open quotes", "quotes")}
-      ${metric("Renewals in 30 days", renewals, "Policies that need renewal action soon.", "Open renewals", "renewals")}
+      ${quotesPlanned
+        ? plannedMetric("Awaiting decision", "Quote records are not wired yet.", "Open quote status", "quotes")
+        : metric("Awaiting decision", awaiting, "Quotes sent or under consideration.", "Open quotes", "quotes")}
+      ${renewalsPlanned
+        ? plannedMetric("Renewals in 30 days", "Policy expiry records are not wired yet.", "Open renewal status", "renewals")
+        : metric("Renewals in 30 days", renewals, "Policies that need renewal action soon.", "Open renewals", "renewals")}
     </div>
     <div class="grid two" style="margin-top:16px;">
       <section class="panel">
@@ -394,7 +441,7 @@ function renderDashboard() {
 function renderLeads() {
   const rows = filteredLeads();
   screen.innerHTML = `
-    ${pageHead("Leads", "Website enquiries and manually created records are managed here.", connectionPill())}
+    ${pageHead("Leads", "Website enquiries and manually created records are managed here.", resourcePill("leads"))}
     ${errorNotice("leads")}
     ${filterBar([
       ["Status", "leadStatus", STATUS_OPTIONS],
@@ -435,7 +482,7 @@ function renderLeadDetail(id) {
         <h1>${escapeHTML(lead.name || "Unnamed lead")}</h1>
         <p class="lede">${escapeHTML(lead.displayId || lead.id)} · ${interestLabel(lead.interestKey)} · from ${escapeHTML(lead.source || "Unknown source")}</p>
       </div>
-      ${connectionPill()}
+      ${resourcePill("leads")}
     </div>
     ${errorNotice("leads")}
     <div class="split">
@@ -524,49 +571,58 @@ function renderCustomers() {
     rows = rows.filter((row) => String(row.holds || row.type || "").toLowerCase().includes(state.filters.customerHold));
   }
   rows = rows.filter(matchesSearch);
+  const planned = shouldShowPlannedState("customers", rows);
   screen.innerHTML = `
-    ${pageHead("Customers", "People who hold at least one policy.", connectionPill())}
+    ${pageHead("Customers", "People who hold at least one policy.", resourcePill("customers"))}
     ${errorNotice("customers")}
-    ${filterBar([["Holds", "customerHold", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]], rows.length)}
-    ${simpleTable(["Customer", "Policies", "Next renewal", "Annual premium", "Customer since"], rows.map((row) => [
+    ${planned ? plannedSurface("customers") : `
+      ${filterBar([["Holds", "customerHold", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]], rows.length)}
+      ${simpleTable(["Customer", "Policies", "Next renewal", "Annual premium", "Customer since"], rows.map((row) => [
       titleMeta(row.name || row.id, row.phone || row.contact || ""),
       titleMeta(String(row.policyCount ?? row.policies ?? 0), row.holds || row.types || ""),
       row.nextRenewal || row.renewal || "",
       row.annualPremium || row.premium || "",
       row.customerSince || row.since || ""
-    ]))}
+      ]))}
+    `}
   `;
 }
 
 function renderConsultations() {
   const rows = rowsFor("consultations").filter(matchesSearch);
+  const planned = shouldShowPlannedState("consultations", rows);
   screen.innerHTML = `
-    ${pageHead("Consultations", "Advice sessions, booked or completed, and what came out of each.", connectionPill())}
+    ${pageHead("Consultations", "Advice sessions, booked or completed, and what came out of each.", resourcePill("consultations"))}
     ${errorNotice("consultations")}
-    ${simpleInfoBar("Newest first. Each row should link back to the lead or customer it belongs to.", rows.length)}
-    ${simpleTable(["Consultation", "State", "When", "Mode", "Reference"], rows.map((row) => [
+    ${planned ? plannedSurface("consultations") : `
+      ${simpleInfoBar("Newest first. Each row should link back to the lead or customer it belongs to.", rows.length)}
+      ${simpleTable(["Consultation", "State", "When", "Mode", "Reference"], rows.map((row) => [
       titleMeta(row.name || row.customerName || row.id, row.note || row.summary || ""),
       status(row.state || row.status || ""),
       formatDateTime(row.when || row.scheduledAt || row.createdAt),
       row.mode || "",
       row.reference || row.ref || row.id
-    ]))}
+      ]))}
+    `}
   `;
 }
 
 function renderQuotes() {
   const rows = rowsFor("quotes").filter(matchesSearch);
+  const planned = shouldShowPlannedState("quotes", rows);
   screen.innerHTML = `
-    ${pageHead("Quotes", "Comparisons sent and the decisions still outstanding.", connectionPill())}
+    ${pageHead("Quotes", "Comparisons sent and the decisions still outstanding.", resourcePill("quotes"))}
     ${errorNotice("quotes")}
-    ${simpleInfoBar("Newest first. A quote is indicative until the insurer confirms.", rows.length)}
-    ${simpleTable(["Quote", "State", "Insurers compared", "Best option", "Sent"], rows.map((row) => [
+    ${planned ? plannedSurface("quotes") : `
+      ${simpleInfoBar("Newest first. A quote is indicative until the insurer confirms.", rows.length)}
+      ${simpleTable(["Quote", "State", "Insurers compared", "Best option", "Sent"], rows.map((row) => [
       titleMeta(row.title || row.quote || row.customerName || row.id, row.displayId || row.id),
       titleMeta(status(row.state || row.status || ""), row.wait || row.age || ""),
       row.insurerCount ?? row.insurersCompared ?? "",
       row.bestOption || row.best || "",
       formatDate(row.sentAt || row.sent || row.createdAt)
-    ]))}
+      ]))}
+    `}
   `;
 }
 
@@ -575,20 +631,23 @@ function renderPolicies() {
   if (state.filters.policyStatus !== "all") rows = rows.filter((row) => slug(row.status) === state.filters.policyStatus);
   if (state.filters.policyType !== "all") rows = rows.filter((row) => String(row.type || "").toLowerCase() === state.filters.policyType);
   rows = rows.filter(matchesSearch);
+  const planned = shouldShowPlannedState("policies", rows);
   screen.innerHTML = `
-    ${pageHead("Policies", "What each customer actually holds, with whom, and until when.", connectionPill())}
+    ${pageHead("Policies", "What each customer actually holds, with whom, and until when.", resourcePill("policies"))}
     ${errorNotice("policies")}
-    ${filterBar([
+    ${planned ? plannedSurface("policies") : `
+      ${filterBar([
       ["Status", "policyStatus", [["all", "All"], ["active", "Active"], ["renewal", "Renewal pending"], ["expired", "Expired"], ["cancelled", "Cancelled"]]],
       ["Type", "policyType", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]
-    ], rows.length)}
-    ${simpleTable(["Policy", "Status", "Insurer / plan", "Expires", "Premium"], rows.map((row) => [
+      ], rows.length)}
+      ${simpleTable(["Policy", "Status", "Insurer / plan", "Expires", "Premium"], rows.map((row) => [
       titleMeta(row.displayId || row.id, `${row.customerName || row.owner || ""}${row.type ? ` · ${row.type}` : ""}`),
       status(row.status || ""),
       titleMeta(row.insurer || "", row.plan || ""),
       titleMeta(formatDate(row.expiresAt || row.expires), `${row.daysToExpiry ?? row.days ?? ""} days`),
       titleMeta(row.premium || row.annualPremium || "", row.billingCycle || row.cycle || "")
-    ]))}
+      ]))}
+    `}
   `;
 }
 
@@ -597,24 +656,27 @@ function renderRenewals() {
   const windowValue = state.filters.renewalWindow;
   if (windowValue !== "all") rows = rows.filter((row) => Number(row.daysToExpiry ?? row.days ?? 9999) <= Number(windowValue));
   rows = rows.filter(matchesSearch);
+  const planned = shouldShowPlannedState("renewals", rows);
   screen.innerHTML = `
-    ${pageHead("Renewals", "Policies approaching expiry, grouped by how much time is left.", connectionPill())}
+    ${pageHead("Renewals", "Policies approaching expiry, grouped by how much time is left.", resourcePill("renewals"))}
     ${errorNotice("renewals")}
-    ${renewalFilterBar(rows.length)}
-    ${simpleTable(["Policy", "Time left", "Renewal status", "Last contact", "Decision"], rows.map((row) => [
+    ${planned ? plannedSurface("renewals") : `
+      ${renewalFilterBar(rows.length)}
+      ${simpleTable(["Policy", "Time left", "Renewal status", "Last contact", "Decision"], rows.map((row) => [
       titleMeta(row.policy || row.title || row.displayId || row.id, row.meta || row.insurer || ""),
       `<span class="status ${Number(row.daysToExpiry ?? row.days ?? 9999) <= 14 ? "overdue" : Number(row.daysToExpiry ?? row.days ?? 9999) <= 30 ? "new" : "completed"}">${escapeHTML(String(row.daysToExpiry ?? row.days ?? ""))} days</span>`,
       titleMeta(row.renewalStatus || row.status || "", row.expiresAt ? `Expires ${formatDate(row.expiresAt)}` : ""),
       row.lastContact || "",
       titleMeta(row.decision || "", row.decisionNote || "")
-    ], true))}
+      ], true))}
+    `}
   `;
 }
 
 function renderTasks() {
   const rows = filteredTasks();
   screen.innerHTML = `
-    ${pageHead("Tasks and follow-ups", "Anything with a date attached, connected to the record it came from.", connectionPill())}
+    ${pageHead("Tasks and follow-ups", "Anything with a date attached, connected to the record it came from.", resourcePill("tasks"))}
     ${errorNotice("tasks")}
     <div class="filterbar">
       <div class="filter-row">
@@ -662,17 +724,20 @@ function renderDocuments() {
   let rows = rowsFor("documents");
   if (state.filters.documentCategory !== "all") rows = rows.filter((row) => slug(row.category) === state.filters.documentCategory);
   rows = rows.filter(matchesSearch);
+  const planned = shouldShowPlannedState("documents", rows);
   screen.innerHTML = `
-    ${pageHead("Documents", "Organised around the customer and the policy or quotation they belong to.", connectionPill())}
+    ${pageHead("Documents", "Organised around the customer and the policy or quotation they belong to.", resourcePill("documents"))}
     ${errorNotice("documents")}
-    ${filterBar([["Category", "documentCategory", [["all", "All"], ["existing-policy", "Existing policy"], ["quotation", "Quotation"], ["proposal", "Proposal"], ["application", "Application"]]]], rows.length)}
-    ${simpleTable(["File", "Category", "Customer", "Related record", "Uploaded"], rows.map((row) => [
+    ${planned ? plannedSurface("documents") : `
+      ${filterBar([["Category", "documentCategory", [["all", "All"], ["existing-policy", "Existing policy"], ["quotation", "Quotation"], ["proposal", "Proposal"], ["application", "Application"]]]], rows.length)}
+      ${simpleTable(["File", "Category", "Customer", "Related record", "Uploaded"], rows.map((row) => [
       row.fileName || row.file || row.name || row.id,
       status(row.category || ""),
       row.customerName || row.customer || "",
       row.relatedLabel || row.related || "",
       titleMeta(formatDate(row.uploadedAt || row.uploaded || row.createdAt), row.uploadedByName || "")
-    ]))}
+      ]))}
+    `}
   `;
 }
 
@@ -680,9 +745,13 @@ function renderContent() {
   const editDisabled = state.role === "readonly";
   screen.innerHTML = `
     ${pageHead("Website content", "The existing CMS remains the source of truth for public-site copy, sections, preview and publish.", connectionPill("CMS connected"))}
+    <div class="notice" style="margin-bottom:18px;">
+      <strong>Live CMS surface</strong>
+      <div>These actions open the existing Firestore draft/live CMS. They are not part of the new Operations CRUD API.</div>
+    </div>
     <div class="grid four">
       ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels.", "/#edit", editDisabled)}
-      ${contentCard("Arrange and customise", "Use the current control panel for section order, visibility, brand details, footer, backup and restore.", "/admin", editDisabled)}
+      ${contentCard("Arrange and customise", "Use the current control panel for section order, visibility, brand details, footer, backup and restore.", "/#admin", editDisabled)}
       ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", "/#preview", false)}
       ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", "/#admin", editDisabled)}
     </div>
@@ -707,10 +776,11 @@ function renderContent() {
 
 function renderInsurers() {
   const rows = rowsFor("insurers").filter(matchesSearch);
+  const planned = shouldShowPlannedState("insurers", rows);
   screen.innerHTML = `
-    ${pageHead("Insurers and products", "Who is on the panel, through which relationship, and what is placed with them.", connectionPill())}
+    ${pageHead("Insurers and products", "Who is on the panel, through which relationship, and what is placed with them.", resourcePill("insurers"))}
     ${errorNotice("insurers")}
-    ${rows.length ? `<div class="grid four">
+    ${planned ? plannedSurface("insurers") : rows.length ? `<div class="grid four">
       ${rows.map((item) => `
         <section class="card">
           <div style="display:grid; grid-template-columns:58px 1fr; gap:14px; align-items:center;">
@@ -733,8 +803,12 @@ function renderAnalytics() {
   const known = rowsFor("leads").length;
   const tab = state.filters.analyticsTab;
   screen.innerHTML = `
-    ${pageHead("Analytics", "Operational metrics from identified CoverMate records.", connectionPill())}
+    ${pageHead("Analytics", "Operational metrics from identified CoverMate records.", connectionPill("Partial: Firestore leads live"))}
     ${errorNotice()}
+    <div class="notice" style="margin-bottom:18px;">
+      <strong>Partial analytics surface</strong>
+      <div>Lead funnel numbers below use live first-party Operations records. GA4 traffic charts remain in the owner analytics page until a secure Data API/export is wired.</div>
+    </div>
     <div class="filterbar">
       <div class="filter-row">
         ${["overview", "conversion-funnel", "services", "leads", "renewals"].map((value) => `
@@ -772,7 +846,7 @@ function renderSettings() {
     ["audit", "Audit trail"]
   ];
   screen.innerHTML = `
-    ${pageHead("Settings", "Roles, statuses, data protection and the audit trail.", connectionPill())}
+    ${pageHead("Settings", "Roles, statuses, data protection and the audit trail.", connectionPill("Reference · API enforced"))}
     <div class="tabs">
       ${tabs.map(([value, label]) => `<button class="chip ${tab === value ? "active" : ""}" type="button" data-action="settings-tab" data-value="${value}">${escapeHTML(label)}</button>`).join("")}
     </div>
@@ -1067,6 +1141,59 @@ function connectionPill(text) {
   return `<span class="pill${errorCount ? " error" : loading ? " warn" : ""}"><span class="dot"></span>${escapeHTML(label)}</span>`;
 }
 
+function resourcePill(resource) {
+  if (state.errors[resource]) return `<span class="pill error"><span class="dot"></span>API issue</span>`;
+  if (state.loading.has(resource)) return `<span class="pill warn"><span class="dot"></span>Loading</span>`;
+  if (isPlannedResource(resource)) return `<span class="pill planned"><span class="dot"></span>Not wired yet</span>`;
+  if (LIVE_RESOURCES.has(resource)) return `<span class="pill"><span class="dot"></span>Live data</span>`;
+  return connectionPill();
+}
+
+function resourceMeta(resource) {
+  return state.meta[resource] || {};
+}
+
+function isPlannedResource(resource) {
+  const meta = resourceMeta(resource);
+  if (meta.status === "planned" || meta.source === "not_wired") return true;
+  if (meta.source || meta.status) return false;
+  return PLANNED_RESOURCES.has(resource);
+}
+
+function isPlannedModule(moduleId) {
+  const resource = MODULE_RESOURCE[moduleId];
+  return resource ? isPlannedResource(resource) : false;
+}
+
+function shouldShowPlannedState(resource, rows) {
+  return isPlannedResource(resource) && !rows.length && !state.loading.has(resource) && !state.errors[resource];
+}
+
+function plannedSummaryNotice() {
+  const planned = Array.from(PLANNED_RESOURCES).filter((resource) => isPlannedResource(resource));
+  if (!planned.length) return "";
+  return `
+    <div class="notice planned-state" style="margin-bottom:18px;">
+      <strong>Current data boundary</strong>
+      <div>Live today: Leads, Tasks, and Audit. Planned modules stay labeled until their production Firestore/API contracts exist: ${planned.map((item) => titleCase(item)).join(", ")}.</div>
+    </div>
+  `;
+}
+
+function plannedSurface(resource) {
+  const meta = resourceMeta(resource);
+  const label = titleCase(meta.label || resource);
+  const copy = PLANNED_RESOURCE_COPY[resource] || meta.message || "This module needs a production data contract before it can show records.";
+  return `
+    <section class="notice planned-state" data-planned-resource="${escapeHTML(resource)}">
+      <span class="status planned">Not wired yet</span>
+      <h2>${escapeHTML(label)}</h2>
+      <p>${escapeHTML(copy)}</p>
+      <p class="note" style="margin-top:10px;">No fake records are shown here. Use Leads, Tasks, Audit, Website content, and Analytics for the surfaces that are live today.</p>
+    </section>
+  `;
+}
+
 function errorNotice(resource) {
   const errors = resource
     ? (state.errors[resource] ? [[resource, state.errors[resource]]] : [])
@@ -1086,6 +1213,17 @@ function metric(label, value, copy, cta, moduleId) {
     <section class="card metric">
       <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
       <span class="value">${escapeHTML(String(value))}</span>
+      <p>${escapeHTML(copy)}</p>
+      <button type="button" data-action="module" data-module="${escapeHTML(moduleId)}">${escapeHTML(cta)} -></button>
+    </section>
+  `;
+}
+
+function plannedMetric(label, copy, cta, moduleId) {
+  return `
+    <section class="card metric status-metric">
+      <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
+      <span class="value">Not wired yet</span>
       <p>${escapeHTML(copy)}</p>
       <button type="button" data-action="module" data-module="${escapeHTML(moduleId)}">${escapeHTML(cta)} -></button>
     </section>
@@ -1240,7 +1378,7 @@ function derivedLeadTimeline(lead) {
 }
 
 function canWrite() {
-  return state.role !== "readonly";
+  return state.sessionRole !== "readonly" && state.role !== "readonly";
 }
 
 function hashModule() {

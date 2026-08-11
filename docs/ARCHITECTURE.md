@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-08-03
+Last updated: 2026-08-11
 
 ## Current Shape
 
@@ -24,10 +24,11 @@ template placeholders like `{{ brandName }}`. Treat those files as design
 references until they are compiled into self-contained HTML or shipped with a
 complete dependency folder.
 
-There is no backend API in this repo. Admin identity is backed by Firebase Auth
-plus Firestore `admins/{uid}` allowlist checks, and CMS content is
-Firestore-first through `sites/covermate/*` documents. The static bundle keeps
-browser-local caches only as last-known fallback state.
+There is now one narrow backend API in this repo: `/api/ops/*`, deployed as a
+Vercel serverless function for the private Operations Portal. Admin identity is
+backed by Firebase Auth plus Firestore `admins/{uid}` allowlist checks, and CMS
+content is Firestore-first through `sites/covermate/*` documents. The static
+bundle keeps browser-local caches only as last-known fallback state.
 
 ```mermaid
 flowchart TD
@@ -94,9 +95,9 @@ only. It uses measurement ID `G-5TF3C235EF`, loads only on
 `covermate.vercel.app`, suppresses owner hashes and active admin sessions, and
 never sends form field values or visitor contact details.
 
-`admin/index.html` owns the private post-login launcher. It is the required
-"Manage your site" page shown before choosing inline editing, the control
-panel, or analytics.
+`admin/index.html` owns the private post-login Admin Portal Home. It is the
+required hub shown before choosing Operations, Website content, Analytics,
+Settings, public-site exit, or logout.
 
 `admin/analytics/index.html` owns the private analytics dashboard. It is
 source-authored rather than a Claude Design export, uses `admin/session.js` for
@@ -116,6 +117,9 @@ It obtains a Firebase ID token from the verified admin session and calls
 verifies the Firebase ID token, checks the Firestore `admins/{uid}` allowlist,
 applies role permissions server-side, reads `contactLeads/*`, and writes lead
 status, timeline, task, follow-up, and per-lead audit state back to Firestore.
+Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers
+currently return `source: "not_wired"` metadata, so the UI displays an explicit
+not-wired state instead of browser-seeded or fake records.
 
 `assets/ins/*.png` owns insurer logo media for the motor-insurance logo section.
 The exported reference also carries AIA/Srikrung Broker relationship-card logo

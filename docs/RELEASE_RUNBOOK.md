@@ -93,8 +93,11 @@ Minimum checks:
   real admin authorization
 - an owner UID exists at `admins/<uid>` with `active: true` before real admin
   login acceptance is expected
-- `/admin` shows the "Manage your site" launcher
-- launcher links open `/#edit`, `/#admin`, `/admin/analytics`, and `/`
+- `/admin` shows the Admin Portal Home
+- portal links open `/admin/ops`, `/#admin`, `/admin/analytics`,
+  `/admin/ops#settings`, quick actions, and clean `/`
+- `/admin/ops` labels Customers, Consultations, Quotes, Policies, Renewals,
+  Documents, and Insurers as not wired until real API contracts exist
 - admin `Public site` actions clear owner markers and land on clean `/` without
   generating `/?view=public` or showing `[data-admin-owner-bar]`
 - a signed-in browser with a stale `purich-admin-ever-v7` marker can load `/`

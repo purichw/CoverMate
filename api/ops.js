@@ -9,6 +9,7 @@ const IDENTITY_ROOT = `https://identitytoolkit.googleapis.com/v1/accounts:lookup
 const MAX_LIMIT = 200;
 const STATUSES = new Set(["new", "contacting", "contacted", "consultation", "quotation", "considering", "converted", "later", "notinterested", "lost"]);
 const INTERESTS = new Set(["motor", "life", "health", "accident", "savings", "unsure"]);
+const PLANNED_RESOURCES = new Set(["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"]);
 
 const ROLE_ALIASES = {
   admin: "owner",
@@ -72,8 +73,8 @@ module.exports = async function opsApi(req, res) {
     if (method === "GET" && path[0] === "audit" && path.length === 1) {
       return send(res, 200, await listAudit(req, actor));
     }
-    if (method === "GET" && ["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"].includes(path[0])) {
-      return send(res, 200, { rows: [], total: 0, source: "firestore" });
+    if (method === "GET" && PLANNED_RESOURCES.has(path[0])) {
+      return send(res, 200, plannedResource(path[0]));
     }
 
     return send(res, 404, { error: "not_found", message: "Unknown operations endpoint." });
@@ -562,6 +563,27 @@ async function readJson(req) {
 function send(res, status, payload) {
   res.statusCode = status;
   res.end(JSON.stringify(payload));
+}
+
+function plannedResource(resource) {
+  const labels = {
+    customers: "Customer 360 records",
+    consultations: "Consultation records",
+    quotes: "Quote records",
+    policies: "Policy records",
+    renewals: "Renewal workflows",
+    documents: "Document library",
+    insurers: "Insurer/product catalogue"
+  };
+  return {
+    rows: [],
+    total: 0,
+    source: "not_wired",
+    status: "planned",
+    resource,
+    label: labels[resource] || resource,
+    message: `${labels[resource] || resource} are not wired to a production Operations API endpoint yet.`
+  };
 }
 
 function httpError(status, code, message, requiredPermission) {

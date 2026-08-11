@@ -69,21 +69,24 @@ user under Authentication, but the app does not create an admin session. Copy
 that user's UID from Firebase Console and create `admins/<uid>` with
 `active: true`, then sign in again.
 
-## Admin Launcher Flow
+## Admin Portal Home Flow
 
-After login, `/admin` must show the "Manage your site" launcher.
+After login, `/admin` must show the Admin Portal Home.
 
-Launcher actions:
+Home actions:
 
-- `Edit the words` -> `/#edit`
-- `Arrange & customise` -> `/#admin`
+- `Operations` -> `/admin/ops`
+- `Website content` -> `/#admin`
 - `Analytics` -> `/admin/analytics`
+- `Settings` -> `/admin/ops#settings`
+- `Edit public-page words` quick action -> `/#edit`
+- `Preview website draft` quick action -> `/#preview`
 - `Public site` -> clears owner markers and lands the current tab on clean `/`
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
-The launcher is a private three-choice menu, not a dashboard. It must not show
-Operations, fake metrics, lead previews, CMS counters, or public-site editing
-controls directly on `/admin`.
+The home is a private gateway, not the operations record UI. It may link to
+Operations as a first-class module, but records, mutations, filters, and
+settings details stay inside `/admin/ops` and `/api/ops/*`.
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
 `Main`, `Public site`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`,
@@ -211,8 +214,10 @@ JSON-LD claim boundaries stay code-owned.
 4. The Operations API verifies the token, checks `admins/{uid}`, applies the
    role permission matrix server-side, then reads or mutates Firestore.
 5. Lead lists and details render from real `contactLeads/*` API responses.
-   Modules whose backing collections are not populated render empty states, not
-   browser-seeded records.
+   Tasks and Audit also come from the Operations API. Customers, Consultations,
+   Quotes, Policies, Renewals, Documents, and Insurers currently return
+   `source: "not_wired"` metadata and render a visible not-wired state, not
+   browser-seeded records or ambiguous empty tables.
 6. Lead filters and global search remain in memory when a lead detail is opened
    and closed.
 7. New lead, status change, task completion, follow-up date, and internal note

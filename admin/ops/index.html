@@ -198,9 +198,21 @@
       font-weight: 900;
     }
 
+    .badge.planned {
+      background: #5f564a;
+      color: #eadfce;
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
     .nav-button.active .badge {
       background: #fff;
       color: var(--accent-strong);
+    }
+
+    .nav-button.active .badge.planned {
+      color: #5f381f;
     }
 
     .sidebar-footer {
@@ -355,6 +367,12 @@
       border-color: #e9a39a;
       background: var(--danger-soft);
       color: var(--danger);
+    }
+
+    .pill.planned {
+      border-color: var(--line-strong);
+      background: #eee5d6;
+      color: #5f564a;
     }
 
     .dot {
@@ -527,6 +545,11 @@
       font-weight: 900;
     }
 
+    .metric.status-metric .value {
+      font-size: 25px;
+      line-height: 1.2;
+    }
+
     .metric p,
     .note {
       margin: 0;
@@ -672,7 +695,8 @@
     .status.dim,
     .status.later,
     .status.notinterested,
-    .status.lost {
+    .status.lost,
+    .status.planned {
       background: #e3d8c8;
       color: #655d52;
     }
@@ -896,6 +920,15 @@
 
     .notice {
       line-height: 1.5;
+    }
+
+    .notice.planned-state {
+      border-color: var(--line-strong);
+      background: #f6efe5;
+    }
+
+    .notice.planned-state h2 {
+      margin-top: 12px;
     }
 
     .notice.error {

@@ -8,16 +8,18 @@ serverless Operations API. The UI is built from Claude Design `.dc.html`
 bundles, with small production patches applied in the wrapper and embedded
 bundle strings. Firebase Auth, Firestore CMS persistence, lead capture, Admin
 Analytics, and the source-authored Operations Portal route are implemented.
+Operations is live today for Leads, Tasks, and Audit; Customers, Consultations,
+Quotes, Policies, Renewals, Documents, and Insurers stay explicitly labeled as
+not wired until their production Firestore/API contracts exist.
 Future commit, push, Vercel deploy, or Firestore Rules deploy actions still
 require explicit owner approval in the current task.
 
-Product decision checkpoint: the 2026-08-10 Admin/CMS rebuild decision record
+Product decision checkpoint: the 2026-08-11 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
-launcher-card count, insurer-count copy, or Operations scope. Operations is now
-approved only as a separate `/admin/ops/` surface; it must not become an
-`/admin` launcher card unless that product decision is reopened. Future bugs
-should be fixed as defects unless the owner explicitly reopens the product
-decision.
+launcher-card count, insurer-count copy, or Operations scope. `/admin` is now
+the Admin Portal Home with Operations, Website content, Analytics, and Settings
+as primary modules. Future bugs should be fixed as defects unless the owner
+explicitly reopens the product decision.
 
 Standalone/export checkpoint: downloaded Claude standalone HTML files are
 design/reference artifacts only. They are not source of truth for production,
@@ -72,11 +74,11 @@ Detailed project documents:
 | --- | --- |
 | `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. `#motor` is currently an alias into the main site, not a separate page. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
-| `admin/index.html` | Private admin launcher with exactly three primary cards: "Edit the words", "Arrange & customise", and "Analytics". Has an early session gate that redirects unauthenticated visitors to `/admin/login`. |
+| `admin/index.html` | Private Admin Portal Home with the shared admin shell and four primary modules: Operations, Website content, Analytics, and Settings. Has an early session gate and verified Firebase admin session check that redirect unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
 | `admin/ops/index.html` | Private Operations Portal shell. Reuses verified admin session and loads `/admin/ops/app.js`; contains no browser-seeded operations data. |
-| `admin/ops/app.js` | Operations Portal controller. Calls `/api/ops/*` with the active Firebase ID token, renders empty states for unavailable resources, and sends workflow mutations to the server. |
-| `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes `contactLeads/*`, and returns server-produced audit entries. |
+| `admin/ops/app.js` | Operations Portal controller. Calls `/api/ops/*` with the active Firebase ID token, renders live Leads/Tasks/Audit, labels unavailable resources as not wired, and sends supported workflow mutations to the server. |
+| `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes `contactLeads/*`, returns server-produced audit entries, and marks planned resources as `not_wired` instead of pretending they are empty live datasets. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
 | `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
@@ -107,10 +109,10 @@ flowchart LR
   "Visitor /" --> "Owner #admin"
   "Visitor /" --> "Owner #preview"
   "Admin login /admin/login" --> "Admin launcher /admin"
+  "Admin launcher /admin" --> "Operations /admin/ops"
   "Admin launcher /admin" --> "Admin analytics /admin/analytics"
   "Admin launcher /admin" --> "Owner #edit"
   "Admin launcher /admin" --> "Owner #admin"
-  "Admin login /admin/login" --> "Operations /admin/ops"
 ```
 
 Route contracts:
@@ -125,11 +127,13 @@ Route contracts:
   but must not appear in the header nav or `sitemap.xml`.
 - `/#admin`, `/#edit`, and `/#preview` are owner modes inside `index.html`.
 - `/admin/login` is the owner auth gate.
-- `/admin` is the private admin launcher and must remain reachable after login.
+- `/admin` is the private Admin Portal Home and must remain reachable after login.
 - `/admin/analytics` is the private owner analytics dashboard and must remain
   out of `sitemap.xml`.
 - `/admin/ops` is the private Operations Portal. It is reachable directly after
-  login but is intentionally not a launcher card in the current CMS IA.
+  login and from the Operations card on `/admin`. Leads, Tasks, and Audit are
+  live; other operational modules must remain visibly labeled as not wired until
+  backed by real API contracts.
 - Direct unauthenticated access to `/admin`, `/admin/analytics`, `/admin/ops`,
   and owner modes must send the user to `/admin/login`.
 
@@ -175,6 +179,11 @@ Important behavior:
   Admin Analytics reads those leads through `covermate-firebase.js`.
   The Operations Portal reads and mutates them through `/api/ops/*`, which
   re-verifies the Firebase user and role server-side before touching Firestore.
+  `/api/ops/*` currently supports lead reads, lead creation, status changes,
+  notes, follow-up dates, task completion/reopen, and audit reads. Customer,
+  consultation, quote, policy, renewal, document, and insurer endpoints return
+  `source: "not_wired"` metadata so the UI can show honest not-wired states
+  rather than fake or ambiguous empty records.
 
 ## Design Source Of Truth
 
@@ -332,13 +341,14 @@ but is not currently present as a loose repository file.
 2. Firebase Google sign-in checks Firestore `admins/{uid}`.
 3. Successful allowlisted sign-in writes `covermate-admin-session` and lands on
    `/admin`.
-4. "Edit the words" opens `/#edit`.
-5. "Arrange & customise" opens `/#admin`; the owner can also open the control
-   panel from the editor with `Tools -> Panel`.
+4. "Operations" opens `/admin/ops`.
+5. "Website content" opens `/#admin`; quick actions keep `/#edit` and
+   `/#preview` reachable.
 6. "Analytics" opens `/admin/analytics`.
-7. `/admin/analytics` renders Firestore lead analytics and GA4 reporting
+7. "Settings" opens `/admin/ops#settings`.
+8. `/admin/analytics` renders Firestore lead analytics and GA4 reporting
    readiness without loading visitor GA scripts.
-8. The owner panel can reorder/hide sections, edit content/brand/theme data, and
+9. The owner panel can reorder/hide sections, edit content/brand/theme data, and
    publish draft state to Firestore live state.
 9. In structured-card sections, the Content tab can edit insurer relationship
    cards, insurer item logo paths, claim cards, fee transparency cards, and the

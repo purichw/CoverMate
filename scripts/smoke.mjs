@@ -99,6 +99,38 @@ function remoteContentMock(remoteConfig, remoteText = {}) {
   `;
 }
 
+function adminPortalSessionMock() {
+  return `
+    const user = {
+      uid: "smoke-owner",
+      email: "owner@example.com",
+      displayName: "Owner Smoke",
+      photoURL: "",
+      getIdToken: async () => "smoke-token"
+    };
+    const session = {
+      email: user.email,
+      name: user.displayName,
+      pic: "",
+      role: "owner",
+      ts: Date.now(),
+      exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+    };
+    window.CoverMateFirebase = {
+      auth: { currentUser: user },
+      waitForAuth: async () => user,
+      syncSessionFromCurrentUser: async () => {
+        window.localStorage.setItem("covermate-admin-session", JSON.stringify(session));
+        return { ok: true, user, admin: { role: "owner", active: true }, session };
+      },
+      hydrateLocalContent: async () => null,
+      signOut: async () => {}
+    };
+    window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
+    export {};
+  `;
+}
+
 function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftText = {}) {
   return `
     let liveConfig = ${JSON.stringify(liveConfig)};
@@ -821,7 +853,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
     closedState.route !== "/" ||
     closedState.hasReopen ||
     closedState.marker ||
-    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(closedState.text)
+    /Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(closedState.text)
   ) {
     failures.push(`public chrome guard: closing #admin did not return to clean public / (${JSON.stringify(closedState)})`);
   }
@@ -847,7 +879,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
     publicReturnState.marker ||
     publicReturnState.hasOwnerBar ||
     publicReturnState.hasAdminAside ||
-    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(publicReturnState.text)
+    /Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(publicReturnState.text)
   ) {
     failures.push(`public chrome guard: Public site did not leave owner mode for clean public / (${JSON.stringify(publicReturnState)})`);
   }
@@ -880,7 +912,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
     editPublicState.marker ||
     editPublicState.editableCount ||
     editPublicState.hasOwnerBar ||
-    /Editing on page|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(editPublicState.text)
+    /Editing on page|Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(editPublicState.text)
   ) {
     failures.push(`public chrome guard: Public site from #edit did not leave owner mode for clean public / (${JSON.stringify(editPublicState)})`);
   }
@@ -1608,19 +1640,27 @@ for (const [name, width, height] of viewports) {
       "covermate-admin-session",
       JSON.stringify({
         email: "owner@example.com",
-        name: "Owner",
+        name: "Owner Smoke",
         pic: "",
+        role: "owner",
         ts: Date.now(),
         exp: Date.now() + 7 * 24 * 60 * 60 * 1000
       })
     );
   });
+  await page.route("**/covermate-firebase.js", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: adminPortalSessionMock()
+    })
+  );
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Manage your site/);
+  await waitForBodyText(page, /Admin Portal/);
   const adminState = await page.evaluate(() => ({
     text: document.body.innerText,
-    launcherCards: Array.from(document.querySelectorAll("[data-admin-launcher-card]")).map((el) => ({
-      kind: el.getAttribute("data-admin-launcher-card"),
+    moduleCards: Array.from(document.querySelectorAll("[data-admin-home-card]")).map((el) => ({
+      kind: el.getAttribute("data-admin-home-card"),
       text: el.innerText,
       href: el.getAttribute("href")
     })),
@@ -1629,31 +1669,41 @@ for (const [name, width, height] of viewports) {
     clientWidth: document.documentElement.clientWidth,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!adminState.text.includes("Manage your site")) {
-    failures.push(`${name} /admin: authenticated launcher did not render`);
+  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("Admin verified")) {
+    failures.push(`${name} /admin: authenticated Admin Portal Home did not render`);
   }
-  const launcherLabels = adminState.launcherCards.map((card) => {
+  if (
+    !adminState.text.includes("Live: leads/tasks/audit") ||
+    !adminState.text.includes("Partial: GA4 API pending") ||
+    !adminState.text.includes("Not wired yet; labeled in Operations")
+  ) {
+    failures.push(`${name} /admin: live/partial/planned system status copy is missing`);
+  }
+  const launcherLabels = adminState.moduleCards.map((card) => {
     const firstLine = card.text.split("\n").map((part) => part.trim()).filter(Boolean)[0] || "";
     return firstLine;
   });
-  const expectedLauncherLabels = ["Edit the words", "Arrange & customise", "Analytics"];
+  const expectedLauncherLabels = ["Operations", "Website content", "Analytics", "Settings"];
   if (JSON.stringify(launcherLabels) !== JSON.stringify(expectedLauncherLabels)) {
-    failures.push(`${name} /admin: expected launcher labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
+    failures.push(`${name} /admin: expected module labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
   }
-  if (adminState.launcherCards.length !== 3) {
-    failures.push(`${name} /admin: expected 3 primary launcher cards, got ${adminState.launcherCards.length}`);
+  if (adminState.moduleCards.length !== 4) {
+    failures.push(`${name} /admin: expected 4 primary module cards, got ${adminState.moduleCards.length}`);
   }
-  if (!adminState.launcherCards.some((card) => card.kind === "words" && card.href === "/#edit")) {
-    failures.push(`${name} /admin: Edit the words card does not open /#edit`);
+  if (!adminState.moduleCards.some((card) => card.kind === "operations" && card.href === "/admin/ops")) {
+    failures.push(`${name} /admin: Operations card does not open /admin/ops`);
   }
-  if (!adminState.launcherCards.some((card) => card.kind === "arrange" && card.href === "/#admin")) {
-    failures.push(`${name} /admin: Arrange & customise card does not open /#admin`);
+  if (!adminState.moduleCards.some((card) => card.kind === "content" && card.href === "/#admin")) {
+    failures.push(`${name} /admin: Website content card does not open /#admin`);
   }
-  if (!adminState.launcherCards.some((card) => card.kind === "analytics" && card.href === "/admin/analytics")) {
+  if (!adminState.moduleCards.some((card) => card.kind === "analytics" && card.href === "/admin/analytics")) {
     failures.push(`${name} /admin: Analytics card does not open /admin/analytics`);
   }
-  if (/Edit website|Open editor|Open control panel|Operations|\/admin\/ops/.test(adminState.text)) {
-    failures.push(`${name} /admin: forbidden legacy or Operations launcher copy is visible`);
+  if (!adminState.moduleCards.some((card) => card.kind === "settings" && card.href === "/admin/ops#settings")) {
+    failures.push(`${name} /admin: Settings card does not open /admin/ops#settings`);
+  }
+  if (/Manage your site|Edit the words|Arrange & customise|Unpacking/.test(adminState.text)) {
+    failures.push(`${name} /admin: legacy launcher copy is visible`);
   }
   if (!adminState.text.includes("Public site") || !adminState.text.includes("Log out")) {
     failures.push(`${name} /admin: supporting Public site or Log out action is missing`);
@@ -1691,12 +1741,12 @@ for (const [name, width, height] of viewports) {
     launcherPublicState.marker ||
     launcherPublicState.hasOwnerBar ||
     launcherPublicState.hasAdminAside ||
-    /Manage your site|Edit the words|Arrange & customise|Analytics|Admin portal|Save draft|Publish/.test(launcherPublicState.text)
+    /Manage your site|Admin Portal|Website content|Operations|Settings|Save draft|Publish/.test(launcherPublicState.text)
   ) {
     failures.push(`${name} /admin Public site: did not leave owner mode for clean public / (${JSON.stringify(launcherPublicState)})`);
   }
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Manage your site/);
+  await waitForBodyText(page, /Admin Portal/);
 
   const leadNow = Math.floor(Date.now() / 1000);
   const analyticsLocalOnlyMock = `
@@ -1968,7 +2018,7 @@ for (const [name, width, height] of viewports) {
   if (
     closedAdminState.route !== "/" ||
     closedAdminState.adminMarker ||
-    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(closedAdminState.text)
+    /Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(closedAdminState.text)
   ) {
     failures.push(`${name} /#admin close: did not return to clean public / (${JSON.stringify(closedAdminState)})`);
   }
@@ -1997,7 +2047,7 @@ for (const [name, width, height] of viewports) {
     publicReturnState.hasOwnerBar ||
     publicReturnState.hasAdminAside ||
     publicReturnState.adminMarker ||
-    /Admin portal|Text edit|Save draft|Publish|Manage your site/.test(publicReturnState.text)
+    /Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(publicReturnState.text)
   ) {
     failures.push(`${name} /#admin Public site: did not leave owner mode for clean public / (${JSON.stringify(publicReturnState)})`);
   }
@@ -2166,7 +2216,7 @@ for (const [name, width, height] of viewports) {
     editPanelClosedState.toolbarVisible ||
     editPanelClosedState.hasOwnerBar ||
     editPanelClosedState.hasAdminAside ||
-    /Editing on page|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(editPanelClosedState.text)
+    /Editing on page|Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(editPanelClosedState.text)
   ) {
     failures.push(`${name} /#edit panel close: did not exit to clean public / (${JSON.stringify(editPanelClosedState)})`);
   }
@@ -2175,8 +2225,8 @@ for (const [name, width, height] of viewports) {
   }
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Manage your site/);
-  await page.getByRole("button", { name: "Log out" }).click();
+  await waitForBodyText(page, /Admin Portal/);
+  await page.locator("#logoutButtonInline").click();
   await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);

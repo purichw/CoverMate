@@ -157,9 +157,9 @@ Update the corresponding Claude designs to reflect the current product decisions
 - The visitor navbar must show only one motor item: Thai `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`.
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
-- Admin launcher rebuild target has three primary cards: `Edit the words`,
-  `Arrange & customise`, and `Analytics`. Operations is deferred and must not
-  appear in this rebuild.
+- Admin Portal Home target has four primary modules: `Operations`,
+  `Website content`, `Analytics`, and `Settings`. The home is a gateway; record
+  work stays inside `/admin/ops` and CMS work stays in the existing owner modes.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear owner markers and land on clean `/`
   without showing owner chrome. Legacy `/?view=public` may be consumed for
@@ -649,26 +649,33 @@ Behavior:
 - Do not use a demo-only copy in production.
 - The login card should feel centered and breathable, not squeezed.
 
-## Admin Launcher
+## Admin Portal Home
 
 Route: `/admin`
 
-Purpose: private owner menu after login.
+Purpose: private owner menu after login and gateway into admin modules.
 
 Required elements:
 
-- Brand header and licence text.
+- Shared admin shell visually aligned with `/admin/ops`.
 - OIC verify link.
-- H1: `Manage your site`.
-- Intro copy explaining that visitors never see this page.
-- Three primary cards:
-  - `Edit the words`
-  - `Arrange & customise`
+- H1: `Admin Portal`.
+- Four primary cards:
+  - `Operations`
+  - `Website content`
   - `Analytics`
-- Bottom actions:
-  - `Public site`
-  - `Log out`
-- Tip about `/admin` and Firestore/export backup.
+  - `Settings`
+- Each card states whether the destination is live, partial, or reference/API
+  enforced. Operations must disclose that Leads, Tasks, and Audit are live while
+  other modules remain not wired until real API contracts exist.
+- Quick actions:
+  - `Edit public-page words`
+  - `Preview website draft`
+  - `Review lead intake`
+  - `Open follow-ups`
+- System status rows for Firebase admin session, Operations backend, planned
+  customer/policy modules, Website CMS, and GA4 Data API.
+- `Public site` and `Log out` actions.
 
 `Public site` links land directly on clean `/` after clearing owner markers.
 The public bundle may still consume old `/?view=public` links for compatibility.
@@ -676,11 +683,11 @@ Clean public loads must also clear or ignore stale owner markers. Owner controls
 
 Layout:
 
-- Desktop: three cards in one row with equal visual weight.
-- Tablet: two then one, or one column if needed.
+- Desktop: four cards in one row when space allows.
+- Tablet: two-column modules.
 - Mobile: one column with generous spacing.
 
-Do not remove the launcher after login. It is the required hub.
+Do not remove the Admin Portal Home after login. It is the required hub.
 
 ## Owner Edit Mode
 
@@ -905,10 +912,11 @@ Do:
 - Preserve the current warm advisory brand.
 - Keep the public page continuous and anchor-based.
 - Keep admin private surfaces visually related but operationally clear.
-- Keep Analytics as the third admin launcher card after `Edit the words` and
-  `Arrange & customise`.
+- Keep `/admin` as the Admin Portal Home with Operations, Website content,
+  Analytics, and Settings.
 - Keep Google Sans family everywhere.
 - Keep Firestore-first live content behavior visible in design copy/states.
+- Keep planned admin modules visibly labeled instead of showing fake records.
 - Add breathing room where cards or text are crowded.
 
 Do not:
@@ -947,9 +955,11 @@ Public visitor:
 Admin:
 
 - Login page shows Firebase Auth, not demo-only wording.
-- Admin launcher exists after login.
-- Launcher target has exactly three primary cards: Edit the words, Arrange &
-  customise, Analytics.
+- Admin Portal Home exists after login.
+- Portal target has exactly four primary cards: Operations, Website content,
+  Analytics, Settings.
+- Operations discloses the live/planned data boundary and `/admin/ops` planned
+  modules render not-wired states instead of fake records.
 - Owner/admin controls use English labels.
 - Logout and mode switching are reachable from edit and arrange flows.
 - Closing arrange panel exits owner mode to clean `/`; reopen tools from
