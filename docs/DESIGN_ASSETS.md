@@ -157,9 +157,10 @@ approved CoverMate surface until explicitly approved.
 
 ## Favicon
 
-`favicon.svg` is the current CoverMate shield browser icon referenced by page
-heads. `favicon.ico` is also generated from the same source so browsers that
-probe the legacy icon URL do not hit a 404.
+`favicon.svg` is the current transparent CoverMate mark browser icon referenced
+by page heads. Do not add a colored square, rounded rectangle, or filled
+background behind the mark. `favicon.ico` is generated from the same transparent
+source so browsers that probe the legacy icon URL do not hit a 404.
 
 ## Social And App Icons
 
@@ -175,6 +176,10 @@ Browser/app icons:
 - `assets/icon-192.png`
 - `assets/icon-512.png`
 - `site.webmanifest`
+
+These app icons intentionally use `purpose: "any"` rather than `maskable`
+because the CoverMate icon should appear as the logo mark itself, not as a
+full-bleed background tile.
 
 When changing these assets, visually inspect `assets/covermate-og.png` so text
 does not crop in social previews.

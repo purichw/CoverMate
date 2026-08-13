@@ -1,0 +1,39 @@
+{
+  "capturedAt": "2026-08-13T05:25:39.936Z",
+  "source": "http://127.0.0.1:59946/",
+  "scope": "full footer element snapshots after lower-band removal",
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop-element",
+        "width": 1440,
+        "height": 900
+      },
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-13-footer-lower-band-removed/desktop-element-footer-element.png",
+      "metrics": {
+        "footerHeight": 328,
+        "hasPrivacy": true,
+        "hasEmergencyLower": false,
+        "hasClaimLower": false,
+        "hasFooterLegalPara": false
+      },
+      "console": []
+    },
+    {
+      "viewport": {
+        "name": "mobile-element",
+        "width": 390,
+        "height": 844
+      },
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-13-footer-lower-band-removed/mobile-element-footer-element.png",
+      "metrics": {
+        "footerHeight": 1218,
+        "hasPrivacy": true,
+        "hasEmergencyLower": false,
+        "hasClaimLower": false,
+        "hasFooterLegalPara": false
+      },
+      "console": []
+    }
+  ]
+}

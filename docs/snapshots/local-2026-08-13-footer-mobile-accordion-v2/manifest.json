@@ -1,0 +1,53 @@
+{
+  "createdAt": "2026-08-13T05:42:53.754Z",
+  "results": {
+    "mobile-collapsed": {
+      "footerHeight": 578,
+      "mobileDisplay": "flex",
+      "mobilePaddingBottom": "92px",
+      "desktopGridDisplay": "none",
+      "summaryHeights": [
+        58,
+        58,
+        58
+      ],
+      "openCount": 0,
+      "hasPrivacy": false,
+      "hasEmergencyLower": false,
+      "hasClaimLower": false,
+      "consoleErrors": []
+    },
+    "mobile-nav-open": {
+      "footerHeight": 976,
+      "mobileDisplay": "flex",
+      "mobilePaddingBottom": "92px",
+      "desktopGridDisplay": "none",
+      "summaryHeights": [
+        58,
+        58,
+        58
+      ],
+      "openCount": 1,
+      "hasPrivacy": true,
+      "hasEmergencyLower": false,
+      "hasClaimLower": false,
+      "consoleErrors": []
+    },
+    "desktop-grid": {
+      "footerHeight": 328,
+      "mobileDisplay": "none",
+      "mobilePaddingBottom": "0px",
+      "desktopGridDisplay": "grid",
+      "summaryHeights": [
+        0,
+        0,
+        0
+      ],
+      "openCount": 0,
+      "hasPrivacy": true,
+      "hasEmergencyLower": false,
+      "hasClaimLower": false,
+      "consoleErrors": []
+    }
+  }
+}

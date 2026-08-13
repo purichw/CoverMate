@@ -1,0 +1,126 @@
+{
+  "capturedAt": "2026-08-13T05:22:50.607Z",
+  "source": "file:///Users/point/CoverMate/index.html",
+  "route": "file:///Users/point/CoverMate/index.html",
+  "scope": "footer lower-band removal narrow evidence",
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-13-footer-lower-band-removed/desktop-footer-after.png",
+      "metrics": {
+        "footerText": "ที่ปรึกษาประกันภัย\nประกันชีวิต สุขภาพ และรถยนต์ · ให้คำปรึกษาโดยไม่มีค่าใช้จ่าย\nor\nQR\nCoverMate\nตัวแทน AIA · นายหน้าประกันรถยนต์ · ดูแลถึงการเคลม\nใบอนุญาต\nใบอนุญาตตัวแทนประกันชีวิต 6401006221\nใบอนุญาตนายหน้าประกันวินาศภัย 6804008544\nตรวจสอบใบอนุญาตกับ คปภ. →\nไปที่\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nข้อมูลของคุณถูกใช้ทำอะไร\nติดต่อ\nLINE @CoverMate\n08X-XXX-XXXX\npurich@example.com\nFacebook CoverMate Insurance\nจันทร์–เสาร์ 9:00–20:00 น.",
+        "footerHeight": 328,
+        "hasPrivacy": true,
+        "hasEmergencyLower": false,
+        "hasClaimLower": false,
+        "hasFooterLegalPara": false,
+        "navText": "ไปที่\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nข้อมูลของคุณถูกใช้ทำอะไร"
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "error",
+          "text": "Access to script at 'file:///covermate-contract.js' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-extension, chrome-untrusted, data, http, https, isolated-app."
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FAILED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "warning",
+          "text": "[bundle] resource failed to load: LINK file:///assets/fonts/covermate-fonts.css"
+        },
+        {
+          "type": "error",
+          "text": "Access to fetch at 'file:///Users/point/CoverMate/.image-slots.state.json' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-extension, chrome-untrusted, data, http, https, isolated-app."
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FAILED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "file": "/Users/point/CoverMate/docs/snapshots/local-2026-08-13-footer-lower-band-removed/mobile-footer-after.png",
+      "metrics": {
+        "footerText": "ที่ปรึกษาประกันภัย\nประกันชีวิต สุขภาพ และรถยนต์ · ให้คำปรึกษาโดยไม่มีค่าใช้จ่าย\nor\nQR\nCoverMate\nตัวแทน AIA · นายหน้าประกันรถยนต์ · ดูแลถึงการเคลม\nใบอนุญาต\nใบอนุญาตตัวแทนประกันชีวิต 6401006221\nใบอนุญาตนายหน้าประกันวินาศภัย 6804008544\nตรวจสอบใบอนุญาตกับ คปภ. →\nไปที่\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nข้อมูลของคุณถูกใช้ทำอะไร\nติดต่อ\nLINE\n@CoverMate\n08X-XXX-XXXX\npurich@example.com\nFacebook\nCoverMate Insurance\nจันทร์–เสาร์ 9:00–20:00 น.",
+        "footerHeight": 1218,
+        "hasPrivacy": true,
+        "hasEmergencyLower": false,
+        "hasClaimLower": false,
+        "hasFooterLegalPara": false,
+        "navText": "ไปที่\nความคุ้มครอง\nประกันรถยนต์\nเกิดเหตุ\nคำนวณทุน\nขั้นตอน\nคำถามที่พบบ่อย\nข้อมูลของคุณถูกใช้ทำอะไร"
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Access to script at 'file:///covermate-contract.js' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-extension, chrome-untrusted, data, http, https, isolated-app."
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FAILED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "warning",
+          "text": "[bundle] resource failed to load: LINK file:///assets/fonts/covermate-fonts.css"
+        },
+        {
+          "type": "error",
+          "text": "Access to fetch at 'file:///Users/point/CoverMate/.image-slots.state.json' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-extension, chrome-untrusted, data, http, https, isolated-app."
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FAILED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+        }
+      ]
+    }
+  ]
+}

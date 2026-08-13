@@ -1,0 +1,180 @@
+{
+  "capturedAt": "2026-08-13T05:06:38.233Z",
+  "url": "http://localhost:4177/#guides",
+  "shots": [
+    {
+      "name": "desktop-guides-font-only",
+      "width": 1440,
+      "height": 900,
+      "path": "/Users/point/CoverMate/docs/snapshots/local-2026-08-13-guides-font-only/desktop-guides-font-only.png",
+      "metrics": {
+        "section": {
+          "x": 0,
+          "y": 97,
+          "w": 1440,
+          "h": 990
+        },
+        "grid": {
+          "x": 190,
+          "y": 431,
+          "w": 1060,
+          "h": 548
+        },
+        "cards": [
+          {
+            "rect": {
+              "x": 190,
+              "y": 431,
+              "w": 1060,
+              "h": 124
+            },
+            "summary": {
+              "h": 124
+            },
+            "title": {
+              "text": "ค่าห้องที่เลือกไว้ อาจไม่พอกับโรงพยาบาลที่คุณจะไปจริง",
+              "font": "18.72px",
+              "lineHeight": "25.0848px"
+            }
+          },
+          {
+            "rect": {
+              "x": 190,
+              "y": 572,
+              "w": 1060,
+              "h": 124
+            },
+            "summary": {
+              "h": 124
+            },
+            "title": {
+              "text": "ชั้น 3+ ไม่ได้คุ้มครองทุกการชน และนี่คือช่องที่คนพลาด",
+              "font": "18.72px",
+              "lineHeight": "25.0848px"
+            }
+          },
+          {
+            "rect": {
+              "x": 190,
+              "y": 714,
+              "w": 1060,
+              "h": 124
+            },
+            "summary": {
+              "h": 124
+            },
+            "title": {
+              "text": "ทุนประกันชีวิตไม่ใช่ตัวเลขสวย ๆ แต่คือหนี้บวกเวลา",
+              "font": "18.72px",
+              "lineHeight": "25.0848px"
+            }
+          },
+          {
+            "rect": {
+              "x": 190,
+              "y": 871,
+              "w": 1060,
+              "h": 124
+            },
+            "summary": {
+              "h": 124
+            },
+            "title": {
+              "text": "สิทธิลดหย่อนประกันมีสองก้อน คนมักใช้แค่ก้อนเดียว",
+              "font": "18.72px",
+              "lineHeight": "25.0848px"
+            }
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "name": "mobile-guides-font-only",
+      "width": 390,
+      "height": 844,
+      "path": "/Users/point/CoverMate/docs/snapshots/local-2026-08-13-guides-font-only/mobile-guides-font-only.png",
+      "metrics": {
+        "section": {
+          "x": 0,
+          "y": 86,
+          "w": 390,
+          "h": 756
+        },
+        "grid": {
+          "x": 20,
+          "y": 327,
+          "w": 350,
+          "h": 459
+        },
+        "cards": [
+          {
+            "rect": {
+              "x": 20,
+              "y": 327,
+              "w": 350,
+              "h": 102
+            },
+            "summary": {
+              "h": 102
+            },
+            "title": {
+              "text": "ค่าห้องที่เลือกไว้ อาจไม่พอกับโรงพยาบาลที่คุณจะไปจริง",
+              "font": "17px",
+              "lineHeight": "22.78px"
+            }
+          },
+          {
+            "rect": {
+              "x": 20,
+              "y": 447,
+              "w": 350,
+              "h": 102
+            },
+            "summary": {
+              "h": 102
+            },
+            "title": {
+              "text": "ชั้น 3+ ไม่ได้คุ้มครองทุกการชน และนี่คือช่องที่คนพลาด",
+              "font": "17px",
+              "lineHeight": "22.78px"
+            }
+          },
+          {
+            "rect": {
+              "x": 20,
+              "y": 566,
+              "w": 350,
+              "h": 102
+            },
+            "summary": {
+              "h": 102
+            },
+            "title": {
+              "text": "ทุนประกันชีวิตไม่ใช่ตัวเลขสวย ๆ แต่คือหนี้บวกเวลา",
+              "font": "17px",
+              "lineHeight": "22.78px"
+            }
+          },
+          {
+            "rect": {
+              "x": 20,
+              "y": 685,
+              "w": 350,
+              "h": 102
+            },
+            "summary": {
+              "h": 102
+            },
+            "title": {
+              "text": "สิทธิลดหย่อนประกันมีสองก้อน คนมักใช้แค่ก้อนเดียว",
+              "font": "17px",
+              "lineHeight": "22.78px"
+            }
+          }
+        ]
+      },
+      "errors": []
+    }
+  ]
+}
