@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-08-10
+Last updated: 2026-08-13
 
 ## Visual Source
 
@@ -65,6 +65,23 @@ CoverMate should feel like a warm, calm, licensed insurance advisor:
 
 Avoid replacing this with a generic SaaS dashboard, purple/blue gradient theme,
 or decorative illustration-first landing page.
+
+## Brand Logos
+
+Committed primary display logo files:
+
+| File | Use |
+| --- | --- |
+| `assets/brand/covermate-advisory-logo-th.png` | Thai public logo, including the Thai advisory line. |
+| `assets/brand/covermate-advisory-logo-en.png` | English public logo and English-only admin chrome. |
+| `assets/brand/covermate-footer-logo-th.png` | Thai footer-only logo with a light outline for the dark footer. |
+| `assets/brand/covermate-footer-logo-en.png` | English footer-only logo with a light outline for the dark footer. |
+
+The public renderer selects display logos from the active language. Header/admin
+chrome use the primary advisory files. Footer uses the footer-only files directly
+on the dark footer surface, with no white logo plate/background.
+`assets/brand/covermate-wordmark.png` remains a legacy fallback/reference asset,
+not the current primary display logo.
 
 ## Font Policy
 
