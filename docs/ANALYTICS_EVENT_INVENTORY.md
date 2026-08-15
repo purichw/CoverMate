@@ -1,6 +1,6 @@
 # CoverMate Analytics Event Inventory
 
-Last updated: 2026-08-10
+Last updated: 2026-08-16
 
 Phase 7 audit scope: `covermate-analytics.js`, public event calls in
 `index.html`, `/admin/analytics`, Firestore lead reads in
@@ -18,7 +18,7 @@ gating, and test coverage.
 | `phone_click` | Visitor clicks `tel:` link | `link_type: "phone"` plus page context | Safe | Preserved | Keep historical event name and parameter. |
 | `email_click` | Visitor clicks `mailto:` link | `link_type: "email"` plus page context | Safe | Preserved | Keep historical event name and parameter. |
 | `language_change` | Visitor clicks `TH` or `EN` language button | `language` | Safe | Preserved | Keep event name; keep parameter restricted to `th` / `en`. |
-| `calculator_interaction` | Visitor moves calculator range control | `control_type: "range"` | Safe | Preserved | Existing debounce stays in place to avoid noisy duplicates. |
+| `calculator_interaction` | Visitor moves calculator controls | `control_type: "range"` | Safe only when no numeric input values are attached | Preserved + guarded | Existing debounce stays in place to avoid noisy duplicates; never attach spending, obligations, room benefit, recovery period, or calculated output values. |
 | `form_start` | First input in a public form | `form_type: "consultation"` | Safe value, but renewal form was mislabeled | Fixed | Preserve event name; track first start per form type and label renewal as `renewal_reminder`. |
 | `quote_submit` | Public form submit attempt | `form_type: "consultation"` | Safe value, but renewal form was mislabeled | Fixed | Preserve event name; label renewal submit attempts as `renewal_reminder`. |
 | `quote_submit_success` | Firestore lead save succeeds from consultation or renewal reminder flow | `form_type`, `enquiry_type`, `coverage` | Safe category fields; no submitted contact/name/topic | Preserved + guarded | Preserve event name; enforce event-parameter allowlist before GA4 dispatch. |

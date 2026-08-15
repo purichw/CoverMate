@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-08-11
+Last updated: 2026-08-16
 
 ## Persistence Model
 
@@ -67,6 +67,12 @@ Current section types include `hero`, `trust`, `products`, `review`, `fit`,
 `steps`, `insurers`, `tiers`, `claim`, `renew`, `guides`, `stories`, `about`,
 `faq`, `fees`, `pdpa`, and `contact`.
 
+The `fit` section also owns the public needs-calculator methodology under
+`fit.calculator`. The canonical contract is documented in
+[NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md). Runtime normalization fills missing
+nested calculator fields from `DEFAULT_NEEDS_CALCULATOR`, but loaded Firestore
+live/draft values always prevail over embedded defaults and browser cache.
+
 Important dynamic fields:
 
 - Repeatable CMS arrays under sections (`items[]`, `cards[]`, and
@@ -79,6 +85,12 @@ Important dynamic fields:
 - `insurers.items[]` is the source of truth for the public insurer logo grid.
   Each item may carry `logo`; stale items resolve through the built-in logo map
   and exact legacy `LMG` names render as Chubb Samaggi.
+- `fit.calculator` is the source of truth for calculator assumptions:
+  dataset version, life-sum formula constants, health room reference metadata,
+  critical-illness/recovery buffer defaults, and public situation-card payloads
+  under `fit.calculator.situations`. It is additive-normalized so an older live
+  document can render the current calculator without losing owner-managed copy
+  or future custom assumption values.
 - `tiers.heads[]` defines motor comparison columns.
 - `tiers.items[]` defines class rows. Each tier row uses `st[]` states aligned
   to `heads[]` by array index, where `y` means covered, `p` means conditional,

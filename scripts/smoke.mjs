@@ -361,7 +361,7 @@ async function verifyRemoteHydrationContract() {
     const main = document.querySelector("main");
     if (main) main.__covermateSmokeStable = true;
   });
-  await publicPage.locator('header nav a[href="#how"]').first().click();
+  await publicPage.locator('header nav a[href="#fit"]').first().click();
   await publicPage.waitForTimeout(700);
   const anchorState = await publicPage.evaluate(() => ({
     hash: window.location.hash,
@@ -369,8 +369,8 @@ async function verifyRemoteHydrationContract() {
     hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     text: document.body.innerText
   }));
-  if (anchorState.hash !== "#how") {
-    failures.push(`anchor navigation: expected #how after clicking ขั้นตอน, got ${anchorState.hash}`);
+  if (anchorState.hash !== "#fit") {
+    failures.push(`anchor navigation: expected #fit after clicking Resources, got ${anchorState.hash}`);
   }
   if (!anchorState.mainStable) {
     failures.push("anchor navigation: main DOM was rebuilt during a same-page navbar jump");
@@ -1138,7 +1138,9 @@ async function verifyStaticSeoFiles() {
   if (!manifest || manifest.name !== "CoverMate" || manifest.start_url !== "/") {
     failures.push("seo /site.webmanifest: invalid name or start_url");
   }
-  const manifestIcons = Array.isArray(manifest?.icons) ? manifest.icons.map((icon) => icon.src) : [];
+  const manifestIcons = Array.isArray(manifest?.icons)
+    ? manifest.icons.map((icon) => new URL(icon.src, baseUrl).pathname)
+    : [];
   for (const icon of ["/favicon.svg", "/assets/icon-192.png", "/assets/icon-512.png"]) {
     if (!manifestIcons.includes(icon)) failures.push(`seo /site.webmanifest: missing icon ${icon}`);
   }
@@ -1286,7 +1288,7 @@ for (const [name, width, height] of viewports) {
           targetScrollMarginTop: target ? window.getComputedStyle(target).scrollMarginTop : ""
         };
       }, route === "/#motor" ? "insurers" : "cover");
-      const expectedMainNav = ["#cover", "#insurers", "#claim", "#fit", "#how", "#faq"];
+      const expectedMainNav = ["#cover", "#review", "#insurers", "#fit", "#faq"];
       const missingMainNav = expectedMainNav.filter((href) => !aliasState.navHrefs.includes(href));
       if (missingMainNav.length) {
         failures.push(`${name} ${route}: alias should keep main nav, missing ${missingMainNav.join(", ")}`);
@@ -1573,7 +1575,7 @@ for (const [name, width, height] of viewports) {
     if (mainVisitorRoutes.has(route) && !/ไม่ต้องจำวันหมดอายุ|renewal dates/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: renewal reminder section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/ผมได้ค่าตอบแทน|commission comes from/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|How CoverMate is compensated|commission comes from/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: fee transparency section is missing`);
     }
     if (mainVisitorRoutes.has(route) && !/ข้อมูลที่คุณส่งมา|What happens to/i.test(state.bodyText)) {

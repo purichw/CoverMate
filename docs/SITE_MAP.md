@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-08-11
+Last updated: 2026-08-16
 
 ## Routes
 
@@ -49,7 +49,7 @@ Expected visible sections:
 | Trust bar | Fast credibility markers such as licensed broker, AIA care, LINE support, and insurer count. |
 | Hero coverage accordions | Insurance categories and protection details embedded inside the hero assist-card cluster. The `#cover` anchor lands here; it is not a standalone public band. |
 | Policy review | Explains the free policy review offer and what visitors can send in. |
-| Fit/calculator | Helps visitors estimate or choose suitable coverage. |
+| Fit/calculator | Helps visitors estimate life starting need, health room-reference gap, and critical-illness/recovery buffer from explicit inputs. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
 | Motor insurers | Shows insurer-logo animation, AIA/Srikrung proof cards, and broker/license proof. |
 | Motor tier comparison | Explains Class 1, 2+, 2, 3+, and 3 across five coverage axes with desktop table and mobile cards. |
@@ -77,8 +77,10 @@ Expected visible sections:
 
 ## Navigation Contracts
 
-Visitor navigation should move through the hero coverage accordions, motor,
-claim help, calculator, steps, FAQ, and contact entry points.
+Visitor navigation should move through the hero coverage accordions, policy
+review, motor insurers, resources/calculator, and FAQ entry points. Claim help,
+process, contact, and other content sections remain on the continuous page but
+are not all primary header nav items.
 
 `/#motor` keeps the same global navigation as `/` and re-aims to `#insurers`
 after hydration. `/#life` behaves the same way and re-aims to the hero

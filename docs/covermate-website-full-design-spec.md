@@ -1,6 +1,6 @@
 # CoverMate Website Full Design Spec For Claude
 
-Last updated: 2026-08-10
+Last updated: 2026-08-16
 
 Production baseline: `https://covermate.vercel.app`
 
@@ -97,6 +97,16 @@ For release evidence, Claude handoff evidence, or "all screens" visual QA, captu
 - a `manifest.json` with URL, final URL, viewport, auth state, data state, language, scroll position, `fullPage` flag, commit, timestamp, and missing-state reasons.
 
 If this spec is being read from the bundled skill, follow `references/snapshot-suite.md` for the complete matrix.
+
+Latest local needs-calculator evidence:
+
+- Snapshot folder:
+  `/Users/point/CoverMate/docs/snapshots/2026-08-16-needs-calculator`
+- Scope: targeted local proof for the `#fit` section after migrating the
+  calculator to the `covermate-reference-data-v0.1` methodology.
+- The screenshot may still show Firestore-live section heading copy because
+  live CMS content wins over embedded defaults. The calculator controls and
+  methodology payload are the evidence target.
 
 ## Source Of Truth
 
@@ -209,6 +219,7 @@ Supporting docs:
 - Analytics: `/Users/point/CoverMate/docs/ANALYTICS.md`
 - SEO: `/Users/point/CoverMate/docs/SEO.md`
 - Interaction map: `/Users/point/CoverMate/docs/INTERACTION_MAP.md`
+- Needs calculator: `/Users/point/CoverMate/docs/NEEDS_CALCULATOR.md`
 - Assets: `/Users/point/CoverMate/docs/DESIGN_ASSETS.md`
 - NFRs: `/Users/point/CoverMate/docs/NON_FUNCTIONAL_REQUIREMENTS.md`
 
@@ -321,10 +332,9 @@ Components:
 - Logo mark: pale green circular `C`, brand name, Thai/English role line.
 - Nav:
   - `#cover`: `ความคุ้มครอง` / `Cover`
+  - `#review`: `ตรวจกรมธรรม์` / `Policy review`
   - `#insurers`: `ประกันรถยนต์` / `Motor`
-  - `#claim`: `เกิดเหตุ` / `Claims`
-  - `#fit`: `คำนวณทุน` / `Calculator`
-  - `#how`: `ขั้นตอน` / `Process`
+  - `#fit`: `เครื่องมือ` / `Resources`
   - `#faq`: `คำถามที่พบบ่อย` / `FAQ`
 - Language segmented control: `TH` and `EN`.
 - Primary CTA: chat icon + `แอดไลน์` / LINE copy.
@@ -430,15 +440,26 @@ Structure:
 - Dark brown section.
 - Left copy block with warm heading.
 - Right or adjacent calculator panel depending on viewport.
-- Segmented/card-like choices for life stage.
-- Sliders/inputs for income, dependents, debt, existing cover.
-- Calculated number prominent but not alarmist.
+- Segmented/card-like choices for situation context.
+- Inputs for essential monthly spending, support years, debts/future
+  obligations, liquid assets/existing cover, current room benefit, and recovery
+  period.
+- Three outputs: life starting need, health room-reference gap, and
+  critical-illness/recovery buffer.
+- Calculated numbers are prominent but not alarmist and must read as advisory
+  starting points rather than guaranteed costs or quotations.
 
 Current refinements:
 
 - Life-stage option cards center their icon and label.
 - Cards must not look left-heavy.
 - Use terracotta cards against deep brown.
+- The calculator follows `/Users/point/CoverMate/docs/NEEDS_CALCULATOR.md`.
+  Do not reintroduce arbitrary salary/dependency multipliers.
+  `fit.calculator` in Firestore is the source of truth; embedded defaults only
+  fill missing nested assumptions. Situation-card labels, icons, tints, and
+  recommendation bullets are `fit.calculator.situations` data, and the first
+  enabled situation renders by default so results appear on initial load.
 
 ### Process
 

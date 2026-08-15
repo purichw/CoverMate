@@ -21,6 +21,8 @@ before assuming changes are live.
   launcher, edit, panel, auth, language, and first-paint flows
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) - localStorage keys,
   ownership, migration rules, and limitations
+- [`docs/NEEDS_CALCULATOR.md`](docs/NEEDS_CALCULATOR.md) - public calculator
+  methodology, reference-data guardrails, CMS sync contract, and checks
 - [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) - Firebase Auth,
   Firestore allowlist, and Firestore Rules setup
 - [`docs/ANALYTICS.md`](docs/ANALYTICS.md) - GA4 event contract, private
@@ -35,6 +37,9 @@ before assuming changes are live.
   production smoke, bundle parse checks, deploy, and rollback guidance
 - [`docs/HANDOFF.md`](docs/HANDOFF.md) - current state, recent fixes, commands,
   risks, and recommended skill stack
+- [`docs/content/covermate-text-inventory.md`](docs/content/covermate-text-inventory.md) -
+  visitor-visible Thai/English copy inventory for external copy review; admin
+  copy is intentionally excluded
 
 Routes:
 

@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-08-10
+Last updated: 2026-08-16
 
 ## Visitor Journey
 
@@ -90,8 +90,8 @@ Operations as a first-class module, but records, mutations, filters, and
 settings details stay inside `/admin/ops` and `/api/ops/*`.
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
-`Main`, `Public site`, `Close`, `Save draft`, `Preview`, `Publish`, `Success`,
-and `Log out` stable unless wording is explicitly changed by the owner.
+`Main`, `Public site`, `Save draft`, `Preview`, `Publish`, `Success`, and
+`Log out` stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
 The public-site link leaves owner mode completely and lands on clean `/`.
@@ -129,6 +129,30 @@ must not show owner chrome, even if stale local owner markers exist.
 
 Thai and English copy are separate where the bundle supports separate language
 fields.
+
+## Needs Calculator Flow
+
+1. Visitor opens the `#fit` calculator section.
+2. Visitor chooses a situation card. This is advisory context only; it does not
+   apply an old salary/dependency multiplier.
+3. Visitor enters or adjusts essential monthly spending, support years, debts
+   and future obligations, liquid assets/existing cover, current room benefit,
+   and recovery period.
+4. The calculator shows three advisory outputs:
+   - life starting need, using spending x years plus obligations minus
+     earmarked resources;
+   - health room-reference gap, using the current BNH Regent Adult public room
+     reference minus known eligible room benefit;
+   - critical-illness/recovery buffer, using spending x recovery months plus
+     the configured non-medical recovery budget and chosen medical OOP buffer
+     minus earmarked resources.
+5. The result copy must make clear that these are starting points for
+   discussion, not a quotation or guaranteed cost.
+6. Calculator assumptions come from the `fit.calculator` CMS payload. Firestore
+   live/draft values prevail; runtime defaults only fill missing nested fields.
+
+The detailed methodology and verification command live in
+[NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md).
 
 ## Control Panel Flow
 

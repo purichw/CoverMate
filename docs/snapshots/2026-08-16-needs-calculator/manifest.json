@@ -1,0 +1,42 @@
+{
+  "capturedAt": "2026-08-15T18:42:48.746Z",
+  "route": "http://localhost:4188/#fit",
+  "tool": "Playwright via Codex primary runtime",
+  "datasetVersion": "2026-08-15-v0.1",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 1100
+    },
+    "screenshot": "needs-calculator-desktop-section.png",
+    "checks": {
+      "hasResourcesInput": true,
+      "hasRoomBenefitInput": true,
+      "hasRecoveryInput": true,
+      "hasLifeOutput": true,
+      "hasRoomGapOutput": true,
+      "hasCiOutput": true,
+      "hasDefaultSituation": true
+    },
+    "consoleMessages": [],
+    "pageErrors": []
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 980
+    },
+    "screenshot": "needs-calculator-mobile-section.png",
+    "checks": {
+      "hasResourcesInput": true,
+      "hasRoomBenefitInput": true,
+      "hasRecoveryInput": true,
+      "hasLifeOutput": true,
+      "hasRoomGapOutput": true,
+      "hasCiOutput": true,
+      "hasDefaultSituation": true
+    },
+    "consoleMessages": [],
+    "pageErrors": []
+  }
+}

@@ -11,6 +11,9 @@ Analytics, and the source-authored Operations Portal route are implemented.
 Operations is live today for Leads, Tasks, and Audit; Customers, Consultations,
 Quotes, Policies, Renewals, Documents, and Insurers stay explicitly labeled as
 not wired until their production Firestore/API contracts exist.
+The public Needs Calculator now follows the
+`covermate-reference-data-v0.1` methodology through the `fit.calculator` CMS
+payload, with Firestore live/draft values prevailing over embedded defaults.
 Future commit, push, Vercel deploy, or Firestore Rules deploy actions still
 require explicit owner approval in the current task.
 
@@ -36,6 +39,7 @@ produce a self-contained export before treating it as a portable demo.
   [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md).
 - Local static server: `python3 -m http.server 4177`
 - Local bundle/source check: `npm run check:bundles`
+- Needs Calculator contract check: `npm run check:needs`
 - Local smoke: `npm run smoke`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
 - Production URL: `https://covermate.vercel.app`
@@ -58,6 +62,7 @@ Detailed project documents:
 - [`docs/SITE_MAP.md`](docs/SITE_MAP.md)
 - [`docs/INTERACTION_MAP.md`](docs/INTERACTION_MAP.md)
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)
+- [`docs/NEEDS_CALCULATOR.md`](docs/NEEDS_CALCULATOR.md)
 - [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md)
 - [`docs/ANALYTICS.md`](docs/ANALYTICS.md)
 - [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md)
@@ -81,7 +86,7 @@ Detailed project documents:
 | `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes `contactLeads/*`, returns server-produced audit entries, and marks planned resources as `not_wired` instead of pretending they are empty live datasets. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
-| `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
+| `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, needs-calculator defaults, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
 | `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, version history, contact lead submission, and admin lead reads. |
 | `firestore.rules` | Firestore access rules for admin allowlist, site state, versions, analytics docs, and validated contact leads. |
 | `firebase.json` | Firebase CLI mapping for Firestore rules deploys. |
@@ -96,6 +101,9 @@ Detailed project documents:
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness with local/runtime Playwright fallback. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
+| `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
+| `scripts/apply-visitor-copy-update.mjs` | Regenerates visitor default copy/runtime guards from copy-update rules while preserving Firestore-first CMS behavior. |
+| `scripts/export-copy-inventory.mjs` | Exports visitor-visible Thai/English copy to `docs/content/` for external copy review. Admin/private UI copy is excluded unless explicitly requested with a future flag. |
 | `vercel.json` | Vercel settings, clean URLs, `/api/ops/:path*` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
 | `.image-slots.state.json` | Empty file kept to satisfy the exported image-slot runtime request. |
 | `.gitignore` | Ignores `.vercel/` local project config. |
@@ -184,6 +192,9 @@ Important behavior:
   consultation, quote, policy, renewal, document, and insurer endpoints return
   `source: "not_wired"` metadata so the UI can show honest not-wired states
   rather than fake or ambiguous empty records.
+- The `#fit` calculator reads assumptions from `fit.calculator`. Runtime
+  defaults fill missing nested fields only; old salary/dependency multipliers
+  must not return.
 
 ## Design Source Of Truth
 
@@ -222,6 +233,8 @@ Historical inputs used to create the current surfaces:
   `/Users/point/Downloads/SPEC (3).md`,
   `/Users/point/Downloads/SPEC (4).md`, and
   `/Users/point/Downloads/SPEC (5).md`
+- Needs Calculator reference data:
+  `/Users/point/Downloads/covermate-reference-data-v0.1`
 
 Reference/export rules:
 
@@ -271,10 +284,10 @@ Production patches currently preserved in the bundles:
 - `covermate-responsive-touch-policy` raises mobile controls, form fields,
   owner-tool buttons, drawer controls, and nav/footer links to 44px-class touch
   targets without changing desktop density.
-- `/#motor` keeps the global visitor navigation (`#cover`, `#insurers`,
-  `#claim`, `#fit`, `#how`, `#faq`) and re-aims the hash to `#insurers` after
+- `/#motor` keeps the global visitor navigation (`#cover`, `#review`,
+  `#insurers`, `#fit`, `#faq`) and re-aims the hash to `#insurers` after
   hydration so the sticky header does not cover the section title.
-- Same-page visitor nav anchors, including `#how`, scroll in place without
+- Same-page visitor nav anchors, including `#fit`, scroll in place without
   rebuilding the main visitor DOM. This is the current anti-flicker contract.
 
 ## Asset Map

@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-08-11
+Last updated: 2026-08-16
 
 ## Current Shape
 
@@ -164,6 +164,15 @@ normalization is additive only: it fills missing structure, preserves existing
 live/draft values, and must not replace admin-edited remote content with bundled
 fallback copy.
 
+The `fit` calculator is one of those additive normalized structures. Its
+methodology payload lives under `sections[].calculator` for the `fit` section,
+with fallback constants exported from `covermate-contract.js` as
+`DEFAULT_NEEDS_CALCULATOR`. The current dataset is
+`covermate-reference-data-v0.1` / `2026-08-15-v0.1`. Live Firestore values win
+over the fallback, while missing nested fields are filled so older live
+documents can still render the current life, health, and critical-illness
+calculator model. See [NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md).
+
 The only non-additive normalizations are explicit product-contract guardrails:
 duplicate legacy `#motor` nav entries collapse to the current `#insurers`
 anchor, insurer-count copy follows the visible logo count, and old forced
@@ -245,6 +254,11 @@ override a successfully hydrated Firestore live document.
 
 Do not let static SEO fallbacks, stale localStorage, or placeholder contact
 fields override live SEO metadata or structured data after Firestore hydration.
+
+Do not reintroduce the old salary/dependency multiplier calculator model. The
+current calculator uses explicit spending, support years, obligations,
+resources, room-benefit gap context, and recovery-period inputs as documented in
+[NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md).
 
 Do not add Google Analytics to `/admin`, `/admin/login`, or `/admin/analytics`,
 and do not send visitor names, phone numbers, LINE IDs, emails, or message text

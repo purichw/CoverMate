@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-08-10
+Last updated: 2026-08-16
 
 ## Current State
 
@@ -167,6 +167,20 @@ The renewal reminder form uses the same validated Firestore lead stream with
 `qtype: "review"` and no visitor contact/freeform values in GA event
 parameters.
 
+The Needs Calculator now follows the
+`covermate-reference-data-v0.1` / `2026-08-15-v0.1` methodology. The old
+salary/dependency multiplier model is removed. The calculator uses explicit
+inputs for essential spending, support years, obligations, resources, current
+room benefit, and recovery period, then outputs a life starting need, BNH room
+reference gap, and critical-illness/recovery buffer. The assumptions live under
+`fit.calculator`; situation cards and recommendation bullets live under
+`fit.calculator.situations`. Firestore live/draft values prevail and defaults
+only fill missing nested fields. See [NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md).
+
+Visitor-copy inventory for external copy review lives under
+`docs/content/covermate-text-inventory.*`. It contains public visitor-visible
+Thai/English text only and is an export aid, not the source of truth.
+
 Security headers are configured in `vercel.json`; CSP is currently
 `Content-Security-Policy-Report-Only` because the exported bundle still depends
 on inline script/style and blob URLs.
@@ -186,6 +200,7 @@ Read these before changing the project:
 - [SITE_MAP.md](SITE_MAP.md)
 - [INTERACTION_MAP.md](INTERACTION_MAP.md)
 - [DATA_CONTRACT.md](DATA_CONTRACT.md)
+- [NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md)
 - [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
 - [ANALYTICS.md](ANALYTICS.md)
 - [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md)
@@ -203,6 +218,12 @@ Run local static server:
 
 ```bash
 python3 -m http.server 4177
+```
+
+Run the targeted Needs Calculator contract check:
+
+```bash
+npm run check:needs
 ```
 
 Run smoke against local:
@@ -275,6 +296,11 @@ implemented.
 
 Legal/license/contact copy should be reviewed by the site owner before paid
 traffic.
+
+Calculator reference values should be reviewed whenever the external reference
+data package changes. Do not publish package prices, room references, or
+medical-cost claims without source URL, last-checked date, and confidence
+metadata.
 
 ## Recommended Skill Stack
 

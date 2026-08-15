@@ -1,6 +1,6 @@
 # CoverMate Analytics
 
-Last updated: 2026-08-10
+Last updated: 2026-08-16
 
 ## Surfaces
 
@@ -41,7 +41,7 @@ Implemented visitor events:
 | `phone_click` | Visitor clicks a `tel:` link | `link_type` |
 | `email_click` | Visitor clicks a `mailto:` link | `link_type` |
 | `language_change` | Visitor taps `TH` or `EN` | `language` |
-| `calculator_interaction` | Visitor moves calculator range controls | `control_type` |
+| `calculator_interaction` | Visitor moves calculator controls | `control_type` |
 | `form_start` | First visitor input in a public lead form | `form_type` |
 | `quote_submit` | Form submit attempt | `form_type` |
 | `quote_submit_success` | Firestore lead save succeeds from the consultation or renewal reminder form | `form_type`, `enquiry_type`, `coverage` |
@@ -49,8 +49,8 @@ Implemented visitor events:
 
 The success event intentionally uses category fields only. `trackEvent()` drops
 unknown event names and strips parameters not listed above. Do not add contact
-details, URL query strings, error text, claim details, or freeform messages to
-GA event parameters.
+details, calculator values, URL query strings, error text, claim details, or
+freeform messages to GA event parameters.
 
 ## Firestore Lead Analytics
 

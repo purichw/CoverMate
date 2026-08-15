@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-08-03
+Last updated: 2026-08-16
 
 ## Production
 
@@ -45,6 +45,7 @@ Run smoke checks against local:
 
 ```bash
 npm run check:bundles
+npm run check:needs
 npm run smoke:admin-builder
 COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 ```
@@ -83,9 +84,10 @@ Minimum checks:
 - contact form lead-submit code is present and does not send personal contact
   details to GA event parameters
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
-  motor-variant nav, includes the current `#claim` anchor, and lands on
+  motor-variant nav, includes the current `#review`, `#insurers`, `#fit`, and
+  `#faq` anchors, and lands on
   `#insurers` below the sticky header
-- public navbar anchor jumps, including `#how`, scroll in-place without
+- public navbar anchor jumps, including `#fit`, scroll in-place without
   rebuilding the main visitor DOM or flashing the page
 - `/admin/login` loads
 - Firebase Auth login UI renders; real Google popup login is verified manually
@@ -130,8 +132,8 @@ Minimum checks:
 - `Publish` success waits for the Firestore live/draft/version writes, then
   shows a dismissible toast with a 30-second `Undo` that republishes the
   previous live snapshot
-- `/#admin` close button returns to `/admin`; it does not expose owner chrome on
-  the visitor route
+- `/#admin` close button exits owner mode to clean `/`; it does not expose owner
+  chrome on the visitor route
 - `/#admin` drawer appears above visitor sticky header on mobile and must not
   fade in over the header chrome
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
@@ -152,6 +154,10 @@ Minimum checks:
   `Success`, and `Log out`
 - Firestore live content hydrates before public/admin launcher rendering; stale
   local cache must not override a successful `states/live` read
+- the `#fit` Needs Calculator uses the current `fit.calculator` methodology
+  payload, exposes essential spending/support years/obligations/resources/room
+  benefit/recovery inputs, and does not reintroduce salary/dependency
+  multipliers
 - legacy Firestore content that conflicts with product decisions is normalized
   on render/save/publish: duplicate `#motor` nav and forced-line-break contact
   headings. The 2026-08-10 rebuild target treats `26+` as Srikrung panel

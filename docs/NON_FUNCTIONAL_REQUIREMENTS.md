@@ -1,6 +1,6 @@
 # CoverMate Non-Functional Requirements
 
-Last updated: 2026-07-30
+Last updated: 2026-08-16
 
 ## Security
 
@@ -32,6 +32,9 @@ Implemented:
   alone is not authorization.
 - The public privacy/PDPA section explains the current handling of submitted
   information at a page-content level.
+- Needs Calculator interactions remain aggregate/behavioral only in analytics;
+  do not send visitor-entered spending, obligations, room benefit, recovery
+  period, contact details, or freeform text to GA.
 
 Before paid traffic:
 
@@ -83,6 +86,9 @@ Implemented:
 - Firestore live content wins over stale local cache after successful hydration.
 - Runtime schema normalization fills only missing fields/sections from defaults
   and must preserve existing live/draft values.
+- Needs Calculator reference assumptions are normalized additively under
+  `fit.calculator`; Firestore live/draft values must prevail over embedded
+  defaults and browser cache.
 - Draft/live/version writes keep local fallback caches updated only after remote
   success or as fallback.
 - Publish creates version history.
@@ -93,6 +99,8 @@ Operational requirements:
 - Export current CMS config before risky releases.
 - Keep a rollback path through Vercel previous deployments.
 - Deploy Firestore Rules deliberately, then verify lead create and admin read.
+- Re-check medical/room reference source URLs, last-checked dates, and
+  confidence metadata before changing public calculator assumptions.
 
 ## Maintainability
 
@@ -103,6 +111,8 @@ Implemented:
   - `admin/analytics-data.js`
   - `admin/analytics/index.html`
 - `npm run check:bundles` validates generated template JSON and runtime source.
+- `npm run check:needs` validates the current Needs Calculator methodology,
+  public controls, and Firestore-over-default precedence.
 
 Refactor direction:
 
