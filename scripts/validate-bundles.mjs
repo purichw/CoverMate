@@ -35,7 +35,16 @@ const inlineEventPattern = /\son[a-z]+\s*=/gi;
 
 function readBundlerTemplate(html) {
   const open = '<script type="__bundler/template">';
-  const start = html.indexOf(open);
+  const starts = [];
+  let cursor = 0;
+  while ((cursor = html.indexOf(open, cursor)) >= 0) {
+    starts.push(cursor);
+    cursor += open.length;
+  }
+  if (starts.length > 1) {
+    throw new Error(`expected exactly one embedded template, found ${starts.length}`);
+  }
+  const start = starts[0] ?? -1;
   if (start < 0) return null;
 
   const jsonStart = start + open.length;
@@ -84,6 +93,15 @@ for (const file of htmlFiles) {
       }
       if (!template.includes("<!DOCTYPE html>")) {
         failures.push(`${file}: embedded template does not look like HTML`);
+      }
+      if (!template.includes("</html>")) {
+        failures.push(`${file}: embedded template is incomplete`);
+      }
+      if (!template.includes('type="text/x-dc"')) {
+        failures.push(`${file}: embedded template is missing text/x-dc payload`);
+      }
+      if (file === "index.html" && !template.includes("const DEFAULTS =")) {
+        failures.push(`${file}: embedded template is missing DEFAULTS payload`);
       }
       const inlineEvents = template.match(inlineEventPattern) || [];
       if (inlineEvents.length) {
