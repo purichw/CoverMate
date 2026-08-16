@@ -62,6 +62,12 @@ function renamedConfig(name) {
   const config = structuredClone(defaultSiteConfig);
   config.brand.name = { th: name, en: name };
   config.brand.fullName = { th: name, en: name };
+  config.seo = config.seo || {};
+  config.seo.title = { th: `${name} | CoverMate smoke`, en: `${name} | CoverMate smoke` };
+  config.seo.description = {
+    th: `Smoke description for ${name} with 14 insurer logos and live Firestore content.`,
+    en: `Smoke description for ${name} with 14 insurer logos and live Firestore content.`
+  };
   return config;
 }
 
@@ -338,7 +344,8 @@ async function verifyRemoteHydrationContract() {
   if (
     publicState.insurerText.includes("20 เจ้า") ||
     publicState.insurerText.includes("26 เจ้า") ||
-    !publicState.insurerText.includes("14 เจ้า")
+    /กว่า\s*14/.test(publicState.insurerText) ||
+    !/14\s*(เจ้า|แห่ง|บริษัท)/.test(publicState.insurerText)
   ) {
     failures.push("remote hydration: insurer count did not normalize to the current 14-logo product copy");
   }
@@ -415,7 +422,8 @@ async function verifyRemoteHydrationContract() {
   if (
     ownerState.insurerText.includes("20 เจ้า") ||
     ownerState.insurerText.includes("26 เจ้า") ||
-    !ownerState.insurerText.includes("14 เจ้า")
+    /กว่า\s*14/.test(ownerState.insurerText) ||
+    !/14\s*(เจ้า|แห่ง|บริษัท)/.test(ownerState.insurerText)
   ) {
     failures.push("remote hydration: owner route did not normalize stale insurer copy to 14 logos");
   }
@@ -1363,6 +1371,10 @@ for (const [name, width, height] of viewports) {
       const headerNavLabels = Array.from(document.querySelectorAll("header nav a[href]"))
         .map((anchor) => (anchor.textContent || "").trim())
         .filter(Boolean);
+      const headerCtaText = Array.from(document.querySelectorAll("header a[href]"))
+        .map((anchor) => (anchor.textContent || "").replace(/\s+/g, " ").trim())
+        .filter((text) => /LINE|ไลน์/i.test(text))
+        .join(" | ");
       const missingAnchors = navHrefs.filter(
         (href) => href.startsWith("#") && !document.getElementById(href.slice(1))
       );
@@ -1404,6 +1416,20 @@ for (const [name, width, height] of viewports) {
         logos,
         bodyText,
         insurerText,
+        headerCtaText,
+        placeholderStoriesVisible:
+          Array.from(document.querySelectorAll("section#voices")).some((section) => {
+            const rect = section.getBoundingClientRect();
+            const style = window.getComputedStyle(section);
+            return (
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              style.opacity !== "0"
+            );
+          }) ||
+          /รอความคิดเห็นจริง|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|Awaiting real feedback|Client feedback will appear here|Customer name|sample review/i.test(bodyText),
         hasQueryTypeSelect: selectOptions.some((text) =>
           /ขอใบเสนอราคา|Request a quote|Compare plans|เปรียบเทียบแผน/.test(text)
         ),
@@ -1475,8 +1501,15 @@ for (const [name, width, height] of viewports) {
       if (!state.seo.ogTitle || !state.seo.ogDescription || state.seo.ogImage !== "https://covermate.vercel.app/assets/covermate-og.png") {
         failures.push(`${name} ${route}: Open Graph metadata incomplete`);
       }
-      if (/26/.test(state.seo.description) || /26/.test(state.seo.ogDescription)) {
-        failures.push(`${name} ${route}: SEO fallback still contains stale 26-insurer copy`);
+      if (
+        /26/.test(state.seo.description) ||
+        /26/.test(state.seo.ogDescription) ||
+        /กว่า\s*14/.test(state.seo.description) ||
+        /กว่า\s*14/.test(state.seo.ogDescription) ||
+        /เทียบเบี้ยกว่า/.test(state.seo.description) ||
+        /เทียบเบี้ยกว่า/.test(state.seo.ogDescription)
+      ) {
+        failures.push(`${name} ${route}: SEO fallback still contains stale or over-claiming insurer copy`);
       }
       if (state.seo.twitterCard !== "summary_large_image") {
         failures.push(`${name} ${route}: Twitter summary_large_image card missing`);
@@ -1495,6 +1528,21 @@ for (const [name, width, height] of viewports) {
     }
     if (state.bodyText.includes("[object Object]")) {
       failures.push(`${name} ${route}: rendered object placeholder text`);
+    }
+    if (mainVisitorRoutes.has(route) && !/ติดต่อทาง LINE|Contact on LINE/.test(state.headerCtaText)) {
+      failures.push(`${name} ${route}: header CTA drifted from product copy (${state.headerCtaText})`);
+    }
+    if (mainVisitorRoutes.has(route) && state.placeholderStoriesVisible) {
+      failures.push(`${name} ${route}: placeholder client stories/testimonials rendered publicly`);
+    }
+    if (route === "/") {
+      const reviewIndex = state.sectionIds.indexOf("review");
+      const howIndex = state.sectionIds.indexOf("how");
+      const insurersIndex = state.sectionIds.indexOf("insurers");
+      const fitIndex = state.sectionIds.indexOf("fit");
+      if (!(reviewIndex >= 0 && howIndex > reviewIndex && insurersIndex > howIndex && fitIndex > insurersIndex)) {
+        failures.push(`${name} ${route}: public section order should be review > how > insurers > resources (${state.sectionIds.join(", ")})`);
+      }
     }
     if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
@@ -1551,7 +1599,8 @@ for (const [name, width, height] of viewports) {
     if (motorSectionRoutes.has(route) && state.logos.length < 14) {
       failures.push(`${name} ${route}: expected at least 14 visible insurer logos, got ${state.logos.length}`);
     }
-    if (motorSectionRoutes.has(route) && (!state.insurerText.includes("14 เจ้า") || state.insurerText.includes("26 เจ้า"))) {
+    const hasExactMotorCount = /14\s*(เจ้า|แห่ง|บริษัท)/.test(state.insurerText);
+    if (motorSectionRoutes.has(route) && (!hasExactMotorCount || /26\s*เจ้า|26\s*แห่ง|26\s*บริษัท|กว่า\s*14/.test(state.insurerText))) {
       failures.push(`${name} ${route}: insurer section count copy is not aligned to the 14 visible logos`);
     }
     if (motorSectionRoutes.has(route) && !state.hasRelationshipProof) {

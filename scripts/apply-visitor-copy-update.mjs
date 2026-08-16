@@ -7,6 +7,14 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const indexPath = path.join(repoRoot, "index.html");
 const args = new Set(process.argv.slice(2));
+const PUBLIC_SEO_TITLE = {
+  th: "CoverMate | ที่ปรึกษาประกัน AIA และประกันรถยนต์",
+  en: "CoverMate | AIA and Motor Insurance Advisory"
+};
+const PUBLIC_SEO_DESCRIPTION = {
+  th: "ปรึกษาประกันชีวิตและสุขภาพผ่าน AIA และประกันรถยนต์จาก 14 บริษัทประกันภัย พร้อมคำแนะนำชัดเจนโดยไม่มีค่าใช้จ่าย",
+  en: "Life and health insurance through AIA, plus motor insurance options from 14 insurers. Clear guidance at no consultation fee."
+};
 
 function read(file) {
   return fs.readFileSync(file, "utf8");
@@ -36,6 +44,48 @@ function applyOuterAssetVersion(html, version) {
     .replace(/\/favicon\.ico(?:\?v=[^"]*)?/g, `/favicon.ico?v=${version}`)
     .replace(/\/assets\/apple-touch-icon\.png(?:\?v=[^"]*)?/g, `/assets/apple-touch-icon.png?v=${version}`);
   return shell + html.slice(templateStart);
+}
+
+function escapeHtmlText(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttribute(value) {
+  return escapeHtmlText(value).replace(/"/g, "&quot;");
+}
+
+function updateJsonLdMetadata(jsonText) {
+  try {
+    const data = JSON.parse(jsonText);
+    const graph = Array.isArray(data["@graph"]) ? data["@graph"] : [];
+    graph.forEach((entry) => {
+      const types = Array.isArray(entry["@type"]) ? entry["@type"] : [entry["@type"]];
+      if (types.includes("WebPage")) {
+        entry.name = PUBLIC_SEO_TITLE.th;
+        entry.description = PUBLIC_SEO_DESCRIPTION.th;
+      }
+    });
+    return JSON.stringify(data);
+  } catch {
+    return jsonText;
+  }
+}
+
+function applySeoMetadata(html) {
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtmlText(PUBLIC_SEO_TITLE.th)}</title>`)
+    .replace(/(<meta name="description" content=")[^"]*(")/g, `$1${escapeHtmlAttribute(PUBLIC_SEO_DESCRIPTION.th)}$2`)
+    .replace(/(<meta property="og:title" content=")[^"]*(")/g, `$1${escapeHtmlAttribute(PUBLIC_SEO_TITLE.th)}$2`)
+    .replace(/(<meta property="og:description" content=")[^"]*(")/g, `$1${escapeHtmlAttribute(PUBLIC_SEO_DESCRIPTION.th)}$2`)
+    .replace(/(<meta name="twitter:title" content=")[^"]*(")/g, `$1${escapeHtmlAttribute(PUBLIC_SEO_TITLE.th)}$2`)
+    .replace(/(<meta name="twitter:description" content=")[^"]*(")/g, `$1${escapeHtmlAttribute(PUBLIC_SEO_DESCRIPTION.th)}$2`)
+    .replace(
+      /<script type="application\/ld\+json" id="covermate-jsonld">([\s\S]*?)<\/script>/g,
+      (_match, jsonText) => `<script type="application/ld+json" id="covermate-jsonld">${updateJsonLdMetadata(jsonText)}</script>`
+    );
 }
 
 function extractTemplate(html) {
@@ -271,6 +321,46 @@ const NEEDS_CALCULATOR = {
   }
 };
 
+const PRODUCT_SECTION_ORDER = [
+  "hero",
+  "trust",
+  "cover",
+  "review",
+  "how",
+  "insurers",
+  "fit",
+  "tiers",
+  "claim",
+  "renew",
+  "guides",
+  "voices",
+  "about",
+  "faq",
+  "fees",
+  "privacy",
+  "talk"
+];
+
+const LEGACY_SECTION_ORDER = [
+  "hero",
+  "trust",
+  "cover",
+  "review",
+  "fit",
+  "how",
+  "insurers",
+  "tiers",
+  "claim",
+  "renew",
+  "guides",
+  "voices",
+  "about",
+  "faq",
+  "fees",
+  "privacy",
+  "talk"
+];
+
 function replaceBetween(source, startNeedle, endNeedle, replacement) {
   const start = source.indexOf(startNeedle);
   if (start < 0) throw new Error(`Missing runtime block start: ${startNeedle}`);
@@ -317,9 +407,13 @@ function applyRuntimeCopyGuards(source) {
     return value
       .replace(/ไม่ต้องจัดการคนเดียว/g, 'ไม่จำเป็นต้องจัดการเพียงลำพัง')
       .replace(/สู้คนเดียว/g, 'จัดการเพียงลำพัง')
-      .replace(/ชีวิตและสุขภาพ\\s*ผมเป็นตัวแทน AIA โดยเฉพาะ/g, 'ชีวิตและสุขภาพ เราให้บริการผ่าน AIA โดยตรง')
-      .replace(/ผมเป็นตัวแทน AIA โดยเฉพาะ/g, 'เราให้บริการผ่าน AIA โดยตรง')
-      .replace(/ผมเป็นตัวแทน AIA/g, 'เราให้บริการผ่าน AIA')
+      .replace(/ประกันชีวิตและสุขภาพ\\s*เราให้บริการผ่าน AIA โดยตรง/g, 'ประกันชีวิตและสุขภาพดำเนินการผ่าน AIA')
+      .replace(/ชีวิตและสุขภาพ\\s*เราให้บริการผ่าน AIA โดยตรง/g, 'ชีวิตและสุขภาพดำเนินการผ่าน AIA')
+      .replace(/ชีวิตและสุขภาพ\\s*ผมเป็นตัวแทน AIA โดยเฉพาะ/g, 'ชีวิตและสุขภาพดำเนินการผ่าน AIA')
+      .replace(/เราให้บริการผ่าน AIA โดยตรง/g, 'ดำเนินการผ่าน AIA')
+      .replace(/เราให้บริการผ่าน AIA/g, 'ดำเนินการผ่าน AIA')
+      .replace(/ผมเป็นตัวแทน AIA โดยเฉพาะ/g, 'ดำเนินการผ่าน AIA')
+      .replace(/ผมเป็นตัวแทน AIA/g, 'ดำเนินการผ่าน AIA')
       .replace(/ผมจัดผ่าน/g, 'เราจัดผ่าน')
       .replace(/ผมเทียบ/g, 'เราเปรียบเทียบ')
       .replace(/ผมสรุป/g, 'เราสรุป')
@@ -374,6 +468,30 @@ function applyRuntimeCopyGuards(source) {
   }
   next = next
     .replace(
+      /normalizeInsurerCountCopy\(value, count\) \{[\s\S]*?\n  \}\n\n  sanitizeTextOverrides/,
+      `normalizeInsurerCountCopy(value, count) {
+    if (typeof value !== 'string') return value;
+    const n = Number(count) || this.companyLogoCount();
+    if (!/(ประกันรถยนต์|บริษัท|เทียบ|เบี้ย|motor|insurer|broker|compare|comparison)/i.test(value)) return value;
+    return value
+      .replace(/บริษัทประกันภัยกว่า\\s*\\d+\\+?\\s*แห่ง/g, function () { return 'บริษัทประกันภัย ' + n + ' แห่ง'; })
+      .replace(/บริษัทกว่า\\s*\\d+\\+?\\s*เจ้า/g, function () { return 'บริษัทประกันภัย ' + n + ' แห่ง'; })
+      .replace(/เทียบเบี้ยกว่า\\s*\\d+\\+?\\s*บริษัท/g, function () { return 'จาก ' + n + ' บริษัทประกันภัย'; })
+      .replace(/เทียบได้กว่า\\s*\\d+\\+?\\s*เจ้า/g, function () { return 'เทียบได้ ' + n + ' เจ้า'; })
+      .replace(/เทียบเบี้ยได้กว่า\\s*\\d+\\+?\\s*เจ้า/g, function () { return 'เทียบเบี้ยได้ ' + n + ' เจ้า'; })
+      .replace(/กว่า\\s*\\d+\\+?\\s*เจ้า/g, function () { return n + ' เจ้า'; })
+      .replace(/กว่า\\s*\\d+\\+?\\s*บริษัท/g, function () { return n + ' บริษัท'; })
+      .replace(/more than\\s*\\d+\\+?\\s*insurers?/ig, function () { return n + ' insurers'; })
+      .replace(/over\\s*\\d+\\+?\\s*insurers?/ig, function () { return n + ' insurers'; })
+      .replace(/(compared across\\s*)\\d+\\+?/ig, function (_, a) { return a + n; })
+      .replace(/(through\\s*)\\d+\\+?(\\s*insurers)/ig, function (_, a, b) { return a + n + b; })
+      .replace(/(across\\s*)\\d+\\+?(\\s*insurers)/ig, function (_, a, b) { return a + n + b; })
+      .replace(/\\d+\\+?(\\s*insurers compared)/ig, function (_, a) { return n + a; });
+  }
+
+  sanitizeTextOverrides`
+    )
+    .replace(
       /heroClaimText:\s*th\s*\?\s*'เกิดอุบัติเหตุอยู่ตอนนี้ โทร 1669 ก่อนเสมอ แล้วค่อยติดต่อผม'\s*:\s*'In an accident right now, call 1669 first, then contact me',\s*\n\s*heroClaimLinkText:\s*th\s*\?\s*'ดูขั้นตอนเมื่อเกิดเหตุ'\s*:\s*'See the accident guide',\s*\n\s*heroClaimHref:\s*'#claim',/,
       "heroClaimText: this.normalizeProductDecisionCopy((s[lk] && s[lk].claimText) || (th ? 'เกิดอุบัติเหตุอยู่ตอนนี้ โทร 1669 ก่อนเสมอ แล้วค่อยติดต่อเรา' : 'In an accident right now, call 1669 first, then contact us')),\n      heroClaimLinkText: this.normalizeProductDecisionCopy((s[lk] && s[lk].claimLinkText) || (th ? 'ดูขั้นตอนเมื่อเกิดเหตุ' : 'See the accident guide')),\n      heroClaimHref: (s[lk] && s[lk].claimHref) || s.claimHref || '#claim',"
     )
@@ -382,8 +500,8 @@ function applyRuntimeCopyGuards(source) {
       "      const value = this.normalizeProductDecisionCopy(String(next[key] || ''));\n      const isInsurerInlineText = /^insurers:\\d+:(th|en)$/.test(key);\n      const isContactTitleText = /^talk:\\d+:(th|en)$/.test(key);\n      next[key] = value;\n      if (isInsurerInlineText) next[key] = this.normalizeInsurerCountCopy(value, count);\n      if (isContactTitleText) {\n        next[key] = this.normalizeProductDecisionCopy(value\n          .replace(/ขอรับ\\s*\\n\\s*คำปรึกษา/g, 'ขอรับคำปรึกษา')\n          .replace(/Request a\\s*\\n\\s*consultation/ig, 'Request a consultation'));\n      }"
     )
     .replace(
-      "    const defById = {};",
-      "    cfg.header.nav = clone(DEFAULTS.header.nav || []);\n\n    const defById = {};"
+      /(?:\n\s*cfg\.header\.nav = clone\(DEFAULTS\.header\.nav \|\| \[\]\);\s*(?:\n\s*cfg\.header\.cta = clone\(DEFAULTS\.header\.cta \|\| cfg\.header\.cta \|\| \{\}\);\s*)?(?:\n\s*cfg\.sections = this\.reorderKnownLegacySections\(cfg\.sections\);\s*)?)*\n\s*const defById = \{\};/,
+      "\n    cfg.header.nav = clone(DEFAULTS.header.nav || []);\n    cfg.header.cta = clone(DEFAULTS.header.cta || cfg.header.cta || {});\n    cfg.sections = this.reorderKnownLegacySections(cfg.sections);\n\n    const defById = {};"
     )
     .replace(
       "if (typeof obj[field] === 'string') obj[field] = this.normalizeInsurerCountCopy(obj[field], insurerCount);",
@@ -479,6 +597,66 @@ function applyRuntimeCopyGuards(source) {
   // Keeps persisted/local/remote configs aligned with the current schema without`
     );
   }
+  if (!next.includes("reorderKnownLegacySections(sections)")) {
+    next = next.replace(
+      "  // Keeps persisted/local/remote configs aligned with the current schema without",
+      `  reorderKnownLegacySections(sections) {
+    if (!Array.isArray(sections)) return sections;
+    const productOrder = ${JSON.stringify(PRODUCT_SECTION_ORDER)};
+    const legacyOrder = ${JSON.stringify(LEGACY_SECTION_ORDER)};
+    const currentOrder = sections.map(section => section && section.id).join('|');
+    if (currentOrder !== legacyOrder.join('|')) return sections;
+    const byId = new Map(sections.map(section => [section && section.id, section]));
+    return productOrder.map(id => byId.get(id)).filter(Boolean);
+  }
+
+  storyTextChunks(item) {
+    if (!item || typeof item !== 'object' || item.on === false) return [];
+    const chunks = [];
+    ['th', 'en'].forEach(lang => {
+      const bucket = item[lang] || {};
+      ['quote', 'body', 'title', 'value', 'label', 'meta'].forEach(field => {
+        if (bucket[field]) chunks.push(String(bucket[field]));
+      });
+    });
+    return chunks;
+  }
+
+  hasRealStoryContent(section) {
+    const items = Array.isArray(section && section.items) ? section.items : [];
+    const placeholderPattern = /รอความคิดเห็นจริง|เผยแพร่เมื่อได้รับอนุญาต|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ตัวอย่างโครงสร้าง|เสียงจากลูกค้า|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|ชื่อลูกค้า|อาชีพ\\s*·\\s*ประกันที่ทำ|Awaiting real feedback|Published with permission|Client feedback will appear here|Placeholder structure|Customer voice|Customer name|Role\\s*·\\s*policy|sample review/i;
+    return items.some(item => {
+      const allText = this.storyTextChunks(item).join(' ').trim();
+      if (!allText || placeholderPattern.test(allText)) return false;
+      const meaningful = [];
+      ['th', 'en'].forEach(lang => {
+        const bucket = (item && item[lang]) || {};
+        ['quote', 'body', 'title'].forEach(field => {
+          if (bucket[field]) meaningful.push(String(bucket[field]));
+        });
+      });
+      return meaningful.join(' ').trim().length >= 20;
+    });
+  }
+
+  suppressPlaceholderStories(section) {
+    if (!section || (section.id !== 'voices' && section.type !== 'stories' && section.type !== 'testimonials')) return;
+    if (!this.hasRealStoryContent(section)) section.on = false;
+  }
+
+  // Keeps persisted/local/remote configs aligned with the current schema without`
+    );
+  }
+  if (!next.includes("cfg.sections.forEach(section => this.suppressPlaceholderStories(section));")) {
+    next = next.replace(
+      "    sanitizeCmsControlsConfig(cfg);",
+      "    cfg.sections.forEach(section => this.suppressPlaceholderStories(section));\n    sanitizeCmsControlsConfig(cfg);"
+    );
+  }
+  next = next.replace(
+    /const placeholderPattern = \/[^\n]+\/i;/,
+    "const placeholderPattern = /รอความคิดเห็นจริง|เผยแพร่เมื่อได้รับอนุญาต|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ตัวอย่างโครงสร้าง|เสียงจากลูกค้า|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|ชื่อลูกค้า|อาชีพ\\s*·\\s*ประกันที่ทำ|Awaiting real feedback|Published with permission|Client feedback will appear here|Placeholder structure|Customer voice|Customer name|Role\\s*·\\s*policy|sample review/i;"
+  );
   next = next.replace(
     "        if (!s.cols) s.cols = def.cols;\n        ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });",
     "        if (!s.cols) s.cols = def.cols;\n        if (def.calculator) s.calculator = this.mergeDeepDefaults(def.calculator, s.calculator);\n        ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });"
@@ -545,6 +723,13 @@ function applyNeedsCalculatorTemplate(template) {
     .replaceAll("In the order I would do it", "What to review next");
 }
 
+function applyVisualHierarchyTuning(template) {
+  return template.replaceAll(
+    "max-width:12ch;font-size:clamp(36px,4.25vw,58px);line-height:1.16",
+    "max-width:13ch;font-size:clamp(34px,3.65vw,54px);line-height:1.14"
+  );
+}
+
 function updateLocal(target, th, en) {
   target.th = th;
   target.en = en;
@@ -556,7 +741,16 @@ function byId(config, id) {
   return section;
 }
 
+function applyKnownSectionOrderMigration(config) {
+  if (!Array.isArray(config.sections)) return;
+  const currentOrder = config.sections.map((section) => section && section.id).join("|");
+  if (currentOrder !== LEGACY_SECTION_ORDER.join("|")) return;
+  const bySectionId = new Map(config.sections.map((section) => [section && section.id, section]));
+  config.sections = PRODUCT_SECTION_ORDER.map((id) => bySectionId.get(id)).filter(Boolean);
+}
+
 function applyCopy(config) {
+  applyKnownSectionOrderMigration(config);
   config.header.nav = [
     { label: { th: "ความคุ้มครอง", en: "Cover" }, href: "#cover" },
     { label: { th: "ตรวจกรมธรรม์", en: "Policy review" }, href: "#review" },
@@ -565,6 +759,9 @@ function applyCopy(config) {
     { label: { th: "คำถามที่พบบ่อย", en: "FAQ" }, href: "#faq" }
   ];
   config.header.cta = { th: "ติดต่อทาง LINE", en: "Contact on LINE" };
+  config.seo = config.seo && typeof config.seo === "object" ? config.seo : {};
+  config.seo.title = { ...PUBLIC_SEO_TITLE };
+  config.seo.description = { ...PUBLIC_SEO_DESCRIPTION };
   config.footer.tagline = {
     th: "ประกันชีวิต สุขภาพ และรถยนต์ · ให้คำปรึกษาโดยไม่มีค่าใช้จ่าย",
     en: "Life, health and motor insurance · consultation at no charge"
@@ -574,7 +771,7 @@ function applyCopy(config) {
   hero.th = {
     kicker: "ปรึกษาเบื้องต้นโดยไม่มีค่าใช้จ่าย · กรุงเทพฯ",
     title: "เรื่องความเสี่ยง\nไม่จำเป็นต้องจัดการเพียงลำพัง",
-    body: "สำหรับประกันชีวิตและสุขภาพ เราให้บริการผ่าน AIA โดยตรง ส่วนประกันรถยนต์ เราเปรียบเทียบความคุ้มครองและเบี้ยประกันจากบริษัทประกันภัย 14 แห่ง เพื่อช่วยให้คุณเลือกความคุ้มครองที่เหมาะสม โดยไม่เสนอเกินความจำเป็น",
+    body: "ประกันชีวิตและสุขภาพดำเนินการผ่าน AIA ส่วนประกันรถยนต์ เราเปรียบเทียบความคุ้มครองและเบี้ยประกันจากบริษัทประกันภัย 14 แห่ง เพื่อช่วยให้คุณเลือกความคุ้มครองที่เหมาะสม โดยไม่เสนอเกินความจำเป็น",
     cta1: "ติดต่อเราทาง LINE",
     cta2: "ประเมินความคุ้มครอง",
     note: "เราตอบกลับทุกข้อความด้วยตนเองภายในเวลาทำการ",
@@ -965,7 +1162,7 @@ function applyCopy(config) {
   });
 
   const about = byId(config, "about");
-  about.th.body = "CoverMate เกิดขึ้นจากการเห็นว่าหลายคนเพิ่งพบในวันที่ต้องใช้สิทธิหรือเคลมว่า ความคุ้มครองที่มีไม่ตรงกับสิ่งที่เข้าใจไว้ เราจึงให้ความสำคัญกับการอธิบายทางเลือก เงื่อนไข และข้อจำกัดให้ชัดเจน เพื่อให้คุณมีข้อมูลเพียงพอก่อนตัดสินใจ\n\nสำหรับประกันชีวิตและสุขภาพ เราให้บริการผ่าน AIA ส่วนประกันรถยนต์ให้บริการในฐานะนายหน้า โดยเปรียบเทียบทางเลือกจากบริษัทประกันภัยตามความเหมาะสม";
+  about.th.body = "CoverMate เกิดขึ้นจากการเห็นว่าหลายคนเพิ่งพบในวันที่ต้องใช้สิทธิหรือเคลมว่า ความคุ้มครองที่มีไม่ตรงกับสิ่งที่เข้าใจไว้ เราจึงให้ความสำคัญกับการอธิบายทางเลือก เงื่อนไข และข้อจำกัดให้ชัดเจน เพื่อให้คุณมีข้อมูลเพียงพอก่อนตัดสินใจ\n\nประกันชีวิตและสุขภาพดำเนินการผ่าน AIA ส่วนประกันรถยนต์ให้บริการในฐานะนายหน้า โดยเปรียบเทียบทางเลือกจากบริษัทประกันภัยตามความเหมาะสม";
   about.en.body = "CoverMate was created after seeing how often people discover, only when they need to claim, that their cover does not match what they understood. Our approach is to explain options, conditions and limitations clearly so you have enough information before deciding.\n\nFor life and health insurance, we arrange cover through AIA. For motor insurance, we act in a broker capacity and compare suitable insurer options.";
 
   const faq = byId(config, "faq");
@@ -1138,15 +1335,15 @@ const nextScriptSource = guardedScriptSource.replace(
   () => `${nextDefaults}const SCHEMA =`
 );
 const nextDcScript = dcScript.fullMatch.replace(dcScript.source, () => nextScriptSource);
-const nextTemplate = applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
+const nextTemplate = applySeoMetadata(applyVisualHierarchyTuning(applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
   templateParts.template.replace(dcScript.fullMatch, () => nextDcScript)
-));
+))));
 const nextTemplateJson = JSON.stringify(nextTemplate).replace(/<\/script/gi, "<\\/script");
 const rebuiltHtml = `${html.slice(0, templateParts.start)}<script type="__bundler/template">${nextTemplateJson}</script>\n</body>\n</html>\n`;
-const nextHtml = applyOuterAssetVersion(
+const nextHtml = applySeoMetadata(applyOuterAssetVersion(
   rebuiltHtml,
   assetVersion
-);
+));
 
 fs.writeFileSync(indexPath, nextHtml);
 console.log(`Updated visitor CMS defaults in ${indexPath}`);

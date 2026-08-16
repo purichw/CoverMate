@@ -200,6 +200,45 @@ export const PRODUCT_HEADER_NAV = [
   { label: { th: "เครื่องมือ", en: "Resources" }, href: "#fit" },
   { label: { th: "คำถามที่พบบ่อย", en: "FAQ" }, href: "#faq" }
 ];
+export const PRODUCT_HEADER_CTA = { th: "ติดต่อทาง LINE", en: "Contact on LINE" };
+export const PRODUCT_SECTION_ORDER = [
+  "hero",
+  "trust",
+  "cover",
+  "review",
+  "how",
+  "insurers",
+  "fit",
+  "tiers",
+  "claim",
+  "renew",
+  "guides",
+  "voices",
+  "about",
+  "faq",
+  "fees",
+  "privacy",
+  "talk"
+];
+export const LEGACY_SECTION_ORDER = [
+  "hero",
+  "trust",
+  "cover",
+  "review",
+  "fit",
+  "how",
+  "insurers",
+  "tiers",
+  "claim",
+  "renew",
+  "guides",
+  "voices",
+  "about",
+  "faq",
+  "fees",
+  "privacy",
+  "talk"
+];
 export const DEFAULT_NEEDS_CALCULATOR = {
   datasetVersion: "2026-08-15-v0.1",
   sourcePackage: "covermate-reference-data-v0.1",
@@ -376,11 +415,15 @@ function normalizeMotorCountCopy(value, count = MOTOR_INSURER_LOGO_COUNT_FALLBAC
     /(\d+\+?|\d+\s*เจ้า)/.test(text);
   if (!isMotorCountCopy) return text;
   return text
-    .replace(/กว่า\s*\d+\s*เจ้า/g, `กว่า ${count} เจ้า`)
-    .replace(/บริษัทกว่า\s*\d+\s*เจ้า/g, `บริษัทกว่า ${count} เจ้า`)
-    .replace(/เทียบได้กว่า\s*\d+\s*เจ้า/g, `เทียบได้กว่า ${count} เจ้า`)
-    .replace(/เทียบเบี้ยได้กว่า\s*\d+\s*เจ้า/g, `เทียบเบี้ยได้กว่า ${count} เจ้า`)
-    .replace(/กว่า\s*\d+\s*บริษัท/g, `กว่า ${count} บริษัท`)
+    .replace(/บริษัทประกันภัยกว่า\s*\d+\s*แห่ง/g, `บริษัทประกันภัย ${count} แห่ง`)
+    .replace(/บริษัทกว่า\s*\d+\s*เจ้า/g, `บริษัทประกันภัย ${count} แห่ง`)
+    .replace(/เทียบเบี้ยกว่า\s*\d+\s*บริษัท/g, `จาก ${count} บริษัทประกันภัย`)
+    .replace(/เทียบได้กว่า\s*\d+\s*เจ้า/g, `เทียบได้ ${count} เจ้า`)
+    .replace(/เทียบเบี้ยได้กว่า\s*\d+\s*เจ้า/g, `เทียบเบี้ยได้ ${count} เจ้า`)
+    .replace(/กว่า\s*\d+\s*เจ้า/g, `${count} เจ้า`)
+    .replace(/กว่า\s*\d+\s*บริษัท/g, `${count} บริษัท`)
+    .replace(/more than\s*\d+\s*insurers?/gi, `${count} insurers`)
+    .replace(/over\s*\d+\s*insurers?/gi, `${count} insurers`)
     .replace(/\b\d+\+\s*insurers?\b/gi, `${count} insurers`)
     .replace(/\b\d+\s*insurers?\b/gi, `${count} insurers`)
     .replace(/across\s*\d+\+?/gi, `across ${count}`)
@@ -393,9 +436,13 @@ function normalizeProductDecisionCopy(value) {
   return value
     .replace(/ไม่ต้องจัดการคนเดียว/g, "ไม่จำเป็นต้องจัดการเพียงลำพัง")
     .replace(/สู้คนเดียว/g, "จัดการเพียงลำพัง")
-    .replace(/ชีวิตและสุขภาพ\s*ผมเป็นตัวแทน AIA โดยเฉพาะ/g, "ชีวิตและสุขภาพ เราให้บริการผ่าน AIA โดยตรง")
-    .replace(/ผมเป็นตัวแทน AIA โดยเฉพาะ/g, "เราให้บริการผ่าน AIA โดยตรง")
-    .replace(/ผมเป็นตัวแทน AIA/g, "เราให้บริการผ่าน AIA")
+    .replace(/ประกันชีวิตและสุขภาพ\s*เราให้บริการผ่าน AIA โดยตรง/g, "ประกันชีวิตและสุขภาพดำเนินการผ่าน AIA")
+    .replace(/ชีวิตและสุขภาพ\s*เราให้บริการผ่าน AIA โดยตรง/g, "ชีวิตและสุขภาพดำเนินการผ่าน AIA")
+    .replace(/ชีวิตและสุขภาพ\s*ผมเป็นตัวแทน AIA โดยเฉพาะ/g, "ชีวิตและสุขภาพดำเนินการผ่าน AIA")
+    .replace(/เราให้บริการผ่าน AIA โดยตรง/g, "ดำเนินการผ่าน AIA")
+    .replace(/เราให้บริการผ่าน AIA/g, "ดำเนินการผ่าน AIA")
+    .replace(/ผมเป็นตัวแทน AIA โดยเฉพาะ/g, "ดำเนินการผ่าน AIA")
+    .replace(/ผมเป็นตัวแทน AIA/g, "ดำเนินการผ่าน AIA")
     .replace(/ผมจัดผ่าน/g, "เราจัดผ่าน")
     .replace(/ผมเทียบ/g, "เราเปรียบเทียบ")
     .replace(/ผมสรุป/g, "เราสรุป")
@@ -413,8 +460,8 @@ function normalizeProductDecisionCopy(value) {
     .replace(/ไม่ขายเกิน/g, "ไม่เสนอเกินความจำเป็น")
     .replace(/ยิงเทียบ/g, "เปรียบเทียบ")
     .replace(/ยิงเบี้ย/g, "เปรียบเทียบเบี้ย")
-    .replace(/สนใจปรึกษาครับ\/ค่ะ/g, "สนใจปรึกษาเรื่องประกัน")
     .replace(/สนใจปรึกษาครับ\/ค่ะ\s*—\s*สถานการณ์:/g, "สนใจปรึกษาเรื่องประกัน — สถานการณ์:")
+    .replace(/สนใจปรึกษาครับ\/ค่ะ/g, "สนใจปรึกษาเรื่องประกัน")
     .replace(/แอดไลน์ ปรึกษาฟรี/g, "ติดต่อเราทาง LINE")
     .replace(/แอดไลน์ ขอเทียบเบี้ย/g, "ติดต่อเราทาง LINE")
     .replace(/Send me these numbers/g, "Send us these numbers")
@@ -471,6 +518,51 @@ function mergeDeepDefaults(defaults, value) {
 function ensureNeedsCalculatorSection(section) {
   if (!section || section.type !== "fit") return;
   section.calculator = mergeDeepDefaults(DEFAULT_NEEDS_CALCULATOR, section.calculator);
+}
+
+function reorderKnownLegacySections(sections) {
+  if (!Array.isArray(sections)) return sections;
+  const currentOrder = sections.map((section) => section && section.id).join("|");
+  if (currentOrder !== LEGACY_SECTION_ORDER.join("|")) return sections;
+  const byId = new Map(sections.map((section) => [section && section.id, section]));
+  return PRODUCT_SECTION_ORDER.map((id) => byId.get(id)).filter(Boolean);
+}
+
+function storyTextChunks(item) {
+  if (!item || typeof item !== "object" || item.on === false) return [];
+  const chunks = [];
+  ["th", "en"].forEach((lang) => {
+    const bucket = item[lang] || {};
+    ["quote", "body", "title", "value", "label", "meta"].forEach((field) => {
+      if (bucket[field]) chunks.push(String(bucket[field]));
+    });
+  });
+  return chunks;
+}
+
+function hasRealStoryContent(section) {
+  const items = Array.isArray(section && section.items) ? section.items : [];
+  const placeholderPattern =
+    /รอความคิดเห็นจริง|เผยแพร่เมื่อได้รับอนุญาต|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ตัวอย่างโครงสร้าง|เสียงจากลูกค้า|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|ชื่อลูกค้า|อาชีพ\s*·\s*ประกันที่ทำ|Awaiting real feedback|Published with permission|Client feedback will appear here|Placeholder structure|Customer voice|Customer name|Role\s*·\s*policy|sample review/i;
+  return items.some((item) => {
+    const allText = storyTextChunks(item).join(" ").trim();
+    if (!allText || placeholderPattern.test(allText)) return false;
+    const meaningful = [];
+    ["th", "en"].forEach((lang) => {
+      const bucket = (item && item[lang]) || {};
+      ["quote", "body", "title"].forEach((field) => {
+        if (bucket[field]) meaningful.push(String(bucket[field]));
+      });
+    });
+    return meaningful.join(" ").trim().length >= 20;
+  });
+}
+
+function suppressPlaceholderStories(section) {
+  if (!section || (section.id !== "voices" && section.type !== "stories" && section.type !== "testimonials")) {
+    return;
+  }
+  if (!hasRealStoryContent(section)) section.on = false;
 }
 
 function cleanMediaReference(value, fallback = "") {
@@ -620,7 +712,9 @@ export function sanitizeMotorCountConfig(config, options = {}) {
   if (Array.isArray(next.header.nav)) {
     next.header.nav = cloneJSON(PRODUCT_HEADER_NAV);
   }
+  next.header.cta = cloneJSON(PRODUCT_HEADER_CTA);
   if (Array.isArray(next.sections)) {
+    next.sections = reorderKnownLegacySections(next.sections);
     const insurerCount = motorInsurerLogoCount(next);
     ["header", "brand", "footer", "contact", "seo"].forEach((key) => {
       normalizeLocalizedStrings(next[key], insurerCount);
@@ -633,6 +727,7 @@ export function sanitizeMotorCountConfig(config, options = {}) {
       normalizeLocalizedStrings(section.en, insurerCount);
       normalizeLocalizedStrings(section.items, insurerCount);
       normalizeLocalizedStrings(section.cards, insurerCount);
+      suppressPlaceholderStories(section);
     });
     next.sections.forEach((section) => {
       if (!section || (section.id !== "talk" && section.type !== "contact")) return;
@@ -719,6 +814,9 @@ const contract = {
   PROTECTED_BRAND_CREDENTIAL,
   PROTECTED_FOOTER_LEGAL,
   PRODUCT_HEADER_NAV,
+  PRODUCT_HEADER_CTA,
+  PRODUCT_SECTION_ORDER,
+  LEGACY_SECTION_ORDER,
   DEFAULT_NEEDS_CALCULATOR,
   sanitizeMotorCountText,
   sanitizeCmsControlsConfig,
