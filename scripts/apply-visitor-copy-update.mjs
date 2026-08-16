@@ -730,6 +730,56 @@ function applyVisualHierarchyTuning(template) {
   );
 }
 
+function applyGuidesFaqTypeMatch(template) {
+  const css = `<style id="covermate-guides-font-scale">
+  #guides summary > div:last-child {
+    font-size: 16.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.45 !important;
+  }
+  #guides details > div {
+    font-size: clamp(14px, 1.05vw, 15px) !important;
+    line-height: 1.65 !important;
+  }
+  #guides summary span[data-noedit] {
+    font-size: 12px !important;
+  }
+  #guides summary span:not(.om-chev):not([data-noedit]) {
+    font-size: 11px !important;
+    letter-spacing: .08em !important;
+  }
+  @media (max-width: 560px) {
+    #guides summary > div:last-child {
+      font-size: 16.5px !important;
+    }
+    #guides details > div {
+      font-size: 13.5px !important;
+    }
+  }
+</style>`;
+  return template.replace(
+    /<style id="covermate-guides-font-scale">[\s\S]*?<\/style>/,
+    css
+  );
+}
+
+function applyMobileStickySectionFix(template) {
+  const css = `<style id="covermate-mobile-sticky-section-fix">
+  @media (max-width: 899px) {
+    section [style*="position:sticky"][style*="top:96px"],
+    section [style*="position: sticky"][style*="top: 96px"] {
+      position: static !important;
+      top: auto !important;
+    }
+  }
+</style>`;
+  const existing = /<style id="covermate-mobile-sticky-section-fix">[\s\S]*?<\/style>/;
+  if (existing.test(template)) return template.replace(existing, css);
+  const anchor = '<style id="covermate-owner-dock-ui">';
+  if (!template.includes(anchor)) throw new Error("Mobile sticky section fix anchor not found.");
+  return template.replace(anchor, () => `${css}\n${anchor}`);
+}
+
 function updateLocal(target, th, en) {
   target.th = th;
   target.en = en;
@@ -1335,9 +1385,9 @@ const nextScriptSource = guardedScriptSource.replace(
   () => `${nextDefaults}const SCHEMA =`
 );
 const nextDcScript = dcScript.fullMatch.replace(dcScript.source, () => nextScriptSource);
-const nextTemplate = applySeoMetadata(applyVisualHierarchyTuning(applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
+const nextTemplate = applySeoMetadata(applyMobileStickySectionFix(applyGuidesFaqTypeMatch(applyVisualHierarchyTuning(applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
   templateParts.template.replace(dcScript.fullMatch, () => nextDcScript)
-))));
+))))));
 const nextTemplateJson = JSON.stringify(nextTemplate).replace(/<\/script/gi, "<\\/script");
 const rebuiltHtml = `${html.slice(0, templateParts.start)}<script type="__bundler/template">${nextTemplateJson}</script>\n</body>\n</html>\n`;
 const nextHtml = applySeoMetadata(applyOuterAssetVersion(
