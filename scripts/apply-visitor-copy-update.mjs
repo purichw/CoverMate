@@ -732,10 +732,14 @@ function applyVisualHierarchyTuning(template) {
 
 function applyGuidesFaqTypeMatch(template) {
   const css = `<style id="covermate-guides-font-scale">
-  #guides summary > div:last-child {
+  #guides summary > div:last-child,
+  #guides summary > div:last-child span,
+  #guides summary [style*="font-size: clamp(19px"],
+  #guides summary [style*="font-size:clamp(19px"] {
     font-size: 16.5px !important;
     font-weight: 700 !important;
     line-height: 1.45 !important;
+    letter-spacing: 0 !important;
   }
   #guides details > div {
     font-size: clamp(14px, 1.05vw, 15px) !important;
@@ -744,12 +748,15 @@ function applyGuidesFaqTypeMatch(template) {
   #guides summary span[data-noedit] {
     font-size: 12px !important;
   }
-  #guides summary span:not(.om-chev):not([data-noedit]) {
+  #guides summary > div:first-child > span:not([data-noedit]) {
     font-size: 11px !important;
     letter-spacing: .08em !important;
   }
   @media (max-width: 560px) {
-    #guides summary > div:last-child {
+    #guides summary > div:last-child,
+    #guides summary > div:last-child span,
+    #guides summary [style*="font-size: clamp(19px"],
+    #guides summary [style*="font-size:clamp(19px"] {
       font-size: 16.5px !important;
     }
     #guides details > div {
