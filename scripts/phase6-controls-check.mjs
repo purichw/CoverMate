@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import zlib from "node:zlib";
 
 const contractSource = fs.readFileSync(new URL("../covermate-contract.js", import.meta.url), "utf8");
 const {
@@ -18,8 +19,20 @@ const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)
 assert.ok(scriptMatch, "embedded text/x-dc script exists");
 new vm.Script(scriptMatch[1], { filename: "index.html text/x-dc" });
 
+const manifestMatch = html.match(/<script type="__bundler\/manifest">([\s\S]*?)<\/script>/);
+assert.ok(manifestMatch, "embedded bundler manifest exists");
+const manifest = JSON.parse(manifestMatch[1]);
+const bundledRuntime = Object.values(manifest)
+  .map((entry) => {
+    const bytes = Buffer.from(entry.data, "base64");
+    return (entry.compressed ? zlib.gunzipSync(bytes) : bytes).toString("utf8");
+  })
+  .join("\n");
+const fullEmbeddedSurface = `${template}\n${bundledRuntime}`;
+
 for (const pattern of [
   /type=["']file["']/i,
+  /browse files/i,
   /data-admin-logo-upload/i,
   /applyAdvisorLogoFile/i,
   /prepareLogoUpload/i,
@@ -30,7 +43,7 @@ for (const pattern of [
   /data-image-edit/i,
   /Brand &(?:amp;)? chrome/i
 ]) {
-  assert.equal(pattern.test(template), false, `legacy upload/image-edit marker removed: ${pattern}`);
+  assert.equal(pattern.test(fullEmbeddedSurface), false, `legacy upload/image-edit marker removed: ${pattern}`);
 }
 
 for (const pattern of [
