@@ -137,6 +137,56 @@ function adminPortalSessionMock() {
   `;
 }
 
+function adminOpsApiMock(route) {
+  const url = new URL(route.request().url());
+  const resource = url.pathname.replace(/^\/api\/ops\/?/, "").split("/").filter(Boolean)[0];
+  const rows = {
+    leads: [
+      {
+        id: "smoke-lead",
+        displayId: "CL-SMOKE",
+        name: "Smoke Lead",
+        phone: "080-000-0000",
+        source: "Smoke",
+        interestKey: "motor",
+        status: "new",
+        message: "Smoke lead for admin shell.",
+        assigneeName: "Owner Smoke",
+        consent: { given: true },
+        createdAt: "2026-08-10T08:00:00.000Z",
+        updatedAt: "2026-08-10T08:00:00.000Z"
+      }
+    ],
+    tasks: [
+      {
+        id: "smoke-lead:firstContact",
+        title: "First contact - Smoke Lead",
+        dueAt: "2026-08-10T10:00:00.000Z",
+        priority: "High",
+        relatedLabel: "Lead CL-SMOKE",
+        assigneeName: "Owner Smoke",
+        completed: false
+      }
+    ],
+    audit: [
+      {
+        id: "smoke-audit",
+        kind: "Lead",
+        subject: "Lead CL-SMOKE - Smoke Lead",
+        from: "",
+        to: "Created",
+        actorName: "System",
+        at: "2026-08-10T08:00:00.000Z"
+      }
+    ]
+  }[resource] || [];
+  return route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ rows, total: rows.length, source: "smoke-api" })
+  });
+}
+
 function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftText = {}) {
   return `
     let liveConfig = ${JSON.stringify(liveConfig)};
@@ -1718,6 +1768,7 @@ for (const [name, width, height] of viewports) {
       body: adminPortalSessionMock()
     })
   );
+  await page.route("**/api/ops/**", adminOpsApiMock);
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin Portal/);
   const adminState = await page.evaluate(() => ({
@@ -1725,22 +1776,24 @@ for (const [name, width, height] of viewports) {
     moduleCards: Array.from(document.querySelectorAll("[data-admin-home-card]")).map((el) => ({
       kind: el.getAttribute("data-admin-home-card"),
       text: el.innerText,
-      href: el.getAttribute("href")
+      tag: el.tagName.toLowerCase(),
+      action: el.getAttribute("data-action"),
+      module: el.getAttribute("data-module")
     })),
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("Admin verified")) {
+  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("Owner / Administrator · verified")) {
     failures.push(`${name} /admin: authenticated Admin Portal Home did not render`);
   }
   if (
     !adminState.text.includes("Live: leads/tasks/audit") ||
-    !adminState.text.includes("Partial: GA4 API pending") ||
-    !adminState.text.includes("Not wired yet; labeled in Operations")
+    !adminState.text.includes("Website CMS") ||
+    !adminState.text.includes("First-party CoverMate records")
   ) {
-    failures.push(`${name} /admin: live/partial/planned system status copy is missing`);
+    failures.push(`${name} /admin: single-shell live system status copy is missing`);
   }
   const launcherLabels = adminState.moduleCards.map((card) => {
     const firstLine = card.text.split("\n").map((part) => part.trim()).filter(Boolean)[0] || "";
@@ -1753,17 +1806,17 @@ for (const [name, width, height] of viewports) {
   if (adminState.moduleCards.length !== 4) {
     failures.push(`${name} /admin: expected 4 primary module cards, got ${adminState.moduleCards.length}`);
   }
-  if (!adminState.moduleCards.some((card) => card.kind === "operations" && card.href === "/admin/ops")) {
-    failures.push(`${name} /admin: Operations card does not open /admin/ops`);
+  if (!adminState.moduleCards.some((card) => card.kind === "operations" && card.tag === "button" && card.action === "module" && card.module === "operations")) {
+    failures.push(`${name} /admin: Operations card is not a same-shell module action`);
   }
-  if (!adminState.moduleCards.some((card) => card.kind === "content" && card.href === "/#admin")) {
-    failures.push(`${name} /admin: Website content card does not open /#admin`);
+  if (!adminState.moduleCards.some((card) => card.kind === "content" && card.tag === "button" && card.action === "module" && card.module === "content")) {
+    failures.push(`${name} /admin: Website content card is not a same-shell module action`);
   }
-  if (!adminState.moduleCards.some((card) => card.kind === "analytics" && card.href === "/admin/analytics")) {
-    failures.push(`${name} /admin: Analytics card does not open /admin/analytics`);
+  if (!adminState.moduleCards.some((card) => card.kind === "analytics" && card.tag === "button" && card.action === "module" && card.module === "analytics")) {
+    failures.push(`${name} /admin: Analytics card is not a same-shell module action`);
   }
-  if (!adminState.moduleCards.some((card) => card.kind === "settings" && card.href === "/admin/ops#settings")) {
-    failures.push(`${name} /admin: Settings card does not open /admin/ops#settings`);
+  if (!adminState.moduleCards.some((card) => card.kind === "settings" && card.tag === "button" && card.action === "module" && card.module === "settings")) {
+    failures.push(`${name} /admin: Settings card is not a same-shell module action`);
   }
   if (/Manage your site|Edit the words|Arrange & customise|Unpacking/.test(adminState.text)) {
     failures.push(`${name} /admin: legacy launcher copy is visible`);
@@ -2289,7 +2342,7 @@ for (const [name, width, height] of viewports) {
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin Portal/);
-  await page.locator("#logoutButtonInline").click();
+  await page.getByRole("button", { name: "Log out" }).first().click();
   await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);

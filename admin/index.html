@@ -43,6 +43,7 @@
       --accent-soft: #ffe1cf;
       --sage: #60724a;
       --sage-soft: #dfedcb;
+      --warning-soft: #ffe8d9;
       --neutral-soft: #e6dccb;
       --danger: #8f2f1f;
       --danger-soft: #ffe7e1;
@@ -73,7 +74,9 @@
     }
 
     button,
-    input {
+    input,
+    select,
+    textarea {
       font: inherit;
     }
 
@@ -81,14 +84,15 @@
       cursor: pointer;
     }
 
-    a {
-      color: inherit;
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+      cursor: not-allowed;
     }
 
-    a:focus-visible,
-    button:focus-visible {
-      outline: 3px solid rgba(207, 113, 53, 0.45);
-      outline-offset: 2px;
+    a {
+      color: inherit;
     }
 
     .app {
@@ -151,27 +155,28 @@
       gap: 4px;
     }
 
-    .nav-link {
+    .nav-button {
       width: 100%;
       min-height: 42px;
       display: grid;
       grid-template-columns: 28px 1fr auto;
       gap: 8px;
       align-items: center;
+      border: 0;
       border-radius: 999px;
       padding: 8px 12px;
       color: var(--sidebar-muted);
+      background: transparent;
       text-align: left;
-      text-decoration: none;
       font-weight: 800;
     }
 
-    .nav-link:hover {
+    .nav-button:hover {
       color: #fff;
       background: rgba(255, 255, 255, 0.07);
     }
 
-    .nav-link.active {
+    .nav-button.active {
       color: #fff;
       background: var(--accent);
     }
@@ -185,8 +190,8 @@
     }
 
     .nav-icon svg,
-    .round-icon svg,
-    .search svg {
+    .search svg,
+    .round-icon svg {
       width: 20px;
       height: 20px;
       stroke: currentColor;
@@ -209,6 +214,11 @@
       font-weight: 900;
     }
 
+    .nav-button.active .badge {
+      background: #fff;
+      color: var(--accent-strong);
+    }
+
     .sidebar-footer {
       margin-top: auto;
       padding-top: 18px;
@@ -224,10 +234,10 @@
       text-transform: uppercase;
     }
 
-    .role-pill {
+    .role-select,
+    .module-select {
+      width: 100%;
       min-height: 44px;
-      display: flex;
-      align-items: center;
       border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 999px;
       padding: 0 14px;
@@ -328,8 +338,10 @@
     }
 
     .pill,
+    .chip,
     .ghost-button,
-    .primary-button {
+    .primary-button,
+    .danger-button {
       min-height: 42px;
       display: inline-flex;
       align-items: center;
@@ -347,6 +359,18 @@
       background: var(--sage-soft);
       color: #344427;
       font-size: 14px;
+    }
+
+    .pill.warn {
+      border-color: #ffb58f;
+      background: #fff6ed;
+      color: #79421e;
+    }
+
+    .pill.error {
+      border-color: #e9a39a;
+      background: var(--danger-soft);
+      color: var(--danger);
     }
 
     .dot {
@@ -367,15 +391,49 @@
       background: #bd6129;
     }
 
-    .ghost-button {
+    .ghost-button,
+    .chip {
       border-color: var(--line);
       background: var(--surface);
       color: #4f4940;
     }
 
-    .ghost-button:hover {
+    .ghost-button:hover,
+    .chip:hover {
       border-color: var(--line-strong);
       background: #fffaf4;
+    }
+
+    .ghost-button:disabled,
+    .primary-button:disabled,
+    .danger-button:disabled,
+    .chip:disabled {
+      border-color: var(--line);
+      background: #ddd5c8;
+      color: #8e8375;
+      box-shadow: none;
+    }
+
+    .chip {
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 14px;
+    }
+
+    .chip.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .danger-button {
+      border-color: #e2a27f;
+      background: #fff3eb;
+      color: #914917;
+    }
+
+    .mobilebar {
+      display: none;
     }
 
     .screen {
@@ -419,15 +477,11 @@
       letter-spacing: 0;
     }
 
-    .lede,
-    .note {
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
     .lede {
       margin-bottom: 0;
+      color: var(--muted);
       font-size: 18px;
+      line-height: 1.5;
     }
 
     .grid {
@@ -435,16 +489,23 @@
       gap: 16px;
     }
 
-    .grid.modules {
+    .grid.metrics,
+    .grid.four {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .grid.two {
-      grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .card,
     .panel,
+    .filterbar,
+    .table-shell,
     .notice {
       border: 1px solid var(--line);
       border-radius: var(--radius);
@@ -458,12 +519,415 @@
       padding: 24px;
     }
 
+    .metric {
+      min-height: 172px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .metric .label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--accent-strong);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .metric .value {
+      font-size: 46px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .metric.status-metric .value {
+      font-size: 25px;
+      line-height: 1.2;
+    }
+
+    .metric p,
+    .note {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .metric button {
+      justify-self: start;
+      min-height: 0;
+      border: 0;
+      padding: 0;
+      color: var(--accent-strong);
+      background: transparent;
+      font-weight: 900;
+    }
+
+    .filterbar {
+      display: grid;
+      gap: 14px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-label {
+      margin-right: 6px;
+      color: var(--faint);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .record-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .table-shell {
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th {
+      height: 54px;
+      padding: 0 22px;
+      color: var(--muted);
+      background: var(--bg-strong);
+      text-align: left;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    td {
+      min-height: 70px;
+      padding: 18px 22px;
+      border-top: 1px solid #eadfce;
+      vertical-align: middle;
+      font-size: 16px;
+    }
+
+    tr[data-open-lead],
+    tr[data-open-customer],
+    tr[data-open-policy] {
+      cursor: pointer;
+    }
+
+    tr[data-open-lead]:hover td,
+    tr[data-open-customer]:hover td,
+    tr[data-open-policy]:hover td {
+      background: #fff8f0;
+    }
+
+    tr:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    select:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(207, 113, 53, 0.45);
+      outline-offset: 2px;
+    }
+
+    .cell-title {
+      display: block;
+      color: #111;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .cell-meta {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .status {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 12px;
+      background: var(--neutral-soft);
+      color: #4b443b;
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status.new,
+    .status.contacting,
+    .status.awaiting,
+    .status.renewal,
+    .status.overdue {
+      background: var(--warning-soft);
+      color: #6f3715;
+    }
+
+    .status.consultation,
+    .status.converted,
+    .status.active,
+    .status.completed {
+      background: var(--sage-soft);
+      color: #344427;
+    }
+
+    .status.dim,
+    .status.later,
+    .status.notinterested,
+    .status.lost {
+      background: #e3d8c8;
+      color: #655d52;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 18px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .timeline li {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .timeline li::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 6px;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--sage);
+    }
+
+    .timeline li::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 20px;
+      bottom: -20px;
+      width: 2px;
+      background: var(--line);
+    }
+
+    .timeline li:last-child::after {
+      display: none;
+    }
+
+    .timeline strong {
+      display: block;
+      line-height: 1.3;
+    }
+
+    .timeline li > span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .progress-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .progress-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) minmax(160px, 2fr) 76px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--neutral-soft);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .bar.sage span {
+      background: var(--sage);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(330px, .95fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px 28px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .field-value {
+      font-size: 17px;
+      font-weight: 850;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: var(--text);
+      background: var(--surface-soft);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+    }
+
+    .checkbox {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      align-items: center;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .checkbox input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .empty {
+      padding: 36px 22px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .rail-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rail-list a,
+    .rail-action,
+    .rail-row {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: var(--surface-soft);
+      color: var(--text);
+      text-align: left;
+      text-decoration: none;
+      font-weight: 850;
+    }
+
+    .rail-list a:hover,
+    .rail-action:hover {
+      background: #fffaf4;
+    }
+
+    .rail-list span,
+    .rail-action span,
+    .rail-row span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
     .module-card {
-      min-height: 238px;
+      min-height: 190px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      align-items: flex-start;
       color: var(--text);
+      text-align: left;
       text-decoration: none;
       transition: border-color .18s ease, background .18s ease, transform .18s ease;
     }
@@ -479,7 +943,7 @@
       place-items: center;
       width: 50px;
       height: 50px;
-      margin-bottom: 6px;
+      margin-bottom: 16px;
       border-radius: 999px;
       background: var(--accent);
       color: #fff;
@@ -492,12 +956,6 @@
 
     .module-card.ink .round-icon {
       background: var(--sidebar);
-    }
-
-    .module-card p {
-      margin-bottom: 0;
-      color: var(--muted);
-      line-height: 1.45;
     }
 
     .module-status {
@@ -514,12 +972,6 @@
       line-height: 1;
     }
 
-    .module-status.partial,
-    .module-status.planned {
-      background: #eee5d6;
-      color: #5f564a;
-    }
-
     .module-action {
       display: inline-flex;
       gap: 8px;
@@ -529,58 +981,113 @@
       font-weight: 900;
     }
 
-    .module-card.sage .module-action {
-      color: #41552f;
+    .permission-table .yes,
+    .permission-table .no {
+      display: inline-grid;
+      place-items: center;
+      width: 31px;
+      height: 31px;
+      border-radius: 999px;
+      font-weight: 900;
     }
 
-    .module-card.ink .module-action {
-      color: #4d463d;
+    .permission-table .yes {
+      background: var(--sage-soft);
+      color: #344427;
     }
 
-    .rail-list {
+    .permission-table .no {
+      background: var(--neutral-soft);
+      color: var(--muted);
+    }
+
+    .notice {
+      line-height: 1.5;
+    }
+
+    .notice.error {
+      border-color: #e9a39a;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(37, 34, 31, 0.46);
+    }
+
+    .modal-root.open {
       display: grid;
-      gap: 10px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
     }
 
-    .rail-list a,
-    .rail-row {
-      min-height: 48px;
+    .modal {
+      width: min(720px, 100%);
+      max-height: min(760px, calc(100vh - 44px));
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-head,
+    .modal-body,
+    .modal-actions {
+      padding: 22px 24px;
+    }
+
+    .modal-head {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 14px;
-      align-items: center;
-      border-radius: 16px;
-      padding: 12px 14px;
-      background: var(--surface-soft);
-      color: var(--text);
-      text-decoration: none;
-      font-weight: 850;
+      gap: 12px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
     }
 
-    .rail-list a:hover {
-      background: #fffaf4;
-    }
-
-    .rail-list span,
-    .rail-row span {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.35;
-    }
-
-    .quick-actions {
+    .modal-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 20px;
+      justify-content: flex-end;
+      border-top: 1px solid var(--line);
     }
 
-    .mobilebar {
-      display: none;
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 90;
+      width: min(420px, calc(100vw - 40px));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .toast.error {
+      border-color: #e9a39a;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     [hidden] {
@@ -588,11 +1095,13 @@
     }
 
     @media (max-width: 1260px) {
-      .grid.modules {
+      .grid.metrics,
+      .grid.four {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .grid.two {
+      .split,
+      .grid.three {
         grid-template-columns: 1fr;
       }
     }
@@ -615,7 +1124,7 @@
         top: 0;
         z-index: 30;
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: 1fr minmax(180px, 45%);
         gap: 12px;
         align-items: center;
         padding: 12px 16px;
@@ -657,7 +1166,65 @@
         align-items: start;
       }
 
-      .grid.modules {
+      .grid.metrics,
+      .grid.two,
+      .grid.four {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-shell {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      table,
+      tbody,
+      tr,
+      td {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 12px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        background: var(--surface);
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: minmax(104px, 34%) 1fr;
+        gap: 12px;
+        min-height: auto;
+        padding: 13px 16px;
+        border-top: 1px solid #eadfce;
+      }
+
+      td:first-child {
+        border-top: 0;
+      }
+
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+
+      .progress-row {
         grid-template-columns: 1fr;
       }
     }
@@ -666,35 +1233,19 @@
 <body data-boot="pending">
   <div class="app">
     <aside class="sidebar" aria-label="Admin navigation">
-      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home" data-action="module" data-module="home">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png" alt="CoverMate Insurance Advisory"></span>
         <span class="brand-sub">ADMIN PORTAL</span>
       </a>
-      <nav class="nav" aria-label="Admin sections">
-        <a class="nav-link active" href="/admin" aria-current="page">
-          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg></span>
-          Home
-        </a>
-        <a class="nav-link" href="/admin/ops">
-          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-          Operations
-        </a>
-        <a class="nav-link" href="/#admin">
-          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M2 14h4"></path><path d="M10 8h4"></path><path d="M18 16h4"></path></svg></span>
-          Website content
-        </a>
-        <a class="nav-link" href="/admin/analytics">
-          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M7 16v-5"></path><path d="M12 16V7"></path><path d="M17 16v-8"></path></svg></span>
-          Analytics
-        </a>
-        <a class="nav-link" href="/admin/ops#settings">
-          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1.07V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.07-.4H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1.07V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.37.36.7.6 1 .31.26.68.4 1.07.4H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></span>
-          Settings
-        </a>
-      </nav>
+      <nav class="nav" id="sideNav"></nav>
       <div class="sidebar-footer">
         <p class="eyebrow">Signed in as · role</p>
-        <div class="role-pill" id="rolePill">Verifying</div>
+        <select class="role-select" id="roleSelect" aria-label="Preview role">
+          <option value="owner">Owner / Administrator</option>
+          <option value="advisor">Adviser</option>
+          <option value="ops">Operations</option>
+          <option value="readonly">Read-only</option>
+        </select>
         <div class="user">
           <span class="avatar" id="userAvatar">CM</span>
           <span>
@@ -702,174 +1253,33 @@
             <span id="userMeta">Verifying session</span>
           </span>
         </div>
-        <button class="logout" type="button" id="logoutButton">Log out</button>
+        <button class="logout" type="button" data-action="logout">Log out</button>
       </div>
     </aside>
 
     <div class="mobilebar">
-      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home" data-action="module" data-module="home">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png" alt="CoverMate Insurance Advisory"></span>
         <span class="brand-sub">ADMIN</span>
       </a>
-      <a class="ghost-button" href="/admin/ops">Operations</a>
+      <select class="module-select" id="mobileModuleSelect" aria-label="Choose operations module"></select>
     </div>
 
     <main class="workspace">
       <header class="topbar">
         <label class="search" for="globalSearch">
           <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></span>
-          <input id="globalSearch" type="search" autocomplete="off" placeholder="Search opens in Operations" />
+          <input id="globalSearch" type="search" autocomplete="off" placeholder="Search records, phone, LINE, policy" />
         </label>
-        <span class="pill" id="sessionPill"><span class="dot"></span>Verifying admin</span>
-        <a class="primary-button" href="/admin/ops">Open operations</a>
+        <span class="pill warn" id="dataMode"><span class="dot"></span>Connecting</span>
+        <button class="primary-button" type="button" id="newLeadButton" data-action="open-new-lead">+ New lead</button>
       </header>
-
-      <section class="screen" aria-labelledby="adminHomeTitle">
-        <div class="page-head">
-          <div>
-            <h1 id="adminHomeTitle">Admin Portal</h1>
-            <p class="lede">A single private entry point for operations, website content, analytics, and admin settings.</p>
-          </div>
-          <a class="ghost-button" href="/" id="publicSiteLink">Public site</a>
-        </div>
-
-        <div class="grid modules">
-          <a class="card module-card" href="/admin/ops" data-admin-home-card="operations">
-            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-            <h2>Operations</h2>
-            <span class="module-status">Live: leads/tasks/audit</span>
-            <p>Lead intake, follow-ups, task completion, lead notes, status changes, and audit trail run through the Operations API.</p>
-            <span class="module-action">Open workspace -></span>
-          </a>
-
-          <a class="card module-card sage" href="/#admin" data-admin-home-card="content">
-            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path><path d="M3 7h5"></path><path d="M3 12h3"></path></svg></span>
-            <h2>Website content</h2>
-            <span class="module-status">Live CMS</span>
-            <p>Live copy, section order, visibility, contact details, brand settings, media, preview, and publish remain in the Firestore CMS.</p>
-            <span class="module-action">Open controls -></span>
-          </a>
-
-          <a class="card module-card ink" href="/admin/analytics" data-admin-home-card="analytics">
-            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M7 16v-5"></path><path d="M12 16V7"></path><path d="M17 16v-8"></path></svg></span>
-            <h2>Analytics</h2>
-            <span class="module-status partial">Partial: GA4 API pending</span>
-            <p>First-party lead reporting is live. GA4 traffic charts stay labeled until a secure Data API or scheduled export exists.</p>
-            <span class="module-action">Open analytics -></span>
-          </a>
-
-          <a class="card module-card sage" href="/admin/ops#settings" data-admin-home-card="settings">
-            <span class="round-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1.07V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.07-.4H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1.07V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.37.36.7.6 1 .31.26.68.4 1.07.4H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></span>
-            <h2>Settings</h2>
-            <span class="module-status partial">Reference · API enforced</span>
-            <p>Roles, lead statuses, PDPA consent rules, permissions reference, and audit visibility. The API still enforces real permissions.</p>
-            <span class="module-action">Open settings -></span>
-          </a>
-        </div>
-
-        <div class="grid two" style="margin-top:18px">
-          <section class="panel" aria-labelledby="quickActionsTitle">
-            <h2 id="quickActionsTitle">Quick actions</h2>
-            <ul class="rail-list">
-              <li><a href="/#edit">Edit public-page words <span>Inline copy editor</span></a></li>
-              <li><a href="/#preview">Preview website draft <span>Private draft view</span></a></li>
-              <li><a href="/admin/ops#leads">Review lead intake <span>Operations list</span></a></li>
-              <li><a href="/admin/ops#tasks">Open follow-ups <span>Task queue</span></a></li>
-            </ul>
-          </section>
-
-          <section class="panel" aria-labelledby="statusTitle">
-            <h2 id="statusTitle">System status</h2>
-            <div class="rail-list">
-              <div class="rail-row">Firebase admin session <span id="authStatus">Checking</span></div>
-              <div class="rail-row">Operations backend <span>Leads, tasks, audit live through /api/ops</span></div>
-              <div class="rail-row">Customer/policy modules <span>Not wired yet; labeled in Operations</span></div>
-              <div class="rail-row">Website CMS <span>Firestore draft/live</span></div>
-              <div class="rail-row">GA4 Data API <span>Pending backend/export</span></div>
-            </div>
-            <div class="quick-actions">
-              <a class="ghost-button" href="https://smart.oic.or.th/eservice/Menu1" target="_blank" rel="noopener">Verify licence</a>
-              <button class="ghost-button" type="button" id="logoutButtonInline">Log out</button>
-            </div>
-          </section>
-        </div>
-      </section>
+      <section class="screen" id="screen" aria-live="polite"></section>
     </main>
   </div>
 
-  <script type="module">
-    import { requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
-
-    const K_ADMIN_EVER = "purich-admin-ever-v7";
-    const sessionPill = document.getElementById("sessionPill");
-    const rolePill = document.getElementById("rolePill");
-    const userAvatar = document.getElementById("userAvatar");
-    const userName = document.getElementById("userName");
-    const userMeta = document.getElementById("userMeta");
-    const authStatus = document.getElementById("authStatus");
-    const globalSearch = document.getElementById("globalSearch");
-    const publicSiteLink = document.getElementById("publicSiteLink");
-
-    function initialsFrom(name) {
-      return String(name || "CoverMate admin")
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase() || "CM";
-    }
-
-    function displayRole(role) {
-      const map = {
-        owner: "Owner / Administrator",
-        admin: "Owner / Administrator",
-        advisor: "Adviser",
-        ops: "Operations",
-        readonly: "Read-only"
-      };
-      return map[role] || role || "Admin";
-    }
-
-    function clearOwnerMarker() {
-      try {
-        window.localStorage.removeItem(K_ADMIN_EVER);
-      } catch {
-        // Public navigation still proceeds.
-      }
-    }
-
-    function bindEvents() {
-      document.getElementById("logoutButton").addEventListener("click", signOutAdmin);
-      document.getElementById("logoutButtonInline").addEventListener("click", signOutAdmin);
-      publicSiteLink.addEventListener("click", clearOwnerMarker);
-      globalSearch.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") return;
-        const query = globalSearch.value.trim();
-        const suffix = query ? `?q=${encodeURIComponent(query)}#leads` : "#leads";
-        window.location.href = `/admin/ops${suffix}`;
-      });
-    }
-
-    try {
-      const session = await requireVerifiedAdminSession({ redirectTo: "/admin/login" });
-      if (!session) throw new Error("Missing verified admin session.");
-      const name = session.name || session.email || "CoverMate admin";
-      const role = displayRole(session.role);
-      userAvatar.textContent = initialsFrom(name);
-      userName.textContent = name;
-      userMeta.textContent = `${session.role || "admin"} · verified`;
-      rolePill.textContent = role;
-      sessionPill.innerHTML = '<span class="dot"></span>Admin verified';
-      authStatus.textContent = `${role} · verified`;
-      bindEvents();
-      document.body.dataset.boot = "ready";
-    } catch (error) {
-      sessionPill.innerHTML = '<span class="dot"></span>Session issue';
-      sessionPill.style.background = "var(--danger-soft)";
-      sessionPill.style.color = "var(--danger)";
-      document.body.dataset.boot = "ready";
-    }
-  </script>
+  <div class="modal-root" id="modalRoot" role="presentation"></div>
+  <div id="toastRoot" aria-live="polite"></div>
+  <script type="module" src="/admin/ops/app.js"></script>
 </body>
 </html>

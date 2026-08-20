@@ -4,10 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>CoverMate Operations Portal</title>
+  <title>CoverMate Admin Portal</title>
   <link rel="icon" href="/favicon.svg?v=20260815-mark-xl" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico?v=20260815-mark-xl" sizes="any" />
   <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css" />
+  <script>
+    (function () {
+      try {
+        var raw = window.localStorage.getItem("covermate-admin-session");
+        var session = raw ? JSON.parse(raw) : null;
+        if (!session || Number(session.exp || 0) <= Date.now()) {
+          window.location.replace("/admin/login");
+        }
+      } catch (error) {
+        window.location.replace("/admin/login");
+      }
+    })();
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -36,7 +49,7 @@
       --radius-sm: 14px;
       --sidebar-w: 292px;
       --topbar-h: 86px;
-      --font: "Google Sans", "Noto Sans Thai", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font: "Google Sans", "Google Sans Thai", "Noto Sans Thai", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * {
@@ -198,21 +211,9 @@
       font-weight: 900;
     }
 
-    .badge.planned {
-      background: #5f564a;
-      color: #eadfce;
-      font-size: 10px;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
     .nav-button.active .badge {
       background: #fff;
       color: var(--accent-strong);
-    }
-
-    .nav-button.active .badge.planned {
-      color: #5f381f;
     }
 
     .sidebar-footer {
@@ -367,12 +368,6 @@
       border-color: #e9a39a;
       background: var(--danger-soft);
       color: var(--danger);
-    }
-
-    .pill.planned {
-      border-color: var(--line-strong);
-      background: #eee5d6;
-      color: #5f564a;
     }
 
     .dot {
@@ -695,8 +690,7 @@
     .status.dim,
     .status.later,
     .status.notinterested,
-    .status.lost,
-    .status.planned {
+    .status.lost {
       background: #e3d8c8;
       color: #655d52;
     }
@@ -882,8 +876,63 @@
       line-height: 1.5;
     }
 
+    .rail-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rail-list a,
+    .rail-action,
+    .rail-row {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: var(--surface-soft);
+      color: var(--text);
+      text-align: left;
+      text-decoration: none;
+      font-weight: 850;
+    }
+
+    .rail-list a:hover,
+    .rail-action:hover {
+      background: #fffaf4;
+    }
+
+    .rail-list span,
+    .rail-action span,
+    .rail-row span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
     .module-card {
       min-height: 190px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+      color: var(--text);
+      text-align: left;
+      text-decoration: none;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .module-card:hover {
+      border-color: var(--line-strong);
+      background: #fffaf4;
+      transform: translateY(-2px);
     }
 
     .module-card .round-icon {
@@ -895,6 +944,37 @@
       border-radius: 999px;
       background: var(--accent);
       color: #fff;
+      font-weight: 900;
+    }
+
+    .module-card.sage .round-icon {
+      background: var(--sage);
+    }
+
+    .module-card.ink .round-icon {
+      background: var(--sidebar);
+    }
+
+    .module-status {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 30px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 11px;
+      background: var(--sage-soft);
+      color: #344427;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .module-action {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: auto;
+      color: var(--accent-strong);
       font-weight: 900;
     }
 
@@ -920,15 +1000,6 @@
 
     .notice {
       line-height: 1.5;
-    }
-
-    .notice.planned-state {
-      border-color: var(--line-strong);
-      background: #f6efe5;
-    }
-
-    .notice.planned-state h2 {
-      margin-top: 12px;
     }
 
     .notice.error {
@@ -1157,24 +1228,11 @@
   </style>
 </head>
 <body data-boot="pending">
-  <script>
-    (function () {
-      try {
-        var raw = window.localStorage.getItem("covermate-admin-session");
-        var session = raw ? JSON.parse(raw) : null;
-        if (!session || Number(session.exp || 0) <= Date.now()) {
-          window.location.replace("/admin/login");
-        }
-      } catch (error) {
-        window.location.replace("/admin/login");
-      }
-    })();
-  </script>
   <div class="app">
-    <aside class="sidebar" aria-label="Operations navigation">
-      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+    <aside class="sidebar" aria-label="Admin navigation">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home" data-action="module" data-module="home">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png" alt="CoverMate Insurance Advisory"></span>
-        <span class="brand-sub">OPERATIONS</span>
+        <span class="brand-sub">ADMIN PORTAL</span>
       </a>
       <nav class="nav" id="sideNav"></nav>
       <div class="sidebar-footer">
@@ -1197,9 +1255,9 @@
     </aside>
 
     <div class="mobilebar">
-      <a class="brand" href="/admin" aria-label="CoverMate admin home">
+      <a class="brand" href="/admin" aria-label="CoverMate admin home" data-action="module" data-module="home">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png" alt="CoverMate Insurance Advisory"></span>
-        <span class="brand-sub">OPS</span>
+        <span class="brand-sub">ADMIN</span>
       </a>
       <select class="module-select" id="mobileModuleSelect" aria-label="Choose operations module"></select>
     </div>

@@ -13,8 +13,7 @@ Last updated: 2026-08-16
 | `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the latest reference | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Analytics, and Settings | `admin/index.html` |
-| `/admin/analytics` | Owner | Private analytics dashboard for leads and GA4 reporting readiness | `admin/analytics/index.html` |
-| `/admin/ops` | Owner / operations | Separate Operations Portal for authenticated lead intake and workflow management | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
+| `/admin/ops` | Owner / operations | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
 | `/#admin` | Owner | Control panel mode | `index.html` |
 | `/#preview` | Owner | Preview mode | `index.html` |
@@ -29,7 +28,6 @@ Last updated: 2026-08-16
 | `/#motor-focus`, `/#life-focus` | Same document as `/`; unexposed campaign hash states, not sitemap URLs | `https://covermate.vercel.app/` |
 | `/admin/login` | `noindex,nofollow` | `https://covermate.vercel.app/admin/login/` |
 | `/admin` | `noindex,nofollow` | `https://covermate.vercel.app/admin/` |
-| `/admin/analytics` | `noindex,nofollow` | `https://covermate.vercel.app/admin/analytics/` |
 | `/admin/ops` | `noindex,nofollow` | `https://covermate.vercel.app/admin/ops/` |
 | `/#edit`, `/#admin`, `/#preview` | Runtime `noindex,nofollow` owner modes | `https://covermate.vercel.app/` |
 
@@ -69,8 +67,8 @@ Expected visible sections:
 | --- | --- | --- |
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
 | Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Analytics, Settings, public-site exit, and log out. |
-| Analytics | `/admin/analytics` | Owner-only Firestore lead reporting plus GA4 Data API/export readiness view. |
-| Operations Portal | `/admin/ops` | Authenticated operations workspace. Leads, Tasks, and Audit are live through `/api/ops/*`; Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers are visibly labeled as not wired until real API contracts exist. The API verifies Firebase admin identity, checks role permissions server-side, and stores supported lead workflow/audit state on `contactLeads/*`. |
+| Analytics | `/admin` | First-party admin reporting inside the shared shell. The legacy `/admin/analytics` route may remain reachable for older bookmarks, but new navigation stays in the shell. |
+| Operations Portal | `/admin` or `/admin/ops` | Authenticated operations workspace inside the shared shell. Dashboard, Leads, Tasks, and Audit are live through `/api/ops/*`; Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden until real API contracts exist. The API verifies Firebase admin identity, checks role permissions server-side, and stores supported lead workflow/audit state on `contactLeads/*`. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
 | Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |
@@ -93,15 +91,16 @@ Admin login must land on `/admin` after sign-in.
 
 The `/admin` home actions must stay aligned with the live admin product:
 
-- "Operations" opens `/admin/ops`
+- "Operations" switches to the Operations workspace inside the shared `/admin`
+  shell; `/admin/ops` is accepted as a compatibility entry
 - "Website content" opens `/#admin`; the inline text editor remains reachable
   as a quick action through `/#edit`
-- "Analytics" opens `/admin/analytics`
-- "Settings" opens `/admin/ops#settings`
+- "Analytics" switches to the Analytics module inside the shared shell
+- "Settings" switches to the Settings module inside the shared shell
 - "Public site" clears owner markers and opens clean `/`
 
-Inside `/admin/ops`, planned modules must stay labeled as not wired and must not
-show fake records or browser-local workflow data.
+Inside the Admin Portal shell, unbuilt modules must stay hidden and must not show
+fake records, not-wired tables, or browser-local workflow data.
 
 Unauthenticated direct access to `/admin`, `/admin/analytics`, `/admin/ops`,
 `/#edit`, `/#admin`, and `/#preview` must redirect to `/admin/login`.

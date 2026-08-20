@@ -168,8 +168,9 @@ Update the corresponding Claude designs to reflect the current product decisions
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
 - Admin Portal Home target has four primary modules: `Operations`,
-  `Website content`, `Analytics`, and `Settings`. The home is a gateway; record
-  work stays inside `/admin/ops` and CMS work stays in the existing owner modes.
+  `Website content`, `Analytics`, and `Settings`. The home lives inside the
+  same admin shell as those modules; `/admin/ops` remains only a compatibility
+  entry that defaults to Operations.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear owner markers and land on clean `/`
   without showing owner chrome. Legacy `/?view=public` may be consumed for
@@ -204,7 +205,7 @@ The product should feel personal, careful, and financially credible. It should n
 Primary files:
 
 - Public visitor site and owner hash modes: `/Users/point/CoverMate/index.html`
-- Admin launcher: `/Users/point/CoverMate/admin/index.html`
+- Admin Portal shell: `/Users/point/CoverMate/admin/index.html`
 - Admin login: `/Users/point/CoverMate/admin/login/index.html`
 - Admin analytics: `/Users/point/CoverMate/admin/analytics/index.html`
 - Firebase helpers: `/Users/point/CoverMate/covermate-firebase.js`
@@ -236,8 +237,8 @@ Supporting docs:
 | `/#admin` | Owner arrange/customise drawer over public page | Admin only | No separate index route |
 | `/#preview` | Owner preview of draft | Admin only | No separate index route |
 | `/admin/login` | Google sign-in gate | Admin only | `noindex` |
-| `/admin` | Admin launcher | Admin only | `noindex` |
-| `/admin/analytics` | Owner analytics | Admin only | `noindex` |
+| `/admin` | Admin Portal shell | Admin only | `noindex` |
+| `/admin/ops` | Compatibility entry into Operations in the Admin Portal shell | Admin only | `noindex` |
 
 ## Brand Baseline
 
@@ -680,11 +681,12 @@ Behavior:
 
 Route: `/admin`
 
-Purpose: private owner menu after login and gateway into admin modules.
+Purpose: private owner starting point inside the single Admin Portal shell.
 
 Required elements:
 
-- Shared admin shell visually aligned with `/admin/ops`.
+- Single shared admin shell; sidebar changes views client-side without a full
+  document reload.
 - OIC verify link.
 - H1: `Admin Portal`.
 - Four primary cards:
@@ -692,16 +694,15 @@ Required elements:
   - `Website content`
   - `Analytics`
   - `Settings`
-- Each card states whether the destination is live, partial, or reference/API
-  enforced. Operations must disclose that Leads, Tasks, and Audit are live while
-  other modules remain not wired until real API contracts exist.
+- Cards expose only surfaces that are live or operationally useful today.
+  Unbuilt modules stay hidden until real API contracts exist.
 - Quick actions:
   - `Edit public-page words`
   - `Preview website draft`
   - `Review lead intake`
   - `Open follow-ups`
-- System status rows for Firebase admin session, Operations backend, planned
-  customer/policy modules, Website CMS, and GA4 Data API.
+- System status rows for Firebase admin session, Operations backend, Website
+  CMS, and first-party analytics.
 - `Public site` and `Log out` actions.
 
 `Public site` links land directly on clean `/` after clearing owner markers.
@@ -943,7 +944,8 @@ Do:
   Analytics, and Settings.
 - Keep Google Sans family everywhere.
 - Keep Firestore-first live content behavior visible in design copy/states.
-- Keep planned admin modules visibly labeled instead of showing fake records.
+- Keep unbuilt admin modules hidden instead of showing fake records or
+  not-wired surfaces.
 - Add breathing room where cards or text are crowded.
 
 Do not:
@@ -951,7 +953,7 @@ Do not:
 - Reintroduce duplicate motor nav items.
 - Reintroduce `[object Object]` nav labels.
 - Make `#motor` a separate public website.
-- Remove `/admin` launcher after login.
+- Remove `/admin` Admin Portal Home after login.
 - Hide logout in only one owner mode.
 - Keep explicit paths between `/admin`, `/#edit`, and `/#admin`; public-exit
   and close actions must land on clean `/`.
@@ -987,8 +989,9 @@ Admin:
 - Admin Portal Home exists after login.
 - Portal target has exactly four primary cards: Operations, Website content,
   Analytics, Settings.
-- Operations discloses the live/planned data boundary and `/admin/ops` planned
-  modules render not-wired states instead of fake records.
+- Operations sub-tabs expose Dashboard, Leads, Tasks, and Audit without leaving
+  the admin shell. Unbuilt modules stay hidden instead of rendering not-wired
+  states or fake records.
 - Owner/admin controls use English labels.
 - Logout and mode switching are reachable from edit and arrange flows.
 - Closing arrange panel exits owner mode to clean `/`; reopen tools from

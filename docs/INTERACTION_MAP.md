@@ -72,22 +72,21 @@ that user's UID from Firebase Console and create `admins/<uid>` with
 
 ## Admin Portal Home Flow
 
-After login, `/admin` must show the Admin Portal Home.
+After login, `/admin` must show the single Admin Portal shell.
 
 Home actions:
 
-- `Operations` -> `/admin/ops`
-- `Website content` -> `/#admin`
-- `Analytics` -> `/admin/analytics`
-- `Settings` -> `/admin/ops#settings`
+- `Home`, `Operations`, `Website content`, `Analytics`, and `Settings` switch
+  inside the same document through sidebar state.
+- `Operations` contains sub-tabs for Dashboard, Leads, Tasks, and Audit.
 - `Edit public-page words` quick action -> `/#edit`
 - `Preview website draft` quick action -> `/#preview`
 - `Public site` -> clears owner markers and lands the current tab on clean `/`
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
-The home is a private gateway, not the operations record UI. It may link to
-Operations as a first-class module, but records, mutations, filters, and
-settings details stay inside `/admin/ops` and `/api/ops/*`.
+The Home view is a private starting point inside the same admin shell, not a
+separate launcher that bounces to another admin app. Unbuilt modules remain
+hidden until real production contracts exist.
 
 Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
 `Main`, `Public site`, `Save draft`, `Preview`, `Publish`, `Success`, and
@@ -222,7 +221,8 @@ JSON-LD claim boundaries stay code-owned.
 
 ## Admin Analytics Flow
 
-1. Owner opens `/admin/analytics` from the launcher.
+1. Owner opens the Analytics module inside `/admin` or uses the legacy
+   `/admin/analytics` bookmark.
 2. The page checks `covermate-admin-session` only as a fast local cache;
    missing/expired sessions redirect to `/admin/login`.
 3. Before showing the dashboard, the page verifies the current Firebase user is
@@ -234,9 +234,10 @@ JSON-LD claim boundaries stay code-owned.
    Data API endpoint or scheduled Firestore export exists.
 7. The page does not load visitor Google Analytics scripts.
 
-## Operations Portal Flow
+## Admin Operations Flow
 
-1. Owner or operator opens `/admin/ops` directly after signing in.
+1. Owner or operator opens `/admin` and chooses Operations, or opens legacy
+   `/admin/ops` directly after signing in.
 2. The page checks `covermate-admin-session` as a fast local cache, then verifies
    the active Firebase user through `requireVerifiedAdminSession`.
 3. The page requests a Firebase ID token from the active Firebase user and sends
@@ -245,16 +246,15 @@ JSON-LD claim boundaries stay code-owned.
    role permission matrix server-side, then reads or mutates Firestore.
 5. Lead lists and details render from real `contactLeads/*` API responses.
    Tasks and Audit also come from the Operations API. Customers, Consultations,
-   Quotes, Policies, Renewals, Documents, and Insurers currently return
-   `source: "not_wired"` metadata and render a visible not-wired state, not
-   browser-seeded records or ambiguous empty tables.
+   Quotes, Policies, Renewals, Documents, and Insurers remain hidden until real
+   contracts exist.
 6. Lead filters and global search remain in memory when a lead detail is opened
    and closed.
 7. New lead, status change, task completion, follow-up date, and internal note
    interactions write through `/api/ops/*`. Write responses include the audit
    entry produced by the server; the client does not synthesize audit history.
 8. Website content actions link back to the existing CMS routes (`/#edit`,
-   `/#admin`, `/#preview`, `/admin/analytics`) instead of depending on the
+   `/#admin`, `/#preview`) instead of depending on the
    offline Claude standalone files.
 9. The page does not load visitor Google Analytics scripts.
 
@@ -263,9 +263,9 @@ JSON-LD claim boundaries stay code-owned.
 | Entry | With session | Without session |
 | --- | --- | --- |
 | `/admin/login` | Login page remains available | Login page remains available |
-| `/admin` | Show launcher | Redirect to `/admin/login` |
+| `/admin` | Show Admin Portal shell | Redirect to `/admin/login` |
 | `/admin/analytics` | Show analytics dashboard | Redirect to `/admin/login` |
-| `/admin/ops` | Show Operations Portal | Redirect to `/admin/login` |
+| `/admin/ops` | Show Admin Portal shell defaulted to Operations | Redirect to `/admin/login` |
 | `/#edit` | Show edit mode | Redirect to `/admin/login` |
 | `/#admin` | Show control panel | Redirect to `/admin/login` |
 | `/#preview` | Show preview mode | Redirect to `/admin/login` |

@@ -1,5 +1,7 @@
 import { requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
 
+const K_ADMIN_EVER = "purich-admin-ever-v7";
+
 const STATUS_OPTIONS = [
   ["all", "All"],
   ["new", "New"],
@@ -33,62 +35,35 @@ const TASK_FILTERS = [
 ];
 
 const MODULES = [
-  { id: "dashboard", label: "Dashboard", icon: "home" },
-  { id: "leads", label: "Leads", icon: "users", count: () => leadCounts().needsContact },
-  { id: "customers", label: "Customers", icon: "user" },
-  { id: "consultations", label: "Consultations", icon: "message" },
-  { id: "quotes", label: "Quotes", icon: "file" },
-  { id: "policies", label: "Policies", icon: "shield" },
-  { id: "renewals", label: "Renewals", icon: "refresh", count: () => rowsFor("renewals").filter((item) => Number(item.daysToExpiry ?? item.days ?? 9999) <= 30).length },
-  { id: "tasks", label: "Tasks", icon: "check", count: () => rowsFor("tasks").filter((item) => !item.completed && item.priority !== "Low").length },
-  { id: "documents", label: "Documents", icon: "folder" },
+  { id: "home", label: "Home", icon: "home" },
+  { id: "operations", label: "Operations", icon: "users", count: () => leadCounts().needsContact },
   { id: "content", label: "Website content", icon: "edit" },
-  { id: "insurers", label: "Insurers", icon: "building" },
   { id: "analytics", label: "Analytics", icon: "chart" },
   { id: "settings", label: "Settings", icon: "settings" }
+];
+
+const OPERATIONS_TABS = [
+  ["dashboard", "Dashboard"],
+  ["leads", "Leads"],
+  ["tasks", "Tasks"],
+  ["audit", "Audit"]
 ];
 
 const DATA_RESOURCES = [
   "leads",
   "tasks",
-  "customers",
-  "consultations",
-  "quotes",
-  "policies",
-  "renewals",
-  "documents",
-  "insurers",
   "audit"
 ];
 
 const LIVE_RESOURCES = new Set(["leads", "tasks", "audit"]);
-const PLANNED_RESOURCES = new Set(["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"]);
-const MODULE_RESOURCE = {
-  leads: "leads",
-  customers: "customers",
-  consultations: "consultations",
-  quotes: "quotes",
-  policies: "policies",
-  renewals: "renewals",
-  tasks: "tasks",
-  documents: "documents",
-  insurers: "insurers"
-};
-const PLANNED_RESOURCE_COPY = {
-  customers: "Customer 360 needs a customer aggregate model before it can show real policy relationships.",
-  consultations: "Consultation scheduling and outcomes are still represented only through lead notes/statuses.",
-  quotes: "Quote comparison records need their own API and Firestore contract before decisions can be tracked here.",
-  policies: "Issued policy records are not yet separate from lead status and uploaded documents.",
-  renewals: "Renewal workflows need policy expiry records before this queue can become operational.",
-  documents: "Document metadata and secure open/view actions are not wired to an Operations API endpoint yet.",
-  insurers: "The insurer/product catalogue still comes from public CMS content, not an Operations data model."
-};
 
 const EMPTY_DATA = Object.fromEntries(DATA_RESOURCES.map((key) => [key, []]));
 const EMPTY_META = Object.fromEntries(DATA_RESOURCES.map((key) => [key, {}]));
+const initialRoute = routeStateFromLocation();
 
 const state = {
-  module: hashModule() || "dashboard",
+  module: initialRoute.module,
+  operationsTab: initialRoute.operationsTab,
   recordId: null,
   query: "",
   session: null,
@@ -163,14 +138,13 @@ function bindEvents() {
     state.recordId = null;
     renderScreen();
   });
-  window.addEventListener("hashchange", () => {
-    const next = hashModule();
-    if (next && next !== state.module) {
-      state.module = next;
-      state.recordId = null;
-      render();
-    }
+  globalSearch.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    setOperationsTab("leads");
   });
+  window.addEventListener("hashchange", syncRouteFromLocation);
+  window.addEventListener("popstate", syncRouteFromLocation);
 }
 
 async function loadAllData() {
@@ -245,15 +219,25 @@ async function ensureFirebase() {
 }
 
 function handleClick(event) {
+  if (event.target.closest("[data-public-site]")) {
+    clearOwnerMarker();
+    return;
+  }
+
   const actionEl = event.target.closest("[data-action]");
   if (actionEl) {
+    if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
     if (action === "logout") signOutAdmin();
     if (action === "open-new-lead") openNewLeadModal();
     if (action === "close-modal") closeModal();
     if (action === "module") setModule(actionEl.dataset.module);
+    if (action === "op-tab") setOperationsTab(actionEl.dataset.tab);
     if (action === "back-leads") {
       state.recordId = null;
+      state.module = "operations";
+      state.operationsTab = "leads";
+      writeRoute({ replace: true });
       renderScreen();
     }
     if (action === "lead-filter") {
@@ -302,6 +286,14 @@ function handleClick(event) {
   }
 }
 
+function clearOwnerMarker() {
+  try {
+    window.localStorage.removeItem(K_ADMIN_EVER);
+  } catch {
+    // Public navigation still proceeds.
+  }
+}
+
 function handleSubmit(event) {
   const form = event.target.closest("[data-form]");
   if (!form) return;
@@ -331,11 +323,9 @@ function renderChrome() {
     const count = item.count ? Number(item.count() || 0) : 0;
     const navBadge = count
       ? `<span class="badge">${count}</span>`
-      : isPlannedModule(item.id)
-        ? `<span class="badge planned">Planned</span>`
-        : "";
+      : "";
     return `
-      <button class="nav-button ${item.id === state.module ? "active" : ""}" type="button" data-action="module" data-module="${item.id}">
+      <button class="nav-button ${item.id === state.module ? "active" : ""}" type="button" data-action="module" data-module="${item.id}" ${item.id === state.module ? 'aria-current="page"' : ""}>
         <span class="nav-icon" aria-hidden="true">${iconSvg(item.icon)}</span>
         <span>${escapeHTML(item.label)}</span>
         ${navBadge}
@@ -344,6 +334,7 @@ function renderChrome() {
   }).join("");
   mobileModuleSelect.innerHTML = MODULES.map((item) => `<option value="${item.id}" ${item.id === state.module ? "selected" : ""}>${escapeHTML(item.label)}</option>`).join("");
   roleSelect.value = state.role;
+  newLeadButton.hidden = state.module !== "operations";
   newLeadButton.disabled = !canWrite() || Boolean(state.pending);
   newLeadButton.title = canWrite() ? "Create a lead through the operations API" : "This role cannot create leads";
 }
@@ -363,44 +354,109 @@ function renderTopStatus() {
 
 function renderScreen() {
   if (!screen) return;
-  if (state.module === "dashboard") return renderDashboard();
-  if (state.module === "leads") return state.recordId ? renderLeadDetail(state.recordId) : renderLeads();
-  if (state.module === "customers") return renderCustomers();
-  if (state.module === "consultations") return renderConsultations();
-  if (state.module === "quotes") return renderQuotes();
-  if (state.module === "policies") return renderPolicies();
-  if (state.module === "renewals") return renderRenewals();
-  if (state.module === "tasks") return renderTasks();
-  if (state.module === "documents") return renderDocuments();
+  if (state.module === "home") return renderHome();
+  if (state.module === "operations") {
+    if (state.operationsTab === "leads") return state.recordId ? renderLeadDetail(state.recordId) : renderLeads();
+    if (state.operationsTab === "tasks") return renderTasks();
+    if (state.operationsTab === "audit") return renderAudit();
+    return renderDashboard();
+  }
   if (state.module === "content") return renderContent();
-  if (state.module === "insurers") return renderInsurers();
   if (state.module === "analytics") return renderAnalytics();
   if (state.module === "settings") return renderSettings();
+  return renderHome();
+}
+
+function renderHome() {
+  screen.innerHTML = `
+    ${pageHead("Admin Portal", "A single private entry point for operations, website content, analytics, and admin settings.", `<a class="ghost-button" href="/" data-public-site>Public site</a>`)}
+    <div class="grid four">
+      <button class="card module-card" type="button" data-action="module" data-module="operations" data-admin-home-card="operations">
+        <span class="round-icon" aria-hidden="true">${iconSvg("users")}</span>
+        <h2>Operations</h2>
+        <span class="module-status">Live: leads/tasks/audit</span>
+        <p>Lead intake, follow-ups, task completion, lead notes, status changes, and audit trail run through the Operations API.</p>
+        <span class="module-action">Open workspace -></span>
+      </button>
+
+      <button class="card module-card sage" type="button" data-action="module" data-module="content" data-admin-home-card="content">
+        <span class="round-icon" aria-hidden="true">${iconSvg("edit")}</span>
+        <h2>Website content</h2>
+        <span class="module-status">Live CMS</span>
+        <p>Live copy, section order, visibility, contact details, brand settings, media, preview, and publish remain in the Firestore CMS.</p>
+        <span class="module-action">Open controls -></span>
+      </button>
+
+      <button class="card module-card ink" type="button" data-action="module" data-module="analytics" data-admin-home-card="analytics">
+        <span class="round-icon" aria-hidden="true">${iconSvg("chart")}</span>
+        <h2>Analytics</h2>
+        <span class="module-status">First-party live</span>
+        <p>Private reporting from known CoverMate leads, consultation progress, quote stage, and confirmed policy outcomes.</p>
+        <span class="module-action">Open analytics -></span>
+      </button>
+
+      <button class="card module-card sage" type="button" data-action="module" data-module="settings" data-admin-home-card="settings">
+        <span class="round-icon" aria-hidden="true">${iconSvg("settings")}</span>
+        <h2>Settings</h2>
+        <span class="module-status">API enforced</span>
+        <p>Roles, lead statuses, PDPA consent rules, permissions reference, and audit visibility. The API enforces real permissions.</p>
+        <span class="module-action">Open settings -></span>
+      </button>
+    </div>
+
+    <div class="grid two" style="margin-top:18px;">
+      <section class="panel" aria-labelledby="quickActionsTitle">
+        <h2 id="quickActionsTitle">Quick actions</h2>
+        <ul class="rail-list">
+          <li><a href="/#edit">Edit public-page words <span>Inline copy editor</span></a></li>
+          <li><a href="/#preview">Preview website draft <span>Private draft view</span></a></li>
+          <li><button class="rail-action" type="button" data-action="op-tab" data-tab="leads">Review lead intake <span>Operations list</span></button></li>
+          <li><button class="rail-action" type="button" data-action="op-tab" data-tab="tasks">Open follow-ups <span>Task queue</span></button></li>
+        </ul>
+      </section>
+
+      <section class="panel" aria-labelledby="statusTitle">
+        <h2 id="statusTitle">System status</h2>
+        <div class="rail-list">
+          <div class="rail-row">Firebase admin session <span>${escapeHTML(displayRole(state.sessionRole))} · verified</span></div>
+          <div class="rail-row">Operations backend <span>Leads, tasks, and audit live through /api/ops</span></div>
+          <div class="rail-row">Website CMS <span>Firestore draft/live</span></div>
+          <div class="rail-row">Analytics <span>First-party CoverMate records</span></div>
+        </div>
+        <div class="actions">
+          <a class="ghost-button" href="https://smart.oic.or.th/eservice/Menu1" target="_blank" rel="noopener">Verify licence</a>
+          <button class="ghost-button" type="button" data-action="logout">Log out</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function operationsTabs() {
+  return `
+    <div class="tabs" aria-label="Operations views">
+      ${OPERATIONS_TABS.map(([value, label]) => `
+        <button class="chip ${state.operationsTab === value ? "active" : ""}" type="button" data-action="op-tab" data-tab="${value}" ${state.operationsTab === value ? 'aria-current="page"' : ""}>${escapeHTML(label)}</button>
+      `).join("")}
+    </div>
+  `;
 }
 
 function renderDashboard() {
   const counts = leadCounts();
   const tasks = rowsFor("tasks");
   const overdue = tasks.filter((task) => !task.completed && isOverdue(task.dueAt || task.dueDate)).length;
-  const awaiting = rowsFor("quotes").filter((quote) => /awaiting|sent|considering/i.test(String(quote.state || quote.status || ""))).length;
-  const renewals = rowsFor("renewals").filter((item) => Number(item.daysToExpiry ?? item.days ?? 9999) <= 30).length;
-  const quotesPlanned = isPlannedResource("quotes") && !rowsFor("quotes").length;
-  const renewalsPlanned = isPlannedResource("renewals") && !rowsFor("renewals").length;
   const activeTasks = tasks.filter((task) => !task.completed).slice(0, 5);
   const audit = rowsFor("audit").slice(0, 6);
   screen.innerHTML = `
     ${pageHead("Dashboard", "What needs a decision today, and where the live Operations data is reliable.", connectionPill())}
+    ${operationsTabs()}
     ${errorNotice()}
-    ${plannedSummaryNotice()}
     <div class="grid metrics">
       ${metric("Needs first contact", counts.needsContact, "Enquiries that have not moved beyond first contact.", "Open leads", "leads")}
       ${metric("Overdue follow-ups", overdue, "Dated actions that have passed without being completed.", "Open tasks", "tasks")}
-      ${quotesPlanned
-        ? plannedMetric("Awaiting decision", "Quote records are not wired yet.", "Open quote status", "quotes")
-        : metric("Awaiting decision", awaiting, "Quotes sent or under consideration.", "Open quotes", "quotes")}
-      ${renewalsPlanned
-        ? plannedMetric("Renewals in 30 days", "Policy expiry records are not wired yet.", "Open renewal status", "renewals")
-        : metric("Renewals in 30 days", renewals, "Policies that need renewal action soon.", "Open renewals", "renewals")}
+      ${metric("Known leads", rowsFor("leads").length, "Identified CoverMate records in the Operations API.", "Open leads", "leads")}
+      ${metric("Audit entries", rowsFor("audit").length, "Server-produced activity entries visible to admins.", "Open audit", "audit")}
     </div>
     <div class="grid two" style="margin-top:16px;">
       <section class="panel">
@@ -442,6 +498,7 @@ function renderLeads() {
   const rows = filteredLeads();
   screen.innerHTML = `
     ${pageHead("Leads", "Website enquiries and manually created records are managed here.", resourcePill("leads"))}
+    ${operationsTabs()}
     ${errorNotice("leads")}
     ${filterBar([
       ["Status", "leadStatus", STATUS_OPTIONS],
@@ -484,6 +541,7 @@ function renderLeadDetail(id) {
       </div>
       ${resourcePill("leads")}
     </div>
+    ${operationsTabs()}
     ${errorNotice("leads")}
     <div class="split">
       <div class="grid">
@@ -565,118 +623,11 @@ function renderLeadDetail(id) {
   `;
 }
 
-function renderCustomers() {
-  let rows = rowsFor("customers");
-  if (state.filters.customerHold !== "all") {
-    rows = rows.filter((row) => String(row.holds || row.type || "").toLowerCase().includes(state.filters.customerHold));
-  }
-  rows = rows.filter(matchesSearch);
-  const planned = shouldShowPlannedState("customers", rows);
-  screen.innerHTML = `
-    ${pageHead("Customers", "People who hold at least one policy.", resourcePill("customers"))}
-    ${errorNotice("customers")}
-    ${planned ? plannedSurface("customers") : `
-      ${filterBar([["Holds", "customerHold", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]], rows.length)}
-      ${simpleTable(["Customer", "Policies", "Next renewal", "Annual premium", "Customer since"], rows.map((row) => [
-      titleMeta(row.name || row.id, row.phone || row.contact || ""),
-      titleMeta(String(row.policyCount ?? row.policies ?? 0), row.holds || row.types || ""),
-      row.nextRenewal || row.renewal || "",
-      row.annualPremium || row.premium || "",
-      row.customerSince || row.since || ""
-      ]))}
-    `}
-  `;
-}
-
-function renderConsultations() {
-  const rows = rowsFor("consultations").filter(matchesSearch);
-  const planned = shouldShowPlannedState("consultations", rows);
-  screen.innerHTML = `
-    ${pageHead("Consultations", "Advice sessions, booked or completed, and what came out of each.", resourcePill("consultations"))}
-    ${errorNotice("consultations")}
-    ${planned ? plannedSurface("consultations") : `
-      ${simpleInfoBar("Newest first. Each row should link back to the lead or customer it belongs to.", rows.length)}
-      ${simpleTable(["Consultation", "State", "When", "Mode", "Reference"], rows.map((row) => [
-      titleMeta(row.name || row.customerName || row.id, row.note || row.summary || ""),
-      status(row.state || row.status || ""),
-      formatDateTime(row.when || row.scheduledAt || row.createdAt),
-      row.mode || "",
-      row.reference || row.ref || row.id
-      ]))}
-    `}
-  `;
-}
-
-function renderQuotes() {
-  const rows = rowsFor("quotes").filter(matchesSearch);
-  const planned = shouldShowPlannedState("quotes", rows);
-  screen.innerHTML = `
-    ${pageHead("Quotes", "Comparisons sent and the decisions still outstanding.", resourcePill("quotes"))}
-    ${errorNotice("quotes")}
-    ${planned ? plannedSurface("quotes") : `
-      ${simpleInfoBar("Newest first. A quote is indicative until the insurer confirms.", rows.length)}
-      ${simpleTable(["Quote", "State", "Insurers compared", "Best option", "Sent"], rows.map((row) => [
-      titleMeta(row.title || row.quote || row.customerName || row.id, row.displayId || row.id),
-      titleMeta(status(row.state || row.status || ""), row.wait || row.age || ""),
-      row.insurerCount ?? row.insurersCompared ?? "",
-      row.bestOption || row.best || "",
-      formatDate(row.sentAt || row.sent || row.createdAt)
-      ]))}
-    `}
-  `;
-}
-
-function renderPolicies() {
-  let rows = rowsFor("policies");
-  if (state.filters.policyStatus !== "all") rows = rows.filter((row) => slug(row.status) === state.filters.policyStatus);
-  if (state.filters.policyType !== "all") rows = rows.filter((row) => String(row.type || "").toLowerCase() === state.filters.policyType);
-  rows = rows.filter(matchesSearch);
-  const planned = shouldShowPlannedState("policies", rows);
-  screen.innerHTML = `
-    ${pageHead("Policies", "What each customer actually holds, with whom, and until when.", resourcePill("policies"))}
-    ${errorNotice("policies")}
-    ${planned ? plannedSurface("policies") : `
-      ${filterBar([
-      ["Status", "policyStatus", [["all", "All"], ["active", "Active"], ["renewal", "Renewal pending"], ["expired", "Expired"], ["cancelled", "Cancelled"]]],
-      ["Type", "policyType", [["all", "All"], ["motor", "Motor"], ["life", "Life"], ["health", "Health"]]]
-      ], rows.length)}
-      ${simpleTable(["Policy", "Status", "Insurer / plan", "Expires", "Premium"], rows.map((row) => [
-      titleMeta(row.displayId || row.id, `${row.customerName || row.owner || ""}${row.type ? ` · ${row.type}` : ""}`),
-      status(row.status || ""),
-      titleMeta(row.insurer || "", row.plan || ""),
-      titleMeta(formatDate(row.expiresAt || row.expires), `${row.daysToExpiry ?? row.days ?? ""} days`),
-      titleMeta(row.premium || row.annualPremium || "", row.billingCycle || row.cycle || "")
-      ]))}
-    `}
-  `;
-}
-
-function renderRenewals() {
-  let rows = rowsFor("renewals");
-  const windowValue = state.filters.renewalWindow;
-  if (windowValue !== "all") rows = rows.filter((row) => Number(row.daysToExpiry ?? row.days ?? 9999) <= Number(windowValue));
-  rows = rows.filter(matchesSearch);
-  const planned = shouldShowPlannedState("renewals", rows);
-  screen.innerHTML = `
-    ${pageHead("Renewals", "Policies approaching expiry, grouped by how much time is left.", resourcePill("renewals"))}
-    ${errorNotice("renewals")}
-    ${planned ? plannedSurface("renewals") : `
-      ${renewalFilterBar(rows.length)}
-      ${simpleTable(["Policy", "Time left", "Renewal status", "Last contact", "Decision"], rows.map((row) => [
-      titleMeta(row.policy || row.title || row.displayId || row.id, row.meta || row.insurer || ""),
-      `<span class="status ${Number(row.daysToExpiry ?? row.days ?? 9999) <= 14 ? "overdue" : Number(row.daysToExpiry ?? row.days ?? 9999) <= 30 ? "new" : "completed"}">${escapeHTML(String(row.daysToExpiry ?? row.days ?? ""))} days</span>`,
-      titleMeta(row.renewalStatus || row.status || "", row.expiresAt ? `Expires ${formatDate(row.expiresAt)}` : ""),
-      row.lastContact || "",
-      titleMeta(row.decision || "", row.decisionNote || "")
-      ], true))}
-    `}
-  `;
-}
-
 function renderTasks() {
   const rows = filteredTasks();
   screen.innerHTML = `
     ${pageHead("Tasks and follow-ups", "Anything with a date attached, connected to the record it came from.", resourcePill("tasks"))}
+    ${operationsTabs()}
     ${errorNotice("tasks")}
     <div class="filterbar">
       <div class="filter-row">
@@ -720,24 +671,18 @@ function renderTasks() {
   `;
 }
 
-function renderDocuments() {
-  let rows = rowsFor("documents");
-  if (state.filters.documentCategory !== "all") rows = rows.filter((row) => slug(row.category) === state.filters.documentCategory);
-  rows = rows.filter(matchesSearch);
-  const planned = shouldShowPlannedState("documents", rows);
+function renderAudit() {
+  const rows = rowsFor("audit").slice(0, 80);
   screen.innerHTML = `
-    ${pageHead("Documents", "Organised around the customer and the policy or quotation they belong to.", resourcePill("documents"))}
-    ${errorNotice("documents")}
-    ${planned ? plannedSurface("documents") : `
-      ${filterBar([["Category", "documentCategory", [["all", "All"], ["existing-policy", "Existing policy"], ["quotation", "Quotation"], ["proposal", "Proposal"], ["application", "Application"]]]], rows.length)}
-      ${simpleTable(["File", "Category", "Customer", "Related record", "Uploaded"], rows.map((row) => [
-      row.fileName || row.file || row.name || row.id,
-      status(row.category || ""),
-      row.customerName || row.customer || "",
-      row.relatedLabel || row.related || "",
-      titleMeta(formatDate(row.uploadedAt || row.uploaded || row.createdAt), row.uploadedByName || "")
-      ]))}
-    `}
+    ${pageHead("Audit", "Server-produced activity entries from live Operations actions.", resourcePill("audit"))}
+    ${operationsTabs()}
+    ${errorNotice("audit")}
+    ${rows.length ? simpleTable(["Time", "Kind", "Record", "Change"], rows.map((entry) => [
+      formatDateTime(entry.at),
+      entry.kind || entry.action || "",
+      entry.subject || entry.recordId || "",
+      [entry.from, entry.to].filter(Boolean).join(" -> ") || entry.note || entry.message || ""
+    ]), false) : emptyBlock("No audit entries yet.")}
   `;
 }
 
@@ -774,47 +719,18 @@ function renderContent() {
   `;
 }
 
-function renderInsurers() {
-  const rows = rowsFor("insurers").filter(matchesSearch);
-  const planned = shouldShowPlannedState("insurers", rows);
-  screen.innerHTML = `
-    ${pageHead("Insurers and products", "Who is on the panel, through which relationship, and what is placed with them.", resourcePill("insurers"))}
-    ${errorNotice("insurers")}
-    ${planned ? plannedSurface("insurers") : rows.length ? `<div class="grid four">
-      ${rows.map((item) => `
-        <section class="card">
-          <div style="display:grid; grid-template-columns:58px 1fr; gap:14px; align-items:center;">
-            <span class="avatar" style="width:56px;height:56px;background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);font-size:16px;">${escapeHTML(item.code || initials(item.name || item.id))}</span>
-            <div>
-              <h2 style="margin-bottom:3px;">${escapeHTML(item.name || item.id)}</h2>
-              <p class="cell-meta">${escapeHTML(item.relationship || item.relation || "")}</p>
-            </div>
-          </div>
-          <div class="filter-row" style="margin-top:16px;">${arrayOf(item.products).map((product) => `<span class="status dim">${escapeHTML(product)}</span>`).join("")}</div>
-          <p class="note" style="border-top:1px solid var(--line); padding-top:14px; margin-top:14px;"><span class="dot" style="display:inline-block;color:var(--sage);"></span> ${escapeHTML(item.status || "Active")}</p>
-        </section>
-      `).join("")}
-    </div>` : emptyBlock("No insurer records are available yet.")}
-  `;
-}
-
 function renderAnalytics() {
   const counts = leadCounts();
   const known = rowsFor("leads").length;
   const tab = state.filters.analyticsTab;
   screen.innerHTML = `
-    ${pageHead("Analytics", "Operational metrics from identified CoverMate records.", connectionPill("Partial: Firestore leads live"))}
+    ${pageHead("Analytics", "Operational metrics from identified CoverMate records.", connectionPill("First-party live"))}
     ${errorNotice()}
-    <div class="notice" style="margin-bottom:18px;">
-      <strong>Partial analytics surface</strong>
-      <div>Lead funnel numbers below use live first-party Operations records. GA4 traffic charts remain in the owner analytics page until a secure Data API/export is wired.</div>
-    </div>
     <div class="filterbar">
       <div class="filter-row">
-        ${["overview", "conversion-funnel", "services", "leads", "renewals"].map((value) => `
+        ${["overview", "conversion-funnel", "services", "leads"].map((value) => `
           <button class="chip ${tab === value ? "active" : ""}" type="button" data-action="analytics-tab" data-value="${value}">${titleCase(value.replace(/-/g, " "))}</button>
         `).join("")}
-        <a class="ghost-button" href="/admin/analytics">Open owner analytics view</a>
       </div>
     </div>
     <div class="grid four">
@@ -1003,11 +919,13 @@ async function createLead(form) {
   }
   await withPending("create-lead", async () => {
     const result = await apiFetch("leads", { method: "POST", body });
+    const nextId = result.lead && result.lead.id ? result.lead.id : null;
     closeModal();
+    state.module = "operations";
+    state.operationsTab = "leads";
+    state.recordId = nextId;
+    writeRoute({ replace: true });
     await refresh(["leads", "tasks", "audit"]);
-    state.module = "leads";
-    state.recordId = result.lead && result.lead.id ? result.lead.id : null;
-    render();
     toast("Lead created.");
   });
 }
@@ -1072,17 +990,31 @@ async function withPending(key, task) {
 }
 
 function openLead(id) {
-  state.module = "leads";
+  state.module = "operations";
+  state.operationsTab = "leads";
   state.recordId = id;
-  history.replaceState(null, "", "#leads");
+  writeRoute({ replace: true });
   render();
 }
 
-function setModule(moduleId) {
+function setModule(moduleId, options = {}) {
+  if (isOperationsTab(moduleId)) {
+    setOperationsTab(moduleId, options);
+    return;
+  }
   if (!MODULES.some((item) => item.id === moduleId)) return;
   state.module = moduleId;
   state.recordId = null;
-  history.replaceState(null, "", `#${moduleId}`);
+  writeRoute(options);
+  render();
+}
+
+function setOperationsTab(tabId, options = {}) {
+  if (!isOperationsTab(tabId)) return;
+  state.module = "operations";
+  state.operationsTab = tabId;
+  state.recordId = null;
+  writeRoute(options);
   render();
 }
 
@@ -1144,54 +1076,8 @@ function connectionPill(text) {
 function resourcePill(resource) {
   if (state.errors[resource]) return `<span class="pill error"><span class="dot"></span>API issue</span>`;
   if (state.loading.has(resource)) return `<span class="pill warn"><span class="dot"></span>Loading</span>`;
-  if (isPlannedResource(resource)) return `<span class="pill planned"><span class="dot"></span>Not wired yet</span>`;
   if (LIVE_RESOURCES.has(resource)) return `<span class="pill"><span class="dot"></span>Live data</span>`;
   return connectionPill();
-}
-
-function resourceMeta(resource) {
-  return state.meta[resource] || {};
-}
-
-function isPlannedResource(resource) {
-  const meta = resourceMeta(resource);
-  if (meta.status === "planned" || meta.source === "not_wired") return true;
-  if (meta.source || meta.status) return false;
-  return PLANNED_RESOURCES.has(resource);
-}
-
-function isPlannedModule(moduleId) {
-  const resource = MODULE_RESOURCE[moduleId];
-  return resource ? isPlannedResource(resource) : false;
-}
-
-function shouldShowPlannedState(resource, rows) {
-  return isPlannedResource(resource) && !rows.length && !state.loading.has(resource) && !state.errors[resource];
-}
-
-function plannedSummaryNotice() {
-  const planned = Array.from(PLANNED_RESOURCES).filter((resource) => isPlannedResource(resource));
-  if (!planned.length) return "";
-  return `
-    <div class="notice planned-state" style="margin-bottom:18px;">
-      <strong>Current data boundary</strong>
-      <div>Live today: Leads, Tasks, and Audit. Planned modules stay labeled until their production Firestore/API contracts exist: ${planned.map((item) => titleCase(item)).join(", ")}.</div>
-    </div>
-  `;
-}
-
-function plannedSurface(resource) {
-  const meta = resourceMeta(resource);
-  const label = titleCase(meta.label || resource);
-  const copy = PLANNED_RESOURCE_COPY[resource] || meta.message || "This module needs a production data contract before it can show records.";
-  return `
-    <section class="notice planned-state" data-planned-resource="${escapeHTML(resource)}">
-      <span class="status planned">Not wired yet</span>
-      <h2>${escapeHTML(label)}</h2>
-      <p>${escapeHTML(copy)}</p>
-      <p class="note" style="margin-top:10px;">No fake records are shown here. Use Leads, Tasks, Audit, Website content, and Analytics for the surfaces that are live today.</p>
-    </section>
-  `;
 }
 
 function errorNotice(resource) {
@@ -1213,17 +1099,6 @@ function metric(label, value, copy, cta, moduleId) {
     <section class="card metric">
       <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
       <span class="value">${escapeHTML(String(value))}</span>
-      <p>${escapeHTML(copy)}</p>
-      <button type="button" data-action="module" data-module="${escapeHTML(moduleId)}">${escapeHTML(cta)} -></button>
-    </section>
-  `;
-}
-
-function plannedMetric(label, copy, cta, moduleId) {
-  return `
-    <section class="card metric status-metric">
-      <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
-      <span class="value">Not wired yet</span>
       <p>${escapeHTML(copy)}</p>
       <button type="button" data-action="module" data-module="${escapeHTML(moduleId)}">${escapeHTML(cta)} -></button>
     </section>
@@ -1267,24 +1142,6 @@ function filterBar(groups, count) {
       `).join("")}
     </div>
   `;
-}
-
-function renewalFilterBar(count) {
-  return `
-    <div class="filterbar">
-      <div class="filter-row">
-        <span class="filter-label">Expiring within</span>
-        ${[["7", "7 days"], ["14", "14 days"], ["30", "30 days"], ["60", "60 days"], ["90", "90 days"], ["all", "All"]].map(([value, label]) => `
-          <button class="chip ${state.filters.renewalWindow === value ? "active" : ""}" type="button" data-action="renewal-filter" data-value="${value}">${escapeHTML(label)}</button>
-        `).join("")}
-        <span class="record-count">${count} records</span>
-      </div>
-    </div>
-  `;
-}
-
-function simpleInfoBar(text, count) {
-  return `<div class="filterbar"><div class="filter-row"><span>${escapeHTML(text)}</span><span class="record-count">${count} records</span></div></div>`;
 }
 
 function leadRow(lead) {
@@ -1381,9 +1238,50 @@ function canWrite() {
   return state.sessionRole !== "readonly" && state.role !== "readonly";
 }
 
-function hashModule() {
-  const id = (location.hash || "").replace("#", "");
-  return MODULES.some((item) => item.id === id) ? id : "";
+function isOperationsTab(value) {
+  return OPERATIONS_TABS.some(([id]) => id === value);
+}
+
+function routeStateFromLocation() {
+  const rawHash = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
+  const hash = rawHash.split(/[?&]/)[0];
+  const base = {
+    module: location.pathname.replace(/\/$/, "") === "/admin/ops" ? "operations" : "home",
+    operationsTab: "dashboard"
+  };
+  if (!hash) return base;
+  if (isOperationsTab(hash)) {
+    return { module: "operations", operationsTab: hash };
+  }
+  if (hash === "operations") return { module: "operations", operationsTab: "dashboard" };
+  if (MODULES.some((item) => item.id === hash)) {
+    return { module: hash, operationsTab: "dashboard" };
+  }
+  return base;
+}
+
+function syncRouteFromLocation() {
+  const next = routeStateFromLocation();
+  if (next.module === state.module && next.operationsTab === state.operationsTab) return;
+  state.module = next.module;
+  state.operationsTab = next.operationsTab;
+  state.recordId = null;
+  render();
+}
+
+function routeUrl() {
+  if (state.module === "home") return "/admin";
+  if (state.module === "operations") {
+    return state.operationsTab === "dashboard" ? "/admin#operations" : `/admin#${state.operationsTab}`;
+  }
+  return `/admin#${state.module}`;
+}
+
+function writeRoute(options = {}) {
+  const method = options.replace ? "replaceState" : "pushState";
+  const nextUrl = routeUrl();
+  if (`${location.pathname}${location.search}${location.hash}` === nextUrl) return;
+  history[method](null, "", nextUrl);
 }
 
 function matchesSearch(row) {
@@ -1453,6 +1351,17 @@ function normalizeRole(value) {
   if (["ops", "operations"].includes(role)) return "ops";
   if (["readonly", "read-only", "read"].includes(role)) return "readonly";
   return "owner";
+}
+
+function displayRole(role) {
+  const map = {
+    owner: "Owner / Administrator",
+    admin: "Owner / Administrator",
+    advisor: "Adviser",
+    ops: "Operations",
+    readonly: "Read-only"
+  };
+  return map[role] || role || "Admin";
 }
 
 function timestampMs(value) {

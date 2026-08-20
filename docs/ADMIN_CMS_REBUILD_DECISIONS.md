@@ -28,7 +28,7 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
 | Admin Portal Home | `/admin` is now the unified private gateway for `Operations`, `Website content`, `Analytics`, and `Settings`. | Updated after Operations became API-backed. The old three-card "Manage your site" launcher is retired. |
-| Operations portal | Approved as a separate product surface on 2026-08-10. | `/admin/ops/` ships independently from the launcher. The current implementation is API-backed: `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state on `contactLeads/*`. |
+| Operations portal | Approved as an Operations module inside the shared Admin Portal shell. | `/admin/ops/` remains a compatibility entry, but the current implementation is the same shell as `/admin`. `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state on `contactLeads/*`. |
 | Public exit | New UI exits directly to clean `/`. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Owner close/public-exit actions leave owner mode and land on clean `/`. | Do not preserve an in-tab owner workspace after `Public site`, drawer X, or edit public-exit. |
@@ -72,16 +72,17 @@ Phase 6 adds media metadata, global contact controls, and guarded SEO editing.
 Phase 7 aligns analytics instrumentation/reporting without breaking event
 history or sending PII.
 
-Phase 8, the Operations portal, has owner approval as a separate route.
-`/admin/ops/` now reuses the admin session/Firebase allowlist and calls
+Phase 8, the Operations portal, now lives as a module inside the shared Admin
+Portal shell. `/admin/ops/` remains a compatibility route; it reuses the admin
+session/Firebase allowlist and calls
 `/api/ops/*` for lead reads, lead creation, status updates, notes, follow-up
 dates, task completion, and audit. The first backend pass stores operations
 state on `contactLeads/*` to avoid adding un-deployed collections. Later work may
 split customers, policies, documents, scheduler jobs, retention/deletion, and
 global audit into dedicated collections after privacy/security review.
 Until those contracts exist, Customers, Consultations, Quotes, Policies,
-Renewals, Documents, and Insurers must be labeled as not wired and must not show
-demo or browser-seeded records.
+Renewals, Documents, and Insurers must stay hidden in the UI and must not show
+demo, not-wired, or browser-seeded records.
 
 ## Non-Negotiables
 

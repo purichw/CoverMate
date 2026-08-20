@@ -18,7 +18,7 @@ before assuming changes are live.
 - [`docs/SITE_MAP.md`](docs/SITE_MAP.md) - routes, visitor sections, admin
   surfaces, navigation contracts, and insurer assets
 - [`docs/INTERACTION_MAP.md`](docs/INTERACTION_MAP.md) - visitor, admin login,
-  launcher, edit, panel, auth, language, and first-paint flows
+  portal shell, edit, panel, auth, language, and first-paint flows
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) - localStorage keys,
   ownership, migration rules, and limitations
 - [`docs/NEEDS_CALCULATOR.md`](docs/NEEDS_CALCULATOR.md) - public calculator
@@ -47,9 +47,10 @@ Routes:
 - `/#motor` visitor alias into the main motor-insurance / insurer section
 - `/#admin`, `/#edit`, and `/#preview` owner modes inside the visitor bundle
 - `/admin/login` owner auth gate
-- `/admin` owner launcher
-- `/admin/analytics` private owner analytics dashboard
-- `/admin/ops` private Operations Portal
+- `/admin` private Admin Portal shell with Home, Operations, Website content,
+  Analytics, and Settings
+- `/admin/ops` compatibility entry into the same Admin Portal shell, defaulting
+  to Operations
 
 Admin sign-in uses Firebase Auth and a Firestore `admins/{uid}` allowlist. CMS
 draft/live/history content is Firestore-first under `sites/covermate/*`, and

@@ -234,19 +234,29 @@ try {
   await page.locator("#dataMode", { hasText: "Live: leads/tasks/audit" }).waitFor();
   const bodyText = await page.locator("body").innerText();
   if (/demo/i.test(bodyText)) throw new Error("Operations Portal rendered demo copy.");
-  if (!bodyText.includes("Current data boundary") || !bodyText.includes("Planned modules stay labeled")) {
-    throw new Error("Dashboard did not disclose the current live/planned data boundary.");
+  if (/not wired|planned modules|customers|policies|renewals|documents|insurers/i.test(bodyText)) {
+    throw new Error("Operations shell exposed a hidden stub/planned module.");
   }
   await page.screenshot({ path: `${outDir}/ops-dashboard-desktop.png`, fullPage: true });
 
-  await page.getByRole("button", { name: /Customers/ }).first().click();
-  await page.getByRole("heading", { name: "Customers", exact: true }).waitFor();
-  await page.getByText("Not wired yet").first().waitFor();
-  const customersText = await page.locator("body").innerText();
-  if (!customersText.includes("No fake records are shown here")) {
-    throw new Error("Planned customer module did not explain that no fake records are shown.");
+  let documentRequests = 0;
+  page.on("request", (request) => {
+    if (request.isNavigationRequest() && request.resourceType() === "document") documentRequests += 1;
+  });
+  const headingByModule = {
+    Home: "Admin Portal",
+    Operations: "Dashboard",
+    "Website content": "Website content",
+    Analytics: "Analytics",
+    Settings: "Settings"
+  };
+  for (const label of ["Home", "Operations", "Website content", "Analytics", "Settings", "Operations"]) {
+    await page.getByRole("button", { name: new RegExp(label) }).first().click();
+    await page.getByRole("heading", { name: headingByModule[label] }).waitFor();
   }
-  await page.screenshot({ path: `${outDir}/ops-customers-planned-desktop.png`, fullPage: true });
+  if (documentRequests !== 0) {
+    throw new Error(`Admin sidebar triggered ${documentRequests} document navigation request(s).`);
+  }
 
   await page.getByRole("button", { name: /Leads/ }).first().click();
   await page.getByRole("heading", { name: "Leads" }).waitFor();
