@@ -9,6 +9,24 @@ export const HISTORY_KEY = "purich-history-v3";
 export const HISTORY_LIMIT = 20;
 
 export const OWNER_HASHES = new Set(["#admin", "#edit", "#preview"]);
+export const OWNER_PATHS = new Set(["/admin/content", "/admin/edit", "/admin/preview"]);
+
+export function normalizePath(path = "") {
+  const clean = String(path || "").replace(/\/+$/, "");
+  return clean || "/";
+}
+
+export function isOwnerPath(path = "") {
+  return OWNER_PATHS.has(normalizePath(path));
+}
+
+export function ownerModeFromPath(path = "") {
+  const clean = normalizePath(path);
+  if (clean === "/admin/content") return "admin";
+  if (clean === "/admin/edit") return "edit";
+  if (clean === "/admin/preview") return "preview";
+  return "";
+}
 
 function storage() {
   try {
@@ -789,7 +807,11 @@ const contract = {
   HISTORY_KEY,
   HISTORY_LIMIT,
   OWNER_HASHES,
+  OWNER_PATHS,
+  normalizePath,
   isOwnerHash,
+  isOwnerPath,
+  ownerModeFromPath,
   readJSON,
   writeJSON,
   removeKey,

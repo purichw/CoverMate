@@ -52,22 +52,25 @@ flowchart TD
   Launcher --> Session
   Analytics --> Session
   Analytics --> Leads
-  Launcher --> PublicEdit["/#edit"]
-  Launcher --> PublicAdmin["/#admin"]
+  Launcher --> PublicEdit["/admin/edit"]
+  Launcher --> PublicAdmin["/admin/content"]
 ```
 
 ## Source Surfaces
 
-`index.html` owns the public visitor site and owner hash modes:
+`index.html` owns the public visitor site and owner CMS modes:
 
 - `/`
 - `/#motor`
 - `/#life`
 - `/#motor-focus`
 - `/#life-focus`
-- `/#edit`
-- `/#admin`
-- `/#preview`
+- `/admin/edit`
+- `/admin/content`
+- `/admin/preview`
+
+Legacy incoming `/#edit`, `/#admin`, and `/#preview` remain session-gated for
+compatibility, but current admin UI must generate `/admin/...` paths instead.
 
 `/#motor` and `/#life` are aliases into the main site, re-aimed to `#insurers`
 and `#cover` after hydration while preserving the global navbar.
@@ -206,8 +209,9 @@ after login.
 The private analytics page owns owner-only reporting for lead capture, funnel
 readiness, lead mix, recent leads, and GA4 Data API connection state.
 
-The `/#admin` hash mode owns the actual control panel for sections, content,
-brand/chrome, theme/data, export, restore, draft, preview, and publish behavior.
+The `/admin/content` CMS mode owns the actual control panel for sections,
+content, brand/chrome, theme/data, export, restore, draft, preview, and publish
+behavior.
 
 Explicit `Save draft` and `Publish` are recoverable owner actions. They use
 custom confirmation dialogs, wait for successful Firestore writes, and then show
@@ -215,21 +219,22 @@ dismissible success toasts with a 30-second `Undo`. Undo for draft restores the
 previous draft state; undo for publish republishes the previous live state and
 records that undo in version history.
 
-The owner hash modes also own the admin continuation UI:
+The owner CMS modes also own the admin continuation UI:
 
-- closing the `/#admin` drawer clears owner markers and lands on clean `/`;
-- `/#edit` shows its own warm-ink owner dock: the collapsed row keeps only
+- closing the `/admin/content` drawer clears owner markers and lands on `/admin`;
+- `/admin/edit` shows its own warm-ink owner dock: the collapsed row keeps only
   `Editing on page` and `Tools` visible. If the admin drawer is open while text
   editing stays active, the status becomes `Editing on page · Panel open`, and
   the Tools menu collapses after the Panel destination is chosen.
   `Tools` expands a single dark-ink command palette grouped into `Draft` and
   `Go to` actions. `Publish` is the only terracotta-filled action; the other
   owner commands stay quiet cream/outline actions;
-- leaving `/#edit` is done through the `Tools` menu (`Main`, `Panel`,
+- leaving `/admin/edit` is done through the `Tools` menu (`Main`, `Panel`,
   `Public site`, or `Log out`); there is no separate collapsed `Close` button;
-- `Public site` clears owner markers and navigates the current tab to clean `/`.
-  Legacy incoming `/?view=public` is still consumed and cleaned for
-  compatibility, but new UI must not generate it;
+- `Public site` / `View live site` always opens clean `/` in a new browser tab.
+  It must not move the current Admin tab out of the `/admin` namespace. Legacy
+  incoming `/?view=public` is still consumed and cleaned for compatibility, but
+  new UI must not generate it;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
@@ -264,8 +269,8 @@ Do not add Google Analytics to `/admin`, `/admin/login`, or `/admin/analytics`,
 and do not send visitor names, phone numbers, LINE IDs, emails, or message text
 as Analytics event parameters.
 
-Do not redirect successful login directly to `/#admin`; keep `/admin` as the
-post-login launcher.
+Do not redirect successful login directly to `/admin/content` or a legacy owner
+hash; keep `/admin` as the post-login launcher.
 
 Do not remove the early `/admin/login` session gate from `/admin`.
 
@@ -276,8 +281,9 @@ Do not remove the `covermate-template-cloak` rules that hide raw `<x-dc>`
 template content before hydration on visitor and admin pages.
 
 Do not add an owner reopen bar to the visitor route. Closing admin mode or using
-the edit/public-site exit must land on clean `/`; reopen owner tools from the
-private `/admin` launcher.
+the edit `Main` exit must stay inside the private `/admin` namespace. The
+explicit `Public site`/`View live site` action opens clean `/` in a new tab and
+must not navigate the current Admin tab.
 
 Do not let a stored admin session or stale `purich-admin-ever-v7` marker show
 owner chrome on a clean visitor `/` route. Admin authentication and visible
@@ -288,8 +294,8 @@ rehydrate the page as if they were owner routes. Same-page anchors should scroll
 in place to avoid visible flicker.
 
 Do not reintroduce an ambiguous drawer-header-only sign-out button. Sign-out
-must remain reachable from `/admin`, the `/#admin` owner tools, and the `/#edit`
-owner toolbar.
+must remain reachable from `/admin`, the `/admin/content` owner tools, and the
+`/admin/edit` owner toolbar.
 
 Do not reduce mobile controls below 44px-class touch targets.
 

@@ -5,9 +5,30 @@
     {
       "source": "/api/ops/:path*",
       "destination": "/api/ops?path=:path*"
+    },
+    {
+      "source": "/admin/content",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/edit",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/preview",
+      "destination": "/"
     }
   ],
   "headers": [
+    {
+      "source": "/admin/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

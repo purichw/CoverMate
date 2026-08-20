@@ -101,6 +101,7 @@ const toastRoot = document.getElementById("toastRoot");
 init();
 
 async function init() {
+  clearOwnerMarker();
   try {
     state.session = await requireVerifiedAdminSession({ redirectTo: "/admin/login" });
     if (!state.session) return;
@@ -369,7 +370,7 @@ function renderScreen() {
 
 function renderHome() {
   screen.innerHTML = `
-    ${pageHead("Admin Portal", "A single private entry point for operations, website content, analytics, and admin settings.", `<a class="ghost-button" href="/" data-public-site>Public site</a>`)}
+    ${pageHead("Admin Portal", "A single private entry point for operations, website content, analytics, and admin settings.", `<a class="ghost-button" href="/" target="_blank" rel="noopener noreferrer" data-public-site>Public site</a>`)}
     <div class="grid four">
       <button class="card module-card" type="button" data-action="module" data-module="operations" data-admin-home-card="operations">
         <span class="round-icon" aria-hidden="true">${iconSvg("users")}</span>
@@ -408,8 +409,8 @@ function renderHome() {
       <section class="panel" aria-labelledby="quickActionsTitle">
         <h2 id="quickActionsTitle">Quick actions</h2>
         <ul class="rail-list">
-          <li><a href="/#edit">Edit public-page words <span>Inline copy editor</span></a></li>
-          <li><a href="/#preview">Preview website draft <span>Private draft view</span></a></li>
+          <li><a href="/admin/edit">Edit public-page words <span>Inline copy editor</span></a></li>
+          <li><a href="/admin/preview">Preview website draft <span>Private draft view</span></a></li>
           <li><button class="rail-action" type="button" data-action="op-tab" data-tab="leads">Review lead intake <span>Operations list</span></button></li>
           <li><button class="rail-action" type="button" data-action="op-tab" data-tab="tasks">Open follow-ups <span>Task queue</span></button></li>
         </ul>
@@ -695,10 +696,10 @@ function renderContent() {
       <div>These actions open the existing Firestore draft/live CMS. They are not part of the new Operations CRUD API.</div>
     </div>
     <div class="grid four">
-      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels.", "/#edit", editDisabled)}
-      ${contentCard("Arrange and customise", "Use the current control panel for section order, visibility, brand details, footer, backup and restore.", "/#admin", editDisabled)}
-      ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", "/#preview", false)}
-      ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", "/#admin", editDisabled)}
+      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels.", "/admin/edit", editDisabled)}
+      ${contentCard("Arrange and customise", "Use the current control panel for section order, visibility, brand details, footer, backup and restore.", "/admin/content", editDisabled)}
+      ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", "/admin/preview", false)}
+      ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", "/admin/content", editDisabled)}
     </div>
     <section class="panel" style="margin-top:18px;">
       <h2>Operator-editable surfaces</h2>
