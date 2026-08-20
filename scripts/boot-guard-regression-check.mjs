@@ -86,6 +86,11 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function isAllowedBrowserBeaconFailure(requestUrl) {
+  const url = new URL(requestUrl);
+  return url.hostname === "www.google-analytics.com" && url.pathname === "/g/collect";
+}
+
 async function main() {
   const local = remoteUrl ? null : await startServer();
   const url = remoteUrl || `${local.baseUrl}/?bootGuardCheck=1`;
@@ -105,6 +110,7 @@ async function main() {
     page.on("requestfailed", (request) => {
       const requestUrl = request.url();
       if (requestUrl.endsWith("/favicon.ico")) return;
+      if (isAllowedBrowserBeaconFailure(requestUrl)) return;
       failed.push(`${requestUrl} ${request.failure()?.errorText || "failed"}`);
     });
     page.on("response", (response) => {
