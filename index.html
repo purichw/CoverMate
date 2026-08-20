@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th-TH">
+<html lang="th-TH" data-covermate-booting="true">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -40,6 +40,19 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { min-height: 100%; background: #f5ead8; }
     body { min-height: 100vh; font-family: "Google Sans", "Google Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    html[data-covermate-booting="true"],
+    html[data-covermate-booting="true"] body {
+      background: #f5ead8 !important;
+    }
+    html[data-covermate-booting="true"] body {
+      color: transparent !important;
+      overflow-x: hidden;
+      text-shadow: none !important;
+      visibility: hidden !important;
+    }
+    html[data-covermate-booting="true"] body > * {
+      visibility: hidden !important;
+    }
     #__bundler_thumbnail,
     #__bundler_loading,
     #__bundler_placeholder {
@@ -58,7 +71,7 @@
     }
   </style>
   <noscript>
-    <style>#__bundler_loading { display: none; }</style>
+    <style>html[data-covermate-booting="true"] body, html[data-covermate-booting="true"] body > * { color: #201e1d !important; visibility: visible !important; } #__bundler_loading { display: none; }</style>
     <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 &quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
       This page requires JavaScript to display.
     </div>
@@ -73,6 +86,34 @@
 document.addEventListener('DOMContentLoaded', async function() {
   const loading = document.getElementById('__bundler_loading');
   function setStatus(msg) { if (loading) loading.textContent = msg; }
+  const BOOT_ATTR = 'data-covermate-booting';
+  const BOOT_GUARD_ID = 'covermate-hydration-guard';
+  let revealTimer = window.setTimeout(revealCoverMate, 10000);
+  function revealCoverMate() {
+    try { window.clearTimeout(revealTimer); } catch (err) {}
+    try {
+      const guard = document.getElementById(BOOT_GUARD_ID);
+      if (guard) guard.remove();
+      if (document.documentElement) document.documentElement.removeAttribute(BOOT_ATTR);
+      if (document.body) {
+        document.body.style.removeProperty('visibility');
+        document.body.style.removeProperty('color');
+      }
+    } catch (err) {
+      /* Keep fallback reveal non-fatal. */
+    }
+  }
+  function installTemplateGuard(source) {
+    const guard =
+      '<style id="' + BOOT_GUARD_ID + '">' +
+      'html,body{min-height:100%;background:#f5ead8!important}' +
+      'body{visibility:hidden!important;color:transparent!important}' +
+      '</style>';
+    const headOpen = source.match(/<head[^>]*>/i);
+    if (!headOpen) return guard + source;
+    const i = headOpen.index + headOpen[0].length;
+    return source.slice(0, i) + guard + source.slice(i);
+  }
 
   const FONT_MIME = /^(font[/]|application[/](x-)?font-|application[/]vnd\.ms-fontobject)/i;
   const MIME_TOKEN = /^[\w.+-]+[/][\w.+-]+$/;
@@ -409,6 +450,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       const i = headOpen.index + headOpen[0].length;
       template = template.slice(0, i) + resourceScript + template.slice(i);
     }
+    template = installTemplateGuard(template);
 
     // Parse the template and swap the root element. Scripts inserted via
     // DOMParser/replaceWith are inert per spec — re-create each with
@@ -465,7 +507,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
       window.Babel.transformScriptTags();
     }
+    revealCoverMate();
   } catch (err) {
+    revealCoverMate();
     setStatus('Error unpacking: ' + err.message);
     console.error('Bundle unpack error:', err);
   }
