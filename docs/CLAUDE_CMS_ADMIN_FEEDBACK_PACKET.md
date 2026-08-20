@@ -429,7 +429,7 @@ production/dev line.
 | Admin launcher | `/admin` remains after login as the Admin Portal shell with four modules: `Operations`, `Website content`, `Analytics`, and `Settings`. Inside `Website content`, `Edit the words` is the unified entry and the control panel is opened from editor mode via `Tools -> Panel`. |
 | Admin labels | Owner/admin chrome labels are English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`. Do not reintroduce Thai `ออก` as an ambiguous action label. |
 | Public-site exit | `Public site` opens a new tab with `/?view=public`, clears owner markers in that visitor tab, and cleans the URL back to `/`. The current admin tab stays in owner mode. |
-| Admin close paths | Closing `/#admin` or `/#edit` returns to `/admin`, not to the visitor page. A signed-in admin session must not visibly alter the public visitor page. |
+| Admin close paths | Closing the standalone control panel returns to `/admin`, not to the visitor page. Closing a panel opened from editor mode only hides that panel and stays in `/admin/edit`. A signed-in admin session must not visibly alter the public visitor page. |
 | Save/Publish | Must use custom confirmation dialogs, wait for Firestore writes, then show dismissible success toasts with a 30-second `Undo`. |
 | CMS content | Firestore live content is canonical for visitors. Draft is private. Local fallback/cache may not override successfully loaded Firestore live content. |
 | Typography | Google Sans family everywhere. Do not reintroduce Caprasimo, Chonburi, or unrelated display/body fonts. |
@@ -1313,7 +1313,11 @@ Required capabilities:
   a dismissible toast with `Undo` available for 30 seconds.
 - `Undo` after publish restores the previous live snapshot by publishing it
   back to Firestore.
-- Closing the drawer should not trap the owner; it returns to `/admin`.
+- Closing the standalone drawer should not trap the owner; it returns to
+  `/admin`.
+- Closing the drawer after `Tools → Panel` from editor mode should only hide the
+  drawer and keep `/admin/edit`, the owner dock, and inline edit affordances
+  active.
 - No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
@@ -1326,7 +1330,9 @@ Required capabilities:
   scrollable column with a 460px cap when viewport height allows. Use
   `Tools → Main` or `Tools → Panel` to leave edit mode. `Publish` is
   the only terracotta-filled dock action.
-- Save/Preview/Publish remain available from `/#admin` and the inline-edit dock; closing the drawer returns to `/admin`.
+- Save/Preview/Publish remain available from the standalone control panel and
+  the inline-edit dock. Closing a standalone control panel returns to `/admin`;
+  closing the panel opened from editor mode stays in `/admin/edit`.
 - `Log out` should be available consistently from owner surfaces.
 - The drawer must stack above visitor sticky header/navigation on mobile and
   should not fade in over the public header.
@@ -1646,8 +1652,9 @@ When an admin intentionally opens the live public site from private admin
 surfaces, `Public site` opens a new tab with `/?view=public`. The public bundle
 consumes that flag, cleans the URL back to `/`, and removes the owner marker
 `purich-admin-ever-v7` so admin chrome does not appear on the visitor view. The
-current admin tab remains in owner mode. Closing `/#admin` or `/#edit` returns
-to the private `/admin` launcher.
+current admin tab remains in owner mode. Closing the standalone control panel
+returns to the private `/admin` launcher; closing a panel opened from
+`/admin/edit` stays in the editor and only hides the panel.
 
 The public/admin CMS normalizes known legacy values that conflict with current
 product decisions before rendering, caching, saving, or publishing. This is a
@@ -1935,7 +1942,9 @@ fields.
    publishes the previous live snapshot back to the visitor site.
 7. Native browser `confirm()` dialogs are not used for owner CMS actions.
 8. Public visitors hydrate the latest `states/live` before rendering.
-9. The drawer close button returns to `/admin`. It does not sign out.
+9. The standalone drawer close button returns to `/admin`. The drawer close
+   button opened from editor mode only hides the drawer and stays in
+   `/admin/edit`. Neither path signs out.
 10. Owner draft/publish recovery remains available through `/admin`, `/#admin`,
     and the inline-edit dock rather than a public-page owner bar.
 11. The action bar inside the drawer keeps editing/navigation/session actions
@@ -2185,7 +2194,10 @@ records that undo in version history.
 
 The owner hash modes also own the admin continuation UI:
 
-- closing the `/#admin` drawer returns to `/admin`, keeping the owner in a private admin surface;
+- closing the standalone control-panel drawer returns to `/admin`, keeping the
+  owner in a private admin surface;
+- closing the drawer opened from `/admin/edit` via `Tools → Panel` only hides
+  the drawer and keeps the editor dock/contenteditable surface active;
 - `/#edit` shows its own warm-ink owner dock: the collapsed row keeps
   `Editing on page` and `Tools` visible. If the admin drawer is open while text
   editing stays active, the status becomes `Editing on page · Panel open`.

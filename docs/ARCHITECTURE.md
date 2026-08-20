@@ -229,7 +229,11 @@ records that undo in version history.
 
 The owner CMS modes also own the admin continuation UI:
 
-- closing the `/admin/content` drawer clears owner markers and lands on `/admin`;
+- closing the standalone `/admin/content` drawer clears owner markers and lands
+  on `/admin`;
+- closing a panel opened from `/admin/edit` via `Tools → Panel` only hides the
+  drawer and keeps `/admin/edit`, the owner dock, and inline edit affordances
+  active;
 - `/admin/edit` shows its own warm-ink owner dock: the collapsed row keeps only
   `Editing on page` and `Tools` visible. If the admin drawer is open while text
   editing stays active, the status becomes `Editing on page · Panel open`, and

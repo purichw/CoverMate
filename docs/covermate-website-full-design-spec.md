@@ -799,7 +799,11 @@ Required capabilities:
   a dismissible toast with `Undo` available for 30 seconds.
 - `Undo` after publish restores the previous live snapshot by publishing it
   back to Firestore.
-- Closing the drawer should not trap the owner; it returns to `/admin`.
+- Closing the drawer from the standalone control-panel route returns to
+  `/admin`.
+- Closing the drawer after it was opened from `/admin/edit` via `Tools → Panel`
+  only hides the drawer; it must stay on `/admin/edit`, keep the editor dock
+  visible, and keep inline text/image edit affordances active.
 - No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/#edit` uses the warm-ink owner dock from the Claude owner-dock reference.
@@ -811,7 +815,9 @@ Required capabilities:
   `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
   scrollable column with a 460px cap when viewport height allows. `Publish` is
   the only terracotta-filled dock action.
-- Save/Preview/Publish remain available from `/#admin` and the inline-edit dock; closing the drawer returns to `/admin`.
+- Save/Preview/Publish remain available from the control panel and the
+  inline-edit dock. Closing a standalone control panel returns to `/admin`;
+  closing the panel opened from the editor stays in `/admin/edit`.
 - `Log out` should be available consistently from owner surfaces.
 - The drawer must stack above visitor sticky header/navigation on mobile and
   should not fade in over the public header.
