@@ -143,8 +143,35 @@ details. The renewal reminder form uses the same validated collection with
 `qtype: "review"` and stores the selected insurance type/month in generated
 topic and summary fields.
 
-Admin users can read, update, or delete leads. `/admin/analytics` currently uses
-`CoverMateFirebase.loadContactLeads()` to render the latest lead analytics.
+Admin users can read, update, or delete leads. `/admin/analytics` uses
+`CoverMateFirebase.loadContactLeads()` to render Firestore lead analytics and
+`/api/analytics` to request aggregate GA4 traffic when server credentials are
+configured.
+
+## Admin Analytics GA4 Data API
+
+The server endpoint is:
+
+```text
+/api/analytics?days=30
+```
+
+It requires a Firebase ID token, verifies the signed-in user against
+`admins/{uid}`, then queries GA4 with server-side service-account credentials.
+The browser never receives or stores GA4 service-account secrets.
+
+Add these Vercel environment variables for production live traffic metrics:
+
+```text
+COVERMATE_GA4_PROPERTY_ID=<numeric GA4 property id>
+COVERMATE_GA4_CLIENT_EMAIL=<service account email>
+COVERMATE_GA4_PRIVATE_KEY=<service account private key>
+```
+
+Use the numeric GA4 property ID from Google Analytics Admin, not
+`G-5TF3C235EF`. Grant the service account Viewer or Analyst access to that GA4
+property. If these variables are absent, `/admin/analytics` still loads
+Firestore leads and shows `Setup needed` for traffic instead of fake data.
 
 ## Analytics Summaries
 
@@ -155,6 +182,6 @@ exports:
 sites/covermate/analytics/<doc-id>
 ```
 
-Do not put GA Data API service-account secrets in the static browser app. Use a
-serverless endpoint or scheduled export if real GA traffic metrics are needed in
-the private dashboard.
+Do not put GA Data API service-account secrets in the static browser app. The
+serverless endpoint above is the current live GA4 path; scheduled exports remain
+reserved for later batch reporting.

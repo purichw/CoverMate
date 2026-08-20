@@ -93,8 +93,10 @@ The `/admin` home actions must stay aligned with the live admin product:
 
 - "Operations" switches to the Operations workspace inside the shared `/admin`
   shell; `/admin/ops` is accepted as a compatibility entry
-- "Website content" opens `/#admin`; the inline text editor remains reachable
-  as a quick action through `/#edit`
+- "Website content" switches to the Website content module inside the shared
+  shell. Its primary action opens `/admin/edit`; the editor dock's `Tools ->
+  Panel` command opens the control panel for section order, visibility, brand,
+  footer, backup, restore, preview, and publish.
 - "Analytics" switches to the Analytics module inside the shared shell
 - "Settings" switches to the Settings module inside the shared shell
 - "Public site" clears owner markers and opens clean `/`

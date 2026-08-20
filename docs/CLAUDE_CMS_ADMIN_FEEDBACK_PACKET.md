@@ -271,7 +271,7 @@ production decision unless the owner explicitly changes it.
 | Contact form | Name/contact/topic/coverage/detail/consent with clear spacing. | Do not remove consent or make form fields cramped. |
 | Footer | Dark footer after contact with brand, nav, contact, licence/OIC copy. | Do not put standalone screen switcher or admin edit outlines in production footer. |
 | Admin login | Centered breathable auth card on organic cream background. | Do not squeeze the central card or use demo/no-server copy in production. |
-| Admin launcher | `/admin` after login, with exactly two primary cards: `Edit website` and `Analytics`. The control panel is reached from editor mode through `Tools -> Panel`. | Do not bypass the launcher after login. Do not remove Analytics. Do not re-split Edit and Arrange into separate cards. |
+| Admin launcher | `/admin` after login is the Admin Portal shell with four modules: `Operations`, `Website content`, `Analytics`, and `Settings`. Inside `Website content`, `Edit the words` is the unified entry; the control panel is reached from editor mode through `Tools -> Panel`. | Do not bypass the launcher after login. Do not remove Analytics. Do not re-split Edit and Arrange into separate cards. |
 | Admin drawer / `#admin` | Right-side drawer/control panel, persistent publish path, English admin labels. | Do not make `Close` ambiguous with `Log out`. Do not hide Save/Preview/Publish after closing without a reopen path. |
 | Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default with `Editing on page` and `Tools`; `Tools → Panel` opens the drawer without disabling inline text editing, so the status becomes `Editing on page · Panel open`. `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not add a separate collapsed `Close` button; use `Tools → Main` to leave edit mode and `Tools → Panel` to open the drawer while staying in edit mode. |
 | Admin public exit | `Public site` clears owner markers via `/?view=public` then lands on clean `/`. | Do not leave admin chrome visible on the visitor page after Public site. |
@@ -287,7 +287,9 @@ Run this checklist before returning any updated standalone/design:
 - Credential-card logo/company rows are centered.
 - Fee cards do not clip decorative numbers, headings, or body copy.
 - Contact heading Thai `ขอรับคำปรึกษา` stays one line on desktop.
-- Admin launcher has two clear cards: Edit website and Analytics.
+- Admin Portal Home has four clear modules: Operations, Website content,
+  Analytics, and Settings. The Website content module must not add a separate
+  Arrange/control-panel card; use `Edit the words` plus `Tools -> Panel`.
 - Owner dock default is compact, with `Tools` expansion available.
 - `Public site` removes owner chrome from the visible public route.
 - Header has one motor nav item only.
@@ -424,7 +426,7 @@ production/dev line.
 | Public section set | Keep all 17 sections: hero, trust, cover, review, fit, how, insurers, tiers, claim, renew, guides, voices, about, faq, fees, privacy, talk. |
 | Header nav | Header shows one motor item only: Thai `ประกันรถยนต์`, English `Motor`, href `#insurers`. |
 | Focus routes | `/#motor-focus` and `/#life-focus` may exist as unexposed campaign variants. They are not public nav or sitemap items. |
-| Admin launcher | `/admin` remains after login and has exactly two primary cards: `Edit website` and `Analytics`. The control panel is opened from editor mode via `Tools -> Panel`. |
+| Admin launcher | `/admin` remains after login as the Admin Portal shell with four modules: `Operations`, `Website content`, `Analytics`, and `Settings`. Inside `Website content`, `Edit the words` is the unified entry and the control panel is opened from editor mode via `Tools -> Panel`. |
 | Admin labels | Owner/admin chrome labels are English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`. Do not reintroduce Thai `ออก` as an ambiguous action label. |
 | Public-site exit | `Public site` opens a new tab with `/?view=public`, clears owner markers in that visitor tab, and cleans the URL back to `/`. The current admin tab stays in owner mode. |
 | Admin close paths | Closing `/#admin` or `/#edit` returns to `/admin`, not to the visitor page. A signed-in admin session must not visibly alter the public visitor page. |
@@ -447,7 +449,7 @@ production/dev line.
 | Hero proof card | Reference can show placeholder image state in standalone due image-slot storage. | Production uses AIA red logo from `brand.advisorLogo`. | Hybrid. | Keep Claude layout but use real AIA logo asset/default and editable image field. |
 | Stories / voices | Reference heading implies real claim stories. | Product keeps "not filled yet" placeholder until compliant cases exist. | Product UX/compliance preserved. | Use placeholder/no-real-review state unless real approved stories are provided. |
 | Admin login | Reference says `Demo build`, no server, button opens portal. | Production uses Firebase Auth and Firestore `admins/{uid}` allowlist. | Behavior exception / product preserved. | Keep card geometry, but production design copy must say Firebase Auth/Firestore allowlist, not demo. |
-| Admin launcher | Reference originally had separate Edit and Arrange cards. | Production now uses one unified `Edit website` entry plus `Analytics`; `Tools -> Panel` opens layout/customization inside editor mode. | Product decision supersedes reference. | Keep the two-card launcher. Do not bypass `/admin` after login. |
+| Admin launcher | Reference originally had separate Edit and Arrange cards. | Production now uses the Admin Portal shell: `Operations`, `Website content`, `Analytics`, `Settings`. The `Website content` module has one unified `Edit the words` entry; `Tools -> Panel` opens layout/customization inside editor mode. | Product decision supersedes reference. | Keep the four-module admin shell and do not re-split Edit and Arrange into separate cards. Do not bypass `/admin` after login. |
 | Admin panel close | Reference visible button says Thai `ออก`. | Production uses close semantics, not sign-out, and keeps `Log out` separate. | Product UX preserved. | Replace ambiguous `ออก` with icon/accessible close or English close semantics; do not imply logout. |
 | Owner action bar | Reference has Save/Preview/Publish but localStorage/demo flashes. | Production uses custom confirm dialogs, Firestore writes, toasts, Undo. | Product UX preserved. | Design confirm/toast/Undo states explicitly. Do not collapse to a short flash. |
 | Public-site action | Reference `goVisitor` sets hash empty. | Production must use `/?view=public` to clear owner marker and suppress admin chrome. | Product UX preserved. | Future exports must model `Public site` as a clean visitor-view transition, not just hash clear. |
@@ -750,9 +752,10 @@ Update the corresponding Claude designs to reflect the current product decisions
 - The visitor navbar must show only one motor item: Thai `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`.
 - Keep the hidden focused motor variant available conceptually, but do not expose it in the public nav/design unless the owner explicitly asks.
 - Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
-- Admin launcher has two primary cards: `Edit website` and `Analytics`. The
-  control panel is available inside editor mode through `Tools -> Panel`, not as
-  a separate launcher choice.
+- Admin Portal Home has four primary modules: `Operations`, `Website content`,
+  `Analytics`, and `Settings`. The `Website content` module has one unified
+  `Edit the words` entry; the control panel is available inside editor mode
+  through `Tools -> Panel`, not as a separate launcher choice.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear the owner marker and return to the
   public visitor route without showing owner chrome.
@@ -1503,7 +1506,8 @@ Admin:
 
 - Login page shows Firebase Auth, not demo-only wording.
 - Admin launcher exists after login.
-- Launcher has exactly two primary cards: Edit website, Analytics.
+- Launcher has four primary modules: Operations, Website content, Analytics,
+  Settings. Website content does not split Edit and Arrange into separate cards.
 - Owner/admin controls use English labels.
 - Logout and mode switching are reachable from edit and arrange flows.
 - Closing arrange panel leaves a visible way to reopen or go Main.

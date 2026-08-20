@@ -150,8 +150,9 @@ The app treats Firestore as the source of truth for CMS state:
 - publish or restore: atomically write `states/live`, `states/draft`, and a new
   version document
 - visitor lead submit: create a validated `contactLeads/*` document
-- admin analytics: read `contactLeads/*`; GA4 traffic metrics require a future
-  server-side Data API endpoint or Firestore export
+- admin analytics: read `contactLeads/*` in the browser after admin
+  verification; read aggregate GA4 traffic through `/api/analytics` when Vercel
+  service-account env vars are configured
 
 `localStorage` stores last-known copies of live/draft/text/history so the static
 bundle can render a fallback if Firestore is unreachable. A successful remote
@@ -207,11 +208,18 @@ The admin launcher owns post-login choice architecture. It should not be skipped
 after login.
 
 The private analytics page owns owner-only reporting for lead capture, funnel
-readiness, lead mix, recent leads, and GA4 Data API connection state.
+readiness, lead mix, recent leads, GA4 acquisition/device/page rows, and GA4
+Data API connection state. It never loads the visitor GA script; traffic rows
+come from the server-only `/api/analytics` endpoint.
 
 The `/admin/content` CMS mode owns the actual control panel for sections,
 content, brand/chrome, theme/data, export, restore, draft, preview, and publish
 behavior.
+
+The Admin Portal no longer exposes that control panel as a separate `Arrange
+and customise` launcher card. Operators enter `/admin/edit` first, then open
+`Tools -> Panel` from the editor dock when they need section order, visibility,
+brand, footer, backup, restore, preview, or publish controls.
 
 Explicit `Save draft` and `Publish` are recoverable owner actions. They use
 custom confirmation dialogs, wait for successful Firestore writes, and then show

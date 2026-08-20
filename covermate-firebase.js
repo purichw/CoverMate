@@ -266,6 +266,16 @@ async function loadContactLeads(limitCount = LEAD_LIMIT) {
   });
 }
 
+async function getAdminIdToken(forceRefresh = false) {
+  const user = auth.currentUser || await waitForAuth();
+  const admin = await readAdmin(user);
+  if (!admin) throw new Error("Not authorized to use CoverMate admin APIs.");
+  if (!user || typeof user.getIdToken !== "function") {
+    throw new Error("Firebase ID token is unavailable.");
+  }
+  return user.getIdToken(forceRefresh === true);
+}
+
 async function loadOperationalLeads(limitCount = LEAD_LIMIT) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
@@ -353,6 +363,7 @@ window.CoverMateFirebase = {
   loadVersions,
   submitContactLead,
   loadContactLeads,
+  getAdminIdToken,
   loadOperationalLeads,
   hydrateLocalContent
 };

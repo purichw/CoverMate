@@ -15,6 +15,7 @@ const jsFiles = [
   "admin/session.js",
   "admin/analytics-data.js",
   "admin/ops/app.js",
+  "api/analytics.js",
   "api/ops.js"
 ];
 

@@ -1,6 +1,6 @@
 # CoverMate Analytics
 
-Last updated: 2026-08-16
+Last updated: 2026-08-20
 
 ## Surfaces
 
@@ -23,6 +23,16 @@ That route is `noindex,nofollow`, guarded by a verified Firebase active-admin
 session, and does not load the visitor GA script. `covermate-admin-session` is
 only a browser cache for fast static routing; it is not enough to authorize the
 analytics dashboard by itself.
+
+The private dashboard combines two sources:
+
+- Firestore lead documents read in the browser after active admin verification.
+- Aggregate GA4 traffic read through the server-only `/api/analytics` endpoint.
+
+The server endpoint is implemented. It returns `Live` data only when the GA4
+property ID and service-account credentials are configured in Vercel. When those
+environment variables are missing, the admin page shows `Setup needed` rather
+than fake sessions or placeholder chart values.
 
 ## GA4
 
@@ -114,11 +124,52 @@ Fields such as `topic`, `summary`, and `sourcePath` stay out of
 - bars: enquiry type and coverage mix
 - recent leads: admin-only operational follow-up view; desktop uses a table,
   while mobile switches to labeled lead cards to avoid horizontal clipping
-- acquisition table: reserved for GA4 channel/source data
+- acquisition table: GA4 session/default channel group, sessions, event count,
+  and session share
+- device mix: GA4 sessions by `deviceCategory`
+- top pages: GA4 public page paths by views and active users
 
-GA4 traffic metrics are shown as honest `N/A` or backend-ready placeholders
-until a secure Data API path exists. Do not substitute fake sessions, active
-users, conversion rates, or acquisition rows.
+GA4 traffic metrics are shown as live aggregate data only when `/api/analytics`
+can verify the Firebase admin, read the active admin allowlist document, obtain a
+Google OAuth token, and query the GA4 Data API. Otherwise the page shows an
+explicit setup/error state. Do not substitute fake sessions, active users,
+conversion rates, acquisition rows, device rows, or page rows.
+
+## Server GA4 Endpoint
+
+Endpoint:
+
+```text
+/api/analytics?days=30
+```
+
+Authorization:
+
+- Requires `Authorization: Bearer <Firebase ID token>`.
+- Verifies the token through Firebase Identity Toolkit.
+- Reads `admins/{uid}` from Firestore with the same user token.
+- Allows only active admin docs with role `owner`, `advisor`, `ops`, or
+  `readonly`.
+
+Environment variables:
+
+```text
+COVERMATE_GA4_PROPERTY_ID=<numeric GA4 property id, not G- measurement id>
+COVERMATE_GA4_CLIENT_EMAIL=<service account email>
+COVERMATE_GA4_PRIVATE_KEY=<service account private key>
+```
+
+Alias env names are supported for common Google/Vercel setups, but the
+`COVERMATE_*` names are the project contract. The private key may contain literal
+`\n`; the endpoint decodes them before signing the OAuth JWT.
+
+Response status values:
+
+- `live`: GA4 Data API responded with aggregate traffic rows.
+- `not_configured`: endpoint and auth work, but required env vars are missing or
+  the property ID is not numeric.
+- HTTP `401`/`403`: Firebase token or active-admin allowlist failed.
+- HTTP `5xx`/`ga4_error`: OAuth or GA4 Data API failed.
 
 ## Regression Checks
 
@@ -127,22 +178,18 @@ rendering changes:
 
 ```bash
 npm run check:analytics
+npm run check:analytics-api
 ```
 
 The check preserves deployed event names, rejects unknown/unsafe GA events,
 asserts representative PII does not reach GA payloads, verifies
 `/admin/analytics` signed-out/localStorage-only/unauthorized/authorized states,
-and confirms admin analytics does not load visitor GA.
+confirms admin analytics does not load visitor GA, and proves the browser
+dashboard can render mocked live GA4 aggregate rows. The API check calls
+`/api/analytics` directly with mocked Firebase, Firestore, OAuth, and GA4
+responses.
 
-## Backend Needed For Full GA Dashboard
-
-Because this repo is static, it must not embed GA Data API service-account
-credentials in the browser. Use one of these before showing real traffic charts:
-
-1. A serverless endpoint that queries GA Data API server-side.
-2. A scheduled GA4 export into Firestore under `sites/covermate/analytics/*`.
-3. A manually generated Firestore summary document with admin-only writes.
-
-The dashboard is already structured so those sources can feed sessions, users,
-channel, device, language, page path, and event counts without redesigning the
-UI.
+Do not put GA Data API service-account secrets in the static browser app. The
+serverless endpoint is the only live GA4 path in this repo; scheduled Firestore
+summaries under `sites/covermate/analytics/*` remain reserved for future batch
+reporting if needed.

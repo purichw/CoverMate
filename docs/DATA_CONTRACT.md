@@ -82,6 +82,9 @@ Important dynamic fields:
   Firestore writes add missing IDs once and preserve valid existing IDs so
   repeatable content can survive edit, reorder, draft save, publish, reload,
   and version snapshots without relying on array position or mutable copy.
+  Clearing copy inside a repeatable item is valid content, not a delete signal.
+  CMS hide/remove controls should set `on:false` and keep the item restorable
+  from the admin panel unless a separately specified destructive purge is added.
 - `insurers.items[]` is the source of truth for the public insurer logo grid.
   Each item may carry `logo`; stale items resolve through the built-in logo map
   and exact legacy `LMG` names render as Chubb Samaggi.
@@ -125,6 +128,12 @@ Explicit owner actions have recoverability requirements:
 - Undo after `Publish` republishes the previous live snapshot and records the
   undo in version history.
 - Native browser confirmation dialogs are not part of the product contract.
+
+Inline owner text edits also treat an empty string as intentional content. A
+text override key with value `""` must be saved, reloaded, and published as a
+real draft/live value. In edit mode, blank text slots remain visible as editable
+placeholders so the owner can add text back later; visitor rendering may show
+the slot as empty without admin affordances.
 
 Public visitor rendering should not depend on the user already having admin
 storage keys.
@@ -192,6 +201,11 @@ Important dynamic contact fields include:
 | `contact.hours.th/en` | string | Public service-hours copy. |
 | `contact.area.th/en` | string | Public service-area copy. |
 
+Same-page section links are derived at render time from the visible section set.
+Header/footer nav items, hero secondary CTAs, calculator handoff CTAs, claim
+prompts, and privacy/PDPA helper links must not render when their `#section`
+target is hidden or absent.
+
 Important guarded SEO fields include:
 
 | Field | Type | Purpose |
@@ -232,6 +246,13 @@ hydrate/save/publish:
 `covermate-firebase.js` owns Firestore hydration, draft save, publish, restore,
 version-history reads, public lead submission, and Firebase Auth session
 hydration.
+
+`/api/analytics` owns live aggregate GA4 reporting for `/admin/analytics`. It
+requires a Firebase ID token, verifies the user against `admins/{uid}`, and uses
+server-only GA4 service-account environment variables. It returns aggregate
+sessions, users, page views, event counts, acquisition, device, and page rows;
+it must not return visitor names, contact details, LINE IDs, emails, message
+text, or other submitted freeform values.
 
 `/api/ops/*` owns Operations Portal reads and writes. The server receives a
 Firebase ID token, verifies it through Firebase Identity Toolkit, checks

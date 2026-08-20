@@ -258,6 +258,22 @@ try {
     throw new Error(`Admin sidebar triggered ${documentRequests} document navigation request(s).`);
   }
 
+  await page.getByRole("button", { name: /Website content/ }).first().click();
+  await page.getByRole("heading", { name: "Website content" }).waitFor();
+  const arrangeCardCount = await page.getByText("Arrange and customise", { exact: true }).count();
+  if (arrangeCardCount !== 0) throw new Error("Website content reintroduced a separate Arrange and customise card.");
+  const editCard = page.locator(".module-card").filter({ hasText: "Edit the words" }).first();
+  const editCardText = await editCard.innerText();
+  if (!editCardText.includes("Tools -> Panel")) {
+    throw new Error("Edit the words card does not explain that panel access lives under Tools -> Panel.");
+  }
+  const editHref = await editCard.locator("a.ghost-button").getAttribute("href");
+  if (editHref !== "/admin/edit") throw new Error(`Edit the words card points to ${editHref || "no href"} instead of /admin/edit.`);
+  await page.screenshot({ path: `${outDir}/ops-website-content-desktop.png`, fullPage: true });
+
+  await page.getByRole("button", { name: /Operations/ }).first().click();
+  await page.getByRole("heading", { name: "Dashboard" }).waitFor();
+
   await page.getByRole("button", { name: /Leads/ }).first().click();
   await page.getByRole("heading", { name: "Leads" }).waitFor();
   await page.getByText("Live Lead A").waitFor();

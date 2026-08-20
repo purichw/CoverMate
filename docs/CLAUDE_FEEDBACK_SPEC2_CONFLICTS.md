@@ -102,7 +102,7 @@ production decision unless the owner explicitly changes it.
 | Contact form | Name/contact/topic/coverage/detail/consent with clear spacing. | Do not remove consent or make form fields cramped. |
 | Footer | Dark footer after contact with brand, nav, contact, licence/OIC copy. | Do not put standalone screen switcher or admin edit outlines in production footer. |
 | Admin login | Centered breathable auth card on organic cream background. | Do not squeeze the central card or use demo/no-server copy in production. |
-| Admin launcher | `/admin` after login, with exactly two primary cards: `Edit website` and `Analytics`. The control panel is reached from editor mode through `Tools -> Panel`. | Do not bypass the launcher after login. Do not remove Analytics. Do not re-split Edit and Arrange into separate cards. |
+| Admin launcher | `/admin` after login is the Admin Portal shell with four modules: `Operations`, `Website content`, `Analytics`, and `Settings`. Inside `Website content`, the editing entry is unified: `Edit the words` opens the editor and the control panel is reached from editor mode through `Tools -> Panel`. | Do not bypass the launcher after login. Do not remove Analytics. Do not re-split Edit and Arrange into separate cards. |
 | Admin drawer / `#admin` | Right-side drawer/control panel, persistent publish path, English admin labels. | Do not make `Close` ambiguous with `Log out`. Do not hide Save/Preview/Publish after closing without a reopen path. |
 | Inline edit / `#edit` | Warm-ink owner dock floats over the page. Compact by default with `Editing on page` and `Tools`; `Tools → Panel` opens the drawer without disabling inline text editing, so the status becomes `Editing on page · Panel open`. `Tools` expands the command palette. | Do not use a busy full-width bottom bar with every action visible at once. Do not add a separate collapsed `Close` button; use `Tools → Main` to leave edit mode and `Tools → Panel` to open the drawer while staying in edit mode. |
 | Admin public exit | `Public site` clears owner markers via `/?view=public` then lands on clean `/`. | Do not leave admin chrome visible on the visitor page after Public site. |
@@ -118,7 +118,9 @@ Run this checklist before returning any updated standalone/design:
 - Credential-card logo/company rows are centered.
 - Fee cards do not clip decorative numbers, headings, or body copy.
 - Contact heading Thai `ขอรับคำปรึกษา` stays one line on desktop.
-- Admin launcher has two clear cards: Edit website and Analytics.
+- Admin Portal Home has four clear modules: Operations, Website content,
+  Analytics, and Settings. The Website content module must not add a separate
+  Arrange/control-panel card; use `Edit the words` plus `Tools -> Panel`.
 - Owner dock default is compact, with `Tools` expansion available.
 - `Public site` removes owner chrome from the visible public route.
 - Header has one motor nav item only.

@@ -71,6 +71,7 @@ export function summarizeLeads(leads, options = {}) {
   }
 
   const total = safeLeads.length;
+  const totalInRange = timeline.reduce((sum, entry) => sum + entry.leads, 0);
   const unread = safeLeads.filter((lead) => lead.read !== true && lead.status !== "archived").length;
   const recent = safeLeads.slice(0, 8).map((lead) => ({
     id: lead.id || "",
@@ -83,6 +84,7 @@ export function summarizeLeads(leads, options = {}) {
 
   return {
     total,
+    totalInRange,
     unread,
     newest,
     timeline,
@@ -96,8 +98,9 @@ export function gaConnectionModel() {
   return {
     measurementId: "G-5TF3C235EF",
     status: "tracking-installed",
-    dataApiStatus: "not-connected",
-    requiredBackend: "GA4 Data API or scheduled export into Firestore",
+    dataApiStatus: "server-endpoint-ready",
+    apiEndpoint: "/api/analytics",
+    requiredBackend: "Set GA4 property and service-account environment variables in Vercel",
     metrics: [
       "sessions",
       "activeUsers",

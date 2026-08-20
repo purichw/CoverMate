@@ -71,7 +71,7 @@ function assertNoPii(value, label) {
   }
 }
 
-async function routeStatic(page, firebaseBody = "export {};") {
+async function routeStatic(page, firebaseBody = "export {};", analyticsPayload = null) {
   await page.route("**/*", (route) => {
     const url = new URL(route.request().url());
     if (url.hostname === "www.googletagmanager.com") {
@@ -94,6 +94,22 @@ async function routeStatic(page, firebaseBody = "export {};") {
     }
     if (url.pathname === "/admin/analytics-data.js") {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: read("admin/analytics-data.js") });
+    }
+    if (url.pathname === "/api/analytics") {
+      return route.fulfill({
+        status: analyticsPayload ? 200 : 404,
+        contentType: "application/json",
+        body: JSON.stringify(analyticsPayload || { error: "not_found" })
+      });
+    }
+    if (url.pathname.startsWith("/assets/")) {
+      const file = new URL(`.${url.pathname}`, root);
+      if (fs.existsSync(file)) {
+        const contentType = url.pathname.endsWith(".png") ? "image/png"
+          : url.pathname.endsWith(".svg") ? "image/svg+xml"
+            : "application/octet-stream";
+        return route.fulfill({ status: 200, contentType, body: fs.readFileSync(file) });
+      }
     }
     if (url.pathname === "/admin/analytics" || url.pathname === "/admin/analytics/") {
       return route.fulfill({ status: 200, contentType: "text/html", body: read("admin/analytics/index.html") });
@@ -201,9 +217,9 @@ async function verifyAnalyticsRouteAuth(browser) {
     exp: Date.now() + 60 * 60 * 1000
   };
 
-  async function openWith(firebaseBody, session = validSession) {
+  async function openWith(firebaseBody, session = validSession, analyticsPayload = null) {
     const page = await browser.newPage();
-    await routeStatic(page, firebaseBody);
+    await routeStatic(page, firebaseBody, analyticsPayload);
     if (session) {
       await page.addInitScript((cached) => {
         window.localStorage.setItem("covermate-admin-session", JSON.stringify(cached));
@@ -240,10 +256,54 @@ async function verifyAnalyticsRouteAuth(browser) {
   await unauthorized.waitForURL(/\/admin\/login$/, { timeout: 5000 });
   await unauthorized.close();
 
+  const analyticsPayload = {
+    status: "live",
+    source: "ga4_data_api",
+    measurementId: "G-5TF3C235EF",
+    propertyId: "123456789",
+    range: { days: 30, startDate: "30daysAgo", endDate: "today" },
+    metrics: {
+      sessions: 123,
+      activeUsers: 45,
+      screenPageViews: 321,
+      eventCount: 250,
+      engagementRate: 0.64,
+      contactIntent: 12,
+      formStarts: 5,
+      quoteSubmits: 4,
+      leadSubmitSuccess: 2,
+      submitErrors: 0
+    },
+    timeline: [
+      { date: "20260819", label: "19 Aug", sessions: 60, activeUsers: 20, pageViews: 160, contactIntent: 6, formStarts: 3, leadSubmitSuccess: 1 },
+      { date: "20260820", label: "20 Aug", sessions: 63, activeUsers: 25, pageViews: 161, contactIntent: 6, formStarts: 2, leadSubmitSuccess: 1 }
+    ],
+    events: [
+      { eventName: "line_click", count: 7 },
+      { eventName: "phone_click", count: 3 },
+      { eventName: "email_click", count: 2 },
+      { eventName: "form_start", count: 5 },
+      { eventName: "quote_submit_success", count: 2 }
+    ],
+    acquisition: [
+      { channel: "Organic Search", sessions: 80, activeUsers: 30, pageViews: 190, eventCount: 150 },
+      { channel: "Direct", sessions: 43, activeUsers: 15, pageViews: 131, eventCount: 100 }
+    ],
+    devices: [
+      { device: "mobile", sessions: 90, activeUsers: 33 },
+      { device: "desktop", sessions: 33, activeUsers: 12 }
+    ],
+    topPages: [
+      { path: "/", pageViews: 280, activeUsers: 40 },
+      { path: "/#cover", pageViews: 41, activeUsers: 10 }
+    ]
+  };
+
   const authorized = await openWith(`
     window.CoverMateFirebase = {
       waitForAuth: async () => ({ uid: 'owner' }),
       syncSessionFromCurrentUser: async () => ({ ok: true, session: { email: 'owner@example.com' } }),
+      getAdminIdToken: async () => 'analytics-regression-token',
       loadContactLeads: async () => ([
         { id: 'lead-a', name: 'Test Lead', contact: 'LINE test', qtype: 'quote', coverage: 'motor', read: false, status: 'new', createdAt: Date.now(), topic: 'secret freeform message', summary: 'secret freeform message' },
         { id: 'lead-b', name: 'Second Lead', contact: 'Phone test', qtype: 'review', coverage: 'life', read: true, status: 'new', createdAt: Date.now() - 86400000, sourcePath: '/?email=point@example.com' }
@@ -251,22 +311,31 @@ async function verifyAnalyticsRouteAuth(browser) {
       signOut: async () => {}
     };
     export {};
-  `);
+  `, validSession, analyticsPayload);
   await authorized.getByRole("heading", { name: "Analytics" }).waitFor({ timeout: 5000 });
   await authorized.getByText("Test Lead").waitFor({ timeout: 5000 });
+  await authorized.getByText("Organic Search").waitFor({ timeout: 5000 });
   const state = await authorized.evaluate(() => ({
     text: document.body.innerText,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || "",
     hasVisitorGa: Boolean(document.querySelector('script[src*="googletagmanager"], script[src*="google-analytics"]')),
     authState: document.body.getAttribute("data-auth-state"),
-    leadKpi: document.querySelector('[data-kpi="leads"]')?.textContent || ""
+    leadKpi: document.querySelector('[data-kpi="leads"]')?.textContent || "",
+    sessionsKpi: document.querySelector('[data-kpi="sessions"]')?.textContent || "",
+    dataApiStatus: document.querySelector("#data-api-status")?.textContent || ""
   }));
   assert.equal(state.authState, "ready");
   assert.equal(state.leadKpi, "2");
+  assert.equal(state.sessionsKpi, "123");
+  assert.equal(state.dataApiStatus, "Connected");
   assert.match(state.robots, /^noindex/);
   assert.equal(state.hasVisitorGa, false, "admin analytics does not load visitor GA script");
   assert.equal(/Operations|\/admin\/ops/.test(state.text), false, "admin analytics does not introduce Operations");
   assertNoPii(state.text.replace(/Test Lead|Second Lead|LINE test|Phone test/g, ""), "admin analytics non-rendered fields");
+  if (process.env.COVERMATE_ANALYTICS_SNAPSHOT_OUT) {
+    await authorized.setViewportSize({ width: 1280, height: 900 });
+    await authorized.screenshot({ path: process.env.COVERMATE_ANALYTICS_SNAPSHOT_OUT, fullPage: false });
+  }
   await authorized.close();
 }
 

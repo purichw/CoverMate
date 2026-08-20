@@ -30,6 +30,9 @@ Implemented:
 - Admin Analytics does not load the visitor analytics script.
 - Admin Analytics requires active Firebase admin verification; localStorage
   alone is not authorization.
+- GA4 traffic reporting uses `/api/analytics`, a server-only endpoint. GA4
+  service-account credentials must stay in Vercel environment variables and
+  must never be embedded in browser HTML or JavaScript.
 - The public privacy/PDPA section explains the current handling of submitted
   information at a page-content level.
 - Needs Calculator interactions remain aggregate/behavioral only in analytics;
@@ -110,7 +113,10 @@ Implemented:
   - `admin/session.js`
   - `admin/analytics-data.js`
   - `admin/analytics/index.html`
+  - `api/analytics.js`
 - `npm run check:bundles` validates generated template JSON and runtime source.
+- `npm run check:analytics-api` validates the server analytics auth/config/GA4
+  mapping boundary with mocked Firebase, Firestore, OAuth, and GA4 responses.
 - `npm run check:needs` validates the current Needs Calculator methodology,
   public controls, and Firestore-over-default precedence.
 

@@ -230,9 +230,14 @@ JSON-LD claim boundaries stay code-owned.
 4. The page loads recent Firestore leads through `covermate-firebase.js`.
 5. Lead KPIs, trend, enquiry mix, coverage mix, and recent leads render from
    real Firestore data.
-6. GA4 traffic charts remain backend-ready placeholders until a server-side GA
-   Data API endpoint or scheduled Firestore export exists.
-7. The page does not load visitor Google Analytics scripts.
+6. The page requests aggregate GA4 traffic through `/api/analytics`. That
+   endpoint verifies the Firebase admin token and active-admin allowlist, then
+   uses server-only service-account credentials when Vercel env vars are
+   configured.
+7. GA4 traffic charts render live aggregate sessions/users/funnel/acquisition/
+   device/page rows when the endpoint returns `live`; otherwise they show an
+   explicit setup or unavailable state.
+8. The page does not load visitor Google Analytics scripts.
 
 ## Admin Operations Flow
 
@@ -253,9 +258,10 @@ JSON-LD claim boundaries stay code-owned.
 7. New lead, status change, task completion, follow-up date, and internal note
    interactions write through `/api/ops/*`. Write responses include the audit
    entry produced by the server; the client does not synthesize audit history.
-8. Website content actions link back to the existing CMS routes (`/#edit`,
-   `/#admin`, `/#preview`) instead of depending on the
-   offline Claude standalone files.
+8. Website content actions link to the source-authored CMS routes
+   (`/admin/edit`, `/admin/preview`, `/admin/content`) instead of depending on
+   offline Claude standalone files. The control panel is not a separate
+   launcher card; open it from the editor dock through `Tools -> Panel`.
 9. The page does not load visitor Google Analytics scripts.
 
 ## Access Behavior

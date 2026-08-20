@@ -170,7 +170,11 @@ Update the corresponding Claude designs to reflect the current product decisions
 - Admin Portal Home target has four primary modules: `Operations`,
   `Website content`, `Analytics`, and `Settings`. The home lives inside the
   same admin shell as those modules; `/admin/ops` remains only a compatibility
-  entry that defaults to Operations.
+  entry that defaults to Operations. The `Website content` module must not
+  split editing and arranging into separate launcher cards; `Edit the words`
+  opens the editor, and its `Tools -> Panel` command opens the control panel for
+  section order, visibility, brand, footer, preview, publish, backup, and
+  restore.
 - Admin menu/chrome labels are intentionally English: `Main`, `Public site`, `Log out`, `Panel`, `Edit text`, `Save draft`, `Preview`, `Publish`, `Success`.
 - Admin `Public site` actions must clear owner markers and land on clean `/`
   without showing owner chrome. Legacy `/?view=public` may be consumed for
@@ -345,6 +349,9 @@ Guardrails:
 - Never show two `ประกันรถยนต์` nav items.
 - Do not make `#motor` appear like a separate website.
 - Header should stay calm and not become a marketing mega-nav.
+- Header/footer nav and any CTA that points to a same-page section must be
+  visibility-aware: if the target section is hidden in Admin, the link/button is
+  hidden too rather than leaving a dead anchor on the visitor surface.
 
 ## Visitor Section Order
 
@@ -703,6 +710,10 @@ Required elements:
   - `Open follow-ups`
 - System status rows for Firebase admin session, Operations backend, Website
   CMS, and first-party analytics.
+- Inside the `Website content` module, use one unified `Edit the words` entry
+  for copy and panel access. Do not reintroduce a separate `Arrange and
+  customise` card; the panel is reached from the editor dock through `Tools ->
+  Panel`.
 - `Public site` and `Log out` actions.
 
 `Public site` links land directly on clean `/` after clearing owner markers.
@@ -726,6 +737,10 @@ Purpose: click-to-type text editing over the public page.
 Behavior:
 
 - Editable text fields become tappable/clickable.
+- Empty editable text fields must persist in edit mode. Deleting all text from a
+  slot records an intentional blank value and leaves a visible placeholder such
+  as `ว่าง - คลิกเพื่อใส่ข้อความ` / `Empty - click to add text` so the owner can
+  type into it again.
 - Media is not changed through inline binary upload. The advisor proof logo is
   managed as metadata in the owner panel through `brand.advisorLogo` and
   `brand.advisorLogoAlt`, defaulting to `assets/logos/aia-logo.png`.
@@ -765,6 +780,10 @@ Required capabilities:
 
 - Sections tab: reorder, hide/show, choose background tone, change columns.
 - Content tab: edit structured section content.
+- Repeatable Content tab rows/cards/columns are additive and reversible: adding
+  creates a blank durable-ID item, duplicating creates a new ID, and hide/remove
+  controls set `on:false` with an admin-visible Restore path rather than deleting
+  the object.
 - Brand & contact tab: edit brand text, advisor logo path/alt metadata,
   contact links, guarded SEO title/description, footer copy, and
   header/sticky visibility. It must not expose direct file upload, Firebase
@@ -808,9 +827,11 @@ Purpose: private operating view for traffic quality, consultation intent, and le
 Current state:
 
 - GA4 measurement ID: `G-5TF3C235EF`, installed on public production traffic.
-- GA4 Data API is not connected in the static app yet.
 - Firestore leads render live when available.
-- Traffic charts are backend-ready placeholders until a GA4 Data API or scheduled Firestore export exists.
+- GA4 traffic connects through the server-only `/api/analytics` endpoint when
+  Vercel has the numeric GA4 property ID and service-account env vars.
+- If GA4 env vars are missing or the Data API fails, traffic charts show honest
+  setup/unavailable states, not fake data.
 - LocalStorage-only admin sessions must not reveal analytics data. The route
   must verify active Firebase admin authorization before showing the private
   dashboard.
@@ -819,7 +840,8 @@ Required layout:
 
 - Top brand/chrome with `Main`, `Public site`, and `Log out`.
 - Heading group: `OWNER ANALYTICS`, `Analytics`, explanatory copy.
-- Measurement card showing GA4 installed and Data API not connected/backend needed.
+- Measurement card showing GA4 installed and Data API `Live`, `Setup needed`,
+  or `Unavailable`.
 - KPI cards:
   - Sessions
   - Active users
@@ -828,6 +850,8 @@ Required layout:
 - Lead trend chart from Firestore lead timestamps when available.
 - Enquiry mix chart from lead `qtype`.
 - Coverage interest chart from lead `coverage`.
+- Acquisition/channel table from GA4 when live.
+- Device mix and top public pages from GA4 when live.
 - Recent leads table/list.
 - Empty states should explain what data source is missing without looking broken.
 
@@ -843,6 +867,7 @@ Firestore-first behavior:
   hard-coded public-only constants or stale fallback counts.
 - Publish/restore history writes `sites/covermate/versions/{versionId}`.
 - Public lead submissions write `contactLeads/{leadId}`.
+- Live GA4 traffic reads through `/api/analytics` with server-only secrets.
 - Reserved analytics summaries may live under `sites/covermate/analytics/{analyticsDoc}`.
 
 Cache policy:
@@ -876,7 +901,9 @@ Private admin analytics:
 - Does not load the public GA script.
 - Requires active Firebase admin authorization, not localStorage alone.
 - Reads only dashboard-needed Firestore lead fields when available.
-- Treats GA4 charts as honest placeholders until a backend/export is added.
+- Reads aggregate GA4 traffic only through `/api/analytics`; service-account
+  secrets must stay server-side.
+- Shows `Live`, `Setup needed`, or `Unavailable` status for GA4 traffic.
 
 ## SEO Contract
 

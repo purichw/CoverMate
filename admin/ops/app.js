@@ -384,8 +384,8 @@ function renderHome() {
         <span class="round-icon" aria-hidden="true">${iconSvg("edit")}</span>
         <h2>Website content</h2>
         <span class="module-status">Live CMS</span>
-        <p>Live copy, section order, visibility, contact details, brand settings, media, preview, and publish remain in the Firestore CMS.</p>
-        <span class="module-action">Open controls -></span>
+        <p>Edit visible copy first, then use the editor's Tools menu for section order, visibility, contact details, brand settings, media, preview, and publish.</p>
+        <span class="module-action">Open website tools -></span>
       </button>
 
       <button class="card module-card ink" type="button" data-action="module" data-module="analytics" data-admin-home-card="analytics">
@@ -693,11 +693,10 @@ function renderContent() {
     ${pageHead("Website content", "The existing CMS remains the source of truth for public-site copy, sections, preview and publish.", connectionPill("CMS connected"))}
     <div class="notice" style="margin-bottom:18px;">
       <strong>Live CMS surface</strong>
-      <div>These actions open the existing Firestore draft/live CMS. They are not part of the new Operations CRUD API.</div>
+      <div>Start with the inline editor. Its Tools menu opens the panel for section order, visibility, brand settings, footer, preview and publish.</div>
     </div>
-    <div class="grid four">
-      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels.", "/admin/edit", editDisabled)}
-      ${contentCard("Arrange and customise", "Use the current control panel for section order, visibility, brand details, footer, backup and restore.", "/admin/content", editDisabled)}
+    <div class="grid three">
+      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels. Use Tools -> Panel there for section order, visibility, brand details, footer, backup and restore.", "/admin/edit", editDisabled)}
       ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", "/admin/preview", false)}
       ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", "/admin/content", editDisabled)}
     </div>
