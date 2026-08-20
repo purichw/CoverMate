@@ -8,8 +8,25 @@ export const DRAFT_TEXT_KEY = "purich-draft-text-v3";
 export const HISTORY_KEY = "purich-history-v3";
 export const HISTORY_LIMIT = 20;
 
-export const OWNER_HASHES = new Set(["#admin", "#edit", "#preview"]);
-export const OWNER_PATHS = new Set(["/admin/content", "/admin/edit", "/admin/preview"]);
+export const ADMIN_ROOT_PATH = "/admin";
+export const ADMIN_LOGIN_PATH = "/admin/login";
+export const ADMIN_OPERATIONS_PATH = "/admin/ops";
+export const ADMIN_ANALYTICS_PATH = "/admin/analytics";
+export const ADMIN_PUBLIC_EXIT_PATH = "/";
+export const ADMIN_OWNER_ROUTE_MAP = Object.freeze({
+  "/admin/content": "admin",
+  "/admin/edit": "edit",
+  "/admin/preview": "preview"
+});
+export const ADMIN_OWNER_HASH_MAP = Object.freeze({
+  "#admin": "admin",
+  "#edit": "edit",
+  "#preview": "preview"
+});
+export const ADMIN_OWNER_PATHS = Object.freeze(Object.keys(ADMIN_OWNER_ROUTE_MAP));
+export const ADMIN_SHELL_PATHS = new Set([ADMIN_ROOT_PATH, ADMIN_LOGIN_PATH, ADMIN_OPERATIONS_PATH, ADMIN_ANALYTICS_PATH]);
+export const OWNER_HASHES = new Set(Object.keys(ADMIN_OWNER_HASH_MAP));
+export const OWNER_PATHS = new Set(ADMIN_OWNER_PATHS);
 
 export function normalizePath(path = "") {
   const clean = String(path || "").replace(/\/+$/, "");
@@ -17,15 +34,29 @@ export function normalizePath(path = "") {
 }
 
 export function isOwnerPath(path = "") {
-  return OWNER_PATHS.has(normalizePath(path));
+  return Boolean(ownerModeFromPath(path));
+}
+
+export function isAdminNamespacePath(path = "") {
+  const clean = normalizePath(path);
+  return clean === ADMIN_ROOT_PATH || clean.startsWith(`${ADMIN_ROOT_PATH}/`);
+}
+
+export function isAdminShellPath(path = "") {
+  return ADMIN_SHELL_PATHS.has(normalizePath(path));
 }
 
 export function ownerModeFromPath(path = "") {
-  const clean = normalizePath(path);
-  if (clean === "/admin/content") return "admin";
-  if (clean === "/admin/edit") return "edit";
-  if (clean === "/admin/preview") return "preview";
-  return "";
+  return ADMIN_OWNER_ROUTE_MAP[normalizePath(path)] || "";
+}
+
+export function ownerPathForMode(mode = "") {
+  const entry = Object.entries(ADMIN_OWNER_ROUTE_MAP).find(([, value]) => value === mode);
+  return entry ? entry[0] : "";
+}
+
+export function ownerModeFromHash(hash = "") {
+  return ADMIN_OWNER_HASH_MAP[hash || ""] || "";
 }
 
 function storage() {
@@ -37,7 +68,7 @@ function storage() {
 }
 
 export function isOwnerHash(hash = "") {
-  return OWNER_HASHES.has(hash || "");
+  return Boolean(ownerModeFromHash(hash));
 }
 
 export function readJSON(key) {
@@ -806,12 +837,25 @@ const contract = {
   DRAFT_TEXT_KEY,
   HISTORY_KEY,
   HISTORY_LIMIT,
+  ADMIN_ROOT_PATH,
+  ADMIN_LOGIN_PATH,
+  ADMIN_OPERATIONS_PATH,
+  ADMIN_ANALYTICS_PATH,
+  ADMIN_PUBLIC_EXIT_PATH,
+  ADMIN_OWNER_ROUTE_MAP,
+  ADMIN_OWNER_HASH_MAP,
+  ADMIN_OWNER_PATHS,
+  ADMIN_SHELL_PATHS,
   OWNER_HASHES,
   OWNER_PATHS,
   normalizePath,
+  isAdminNamespacePath,
+  isAdminShellPath,
   isOwnerHash,
   isOwnerPath,
   ownerModeFromPath,
+  ownerPathForMode,
+  ownerModeFromHash,
   readJSON,
   writeJSON,
   removeKey,

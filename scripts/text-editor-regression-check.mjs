@@ -2,40 +2,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-function restoreTemplateScriptMarkers(template) {
-  return template
-    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
-    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
-    .replace(
-      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
-      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
-    );
-}
+import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 
 function extractTemplate(html) {
-  const open = '<script type="__bundler/template">';
-  const start = html.indexOf(open);
-  if (start < 0) throw new Error("index.html: embedded template missing");
-  const jsonStart = start + open.length;
-  let escaped = false;
-  let jsonEnd = -1;
-  for (let i = jsonStart + 1; i < html.length; i += 1) {
-    const ch = html[i];
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-    if (ch === "\\") {
-      escaped = true;
-      continue;
-    }
-    if (ch === '"') {
-      jsonEnd = i + 1;
-      break;
-    }
-  }
-  if (jsonEnd < 0) throw new Error("index.html: embedded template JSON is unterminated");
-  return restoreTemplateScriptMarkers(JSON.parse(html.slice(jsonStart, jsonEnd)));
+  return extractBundlerTemplate(html, {
+    fileLabel: "index.html",
+    completePredicate: (template) => template.includes("</html>") && template.includes("const DEFAULTS =")
+  });
 }
 
 function extractRuntime(template) {

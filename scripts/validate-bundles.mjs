@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+import { parseBundlerTemplateParts } from "./lib/bundler-template.mjs";
+
 const htmlFiles = [
   "index.html",
   "admin/index.html",
@@ -35,41 +37,15 @@ const forbiddenPatterns = [
 const inlineEventPattern = /\son[a-z]+\s*=/gi;
 
 function readBundlerTemplate(html) {
-  const open = '<script type="__bundler/template">';
-  const starts = [];
-  let cursor = 0;
-  while ((cursor = html.indexOf(open, cursor)) >= 0) {
-    starts.push(cursor);
-    cursor += open.length;
+  const parts = parseBundlerTemplateParts(html, {
+    fileLabel: "HTML",
+    requireComplete: false,
+    completePredicate: () => true
+  });
+  if (parts.length > 1) {
+    throw new Error(`expected exactly one embedded template, found ${parts.length}`);
   }
-  if (starts.length > 1) {
-    throw new Error(`expected exactly one embedded template, found ${starts.length}`);
-  }
-  const start = starts[0] ?? -1;
-  if (start < 0) return null;
-
-  const jsonStart = start + open.length;
-  if (html[jsonStart] !== '"') {
-    throw new Error("template content is not a JSON string");
-  }
-
-  let escaped = false;
-  for (let i = jsonStart + 1; i < html.length; i += 1) {
-    const ch = html[i];
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-    if (ch === "\\") {
-      escaped = true;
-      continue;
-    }
-    if (ch === '"') {
-      return html.slice(jsonStart, i + 1);
-    }
-  }
-
-  throw new Error("unterminated template JSON string");
+  return parts[0].rawJson;
 }
 
 function checkSource(file, source, label = "source") {

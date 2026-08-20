@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 
+import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
+
 const repoRoot = path.resolve(new URL("..", import.meta.url).pathname);
 const indexPath = path.join(repoRoot, "index.html");
 const outDir = path.join(repoRoot, "docs", "content");
@@ -27,57 +29,11 @@ function read(file) {
   return fs.readFileSync(file, "utf8");
 }
 
-function restoreTemplateScriptMarkers(template) {
-  return template
-    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
-    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
-    .replace(
-      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
-      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
-    );
-}
-
 function extractTemplateFromBundledHtml(html, fileLabel) {
-  const open = '<script type="__bundler/template">';
-  const starts = [];
-  let cursor = 0;
-  while ((cursor = html.indexOf(open, cursor)) >= 0) {
-    starts.push(cursor);
-    cursor += open.length;
-  }
-  if (!starts.length) throw new Error(`${fileLabel}: embedded template missing`);
-
-  const parsed = starts.map((start) => {
-    const jsonStart = start + open.length;
-    if (html[jsonStart] !== '"') throw new Error(`${fileLabel}: embedded template is not a JSON string`);
-    let escaped = false;
-    let jsonEnd = -1;
-    for (let i = jsonStart + 1; i < html.length; i += 1) {
-      const ch = html[i];
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-      if (ch === "\\") {
-        escaped = true;
-        continue;
-      }
-      if (ch === '"') {
-        jsonEnd = i + 1;
-        break;
-      }
-    }
-    if (jsonEnd < 0) throw new Error(`${fileLabel}: embedded template JSON is unterminated`);
-    const template = restoreTemplateScriptMarkers(JSON.parse(html.slice(jsonStart, jsonEnd)));
-    return {
-      template,
-      complete: template.includes("</html>") && template.includes("const DEFAULTS =")
-    };
+  return extractBundlerTemplate(html, {
+    fileLabel,
+    completePredicate: (template) => template.includes("</html>") && template.includes("const DEFAULTS =")
   });
-
-  const chosen = [...parsed].reverse().find((part) => part.complete) || parsed.at(-1);
-  if (!chosen.complete) throw new Error(`${fileLabel}: embedded template is incomplete`);
-  return chosen.template;
 }
 
 function extractDefaultConfig() {

@@ -1,6 +1,15 @@
-import { requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
+import { ADMIN_LOGIN_PATH, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
+import {
+  ADMIN_OPERATIONS_PATH,
+  ADMIN_ROOT_PATH,
+  normalizePath,
+  ownerPathForMode
+} from "/covermate-contract.js";
 
 const K_ADMIN_EVER = "purich-admin-ever-v7";
+const OWNER_CONTENT_PATH = ownerPathForMode("admin");
+const OWNER_EDIT_PATH = ownerPathForMode("edit");
+const OWNER_PREVIEW_PATH = ownerPathForMode("preview");
 
 const STATUS_OPTIONS = [
   ["all", "All"],
@@ -103,7 +112,7 @@ init();
 async function init() {
   clearOwnerMarker();
   try {
-    state.session = await requireVerifiedAdminSession({ redirectTo: "/admin/login" });
+    state.session = await requireVerifiedAdminSession({ redirectTo: ADMIN_LOGIN_PATH });
     if (!state.session) return;
   } finally {
     document.body.dataset.boot = "ready";
@@ -409,8 +418,8 @@ function renderHome() {
       <section class="panel" aria-labelledby="quickActionsTitle">
         <h2 id="quickActionsTitle">Quick actions</h2>
         <ul class="rail-list">
-          <li><a href="/admin/edit">Edit public-page words <span>Inline copy editor</span></a></li>
-          <li><a href="/admin/preview">Preview website draft <span>Private draft view</span></a></li>
+          <li><a href="${OWNER_EDIT_PATH}">Edit public-page words <span>Inline copy editor</span></a></li>
+          <li><a href="${OWNER_PREVIEW_PATH}">Preview website draft <span>Private draft view</span></a></li>
           <li><button class="rail-action" type="button" data-action="op-tab" data-tab="leads">Review lead intake <span>Operations list</span></button></li>
           <li><button class="rail-action" type="button" data-action="op-tab" data-tab="tasks">Open follow-ups <span>Task queue</span></button></li>
         </ul>
@@ -696,9 +705,9 @@ function renderContent() {
       <div>Start with the inline editor. Its Tools menu opens the panel for section order, visibility, brand settings, footer, preview and publish.</div>
     </div>
     <div class="grid three">
-      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels. Use Tools -> Panel there for section order, visibility, brand details, footer, backup and restore.", "/admin/edit", editDisabled)}
-      ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", "/admin/preview", false)}
-      ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", "/admin/content", editDisabled)}
+      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels. Use Tools -> Panel there for section order, visibility, brand details, footer, backup and restore.", OWNER_EDIT_PATH, editDisabled)}
+      ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", OWNER_PREVIEW_PATH, false)}
+      ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", OWNER_CONTENT_PATH, editDisabled)}
     </div>
     <section class="panel" style="margin-top:18px;">
       <h2>Operator-editable surfaces</h2>
@@ -1246,7 +1255,7 @@ function routeStateFromLocation() {
   const rawHash = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
   const hash = rawHash.split(/[?&]/)[0];
   const base = {
-    module: location.pathname.replace(/\/$/, "") === "/admin/ops" ? "operations" : "home",
+    module: normalizePath(location.pathname) === ADMIN_OPERATIONS_PATH ? "operations" : "home",
     operationsTab: "dashboard"
   };
   if (!hash) return base;
@@ -1270,11 +1279,11 @@ function syncRouteFromLocation() {
 }
 
 function routeUrl() {
-  if (state.module === "home") return "/admin";
+  if (state.module === "home") return ADMIN_ROOT_PATH;
   if (state.module === "operations") {
-    return state.operationsTab === "dashboard" ? "/admin#operations" : `/admin#${state.operationsTab}`;
+    return state.operationsTab === "dashboard" ? `${ADMIN_ROOT_PATH}#operations` : `${ADMIN_ROOT_PATH}#${state.operationsTab}`;
   }
-  return `/admin#${state.module}`;
+  return `${ADMIN_ROOT_PATH}#${state.module}`;
 }
 
 function writeRoute(options = {}) {

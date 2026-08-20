@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-08-16
+Last updated: 2026-08-20
 
 ## Current Shape
 
@@ -14,8 +14,9 @@ The current visitor bundle has been reconciled against
 `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`,
 and `SPEC (5)` while
 preserving production product decisions that intentionally differ from offline
-demos, including Firebase Auth/Firestore, Admin Analytics, split admin routes,
-real lead submission paths, and the one-page `#motor` alias behavior.
+demos, including Firebase Auth/Firestore, Admin Analytics, private admin
+namespace routes, real lead submission paths, and the one-page `#motor` alias
+behavior.
 
 Downloaded Claude HTML is not automatically a portable standalone. Some exports
 still depend on sidecar runtime files such as `support.js`, `image-slot.js`, and
@@ -36,7 +37,9 @@ flowchart TD
   Vercel --> Public["/ index.html"]
   Vercel --> Login["/admin/login/index.html"]
   Vercel --> Launcher["/admin/index.html"]
+  Vercel --> OpsShim["/admin/ops/index.html"]
   Vercel --> Analytics["/admin/analytics/index.html"]
+  OpsShim --> Launcher
   Browser --> Firebase["Firebase Auth + Firestore"]
   Public --> Contract["covermate-contract.js"]
   Login --> Contract
@@ -88,10 +91,11 @@ submission, and admin lead reads. The visitor page loads only the live CMS
 state; owner modes additionally load draft and versions.
 
 `covermate-contract.js` owns shared runtime constants and defensive helpers for
-admin session storage, owner hash detection, Firestore cache keys, state
-sanitization, and local fallback caching. The visitor shell, Firebase adapter,
-and source-authored admin pages must consume this contract rather than
-duplicating storage keys or session parsing.
+admin namespace routes, owner path/hash detection, admin session storage,
+Firestore cache keys, state sanitization, and local fallback caching. The
+visitor shell, Firebase adapter, and source-authored admin pages must consume
+this contract rather than duplicating storage keys, route constants, or session
+parsing.
 
 `covermate-analytics.js` owns Google Analytics 4 visitor tracking for production
 only. It uses measurement ID `G-5TF3C235EF`, loads only on
@@ -111,10 +115,12 @@ normalize Firestore lead data. It does not load the visitor GA script.
 around the exported admin bundles. `admin/session.js` delegates storage/session
 behavior to `covermate-contract.js`.
 
-`admin/ops/index.html` and `admin/ops/app.js` own the private Operations Portal.
-The page has no browser-seeded operations data and no local workflow fallback.
-It obtains a Firebase ID token from the verified admin session and calls
-`/api/ops/*`.
+`admin/ops/index.html` is a compatibility shim into `/admin#operations`. It
+must stay small and must not duplicate the Admin Portal sidebar, session gate,
+or layout. `admin/ops/app.js` owns the private Operations Portal module mounted
+by `admin/index.html`. It has no browser-seeded operations data and no local
+workflow fallback. It obtains a Firebase ID token from the verified admin
+session and calls `/api/ops/*`.
 
 `api/ops.js` owns Operations Portal backend reads and writes on Vercel. It
 verifies the Firebase ID token, checks the Firestore `admins/{uid}` allowlist,
@@ -131,6 +137,11 @@ assets through the bundle runtime.
 `organic.css` is the supplied organic design-system reference.
 
 `scripts/smoke.mjs` owns the current Playwright smoke contract.
+
+`scripts/lib/bundler-template.mjs` owns embedded Claude bundle-template parsing,
+marker restoration/masking, and serialization for maintenance scripts. Scripts
+that read or rewrite `<script type="__bundler/template">` must import this
+module instead of carrying local JSON-string scanners.
 
 `favicon.svg` and `favicon.ico` own the CoverMate browser icons. `vercel.json`
 owns clean URLs and static cache behavior.

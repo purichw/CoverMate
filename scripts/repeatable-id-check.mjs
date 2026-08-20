@@ -2,15 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-function restoreTemplateScriptMarkers(template) {
-  return template
-    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
-    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
-    .replace(
-      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
-      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
-    );
-}
+import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 
 async function loadContract() {
   const source = fs.readFileSync(new URL("../covermate-contract.js", import.meta.url), "utf8");
@@ -19,9 +11,10 @@ async function loadContract() {
 
 function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  const templateMatch = html.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
-  if (!templateMatch) throw new Error("index.html: embedded template missing");
-  const template = restoreTemplateScriptMarkers(JSON.parse(templateMatch[1]));
+  const template = extractBundlerTemplate(html, {
+    fileLabel: "index.html",
+    completePredicate: (source) => source.includes("</html>") && source.includes("const DEFAULTS =")
+  });
   const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
   if (!scriptMatch) throw new Error("index.html: text/x-dc script missing");
   const scriptSource = scriptMatch[1];

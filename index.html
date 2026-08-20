@@ -172,12 +172,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function hydrateCoverMateContent() {
       if (!/^https?:$/.test(window.location.protocol)) return;
       const contract = window.CoverMateContract || {};
+      const ownerPaths = contract.ADMIN_OWNER_PATHS || ['/admin/content', '/admin/edit', '/admin/preview'];
+      const ownerHashes = contract.OWNER_HASHES ? Array.from(contract.OWNER_HASHES) : ['#admin', '#edit', '#preview'];
+      const normalizedPath = (window.location.pathname || '').replace(/\/+$/, '') || '/';
       const ownerPath = contract.isOwnerPath
         ? contract.isOwnerPath(window.location.pathname)
-        : ['/admin/content', '/admin/edit', '/admin/preview'].indexOf((window.location.pathname || '').replace(/\/+$/, '') || '/') >= 0;
+        : ownerPaths.indexOf(normalizedPath) >= 0;
       const ownerHash = contract.isOwnerHash
         ? contract.isOwnerHash(window.location.hash)
-        : ['#admin', '#edit', '#preview'].indexOf(window.location.hash) >= 0;
+        : ownerHashes.indexOf(window.location.hash) >= 0;
       const owner = ownerPath || ownerHash;
       if (owner) {
         const session = contract.readAdminSession

@@ -2,6 +2,8 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
 
+import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
+
 const require = createRequire(import.meta.url);
 let playwright;
 
@@ -20,16 +22,6 @@ const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
 const chromePath =
   process.env.CHROME_PATH ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-
-function restoreTemplateScriptMarkers(template) {
-  return template
-    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
-    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
-    .replace(
-      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
-      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
-    );
-}
 
 const viewports = [
   ["desktop", 1440, 900],
@@ -52,9 +44,10 @@ const visitorRoutes = new Set(["/", "/#motor", "/#life", "/#motor-focus", "/#lif
 
 function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  const templateMatch = html.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
-  if (!templateMatch) throw new Error("index.html: embedded template missing");
-  const template = restoreTemplateScriptMarkers(JSON.parse(templateMatch[1]));
+  const template = extractBundlerTemplate(html, {
+    fileLabel: "index.html",
+    completePredicate: (source) => source.includes("</html>") && source.includes("const DEFAULTS =")
+  });
   const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
   if (!scriptMatch) throw new Error("index.html: text/x-dc script missing");
   const scriptSource = scriptMatch[1];
@@ -525,7 +518,7 @@ async function verifyRemoteHydrationContract() {
     const main = document.querySelector("main");
     if (main) main.__covermateSmokeStable = true;
   });
-  await publicPage.locator('header nav a[href="#fit"]').first().click();
+  await publicPage.locator('header nav a[href="#faq"]').first().click();
   await publicPage.waitForTimeout(700);
   const anchorState = await publicPage.evaluate(() => ({
     hash: window.location.hash,
@@ -533,8 +526,8 @@ async function verifyRemoteHydrationContract() {
     hasOwnerBar: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     text: document.body.innerText
   }));
-  if (anchorState.hash !== "#fit") {
-    failures.push(`anchor navigation: expected #fit after clicking Resources, got ${anchorState.hash}`);
+  if (anchorState.hash !== "#faq") {
+    failures.push(`anchor navigation: expected #faq after clicking FAQ, got ${anchorState.hash}`);
   }
   if (!anchorState.mainStable) {
     failures.push("anchor navigation: main DOM was rebuilt during a same-page navbar jump");
@@ -1399,7 +1392,7 @@ for (const [name, width, height] of viewports) {
           targetScrollMarginTop: target ? window.getComputedStyle(target).scrollMarginTop : ""
         };
       }, route === "/#motor" ? "insurers" : "cover");
-      const expectedMainNav = ["#cover", "#review", "#insurers", "#fit", "#faq"];
+      const expectedMainNav = ["#cover", "#review", "#insurers", "#faq"];
       const missingMainNav = expectedMainNav.filter((href) => !aliasState.navHrefs.includes(href));
       if (missingMainNav.length) {
         failures.push(`${name} ${route}: alias should keep main nav, missing ${missingMainNav.join(", ")}`);
@@ -1643,8 +1636,11 @@ for (const [name, width, height] of viewports) {
       const howIndex = state.sectionIds.indexOf("how");
       const insurersIndex = state.sectionIds.indexOf("insurers");
       const fitIndex = state.sectionIds.indexOf("fit");
-      if (!(reviewIndex >= 0 && howIndex > reviewIndex && insurersIndex > howIndex && fitIndex > insurersIndex)) {
-        failures.push(`${name} ${route}: public section order should be review > how > insurers > resources (${state.sectionIds.join(", ")})`);
+      if (!(reviewIndex >= 0 && howIndex > reviewIndex && insurersIndex > howIndex)) {
+        failures.push(`${name} ${route}: public section order should be review > how > insurers (${state.sectionIds.join(", ")})`);
+      }
+      if (fitIndex >= 0 && fitIndex < insurersIndex) {
+        failures.push(`${name} ${route}: visible resources section should follow insurers (${state.sectionIds.join(", ")})`);
       }
     }
     if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
@@ -1687,7 +1683,7 @@ for (const [name, width, height] of viewports) {
       }
     }
     if (route === "/#life-focus") {
-      for (const id of ["life", "life-trust", "life-cover", "fit", "review", "how", "faq", "talk", "privacy"]) {
+      for (const id of ["life", "life-trust", "life-cover", "review", "how", "faq", "talk", "privacy"]) {
         if (!state.sectionIds.includes(id)) {
           failures.push(`${name} ${route}: missing focused life section #${id}`);
         }
@@ -1721,7 +1717,7 @@ for (const [name, width, height] of viewports) {
         `${name} ${route}: public lead forms are missing required consent checkboxes (${state.requiredConsentCheckboxCount}/${expectedConsentCheckboxes})`
       );
     }
-    if (mainVisitorRoutes.has(route) && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && state.sectionIds.includes("claim") && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: claim help section is missing`);
     }
     if (mainVisitorRoutes.has(route) && !/ไม่ต้องจำวันหมดอายุ|renewal dates/i.test(state.bodyText)) {
@@ -2321,14 +2317,15 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/edit panel: text editing stopped while panel was open`);
   }
 
-  await page.getByRole("button", { name: "Close admin panel" }).click();
+  const editorPanel = page.locator("aside").filter({ hasText: "Admin portal" }).first();
+  await page.getByTitle("Close panel").click();
+  await editorPanel.waitFor({ state: "hidden", timeout: 10000 });
+  await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   await page.waitForFunction(
-    () => /^\/admin\/?$/.test(window.location.pathname) && !window.location.search && !window.location.hash,
+    () => document.querySelectorAll('[contenteditable="true"][data-ek]').length > 20,
     null,
-    { timeout: 10000 }
-  ).catch(() => {});
-  await waitForBodyText(page, /Admin Portal/);
-  await page.waitForTimeout(400);
+    { timeout: 15000 }
+  );
   const editPanelClosedState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
@@ -2340,18 +2337,18 @@ for (const [name, width, height] of viewports) {
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth
   }));
-  if (editPanelClosedState.contentEditableCount !== 0) {
-    failures.push(`${name} /admin/edit panel close: contenteditable fields remained active`);
+  if (editPanelClosedState.contentEditableCount < 20) {
+    failures.push(`${name} /admin/edit panel close: inline editing stopped (${editPanelClosedState.contentEditableCount})`);
   }
   if (
-    !/^\/admin\/?$/.test(editPanelClosedState.route) ||
-    editPanelClosedState.adminMarker ||
-    editPanelClosedState.toolbarVisible ||
-    editPanelClosedState.hasOwnerBar ||
+    editPanelClosedState.route !== "/admin/edit" ||
+    !editPanelClosedState.toolbarVisible ||
+    !editPanelClosedState.hasOwnerBar ||
     editPanelClosedState.hasAdminAside ||
-    /Editing on page|Admin portal|Text edit|Save draft|Publish/.test(editPanelClosedState.text)
+    !/Editing(?: on page)?/.test(editPanelClosedState.text) ||
+    /Admin portal/.test(editPanelClosedState.text)
   ) {
-    failures.push(`${name} /admin/edit panel close: did not stay inside /admin (${JSON.stringify(editPanelClosedState)})`);
+    failures.push(`${name} /admin/edit panel close: did not stay in editor with panel hidden (${JSON.stringify(editPanelClosedState)})`);
   }
   if (editPanelClosedState.scrollWidth > editPanelClosedState.clientWidth) {
     failures.push(`${name} /admin/edit panel close: horizontal overflow ${editPanelClosedState.scrollWidth} > ${editPanelClosedState.clientWidth}`);

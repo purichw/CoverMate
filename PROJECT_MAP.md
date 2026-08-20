@@ -11,6 +11,10 @@ Analytics, and the source-authored Operations Portal route are implemented.
 Operations is live today for Dashboard, Leads, Tasks, and Audit; Customers,
 Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden
 until their production Firestore/API contracts exist.
+Shared route/storage contracts live in `covermate-contract.js`; shared
+embedded-template parsing and serialization lives in
+`scripts/lib/bundler-template.mjs`. Do not reintroduce per-script template
+parsers or duplicate admin route constants.
 The public Needs Calculator now follows the
 `covermate-reference-data-v0.1` methodology through the `fit.calculator` CMS
 payload, with Firestore live/draft values prevailing over embedded defaults.
@@ -82,8 +86,8 @@ Detailed project documents:
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private single-shell Admin Portal. Home, Operations, Website content, Analytics, and Settings switch client-side through the shared sidebar. Has an early session gate and verified Firebase admin session check that redirect unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
-| `admin/ops/index.html` | Compatibility entry into the same private Admin Portal shell, defaulting to Operations. Reuses verified admin session and loads `/admin/ops/app.js`; contains no browser-seeded operations data. |
-| `admin/ops/app.js` | Admin shell controller. Calls `/api/ops/*` with the active Firebase ID token, renders only live Operations tabs for Leads/Tasks/Audit, hides unavailable admin modules, and sends supported workflow mutations to the server. |
+| `admin/ops/index.html` | Compatibility shim into `/admin#operations`. It must stay tiny and must not grow into a second Admin Portal shell. |
+| `admin/ops/app.js` | Operations module controller loaded by `admin/index.html`. Calls `/api/ops/*` with the active Firebase ID token, renders only live Operations tabs for Leads/Tasks/Audit, hides unavailable admin modules, and sends supported workflow mutations to the server. |
 | `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes `contactLeads/*`, returns server-produced audit entries, and marks planned resources as `not_wired` instead of pretending they are empty live datasets. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
@@ -101,6 +105,7 @@ Detailed project documents:
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness with local/runtime Playwright fallback. |
+| `scripts/lib/bundler-template.mjs` | Shared embedded Claude bundle-template parser/serializer used by validation, copy export/update, and regression scripts. This is the owner for template marker masking/restoring. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
 | `scripts/apply-visitor-copy-update.mjs` | Regenerates visitor default copy/runtime guards from copy-update rules while preserving Firestore-first CMS behavior. |
@@ -118,6 +123,7 @@ flowchart LR
   "Visitor /" --> "Owner #admin"
   "Visitor /" --> "Owner #preview"
   "Admin login /admin/login" --> "Admin shell /admin"
+  "Compatibility /admin/ops" --> "Admin shell /admin"
   "Admin shell /admin" --> "Operations module"
   "Admin shell /admin" --> "Analytics module"
   "Admin shell /admin" --> "Owner #edit"
@@ -141,10 +147,27 @@ Route contracts:
   `sitemap.xml`; new sidebar navigation uses the Analytics module inside
   `/admin`.
 - `/admin/ops` is a compatibility entry into the shared private Admin Portal
-  shell, defaulting to Operations. Leads, Tasks, and Audit are live; other
+  shell, defaulting to Operations. It redirects into `/admin#operations` and is
+  not allowed to duplicate sidebar/layout/session code. Leads, Tasks, and Audit are live; other
   operational modules must remain hidden until backed by real API contracts.
 - Direct unauthenticated access to `/admin`, `/admin/analytics`, `/admin/ops`,
   and owner modes must send the user to `/admin/login`.
+
+## Maintenance Ownership
+
+- Admin namespace routes, owner paths, and legacy owner hashes are centralized in
+  `covermate-contract.js`. New admin UI should use `/admin`, `/admin/edit`,
+  `/admin/content`, and `/admin/preview`; legacy `/#edit`, `/#admin`, and
+  `/#preview` remain compatibility inputs only.
+- `/admin/index.html` owns the single Admin Portal shell. `/admin/ops/index.html`
+  is only a compatibility shim, and `/admin/ops/app.js` is only the Operations
+  module mounted inside that shell.
+- Embedded Claude bundle JSON-string parsing belongs in
+  `scripts/lib/bundler-template.mjs`. Validation/export/update/regression
+  scripts should import it rather than hand-scanning `index.html` or rebuilding
+  `<script type="__bundler/template">` strings themselves.
+- Firestore/cache key names remain shared product contracts. Additions and
+  migrations belong in `covermate-contract.js` first, then consumers.
 
 ## Data / Auth / Storage Flow
 

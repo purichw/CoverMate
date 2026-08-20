@@ -3,15 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import zlib from "node:zlib";
 
-function restoreTemplateScriptMarkers(template) {
-  return template
-    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
-    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
-    .replace(
-      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
-      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
-    );
-}
+import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 
 const contractSource = fs.readFileSync(new URL("../covermate-contract.js", import.meta.url), "utf8");
 const {
@@ -21,10 +13,10 @@ const {
 } = await import(`data:text/javascript;base64,${Buffer.from(contractSource).toString("base64")}`);
 
 const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const templateMatch = html.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
-assert.ok(templateMatch, "embedded template script exists");
-
-const template = restoreTemplateScriptMarkers(JSON.parse(templateMatch[1]));
+const template = extractBundlerTemplate(html, {
+  fileLabel: "index.html",
+  completePredicate: (source) => source.includes("</html>") && source.includes("const DEFAULTS =")
+});
 const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
 assert.ok(scriptMatch, "embedded text/x-dc script exists");
 new vm.Script(scriptMatch[1], { filename: "index.html text/x-dc" });
