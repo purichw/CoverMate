@@ -122,7 +122,7 @@ function extractTemplate(html) {
     const close = html.slice(jsonEnd).match(/^\s*<\/script>/);
     if (!close) throw new Error("Bundler template closing script tag not found after JSON string.");
     const rawJson = html.slice(jsonStart, jsonEnd);
-    const template = JSON.parse(rawJson);
+    const template = restoreTemplateScriptMarkers(JSON.parse(rawJson));
     return {
       start,
       closeEnd: jsonEnd + close[0].length,
@@ -142,6 +142,26 @@ function extractTemplate(html) {
     template: chosen.template,
     fullMatch: chosen.fullMatch
   };
+}
+
+function restoreTemplateScriptMarkers(template) {
+  return template
+    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
+    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
+    .replace(
+      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
+      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
+    );
+}
+
+function maskTemplateScriptMarkers(template) {
+  return template
+    .replace(/<script(\s+)src=/gi, "__COVERMATE_SCRIPT_OPEN__$1__COVERMATE_SCRIPT_SRC_ATTR__=")
+    .replace(/<script/gi, "__COVERMATE_SCRIPT_OPEN__")
+    .replace(
+      /\b([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})\b/gi,
+      (_, a, b, c, d, e) => `__COVERMATE_RESOURCE_${[a, b, c, d, e].join("_").toUpperCase()}__`
+    );
 }
 
 function extractDcScript(template) {
@@ -1395,7 +1415,7 @@ const nextDcScript = dcScript.fullMatch.replace(dcScript.source, () => nextScrip
 const nextTemplate = applySeoMetadata(applyMobileStickySectionFix(applyGuidesFaqTypeMatch(applyVisualHierarchyTuning(applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
   templateParts.template.replace(dcScript.fullMatch, () => nextDcScript)
 ))))));
-const nextTemplateJson = JSON.stringify(nextTemplate).replace(/<\/script/gi, "<\\/script");
+const nextTemplateJson = JSON.stringify(maskTemplateScriptMarkers(nextTemplate)).replace(/<\/script/gi, "<\\/script");
 const rebuiltHtml = `${html.slice(0, templateParts.start)}<script type="__bundler/template">${nextTemplateJson}</script>\n</body>\n</html>\n`;
 const nextHtml = applySeoMetadata(applyOuterAssetVersion(
   rebuiltHtml,

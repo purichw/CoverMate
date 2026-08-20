@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
+function restoreTemplateScriptMarkers(template) {
+  return template
+    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
+    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
+    .replace(
+      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
+      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
+    );
+}
+
 async function loadContract() {
   const source = fs.readFileSync(new URL("../covermate-contract.js", import.meta.url), "utf8");
   return import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
@@ -11,7 +21,7 @@ function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
   const templateMatch = html.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
   if (!templateMatch) throw new Error("index.html: embedded template missing");
-  const template = JSON.parse(templateMatch[1]);
+  const template = restoreTemplateScriptMarkers(JSON.parse(templateMatch[1]));
   const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
   if (!scriptMatch) throw new Error("index.html: text/x-dc script missing");
   const scriptSource = scriptMatch[1];

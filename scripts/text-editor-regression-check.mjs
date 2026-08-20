@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
+function restoreTemplateScriptMarkers(template) {
+  return template
+    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
+    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
+    .replace(
+      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
+      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
+    );
+}
+
 function extractTemplate(html) {
   const open = '<script type="__bundler/template">';
   const start = html.indexOf(open);
@@ -25,7 +35,7 @@ function extractTemplate(html) {
     }
   }
   if (jsonEnd < 0) throw new Error("index.html: embedded template JSON is unterminated");
-  return JSON.parse(html.slice(jsonStart, jsonEnd));
+  return restoreTemplateScriptMarkers(JSON.parse(html.slice(jsonStart, jsonEnd)));
 }
 
 function extractRuntime(template) {

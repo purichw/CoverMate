@@ -12,6 +12,16 @@ import {
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const indexHtml = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
 
+function restoreTemplateScriptMarkers(template) {
+  return template
+    .replace(/__COVERMATE_SCRIPT_OPEN__/g, "<script")
+    .replace(/__COVERMATE_SCRIPT_SRC_ATTR__/g, "src")
+    .replace(
+      /__COVERMATE_RESOURCE_([0-9A-F]{8})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{4})_([0-9A-F]{12})__/g,
+      (_, a, b, c, d, e) => [a, b, c, d, e].join("-").toLowerCase()
+    );
+}
+
 function extractTemplate(html) {
   const open = '<script type="__bundler/template">';
   const start = html.lastIndexOf(open);
@@ -19,7 +29,7 @@ function extractTemplate(html) {
   const after = start + open.length;
   const end = html.indexOf("</script>", after);
   assert.notEqual(end, -1, "embedded template closes");
-  return JSON.parse(html.slice(after, end));
+  return restoreTemplateScriptMarkers(JSON.parse(html.slice(after, end)));
 }
 
 function extractDcScript(template) {
