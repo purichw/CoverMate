@@ -20,6 +20,7 @@ const { chromium } = playwright;
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const remoteUrl = process.env.COVERMATE_BOOT_URL || "";
 const firebaseDelayMs = Number(process.env.COVERMATE_BOOT_FIREBASE_DELAY_MS || 700);
+const maxVisibleMs = Number(process.env.COVERMATE_BOOT_MAX_VISIBLE_MS || 0);
 
 function contentType(filePath) {
   const ext = path.extname(filePath).toLowerCase();
@@ -151,6 +152,7 @@ async function main() {
       null,
       { timeout: 30000 }
     );
+    const visibleMs = Date.now() - start;
     await page.waitForTimeout(700);
 
     const settled = await page.evaluate(() => {
@@ -169,6 +171,7 @@ async function main() {
     const result = {
       target: remoteUrl ? "remote" : "local",
       url,
+      visibleMs,
       elapsedMs: Date.now() - start,
       early,
       settled,
@@ -186,6 +189,12 @@ async function main() {
     assert.equal(settled.htmlBooting, false, "boot attribute is removed after hydration");
     assert.equal(settled.guard, false, "hydration guard is removed after hydration");
     assert.equal(settled.bodyVisibility, "visible", "body is visible after hydration");
+    if (maxVisibleMs > 0) {
+      assert.ok(
+        visibleMs <= maxVisibleMs,
+        `body becomes visible within ${maxVisibleMs}ms (actual ${visibleMs}ms)`
+      );
+    }
     assert.equal(pageErrors.length, 0, "no page errors");
     assert.equal(failed.length, 0, "no failed requests");
     assert.equal(badResponses.length, 0, "no 4xx/5xx asset responses");

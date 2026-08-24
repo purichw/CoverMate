@@ -53,6 +53,23 @@
     html[data-covermate-booting="true"] body > * {
       visibility: hidden !important;
     }
+    html[data-covermate-booting="true"]::before {
+      content: "CoverMate";
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      display: grid;
+      place-items: center;
+      color: #201e1d;
+      font: 700 22px/1.2 "Google Sans", "Google Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: 0;
+      opacity: 0;
+      pointer-events: none;
+      animation: covermateBootPrompt 1ms linear 900ms forwards;
+    }
+    @keyframes covermateBootPrompt {
+      to { opacity: .55; }
+    }
     #__bundler_thumbnail,
     #__bundler_loading,
     #__bundler_placeholder {
@@ -88,9 +105,18 @@ document.addEventListener('DOMContentLoaded', async function() {
   function setStatus(msg) { if (loading) loading.textContent = msg; }
   const BOOT_ATTR = 'data-covermate-booting';
   const BOOT_GUARD_ID = 'covermate-hydration-guard';
-  let revealTimer = window.setTimeout(revealCoverMate, 10000);
+  const FIRST_BOOT_REVEAL_MS = 8000;
+  const SWAPPED_BOOT_REVEAL_MS = 3500;
+  const PUBLIC_REMOTE_TIMEOUT_MS = 1500;
+  const OWNER_REMOTE_TIMEOUT_MS = 9000;
+  let revealTimer = 0;
+  function scheduleReveal(ms) {
+    try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
+    revealTimer = window.setTimeout(revealCoverMate, ms);
+  }
   function revealCoverMate() {
-    try { window.clearTimeout(revealTimer); } catch (err) {}
+    try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
+    revealTimer = 0;
     try {
       const guard = document.getElementById(BOOT_GUARD_ID);
       if (guard) guard.remove();
@@ -103,11 +129,14 @@ document.addEventListener('DOMContentLoaded', async function() {
       /* Keep fallback reveal non-fatal. */
     }
   }
+  scheduleReveal(FIRST_BOOT_REVEAL_MS);
   function installTemplateGuard(source) {
     const guard =
       '<style id="' + BOOT_GUARD_ID + '">' +
       'html,body{min-height:100%;background:#f5ead8!important}' +
-      'body{visibility:hidden!important;color:transparent!important}' +
+      'html[data-covermate-booting="true"] body{visibility:hidden!important;color:transparent!important}' +
+      'html[data-covermate-booting="true"] body>*{visibility:hidden!important}' +
+      'html[data-covermate-booting="true"]::before{content:"CoverMate";position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;color:#201e1d;font:700 22px/1.2 "Google Sans","Google Sans Thai",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:0;opacity:.55;pointer-events:none}' +
       '</style>';
     const headOpen = source.match(/<head[^>]*>/i);
     if (!headOpen) return guard + source;
@@ -201,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       } else if (contract.clearAdminChromeState) {
         contract.clearAdminChromeState();
       }
-      const timeoutMs = owner ? 9000 : 5000;
+      const timeoutMs = owner ? OWNER_REMOTE_TIMEOUT_MS : PUBLIC_REMOTE_TIMEOUT_MS;
       let timeoutId = 0;
       const timeout = new Promise((resolve) => {
         timeoutId = window.setTimeout(() => resolve({ timedOut: true }), timeoutMs);
@@ -479,6 +508,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // createElement so they execute, awaiting onload for src scripts to
     // preserve ordering (React before ReactDOM before Babel before text/babel).
     const doc = new DOMParser().parseFromString(template, 'text/html');
+    doc.documentElement.setAttribute(BOOT_ATTR, 'true');
+    scheduleReveal(SWAPPED_BOOT_REVEAL_MS);
     document.documentElement.replaceWith(doc.documentElement);
 
     // Resolve page-frame markers: mint this document's own blob for each
