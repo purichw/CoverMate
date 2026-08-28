@@ -1,20 +1,10 @@
 import fs from "node:fs";
 import vm from "node:vm";
-import { createRequire } from "node:module";
 
 import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
+import { loadPlaywright } from "./lib/playwright.mjs";
 
-const require = createRequire(import.meta.url);
-let playwright;
-
-try {
-  playwright = require("playwright");
-} catch {
-  playwright = require(
-    "/Users/point/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"
-  );
-}
-
+const playwright = loadPlaywright();
 const { chromium } = playwright;
 
 const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";

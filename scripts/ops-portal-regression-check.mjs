@@ -1,19 +1,11 @@
 import fs from "node:fs";
-import { createRequire } from "node:module";
 
-const require = createRequire(import.meta.url);
-let playwright;
+import { loadPlaywright } from "./lib/playwright.mjs";
+import { startStaticServer } from "./lib/static-server.mjs";
 
-try {
-  playwright = require("playwright");
-} catch {
-  playwright = require(
-    "/Users/point/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"
-  );
-}
-
+const playwright = loadPlaywright();
 const { chromium } = playwright;
-const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";
+let baseUrl = process.env.COVERMATE_URL || "";
 const outDir = process.env.COVERMATE_OPS_QA_DIR || "/tmp/covermate-ops-qa";
 
 const firebaseMock = `
@@ -205,6 +197,8 @@ async function fulfillApi(route) {
 
 fs.mkdirSync(outDir, { recursive: true });
 
+const localServer = baseUrl ? null : await startStaticServer();
+if (localServer) baseUrl = localServer.baseUrl;
 const browser = await chromium.launch({ headless: true });
 try {
   const unauthenticated = await browser.newPage({ viewport: { width: 1280, height: 760 } });
@@ -336,4 +330,7 @@ try {
   }, null, 2));
 } finally {
   await browser.close();
+  if (localServer) {
+    await new Promise((resolve) => localServer.server.close(resolve));
+  }
 }

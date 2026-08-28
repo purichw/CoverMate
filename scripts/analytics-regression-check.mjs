@@ -1,17 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { createRequire } from "node:module";
 
-const require = createRequire(import.meta.url);
-let playwright;
-try {
-  playwright = require("playwright");
-} catch {
-  playwright = require(
-    "/Users/point/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"
-  );
-}
+import { loadPlaywright } from "./lib/playwright.mjs";
 
+const playwright = loadPlaywright();
 const { chromium } = playwright;
 const root = new URL("../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), "utf8");

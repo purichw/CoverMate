@@ -119,6 +119,16 @@ Implemented:
   mapping boundary with mocked Firebase, Firestore, OAuth, and GA4 responses.
 - `npm run check:needs` validates the current Needs Calculator methodology,
   public controls, and Firestore-over-default precedence.
+- Browser regression scripts resolve Playwright through
+  `scripts/lib/playwright.mjs`, keeping the local install and Codex bundled
+  runtime fallback in one place.
+- Browser regression scripts that need a local site use
+  `scripts/lib/static-server.mjs` for ephemeral clean-URL serving, so checks do
+  not depend on a long-running server at a fixed port unless explicitly
+  configured.
+- `npm run check:ops` can start its own local static server when
+  `COVERMATE_URL` is not provided, while still allowing production or preview
+  targets through that environment variable.
 
 Refactor direction:
 

@@ -13,8 +13,11 @@ Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden
 until their production Firestore/API contracts exist.
 Shared route/storage contracts live in `covermate-contract.js`; shared
 embedded-template parsing and serialization lives in
-`scripts/lib/bundler-template.mjs`. Do not reintroduce per-script template
-parsers or duplicate admin route constants.
+`scripts/lib/bundler-template.mjs`; shared browser-test Playwright loading and
+ephemeral static serving live in `scripts/lib/playwright.mjs` and
+`scripts/lib/static-server.mjs`. Do not reintroduce per-script template
+parsers, duplicate admin route constants, copied Playwright fallback paths, or
+fixed-port local servers in regression scripts.
 The public Needs Calculator now follows the
 `covermate-reference-data-v0.1` methodology through the `fit.calculator` CMS
 payload, with Firestore live/draft values prevailing over embedded defaults.
@@ -104,8 +107,10 @@ Detailed project documents:
 | `sitemap.xml` | Production canonical sitemap. Includes only `https://covermate.vercel.app/`; hash aliases and admin routes must stay out. |
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
-| `scripts/smoke.mjs` | Playwright smoke harness with local/runtime Playwright fallback. |
+| `scripts/smoke.mjs` | Playwright smoke harness using the shared Playwright loader. |
 | `scripts/lib/bundler-template.mjs` | Shared embedded Claude bundle-template parser/serializer used by validation, copy export/update, and regression scripts. This is the owner for template marker masking/restoring. |
+| `scripts/lib/playwright.mjs` | Shared Playwright resolver for local installs and the Codex bundled runtime path. |
+| `scripts/lib/static-server.mjs` | Shared ephemeral static server for browser regression scripts. It preserves clean URL behavior and only maps owner public-page routes to `index.html` when requested by a check. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
 | `scripts/apply-visitor-copy-update.mjs` | Regenerates visitor default copy/runtime guards from copy-update rules while preserving Firestore-first CMS behavior. |
@@ -166,6 +171,10 @@ Route contracts:
   `scripts/lib/bundler-template.mjs`. Validation/export/update/regression
   scripts should import it rather than hand-scanning `index.html` or rebuilding
   `<script type="__bundler/template">` strings themselves.
+- Browser regression scripts should import `scripts/lib/playwright.mjs` for
+  Playwright loading and `scripts/lib/static-server.mjs` for local static
+  serving. Use ephemeral ports by default; bind to a fixed port only when a test
+  intentionally targets an external server.
 - Firestore/cache key names remain shared product contracts. Additions and
   migrations belong in `covermate-contract.js` first, then consumers.
 

@@ -1,77 +1,13 @@
 import assert from "node:assert/strict";
-import fs from "node:fs/promises";
-import http from "node:http";
-import path from "node:path";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 
-const require = createRequire(import.meta.url);
-let playwright;
+import { loadPlaywright } from "./lib/playwright.mjs";
+import { startStaticServer } from "./lib/static-server.mjs";
 
-try {
-  playwright = require("playwright");
-} catch {
-  playwright = require(
-    "/Users/point/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"
-  );
-}
-
+const playwright = loadPlaywright();
 const { chromium } = playwright;
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const remoteUrl = process.env.COVERMATE_BOOT_URL || "";
 const firebaseDelayMs = Number(process.env.COVERMATE_BOOT_FIREBASE_DELAY_MS || 700);
 const maxVisibleMs = Number(process.env.COVERMATE_BOOT_MAX_VISIBLE_MS || 0);
-
-function contentType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  if (ext === ".html") return "text/html; charset=utf-8";
-  if (ext === ".js" || ext === ".mjs") return "application/javascript; charset=utf-8";
-  if (ext === ".css") return "text/css; charset=utf-8";
-  if (ext === ".svg") return "image/svg+xml";
-  if (ext === ".png") return "image/png";
-  if (ext === ".ico") return "image/x-icon";
-  if (ext === ".json" || ext === ".webmanifest") return "application/json; charset=utf-8";
-  return "application/octet-stream";
-}
-
-function safeFilePath(urlPath) {
-  let pathname = decodeURIComponent(urlPath).replace(/^\/+/, "");
-  pathname = pathname.replace(/^"+|"+$/g, "");
-  if (!pathname || pathname === "admin" || pathname.startsWith("admin/")) {
-    pathname = "index.html";
-  }
-  const filePath = path.resolve(rootDir, pathname);
-  if (!filePath.startsWith(rootDir + path.sep) && filePath !== rootDir) {
-    return null;
-  }
-  return filePath;
-}
-
-function startServer() {
-  const server = http.createServer(async (req, res) => {
-    try {
-      const url = new URL(req.url || "/", "http://127.0.0.1");
-      const filePath = safeFilePath(url.pathname);
-      if (!filePath) {
-        res.writeHead(403);
-        res.end("Forbidden");
-        return;
-      }
-      const data = await fs.readFile(filePath);
-      res.writeHead(200, { "content-type": contentType(filePath) });
-      res.end(data);
-    } catch {
-      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-      res.end("Not found");
-    }
-  });
-  return new Promise((resolve) => {
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      resolve({ server, baseUrl: `http://127.0.0.1:${address.port}` });
-    });
-  });
-}
 
 function firebaseMock() {
   return `
@@ -93,7 +29,7 @@ function isAllowedBrowserBeaconFailure(requestUrl) {
 }
 
 async function main() {
-  const local = remoteUrl ? null : await startServer();
+  const local = remoteUrl ? null : await startStaticServer();
   const url = remoteUrl || `${local.baseUrl}/?bootGuardCheck=1`;
   const browser = await chromium.launch({ headless: true });
 

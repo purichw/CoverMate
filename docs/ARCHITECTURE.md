@@ -143,6 +143,16 @@ marker restoration/masking, and serialization for maintenance scripts. Scripts
 that read or rewrite `<script type="__bundler/template">` must import this
 module instead of carrying local JSON-string scanners.
 
+`scripts/lib/playwright.mjs` owns Playwright resolution for local and Codex
+runtime environments. Browser regression scripts must import it instead of
+duplicating absolute fallback paths.
+
+`scripts/lib/static-server.mjs` owns the ephemeral local static server used by
+browser regression scripts. It supports clean URLs and maps only owner
+public-page routes such as `/admin/edit`, `/admin/content`, and
+`/admin/preview` back to `index.html` when a check explicitly asks for that
+behavior.
+
 `favicon.svg` and `favicon.ico` own the CoverMate browser icons. `vercel.json`
 owns clean URLs and static cache behavior.
 
