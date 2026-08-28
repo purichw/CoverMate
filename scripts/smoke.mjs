@@ -288,7 +288,10 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
 
 async function waitForBodyText(page, pattern, timeout = 30000) {
   await page.waitForFunction(
-    ({ source, flags }) => new RegExp(source, flags).test(document.body.innerText || ""),
+    ({ source, flags }) => {
+      const body = document.body;
+      return Boolean(body) && new RegExp(source, flags).test(body.innerText || "");
+    },
     { source: pattern.source, flags: pattern.flags },
     { timeout }
   );
