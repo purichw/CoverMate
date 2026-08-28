@@ -105,8 +105,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   function setStatus(msg) { if (loading) loading.textContent = msg; }
   const BOOT_ATTR = 'data-covermate-booting';
   const BOOT_GUARD_ID = 'covermate-hydration-guard';
-  const FIRST_BOOT_REVEAL_MS = 8000;
-  const SWAPPED_BOOT_REVEAL_MS = 3500;
+  const FIRST_BOOT_REVEAL_MS = 4500;
+  const SWAPPED_BOOT_REVEAL_MS = 1200;
   const PUBLIC_REMOTE_TIMEOUT_MS = 1500;
   const OWNER_REMOTE_TIMEOUT_MS = 9000;
   let revealTimer = 0;
