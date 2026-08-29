@@ -335,6 +335,10 @@ Guardrails:
 - Header/footer nav and any CTA that points to a same-page section must be
   visibility-aware: if the target section is hidden in Admin, the link/button is
   hidden too rather than leaving a dead anchor on the visitor surface.
+- The Home `#insurers` section carries the explicit path into the dedicated
+  motor campaign page: Thai `ดูหน้าประกันรถยนต์โดยเฉพาะ`, English
+  `Open the dedicated motor page`, with `href="/motor"`. Keep this out of the
+  header nav so the header still has only one Motor item.
 
 ## Visitor Section Order
 

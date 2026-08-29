@@ -618,6 +618,12 @@ function applyRuntimeCopyGuards(source) {
     "        if (!s.cols) s.cols = def.cols;\n        ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });",
     "        if (!s.cols) s.cols = def.cols;\n        if (def.calculator) s.calculator = this.mergeDeepDefaults(def.calculator, s.calculator);\n        ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });"
   );
+  if (!next.includes("['cta1href', 'cta2href', 'claimHref'].forEach")) {
+    const source = "        if (def.calculator) s.calculator = this.mergeDeepDefaults(def.calculator, s.calculator);\n        ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });";
+    const target = "        if (def.calculator) s.calculator = this.mergeDeepDefaults(def.calculator, s.calculator);\n        ['cta1href', 'cta2href', 'claimHref'].forEach(key => { if (def[key] && !s[key]) s[key] = def[key]; });\n        ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });";
+    if (!next.includes(source)) throw new Error("CTA fallback normalization anchor not found.");
+    next = next.replace(source, target);
+  }
   return next;
 }
 
@@ -725,6 +731,21 @@ function applyGuidesFaqTypeMatch(template) {
     /<style id="covermate-guides-font-scale">[\s\S]*?<\/style>/,
     css
   );
+}
+
+function applyHomeMotorPageLink(template) {
+  if (template.includes("data-home-motor-page-link")) return template;
+  const source = `          <p style="margin:0;font-size:16px;line-height:1.55;color:{{ s.muted }};max-width:52ch;text-wrap:balance">{{ s.body }}</p>
+        </div>
+        <div data-reveal="1" style="background:var(--color-bg);border-radius:var(--radius-lg);padding:clamp(20px,3vw,40px)">`;
+  const target = `          <p style="margin:0;font-size:16px;line-height:1.55;color:{{ s.muted }};max-width:52ch;text-wrap:balance">{{ s.body }}</p>
+          <sc-if value="{{ s.hasCta1 }}" hint-placeholder-val="{{ true }}">
+            <a data-home-motor-page-link="" href="{{ s.cta1href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;margin-top:var(--space-2);padding:0 21px;border-radius:999px;background:{{ A_base }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-sm);transition:transform .2s ease, background .2s ease" style-hover="background:{{ A_mid }};color:#fff;transform:translateY(-1px)" style-active="transform:translateY(0)">{{ s.cta1 }} <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+          </sc-if>
+        </div>
+        <div data-reveal="1" style="background:var(--color-bg);border-radius:var(--radius-lg);padding:clamp(20px,3vw,40px)">`;
+  if (!template.includes(source)) throw new Error("Home motor page link insertion anchor not found.");
+  return template.replace(source, target);
 }
 
 function applyMobileStickySectionFix(template) {
@@ -990,13 +1011,16 @@ function applyCopy(config) {
   insurers.th = {
     kicker: "ประกันรถยนต์ · ในฐานะนายหน้า",
     title: "ประกันรถยนต์\nเปรียบเทียบได้ 14 แห่ง",
-    body: "สำหรับประกันรถยนต์ เราสามารถเปรียบเทียบข้อเสนอจากบริษัทประกันภัย 14 แห่ง เพื่อพิจารณาทางเลือกที่เหมาะสมกับคุณ ส่วนประกันชีวิตและสุขภาพดำเนินการผ่าน AIA"
+    body: "สำหรับประกันรถยนต์ เราสามารถเปรียบเทียบข้อเสนอจากบริษัทประกันภัย 14 แห่ง เพื่อพิจารณาทางเลือกที่เหมาะสมกับคุณ ส่วนประกันชีวิตและสุขภาพดำเนินการผ่าน AIA",
+    cta1: "ดูหน้าประกันรถยนต์โดยเฉพาะ"
   };
   insurers.en = {
     kicker: "Motor insurance · as a broker",
     title: "Motor insurance\ncompared across 14 insurers",
-    body: "For motor insurance, we compare options from 14 insurers. Life and health insurance is arranged through AIA."
+    body: "For motor insurance, we compare options from 14 insurers. Life and health insurance is arranged through AIA.",
+    cta1: "Open the dedicated motor page"
   };
+  insurers.cta1href = "/motor";
   if (Array.isArray(insurers.cards) && insurers.cards[0]) {
     updateLocal(insurers.cards[0], {
       ...(insurers.cards[0].th || {}),
@@ -1349,9 +1373,9 @@ const nextScriptSource = guardedScriptSource.replace(
   () => `${nextDefaults}const SCHEMA =`
 );
 const nextDcScript = dcScript.fullMatch.replace(dcScript.source, () => nextScriptSource);
-const nextTemplate = applySeoMetadata(applyMobileStickySectionFix(applyGuidesFaqTypeMatch(applyVisualHierarchyTuning(applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
+const nextTemplate = applySeoMetadata(applyMobileStickySectionFix(applyHomeMotorPageLink(applyGuidesFaqTypeMatch(applyVisualHierarchyTuning(applyNeedsCalculatorTemplate(applyRuntimeCopyGuards(
   templateParts.template.replace(dcScript.fullMatch, () => nextDcScript)
-))))));
+)))))));
 const nextTemplateJson = serializeBundlerTemplate(nextTemplate);
 const rebuiltHtml = `${html.slice(0, templateParts.start)}${BUNDLER_TEMPLATE_OPEN}${nextTemplateJson}</script>\n</body>\n</html>\n`;
 const nextHtml = applySeoMetadata(applyOuterAssetVersion(

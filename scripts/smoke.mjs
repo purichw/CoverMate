@@ -1508,6 +1508,11 @@ for (const [name, width, height] of viewports) {
           style.opacity !== "0"
         );
       };
+      const homeMotorLinks = Array.from(document.querySelectorAll('main #insurers a[href="/motor"]'))
+        .map((anchor) => ({
+          text: (anchor.textContent || "").replace(/\s+/g, " ").trim(),
+          visible: isVisible(anchor)
+        }));
 
       return {
         title: document.title,
@@ -1530,6 +1535,7 @@ for (const [name, width, height] of viewports) {
         bodyText,
         insurerText,
         navHrefs,
+        homeMotorLinks,
         headerCtaText,
         placeholderStoriesVisible:
           Array.from(document.querySelectorAll("section#voices")).some((section) => {
@@ -1663,6 +1669,10 @@ for (const [name, width, height] of viewports) {
       if (fitIndex >= 0 && fitIndex < insurersIndex) {
         failures.push(`${name} ${route}: visible resources section should follow insurers (${state.sectionIds.join(", ")})`);
       }
+      const visibleHomeMotorLinks = state.homeMotorLinks.filter((link) => link.visible);
+      if (visibleHomeMotorLinks.length !== 1 || !/ประกันรถยนต์|Motor/i.test(visibleHomeMotorLinks[0]?.text || "")) {
+        failures.push(`${name} ${route}: home is missing the dedicated /motor CTA (${JSON.stringify(state.homeMotorLinks)})`);
+      }
     }
     if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
@@ -1717,6 +1727,9 @@ for (const [name, width, height] of viewports) {
       }
       if (!state.navHrefs.includes("/") || !state.navHrefs.includes("#motor-cover") || !state.navHrefs.includes("#insurers")) {
         failures.push(`${name} ${route}: dedicated motor nav is missing Home/motor anchors (${state.navHrefs.join(", ")})`);
+      }
+      if (state.homeMotorLinks.some((link) => link.visible)) {
+        failures.push(`${name} ${route}: dedicated motor page should not show a self-linking /motor CTA`);
       }
     }
     if (route === "/#life-focus") {
