@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-08-16
+Last updated: 2026-08-29
 
 ## Current State
 
@@ -16,8 +16,9 @@ source-authored private analytics surface:
 - `admin/index.html`
 - `admin/analytics/index.html`
 
-The site includes the visitor experience, motor-insurance section, admin login,
-admin launcher, admin analytics, inline editing mode, and control panel mode.
+The site includes the visitor experience, dedicated motor-insurance route,
+admin login, Admin Portal, admin analytics, inline editing mode, and control
+panel mode.
 
 Current external handoff package:
 
@@ -28,7 +29,7 @@ Current external handoff package:
   store/migration/markup/routing/theme/calculator/analytics/validation, and
   test stubs.
 - Use this zip, together with the latest SPEC, as the current handoff artifact
-  for Claude/implementation planning. Do not treat the filename as meaning the
+  for implementation planning. Do not treat the filename as meaning the
   package is poster-only.
 
 Local workspace state can still be ahead of production between edits. Treat
@@ -69,21 +70,21 @@ The exported bundler placeholder is hidden on first paint so users do not see an
 Admin login redirects to `/admin`, the private Admin Portal Home. The home has
 four primary modules: Operations, Website content, Analytics, and Settings.
 
-The admin launcher has an early session gate and its own sign-out action.
+The Admin Portal has an early session gate and its own sign-out action.
 
-The `/#admin` drawer no longer uses a standalone ambiguous "ออก" button in the
-header. Closing the drawer now clears owner markers and lands on clean `/`; it
-does not place an owner bar on the public visitor page.
+The owner control panel no longer uses an ambiguous header-only "ออก" button.
+Closing direct `/admin/content` returns to `/admin`; closing a panel opened from
+`/admin/edit` keeps the owner in the editor and only hides the panel.
 
-The `/#edit` mode now uses the warm-ink owner dock from the Claude owner-dock
-reference. The collapsed dock keeps only `Editing on page` and `Tools`
+The `/admin/edit` mode now uses the warm-ink owner dock product direction. The collapsed dock keeps only `Editing on page` and `Tools`
 available; if the admin drawer is open at the same time, the status reads
 `Editing on page · Panel open`, and choosing `Panel` collapses the menu so the
 state remains visible. Expanding `Tools` opens a single dark-ink command
 palette grouped into `Draft` and `Go to` actions. `Publish` is the only
 terracotta-filled action inside the dock; `Save draft`, `Preview`, `Panel`,
 `Main`, `Public site`, and `Log out` stay quiet cream actions. `Public site`
-removes `contenteditable` state before landing on clean `/`.
+opens the clean public route in a new browser tab and must not move the current
+Admin tab out of the `/admin` namespace.
 
 Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
 successful Firestore writes, then show dismissible success toasts with
@@ -103,45 +104,7 @@ Visible Admin chrome/action labels are intentionally English-only: `Panel`,
 
 Insurer logos are present under `assets/ins`.
 
-The visitor bundle has been reconciled with
-`/Users/point/Downloads/Purich Insurance Site (standalone).html`, including the
-new contact form selects, insurer relationship proof cards, card editing in the
-admin content panel, and local structural migration key.
-
-The visitor bundle has also been reconciled with
-`/Users/point/Downloads/CoverMate Standalone.html`. The latest local bundle
-includes the expanded reference sections for policy review, claim help, renewal
-reminders, guides, fee transparency, privacy/PDPA, the main-site `#motor` /
-`#life` aliases, and unexposed `#motor-focus` / `#life-focus` campaign variants
-while preserving the production decisions for Firebase/Firestore, Admin
-Analytics, and real public lead submission paths. The current Admin Portal Home
-opens the existing CMS controls for website content and the source-authored
-Operations Portal for live lead/task/audit work.
-
-The SPEC (5) reconciliation added the motor tier comparison section after the
-insurer-logo section. It renders as a desktop comparison table and mobile
-stacked cards, with editable tier heads/items/cell states in the Admin Content
-tab.
-
-The latest studied Claude standalone is
-`/Users/point/Downloads/CoverMate Standalone (1).html`. The reconciliation
-ledger is now captured in
-[`CLAUDE_DESIGN_RECONCILIATION.md`](CLAUDE_DESIGN_RECONCILIATION.md), with
-snapshot evidence under
-`/Users/point/CoverMate/docs/snapshots/claude-reconcile-2026-08-02`. Use that
-document as the feedback loop for future Claude exports so accepted production
-decisions are not reintroduced as conflicts.
-
-`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
-is the runtime-dependent Claude build source. When opened alone from
-`/Downloads`, it can show raw `{{ ... }}` placeholders because required sidecar
-files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js` are
-absent. Treat it as reference material only unless Claude exports a
-self-contained HTML or complete folder bundle. The latest studied packaged demo
-`/Users/point/Downloads/CoverMate Standalone (1).html` showed no visible raw
-template markers after settle, but it still logs a `file://`
-`.image-slots.state.json` fetch error, so it is not yet fully validated as a
-portable evidence artifact.
+The visitor bundle has been reconciled through the product specs, current implementation docs, and owner-supplied reference packages used during development. Those artifacts are historical inputs only; the repository, current docs, and Firestore live CMS state are the maintained source of truth.
 
 Admin login now uses Firebase Auth through `covermate-firebase.js` and checks
 Firestore `admins/{uid}` before creating `covermate-admin-session`.
@@ -206,7 +169,6 @@ Read these before changing the project:
 - [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md)
 - [SEO.md](SEO.md)
 - [DESIGN_ASSETS.md](DESIGN_ASSETS.md)
-- [CLAUDE_DESIGN_RECONCILIATION.md](CLAUDE_DESIGN_RECONCILIATION.md)
 - [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md)
 
 ## Common Commands
@@ -261,14 +223,14 @@ fall back to embedded defaults or last-known local cache. Seed/publish live
 content before treating Admin Portal edits as production CMS content.
 
 The insurer-logo grid has 14 committed files and the public copy is aligned to
-that visible logo count. The latest reference supports this with additional AIA
-and Srikrung Broker proof cards below the grid; confirm any future count/copy
-change with the business owner and add matching logo assets first.
+that visible logo count. AIA and Srikrung Broker proof cards carry the related
+business context below the grid; confirm any future count/copy change with the
+business owner and add matching logo assets first.
 
 The embedded exported bundle is hard to maintain by hand. Run parse checks and
 visual smoke checks after bundle edits.
 
-Downloaded standalone/reference HTML may be incomplete. If it renders raw
+Downloaded offline/reference HTML may be incomplete. If it renders raw
 `{{ ... }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`, do not treat it as
 the production source of truth or a valid portable demo. Use the production
 site, repository implementation, docs, Firestore live state, and snapshot suite
@@ -309,7 +271,7 @@ Use `project-onboarding` first when returning to the repo after a break.
 Use `docs-cartographer` when adding routes, sections, data keys, or release
 process.
 
-Use `ui-ux-orchestrator`, `ui-ux-expert`, `claude-to-a-tee`, and `snapshot` for
+Use `ui-ux-orchestrator`, `ui-ux-expert`, `covermate-design-spec`, and `snapshot` for
 visual reconciliation.
 
 Use `admin-ops` and `admin-prototype-reconciliation` for admin/CMS work.

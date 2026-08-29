@@ -4,9 +4,9 @@ Purpose: make the static CoverMate visitor/admin site easy to navigate, verify,
 and safely edit in later sessions.
 
 Current state: this repo is a Vercel-hosted static export plus a narrow Vercel
-serverless Operations API. The UI is built from Claude Design `.dc.html`
-bundles, with small production patches applied in the wrapper and embedded
-bundle strings. Firebase Auth, Firestore CMS persistence, lead capture, Admin
+serverless Operations API. The UI is maintained as large exported HTML
+bundles plus source-authored helpers, with production patches applied in the
+wrapper and embedded bundle strings. Firebase Auth, Firestore CMS persistence, lead capture, Admin
 Analytics, and the source-authored Operations Portal route are implemented.
 Operations is live today for Dashboard, Leads, Tasks, and Audit; Customers,
 Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden
@@ -32,13 +32,10 @@ and Settings in one sidebar. Stub/planned admin modules stay hidden until their
 real contracts exist. Future bugs should be fixed as defects unless the owner
 explicitly reopens the product decision.
 
-Standalone/export checkpoint: downloaded Claude standalone HTML files are
-design/reference artifacts only. They are not source of truth for production,
-and they are not valid "standalone" deliverables unless they open from `file://`
-without missing runtime files and without rendering raw placeholders such as
-`{{ brandName }}`. If a Claude export depends on `support.js`, `image-slot.js`,
-or `_ds/*/_ds_bundle.js`, keep it as a reference bundle input and ask Claude to
-produce a self-contained export before treating it as a portable demo.
+External prototype checkpoint: offline prototype exports and screenshots are
+historical inputs only. They are not source of truth for production unless the
+owner explicitly reintroduces them in the current task and they pass the raw
+template/runtime-dependency checks in the release runbook.
 
 ## How To Run / Verify
 
@@ -57,7 +54,7 @@ produce a self-contained export before treating it as a portable demo.
 `scripts/smoke.mjs` covers desktop/tablet/mobile routes, first-paint placeholder
 cloaking, insurer logos, expanded public sections, horizontal overflow,
 unauthenticated admin redirects, Firebase login UI rendering, authenticated
-admin launcher rendering, private analytics rendering, `/#admin` tab
+Admin Portal rendering, private analytics rendering, `/#admin` tab
 visibility/content, admin drawer clean-exit behavior, `/#edit` editable-mode
 rendering, edit-mode exit cleanup, SEO metadata/structured-data contracts, and
 `Log out` redirects.
@@ -77,7 +74,6 @@ Detailed project documents:
 - [`docs/SEO.md`](docs/SEO.md)
 - [`docs/ADMIN_CMS_REBUILD_DECISIONS.md`](docs/ADMIN_CMS_REBUILD_DECISIONS.md)
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
-- [`docs/CLAUDE_DESIGN_RECONCILIATION.md`](docs/CLAUDE_DESIGN_RECONCILIATION.md)
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 - [`docs/HANDOFF.md`](docs/HANDOFF.md)
 
@@ -85,7 +81,7 @@ Detailed project documents:
 
 | Path | Purpose / ownership |
 | --- | --- |
-| `index.html` | Public visitor site and owner hash modes: `#motor`, `#admin`, `#edit`, `#preview`. This is the main bundled site surface. `#motor` is currently an alias into the main site, not a separate page. |
+| `index.html` | Public visitor site, dedicated `/motor` campaign route through Vercel rewrites, and owner modes: legacy `#motor`, `#admin`, `#edit`, `#preview` plus direct `/admin/content`, `/admin/edit`, and `/admin/preview` owner routes. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private single-shell Admin Portal. Home, Operations, Website content, Analytics, and Settings switch client-side through the shared sidebar. Has an early session gate and verified Firebase admin session check that redirect unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
@@ -108,7 +104,7 @@ Detailed project documents:
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness using the shared Playwright loader. |
-| `scripts/lib/bundler-template.mjs` | Shared embedded Claude bundle-template parser/serializer used by validation, copy export/update, and regression scripts. This is the owner for template marker masking/restoring. |
+| `scripts/lib/bundler-template.mjs` | Shared embedded bundle-template parser/serializer used by validation, copy export/update, and regression scripts. This is the owner for template marker masking/restoring. |
 | `scripts/lib/playwright.mjs` | Shared Playwright resolver for local installs and the Codex bundled runtime path. |
 | `scripts/lib/static-server.mjs` | Shared ephemeral static server for browser regression scripts. It preserves clean URL behavior and only maps owner public-page routes to `index.html` when requested by a check. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
@@ -123,7 +119,8 @@ Detailed project documents:
 
 ```mermaid
 flowchart LR
-  "Visitor /" --> "Visitor #motor"
+  "Visitor /" --> "Visitor /motor"
+  "Visitor /" --> "Visitor #motor legacy alias"
   "Visitor /" --> "Owner #edit"
   "Visitor /" --> "Owner #admin"
   "Visitor /" --> "Owner #preview"
@@ -138,12 +135,15 @@ flowchart LR
 Route contracts:
 
 - `/` is the public visitor site.
+- `/motor` is the dedicated motor-insurance campaign page inside the same
+  product and bundle. It shares canonical data with Home where appropriate and
+  adds motor-local blocks under `motorPage.*`.
 - `/#motor` is a visitor anchor alias for the main site's motor-insurance /
   insurer section (`#insurers`). It must keep the same global navbar as `/`.
 - `/#life` is a visitor anchor alias for the hero coverage accordion cluster
   (`#cover`). It must keep the same global navbar as `/`.
 - `/#motor-focus` and `/#life-focus` are unexposed campaign variants preserved
-  from the latest Claude reference. They are public hash states in `index.html`,
+  from the legacy reference set. They are public hash states in `index.html`,
   but must not appear in the header nav or `sitemap.xml`.
 - `/#admin`, `/#edit`, and `/#preview` are owner modes inside `index.html`.
 - `/admin/login` is the owner auth gate.
@@ -167,7 +167,7 @@ Route contracts:
 - `/admin/index.html` owns the single Admin Portal shell. `/admin/ops/index.html`
   is only a compatibility shim, and `/admin/ops/app.js` is only the Operations
   module mounted inside that shell.
-- Embedded Claude bundle JSON-string parsing belongs in
+- Embedded bundle JSON-string parsing belongs in
   `scripts/lib/bundler-template.mjs`. Validation/export/update/regression
   scripts should import it rather than hand-scanning `index.html` or rebuilding
   `<script type="__bundler/template">` strings themselves.
@@ -231,33 +231,22 @@ Important behavior:
 
 ## Design Source Of Truth
 
-Current implementation source of truth is the workspace HTML/CSS in this repo;
-check `git status` before assuming a local change has been committed or
-deployed.
-Historical inputs used to create the current surfaces:
+Current implementation source of truth is the workspace HTML/CSS/JavaScript in
+this repo plus Firestore live CMS state after successful hydration. Check
+`git status` before assuming a local change has been committed or deployed.
+
+Historical design files, screenshots, and offline prototypes are not product
+authority. Use them only when the owner explicitly supplies them in the current
+task, and reconcile them against this map, `docs/ADMIN_CMS_REBUILD_DECISIONS.md`,
+and live production behavior before implementing.
+
+Active references and assets:
 
 - Current machine-readable implementation handoff package:
   `/Users/point/Downloads/Insurance Agent Poster Concepts.zip`. The filename
   is misleading: the zip contains `handoff/README.md`, content defaults/schema,
   OpenAPI, Firestore rules, source helper modules, theme data, and spec test
-  stubs. Use this artifact for handoff work instead of assuming it is only a
-  poster concept archive.
-- Latest Claude/Product reconciliation note:
-  `/Users/point/CoverMate/docs/CLAUDE_DESIGN_RECONCILIATION.md`. Read this
-  before asking Claude to export a new design or standalone file; it records
-  which Claude reference changes are accepted, which production decisions must
-  prevail, and which standalone behaviors are demo-only.
-- Visitor/admin standalone reference:
-  `/Users/point/Downloads/Purich Insurance Site (standalone).html`
-- Latest visitor/admin standalone reference:
-  `/Users/point/Downloads/CoverMate Standalone.html`
-- Latest studied Claude standalone reference:
-  `/Users/point/Downloads/CoverMate Standalone (1).html`
-- Latest Claude runtime-dependent reference:
-  `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
-- Earlier visitor reference: `/Users/point/Downloads/Purich Insurance Site.dc.html`
-- Admin references: `/Users/point/Downloads/export/Admin Login.dc.html` and
-  `/Users/point/Downloads/export/admin.dc.html`
+  stubs. Use it for implementation planning when supplied by the owner.
 - Design tokens/reference CSS: `/Users/point/Downloads/organic.css`
 - Insurer logos: `/Users/point/Downloads/assets/ins/`
 - Specs: `/Users/point/Downloads/SPEC.md`,
@@ -272,12 +261,12 @@ Historical inputs used to create the current surfaces:
 Reference/export rules:
 
 - Production, the repository implementation, current docs, and Firestore live
-  CMS state outrank older Claude/standalone files.
-- A Claude/standalone HTML file that shows raw `{{ ... }}`, `sc-if`, `sc-for`,
-  `x-dc`, or `[object Object]` in the browser is an incomplete export, not a
-  valid implementation target.
-- A portable standalone demo must include or inline every runtime dependency,
-  load correctly from `file://`, and pass a visible-text check for raw template
+  CMS state outrank older offline/reference files.
+- An offline/reference HTML file that shows raw `{{ ... }}`, `sc-if`,
+  `sc-for`, `x-dc`, or `[object Object]` in the browser is an incomplete
+  export, not a valid implementation target.
+- A portable offline demo must include or inline every runtime dependency, load
+  correctly from `file://`, and pass a visible-text check for raw template
   markers before it is shared.
 
 Production patches currently preserved in the bundles:
@@ -293,39 +282,24 @@ Production patches currently preserved in the bundles:
 - `#__bundler_thumbnail`, `#__bundler_loading`, and raw `<x-dc>` template content
   are hidden before hydration to remove the exported "Unpacking..." splash and
   first-load template flash.
-- Admin login redirects to `/admin`, not directly to `/#admin`.
+- Admin login redirects to `/admin`, not directly to legacy owner hashes.
 - The Admin Portal shell has an early `/admin/login` session gate.
-- Owner public-exit actions leave owner mode completely: closing the `/#admin`
-  drawer returns to clean `/`, and `Public site` from owner surfaces navigates
-  the current tab to clean `/` after clearing owner markers. Legacy incoming
-  `/?view=public` is still consumed for compatibility, but new UI must not
-  generate it.
-- A clean `/` load or reload must clear/ignore stale owner markers and hide
-  owner chrome even when `covermate-admin-session` is still valid.
+- Owner public-exit actions leave owner mode completely. Clean public `/` must
+  never show owner chrome just because an admin session exists.
 - Inline edit mode has its own warm-ink owner dock. The default row keeps
-  `Editing on page` and `Tools` visible; when the admin drawer is open while
-  editing remains active, the status becomes `Editing on page · Panel open`;
-  choosing `Tools → Panel` collapses the menu so the state is visible.
-  Expanding `Tools` reveals a single dark command palette grouped into `Draft`
-  (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`, `Main`,
-  `Public site`, `Log out`). `Publish` is the only terracotta-filled action in
-  this surface, and `Tools → Main` exits back to `/admin`.
-- Explicit owner `Save draft` and `Publish` actions use custom confirmation
-  dialogs, wait for successful Firestore writes, then show dismissible success
-  toasts with a 30-second `Undo`. Save undo restores the previous draft; publish
-  undo republishes the previous live snapshot.
-- `covermate-responsive-touch-policy` raises mobile controls, form fields,
-  owner-tool buttons, drawer controls, and nav/footer links to 44px-class touch
-  targets without changing desktop density.
-- `/#motor` keeps the global visitor navigation (`#cover`, `#review`,
-  `#insurers`, `#fit`, `#faq`) and re-aims the hash to `#insurers` after
-  hydration so the sticky header does not cover the section title.
-- Same-page visitor nav anchors, including `#fit`, scroll in place without
-  rebuilding the main visitor DOM. This is the current anti-flicker contract.
+  `Editing on page` and `Tools` visible; opening `Tools -> Panel` shows the
+  control panel without leaving the editor route.
+- Same-page public anchors scroll in place without rebuilding the visitor DOM.
+- `#cover` is embedded in the hero accordion cluster; it is not a standalone
+  public/Admin section.
+- Home keeps one motor nav item only. `/motor` is the dedicated motor campaign
+  route; `/#motor` remains a legacy home alias to `#insurers`.
 
-## Asset Map
+## Insurer Assets
 
-Current insurer logo files:
+Insurer logo files live in `assets/ins`.
+
+Current committed files:
 
 - `assets/ins/01-viriyah.png`
 - `assets/ins/02-bangkok.png`
@@ -344,17 +318,8 @@ Current insurer logo files:
 
 The committed insurer grid currently has 14 logo files, is rendered from the
 editable `insurers.items` content array, and includes AIA/Srikrung Broker
-relationship proof cards in the same section. The rebuild decision is that
-`26+` describes Srikrung panel availability while the visible grid may remain a
-14-logo selection; reconcile the existing 14-count sanitizer in a later
-content/sanitizer phase.
-
-Legacy Firestore CMS data can contain older Claude-reference values such as
-`20/26` insurer count copy, duplicate `#motor` nav entries, or forced line
-breaks in the contact heading. The public bundle and `covermate-firebase.js`
-normalize only those product-contract conflicts on render, cache, draft save,
-and publish. Firestore/live database content otherwise prevails over hard-coded
-defaults and local fallback caches.
+relationship proof cards in the same section. The visible copy should follow the
+actual logo count unless business-approved copy says otherwise.
 
 `assets/logos/aia-logo.png` is the committed loose source for the AIA proof-card
 logo and is also embedded into the current `index.html` bundle resource map.
@@ -394,17 +359,18 @@ but is not currently present as a loose repository file.
 6. "Website content", "Analytics", and "Settings" open inside the same shell.
 7. Quick actions keep `/#edit` and `/#preview` reachable for CMS work.
 8. `/admin/analytics` remains a legacy/private analytics route while the main
-   sidebar Analytics surface shows first-party CoverMate records.
+   sidebar Analytics surface shows first-party CoverMate records and funnel
    readiness without loading visitor GA scripts.
 9. The owner panel can reorder/hide sections, edit content/brand/theme data, and
    publish draft state to Firestore live state.
-9. In structured-card sections, the Content tab can edit insurer relationship
+10. In structured-card sections, the Content tab can edit insurer relationship
    cards, insurer item logo paths, claim cards, fee transparency cards, and the
    motor tier comparison table/cell states.
-10. `Save draft` and `Publish` confirm before writing, then toast completion
+11. `Save draft` and `Publish` confirm before writing, then toast completion
    with a 30-second undo window.
-11. Closing the control panel does not log out; it exits owner mode and lands on
-   clean `/`. The owner can reopen tools from `/admin`.
+12. Closing direct `/admin/content` returns to `/admin`. Closing a panel opened
+   from `/admin/edit` hides the panel and keeps the owner in the same editor
+   context. `Public site` opens the clean public route in a new browser tab.
 
 ## Do Not Break
 
@@ -422,10 +388,11 @@ but is not currently present as a loose repository file.
   as a lone ambiguous "ออก" control in the drawer header.
 - Keep direct mode switching and `Main` recovery available from owner modes:
   `/#admin` must link to `Edit text` and `Main`; `/#edit` must link to `Panel`
-  and `Main`; closing either owner mode must land on `/admin`, not on the
-  visitor route.
+  and `Main`; closing direct content or using `Main` must land on `/admin`, not
+  on the visitor route, while panel close from `/admin/edit` keeps editing
+  active.
 - Keep mobile touch targets at 44px-class sizing for visitor, admin login,
-  admin launcher, admin drawer, and edit toolbar controls.
+  Admin Portal, admin drawer, and edit toolbar controls.
 - Keep the admin drawer above the visitor sticky header on mobile; do not fade it
   in over public header chrome.
 - Keep same-page visitor nav as anchor scrolling. Do not turn ordinary header
@@ -462,7 +429,6 @@ but is not currently present as a loose repository file.
 - `$project-onboarding`: read/map repo before broad changes.
 - `$docs-cartographer`: update this map when routes, data, deploy, or source
   ownership changes.
-- `$claude-to-a-tee`: preserve parity with the Claude Design references.
 - `$admin-prototype-reconciliation`: reconcile admin reference behavior with
   visitor/static constraints.
 - `$ui-ux-expert`: visual/product UI changes.
@@ -479,8 +445,8 @@ but is not currently present as a loose repository file.
   Rules deliberately whenever `firestore.rules` changes.
 - Full GA traffic charts in `/admin/analytics` still need a server-side GA4 Data
   API endpoint or scheduled export into Firestore.
-- Asset count: current insurer logo grid and public copy are aligned at 14; the
-  latest reference supports that with relationship proof cards.
+- Asset count: current insurer logo grid and public copy are aligned at 14.
+  Relationship proof cards carry the AIA/Srikrung business context.
 - Firestore live/draft may still contain legacy stale fields until the owner
   publishes a clean draft; runtime normalization keeps visitor/admin rendering
   aligned with current product decisions in the meantime.

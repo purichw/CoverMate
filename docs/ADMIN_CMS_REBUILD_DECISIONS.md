@@ -1,27 +1,22 @@
 # CoverMate Admin/CMS Rebuild Decisions
 
-Last updated: 2026-08-11
+Last updated: 2026-08-29
 
-This is the authoritative decision record for the next Admin/CMS rebuild. It
-records the latest owner-approved direction from the attached ChatGPT governance
-brief and supersedes older reconciliation notes where they describe the previous
-two-card launcher, `/?view=public` exit flow, public owner reopen bar, or
-Operations as a launcher-card concern. On 2026-08-10 the owner separately
-approved starting the Operations portal as its own `/admin/ops/` surface.
+This is the authoritative decision record for the current Admin/CMS product.
+It records owner-approved behavior that future implementation and design work
+must preserve. Older references that describe a two-card website-content split,
+`/?view=public` as a new UI exit, a public owner reopen bar, a public-page Admin
+Panel leak, or stale higher-count insurer copy are stale.
 
 ## Source Precedence
 
 1. Latest explicit owner intent.
-2. `CoverMate-Claude-CMS-Admin-Feedback-Packet 2.md`, especially Product
-   Decisions and Current Implementation Overrides.
-3. Current repository implementation and production docs.
-4. `SPEC (2).md`, only where additive and non-conflicting.
-5. `BRAND (2).md` for brand, Organic visual system, voice, and compliance.
-6. `CoverMate Standalone.html` as visual/prototype evidence only.
+2. Current repository implementation and production docs.
+3. Current product specs supplied by the owner, only where additive and non-conflicting.
+4. Brand/compliance direction for Google Sans, Organic visual system, voice, licence/OIC wording, AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
+5. Historical offline prototypes or screenshots as visual evidence only, never as product authority.
 
-`BRAND (2).md` remains authoritative for brand/compliance: Google Sans, Organic
-tokens, warm advisor posture, English owner chrome, licence/OIC wording,
-AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
+Brand/compliance direction remains authoritative for Google Sans, Organic tokens, warm advisor posture, English owner chrome, licence/OIC wording, AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 
 ## Decided Conflicts
 
@@ -29,13 +24,13 @@ AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 | --- | --- | --- |
 | Admin Portal Home | `/admin` is now the unified private gateway for `Operations`, `Website content`, `Analytics`, and `Settings`. | Updated after Operations became API-backed. The old three-card "Manage your site" launcher is retired. |
 | Operations portal | Approved as an Operations module inside the shared Admin Portal shell. | `/admin/ops/` remains a compatibility entry, but the current implementation is the same shell as `/admin`. `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state on `contactLeads/*`. |
-| Public exit | New UI exits directly to clean `/`. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
+| Public exit | `Public site` / `View live site` opens a clean public route in a new tab. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
-| Admin close / edit exit | Owner close/public-exit actions leave owner mode and land on clean `/`. | Do not preserve an in-tab owner workspace after `Public site`, drawer X, or edit public-exit. |
+| Admin close / edit exit | Admin stays on Admin URLs. Direct `/admin/content` close returns to `/admin`; a panel opened from `/admin/edit` closes back to the same editor. | `Main` returns to `/admin`. `Public site` opens a new clean public tab and must not move the current Admin tab. |
 | Draft preview | Private `/#preview`, draft data only, one top preview bar. | No edit dock, drawer, screen switcher, or public admin marker. |
 | Public site | Keep the canonical continuous page, but `cover` is now embedded in the hero accordion cluster rather than a standalone section. | Do not replace current public page with the shorter standalone or reintroduce a separate coverage-products band. |
-| Motor/life aliases | `#motor -> #insurers`; `#life -> #cover` where `#cover` is the hero accordion cluster. | One public page, no duplicated motor nav and no separate life/coverage page. |
-| Insurer count copy | `26+` describes Srikrung panel availability; visible logos may remain a 14-logo selection. | Reconcile existing 14-count normalization in a later content/sanitizer phase. |
+| Motor entry points | `/motor` is the dedicated motor-insurance campaign page in the same product. `#motor -> #insurers` remains a legacy Home alias; `#life -> #cover` where `#cover` is the hero accordion cluster. | `/motor` may have local motor nav plus a Home link. Home still has one motor nav item only, no duplicated motor labels. |
+| Insurer count copy | Public/Admin visible insurer-count copy follows active `insurers.items` logo data. | Current committed logo count is `14`; do not reintroduce stale higher-count claims unless logo data and owner approval both support the new count. |
 | Analytics | Preserve deployed event history; expand by adding safe parameters/events only. | Audit `covermate-analytics.js` before any event-name change. |
 | Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, `sites/covermate/states/live`, `states/draft`, `versions/*`, and `contactLeads/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project and does not require a collection migration. |
 | CMS IA | Replace developer-like controls with owner-readable CMS. | Site structure rows, section editor, collapsed Advanced layout, stable repeatable IDs. |
@@ -58,7 +53,7 @@ Phase 3 isolates `/#preview` as a private draft render with only the preview
 bar. Local implementation is complete as of 2026-08-10: preview requests
 draft/version hydration before owner-hash rendering, avoids the legacy owner
 marker, shows `Open editor`, `Public site`, and `Publish` in the single preview
-bar, and exits to clean `/`. Narrow local snapshot evidence lives at
+bar, and `Public site` opens clean `/` in a new tab. Narrow local snapshot evidence lives at
 `/tmp/covermate-phase3-2026-08-10`.
 
 Phase 4 redesigns `/#admin` as owner-readable Site structure plus section
@@ -90,8 +85,14 @@ demo, not-wired, or browser-seeded records.
 - Owner modes require a valid admin session.
 - `/#preview` reads draft only and remains private.
 - Save and Publish success only after confirmed persistence.
+- `Public site` / `View live site` opens a new clean public tab and does not
+  navigate the current Admin tab.
+- Closing direct `/admin/content` returns to `/admin`; closing a panel opened
+  from `/admin/edit` stays in the same editor context.
 - No PII or free text goes to GA4.
 - Local cache never overrides a successful Firestore live read.
+- Insurer-count copy follows the active logo data. With the current committed
+  logo set, the count is `14`.
 - Schema migrations are additive/idempotent and must not overwrite owner-edited
   values.
 - Do not commit, push, deploy, modify Firestore Rules, or add direct upload

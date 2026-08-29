@@ -1,55 +1,43 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-08-13
+Last updated: 2026-08-29
 
 ## Visual Source
 
-The current implementation reconciles these supplied references:
+The maintained visual source is the production implementation in this repository
+plus current product docs and Firestore-backed CMS data. Historical screenshots,
+offline prototypes, or downloaded references may be used only when the owner
+explicitly supplies them for the current task, and they must be reconciled
+against current product decisions before implementation.
+
+Active inputs that can still inform implementation when supplied by the owner:
 
 - `/Users/point/Downloads/SPEC.md`
 - `/Users/point/Downloads/SPEC (1).md`
-- `/Users/point/Downloads/organic.css`
-- `/Users/point/Downloads/Purich Insurance Site.dc.html`
-- `/Users/point/Downloads/export/Admin Login.dc.html`
-- `/Users/point/Downloads/export/admin.dc.html`
-- `/Users/point/Downloads/Purich Insurance Site (standalone).html`
-- `/Users/point/Downloads/CoverMate Standalone.html`
-- `/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
 - `/Users/point/Downloads/SPEC (2).md`
 - `/Users/point/Downloads/SPEC (3).md`
 - `/Users/point/Downloads/SPEC (4).md`
 - `/Users/point/Downloads/SPEC (5).md`
+- `/Users/point/Downloads/organic.css`
 - screenshots supplied in the Codex thread
 - `/Users/point/Downloads/assets/`
+- `/Users/point/Downloads/covermate-reference-data-v0.1`
 
-## Standalone / Claude Export Policy
+## Offline Prototype Policy
 
-Standalone Claude HTML files are useful as visual references, archival demos,
-or Claude Design handoff inputs, but the production repository and this document
-set remain the source of truth.
+Offline prototype HTML files are archival inputs, not production source of truth.
+A file is a valid portable prototype only when all of these are true:
 
-A file is a valid portable standalone only when all of these are true:
-
-- it opens directly from `file://` without a dev server
-- all required runtime files are embedded or shipped beside the HTML
+- it opens directly from `file://` without a dev server;
+- all required runtime files are embedded or shipped beside the HTML;
 - the console has no missing-file errors for `support.js`, `image-slot.js`, or
-  `_ds/*/_ds_bundle.js`
+  `_ds/*/_ds_bundle.js`;
 - the visible page never shows raw template markers such as `{{ brandName }}`,
-  `{{ n.label }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`
-- `#admin`, `#edit`, and relevant public hash states render after reload
+  `{{ n.label }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`;
+- public, admin, edit, preview, and relevant route states render after reload.
 
-`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`
-is the runtime-dependent Claude build source. When opened alone from
-`/Downloads`, it can show raw `{{ ... }}` placeholders because its sidecar
-runtime files are absent. Treat that file as reference source material only.
-`/Users/point/Downloads/CoverMate Standalone.html` is the candidate packaged
-standalone demo, but it still needs the standalone validation checklist before
-being shared as evidence. A 2026-08-02 quick check found no visible raw template
-markers in that packaged file, but Chrome still reports a `file://` fetch error
-for `.image-slots.state.json`; resolve or explicitly waive that before calling
-it fully portable. If a new portable standalone is needed, ask Claude to
-compile/export a self-contained HTML or provide a complete folder manifest with
-every dependency.
+If an offline prototype fails these checks, fix the prototype/export itself
+before using it as evidence. Do not make production emulate a broken prototype.
 
 ## Brand Direction
 
@@ -97,7 +85,7 @@ This includes:
 - visitor site
 - motor route/section
 - admin login
-- admin launcher
+- Admin Portal
 - admin analytics
 - inline edit mode
 - control panel
@@ -110,7 +98,7 @@ footer/legal copy, and English UI labels should all stay on that same family.
 The current HTML bundles include a historical `covermate-thai-font-policy`
 patch. Keep it unless replacing it with equivalent source-level CSS coverage.
 
-`/admin/analytics` is source-authored rather than exported from Claude Design.
+`/admin/analytics` is source-authored rather than imported from an offline prototype.
 It keeps the CoverMate warm organic palette, rounded owner-tool language,
 Google Sans type stack, 44px-class controls, and
 responsive admin dashboard density. Its charts should remain quiet
@@ -152,14 +140,14 @@ Committed insurer logo files:
 | `assets/ins/14-sompo.png` | Referenced by bundle |
 
 The visible grid currently uses 14 committed insurer logos, plus broker/agency
-proof cards for AIA and Srikrung Broker supplied by the latest standalone
-reference. The renderer is data-driven from `insurers.items[]`; `item.logo` is
+proof cards for AIA and Srikrung Broker supplied by current product reference
+data. The renderer is data-driven from `insurers.items[]`; `item.logo` is
 preferred and older/stale names resolve through the built-in logo map. The
-2026-08-10 rebuild decision allows `26+` as the Srikrung panel-availability
-claim while the grid remains a 14-logo selection; do not add a separate
-hard-coded logo count.
+displayed insurer count must follow the active logo data. With the current
+committed logo set, product copy should say `14`; do not add a separate
+hard-coded logo count or revive stale higher-count claims.
 
-Relationship-card logo paths in the latest reference:
+Relationship-card logo paths in the current product reference:
 
 | Path | Role |
 | --- | --- |
@@ -227,12 +215,10 @@ For visual changes, capture at least:
 - visitor claim, renewal, fee, and privacy/PDPA sections when those areas
   change
 - admin login
-- admin launcher
+- Admin Portal
 - admin control panel
 - admin inline edit mode
 - admin analytics
 
 Use snapshots or contact sheets when comparing against supplied references.
-Generated Claude-reference extraction/audit artifacts may live locally under
-`.claude-reference/`; that directory is ignored so heavy screenshot evidence
-does not get committed accidentally.
+Generated reference extraction/audit artifacts may live locally under `.reference-artifacts/`; that directory should remain ignored so heavy screenshot evidence does not get committed accidentally.

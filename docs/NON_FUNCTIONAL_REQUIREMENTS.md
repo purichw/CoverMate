@@ -17,7 +17,7 @@ Implemented:
   - `Strict-Transport-Security`
   - `Content-Security-Policy-Report-Only`
 
-Current CSP is Report-Only because the exported Claude Design bundle still uses
+Current CSP is Report-Only because the exported browser bundle still uses
 inline scripts, inline styles, and blob URLs. Enforce CSP only after a source
 refactor removes or hashes those requirements.
 
@@ -77,7 +77,7 @@ Implemented support:
 
 Release checks should keep covering:
 
-- keyboard path through admin launcher, analytics, panel, and edit toolbar
+- keyboard path through Admin Portal, analytics, panel, and edit toolbar
 - visible focus states
 - no horizontal overflow at mobile widths
 - no color-only chart meaning without table/text fallback

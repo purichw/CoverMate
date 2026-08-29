@@ -21,6 +21,7 @@ const viewports = [
 
 const routes = [
   ["/", "main"],
+  ["/motor", "main"],
   ["/#motor", "main"],
   ["/#life", "main"],
   ["/#motor-focus", "main"],
@@ -29,8 +30,10 @@ const routes = [
 ];
 
 const mainVisitorRoutes = new Set(["/", "/#motor", "/#life"]);
-const motorSectionRoutes = new Set(["/", "/#motor", "/#motor-focus"]);
-const visitorRoutes = new Set(["/", "/#motor", "/#life", "/#motor-focus", "/#life-focus"]);
+const seoVisitorRoutes = new Set(["/", "/motor", "/#motor", "/#life"]);
+const dualConsentRoutes = new Set(["/", "/motor", "/#motor", "/#life"]);
+const motorLogoRoutes = new Set(["/", "/motor", "/#motor", "/#motor-focus"]);
+const visitorRoutes = new Set(["/", "/motor", "/#motor", "/#life", "/#motor-focus", "/#life-focus"]);
 
 function extractDefaultSiteConfig() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -317,7 +320,7 @@ function adminAsideLocator(page) {
   return page.locator("aside").filter({ hasText: "Admin portal" }).last();
 }
 
-async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, label) {
+async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, label, expectedPopupPath = "/") {
   const [popup] = await Promise.all([
     page.waitForEvent("popup", { timeout: 10000 }),
     clickAction()
@@ -343,13 +346,13 @@ async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, lab
     };
   });
   if (
-    popupState.route !== "/" ||
+    popupState.route !== expectedPopupPath ||
     popupState.marker ||
     popupState.hasOwnerBar ||
     popupState.hasAdminAside ||
     /Admin Portal|Admin portal|Text edit|Save draft|Publish|Manage your site/.test(popupState.text)
   ) {
-    failures.push(`${label}: new live-site tab is not clean public / (${JSON.stringify(popupState)})`);
+    failures.push(`${label}: new live-site tab is not clean public ${expectedPopupPath} (${JSON.stringify(popupState)})`);
   }
   const currentState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
@@ -409,12 +412,18 @@ const browser = await chromium.launch({
 const failures = [];
 
 async function newSmokePage(options) {
-  const page = await browser.newPage(options);
+  const context = await browser.newContext(options);
+  const page = await context.newPage();
+  const closePage = page.close.bind(page);
+  page.close = async (...args) => {
+    await closePage(...args).catch(() => {});
+    await context.close().catch(() => {});
+  };
   const localSmoke = ["localhost", "127.0.0.1", "::1"].includes(new URL(baseUrl).hostname);
   if (localSmoke) {
     const rootIndex = new URL("../index.html", import.meta.url).pathname;
-    for (const routePath of ["/admin/content", "/admin/edit", "/admin/preview"]) {
-      await page.route(`**${routePath}`, (route) =>
+    for (const routePath of ["/motor", "/admin/content", "/admin/edit", "/admin/preview"]) {
+      await context.route(`**${routePath}**`, (route) =>
         route.fulfill({ status: 200, contentType: "text/html", path: rootIndex })
       );
     }
@@ -1416,7 +1425,7 @@ for (const [name, width, height] of viewports) {
         failures.push(`${name} ${route}: alias target anchor is missing scroll-margin-top`);
       }
     }
-    if (motorSectionRoutes.has(route)) {
+    if (motorLogoRoutes.has(route)) {
       const insurers = page.locator("#insurers");
       if (await insurers.count()) {
         await insurers.scrollIntoViewIfNeeded();
@@ -1487,11 +1496,26 @@ for (const [name, width, height] of viewports) {
           rect.height > 0
         );
       });
+      const isVisible = (el) => {
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          style.opacity !== "0"
+        );
+      };
 
       return {
         title: document.title,
         hasTarget: Boolean(target),
         sectionIds: Array.from(document.querySelectorAll("section[id]")).map((section) => section.id),
+        visibleSectionIds: Array.from(document.querySelectorAll("section[id]"))
+          .filter(isVisible)
+          .map((section) => section.id),
         h1Text: Array.from(document.querySelectorAll("h1")).map((heading) =>
           (heading.textContent || "").trim()
         ).join(" | "),
@@ -1505,6 +1529,7 @@ for (const [name, width, height] of viewports) {
         logos,
         bodyText,
         insurerText,
+        navHrefs,
         headerCtaText,
         placeholderStoriesVisible:
           Array.from(document.querySelectorAll("section#voices")).some((section) => {
@@ -1571,7 +1596,10 @@ for (const [name, width, height] of viewports) {
     if (state.splashVisible) {
       failures.push(`${name} ${route}: exported bundler splash is visible`);
     }
-    if (mainVisitorRoutes.has(route)) {
+    if (seoVisitorRoutes.has(route)) {
+      const expectedCanonical = route === "/motor"
+        ? "https://covermate.vercel.app/motor"
+        : "https://covermate.vercel.app/";
       if (!/^th($|-TH$)/i.test(state.seo.htmlLang)) {
         failures.push(`${name} ${route}: missing Thai html lang (${state.seo.htmlLang})`);
       }
@@ -1584,8 +1612,8 @@ for (const [name, width, height] of viewports) {
       if (!/^index,follow/.test(state.seo.robots)) {
         failures.push(`${name} ${route}: public route is not indexable (${state.seo.robots})`);
       }
-      if (state.seo.canonical !== "https://covermate.vercel.app/") {
-        failures.push(`${name} ${route}: canonical is not production root (${state.seo.canonical})`);
+      if (state.seo.canonical !== expectedCanonical) {
+        failures.push(`${name} ${route}: canonical is not ${expectedCanonical} (${state.seo.canonical})`);
       }
       if (!state.seo.ogTitle || !state.seo.ogDescription || state.seo.ogImage !== "https://covermate.vercel.app/assets/covermate-og.png") {
         failures.push(`${name} ${route}: Open Graph metadata incomplete`);
@@ -1618,10 +1646,10 @@ for (const [name, width, height] of viewports) {
     if (state.bodyText.includes("[object Object]")) {
       failures.push(`${name} ${route}: rendered object placeholder text`);
     }
-    if (mainVisitorRoutes.has(route) && !/ติดต่อทาง LINE|Contact on LINE/.test(state.headerCtaText)) {
+    if (seoVisitorRoutes.has(route) && !/ติดต่อทาง LINE|Contact on LINE|คุยฟรีทาง LINE|แอดไลน์/.test(state.headerCtaText)) {
       failures.push(`${name} ${route}: header CTA drifted from product copy (${state.headerCtaText})`);
     }
-    if (mainVisitorRoutes.has(route) && state.placeholderStoriesVisible) {
+    if (seoVisitorRoutes.has(route) && state.placeholderStoriesVisible) {
       failures.push(`${name} ${route}: placeholder client stories/testimonials rendered publicly`);
     }
     if (route === "/") {
@@ -1664,7 +1692,7 @@ for (const [name, width, height] of viewports) {
     }
     if (route === "/#motor-focus") {
       for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "how", "talk"]) {
-        if (!state.sectionIds.includes(id)) {
+        if (!state.visibleSectionIds.includes(id)) {
           failures.push(`${name} ${route}: missing focused motor section #${id}`);
         }
       }
@@ -1673,6 +1701,22 @@ for (const [name, width, height] of viewports) {
       }
       if (state.sectionIds.includes("hero") || state.sectionIds.includes("cover")) {
         failures.push(`${name} ${route}: focused motor route leaked main hero/cover sections`);
+      }
+    }
+    if (route === "/motor") {
+      for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "tiers", "how", "claim", "renew", "guides", "faq", "talk"]) {
+        if (!state.visibleSectionIds.includes(id)) {
+          failures.push(`${name} ${route}: missing dedicated motor section #${id}`);
+        }
+      }
+      if (!/เบี้ยรถคันเดิม|ประกันรถยนต์|One car|Motor/i.test(state.h1Text)) {
+        failures.push(`${name} ${route}: dedicated motor hero did not render (${state.h1Text})`);
+      }
+      if (state.sectionIds.includes("hero") || state.sectionIds.includes("cover")) {
+        failures.push(`${name} ${route}: dedicated motor route leaked main hero/cover sections`);
+      }
+      if (!state.navHrefs.includes("/") || !state.navHrefs.includes("#motor-cover") || !state.navHrefs.includes("#insurers")) {
+        failures.push(`${name} ${route}: dedicated motor nav is missing Home/motor anchors (${state.navHrefs.join(", ")})`);
       }
     }
     if (route === "/#life-focus") {
@@ -1688,14 +1732,14 @@ for (const [name, width, height] of viewports) {
         failures.push(`${name} ${route}: focused life route leaked main hero/insurers sections`);
       }
     }
-    if (motorSectionRoutes.has(route) && state.logos.length < 14) {
+    if (motorLogoRoutes.has(route) && state.logos.length < 14) {
       failures.push(`${name} ${route}: expected at least 14 visible insurer logos, got ${state.logos.length}`);
     }
     const hasExactMotorCount = /14\s*(เจ้า|แห่ง|บริษัท)/.test(state.insurerText);
-    if (motorSectionRoutes.has(route) && (!hasExactMotorCount || /26\s*เจ้า|26\s*แห่ง|26\s*บริษัท|กว่า\s*14/.test(state.insurerText))) {
+    if (motorLogoRoutes.has(route) && (!hasExactMotorCount || /26\s*เจ้า|26\s*แห่ง|26\s*บริษัท|กว่า\s*14/.test(state.insurerText))) {
       failures.push(`${name} ${route}: insurer section count copy is not aligned to the 14 visible logos`);
     }
-    if (motorSectionRoutes.has(route) && !state.hasRelationshipProof) {
+    if (motorLogoRoutes.has(route) && !state.hasRelationshipProof) {
       failures.push(`${name} ${route}: insurer relationship proof cards missing AIA/Srikrung copy`);
     }
     if (visitorRoutes.has(route) && !state.hasQueryTypeSelect) {
@@ -1704,7 +1748,7 @@ for (const [name, width, height] of viewports) {
     if (visitorRoutes.has(route) && !state.hasCoverageSelect) {
       failures.push(`${name} ${route}: contact form is missing coverage select options`);
     }
-    const expectedConsentCheckboxes = mainVisitorRoutes.has(route) ? 2 : 1;
+    const expectedConsentCheckboxes = dualConsentRoutes.has(route) ? 2 : 1;
     if (visitorRoutes.has(route) && state.requiredConsentCheckboxCount < expectedConsentCheckboxes) {
       failures.push(
         `${name} ${route}: public lead forms are missing required consent checkboxes (${state.requiredConsentCheckboxCount}/${expectedConsentCheckboxes})`
@@ -1713,13 +1757,13 @@ for (const [name, width, height] of viewports) {
     if (mainVisitorRoutes.has(route) && state.sectionIds.includes("claim") && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: claim help section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/ไม่ต้องจำวันหมดอายุ|renewal dates/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/ไม่ต้อง(?:จำ|กังวลเรื่อง)วันหมดอายุ|ช่วยเตือนล่วงหน้า|renewal dates|keep track/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: renewal reminder section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|How CoverMate is compensated|commission comes from/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|ค่าตอบแทนในการให้บริการ|How CoverMate is compensated|service compensation|commission comes from/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: fee transparency section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/ข้อมูลที่คุณส่งมา|What happens to/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/ข้อมูลที่คุณส่ง(?:มา|ให้เรา)|ถูกใช้(?:ทำ|อย่าง)ไร|What happens to|data you send|privacy/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: privacy / PDPA section is missing`);
     }
     if (mainVisitorRoutes.has(route) && /ขอรับ\s*\n\s*คำปรึกษา|Request a\s*\n\s*consultation/.test(state.contactHeadingText)) {
@@ -1747,7 +1791,14 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/analytics: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
   }
 
-  for (const ownerRoute of ["/admin/content", "/admin/edit", "/admin/preview"]) {
+  for (const ownerRoute of [
+    "/admin/content",
+    "/admin/edit",
+    "/admin/preview",
+    "/admin/content?page=motor",
+    "/admin/edit?page=motor",
+    "/admin/preview?page=motor"
+  ]) {
     await page.goto(new URL(ownerRoute, baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
     await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
     if (!page.url().includes("/admin/login")) {
@@ -2174,6 +2225,44 @@ for (const [name, width, height] of viewports) {
     `${name} /admin/content Public site`
   );
 
+  await page.goto(new URL("/admin/content?page=motor", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await waitForBodyText(page, /Admin portal/);
+  const ownerMotorPanelState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    pageRoute: document.documentElement.getAttribute("data-covermate-route"),
+    text: document.body.innerText,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
+  }));
+  if (ownerMotorPanelState.route !== "/admin/content?page=motor" || ownerMotorPanelState.pageRoute !== "motor") {
+    failures.push(`${name} /admin/content?page=motor: route state is not motor (${JSON.stringify(ownerMotorPanelState)})`);
+  }
+  for (const expected of ["#motor", "#motor-trust", "#motor-cover", "#insurers", "#tiers"]) {
+    if (!ownerMotorPanelState.text.includes(expected)) {
+      failures.push(`${name} /admin/content?page=motor: missing route section ${expected}`);
+    }
+  }
+  if (ownerMotorPanelState.text.includes("[object Object]")) {
+    failures.push(`${name} /admin/content?page=motor: rendered object placeholder text`);
+  }
+  if (/26\s*เจ้า|26\s*แห่ง|26\s*บริษัท|กว่า\s*14/.test(ownerMotorPanelState.text)) {
+    failures.push(`${name} /admin/content?page=motor: stale insurer count copy is visible`);
+  }
+  if (ownerMotorPanelState.scrollWidth > ownerMotorPanelState.clientWidth) {
+    failures.push(`${name} /admin/content?page=motor: horizontal overflow ${ownerMotorPanelState.scrollWidth} > ${ownerMotorPanelState.clientWidth}`);
+  }
+  if (!/^noindex/.test(ownerMotorPanelState.robots)) {
+    failures.push(`${name} /admin/content?page=motor: owner panel metadata is not noindex (${ownerMotorPanelState.robots})`);
+  }
+  await expectPublicSitePopup(
+    page,
+    () => page.getByRole("button", { name: "Public site" }).last().click(),
+    "/admin/content?page=motor",
+    `${name} /admin/content?page=motor Public site`,
+    "/motor"
+  );
+
   await page.goto(new URL("/admin/preview", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Draft preview · visitors don’t see this until you publish/);
   const previewState = await page.evaluate(() => ({
@@ -2243,7 +2332,13 @@ for (const [name, width, height] of viewports) {
   ) {
     failures.push(`${name} /admin/edit: compact edit toolbar should show Editing + Tools, without Mode/Text edit/Close`);
   }
-  await page.locator('[data-admin-owner-bar="edit"] .cm-owner-dock__summary').click();
+  await page.evaluate(() => {
+    const toggle = document.querySelector('[data-admin-owner-bar="edit"] #covermate-owner-tools-toggle');
+    if (toggle && !toggle.checked) {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
   await page.waitForTimeout(150);
   const editToolsState = await page.evaluate(() => {
     const bar = document.querySelector('[data-admin-owner-bar="edit"]');
@@ -2289,6 +2384,14 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/edit: edit mode metadata is not noindex (${editState.robots})`);
   }
 
+  await page.evaluate(() => {
+    const toggle = document.querySelector('[data-admin-owner-bar="edit"] #covermate-owner-tools-toggle');
+    if (toggle && !toggle.checked) {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+  await page.waitForTimeout(150);
   await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "Panel" }).click();
   await page.waitForTimeout(400);
   const editPanelState = await page.evaluate(() => ({
@@ -2345,6 +2448,75 @@ for (const [name, width, height] of viewports) {
   }
   if (editPanelClosedState.scrollWidth > editPanelClosedState.clientWidth) {
     failures.push(`${name} /admin/edit panel close: horizontal overflow ${editPanelClosedState.scrollWidth} > ${editPanelClosedState.clientWidth}`);
+  }
+
+  await page.goto(new URL("/admin/edit?page=motor", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
+  await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 10000 });
+  await waitForBodyText(page, /Editing on page|ประกันรถยนต์|Motor/);
+  const motorEditState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    pageRoute: document.documentElement.getAttribute("data-covermate-route"),
+    toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
+    sectionIds: Array.from(document.querySelectorAll("section[id]")).map((section) => section.id),
+    contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
+    text: document.body.innerText,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
+  }));
+  if (motorEditState.route !== "/admin/edit?page=motor" || motorEditState.pageRoute !== "motor") {
+    failures.push(`${name} /admin/edit?page=motor: route state is not motor (${JSON.stringify(motorEditState)})`);
+  }
+  for (const id of ["motor", "motor-trust", "motor-cover", "insurers"]) {
+    if (!motorEditState.sectionIds.includes(id)) {
+      failures.push(`${name} /admin/edit?page=motor: missing editable motor section #${id}`);
+    }
+  }
+  if (!/Editing(?: on page)?/.test(motorEditState.toolbarText) || !motorEditState.toolbarText.includes("Tools")) {
+    failures.push(`${name} /admin/edit?page=motor: edit dock state is unclear (${motorEditState.toolbarText})`);
+  }
+  if (motorEditState.contentEditableCount < 12) {
+    failures.push(`${name} /admin/edit?page=motor: expected editable motor text, got ${motorEditState.contentEditableCount}`);
+  }
+  if (motorEditState.text.includes("[object Object]")) {
+    failures.push(`${name} /admin/edit?page=motor: rendered object placeholder text`);
+  }
+  if (motorEditState.scrollWidth > motorEditState.clientWidth) {
+    failures.push(`${name} /admin/edit?page=motor: horizontal overflow ${motorEditState.scrollWidth} > ${motorEditState.clientWidth}`);
+  }
+  await page.evaluate(() => {
+    const toggle = document.querySelector('[data-admin-owner-bar="edit"] #covermate-owner-tools-toggle');
+    if (toggle && !toggle.checked) {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+  await page.waitForTimeout(150);
+  await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "Panel" }).click();
+  await page.waitForTimeout(400);
+  const motorEditorPanel = page.locator("aside").filter({ hasText: "Admin portal" }).first();
+  await page.getByTitle("Close panel").click();
+  await motorEditorPanel.waitFor({ state: "hidden", timeout: 10000 });
+  await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
+  const motorEditPanelClosedState = await page.evaluate(() => ({
+    route: window.location.pathname + window.location.search + window.location.hash,
+    pageRoute: document.documentElement.getAttribute("data-covermate-route"),
+    toolbarVisible: Boolean(document.querySelector('[data-admin-owner-bar="edit"]')),
+    hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
+    contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
+  }));
+  if (
+    motorEditPanelClosedState.route !== "/admin/edit?page=motor" ||
+    motorEditPanelClosedState.pageRoute !== "motor" ||
+    !motorEditPanelClosedState.toolbarVisible ||
+    motorEditPanelClosedState.hasAdminAside ||
+    motorEditPanelClosedState.contentEditableCount < 12
+  ) {
+    failures.push(`${name} /admin/edit?page=motor panel close: did not stay in motor editor (${JSON.stringify(motorEditPanelClosedState)})`);
+  }
+  if (motorEditPanelClosedState.scrollWidth > motorEditPanelClosedState.clientWidth) {
+    failures.push(`${name} /admin/edit?page=motor panel close: horizontal overflow ${motorEditPanelClosedState.scrollWidth} > ${motorEditPanelClosedState.clientWidth}`);
   }
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });

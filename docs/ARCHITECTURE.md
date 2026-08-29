@@ -1,29 +1,17 @@
 # CoverMate Architecture
 
-Last updated: 2026-08-20
+Last updated: 2026-08-28
 
 ## Current Shape
 
 CoverMate is a Vercel-hosted static export. The visitor site and owner/admin
-tools are bundled into HTML files generated from Claude Design `.dc.html`
-references, with small production patches applied in the wrapper and embedded
-bundle strings.
+tools are maintained as exported HTML bundles plus source-authored helpers,
+with small production patches applied in the wrapper and embedded bundle
+strings.
 
-The current visitor bundle has been reconciled against
-`/Users/point/Downloads/CoverMate Standalone.html`,
-`/Users/point/Downloads/CoverMate Standalone BUILD SOURCE (do not open).dc.html`,
-and `SPEC (5)` while
-preserving production product decisions that intentionally differ from offline
-demos, including Firebase Auth/Firestore, Admin Analytics, private admin
-namespace routes, real lead submission paths, and the one-page `#motor` alias
-behavior.
+The current visitor bundle is maintained against the product specs, repository docs, Firestore CMS contract, and owner-approved product decisions, including Firebase Auth/Firestore, Admin Analytics, private admin namespace routes, real lead submission paths, and the split between the home page plus the dedicated `/motor` campaign page.
 
-Downloaded Claude HTML is not automatically a portable standalone. Some exports
-still depend on sidecar runtime files such as `support.js`, `image-slot.js`, and
-`_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw
-template placeholders like `{{ brandName }}`. Treat those files as design
-references until they are compiled into self-contained HTML or shipped with a
-complete dependency folder.
+Downloaded offline prototype HTML is not automatically portable. Some exports can depend on sidecar runtime files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw template placeholders like `{{ brandName }}`. Treat those files as historical references until they are compiled into self-contained HTML or shipped with a complete dependency folder.
 
 There is now one narrow backend API in this repo: `/api/ops/*`, deployed as a
 Vercel serverless function for the private Operations Portal. Admin identity is
@@ -64,6 +52,7 @@ flowchart TD
 `index.html` owns the public visitor site and owner CMS modes:
 
 - `/`
+- `/motor`
 - `/#motor`
 - `/#life`
 - `/#motor-focus`
@@ -71,14 +60,20 @@ flowchart TD
 - `/admin/edit`
 - `/admin/content`
 - `/admin/preview`
+- `/admin/edit?page=motor`
+- `/admin/content?page=motor`
+- `/admin/preview?page=motor`
 
 Legacy incoming `/#edit`, `/#admin`, and `/#preview` remain session-gated for
 compatibility, but current admin UI must generate `/admin/...` paths instead.
 
-`/#motor` and `/#life` are aliases into the main site, re-aimed to `#insurers`
-and `#cover` after hydration while preserving the global navbar.
-`/#motor-focus` and `/#life-focus` render unexposed campaign variants from the
-latest reference and must stay out of the header nav and sitemap.
+`/motor` is the dedicated motor-insurance campaign page in the same bundle. It
+has its own local motor-page nav and canonical metadata while reusing shared
+Firestore-backed insurer, tier, process, claim, renewal, guide, FAQ, contact,
+and footer data. `/#motor` and `/#life` are legacy aliases into the home page,
+re-aimed to `#insurers` and `#cover` after hydration while preserving the home
+navbar. `/#motor-focus` and `/#life-focus` are legacy unexposed variants and
+must stay out of the header nav and sitemap.
 
 `admin/login/index.html` owns the admin sign-in surface. Firebase Google sign-in
 checks Firestore `admins/{uid}` before writing the browser-local
@@ -107,7 +102,7 @@ required hub shown before choosing Operations, Website content, Analytics,
 Settings, public-site exit, or logout.
 
 `admin/analytics/index.html` owns the private analytics dashboard. It is
-source-authored rather than a Claude Design export, uses `admin/session.js` for
+source-authored rather than imported from an offline prototype, uses `admin/session.js` for
 verified Firebase admin gating/sign-out, and uses `admin/analytics-data.js` to
 normalize Firestore lead data. It does not load the visitor GA script.
 
@@ -138,7 +133,7 @@ assets through the bundle runtime.
 
 `scripts/smoke.mjs` owns the current Playwright smoke contract.
 
-`scripts/lib/bundler-template.mjs` owns embedded Claude bundle-template parsing,
+`scripts/lib/bundler-template.mjs` owns embedded bundle-template parsing,
 marker restoration/masking, and serialization for maintenance scripts. Scripts
 that read or rewrite `<script type="__bundler/template">` must import this
 module instead of carrying local JSON-string scanners.
@@ -225,7 +220,7 @@ insurance sections, lead/contact UI, and owner hash-mode rendering.
 
 The admin login surface owns only session entry and post-login redirect.
 
-The admin launcher owns post-login choice architecture. It should not be skipped
+The Admin Portal owns post-login choice architecture. It should not be skipped
 after login.
 
 The private analytics page owns owner-only reporting for lead capture, funnel
@@ -250,7 +245,7 @@ records that undo in version history.
 
 The owner CMS modes also own the admin continuation UI:
 
-- closing the standalone `/admin/content` drawer clears owner markers and lands
+- closing the direct `/admin/content` drawer clears owner markers and lands
   on `/admin`;
 - closing a panel opened from `/admin/edit` via `Tools → Panel` only hides the
   drawer and keeps `/admin/edit`, the owner dock, and inline edit affordances
@@ -264,10 +259,11 @@ The owner CMS modes also own the admin continuation UI:
   owner commands stay quiet cream/outline actions;
 - leaving `/admin/edit` is done through the `Tools` menu (`Main`, `Panel`,
   `Public site`, or `Log out`); there is no separate collapsed `Close` button;
-- `Public site` / `View live site` always opens clean `/` in a new browser tab.
-  It must not move the current Admin tab out of the `/admin` namespace. Legacy
-  incoming `/?view=public` is still consumed and cleaned for compatibility, but
-  new UI must not generate it;
+- `Public site` / `View live site` always opens the clean public route (`/` or
+  `/motor`, depending on the owner route scope) in a new browser tab. It must
+  not move the current Admin tab out of the `/admin` namespace. Legacy incoming
+  `/?view=public` is still consumed and cleaned for compatibility, but new UI
+  must not generate it;
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
@@ -303,7 +299,7 @@ and do not send visitor names, phone numbers, LINE IDs, emails, or message text
 as Analytics event parameters.
 
 Do not redirect successful login directly to `/admin/content` or a legacy owner
-hash; keep `/admin` as the post-login launcher.
+hash; keep `/admin` as the post-login Admin Portal.
 
 Do not remove the early `/admin/login` session gate from `/admin`.
 
@@ -361,7 +357,7 @@ These are proposals, not current implementation.
 For a real production CMS, add server-backed auth and persistence.
 
 For maintainability, migrate the exported HTML bundles into source components
-while keeping the `.dc.html` references as visual fixtures.
+while preserving current product decisions and using historical references only as optional visual fixtures.
 
 For insurer-count copy, keep the visible 14-logo comparison grid plus
 AIA/Srikrung relationship proof cards aligned with the supplied reference unless

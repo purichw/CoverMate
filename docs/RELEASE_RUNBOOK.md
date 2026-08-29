@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-08-16
+Last updated: 2026-08-29
 
 ## Production
 
@@ -68,7 +68,7 @@ Minimum checks:
 - `/` loads public visitor site
 - first paint does not show exported placeholder UI or raw `<x-dc>` template
   content
-- no visible raw Claude template markers such as `{{ brandName }}`,
+- no visible raw template markers such as `{{ brandName }}`,
   `{{ n.label }}`, `sc-if`, or `sc-for` appear after hydration
 - no rendered `[object Object]` placeholder text appears on visitor or admin
   surfaces
@@ -87,6 +87,10 @@ Minimum checks:
   motor-variant nav, includes the current `#review`, `#insurers`, `#fit`, and
   `#faq` anchors, and lands on
   `#insurers` below the sticky header
+- `/motor` renders the dedicated motor-insurance campaign page with its own
+  local motor-page nav, `Home` link, 14-logo insurer grid, motor tier
+  comparison, claim/renewal/guides/FAQ/contact sections, and canonical
+  `https://covermate.vercel.app/motor`
 - public navbar anchor jumps, including `#fit`, scroll in-place without
   rebuilding the main visitor DOM or flashing the page
 - `/admin/login` loads
@@ -103,8 +107,8 @@ Minimum checks:
   Operations
 - Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers
   remain hidden until real API contracts exist
-- admin `Public site` actions clear owner markers and land on clean `/` without
-  generating `/?view=public` or showing `[data-admin-owner-bar]`
+- admin `Public site` actions open the clean public route in a new tab without
+  generating `/?view=public` or showing owner chrome in that public tab
 - a signed-in browser with a stale `purich-admin-ever-v7` marker can load `/`
   and reload `/` without showing owner chrome
 - `/admin/analytics` renders private analytics without loading visitor GA
@@ -134,8 +138,9 @@ Minimum checks:
 - `Publish` success waits for the Firestore live/draft/version writes, then
   shows a dismissible toast with a 30-second `Undo` that republishes the
   previous live snapshot
-- `/#admin` close button exits owner mode to clean `/`; it does not expose owner
-  chrome on the visitor route
+- direct `/admin/content` close returns to `/admin`; a panel opened from
+  `/admin/edit` closes back into the same editor context and does not expose
+  owner chrome on the visitor route
 - `/#admin` drawer appears above visitor sticky header on mobile and must not
   fade in over the header chrome
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
@@ -147,27 +152,29 @@ Minimum checks:
   warm-ink command palette with `Draft` (`Save draft`, `Preview`, `Publish`) and
   `Go to` (`Panel`, `Main`, `Public site`, `Log out`) groups. `Publish` is the
   only terracotta-filled dock action
-- `Tools → Public site` in edit mode removes `contenteditable` affordances and
-  lands on clean `/`
+- `Tools → Public site` in edit mode opens the clean public route in a new tab
+  without owner chrome
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English
 - visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
   `Main`, `Public site`, `Save draft`, `Preview`, `Publish`,
   `Success`, and `Log out`
-- Firestore live content hydrates before public/admin launcher rendering; stale
+- Firestore live content hydrates before public/Admin Portal rendering; stale
   local cache must not override a successful `states/live` read
 - the `#fit` Needs Calculator uses the current `fit.calculator` methodology
   payload, exposes essential spending/support years/obligations/resources/room
   benefit/recovery inputs, and does not reintroduce salary/dependency
   multipliers
 - legacy Firestore content that conflicts with product decisions is normalized
-  on render/save/publish: duplicate `#motor` nav and forced-line-break contact
-  headings. The 2026-08-10 rebuild target treats `26+` as Srikrung panel
-  availability plus a 14-logo visible selection
+  on render/save/publish: duplicate `#motor` nav, stale insurer-count copy, and
+  forced-line-break contact headings. The current insurer-count decision follows
+  the active `insurers.items` logo data; with the committed logo set, the count
+  is `14`
 - owner modes hydrate Firestore draft/version data as needed, and publish writes
   `states/live`, `states/draft`, and a version document
-- `/`, including `/#motor`, remains indexable with canonical
-  `https://covermate.vercel.app/`
+- `/` and `/motor` remain indexable with canonicals
+  `https://covermate.vercel.app/` and `https://covermate.vercel.app/motor`;
+  `/#motor` remains a hash alias with the home canonical
 - `/admin`, `/admin/login`, `/#admin`, `/#edit`, and `/#preview` remain
   `noindex`
 - `robots.txt`, `sitemap.xml`, `site.webmanifest`, Open Graph/Twitter metadata,
@@ -213,16 +220,16 @@ for (const file of ['index.html', 'admin/login/index.html', 'admin/index.html', 
 NODE
 ```
 
-## Standalone / Claude Export Check
+## Offline Prototype Export Check
 
-The production site does not require a portable standalone artifact. Treat
-downloaded Claude standalone HTML as reference material unless the current task
+The production site does not require a portable offline prototype artifact. Treat
+downloaded prototype HTML as reference material unless the current task
 explicitly asks for a shareable offline demo.
 
-If a standalone demo is requested, validate it separately from production:
+If an offline demo is requested, validate it separately from production:
 
 1. Open it directly from `file://`, not only through a local server.
-2. Reload `/`, `#admin`, `#edit`, and any requested hash states.
+2. Reload `/`, admin, edit, preview, and any requested hash/route states.
 3. Confirm the browser console has no missing-file errors for `support.js`,
    `image-slot.js`, or `_ds/*/_ds_bundle.js`.
 4. Search visible body text for raw template markers:
@@ -234,8 +241,8 @@ document.body.innerText.match(/\{\{[^}]+\}\}|sc-if|sc-for|x-dc|\[object Object\]
 The expression should return `null`.
 
 5. If the file renders raw `{{ ... }}` placeholders, do not patch production
-   around it. Ask Claude to compile/export a self-contained HTML file or provide
-   a complete folder bundle with every runtime dependency.
+   around it. Fix or regenerate the offline prototype as a self-contained file
+   or provide a complete folder bundle with every runtime dependency.
 
 ## Deploy
 

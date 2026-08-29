@@ -42,8 +42,8 @@ Implications:
 
 | Key | Surface | Purpose |
 | --- | --- | --- |
-| `covermate-admin-session` | Admin login, admin launcher, owner modes | Browser-local admin session marker with expiry. |
-| `purich-live-config-v3` | Public bundle, admin launcher | Last-known cache of Firestore `states/live.config`. |
+| `covermate-admin-session` | Admin login, Admin Portal, owner modes | Browser-local admin session marker with expiry. |
+| `purich-live-config-v3` | Public bundle, Admin Portal | Last-known cache of Firestore `states/live.config`. |
 | `purich-live-text-v3` | Public bundle | Last-known cache of Firestore `states/live.text`. |
 | `purich-draft-config-v3` | Owner modes | Last-known cache of Firestore `states/draft.config`. |
 | `purich-draft-text-v3` | Owner modes | Last-known cache of Firestore `states/draft.text`. |
@@ -52,7 +52,7 @@ Implications:
 | `purich-scrub-copy-v2` | Public bundle | Copy-scrub/sanitization state used by the exported app. |
 | `purich-site-config-v7` | Public bundle | Site configuration namespace used by the exported app. |
 | `covermate-text-v7` | Public bundle | Legacy editable text namespace read during migration. |
-| `purich-struct-cards-v4` | Public bundle | Structural migration marker for latest standalone-reference sections, insurer/claim/fee/tier fields, logo backfill, and read-time schema normalization. |
+| `purich-struct-cards-v4` | Public bundle | Structural migration marker for latest product-reference sections, insurer/claim/fee/tier fields, logo backfill, and read-time schema normalization. |
 
 `purich-history-v3` is capped by the exported bundle. The current reference keeps
 the latest 20 publish/restore snapshots.
@@ -108,7 +108,7 @@ after Firebase Google Auth succeeds and Firestore `admins/{uid}` has
 `active: true`.
 
 `admin/index.html` may read `covermate-admin-session` and the hydrated live
-config cache for launcher branding.
+config cache for Admin Portal branding.
 
 `index.html` hydrates Firestore live before public rendering. In owner modes it
 may write draft state, publish live state, and restore versions through
@@ -139,11 +139,11 @@ Public visitor rendering should not depend on the user already having admin
 storage keys.
 
 When an admin intentionally opens the live public site from private admin
-surfaces, current UI actions must clear owner markers and navigate the current
-tab to clean `/`. The public bundle still consumes legacy incoming
+surfaces, current UI actions must open a clean public route in a new tab without
+owner markers. The public bundle still consumes legacy incoming
 `/?view=public` or `?public=1` requests and cleans the URL back to `/`, but new
-owner UI must not generate those URLs. Closing `/#admin` or using the owner
-public-site exit from `/#edit` also lands on clean `/`.
+owner UI must not generate those URLs. Closing direct `/admin/content` returns
+to `/admin`, and closing a panel opened from `/admin/edit` stays in the editor.
 
 `/#preview` is an authenticated draft-only render. It may request draft and
 version hydration, but it must not write the legacy `purich-admin-ever-v7`
@@ -158,10 +158,10 @@ product contracts:
 
 - `#motor` nav entries normalize to `#insurers` and duplicate motor nav entries
   are removed.
-- legacy insurer count overrides currently normalize to the visible insurer-logo
-  count (`14` with the present asset set). The 2026-08-10 rebuild target changes
-  the product copy model to `26+` panel availability plus a 14-logo selection;
-  reconcile this sanitizer in a later content/sanitizer phase.
+- legacy insurer count overrides normalize to the visible insurer-logo count.
+  With the current committed logo data this count is `14`. Do not reintroduce
+  stale higher-count copy unless the active `insurers.items` data and owner
+  approval both support a new count.
 - legacy contact headings with forced line breaks normalize to
   `ขอรับคำปรึกษา` / `Request a consultation`.
 

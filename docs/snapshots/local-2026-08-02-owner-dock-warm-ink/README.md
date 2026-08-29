@@ -9,8 +9,8 @@ Reference inputs:
 
 Files:
 
-- `reference-desktop.png` - Claude owner-dock reference page at 1440 x 900.
-- `reference-mobile-section.png` - Claude reference mobile section.
+- `reference-desktop.png` - owner-dock reference page at 1440 x 900.
+- `reference-mobile-section.png` - owner-dock mobile reference section.
 - `app-desktop-edit-dock-expanded.png` - CoverMate `/#edit` at 1440 x 900 with Tools expanded.
 - `app-mobile-edit-dock-expanded.png` - CoverMate `/#edit` at 390 x 844 with Tools expanded.
 - `desktop-reference-vs-app.png` - desktop side-by-side contact sheet.
@@ -18,7 +18,7 @@ Files:
 
 Product decision:
 
-- Use the Claude warm-ink owner dock visual direction.
+- Use the warm-ink owner dock visual direction.
 - Preserve CoverMate production behavior for real `Save draft`, `Preview`, `Publish`, `Panel`, `Main`, `Public site`, and `Log out`.
 - Keep public visitor mode free of owner chrome unless an owner hash mode is intentionally opened.
 

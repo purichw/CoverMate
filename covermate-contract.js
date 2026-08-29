@@ -13,6 +13,10 @@ export const ADMIN_LOGIN_PATH = "/admin/login";
 export const ADMIN_OPERATIONS_PATH = "/admin/ops";
 export const ADMIN_ANALYTICS_PATH = "/admin/analytics";
 export const ADMIN_PUBLIC_EXIT_PATH = "/";
+export const PUBLIC_HOME_PATH = "/";
+export const PUBLIC_MOTOR_PATH = "/motor";
+export const ADMIN_OWNER_PAGE_QUERY = "page";
+export const PUBLIC_ROUTE_PATHS = new Set([PUBLIC_HOME_PATH, PUBLIC_MOTOR_PATH]);
 export const ADMIN_OWNER_ROUTE_MAP = Object.freeze({
   "/admin/content": "admin",
   "/admin/edit": "edit",
@@ -50,9 +54,10 @@ export function ownerModeFromPath(path = "") {
   return ADMIN_OWNER_ROUTE_MAP[normalizePath(path)] || "";
 }
 
-export function ownerPathForMode(mode = "") {
+export function ownerPathForMode(mode = "", page = "home") {
   const entry = Object.entries(ADMIN_OWNER_ROUTE_MAP).find(([, value]) => value === mode);
-  return entry ? entry[0] : "";
+  if (!entry) return "";
+  return page === "motor" ? `${entry[0]}?${ADMIN_OWNER_PAGE_QUERY}=motor` : entry[0];
 }
 
 export function ownerModeFromHash(hash = "") {
@@ -151,6 +156,19 @@ export function cloneJSON(value) {
   return JSON.parse(JSON.stringify(value || {}));
 }
 
+function motorLocalSections(config) {
+  const page = config && config.motorPage;
+  if (!page || typeof page !== "object") return [];
+  return [page.hero, page.trust, page.cover].filter((section) =>
+    section && typeof section === "object"
+  );
+}
+
+export function editableContentSections(config) {
+  const sections = Array.isArray(config && config.sections) ? config.sections : [];
+  return sections.concat(motorLocalSections(config));
+}
+
 const REPEATABLE_COLLECTION_KEYS = ["items", "cards", "heads"];
 const REPEATABLE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{1,96}$/;
 
@@ -196,7 +214,7 @@ export function createRepeatableContentId(section, collectionKey, used = new Set
 
 export function ensureRepeatableContentIds(config, options = {}) {
   const next = options.mutate ? (config || {}) : cloneJSON(config || {});
-  const sections = Array.isArray(next.sections) ? next.sections : [];
+  const sections = editableContentSections(next);
   sections.forEach((section) => {
     if (!section || typeof section !== "object") return;
     REPEATABLE_COLLECTION_KEYS.forEach((collectionKey) => {
@@ -708,25 +726,57 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
   next.footer.legal.th = protectFooterLegal(next.footer.legal.th, "th");
   next.footer.legal.en = protectFooterLegal(next.footer.legal.en, "en");
 
-  if (Array.isArray(next.sections)) {
-    next.sections.forEach((section) => {
-      if (!section || typeof section !== "object") return;
-      if (section.type === "insurers") {
-        if (Array.isArray(section.items)) {
-          section.items.forEach((item) => {
-            if (!item || typeof item !== "object") return;
-            item.logo = cleanMediaReference(item.logo, "");
-          });
+  editableContentSections(next).forEach((section) => {
+    if (!section || typeof section !== "object") return;
+    if (Array.isArray(section.items)) {
+      section.items.forEach((item) => {
+        if (!item || typeof item !== "object") return;
+        if (Object.prototype.hasOwnProperty.call(item, "logo")) {
+          item.logo = cleanMediaReference(item.logo, "");
         }
-        if (Array.isArray(section.cards)) {
-          section.cards.forEach((card) => {
-            if (!card || typeof card !== "object") return;
-            card.logo = cleanMediaReference(card.logo, "");
-            card.logoAlt = cleanText(card.logoAlt || "", 120);
-          });
+        if (Object.prototype.hasOwnProperty.call(item, "logoAlt")) {
+          item.logoAlt = cleanText(item.logoAlt || "", 120);
         }
-      }
-    });
+      });
+    }
+    if (Array.isArray(section.cards)) {
+      section.cards.forEach((card) => {
+        if (!card || typeof card !== "object") return;
+        if (Object.prototype.hasOwnProperty.call(card, "logo")) {
+          card.logo = cleanMediaReference(card.logo, "");
+        }
+        if (Object.prototype.hasOwnProperty.call(card, "logoAlt")) {
+          card.logoAlt = cleanText(card.logoAlt || "", 120);
+        }
+      });
+    }
+  });
+
+  if (next.motorPage && typeof next.motorPage === "object") {
+    next.motorPage.seo = next.motorPage.seo && typeof next.motorPage.seo === "object"
+      ? next.motorPage.seo
+      : {};
+    next.motorPage.seo.title = cleanLocalizedSeo(next.motorPage.seo.title, 68);
+    next.motorPage.seo.description = cleanLocalizedSeo(next.motorPage.seo.description, 155);
+    if (!Array.isArray(next.motorPage.sections)) {
+      next.motorPage.sections = [];
+    }
+    if (Array.isArray(next.motorPage.nav)) {
+      next.motorPage.nav = next.motorPage.nav
+        .filter((item) => item && typeof item === "object")
+        .map((item) => ({
+          label: {
+            th: cleanText(item.label && item.label.th, 40),
+            en: cleanText(item.label && item.label.en, 40)
+          },
+          href: cleanText(item.href || "", 80)
+        }))
+        .filter((item) =>
+          item.label.th &&
+          item.label.en &&
+          (/^#[-A-Za-z0-9_]+$/.test(item.href) || item.href === "/")
+        );
+    }
   }
   return next;
 }
@@ -765,10 +815,10 @@ export function sanitizeMotorCountConfig(config, options = {}) {
   if (Array.isArray(next.sections)) {
     next.sections = reorderKnownLegacySections(next.sections);
     const insurerCount = motorInsurerLogoCount(next);
-    ["header", "brand", "footer", "contact", "seo"].forEach((key) => {
+    ["header", "brand", "footer", "contact", "seo", "motorPage"].forEach((key) => {
       normalizeLocalizedStrings(next[key], insurerCount);
     });
-    next.sections.forEach((section) => {
+    editableContentSections(next).forEach((section) => {
       if (!section) return;
       ensureNeedsCalculatorSection(section);
       normalizeLocalizedStrings(section, insurerCount);
@@ -778,7 +828,7 @@ export function sanitizeMotorCountConfig(config, options = {}) {
       normalizeLocalizedStrings(section.cards, insurerCount);
       suppressPlaceholderStories(section);
     });
-    next.sections.forEach((section) => {
+    editableContentSections(next).forEach((section) => {
       if (!section || (section.id !== "talk" && section.type !== "contact")) return;
       if (section.th && /ขอรับ\s*\n\s*คำปรึกษา/.test(String(section.th.title || ""))) {
         section.th.title = "ขอรับคำปรึกษา";
@@ -842,6 +892,10 @@ const contract = {
   ADMIN_OPERATIONS_PATH,
   ADMIN_ANALYTICS_PATH,
   ADMIN_PUBLIC_EXIT_PATH,
+  PUBLIC_HOME_PATH,
+  PUBLIC_MOTOR_PATH,
+  ADMIN_OWNER_PAGE_QUERY,
+  PUBLIC_ROUTE_PATHS,
   ADMIN_OWNER_ROUTE_MAP,
   ADMIN_OWNER_HASH_MAP,
   ADMIN_OWNER_PATHS,
@@ -868,6 +922,7 @@ const contract = {
   cleanLeadChoice,
   validStateDoc,
   cloneJSON,
+  editableContentSections,
   validRepeatableContentId,
   createRepeatableContentId,
   ensureRepeatableContentIds,

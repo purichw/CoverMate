@@ -44,8 +44,13 @@ before assuming changes are live.
 Routes:
 
 - `/` public visitor site
-- `/#motor` visitor alias into the main motor-insurance / insurer section
+- `/motor` dedicated motor-insurance campaign page inside the same CoverMate
+  product
+- `/#motor` legacy visitor alias into the home motor-insurance / insurer
+  section
 - `/#admin`, `/#edit`, and `/#preview` owner modes inside the visitor bundle
+- `/admin/content?page=motor`, `/admin/edit?page=motor`, and
+  `/admin/preview?page=motor` owner modes scoped to the dedicated motor page
 - `/admin/login` owner auth gate
 - `/admin` private Admin Portal shell with Home, Operations, Website content,
   Analytics, and Settings

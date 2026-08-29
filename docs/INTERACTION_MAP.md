@@ -1,10 +1,11 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-08-16
+Last updated: 2026-08-28
 
 ## Visitor Journey
 
-1. Visitor lands on `/`, `/#motor`, `/#life`, or an unexposed campaign hash.
+1. Visitor lands on `/`, `/motor`, `/#motor`, `/#life`, or an unexposed
+   compatibility hash.
 2. Visitor scans the offer, credibility bar, hero coverage accordions,
    policy-review offer, calculator, process, insurer proof, motor tier comparison, claim
    help, renewal reminders, guides, claim stories, about/license copy, FAQ, fee transparency,
@@ -14,18 +15,22 @@ Last updated: 2026-08-16
 4. Public forms save validated Firestore `contactLeads/*` documents; LINE,
    phone, and email CTAs still hand off directly.
 
-`/#motor` and `/#life` are aliases into the main visitor site, not separate page
-variants. They keep the same global navbar as `/`; `/#motor` re-aims to
-`#insurers`, while `/#life` re-aims to the hero coverage accordion cluster at
-`#cover` after hydration.
+`/motor` is the dedicated motor-insurance campaign page inside the same
+CoverMate product. It has motor-local navigation and canonical metadata, but it
+reuses shared CMS-backed insurer, tier, process, claim, renewal, guide, FAQ,
+contact, and footer data where appropriate.
+
+`/#motor` and `/#life` are legacy aliases into the home visitor site. They keep
+the same global navbar as `/`; `/#motor` re-aims to `#insurers`, while `/#life`
+re-aims to the hero coverage accordion cluster at `#cover` after hydration.
 
 Public navbar clicks are same-page anchor jumps, not route transitions. Clicking
 items such as `ขั้นตอน` / `#how` must scroll to the section without reloading or
 rebuilding the visitor DOM, which prevents a visible page flicker.
 
-`/#motor-focus` and `/#life-focus` are unexposed campaign variants from the
-latest Claude reference. They are live hash states for campaign use, but they
-must not appear in the header navigation or sitemap.
+`/#motor-focus` and `/#life-focus` are legacy unexposed compatibility variants.
+They are not the current motor campaign strategy and must not appear in header
+navigation or sitemap.
 
 ## Lead Form Contract
 
@@ -79,9 +84,10 @@ Home actions:
 - `Home`, `Operations`, `Website content`, `Analytics`, and `Settings` switch
   inside the same document through sidebar state.
 - `Operations` contains sub-tabs for Dashboard, Leads, Tasks, and Audit.
-- `Edit public-page words` quick action -> `/#edit`
-- `Preview website draft` quick action -> `/#preview`
-- `Public site` -> clears owner markers and lands the current tab on clean `/`
+- `Edit public-page words` quick action -> `/admin/edit`
+- `Preview website draft` quick action -> `/admin/preview`
+- `Public site` -> opens the clean public route in a new browser tab without
+  moving the current Admin tab out of the `/admin` namespace
 - `Log out` -> clears local admin session and returns to `/admin/login`
 
 The Home view is a private starting point inside the same admin shell, not a
@@ -93,7 +99,22 @@ Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
 `Log out` stable unless wording is explicitly changed by the owner.
 
 This page is an intentional admin step and should not disappear after login.
-The public-site link leaves owner mode completely and lands on clean `/`.
+
+## Motor Page Admin Flow
+
+The dedicated motor page uses the same owner editing shell with a route scope:
+
+- `/admin/edit?page=motor` opens inline editing on `/motor` content.
+- `/admin/content?page=motor` opens the control panel scoped to the motor-page
+  section order and local motor blocks.
+- `/admin/preview?page=motor` previews the motor draft at the `/motor` surface.
+- `Public site` from this scoped context opens clean `/motor` in a new public
+  tab/window where appropriate and must not leave owner chrome visible.
+- Save draft and Publish write the same Firestore draft/live documents; no
+  route-specific localStorage fallback may override a successful Firestore live
+  read.
+The public-site link opens the clean public route in a new tab and must not
+leave owner chrome visible in that public tab.
 Legacy incoming `/?view=public` links are still consumed and cleaned for
 compatibility, but new owner UI must not generate them.
 Being signed in as an admin is not itself a visible mode. A clean public route
@@ -120,8 +141,8 @@ must not show owner chrome, even if stale local owner markers exist.
 7. `Tools → Main` removes all `contenteditable` affordances and
    returns to `/admin`; `Tools → Panel` keeps the owner in the right-side
    control panel.
-8. `Public site` removes all owner/edit affordances, clears owner markers, and
-   navigates the current tab to clean `/`.
+8. `Public site` opens the clean public route in a new tab with no owner/edit
+   affordances.
 9. Reloading `/` after that remains a visitor view; owner chrome must stay
    hidden until the owner intentionally opens `#admin`, `#edit`, `#preview`, or
    `/admin`.
@@ -170,8 +191,9 @@ The detailed methodology and verification command live in
    publishes the previous live snapshot back to the visitor site.
 7. Native browser `confirm()` dialogs are not used for owner CMS actions.
 8. Public visitors hydrate the latest `states/live` before rendering.
-9. The drawer close button exits owner mode and returns to clean `/`. It does
-   not sign out.
+9. The direct `/admin/content` drawer close button returns to `/admin` and does
+   not sign out. A panel opened from `/admin/edit` closes back into the same
+   editor context.
 10. Owner draft/publish recovery remains available through `/admin`, `/#admin`,
     and the inline-edit dock rather than a public-page owner bar.
 11. The action bar inside the drawer keeps editing/navigation/session actions
@@ -215,8 +237,8 @@ JSON-LD claim boundaries stay code-owned.
 3. The only owner chrome is the fixed preview top bar: `Draft preview`,
    `Open editor`, `Public site`, and `Publish`.
 4. `Open editor` returns to `/#edit`.
-5. `Public site` exits owner mode, clears transient owner chrome state, and
-   lands on clean `/` without generating `/?view=public`.
+5. `Public site` opens clean `/` in a new tab without generating
+   `/?view=public`.
 6. Public `/` continues to read live content only.
 
 ## Admin Analytics Flow
@@ -260,7 +282,7 @@ JSON-LD claim boundaries stay code-owned.
    entry produced by the server; the client does not synthesize audit history.
 8. Website content actions link to the source-authored CMS routes
    (`/admin/edit`, `/admin/preview`, `/admin/content`) instead of depending on
-   offline Claude standalone files. The control panel is not a separate
+   offline prototype files. The control panel is not a separate
    launcher card; open it from the editor dock through `Tools -> Panel`.
 9. The page does not load visitor Google Analytics scripts.
 

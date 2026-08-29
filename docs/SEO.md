@@ -1,22 +1,26 @@
 # CoverMate SEO Contract
 
-Last updated: 2026-08-10
+Last updated: 2026-08-28
 
 ## Canonical Indexing
 
-The only indexable public URL is:
+The indexable public URLs are:
 
 - `https://covermate.vercel.app/`
+- `https://covermate.vercel.app/motor`
 
-`/#motor` is a hash alias into the public single-page site and must keep the
-same canonical URL. Do not add hash URLs to `sitemap.xml`; crawlers ignore URL
-fragments for separate indexing.
+`/#motor` is a legacy hash alias into the home page and must keep the same
+canonical URL as `/`. Do not add hash URLs to `sitemap.xml`; crawlers ignore
+URL fragments for separate indexing.
 
 Admin surfaces are private owner tools and must stay `noindex,nofollow`:
 
 - `/admin/login`
 - `/admin`
 - `/admin/analytics`
+- `/admin/content`
+- `/admin/edit`
+- `/admin/preview`
 - `/#admin`
 - `/#edit`
 - `/#preview`
@@ -26,7 +30,7 @@ sitemap.
 
 ## Metadata Layers
 
-The site is a static Claude Design export that replaces the shell document with
+The site is a static exported bundle that replaces the shell document with
 an embedded template at runtime. SEO metadata therefore exists in two places:
 
 - the outer `index.html` head, which non-rendering crawlers and link previews
@@ -67,8 +71,9 @@ fields are blank, the runtime falls back to the live brand and hero copy.
 The CMS must not expose arbitrary controls for canonical URL, robots directives,
 social image path, JSON-LD entity types, testimonials, ratings, reviews,
 addresses, PII, or unsupported licence/claim statements. Canonical remains
-locked to `https://covermate.vercel.app/`. Public `/` remains
-`index,follow`; owner/admin routes remain `noindex,nofollow`.
+locked to the rendered public route: `https://covermate.vercel.app/` for Home
+and `https://covermate.vercel.app/motor` for the motor page. Public `/` and
+`/motor` remain `index,follow`; owner/admin routes remain `noindex,nofollow`.
 
 ## Structured Data
 
@@ -115,7 +120,8 @@ npm run smoke
 The smoke harness verifies:
 
 - `robots.txt`, `sitemap.xml`, `site.webmanifest`, and SEO images/icons load;
-- public routes are indexable and canonicalized to production root;
+- public routes are indexable and canonicalized to the matching production
+  route (`/` or `/motor`);
 - admin routes and owner modes are `noindex`;
 - Open Graph, Twitter, and JSON-LD metadata exist and parse;
 - remote Firestore live content updates SEO metadata instead of stale local

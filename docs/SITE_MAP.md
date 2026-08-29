@@ -1,28 +1,33 @@
 # CoverMate Site Map
 
-Last updated: 2026-08-16
+Last updated: 2026-08-29
 
 ## Routes
 
 | Route | Audience | Purpose | Source |
 | --- | --- | --- | --- |
-| `/` | Visitor | Main public landing page | `index.html` |
-| `/#motor` | Visitor | Alias to the main site's motor-insurance / insurer section | `index.html` |
+| `/` | Visitor | Main public home page | `index.html` |
+| `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `index.html`, Vercel rewrite to `/` |
+| `/#motor` | Visitor | Legacy alias to the home motor-insurance / insurer section | `index.html` |
 | `/#life` | Visitor | Alias to the hero coverage accordion cluster | `index.html` |
-| `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the latest reference | `index.html` |
-| `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the latest reference | `index.html` |
+| `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the legacy reference set | `index.html` |
+| `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the legacy reference set | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Analytics, and Settings | `admin/index.html` |
 | `/admin/ops` | Owner / operations | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit` | Owner | Inline text editing mode | `index.html` |
 | `/#admin` | Owner | Control panel mode | `index.html` |
 | `/#preview` | Owner | Preview mode | `index.html` |
+| `/admin/content?page=motor` | Owner | Control panel mode scoped to `/motor` | `index.html`, Vercel rewrite to `/` |
+| `/admin/edit?page=motor` | Owner | Inline text editing mode scoped to `/motor` | `index.html`, Vercel rewrite to `/` |
+| `/admin/preview?page=motor` | Owner | Draft preview mode scoped to `/motor` | `index.html`, Vercel rewrite to `/` |
 
 ## Indexing Map
 
 | URL | Indexing | Canonical |
 | --- | --- | --- |
 | `/` | `index,follow` | `https://covermate.vercel.app/` |
+| `/motor` | `index,follow` | `https://covermate.vercel.app/motor` |
 | `/#motor` | Same document as `/`; do not sitemap hash URLs | `https://covermate.vercel.app/` |
 | `/#life` | Same document as `/`; do not sitemap hash URLs | `https://covermate.vercel.app/` |
 | `/#motor-focus`, `/#life-focus` | Same document as `/`; unexposed campaign hash states, not sitemap URLs | `https://covermate.vercel.app/` |
@@ -35,9 +40,10 @@ SEO implementation details live in [`SEO.md`](SEO.md).
 
 ## Visitor Sections
 
-The public site is a single-page landing experience. Exact implementation
-details live inside the exported bundle, so inspect the DOM before renaming
-section IDs or anchors.
+The public home is a single-page landing experience. The product also includes
+`/motor`, a dedicated motor-insurance page in the same bundle and brand system.
+Exact implementation details live inside the exported bundle, so inspect the
+DOM before renaming section IDs or anchors.
 
 Expected visible sections:
 
@@ -61,6 +67,28 @@ Expected visible sections:
 | Privacy/PDPA | Explains what happens to submitted information and what is not sent to Analytics. |
 | Contact/footer | LINE, phone, email, location, form, and legal copy. |
 
+## Dedicated Motor Page
+
+`/motor` is the current motor-specific campaign route, not an old hidden hash
+variant. It shares Firestore CMS data with Home where appropriate and adds
+local page blocks under `motorPage.*`.
+
+Expected visible motor route sections:
+
+| Section | Role |
+| --- | --- |
+| Motor hero | Motor-only offer, advisor proof card, and LINE CTA. |
+| Motor trust bar | Motor-specific credibility chips. |
+| Motor coverage accordions | Insurance-category accordion cards for motor-oriented intent. |
+| Motor insurers | Shared `insurers.items` 14-logo grid and AIA/Srikrung proof cards. |
+| Motor tier comparison | Shared class comparison table/cards. |
+| Process/how | Shared consultation workflow. |
+| Claim help | Shared accident/claim assistance section. |
+| Renewal reminders | Shared renewal reminder form/benefits. |
+| Guides | Shared buying guides. |
+| FAQ | Shared objections. |
+| Contact/footer | Shared contact panel, lead form, and footer. |
+
 ## Admin Sections
 
 | Surface | Route | Role |
@@ -80,12 +108,13 @@ review, motor insurers, resources/calculator, and FAQ entry points. Claim help,
 process, contact, and other content sections remain on the continuous page but
 are not all primary header nav items.
 
-`/#motor` keeps the same global navigation as `/` and re-aims to `#insurers`
-after hydration. `/#life` behaves the same way and re-aims to the hero
-accordion cluster at `#cover`.
+`/motor` uses dedicated motor-page navigation with a `Home` link and local
+anchors. `/#motor` keeps the same global navigation as `/` and re-aims to
+`#insurers` after hydration for backward compatibility. `/#life` behaves the
+same way and re-aims to the hero accordion cluster at `#cover`.
 
 `/#motor-focus` and `/#life-focus` render focused campaign variants from the
-latest Claude reference. They stay unexposed in the header nav and sitemap.
+legacy reference set. They stay unexposed in the header nav and sitemap.
 
 Admin login must land on `/admin` after sign-in.
 
@@ -136,7 +165,7 @@ Current committed files:
 The bundle currently expects these numbered filenames. Do not rename them
 without updating bundle references and smoke expectations together.
 
-The latest standalone reference also renders relationship proof cards in the
+The latest historical reference also renders relationship proof cards in the
 insurer section. `assets/logos/aia-logo.png` is present as a loose repo file and
 embedded in the bundle. `assets/logos/srikrung-logo.png` is present in the
 embedded bundle resource map, but is not currently present as a loose repo file.
