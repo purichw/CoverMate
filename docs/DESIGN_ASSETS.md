@@ -10,7 +10,8 @@ offline prototypes, or downloaded references may be used only when the owner
 explicitly supplies them for the current task, and they must be reconciled
 against current product decisions before implementation.
 
-Active inputs that can still inform implementation when supplied by the owner:
+Archived/reference inputs that can still inform implementation when explicitly
+supplied or reopened by the owner:
 
 - `/Users/point/Downloads/SPEC.md`
 - `/Users/point/Downloads/SPEC (1).md`

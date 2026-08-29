@@ -13,6 +13,18 @@ import {
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const indexPath = path.join(repoRoot, "index.html");
 const args = new Set(process.argv.slice(2));
+const LEGACY_COPY_UPDATE_CONFIRM_ARG = "--allow-legacy-copy-update";
+
+if (!args.has(LEGACY_COPY_UPDATE_CONFIRM_ARG)) {
+  console.error([
+    "scripts/apply-visitor-copy-update.mjs is a guarded legacy migration.",
+    "It embeds a past public-copy brief and can overwrite current CMS-aligned defaults.",
+    "Do not use it as product source of truth. Re-run only for an intentional",
+    `migration after reconciling with current docs/live CMS, using ${LEGACY_COPY_UPDATE_CONFIRM_ARG}.`
+  ].join("\n"));
+  process.exit(1);
+}
+
 const PUBLIC_SEO_TITLE = {
   th: "CoverMate | ที่ปรึกษาประกัน AIA และประกันรถยนต์",
   en: "CoverMate | AIA and Motor Insurance Advisory"

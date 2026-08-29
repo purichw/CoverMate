@@ -100,7 +100,7 @@ Detailed project documents:
 | `assets/apple-touch-icon.png`, `assets/icon-192.png`, `assets/icon-512.png` | Browser/mobile icon assets referenced by the manifest and page head. |
 | `favicon.svg` / `favicon.ico` | CoverMate shield browser icons. SVG is referenced in page heads; ICO covers legacy browser probes. |
 | `robots.txt` | Public crawler policy. Allows the visitor site, disallows `/admin`, and points to the production sitemap. |
-| `sitemap.xml` | Production canonical sitemap. Includes only `https://covermate.vercel.app/`; hash aliases and admin routes must stay out. |
+| `sitemap.xml` | Production canonical sitemap. Includes `https://covermate.vercel.app/` and `https://covermate.vercel.app/motor`; hash aliases and admin routes must stay out. |
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness using the shared Playwright loader. |
@@ -109,7 +109,7 @@ Detailed project documents:
 | `scripts/lib/static-server.mjs` | Shared ephemeral static server for browser regression scripts. It preserves clean URL behavior and only maps owner public-page routes to `index.html` when requested by a check. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
-| `scripts/apply-visitor-copy-update.mjs` | Regenerates visitor default copy/runtime guards from copy-update rules while preserving Firestore-first CMS behavior. |
+| `scripts/apply-visitor-copy-update.mjs` | Guarded legacy one-off copy migration. It embeds a past public-copy brief and exits unless `--allow-legacy-copy-update` is passed; do not use it as product source of truth without reconciling current docs, live CMS, and production behavior first. |
 | `scripts/export-copy-inventory.mjs` | Exports visitor-visible Thai/English copy to `docs/content/` for external copy review. Admin/private UI copy is excluded unless explicitly requested with a future flag. |
 | `vercel.json` | Vercel settings, clean URLs, `/api/ops/:path*` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
 | `.image-slots.state.json` | Empty file kept to satisfy the exported image-slot runtime request. |
@@ -240,16 +240,18 @@ authority. Use them only when the owner explicitly supplies them in the current
 task, and reconcile them against this map, `docs/ADMIN_CMS_REBUILD_DECISIONS.md`,
 and live production behavior before implementing.
 
-Active references and assets:
+Reference inputs and assets:
 
-- Current machine-readable implementation handoff package:
+- Archived machine-readable implementation handoff package:
   `/Users/point/Downloads/Insurance Agent Poster Concepts.zip`. The filename
   is misleading: the zip contains `handoff/README.md`, content defaults/schema,
   OpenAPI, Firestore rules, source helper modules, theme data, and spec test
-  stubs. Use it for implementation planning when supplied by the owner.
-- Design tokens/reference CSS: `/Users/point/Downloads/organic.css`
-- Insurer logos: `/Users/point/Downloads/assets/ins/`
-- Specs: `/Users/point/Downloads/SPEC.md`,
+  stubs. Use it only when supplied or explicitly reopened by the owner, then
+  reconcile it against this repo, current docs, Firestore-backed CMS behavior,
+  and live production before implementing.
+- Historical design tokens/reference CSS: `/Users/point/Downloads/organic.css`
+- Historical insurer logo source folder: `/Users/point/Downloads/assets/ins/`
+- Historical specs: `/Users/point/Downloads/SPEC.md`,
   `/Users/point/Downloads/SPEC (1).md`,
   `/Users/point/Downloads/SPEC (2).md`,
   `/Users/point/Downloads/SPEC (3).md`,

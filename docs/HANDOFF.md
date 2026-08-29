@@ -20,7 +20,7 @@ The site includes the visitor experience, dedicated motor-insurance route,
 admin login, Admin Portal, admin analytics, inline editing mode, and control
 panel mode.
 
-Current external handoff package:
+Archived external handoff package:
 
 - `/Users/point/Downloads/Insurance Agent Poster Concepts.zip`
 - Despite the filename, this zip's contents are the machine-readable
@@ -28,9 +28,10 @@ Current external handoff package:
   rules, content defaults/schema/reference data/icons, source helpers for
   store/migration/markup/routing/theme/calculator/analytics/validation, and
   test stubs.
-- Use this zip, together with the latest SPEC, as the current handoff artifact
-  for implementation planning. Do not treat the filename as meaning the
-  package is poster-only.
+- Do not treat this zip or the downloaded SPEC files as current product
+  authority by default. Use them only when explicitly supplied or reopened by
+  the owner, then reconcile them against this repo, current docs,
+  Firestore-backed CMS behavior, and live production before implementing.
 
 Local workspace state can still be ahead of production between edits. Treat
 `covermate.vercel.app` as current only after the relevant commit is pushed,

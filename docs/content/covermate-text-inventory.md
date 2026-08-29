@@ -9,7 +9,7 @@ Generated: 2026-08-16T06:50:04.976Z
 ## Product Guardrails For Rewriting
 - Keep motor/company count at `14` where it refers to visible insurer logos.
 - Do not change licence numbers: `6401006221`, `6804008544`, `5704011570`, or Thai legal licence `ว00287/2534` without explicit approval.
-- Preserve the one-page public site model; `#motor` is an alias into `#insurers`, not a separate page.
+- Preserve the two public visitor entry points in the same CoverMate product: `/` is the full home page, `/motor` is the dedicated motor campaign page, and `/#motor` is only a legacy home alias into `#insurers`.
 - Keep public analytics privacy-safe: no visitor names, phone numbers, LINE IDs, or freeform messages in GA4 copy/events.
 ## Suggested Prompt For ChatGPT
 ```text

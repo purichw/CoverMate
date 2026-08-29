@@ -99,10 +99,10 @@ Use this precedence order:
 2. Repository implementation in `/Users/point/CoverMate`.
 3. Project docs in `/Users/point/CoverMate/docs`.
 4. Firestore live CMS state when present: `sites/covermate/states/live`.
-5. The current external machine-readable handoff package at
-   `/Users/point/Downloads/Insurance Agent Poster Concepts.zip` for
-    implementation planning, schema/API/rules references, and source-module cross-checks. The filename is misleading; it contains a `handoff/` implementation
-   package, not only poster concepts.
+5. Archived external handoff packages or downloaded SPEC files only when the
+   owner explicitly supplies or reopens them for the current task. Reconcile
+   them against the repo, current docs, Firestore-backed CMS behavior, and live
+   production before implementing.
 6. Earlier offline prototypes and screenshots only as historical visual calibration.
 
 If older references conflict with this spec or the live site, this spec and the live implementation win.
@@ -930,14 +930,15 @@ Private admin analytics:
 
 ## SEO Contract
 
-Public root:
+Public visitor routes:
 
-- Indexable.
-- Canonical: `https://covermate.vercel.app/`.
+- `/` is indexable with canonical `https://covermate.vercel.app/`.
+- `/motor` is indexable with canonical `https://covermate.vercel.app/motor`.
 - Thai and English metadata.
 - OG/Twitter image: `https://covermate.vercel.app/assets/covermate-og.png`.
 - JSON-LD includes Website, Organization/InsuranceAgency, WebPage, and Service.
-- Sitemap and robots should include the public root and exclude admin routes.
+- Sitemap and robots should include both public visitor routes and exclude admin
+  routes, owner modes, and hash aliases.
 
 Admin routes:
 
@@ -1002,7 +1003,9 @@ Do not:
 
 - Reintroduce duplicate motor nav items.
 - Reintroduce `[object Object]` nav labels.
-- Make `#motor` a separate public website.
+- Make `/#motor` behave like the dedicated motor page. The canonical motor
+  campaign route is `/motor`; `/#motor` remains a home-page alias to
+  `#insurers`.
 - Remove `/admin` Admin Portal Home after login.
 - Hide logout in only one owner mode.
 - Keep explicit paths between `/admin`, `/admin/edit`, and `/admin/content`;
@@ -1021,7 +1024,8 @@ Do not:
 Public visitor:
 
 - Header has one motor nav item and no duplicate `ประกันรถยนต์`.
-- `#motor` is represented as an alias to the motor insurer section, not a separate surface.
+- `/#motor` is represented as an alias to the motor insurer section, not a
+  separate surface; `/motor` is the dedicated motor campaign route.
 - All visible sections are represented in the design, including motor tier
   comparison, while `cover` is represented as hero accordions rather than a
   standalone band.

@@ -53,23 +53,6 @@
     html[data-covermate-booting="true"] body > * {
       visibility: hidden !important;
     }
-    html[data-covermate-booting="true"]::before {
-      content: "CoverMate";
-      position: fixed;
-      inset: 0;
-      z-index: 2147483647;
-      display: grid;
-      place-items: center;
-      color: #201e1d;
-      font: 700 22px/1.2 "Google Sans", "Google Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      letter-spacing: 0;
-      opacity: 0;
-      pointer-events: none;
-      animation: covermateBootPrompt 1ms linear 900ms forwards;
-    }
-    @keyframes covermateBootPrompt {
-      to { opacity: .55; }
-    }
     #__bundler_thumbnail,
     #__bundler_loading,
     #__bundler_placeholder {
@@ -136,7 +119,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       'html,body{min-height:100%;background:#f5ead8!important}' +
       'html[data-covermate-booting="true"] body{visibility:hidden!important;color:transparent!important}' +
       'html[data-covermate-booting="true"] body>*{visibility:hidden!important}' +
-      'html[data-covermate-booting="true"]::before{content:"CoverMate";position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;color:#201e1d;font:700 22px/1.2 "Google Sans","Google Sans Thai",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:0;opacity:.55;pointer-events:none}' +
       '</style>';
     const headOpen = source.match(/<head[^>]*>/i);
     if (!headOpen) return guard + source;
