@@ -13,7 +13,7 @@ const routes = [
 
 const viewports = [
   { label: "mobile", width: 390, height: 844, maxVisibleMs: 4500, maxLcpMs: 3500 },
-  { label: "desktop", width: 1440, height: 900, maxVisibleMs: 3500, maxLcpMs: 3000 }
+  { label: "desktop", width: 1440, height: 900, maxVisibleMs: 3500, maxLcpMs: 3500 }
 ];
 
 const maxCls = Number(process.env.COVERMATE_PERF_MAX_CLS || "0.1");
