@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Production
 
@@ -45,7 +45,12 @@ Run smoke checks against local:
 
 ```bash
 npm run check:bundles
+npm run check:contracts
+npm run check:ids
+npm run check:uat
 npm run check:needs
+npm run check:text-editor
+npm run check:boot
 npm run smoke:admin-builder
 COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 ```
@@ -54,6 +59,21 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 `npm run smoke:admin-builder` runs only the dedicated Admin builder flow for
 section structure, embedded hero coverage accordions, relationship cards,
 insurer logo items, and tier rows/columns.
+
+## UAT Smoke
+
+Use a Vercel preview URL for UAT whenever possible. Preview hosts resolve to the
+isolated UAT Firestore namespace (`sites/covermate-uat/*`,
+`contactLeadsUat/*`) automatically.
+
+```bash
+npm run check:uat
+COVERMATE_URL=<vercel-preview-url> npm run smoke
+```
+
+If admin sign-in fails on the preview URL, add that exact preview domain in
+Firebase Authentication -> Settings -> Authorized domains. Do not bypass
+Firebase Auth or the `admins/{uid}` allowlist for UAT.
 
 ## Production Smoke
 
@@ -80,7 +100,7 @@ Minimum checks:
   privacy/PDPA sections render when present in the live schema
 - contact form enquiry-type and coverage selects render
 - renewal reminder form renders, validates required contact, and writes only
-  through the shared Firestore lead path
+  through the active runtime Firestore lead collection
 - contact form lead-submit code is present and does not send personal contact
   details to GA event parameters
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
@@ -97,7 +117,7 @@ Minimum checks:
 - Firebase Auth login UI renders; real Google popup login is verified manually
   with an allowlisted admin account before production release
 - Firestore Rules are published for project `covermate-purich` before relying on
-  real admin authorization
+  real admin authorization or UAT Firestore namespaces
 - an owner UID exists at `admins/<uid>` with `active: true` before real admin
   login acceptance is expected
 - `/admin` shows the Admin Portal Home inside the shared admin shell
@@ -119,9 +139,9 @@ Minimum checks:
   Brand & contact, Theme & data, and Versions
 - `/#admin` Content tab can edit structured card sets, including insurer
   relationship cards, claim cards, and fee cards
-- `/#admin` Brand & contact tab manages advisor logo path/alt metadata and
-  global contact values without exposing binary upload, Firebase Storage upload,
-  base64/data-image storage, drag/drop image processing, or a media library
+- `/#admin` Brand & contact tab manages advisor/brand logo and global contact
+  values without storing base64/data-image payloads in Firestore or bypassing
+  the current media contract
 - `/#admin` Brand & contact displays credential and footer legal identity copy
   as protected owner-readable content, with required licence identifiers intact
 - `/#admin` Theme & data exposes guarded SEO title/description controls only;
@@ -184,20 +204,29 @@ Minimum checks:
 - `covermate-analytics.js` loads as a static asset, uses GA4 measurement ID
   `G-5TF3C235EF`, runs only on `covermate.vercel.app`, and suppresses owner
   hashes/admin sessions
-- `admin/session.js`, `admin/analytics-data.js`, and `scripts/validate-bundles.mjs`
-  parse as source-authored refactor helpers
+- `src/visitor/*`, `scripts/lib/visitor-source.mjs`,
+  `scripts/lib/contract-loader.mjs`, `admin/session.js`,
+  `admin/analytics-data.js`, and `scripts/validate-bundles.mjs` parse as
+  source-authored refactor helpers
 - Vercel security headers are present in `vercel.json`; CSP remains Report-Only
   until exported inline/blob bundle requirements are removed
 - no horizontal overflow on covered viewports
 - admin controls meet mobile touch-target expectations on covered viewports
 
-## Bundle Parse Check
+## Visitor Source And Bundle Check
 
-Before deploying manual edits to exported HTML bundles, run:
+Before deploying visitor source or generated HTML bundle edits, run:
 
 ```bash
+npm run build:visitor
+npm run check:visitor-source
 npm run check:bundles
 ```
+
+`index.html` is generated from `src/visitor/*`; use
+`scripts/lib/visitor-source.mjs` and `scripts/lib/bundler-template.mjs` instead
+of ad hoc script-local parsing when a maintenance script needs visitor template
+or runtime content.
 
 The historical inline parse snippet is still useful for debugging:
 

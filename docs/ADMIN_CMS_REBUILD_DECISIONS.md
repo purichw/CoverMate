@@ -23,7 +23,7 @@ Brand/compliance direction remains authoritative for Google Sans, Organic tokens
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
 | Admin Portal Home | `/admin` is now the unified private gateway for `Operations`, `Website content`, `Analytics`, and `Settings`. | Updated after Operations became API-backed. The old three-card "Manage your site" launcher is retired. |
-| Operations portal | Approved as an Operations module inside the shared Admin Portal shell. | `/admin/ops/` remains a compatibility entry, but the current implementation is the same shell as `/admin`. `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state on `contactLeads/*`. |
+| Operations portal | Approved as an Operations module inside the shared Admin Portal shell. | `/admin/ops/` remains a compatibility entry, but the current implementation is the same shell as `/admin`. `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state in the active runtime lead collection. |
 | Public exit | `Public site` / `View live site` opens a clean public route in a new tab. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Admin stays on Admin URLs. Direct `/admin/content` close returns to `/admin`; a panel opened from `/admin/edit` closes back to the same editor. | `Main` returns to `/admin`. `Public site` opens a new clean public tab and must not move the current Admin tab. |
@@ -32,7 +32,7 @@ Brand/compliance direction remains authoritative for Google Sans, Organic tokens
 | Motor entry points | `/motor` is the dedicated motor-insurance campaign page in the same product. `#motor -> #insurers` remains a legacy Home alias; `#life -> #cover` where `#cover` is the hero accordion cluster. | `/motor` may have local motor nav plus a Home link. Home still has one motor nav item only, no duplicated motor labels. |
 | Insurer count copy | Public/Admin visible insurer-count copy follows active `insurers.items` logo data. | Current committed logo count is `14`; do not reintroduce stale higher-count claims unless logo data and owner approval both support the new count. |
 | Analytics | Preserve deployed event history; expand by adding safe parameters/events only. | Audit `covermate-analytics.js` before any event-name change. |
-| Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, `sites/covermate/states/live`, `states/draft`, `versions/*`, and `contactLeads/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project and does not require a collection migration. |
+| Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, production `sites/covermate/*`/`contactLeads/*`, and UAT `sites/covermate-uat/*`/`contactLeadsUat/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project. UAT is isolated by runtime namespace, not by an auth bypass. |
 | CMS IA | Replace developer-like controls with owner-readable CMS. | Site structure rows, section editor, collapsed Advanced layout, stable repeatable IDs. |
 | Compliance | Licence/OIC, agent/broker, commission disclosure, and claim stories are protected. | No casual inline editing of regulated copy. |
 
@@ -72,7 +72,8 @@ Portal shell. `/admin/ops/` remains a compatibility route; it reuses the admin
 session/Firebase allowlist and calls
 `/api/ops/*` for lead reads, lead creation, status updates, notes, follow-up
 dates, task completion, and audit. The first backend pass stores operations
-state on `contactLeads/*` to avoid adding un-deployed collections. Later work may
+state on the active runtime lead collection (`contactLeads/*` in production and
+`contactLeadsUat/*` in UAT). Later work may
 split customers, policies, documents, scheduler jobs, retention/deletion, and
 global audit into dedicated collections after privacy/security review.
 Until those contracts exist, Customers, Consultations, Quotes, Policies,

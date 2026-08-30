@@ -1070,7 +1070,7 @@
         if (!user || typeof user.getIdToken !== "function") throw new Error("Firebase ID token is unavailable.");
         token = await user.getIdToken();
       }
-      const response = await fetch("/api/analytics?days=30", {
+      const response = await fetch(withEnvironmentQuery("/api/analytics?days=30", cm.environment), {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json"
@@ -1081,6 +1081,11 @@
         throw new Error(payload.message || payload.error || `Analytics API failed with ${response.status}.`);
       }
       return payload;
+    }
+
+    function withEnvironmentQuery(url, environment) {
+      if (!environment || environment.name !== "uat") return url;
+      return `${url}${url.includes("?") ? "&" : "?"}cm_env=uat`;
     }
 
     async function loadLeads() {

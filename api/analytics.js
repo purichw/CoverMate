@@ -1,4 +1,6 @@
 const crypto = require("node:crypto");
+const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 
 const PROJECT_ID = "covermate-purich";
 const FIREBASE_API_KEY = "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM";
@@ -39,6 +41,7 @@ const EVENT_NAMES = [
 ];
 
 let cachedAccessToken = null;
+let environmentModulePromise = null;
 
 module.exports = async function analyticsApi(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -52,7 +55,8 @@ module.exports = async function analyticsApi(req, res) {
     }
 
     const actor = await authorize(req);
-    const config = analyticsConfig();
+    actor.environment = await resolveRequestEnvironment(req);
+    const config = analyticsConfig(actor.environment);
     if (!config.ok) {
       return send(res, 200, unavailablePayload("not_configured", config.message, actor));
     }
@@ -61,6 +65,8 @@ module.exports = async function analyticsApi(req, res) {
     const days = clampDays(url.searchParams.get("days"));
     const payload = await readGa4(config, days);
     payload.actor = { uid: actor.uid, role: actor.role };
+    payload.environment = actor.environment.name;
+    payload.siteId = actor.environment.siteId;
     return send(res, 200, payload);
   } catch (error) {
     const status = Number(error.status || 500);
@@ -95,34 +101,68 @@ async function authorize(req) {
   return { uid, email: account.email || "", role, token };
 }
 
-function analyticsConfig() {
+async function resolveRequestEnvironment(req) {
+  const { resolveCoverMateEnvironment } = await loadEnvironmentModule();
+  return resolveCoverMateEnvironment({
+    url: req.url || "/",
+    headers: req.headers || {},
+    vercelEnv: process.env.VERCEL_ENV || ""
+  });
+}
+
+function loadEnvironmentModule() {
+  if (!environmentModulePromise) {
+    environmentModulePromise = import(pathToFileURL(path.join(__dirname, "..", "covermate-environment.mjs")).href);
+  }
+  return environmentModulePromise;
+}
+
+function analyticsConfig(environment) {
+  if (environment && environment.isUat) {
+    return analyticsConfigForEnvironment({
+      propertyId: process.env.COVERMATE_UAT_GA4_PROPERTY_ID || "",
+      clientEmail: process.env.COVERMATE_UAT_GA4_CLIENT_EMAIL || "",
+      privateKey: process.env.COVERMATE_UAT_GA4_PRIVATE_KEY || "",
+      missingMessage: "Set COVERMATE_UAT_GA4_PROPERTY_ID, COVERMATE_UAT_GA4_CLIENT_EMAIL, and COVERMATE_UAT_GA4_PRIVATE_KEY in the Vercel Preview environment to enable UAT traffic analytics. Production GA4 credentials are not reused for UAT."
+    });
+  }
+  return analyticsConfigForEnvironment({
+    propertyId:
+      process.env.COVERMATE_GA4_PROPERTY_ID ||
+      process.env.GA4_PROPERTY_ID ||
+      process.env.GOOGLE_ANALYTICS_PROPERTY_ID ||
+      "",
+    clientEmail:
+      process.env.COVERMATE_GA4_CLIENT_EMAIL ||
+      process.env.GA4_CLIENT_EMAIL ||
+      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+      process.env.GOOGLE_CLIENT_EMAIL ||
+      "",
+    privateKey:
+      process.env.COVERMATE_GA4_PRIVATE_KEY ||
+      process.env.GA4_PRIVATE_KEY ||
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ||
+      process.env.GOOGLE_PRIVATE_KEY ||
+      "",
+    missingMessage: "Set COVERMATE_GA4_PROPERTY_ID, COVERMATE_GA4_CLIENT_EMAIL, and COVERMATE_GA4_PRIVATE_KEY in Vercel."
+  });
+}
+
+function analyticsConfigForEnvironment(input) {
   const propertyId = clean(
-    process.env.COVERMATE_GA4_PROPERTY_ID ||
-    process.env.GA4_PROPERTY_ID ||
-    process.env.GOOGLE_ANALYTICS_PROPERTY_ID ||
-    "",
+    input.propertyId,
     80
   ).replace(/^properties\//, "");
   const clientEmail = clean(
-    process.env.COVERMATE_GA4_CLIENT_EMAIL ||
-    process.env.GA4_CLIENT_EMAIL ||
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
-    process.env.GOOGLE_CLIENT_EMAIL ||
-    "",
+    input.clientEmail,
     240
   );
-  const privateKey = decodePrivateKey(
-    process.env.COVERMATE_GA4_PRIVATE_KEY ||
-    process.env.GA4_PRIVATE_KEY ||
-    process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ||
-    process.env.GOOGLE_PRIVATE_KEY ||
-    ""
-  );
+  const privateKey = decodePrivateKey(input.privateKey);
 
   if (!propertyId || !clientEmail || !privateKey) {
     return {
       ok: false,
-      message: "Set COVERMATE_GA4_PROPERTY_ID, COVERMATE_GA4_CLIENT_EMAIL, and COVERMATE_GA4_PRIVATE_KEY in Vercel."
+      message: input.missingMessage
     };
   }
   if (!/^\d+$/.test(propertyId)) {
@@ -135,8 +175,11 @@ function analyticsConfig() {
 }
 
 function unavailablePayload(status, message, actor) {
+  const environment = actor && actor.environment || { name: "production", siteId: "covermate" };
   return {
     measurementId: MEASUREMENT_ID,
+    environment: environment.name,
+    siteId: environment.siteId,
     source: "ga4_data_api",
     status,
     message,
@@ -356,7 +399,8 @@ function emptyMetrics() {
 }
 
 async function googleAccessToken(config) {
-  if (cachedAccessToken && cachedAccessToken.exp > Date.now() + 60_000) {
+  const cacheKey = `${config.clientEmail}:${config.propertyId}`;
+  if (cachedAccessToken && cachedAccessToken.key === cacheKey && cachedAccessToken.exp > Date.now() + 60_000) {
     return cachedAccessToken.token;
   }
   const now = Math.floor(Date.now() / 1000);
@@ -384,6 +428,7 @@ async function googleAccessToken(config) {
     throw httpError(502, "oauth_failed", payload.error_description || payload.error || "Google OAuth token request failed.");
   }
   cachedAccessToken = {
+    key: cacheKey,
     token: payload.access_token,
     exp: Date.now() + Math.max(0, Number(payload.expires_in || 3600) - 120) * 1000
   };

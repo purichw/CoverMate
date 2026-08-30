@@ -11,7 +11,11 @@ Analytics, and the source-authored Operations Portal route are implemented.
 Operations is live today for Dashboard, Leads, Tasks, and Audit; Customers,
 Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden
 until their production Firestore/API contracts exist.
-Shared route/storage contracts live in `covermate-contract.js`; shared
+Shared runtime environment routing lives in `covermate-environment.mjs`.
+Production host `covermate.vercel.app` resolves to production Firestore data;
+Vercel preview hosts and explicit local `cm_env=uat` resolve to UAT Firestore
+data under `sites/covermate-uat/*` and `contactLeadsUat/*`. Shared
+route/storage contracts live in `covermate-contract.js`; shared
 embedded-template parsing and serialization lives in
 `scripts/lib/bundler-template.mjs`; shared browser-test Playwright loading and
 ephemeral static serving live in `scripts/lib/playwright.mjs` and
@@ -45,6 +49,7 @@ template/runtime-dependency checks in the release runbook.
 - Local static server: `python3 -m http.server 4177`
 - Local bundle/source check: `npm run check:bundles`
 - Needs Calculator contract check: `npm run check:needs`
+- UAT namespace contract check: `npm run check:uat`
 - Local smoke: `npm run smoke`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
 - Production URL: `https://covermate.vercel.app`
@@ -69,6 +74,7 @@ Detailed project documents:
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)
 - [`docs/NEEDS_CALCULATOR.md`](docs/NEEDS_CALCULATOR.md)
 - [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md)
+- [`docs/UAT.md`](docs/UAT.md)
 - [`docs/ANALYTICS.md`](docs/ANALYTICS.md)
 - [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md)
 - [`docs/SEO.md`](docs/SEO.md)
@@ -81,18 +87,23 @@ Detailed project documents:
 
 | Path | Purpose / ownership |
 | --- | --- |
-| `index.html` | Public visitor site, dedicated `/motor` campaign route through Vercel rewrites, and owner modes: legacy `#motor`, `#admin`, `#edit`, `#preview` plus direct `/admin/content`, `/admin/edit`, and `/admin/preview` owner routes. |
+| `index.html` | Generated deploy artifact for the public visitor site, dedicated `/motor` campaign route through Vercel rewrites, and owner modes. Do not use it as the source of truth for visitor runtime edits; update `src/visitor/*` and run `npm run build:visitor`. |
+| `src/visitor/shell.html` | Source outer shell for `index.html`, including first-paint cloak, favicon/head metadata, script imports, and the embedded bundle slot. |
+| `src/visitor/template.html` | Source embedded `__bundler/template` HTML. The generator serializes this through `scripts/lib/bundler-template.mjs`. |
+| `src/visitor/defaults.js` | Source default CMS/site config injected into the visitor runtime. Firestore live/draft data still owns runtime content. |
+| `src/visitor/runtime.js` | Source `text/x-dc` visitor runtime injected into the template. Route, admin namespace, repeatable-item, and visible-section decisions should call `covermate-contract.js` helpers instead of duplicating contracts. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private single-shell Admin Portal. Home, Operations, Website content, Analytics, and Settings switch client-side through the shared sidebar. Has an early session gate and verified Firebase admin session check that redirect unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
 | `admin/ops/index.html` | Compatibility shim into `/admin#operations`. It must stay tiny and must not grow into a second Admin Portal shell. |
 | `admin/ops/app.js` | Operations module controller loaded by `admin/index.html`. Calls `/api/ops/*` with the active Firebase ID token, renders only live Operations tabs for Leads/Tasks/Audit, hides unavailable admin modules, and sends supported workflow mutations to the server. |
-| `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes `contactLeads/*`, returns server-produced audit entries, and marks planned resources as `not_wired` instead of pretending they are empty live datasets. |
+| `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes the runtime lead collection (`contactLeads/*` in production, `contactLeadsUat/*` in UAT), returns server-produced audit entries, and marks planned resources as `not_wired` instead of pretending they are empty live datasets. |
 | `admin/session.js` | Shared admin session helper for source-authored admin pages. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
+| `covermate-environment.mjs` | Runtime environment resolver. Production host is locked to production; Vercel preview and explicit local UAT route CMS/lead traffic to UAT collections. |
 | `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, needs-calculator defaults, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
-| `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, version history, contact lead submission, and admin lead reads. |
-| `firestore.rules` | Firestore access rules for admin allowlist, site state, versions, analytics docs, and validated contact leads. |
+| `covermate-firebase.js` | Firebase web helper for Google Auth, Firestore admin allowlist checks, local session cache, Firestore CMS hydration, draft save, publish/restore, version history, contact lead submission, and admin lead reads. CMS/lead paths come from `covermate-environment.mjs`. |
+| `firestore.rules` | Firestore access rules for admin allowlist, production/UAT site state, versions, analytics docs, and validated contact leads. |
 | `firebase.json` | Firebase CLI mapping for Firestore rules deploys. |
 | `assets/ins/*.png` | Insurer logo assets used by the `#insurers` section. Current bundle expects `assets/ins/NN-name.png`. |
 | `assets/logos/aia-logo.png` | Loose AIA logo PNG used for the AIA proof-card replacement and embedded into the current bundle resource map. |
@@ -105,10 +116,14 @@ Detailed project documents:
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness using the shared Playwright loader. |
 | `scripts/lib/bundler-template.mjs` | Shared embedded bundle-template parser/serializer used by validation, copy export/update, and regression scripts. This is the owner for template marker masking/restoring. |
+| `scripts/lib/visitor-source.mjs` | Shared source-to-generated visitor bundle composer. It is the only script-layer owner for the `src/visitor/*` to `index.html` generation boundary. |
+| `scripts/lib/contract-loader.mjs` | Shared regression-script loader for `covermate-contract.js`, used to keep Node checks clean without changing the repo-wide CommonJS/ESM mode. |
 | `scripts/lib/playwright.mjs` | Shared Playwright resolver for local installs and the Codex bundled runtime path. |
 | `scripts/lib/static-server.mjs` | Shared ephemeral static server for browser regression scripts. It preserves clean URL behavior and only maps owner public-page routes to `index.html` when requested by a check. |
+| `scripts/generate-visitor-bundle.mjs` | Generates `index.html` from `src/visitor/*`; `--check` is wired into `npm run check:bundles` to catch generated artifact drift. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
+| `scripts/uat-environment-check.mjs` | Static/runtime UAT contract check for environment resolution, production-host override, preview namespace paths, server API routing, and rules coverage. |
 | `scripts/apply-visitor-copy-update.mjs` | Guarded legacy one-off copy migration. It embeds a past public-copy brief and exits unless `--allow-legacy-copy-update` is passed; do not use it as product source of truth without reconciling current docs, live CMS, and production behavior first. |
 | `scripts/export-copy-inventory.mjs` | Exports visitor-visible Thai/English copy to `docs/content/` for external copy review. Admin/private UI copy is excluded unless explicitly requested with a future flag. |
 | `vercel.json` | Vercel settings, clean URLs, `/api/ops/:path*` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
@@ -164,6 +179,9 @@ Route contracts:
   `covermate-contract.js`. New admin UI should use `/admin`, `/admin/edit`,
   `/admin/content`, and `/admin/preview`; legacy `/#edit`, `/#admin`, and
   `/#preview` remain compatibility inputs only.
+- Visitor bundle edits belong in `src/visitor/*`. Run
+  `npm run build:visitor` after source edits; `index.html` is a generated
+  deploy artifact and `npm run check:visitor-source` catches drift.
 - `/admin/index.html` owns the single Admin Portal shell. `/admin/ops/index.html`
   is only a compatibility shim, and `/admin/ops/app.js` is only the Operations
   module mounted inside that shell.
@@ -183,9 +201,10 @@ Route contracts:
 Admin identity is Firebase-backed. The approved admin session is cached in
 browser `localStorage` for routing convenience, but private analytics,
 Operations, and lead reads must re-verify the active Firebase admin user. CMS
-content is Firestore-first under
-`sites/covermate/*`; localStorage keeps last-known live/draft/text/history
-fallback caches and must not override a successful remote read. These keys are
+content is Firestore-first in the active runtime namespace: production uses
+`sites/covermate/*`, and UAT uses `sites/covermate-uat/*`. localStorage keeps
+last-known live/draft/text/history fallback caches and must not override a
+successful remote read. These keys are
 part of the product contract, are centralized in `covermate-contract.js`, and
 must not be renamed without a migration:
 
@@ -211,12 +230,13 @@ Important behavior:
   rendering cache-backed brand/public content.
 - `/#admin`, `/#edit`, and `/#preview` additionally hydrate Firestore draft and
   version history as needed.
-- Save draft writes `sites/covermate/states/draft`; publish/restore writes
+- Save draft writes the active namespace `states/draft`; publish/restore writes
   `states/live`, `states/draft`, and a new `versions/*` document.
 - Public SEO metadata starts from static fallbacks in `index.html`, then runtime
   sync updates title, description, Open Graph/Twitter, and JSON-LD from the
   hydrated live state. Admin routes and owner modes must remain `noindex`.
-- Visitor lead submissions write validated documents to `contactLeads/*`.
+- Visitor lead submissions write validated documents to the active lead
+  collection: `contactLeads/*` in production and `contactLeadsUat/*` in UAT.
   Admin Analytics reads those leads through `covermate-firebase.js`.
   The Operations Portal reads and mutates them through `/api/ops/*`, which
   re-verifies the Firebase user and role server-side before touching Firestore.
@@ -409,7 +429,7 @@ but is not currently present as a loose repository file.
   routed through `covermate-contract.js` instead of reintroducing duplicate
   constants in page-specific files.
 - Keep public lead writes validated by Firestore Rules; do not make
-  `contactLeads/*` a free-form public write path.
+  `contactLeads/*` or `contactLeadsUat/*` a free-form public write path.
 - Keep visitor GA off admin-only surfaces, including `/admin/analytics`.
 - Keep OIC licence link and licence copy intact unless the business owner
   supplies updated verified text.
@@ -418,6 +438,7 @@ but is not currently present as a loose repository file.
 
 | Change type | Minimum verification |
 | --- | --- |
+| Visitor source/generator changes | `npm run build:visitor`, `npm run check:visitor-source`, `npm run check:contracts`, `npm run check:bundles`, and targeted browser interaction for the changed flow. |
 | HTML bundle route/auth/content changes | `npm run smoke`, plus targeted Playwright interaction for the changed flow. |
 | Source-authored admin pages | `npm run check:bundles`, `npm run smoke`, and desktop/mobile screenshot evidence. |
 | Firestore rules or lead data changes | Rules syntax/deploy planning, `npm run smoke`, and a scoped allow/deny review. |

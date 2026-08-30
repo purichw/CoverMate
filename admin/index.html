@@ -13,14 +13,23 @@
   <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css" />
   <script>
     (function () {
+      function loginPath() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          if (params.get("cm_env") === "uat") return "/admin/login?cm_env=uat";
+        } catch (error) {
+          // Fall through to the production-shaped login URL.
+        }
+        return "/admin/login";
+      }
       try {
         var raw = window.localStorage.getItem("covermate-admin-session");
         var session = raw ? JSON.parse(raw) : null;
         if (!session || Number(session.exp || 0) <= Date.now()) {
-          window.location.replace("/admin/login");
+          window.location.replace(loginPath());
         }
       } catch (error) {
-        window.location.replace("/admin/login");
+        window.location.replace(loginPath());
       }
     })();
   </script>

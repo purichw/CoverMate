@@ -31,6 +31,10 @@ export const ADMIN_OWNER_PATHS = Object.freeze(Object.keys(ADMIN_OWNER_ROUTE_MAP
 export const ADMIN_SHELL_PATHS = new Set([ADMIN_ROOT_PATH, ADMIN_LOGIN_PATH, ADMIN_OPERATIONS_PATH, ADMIN_ANALYTICS_PATH]);
 export const OWNER_HASHES = new Set(Object.keys(ADMIN_OWNER_HASH_MAP));
 export const OWNER_PATHS = new Set(ADMIN_OWNER_PATHS);
+export const ROUTE_PAGE_HOME = "home";
+export const ROUTE_PAGE_MOTOR = "motor";
+export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "analytics", "settings"]);
+export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
 
 export function normalizePath(path = "") {
   const clean = String(path || "").replace(/\/+$/, "");
@@ -57,11 +61,66 @@ export function ownerModeFromPath(path = "") {
 export function ownerPathForMode(mode = "", page = "home") {
   const entry = Object.entries(ADMIN_OWNER_ROUTE_MAP).find(([, value]) => value === mode);
   if (!entry) return "";
-  return page === "motor" ? `${entry[0]}?${ADMIN_OWNER_PAGE_QUERY}=motor` : entry[0];
+  return normalizeRoutePage(page) === ROUTE_PAGE_MOTOR
+    ? `${entry[0]}?${ADMIN_OWNER_PAGE_QUERY}=motor`
+    : entry[0];
 }
 
 export function ownerModeFromHash(hash = "") {
   return ADMIN_OWNER_HASH_MAP[hash || ""] || "";
+}
+
+export function normalizeRoutePage(page = ROUTE_PAGE_HOME) {
+  return page === ROUTE_PAGE_MOTOR ? ROUTE_PAGE_MOTOR : ROUTE_PAGE_HOME;
+}
+
+export function publicPathForRoutePage(page = ROUTE_PAGE_HOME) {
+  return normalizeRoutePage(page) === ROUTE_PAGE_MOTOR ? PUBLIC_MOTOR_PATH : PUBLIC_HOME_PATH;
+}
+
+export function routePageFromLocationParts(path = "", search = "") {
+  const clean = normalizePath(path);
+  if (clean === PUBLIC_MOTOR_PATH) return ROUTE_PAGE_MOTOR;
+  if (!ownerModeFromPath(clean)) return ROUTE_PAGE_HOME;
+  try {
+    const params = new URLSearchParams(String(search || ""));
+    return normalizeRoutePage(params.get(ADMIN_OWNER_PAGE_QUERY));
+  } catch {
+    return ROUTE_PAGE_HOME;
+  }
+}
+
+export function cleanPublicExitPath(path = PUBLIC_HOME_PATH) {
+  const clean = normalizePath(path);
+  return clean === PUBLIC_MOTOR_PATH ? PUBLIC_MOTOR_PATH : PUBLIC_HOME_PATH;
+}
+
+export function adminPortalRouteStateFromLocation(path = "", hash = "") {
+  const rawHash = decodeURIComponent(String(hash || "").replace(/^#/, "")).trim();
+  const hashKey = rawHash.split(/[?&]/)[0];
+  const base = {
+    module: normalizePath(path) === ADMIN_OPERATIONS_PATH ? "operations" : "home",
+    operationsTab: "dashboard"
+  };
+  if (!hashKey) return base;
+  if (ADMIN_PORTAL_OPERATIONS_TABS.includes(hashKey)) {
+    return { module: "operations", operationsTab: hashKey };
+  }
+  if (hashKey === "operations") return { module: "operations", operationsTab: "dashboard" };
+  if (ADMIN_PORTAL_MODULES.includes(hashKey)) {
+    return { module: hashKey, operationsTab: "dashboard" };
+  }
+  return base;
+}
+
+export function adminPortalUrl(module = "home", operationsTab = "dashboard") {
+  if (module === "home") return ADMIN_ROOT_PATH;
+  if (module === "operations") {
+    return operationsTab === "dashboard"
+      ? `${ADMIN_ROOT_PATH}#operations`
+      : `${ADMIN_ROOT_PATH}#${operationsTab}`;
+  }
+  return ADMIN_PORTAL_MODULES.includes(module) ? `${ADMIN_ROOT_PATH}#${module}` : ADMIN_ROOT_PATH;
 }
 
 function storage() {
@@ -169,6 +228,72 @@ export function editableContentSections(config) {
   return sections.concat(motorLocalSections(config));
 }
 
+export function isVisibleSection(section) {
+  return Boolean(section && typeof section === "object" && section.on !== false);
+}
+
+export function visiblePublicSections(config) {
+  const sections = Array.isArray(config && config.sections) ? config.sections : [];
+  return sections.filter(isVisibleSection);
+}
+
+function sectionHasVisibleItems(section) {
+  return !Array.isArray(section && section.items) || section.items.some(isVisibleSection);
+}
+
+export function normalizeSectionHref(href = "") {
+  const raw = String(href || "").trim();
+  if (raw === "#motor") return "#insurers";
+  if (raw === "#life") return "#cover";
+  return raw;
+}
+
+export function isSectionHref(href = "") {
+  return /^#[A-Za-z0-9_-]+$/.test(String(href || "").trim());
+}
+
+export function visibleSectionAnchorIds(config, options = {}) {
+  const visible = visiblePublicSections(config);
+  const ids = new Set(visible
+    .filter((section) => section.id !== "cover" || sectionHasVisibleItems(section))
+    .map((section) => section && section.id)
+    .filter(Boolean));
+  const heroVisible = visible.some((section) => section && section.type === "hero");
+  const embeddedCover = (Array.isArray(config && config.sections) ? config.sections : [])
+    .find((section) => section && section.id === "cover");
+  const hasEmbeddedCoverAnchor = Boolean(
+    heroVisible &&
+    isVisibleSection(embeddedCover) &&
+    Array.isArray(embeddedCover.items) &&
+    embeddedCover.items.some(isVisibleSection)
+  );
+  if (hasEmbeddedCoverAnchor) ids.add("cover");
+  if (options.aliases !== false) {
+    if (ids.has("insurers")) ids.add("motor");
+    if (ids.has("cover")) ids.add("life");
+  }
+  return ids;
+}
+
+export function sectionHrefAvailable(href = "", configOrAnchorIds = {}) {
+  if (!isSectionHref(href)) return true;
+  const target = normalizeSectionHref(href).replace(/^#/, "");
+  if (target === "top") return true;
+  const anchorIds = configOrAnchorIds instanceof Set
+    ? configOrAnchorIds
+    : visibleSectionAnchorIds(configOrAnchorIds);
+  return anchorIds.has(target);
+}
+
+export function filterLinksByVisibleSections(links = [], configOrAnchorIds = {}) {
+  const anchorIds = configOrAnchorIds instanceof Set
+    ? configOrAnchorIds
+    : visibleSectionAnchorIds(configOrAnchorIds);
+  return (Array.isArray(links) ? links : []).filter((link) =>
+    sectionHrefAvailable(link && link.href, anchorIds)
+  );
+}
+
 const REPEATABLE_COLLECTION_KEYS = ["items", "cards", "heads"];
 const REPEATABLE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{1,96}$/;
 
@@ -234,6 +359,15 @@ export function ensureRepeatableContentIds(config, options = {}) {
     });
   });
   return next;
+}
+
+export function repeatableContentIndex(list, id, fallbackIndex) {
+  if (!Array.isArray(list)) return -1;
+  if (id) {
+    const index = list.findIndex((entry) => entry && entry.id === id);
+    if (index >= 0) return index;
+  }
+  return fallbackIndex >= 0 && fallbackIndex < list.length ? fallbackIndex : -1;
 }
 
 export const MOTOR_INSURER_LOGO_COUNT_FALLBACK = 14;
@@ -902,6 +1036,10 @@ const contract = {
   ADMIN_SHELL_PATHS,
   OWNER_HASHES,
   OWNER_PATHS,
+  ROUTE_PAGE_HOME,
+  ROUTE_PAGE_MOTOR,
+  ADMIN_PORTAL_MODULES,
+  ADMIN_PORTAL_OPERATIONS_TABS,
   normalizePath,
   isAdminNamespacePath,
   isAdminShellPath,
@@ -910,6 +1048,12 @@ const contract = {
   ownerModeFromPath,
   ownerPathForMode,
   ownerModeFromHash,
+  normalizeRoutePage,
+  publicPathForRoutePage,
+  routePageFromLocationParts,
+  cleanPublicExitPath,
+  adminPortalRouteStateFromLocation,
+  adminPortalUrl,
   readJSON,
   writeJSON,
   removeKey,
@@ -923,9 +1067,17 @@ const contract = {
   validStateDoc,
   cloneJSON,
   editableContentSections,
+  isVisibleSection,
+  visiblePublicSections,
+  normalizeSectionHref,
+  isSectionHref,
+  visibleSectionAnchorIds,
+  sectionHrefAvailable,
+  filterLinksByVisibleSections,
   validRepeatableContentId,
   createRepeatableContentId,
   ensureRepeatableContentIds,
+  repeatableContentIndex,
   MOTOR_INSURER_LOGO_COUNT_FALLBACK,
   motorInsurerLogoCount,
   DEFAULT_ADVISOR_LOGO,

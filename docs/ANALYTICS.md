@@ -1,6 +1,6 @@
 # CoverMate Analytics
 
-Last updated: 2026-08-20
+Last updated: 2026-08-30
 
 ## Surfaces
 
@@ -34,6 +34,11 @@ property ID and service-account credentials are configured in Vercel. When those
 environment variables are missing, the admin page shows `Setup needed` rather
 than fake sessions or placeholder chart values.
 
+UAT/preview does not reuse production GA4 credentials. `/api/analytics` resolves
+runtime environment with `covermate-environment.mjs`; production host uses the
+production credential variables, while UAT returns `Setup needed` unless
+`COVERMATE_UAT_GA4_*` preview variables are configured.
+
 ## GA4
 
 Measurement ID:
@@ -65,10 +70,11 @@ freeform messages to GA event parameters.
 ## Firestore Lead Analytics
 
 The public consultation form and renewal reminder form write validated lead
-documents to:
+documents to the active runtime collection:
 
 ```text
-contactLeads/<auto-id>
+Production: contactLeads/<auto-id>
+UAT: contactLeadsUat/<auto-id>
 ```
 
 Admin Analytics reads the latest leads through
@@ -159,6 +165,14 @@ COVERMATE_GA4_CLIENT_EMAIL=<service account email>
 COVERMATE_GA4_PRIVATE_KEY=<service account private key>
 ```
 
+Optional UAT/preview variables:
+
+```text
+COVERMATE_UAT_GA4_PROPERTY_ID=<numeric UAT GA4 property id>
+COVERMATE_UAT_GA4_CLIENT_EMAIL=<UAT service account email>
+COVERMATE_UAT_GA4_PRIVATE_KEY=<UAT service account private key>
+```
+
 Alias env names are supported for common Google/Vercel setups, but the
 `COVERMATE_*` names are the project contract. The private key may contain literal
 `\n`; the endpoint decodes them before signing the OAuth JWT.
@@ -191,5 +205,6 @@ responses.
 
 Do not put GA Data API service-account secrets in the static browser app. The
 serverless endpoint is the only live GA4 path in this repo; scheduled Firestore
-summaries under `sites/covermate/analytics/*` remain reserved for future batch
-reporting if needed.
+summaries under `sites/covermate/analytics/*` and
+`sites/covermate-uat/analytics/*` remain reserved for future batch reporting if
+needed.

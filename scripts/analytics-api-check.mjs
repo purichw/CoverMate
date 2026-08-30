@@ -54,17 +54,31 @@ function clearGaEnv() {
     "COVERMATE_GA4_PRIVATE_KEY",
     "GA4_PRIVATE_KEY",
     "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY",
-    "GOOGLE_PRIVATE_KEY"
+    "GOOGLE_PRIVATE_KEY",
+    "COVERMATE_UAT_GA4_PROPERTY_ID",
+    "COVERMATE_UAT_GA4_CLIENT_EMAIL",
+    "COVERMATE_UAT_GA4_PRIVATE_KEY",
+    "VERCEL_ENV"
   ]) {
     delete process.env[key];
   }
 }
 
-function setGaEnv() {
+function privateKeyPem() {
   const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+  return privateKey.export({ type: "pkcs8", format: "pem" });
+}
+
+function setGaEnv() {
   process.env.COVERMATE_GA4_PROPERTY_ID = "123456789";
   process.env.COVERMATE_GA4_CLIENT_EMAIL = "ga4-reader@covermate-purich.iam.gserviceaccount.com";
-  process.env.COVERMATE_GA4_PRIVATE_KEY = privateKey.export({ type: "pkcs8", format: "pem" });
+  process.env.COVERMATE_GA4_PRIVATE_KEY = privateKeyPem();
+}
+
+function setUatGaEnv() {
+  process.env.COVERMATE_UAT_GA4_PROPERTY_ID = "987654321";
+  process.env.COVERMATE_UAT_GA4_CLIENT_EMAIL = "ga4-uat-reader@covermate-purich.iam.gserviceaccount.com";
+  process.env.COVERMATE_UAT_GA4_PRIVATE_KEY = privateKeyPem();
 }
 
 function firestoreAdmin(active = true, role = "owner") {
@@ -214,6 +228,22 @@ try {
   assert.equal(live.json.devices[0].device, "mobile");
   assert.equal(live.json.topPages[0].path, "/");
   assert.deepEqual(Object.keys(live.json.actor).sort(), ["role", "uid"]);
+
+  const uatWithoutCredentials = await callApi({ token: "active-token", url: "/api/analytics?days=30&cm_env=uat" });
+  assert.equal(uatWithoutCredentials.status, 200);
+  assert.equal(uatWithoutCredentials.json.status, "not_configured");
+  assert.equal(uatWithoutCredentials.json.environment, "uat");
+  assert.equal(uatWithoutCredentials.json.siteId, "covermate-uat");
+  assert.match(uatWithoutCredentials.json.message, /Production GA4 credentials are not reused/);
+
+  setUatGaEnv();
+  const uatLive = await callApi({ token: "active-token", url: "/api/analytics?days=12&cm_env=uat" });
+  assert.equal(uatLive.status, 200);
+  assert.equal(uatLive.json.status, "live");
+  assert.equal(uatLive.json.environment, "uat");
+  assert.equal(uatLive.json.siteId, "covermate-uat");
+  assert.equal(uatLive.json.propertyId, "987654321");
+  assert.equal(uatLive.json.range.days, 12);
 
   console.log("CoverMate analytics API check passed");
 } finally {

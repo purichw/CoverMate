@@ -3,11 +3,12 @@ import {
   clearAdminSession,
   readAdminSession
 } from "../covermate-contract.js";
+import { appendEnvironmentSearch, resolveCoverMateEnvironment } from "../covermate-environment.mjs";
 
 export { ADMIN_LOGIN_PATH, clearAdminSession, readAdminSession };
 
 export function requireAdminSession(options = {}) {
-  const redirectTo = options.redirectTo || ADMIN_LOGIN_PATH;
+  const redirectTo = adminRedirect(options.redirectTo || ADMIN_LOGIN_PATH);
   const session = readAdminSession();
   if (!session) {
     window.location.replace(redirectTo);
@@ -17,7 +18,7 @@ export function requireAdminSession(options = {}) {
 }
 
 export async function requireVerifiedAdminSession(options = {}) {
-  const redirectTo = options.redirectTo || ADMIN_LOGIN_PATH;
+  const redirectTo = adminRedirect(options.redirectTo || ADMIN_LOGIN_PATH);
   const session = requireAdminSession({ redirectTo });
   if (!session) return null;
   try {
@@ -53,12 +54,17 @@ export function signOutAdmin() {
   } catch {
     // Local session has already been cleared.
   }
-  window.location.replace(ADMIN_LOGIN_PATH);
+  window.location.replace(adminRedirect(ADMIN_LOGIN_PATH));
+}
+
+export function adminRedirect(path) {
+  return appendEnvironmentSearch(path, resolveCoverMateEnvironment());
 }
 
 window.CoverMateAdminSession = {
   readAdminSession,
   clearAdminSession,
+  adminRedirect,
   requireAdminSession,
   requireVerifiedAdminSession,
   signOutAdmin

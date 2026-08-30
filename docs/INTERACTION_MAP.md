@@ -1,6 +1,6 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-08-28
+Last updated: 2026-08-30
 
 ## Visitor Journey
 
@@ -12,8 +12,9 @@ Last updated: 2026-08-28
    privacy/PDPA copy, and contact area.
 3. Visitor starts contact through LINE, phone, email, the consultation lead
    form, or the renewal reminder form.
-4. Public forms save validated Firestore `contactLeads/*` documents; LINE,
-   phone, and email CTAs still hand off directly.
+4. Public forms save validated Firestore lead documents in the active runtime
+   collection (`contactLeads/*` in production, `contactLeadsUat/*` in UAT);
+   LINE, phone, and email CTAs still hand off directly.
 
 `/motor` is the dedicated motor-insurance campaign page inside the same
 CoverMate product. It has motor-local navigation and canonical metadata, but it
@@ -56,9 +57,9 @@ The renewal reminder form asks for:
 - LINE ID or phone
 - consent for renewal follow-up/data use
 
-It writes the same rules-validated `contactLeads/*` shape, with `qtype:
-"review"` and a generated topic/summary. The reminder form must not bypass the
-shared validation path or send contact details to GA.
+It writes the same rules-validated lead shape, with `qtype: "review"` and a
+generated topic/summary. The reminder form must not bypass the shared
+validation path or send contact details to GA.
 
 ## Admin Login Flow
 
@@ -271,10 +272,10 @@ JSON-LD claim boundaries stay code-owned.
    it as a bearer token to `/api/ops/*`.
 4. The Operations API verifies the token, checks `admins/{uid}`, applies the
    role permission matrix server-side, then reads or mutates Firestore.
-5. Lead lists and details render from real `contactLeads/*` API responses.
-   Tasks and Audit also come from the Operations API. Customers, Consultations,
-   Quotes, Policies, Renewals, Documents, and Insurers remain hidden until real
-   contracts exist.
+5. Lead lists and details render from real API responses in the active lead
+   collection. Tasks and Audit also come from the Operations API. Customers,
+   Consultations, Quotes, Policies, Renewals, Documents, and Insurers remain
+   hidden until real contracts exist.
 6. Lead filters and global search remain in memory when a lead detail is opened
    and closed.
 7. New lead, status change, task completion, follow-up date, and internal note

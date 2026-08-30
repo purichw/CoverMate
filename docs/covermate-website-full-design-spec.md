@@ -98,7 +98,9 @@ Use this precedence order:
 1. Production site at `https://covermate.vercel.app`; verify the deployed commit for the current release in Vercel or `git log`.
 2. Repository implementation in `/Users/point/CoverMate`.
 3. Project docs in `/Users/point/CoverMate/docs`.
-4. Firestore live CMS state when present: `sites/covermate/states/live`.
+4. Firestore live CMS state in the active runtime namespace when present:
+   production `sites/covermate/states/live`; UAT
+   `sites/covermate-uat/states/live`.
 5. Archived external handoff packages or downloaded SPEC files only when the
    owner explicitly supplies or reopens them for the current task. Reconcile
    them against the repo, current docs, Firestore-backed CMS behavior, and live
@@ -884,14 +886,20 @@ Mobile analytics must be especially careful with spacing. Cards should not feel 
 
 Firestore-first behavior:
 
-- Public live content reads from `sites/covermate/states/live`.
-- Draft content reads/writes `sites/covermate/states/draft`.
+- Public live content reads from runtime `states/live`: production
+  `sites/covermate/states/live`; UAT `sites/covermate-uat/states/live`.
+- Draft content reads/writes runtime `states/draft`: production
+  `sites/covermate/states/draft`; UAT `sites/covermate-uat/states/draft`.
 - Brand/config fields such as `brand.advisorLogo` are draft/live CMS values, not
   hard-coded public-only constants or stale fallback counts.
-- Publish/restore history writes `sites/covermate/versions/{versionId}`.
-- Public lead submissions write `contactLeads/{leadId}`.
-- Live GA4 traffic reads through `/api/analytics` with server-only secrets.
-- Reserved analytics summaries may live under `sites/covermate/analytics/{analyticsDoc}`.
+- Publish/restore history writes runtime `versions/{versionId}`.
+- Public lead submissions write the runtime lead collection: production
+  `contactLeads/{leadId}`; UAT `contactLeadsUat/{leadId}`.
+- Live GA4 traffic reads through `/api/analytics` with server-only secrets; UAT
+  uses only `COVERMATE_UAT_GA4_*` credentials when configured.
+- Reserved analytics summaries may live under
+  `sites/covermate/analytics/{analyticsDoc}` or
+  `sites/covermate-uat/analytics/{analyticsDoc}`.
 
 Cache policy:
 

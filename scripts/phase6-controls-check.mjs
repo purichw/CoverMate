@@ -4,13 +4,13 @@ import vm from "node:vm";
 import zlib from "node:zlib";
 
 import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
+import { importCoverMateContract } from "./lib/contract-loader.mjs";
 
-const contractSource = fs.readFileSync(new URL("../covermate-contract.js", import.meta.url), "utf8");
 const {
   DEFAULT_ADVISOR_LOGO,
   DEFAULT_CONTACT,
   sanitizeMotorCountConfig
-} = await import(`data:text/javascript;base64,${Buffer.from(contractSource).toString("base64")}`);
+} = await importCoverMateContract();
 
 const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const template = extractBundlerTemplate(html, {

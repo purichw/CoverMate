@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-08-16
+Last updated: 2026-08-30
 
 ## Persistence Model
 
@@ -10,7 +10,10 @@ admin sign-in, then caches the approved admin session in browser
 
 CMS content is Firestore-first. The public site hydrates `states/live` before
 rendering. Owner modes hydrate `states/live`, `states/draft`, and version
-history before opening the editor/control panel.
+history before opening the editor/control panel. The runtime environment chooses
+the Firestore namespace: production is `sites/covermate/*` plus
+`contactLeads/*`; UAT/preview is `sites/covermate-uat/*` plus
+`contactLeadsUat/*`.
 
 Browser `localStorage` remains a last-known cache and offline/failure fallback.
 It must not win over a successful Firestore read. If Firestore live content is
@@ -25,16 +28,22 @@ module instead of copying key strings or writing their own admin-session parser.
 
 Implications:
 
-- production and local development read the same Firestore live/draft documents
+- production and local development read the production Firestore live/draft
+  documents unless local development explicitly opts into UAT with `cm_env=uat`
+- production host `covermate.vercel.app` always resolves to production data,
+  even if a query parameter requests UAT
+- Vercel preview hosts resolve to UAT data automatically
 - clearing site data removes only local caches and the session marker
 - a stale cache may render only when Firestore cannot be reached
 - localStorage is an admin-session cache, not the remote authorization source
+- local UAT should use a separate local port/origin from normal local
+  development so the browser fallback cache stays isolated
 - Firestore Security Rules enforce remote admin data access and CMS writes
 - runtime SEO metadata and JSON-LD derive from the hydrated live state, so stale
   cache/defaults must not override live metadata either
-- public lead submissions write validated `contactLeads/*` documents; admin
-  analytics and the Operations Portal read them only after an allowlisted admin
-  session is active
+- public lead submissions write validated lead documents in the selected
+  environment collection; admin analytics and the Operations Portal read them
+  only after an allowlisted admin session is active
 - `/admin/ops` does not store lead, task, status, note, or audit state in
   browser storage; those reads and writes go through `/api/ops/*`
 
@@ -242,6 +251,11 @@ hydrate/save/publish:
 | `sites/covermate/versions/{versionId}` | Admin read/write. | Canonical publish/restore history, newest first by `ts`. |
 | `contactLeads/{leadId}` | Validated public create; active admin read; owner/adviser/ops create/update; client delete blocked. | Canonical lead capture store for the public consultation form, renewal reminder form, Admin Analytics, and Operations Portal workflow state. |
 | `sites/covermate/analytics/{analyticsDoc}` | Admin read/write. | Reserved GA4/Data API summaries or scheduled analytics exports. |
+| `sites/covermate-uat/states/live` | Public read; admin write. | UAT published visitor CMS state for Vercel preview/local UAT. |
+| `sites/covermate-uat/states/draft` | Admin read/write. | UAT working draft state for owner modes. |
+| `sites/covermate-uat/versions/{versionId}` | Admin read/write. | UAT publish/restore history. |
+| `contactLeadsUat/{leadId}` | Same validation and admin access as `contactLeads/*`. | Isolated UAT lead capture and Operations workflow state. |
+| `sites/covermate-uat/analytics/{analyticsDoc}` | Admin read/write. | Reserved UAT analytics summaries or scheduled exports. |
 
 `covermate-firebase.js` owns Firestore hydration, draft save, publish, restore,
 version-history reads, public lead submission, and Firebase Auth session
@@ -262,7 +276,8 @@ fallback.
 
 ## Lead Document Shape
 
-Public creates under `contactLeads/*` must match the rules-validated shape:
+Public creates under `contactLeads/*` or `contactLeadsUat/*` must match the
+rules-validated shape:
 
 | Field | Type | Constraint |
 | --- | --- | --- |

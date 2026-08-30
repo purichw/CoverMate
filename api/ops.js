@@ -1,4 +1,6 @@
 const crypto = require("node:crypto");
+const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 
 const PROJECT_ID = "covermate-purich";
 const FIREBASE_API_KEY = "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM";
@@ -30,6 +32,8 @@ const PERMISSIONS = {
   view_id_documents: new Set(["owner", "advisor"])
 };
 
+let environmentModulePromise = null;
+
 module.exports = async function opsApi(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -38,6 +42,7 @@ module.exports = async function opsApi(req, res) {
     const method = String(req.method || "GET").toUpperCase();
     const path = requestPath(req);
     const actor = await authorize(req, "view_records");
+    actor.environment = await resolveRequestEnvironment(req);
 
     if (method === "GET" && path[0] === "leads" && path.length === 1) {
       return send(res, 200, await listLeads(req, actor));
@@ -96,6 +101,34 @@ function requestPath(req) {
   return raw.split("/").filter(Boolean).map(decodeURIComponent);
 }
 
+async function resolveRequestEnvironment(req) {
+  const { resolveCoverMateEnvironment } = await loadEnvironmentModule();
+  return resolveCoverMateEnvironment({
+    url: req.url || "/",
+    headers: req.headers || {},
+    vercelEnv: process.env.VERCEL_ENV || ""
+  });
+}
+
+function loadEnvironmentModule() {
+  if (!environmentModulePromise) {
+    environmentModulePromise = import(pathToFileURL(path.join(__dirname, "..", "covermate-environment.mjs")).href);
+  }
+  return environmentModulePromise;
+}
+
+function leadCollectionFor(actor) {
+  return actor && actor.environment && actor.environment.leadCollection || "contactLeads";
+}
+
+function firestoreSource(actor) {
+  return actor && actor.environment && actor.environment.isUat ? "firestore-uat" : "firestore";
+}
+
+function environmentName(actor) {
+  return actor && actor.environment && actor.environment.name || "production";
+}
+
 async function authorize(req, permission) {
   const token = bearerToken(req);
   if (!token) throw httpError(401, "unauthorized", "Missing Firebase ID token.");
@@ -149,7 +182,7 @@ async function identityLookup(token) {
 async function listLeads(req, actor) {
   const url = new URL(req.url || "/", "https://covermate.local");
   const limit = clampLimit(url.searchParams.get("limit"));
-  const leads = await readLeads(actor.token, limit);
+  const leads = await readLeads(actor, limit);
   const status = url.searchParams.get("status");
   const interest = url.searchParams.get("interest");
   const q = clean(url.searchParams.get("q"), 120).toLowerCase();
@@ -157,11 +190,11 @@ async function listLeads(req, actor) {
   if (status && status !== "all") rows = rows.filter((lead) => lead.status === normalizeStatus(status));
   if (interest && interest !== "all") rows = rows.filter((lead) => lead.interestKey === normalizeInterest(interest));
   if (q) rows = rows.filter((lead) => JSON.stringify(lead).toLowerCase().includes(q));
-  return { rows, total: rows.length, source: "firestore" };
+  return { rows, total: rows.length, source: firestoreSource(actor), environment: environmentName(actor) };
 }
 
 async function getLead(id, actor) {
-  const doc = await firestoreGet(`contactLeads/${encodeURIComponent(id)}`, actor.token).catch((error) => {
+  const doc = await firestoreGet(`${leadCollectionFor(actor)}/${encodeURIComponent(id)}`, actor.token).catch((error) => {
     if (error.status === 404) return null;
     throw error;
   });
@@ -188,7 +221,7 @@ async function createLead(req, actor) {
   await firestoreCommit(actor.token, [
     {
       update: {
-        name: docName(`contactLeads/${id}`),
+        name: docName(`${leadCollectionFor(actor)}/${id}`),
         fields: toFields({
           name,
           contact,
@@ -237,7 +270,7 @@ async function createLead(req, actor) {
     audit: [audit]
   };
 
-  await updateLeadDocument(id, actor.token, {
+  await updateLeadDocument(id, actor, {
     ops,
     timeline
   });
@@ -248,7 +281,7 @@ async function createLead(req, actor) {
 
 async function patchLead(id, req, actor) {
   const body = await readJson(req);
-  const doc = await requireLeadDoc(id, actor.token);
+  const doc = await requireLeadDoc(id, actor);
   const data = docFields(doc);
   const ops = objectValue(data.ops);
   const now = new Date().toISOString();
@@ -281,7 +314,7 @@ async function patchLead(id, req, actor) {
   ops.audit = auditItems.concat(arrayValue(ops.audit)).slice(0, 120);
   updates.ops = ops;
   updates.timeline = auditItems.map((entry) => timelineEntry("status", entry.kind, `${entry.from} -> ${entry.to}`, actor, now)).concat(arrayValue(data.timeline)).slice(0, 120);
-  await updateLeadDocument(id, actor.token, updates);
+  await updateLeadDocument(id, actor, updates);
   return { audit: auditItems[0], lead: await getLead(id, actor) };
 }
 
@@ -290,7 +323,7 @@ async function updateLeadStatus(id, req, actor) {
   const next = normalizeStatus(body.status);
   if (!STATUSES.has(next)) throw validationError("status", "Unknown lead status.");
 
-  const doc = await requireLeadDoc(id, actor.token);
+  const doc = await requireLeadDoc(id, actor);
   const data = docFields(doc);
   const previous = normalizeStatus(data.status);
   const ops = objectValue(data.ops);
@@ -300,7 +333,7 @@ async function updateLeadStatus(id, req, actor) {
   const audit = auditEntry("Status", `Lead ${displayIdFor(id, ops)} - ${clean(data.name, 120)}`, statusLabel(previous), statusLabel(next), actor, now);
   ops.audit = [audit].concat(arrayValue(ops.audit)).slice(0, 120);
 
-  await updateLeadDocument(id, actor.token, {
+  await updateLeadDocument(id, actor, {
     status: next,
     read: next !== "new",
     ops,
@@ -315,14 +348,14 @@ async function addLeadNote(id, req, actor) {
   const note = clean(body.note, 2000);
   if (!note) throw validationError("note", "Note is required.");
 
-  const doc = await requireLeadDoc(id, actor.token);
+  const doc = await requireLeadDoc(id, actor);
   const data = docFields(doc);
   const ops = objectValue(data.ops);
   const now = new Date().toISOString();
   const audit = auditEntry("Note", `Lead ${displayIdFor(id, ops)} - ${clean(data.name, 120)}`, "", `${note.length} chars`, actor, now);
   ops.audit = [audit].concat(arrayValue(ops.audit)).slice(0, 120);
 
-  await updateLeadDocument(id, actor.token, {
+  await updateLeadDocument(id, actor, {
     ops,
     timeline: [timelineEntry("note", "Internal note", note, actor, now)].concat(arrayValue(data.timeline)).slice(0, 120)
   });
@@ -331,13 +364,13 @@ async function addLeadNote(id, req, actor) {
 }
 
 async function listTasks(req, actor) {
-  const leads = await readLeads(actor.token, MAX_LIMIT);
+  const leads = await readLeads(actor, MAX_LIMIT);
   const url = new URL(req.url || "/", "https://covermate.local");
   const bucket = clean(url.searchParams.get("bucket"), 40);
   let rows = leads.flatMap(tasksForLead);
   if (bucket && bucket !== "all") rows = rows.filter((task) => task.bucket === bucket);
   rows.sort((a, b) => timestampMs(a.dueAt) - timestampMs(b.dueAt));
-  return { rows, total: rows.length, source: "firestore" };
+  return { rows, total: rows.length, source: firestoreSource(actor), environment: environmentName(actor) };
 }
 
 async function patchTask(taskId, req, actor) {
@@ -346,7 +379,7 @@ async function patchTask(taskId, req, actor) {
   const parsed = parseTaskId(taskId);
   if (!parsed) throw validationError("id", "Unknown task id.");
 
-  const doc = await requireLeadDoc(parsed.leadId, actor.token);
+  const doc = await requireLeadDoc(parsed.leadId, actor);
   const data = docFields(doc);
   const ops = objectValue(data.ops);
   ops.tasks = objectValue(ops.tasks);
@@ -358,7 +391,7 @@ async function patchTask(taskId, req, actor) {
   ops.tasks[parsed.kind] = task;
   const audit = auditEntry("Task", `Task ${taskId}`, body.completed ? "Open" : "Completed", body.completed ? "Completed" : "Open", actor, task.updatedAt);
   ops.audit = [audit].concat(arrayValue(ops.audit)).slice(0, 120);
-  await updateLeadDocument(parsed.leadId, actor.token, {
+  await updateLeadDocument(parsed.leadId, actor, {
     ops,
     timeline: [timelineEntry("note", body.completed ? "Task completed" : "Task reopened", task.title || taskId, actor, task.updatedAt)].concat(arrayValue(data.timeline)).slice(0, 120)
   });
@@ -366,18 +399,18 @@ async function patchTask(taskId, req, actor) {
 }
 
 async function listAudit(req, actor) {
-  const leads = await readLeads(actor.token, MAX_LIMIT);
+  const leads = await readLeads(actor, MAX_LIMIT);
   const rows = leads
     .flatMap((lead) => arrayValue(lead.audit || lead.ops && lead.ops.audit).map((entry) => ({ ...entry, leadId: lead.id })))
     .sort((a, b) => timestampMs(b.at) - timestampMs(a.at))
     .slice(0, clampLimit(new URL(req.url || "/", "https://covermate.local").searchParams.get("limit")));
-  return { rows, total: rows.length, source: "firestore" };
+  return { rows, total: rows.length, source: firestoreSource(actor), environment: environmentName(actor) };
 }
 
-async function readLeads(token, limit = MAX_LIMIT) {
-  const payload = await firestoreRunQuery(token, {
+async function readLeads(actor, limit = MAX_LIMIT) {
+  const payload = await firestoreRunQuery(actor.token, {
     structuredQuery: {
-      from: [{ collectionId: "contactLeads" }],
+      from: [{ collectionId: leadCollectionFor(actor) }],
       orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
       limit: clampLimit(limit)
     }
@@ -388,8 +421,8 @@ async function readLeads(token, limit = MAX_LIMIT) {
     .map(normalizeLead);
 }
 
-async function requireLeadDoc(id, token) {
-  const doc = await firestoreGet(`contactLeads/${encodeURIComponent(id)}`, token).catch((error) => {
+async function requireLeadDoc(id, actor) {
+  const doc = await firestoreGet(`${leadCollectionFor(actor)}/${encodeURIComponent(id)}`, actor.token).catch((error) => {
     if (error.status === 404) throw httpError(404, "not_found", "Lead not found.");
     throw error;
   });
@@ -397,12 +430,12 @@ async function requireLeadDoc(id, token) {
   return doc;
 }
 
-async function updateLeadDocument(id, token, data) {
+async function updateLeadDocument(id, actor, data) {
   const payload = {
     writes: [
       {
         update: {
-          name: docName(`contactLeads/${id}`),
+          name: docName(`${leadCollectionFor(actor)}/${id}`),
           fields: toFields(data)
         },
         updateMask: { fieldPaths: Object.keys(data) },
@@ -411,7 +444,7 @@ async function updateLeadDocument(id, token, data) {
       }
     ]
   };
-  await firestoreCommit(token, payload.writes);
+  await firestoreCommit(actor.token, payload.writes);
 }
 
 async function firestoreGet(path, token) {

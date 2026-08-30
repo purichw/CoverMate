@@ -7,10 +7,15 @@ const htmlFiles = [
   "admin/index.html",
   "admin/login/index.html",
   "admin/analytics/index.html",
-  "admin/ops/index.html"
+  "admin/ops/index.html",
+  "src/visitor/shell.html",
+  "src/visitor/template.html"
 ];
 
 const jsFiles = [
+  "src/visitor/defaults.js",
+  "src/visitor/runtime.js",
+  "covermate-environment.mjs",
   "covermate-contract.js",
   "covermate-firebase.js",
   "covermate-analytics.js",
@@ -18,7 +23,11 @@ const jsFiles = [
   "admin/analytics-data.js",
   "admin/ops/app.js",
   "api/analytics.js",
-  "api/ops.js"
+  "api/ops.js",
+  "scripts/lib/visitor-source.mjs",
+  "scripts/lib/contract-loader.mjs",
+  "scripts/generate-visitor-bundle.mjs",
+  "scripts/contract-regression-check.mjs"
 ];
 
 const cssFiles = [
@@ -76,6 +85,12 @@ for (const file of htmlFiles) {
       }
       if (!template.includes('type="text/x-dc"')) {
         failures.push(`${file}: embedded template is missing text/x-dc payload`);
+      }
+      if (templateJson.includes("__COVERMATE_SCRIPT_OPEN__") && !html.includes("replace(/__COVERMATE_SCRIPT_OPEN__/g")) {
+        failures.push(`${file}: embedded template masks <script> markers but the wrapper does not restore them`);
+      }
+      if (templateJson.includes("__COVERMATE_RESOURCE_") && !html.includes("restoreTemplateResourceRefs")) {
+        failures.push(`${file}: embedded template masks resource refs but the wrapper does not restore them`);
       }
       if (file === "index.html" && !template.includes("const DEFAULTS =")) {
         failures.push(`${file}: embedded template is missing DEFAULTS payload`);

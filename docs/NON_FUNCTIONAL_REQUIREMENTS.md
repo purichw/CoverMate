@@ -1,13 +1,14 @@
 # CoverMate Non-Functional Requirements
 
-Last updated: 2026-08-16
+Last updated: 2026-08-30
 
 ## Security
 
 Implemented:
 
 - Firebase Auth plus Firestore `admins/{uid}` allowlist gates admin writes.
-- Firestore Rules validate public `contactLeads/*` creates.
+- Firestore Rules validate public lead creates in both production
+  (`contactLeads/*`) and UAT (`contactLeadsUat/*`).
 - Admin routes are `noindex,nofollow`.
 - Visitor GA tracking is suppressed for owner sessions and owner hashes.
 - Vercel sends security headers:

@@ -21,6 +21,10 @@ service cloud.firestore {
         && adminRole() in ["owner", "admin", "administrator", "advisor", "adviser", "ops", "operations"];
     }
 
+    function validSiteId(siteId) {
+      return siteId in ["covermate", "covermate-uat"];
+    }
+
     function validLeadString(value, max) {
       return value is string && value.size() <= max;
     }
@@ -64,17 +68,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /sites/covermate/states/live {
-      allow read: if true;
-      allow write: if isAdmin();
+    match /sites/{siteId}/states/live {
+      allow read: if validSiteId(siteId);
+      allow write: if validSiteId(siteId) && isAdmin();
     }
 
-    match /sites/covermate/states/draft {
-      allow read, write: if isAdmin();
+    match /sites/{siteId}/states/draft {
+      allow read, write: if validSiteId(siteId) && isAdmin();
     }
 
-    match /sites/covermate/versions/{versionId} {
-      allow read, write: if isAdmin();
+    match /sites/{siteId}/versions/{versionId} {
+      allow read, write: if validSiteId(siteId) && isAdmin();
     }
 
     match /contactLeads/{leadId} {
@@ -84,8 +88,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /sites/covermate/analytics/{analyticsDoc} {
-      allow read, write: if isAdmin();
+    match /contactLeadsUat/{leadId} {
+      allow create: if validLeadCreate() || canWriteOpsRecords();
+      allow read: if isAdmin();
+      allow update: if canWriteOpsRecords();
+      allow delete: if false;
+    }
+
+    match /sites/{siteId}/analytics/{analyticsDoc} {
+      allow read, write: if validSiteId(siteId) && isAdmin();
     }
 
     match /{document=**} {

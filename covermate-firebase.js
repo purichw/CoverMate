@@ -16,6 +16,7 @@ import {
   validStateDoc,
   writeAdminSession as writeSession
 } from "./covermate-contract.js";
+import { resolveCoverMateEnvironment } from "./covermate-environment.mjs";
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM",
@@ -29,6 +30,9 @@ const FIREBASE_CONFIG = {
 
 const FIREBASE_VERSION = "12.16.0";
 const LEAD_LIMIT = 250;
+const COVERMATE_ENVIRONMENT = resolveCoverMateEnvironment();
+const SITE_ID = COVERMATE_ENVIRONMENT.siteId;
+const LEAD_COLLECTION = COVERMATE_ENVIRONMENT.leadCollection;
 
 const LEAD_QTYPES = new Set(["", "quote", "compare", "general", "review", "claim"]);
 const LEAD_COVERAGES = new Set(["", "life", "health", "motor", "accident", "savings", "unsure"]);
@@ -110,7 +114,7 @@ function waitForAuth() {
 }
 
 function stateRef(name) {
-  return firestoreMod.doc(db, "sites", "covermate", "states", name);
+  return firestoreMod.doc(db, "sites", SITE_ID, "states", name);
 }
 
 async function loadSiteState(name) {
@@ -139,7 +143,7 @@ async function saveSiteState(name, config, text) {
 }
 
 function versionRef() {
-  return firestoreMod.doc(firestoreMod.collection(db, "sites", "covermate", "versions"));
+  return firestoreMod.doc(firestoreMod.collection(db, "sites", SITE_ID, "versions"));
 }
 
 async function appendVersion(config, text, metadata = {}) {
@@ -209,7 +213,7 @@ async function publishSiteState(config, text, metadata = {}) {
 
 async function loadVersions(limitCount = HISTORY_LIMIT) {
   const q = firestoreMod.query(
-    firestoreMod.collection(db, "sites", "covermate", "versions"),
+    firestoreMod.collection(db, "sites", SITE_ID, "versions"),
     firestoreMod.orderBy("ts", "desc"),
     firestoreMod.limit(limitCount)
   );
@@ -237,7 +241,7 @@ async function submitContactLead(input = {}) {
     createdAt: firestoreMod.serverTimestamp(),
     updatedAt: firestoreMod.serverTimestamp()
   };
-  const ref = await firestoreMod.addDoc(firestoreMod.collection(db, "contactLeads"), payload);
+  const ref = await firestoreMod.addDoc(firestoreMod.collection(db, LEAD_COLLECTION), payload);
   return { id: ref.id, ...payload };
 }
 
@@ -246,7 +250,7 @@ async function loadContactLeads(limitCount = LEAD_LIMIT) {
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to read CoverMate leads.");
   const q = firestoreMod.query(
-    firestoreMod.collection(db, "contactLeads"),
+    firestoreMod.collection(db, LEAD_COLLECTION),
     firestoreMod.orderBy("createdAt", "desc"),
     firestoreMod.limit(Math.max(1, Math.min(LEAD_LIMIT, Number(limitCount) || LEAD_LIMIT)))
   );
@@ -281,7 +285,7 @@ async function loadOperationalLeads(limitCount = LEAD_LIMIT) {
   const admin = await readAdmin(user);
   if (!admin) throw new Error("Not authorized to read CoverMate operational leads.");
   const q = firestoreMod.query(
-    firestoreMod.collection(db, "contactLeads"),
+    firestoreMod.collection(db, LEAD_COLLECTION),
     firestoreMod.orderBy("createdAt", "desc"),
     firestoreMod.limit(Math.max(1, Math.min(LEAD_LIMIT, Number(limitCount) || LEAD_LIMIT)))
   );
@@ -316,7 +320,9 @@ async function hydrateLocalContent(options = {}) {
     live: false,
     draft: false,
     versions: false,
-    source: "remote"
+    source: "remote",
+    environment: COVERMATE_ENVIRONMENT.name,
+    siteId: SITE_ID
   };
   const live = await loadSiteState("live");
   if (validStateDoc(live)) {
@@ -344,11 +350,13 @@ async function hydrateLocalContent(options = {}) {
   return result;
 }
 
+window.CoverMateEnvironment = COVERMATE_ENVIRONMENT;
 window.CoverMateFirebase = {
   app,
   auth,
   db,
   config: FIREBASE_CONFIG,
+  environment: COVERMATE_ENVIRONMENT,
   readSession,
   clearSession,
   waitForAuth,

@@ -1,8 +1,7 @@
 import { ADMIN_LOGIN_PATH, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
 import {
-  ADMIN_OPERATIONS_PATH,
-  ADMIN_ROOT_PATH,
-  normalizePath,
+  adminPortalRouteStateFromLocation,
+  adminPortalUrl,
   ownerPathForMode
 } from "/covermate-contract.js";
 
@@ -203,7 +202,7 @@ async function apiFetch(path, options = {}) {
   headers.set("Accept", "application/json");
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
 
-  const response = await fetch(`/api/ops/${path}`, {
+  const response = await fetch(withEnvironmentQuery(`/api/ops/${path}`, cm.environment), {
     ...options,
     headers,
     body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
@@ -216,6 +215,11 @@ async function apiFetch(path, options = {}) {
     throw error;
   }
   return payload;
+}
+
+function withEnvironmentQuery(url, environment) {
+  if (!environment || environment.name !== "uat") return url;
+  return `${url}${url.includes("?") ? "&" : "?"}cm_env=uat`;
 }
 
 async function ensureFirebase() {
@@ -1252,21 +1256,7 @@ function isOperationsTab(value) {
 }
 
 function routeStateFromLocation() {
-  const rawHash = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
-  const hash = rawHash.split(/[?&]/)[0];
-  const base = {
-    module: normalizePath(location.pathname) === ADMIN_OPERATIONS_PATH ? "operations" : "home",
-    operationsTab: "dashboard"
-  };
-  if (!hash) return base;
-  if (isOperationsTab(hash)) {
-    return { module: "operations", operationsTab: hash };
-  }
-  if (hash === "operations") return { module: "operations", operationsTab: "dashboard" };
-  if (MODULES.some((item) => item.id === hash)) {
-    return { module: hash, operationsTab: "dashboard" };
-  }
-  return base;
+  return adminPortalRouteStateFromLocation(location.pathname, location.hash);
 }
 
 function syncRouteFromLocation() {
@@ -1279,11 +1269,7 @@ function syncRouteFromLocation() {
 }
 
 function routeUrl() {
-  if (state.module === "home") return ADMIN_ROOT_PATH;
-  if (state.module === "operations") {
-    return state.operationsTab === "dashboard" ? `${ADMIN_ROOT_PATH}#operations` : `${ADMIN_ROOT_PATH}#${state.operationsTab}`;
-  }
-  return `${ADMIN_ROOT_PATH}#${state.module}`;
+  return adminPortalUrl(state.module, state.operationsTab);
 }
 
 function writeRoute(options = {}) {

@@ -75,6 +75,9 @@ async function routeStatic(page, firebaseBody = "export {};", analyticsPayload =
     if (url.pathname === "/covermate-contract.js") {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: read("covermate-contract.js") });
     }
+    if (url.pathname === "/covermate-environment.mjs") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: read("covermate-environment.mjs") });
+    }
     if (url.pathname === "/covermate-analytics.js") {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: read("covermate-analytics.js") });
     }

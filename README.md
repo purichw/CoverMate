@@ -2,6 +2,11 @@
 
 Static CoverMate visitor and admin surfaces for Vercel.
 
+Visitor code is source-authored in `src/visitor/` and generated into the
+deployable `index.html`. Edit `src/visitor/*`, then run
+`npm run build:visitor`; `npm run check:bundles` verifies the generated artifact
+has not drifted.
+
 Start with [`PROJECT_MAP.md`](PROJECT_MAP.md) for the route, data, admin,
 asset, deployment, and verification map.
 
@@ -25,6 +30,8 @@ before assuming changes are live.
   methodology, reference-data guardrails, CMS sync contract, and checks
 - [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) - Firebase Auth,
   Firestore allowlist, and Firestore Rules setup
+- [`docs/UAT.md`](docs/UAT.md) - preview/UAT environment, data isolation,
+  reset, and promotion checklist
 - [`docs/ANALYTICS.md`](docs/ANALYTICS.md) - GA4 event contract, private
   analytics dashboard, and lead reporting data model
 - [`docs/NON_FUNCTIONAL_REQUIREMENTS.md`](docs/NON_FUNCTIONAL_REQUIREMENTS.md) -
@@ -58,7 +65,9 @@ Routes:
   to Operations
 
 Admin sign-in uses Firebase Auth and a Firestore `admins/{uid}` allowlist. CMS
-draft/live/history content is Firestore-first under `sites/covermate/*`, and
-operations lead intake and workflow mutations go through `/api/ops/*` against
-Firestore `contactLeads/*`; browser-local storage is only a session marker or
-last-known CMS cache.
+draft/live/history content is Firestore-first. Production uses
+`sites/covermate/*` and `contactLeads/*`; Vercel preview/UAT uses
+`sites/covermate-uat/*` and `contactLeadsUat/*`. Runtime environment selection
+lives in `covermate-environment.mjs`, with production host
+`covermate.vercel.app` always resolving to production data. Browser-local
+storage is only a session marker or last-known CMS cache.

@@ -21,8 +21,8 @@ The calculator payload is stored under the public CMS `fit` section as
 
 Firestore remains canonical:
 
-1. If Firestore `sites/covermate/states/live` loads successfully, its calculator
-   values are used.
+1. If Firestore `states/live` in the active runtime namespace loads
+   successfully, its calculator values are used.
 2. Runtime normalization fills only missing nested calculator fields from
    `DEFAULT_NEEDS_CALCULATOR`.
 3. Existing live/draft Firestore values must prevail over defaults.

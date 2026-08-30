@@ -1,30 +1,16 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 import vm from "node:vm";
-import { fileURLToPath } from "node:url";
 
+import { importCoverMateContract } from "./lib/contract-loader.mjs";
 import {
+  buildVisitorRuntime,
+  buildVisitorTemplate
+} from "./lib/visitor-source.mjs";
+
+const {
   DEFAULT_NEEDS_CALCULATOR,
   sanitizeMotorCountConfig
-} from "../covermate-contract.js";
-import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
-
-const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const indexHtml = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
-
-function extractTemplate(html) {
-  return extractBundlerTemplate(html, {
-    fileLabel: "index.html",
-    completePredicate: (template) => template.includes("</html>") && template.includes("const DEFAULTS =")
-  });
-}
-
-function extractDcScript(template) {
-  const match = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
-  assert.ok(match, "text/x-dc script is present");
-  return match[1];
-}
+} = await importCoverMateContract();
 
 function extractDefaults(scriptSource) {
   const defaultsEnd = scriptSource.indexOf("const SCHEMA =");
@@ -38,8 +24,8 @@ function roundHundredThousand(value) {
   return Math.round(Math.max(0, value) / 100000) * 100000;
 }
 
-const template = extractTemplate(indexHtml);
-const scriptSource = extractDcScript(template);
+const template = buildVisitorTemplate();
+const scriptSource = buildVisitorRuntime();
 const defaults = extractDefaults(scriptSource);
 const fit = defaults.sections.find((section) => section && section.id === "fit");
 

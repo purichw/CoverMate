@@ -1,25 +1,13 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import vm from "node:vm";
 
-import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
-
-async function loadContract() {
-  const source = fs.readFileSync(new URL("../covermate-contract.js", import.meta.url), "utf8");
-  return import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
-}
+import { buildVisitorRuntime } from "./lib/visitor-source.mjs";
+import { importCoverMateContract } from "./lib/contract-loader.mjs";
 
 function extractDefaultSiteConfig() {
-  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  const template = extractBundlerTemplate(html, {
-    fileLabel: "index.html",
-    completePredicate: (source) => source.includes("</html>") && source.includes("const DEFAULTS =")
-  });
-  const scriptMatch = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
-  if (!scriptMatch) throw new Error("index.html: text/x-dc script missing");
-  const scriptSource = scriptMatch[1];
+  const scriptSource = buildVisitorRuntime();
   const defaultsEnd = scriptSource.indexOf("const SCHEMA =");
-  if (defaultsEnd < 0) throw new Error("index.html: DEFAULTS boundary missing");
+  if (defaultsEnd < 0) throw new Error("src/visitor runtime: DEFAULTS boundary missing");
   const sandbox = { result: null };
   vm.runInNewContext(`${scriptSource.slice(0, defaultsEnd)}\nresult = DEFAULTS;`, sandbox);
   return sandbox.result;
@@ -88,7 +76,7 @@ const {
   ensureRepeatableContentIds,
   sanitizeMotorCountConfig,
   validRepeatableContentId
-} = await loadContract();
+} = await importCoverMateContract();
 
 const defaults = extractDefaultSiteConfig();
 const audited = repeatableCollections(defaults).map(({ sectionId, type, key, list }) =>

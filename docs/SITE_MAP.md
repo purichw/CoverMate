@@ -96,7 +96,7 @@ Expected visible motor route sections:
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
 | Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Analytics, Settings, public-site exit, and log out. |
 | Analytics | `/admin` | First-party admin reporting inside the shared shell. The legacy `/admin/analytics` route may remain reachable for older bookmarks, but new navigation stays in the shell. |
-| Operations Portal | `/admin` or `/admin/ops` | Authenticated operations workspace inside the shared shell. Dashboard, Leads, Tasks, and Audit are live through `/api/ops/*`; Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden until real API contracts exist. The API verifies Firebase admin identity, checks role permissions server-side, and stores supported lead workflow/audit state on `contactLeads/*`. |
+| Operations Portal | `/admin` or `/admin/ops` | Authenticated operations workspace inside the shared shell. Dashboard, Leads, Tasks, and Audit are live through `/api/ops/*`; Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden until real API contracts exist. The API verifies Firebase admin identity, checks role permissions server-side, and stores supported lead workflow/audit state in the active runtime lead collection. |
 | Inline editor | `/#edit` | Tap editable copy directly on the public page. |
 | Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
 | Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |

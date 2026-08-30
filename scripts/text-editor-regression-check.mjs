@@ -1,21 +1,7 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import vm from "node:vm";
 
-import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
-
-function extractTemplate(html) {
-  return extractBundlerTemplate(html, {
-    fileLabel: "index.html",
-    completePredicate: (template) => template.includes("</html>") && template.includes("const DEFAULTS =")
-  });
-}
-
-function extractRuntime(template) {
-  const match = template.match(/<script type="text\/x-dc"[\s\S]*?>([\s\S]*?)<\/script>/);
-  if (!match) throw new Error("index.html template: text/x-dc script missing");
-  return match[1];
-}
+import { buildVisitorRuntime } from "./lib/visitor-source.mjs";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -27,9 +13,7 @@ function section(config, id) {
   return found;
 }
 
-const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const template = extractTemplate(html);
-const runtime = extractRuntime(template);
+const runtime = buildVisitorRuntime();
 const sandbox = {
   result: null,
   console,

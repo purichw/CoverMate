@@ -1,6 +1,6 @@
 # CoverMate Firebase Setup
 
-Last updated: 2026-07-30
+Last updated: 2026-08-30
 
 ## Project
 
@@ -84,7 +84,10 @@ asks for that action.
 
 ## CMS Persistence
 
-The public site reads the latest published CMS state from:
+The public site reads the latest published CMS state from the namespace selected
+by `covermate-environment.mjs`.
+
+Production uses:
 
 ```text
 sites/covermate/states/live
@@ -100,6 +103,14 @@ Every publish or restore creates a version under:
 
 ```text
 sites/covermate/versions/<auto-id>
+```
+
+Vercel preview/UAT uses the matching isolated namespace:
+
+```text
+sites/covermate-uat/states/live
+sites/covermate-uat/states/draft
+sites/covermate-uat/versions/<auto-id>
 ```
 
 Document shape for `states/live` and `states/draft`:
@@ -128,10 +139,19 @@ override live remote content.
 
 ## Lead Capture
 
-The public consultation form and renewal reminder form write to:
+The public consultation form and renewal reminder form write to the selected
+environment collection.
+
+Production:
 
 ```text
 contactLeads/<auto-id>
+```
+
+UAT/preview:
+
+```text
+contactLeadsUat/<auto-id>
 ```
 
 Public creates are allowed only when the submitted document matches the field
@@ -143,10 +163,19 @@ details. The renewal reminder form uses the same validated collection with
 `qtype: "review"` and stores the selected insurance type/month in generated
 topic and summary fields.
 
-Admin users can read, update, or delete leads. `/admin/analytics` uses
+Admin users can read or update leads; client delete stays blocked by Firestore
+Rules. `/admin/analytics` uses
 `CoverMateFirebase.loadContactLeads()` to render Firestore lead analytics and
 `/api/analytics` to request aggregate GA4 traffic when server credentials are
 configured.
+
+## UAT Auth Domains
+
+The same Firebase Auth project and `admins/{uid}` allowlist are used for
+production and UAT. Before using Google sign-in on a Vercel preview URL, add the
+preview domain shown by Vercel to Firebase Authentication -> Settings ->
+Authorized domains. Do not add auth bypasses for UAT; if login fails, fix the
+authorized domain or allowlist entry instead.
 
 ## Admin Analytics GA4 Data API
 
@@ -173,6 +202,15 @@ Use the numeric GA4 property ID from Google Analytics Admin, not
 property. If these variables are absent, `/admin/analytics` still loads
 Firestore leads and shows `Setup needed` for traffic instead of fake data.
 
+UAT does not reuse the production GA4 service account. Add these variables only
+to Vercel Preview if UAT traffic metrics are needed:
+
+```text
+COVERMATE_UAT_GA4_PROPERTY_ID=<numeric UAT GA4 property id>
+COVERMATE_UAT_GA4_CLIENT_EMAIL=<UAT service account email>
+COVERMATE_UAT_GA4_PRIVATE_KEY=<UAT service account private key>
+```
+
 ## Analytics Summaries
 
 The path below is reserved for admin-only GA4/Data API summaries or scheduled
@@ -180,6 +218,7 @@ exports:
 
 ```text
 sites/covermate/analytics/<doc-id>
+sites/covermate-uat/analytics/<doc-id>
 ```
 
 Do not put GA Data API service-account secrets in the static browser app. The

@@ -120,7 +120,9 @@ SEO is now wired for the public site. Static head fallbacks, `robots.txt`,
 image assets are present. Runtime SEO metadata syncs from hydrated live content,
 and admin/owner routes remain `noindex`.
 
-Visitor lead capture now writes validated `contactLeads/*` Firestore documents.
+Visitor lead capture now writes validated Firestore lead documents in the active
+runtime collection: `contactLeads/*` in production and `contactLeadsUat/*` in
+UAT.
 Admin Analytics at `/admin/analytics` reads leads, renders KPI/trend/mix/recent
 lead views, and reserves GA4 traffic charts for a future secure Data API or
 Firestore export. Recent leads render as a desktop table and mobile labeled
@@ -149,8 +151,9 @@ Security headers are configured in `vercel.json`; CSP is currently
 `Content-Security-Policy-Report-Only` because the exported bundle still depends
 on inline script/style and blob URLs.
 
-`npm run check:bundles` validates exported template JSON and source-authored
-runtime helpers before smoke.
+Visitor source now lives in `src/visitor/` and generates `index.html`.
+`npm run check:bundles` first verifies source-generated sync, then validates
+exported template JSON and source-authored runtime helpers before smoke.
 
 `favicon.svg` and `favicon.ico` are present as browser icons.
 
@@ -189,9 +192,16 @@ Run the targeted Needs Calculator contract check:
 npm run check:needs
 ```
 
+Run the route/content contract check:
+
+```bash
+npm run check:contracts
+```
+
 Run smoke against local:
 
 ```bash
+npm run build:visitor
 npm run check:bundles
 COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 ```
@@ -219,9 +229,10 @@ npx firebase-tools deploy --only firestore:rules --project covermate-purich
 Admin sign-in is Firebase-backed through Google Auth and the Firestore
 `admins/{uid}` allowlist.
 
-If Firestore `sites/covermate/states/live` is missing or unreachable, visitors
-fall back to embedded defaults or last-known local cache. Seed/publish live
-content before treating Admin Portal edits as production CMS content.
+If Firestore `states/live` in the active runtime namespace is missing or
+unreachable, visitors fall back to embedded defaults or last-known local cache.
+Seed/publish live content before treating Admin Portal edits as production or
+UAT CMS content.
 
 The insurer-logo grid has 14 committed files and the public copy is aligned to
 that visible logo count. AIA and Srikrung Broker proof cards carry the related
