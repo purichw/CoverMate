@@ -38,6 +38,7 @@ assert.equal(appendEnvironmentSearch("/api/analytics?days=30", localProduction),
 
 const firebaseSource = repoFile("covermate-firebase.js");
 assert.match(firebaseSource, /resolveCoverMateEnvironment/, "Firebase client must use the shared environment resolver.");
+assert.match(firebaseSource, /admin\.uatOnly === true && !COVERMATE_ENVIRONMENT\.isUat/, "Firebase client must reject UAT-only admins on production hosts.");
 assert.match(firebaseSource, /const SITE_ID = COVERMATE_ENVIRONMENT\.siteId;/);
 assert.match(firebaseSource, /const LEAD_COLLECTION = COVERMATE_ENVIRONMENT\.leadCollection;/);
 assert.doesNotMatch(firebaseSource, /collection\(db,\s*"contactLeads"\)/, "Firebase client must not hard-code production lead collection.");
@@ -45,11 +46,13 @@ assert.doesNotMatch(firebaseSource, /"sites",\s*"covermate",\s*"states"/, "Fireb
 
 const opsSource = repoFile("api/ops.js");
 assert.match(opsSource, /resolveRequestEnvironment/, "Ops API must resolve runtime environment.");
+assert.match(opsSource, /admin\.uatOnly === true && !\(environment && environment\.isUat\)/, "Ops API must reject UAT-only credentials outside UAT.");
 assert.match(opsSource, /leadCollectionFor\(actor\)/, "Ops API must route lead reads and writes through the environment collection.");
 assert.doesNotMatch(opsSource, /collectionId:\s*"contactLeads"/, "Ops API queries must not hard-code production contactLeads.");
 
 const analyticsSource = repoFile("api/analytics.js");
 assert.match(analyticsSource, /COVERMATE_UAT_GA4_PROPERTY_ID/);
+assert.match(analyticsSource, /admin\.uatOnly === true && !\(environment && environment\.isUat\)/, "Analytics API must reject UAT-only credentials outside UAT.");
 assert.match(analyticsSource, /Production GA4 credentials are not reused for UAT/);
 
 const opsAdminSource = repoFile("admin/ops/app.js");
@@ -72,6 +75,9 @@ assert.match(loginTemplate, /params\.get\('cm_env'\) === 'uat'/, "Admin login su
 
 const rulesSource = repoFile("firestore.rules");
 assert.match(rulesSource, /"covermate-uat"/);
+assert.match(rulesSource, /isUatOnlyAdmin/);
+assert.match(rulesSource, /canReadOpsRecords\(false\)/);
+assert.match(rulesSource, /canReadOpsRecords\(true\)/);
 assert.match(rulesSource, /match \/contactLeadsUat\/\{leadId\}/);
 
 console.log("CoverMate UAT environment check passed");

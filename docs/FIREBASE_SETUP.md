@@ -57,6 +57,7 @@ Fields:
 active: true
 email: <admin email>
 role: owner
+uatOnly: false
 ```
 
 The app checks this document before creating the browser-local
@@ -178,8 +179,9 @@ Authorized domains. Do not add browser auth bypasses for UAT; if login fails,
 fix the authorized domain or allowlist entry instead.
 
 For automated UAT API smoke, create a dedicated test admin user when possible,
-then add that UID under `admins/{uid}` with `active: true`. Keep its password or
-ID token in `.env.uat.local` or the CI/Vercel environment, never in Git.
+then add that UID under `admins/{uid}` with `active: true`, `role: readonly`,
+and `uatOnly: true`. Keep its password or ID token in `.env.uat.local` or the
+CI/Vercel environment, never in Git.
 
 ```text
 COVERMATE_UAT_ADMIN_EMAIL=<test admin email>
@@ -190,6 +192,10 @@ When no Firebase test admin credential is available, `COVERMATE_UAT_USE_GCLOUD=1
 lets local smoke checks read back UAT Firestore writes through the signed-in
 operator's Google Cloud IAM token. That mode is useful for data-path proof, but
 it does not validate the private `/api/ops` Firebase ID-token gate.
+
+`uatOnly: true` accounts are intentionally blocked from production host/API
+requests and production Firestore CMS/lead paths. Use a real admin account
+without `uatOnly` only when production access is intended.
 
 ## Admin Analytics GA4 Data API
 

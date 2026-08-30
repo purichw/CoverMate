@@ -229,6 +229,8 @@ Important behavior:
 
 - Admin login uses Firebase Auth project `covermate-purich`, then checks
   Firestore `admins/{uid}` with `active: true`.
+- Dedicated UAT test admins should use `uatOnly: true`; client auth, server API
+  auth, and Firestore Rules reject those accounts outside the UAT namespace.
 - The browser-local admin session expires after 7 days based on the `exp`
   timestamp in `covermate-admin-session`.
 - `/`, `/admin`, and `/admin/login` hydrate Firestore `states/live` before

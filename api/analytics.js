@@ -54,8 +54,9 @@ module.exports = async function analyticsApi(req, res) {
       return send(res, 405, { error: "method_not_allowed", message: "Use GET for analytics." });
     }
 
-    const actor = await authorize(req);
-    actor.environment = await resolveRequestEnvironment(req);
+    const environment = await resolveRequestEnvironment(req);
+    const actor = await authorize(req, environment);
+    actor.environment = environment;
     const config = analyticsConfig(actor.environment);
     if (!config.ok) {
       return send(res, 200, unavailablePayload("not_configured", config.message, actor));
@@ -77,7 +78,7 @@ module.exports = async function analyticsApi(req, res) {
   }
 };
 
-async function authorize(req) {
+async function authorize(req, environment) {
   const token = bearerToken(req);
   if (!token) throw httpError(401, "unauthorized", "Missing Firebase ID token.");
 
@@ -93,12 +94,15 @@ async function authorize(req) {
   if (!admin || admin.active !== true) {
     throw httpError(403, "forbidden", "This account is not on the active CoverMate admin allowlist.");
   }
+  if (admin.uatOnly === true && !(environment && environment.isUat)) {
+    throw httpError(403, "forbidden", "This UAT-only admin account cannot access production analytics.");
+  }
 
   const role = normalizeRole(admin.role || "owner");
   if (!VIEW_ROLES.has(role)) {
     throw httpError(403, "forbidden", "This role cannot view analytics.");
   }
-  return { uid, email: account.email || "", role, token };
+  return { uid, email: account.email || "", role, token, uatOnly: admin.uatOnly === true };
 }
 
 async function resolveRequestEnvironment(req) {

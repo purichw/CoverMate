@@ -41,8 +41,9 @@ module.exports = async function opsApi(req, res) {
   try {
     const method = String(req.method || "GET").toUpperCase();
     const path = requestPath(req);
-    const actor = await authorize(req, "view_records");
-    actor.environment = await resolveRequestEnvironment(req);
+    const environment = await resolveRequestEnvironment(req);
+    const actor = await authorize(req, "view_records", environment);
+    actor.environment = environment;
 
     if (method === "GET" && path[0] === "leads" && path.length === 1) {
       return send(res, 200, await listLeads(req, actor));
@@ -129,7 +130,7 @@ function environmentName(actor) {
   return actor && actor.environment && actor.environment.name || "production";
 }
 
-async function authorize(req, permission) {
+async function authorize(req, permission, environment) {
   const token = bearerToken(req);
   if (!token) throw httpError(401, "unauthorized", "Missing Firebase ID token.");
 
@@ -143,13 +144,17 @@ async function authorize(req, permission) {
   });
   const admin = adminDoc ? docFields(adminDoc) : null;
   if (!admin || admin.active !== true) throw httpError(403, "forbidden", "This account is not on the active CoverMate admin allowlist.", permission);
+  if (admin.uatOnly === true && !(environment && environment.isUat)) {
+    throw httpError(403, "forbidden", "This UAT-only admin account cannot access production Operations data.", permission);
+  }
 
   const actor = {
     uid,
     email: account.email || "",
     name: stringValue(admin.name) || account.displayName || account.email || "CoverMate admin",
     role: normalizeRole(admin.role || "owner"),
-    token
+    token,
+    uatOnly: admin.uatOnly === true
   };
   requirePermission(actor, permission);
   return actor;

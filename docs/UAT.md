@@ -27,9 +27,10 @@ production data.
 
 ## Auth And Test Credentials
 
-UAT uses the same Firebase project and the same `admins/{uid}` allowlist as
-production. There is no browser-side admin bypass: preview users must still sign
-in with Firebase Auth and pass the Firestore admin allowlist.
+UAT uses the same Firebase project as production, but test-admin accounts should
+be marked in the shared `admins/{uid}` allowlist with `uatOnly: true`. There is
+no browser-side admin bypass: preview users must still sign in with Firebase
+Auth and pass the Firestore admin allowlist.
 
 Automation can use UAT-only credentials for smoke checks. Keep them in local env
 or Vercel settings; never commit them.
@@ -46,12 +47,18 @@ COVERMATE_UAT_USE_GCLOUD=1
 Credential options:
 
 - `COVERMATE_UAT_ADMIN_ID_TOKEN` or email/password verifies the same Firebase
-  admin path used by `/api/ops` and `/api/analytics`.
+  admin path used by `/api/ops` and `/api/analytics`. Prefer a dedicated
+  allowlist document with `active: true`, `role: readonly`, and `uatOnly: true`
+  for read-only API smoke.
 - `COVERMATE_UAT_USE_GCLOUD=1` uses the local operator's Google Cloud IAM token
   for Firestore readback. This proves the hosted browser writes to
   `contactLeadsUat`, but it does not prove Firebase Rules/admin API auth.
 - Email/password works only if that provider is enabled in Firebase Auth. Google
   admin sign-in still needs manual browser login or a copied ID token.
+
+`uatOnly: true` credentials are accepted only when the resolved environment is
+UAT. Production host/API requests reject them before reading Operations or
+Analytics data, and Firestore Rules block them from production CMS/lead paths.
 
 Before testing admin flows on a Vercel preview URL, add that preview domain to
 Firebase Authentication -> Settings -> Authorized domains. If Google sign-in
@@ -168,6 +175,8 @@ Before production deploy:
   credentials are available
 - confirm the relevant mocked route/API smoke checks pass against the preview URL
 - confirm any Firestore Rules changes have already been deployed deliberately
+- confirm UAT test-admin docs use `uatOnly: true` unless intentionally promoting
+  a real production admin account
 - confirm no fake UAT leads or draft copy are copied into production collections
 - commit, push, and production deploy only after the owner explicitly asks in
   the current task

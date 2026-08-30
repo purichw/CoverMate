@@ -6,18 +6,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function adminPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.uid);
+    }
+
     function isAdmin() {
       return signedIn()
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+        && exists(adminPath())
+        && get(adminPath()).data.active == true;
     }
 
     function adminRole() {
-      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role;
+      return get(adminPath()).data.role;
     }
 
-    function canWriteOpsRecords() {
-      return isAdmin()
+    function isUatOnlyAdmin() {
+      return isAdmin() && get(adminPath()).data.uatOnly == true;
+    }
+
+    function canAccessSite(siteId) {
+      return isAdmin() && (siteId == "covermate-uat" || !isUatOnlyAdmin());
+    }
+
+    function canReadOpsRecords(isUat) {
+      return isAdmin() && (isUat || !isUatOnlyAdmin());
+    }
+
+    function canWriteOpsRecords(isUat) {
+      return canReadOpsRecords(isUat)
         && adminRole() in ["owner", "admin", "administrator", "advisor", "adviser", "ops", "operations"];
     }
 
@@ -64,39 +80,39 @@ service cloud.firestore {
     }
 
     match /admins/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow read: if signedIn() && (request.auth.uid == uid || (isAdmin() && !isUatOnlyAdmin()));
       allow write: if false;
     }
 
     match /sites/{siteId}/states/live {
       allow read: if validSiteId(siteId);
-      allow write: if validSiteId(siteId) && isAdmin();
+      allow write: if validSiteId(siteId) && canAccessSite(siteId);
     }
 
     match /sites/{siteId}/states/draft {
-      allow read, write: if validSiteId(siteId) && isAdmin();
+      allow read, write: if validSiteId(siteId) && canAccessSite(siteId);
     }
 
     match /sites/{siteId}/versions/{versionId} {
-      allow read, write: if validSiteId(siteId) && isAdmin();
+      allow read, write: if validSiteId(siteId) && canAccessSite(siteId);
     }
 
     match /contactLeads/{leadId} {
-      allow create: if validLeadCreate() || canWriteOpsRecords();
-      allow read: if isAdmin();
-      allow update: if canWriteOpsRecords();
+      allow create: if validLeadCreate() || canWriteOpsRecords(false);
+      allow read: if canReadOpsRecords(false);
+      allow update: if canWriteOpsRecords(false);
       allow delete: if false;
     }
 
     match /contactLeadsUat/{leadId} {
-      allow create: if validLeadCreate() || canWriteOpsRecords();
-      allow read: if isAdmin();
-      allow update: if canWriteOpsRecords();
+      allow create: if validLeadCreate() || canWriteOpsRecords(true);
+      allow read: if canReadOpsRecords(true);
+      allow update: if canWriteOpsRecords(true);
       allow delete: if false;
     }
 
     match /sites/{siteId}/analytics/{analyticsDoc} {
-      allow read, write: if validSiteId(siteId) && isAdmin();
+      allow read, write: if validSiteId(siteId) && canAccessSite(siteId);
     }
 
     match /{document=**} {

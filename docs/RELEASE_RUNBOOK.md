@@ -82,6 +82,9 @@ test-admin ID token/email-password for private API checks, or
 `COVERMATE_UAT_USE_GCLOUD=1` for Firestore readback. It refuses production URLs
 and writes fake leads only to `contactLeadsUat`.
 
+When a dedicated UAT test admin is used, its `admins/{uid}` document should have
+`uatOnly: true`; production API and Firestore paths reject that account.
+
 ## Production Smoke
 
 After production deployment:

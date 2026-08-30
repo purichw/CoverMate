@@ -128,7 +128,9 @@ either a Firebase test-admin credential or `COVERMATE_UAT_USE_GCLOUD=1`, then
 run `npm run smoke:uat`. The script refuses production URLs, sends Vercel
 deployment-protection bypass headers only when configured, submits one fake
 visitor lead, and reads it back from `contactLeadsUat` when credentials are
-available.
+available. Dedicated Firebase test admins should be stored in `admins/{uid}` as
+`active: true`, `role: readonly`, and `uatOnly: true`; production host/API
+requests and production Firestore paths reject those accounts.
 Admin Analytics at `/admin/analytics` reads leads, renders KPI/trend/mix/recent
 lead views, and reserves GA4 traffic charts for a future secure Data API or
 Firestore export. Recent leads render as a desktop table and mobile labeled

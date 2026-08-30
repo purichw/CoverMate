@@ -65,7 +65,9 @@ async function readAdmin(user) {
   const snap = await firestoreMod.getDoc(adminRef(user.uid));
   if (!snap.exists()) return null;
   const admin = snap.data() || {};
-  return admin.active === true ? admin : null;
+  if (admin.active !== true) return null;
+  if (admin.uatOnly === true && !COVERMATE_ENVIRONMENT.isUat) return null;
+  return admin;
 }
 
 async function userIsAdmin(user) {
