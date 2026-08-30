@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OWNER_ROOT_ROUTES = new Set(["admin/content", "admin/edit", "admin/preview"]);
+const PUBLIC_ROOT_ROUTES = new Set(["motor"]);
 
 export function contentType(filePath) {
   const ext = path.extname(filePath).toLowerCase();
@@ -27,7 +28,12 @@ export function resolveStaticFileCandidates(urlPath, options = {}) {
   const fallbackFile = options.fallbackFile || "index.html";
   let pathname = decodeURIComponent(urlPath || "/").replace(/^\/+/, "");
   pathname = pathname.replace(/^"+|"+$/g, "");
-  if (!pathname || (options.ownerRoutesToRoot && OWNER_ROOT_ROUTES.has(pathname))) {
+  const publicRoutesToRoot = options.publicRoutesToRoot !== false;
+  if (
+    !pathname ||
+    (publicRoutesToRoot && PUBLIC_ROOT_ROUTES.has(pathname)) ||
+    (options.ownerRoutesToRoot && OWNER_ROOT_ROUTES.has(pathname))
+  ) {
     pathname = fallbackFile;
   }
   const candidates = [pathname];

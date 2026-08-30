@@ -7,6 +7,9 @@
     "check:visitor-source": "node scripts/generate-visitor-bundle.mjs --check",
     "check:contracts": "node scripts/contract-regression-check.mjs",
     "check:bundles": "npm run check:visitor-source && node scripts/validate-bundles.mjs",
+    "check:ci": "node scripts/ci-check.mjs",
+    "check:security": "node scripts/security-contract-check.mjs",
+    "check:performance": "node scripts/performance-budget-check.mjs",
     "check:analytics": "node scripts/analytics-regression-check.mjs",
     "check:analytics-api": "node scripts/analytics-api-check.mjs",
     "check:uat": "node scripts/uat-environment-check.mjs",
@@ -21,5 +24,8 @@
     "smoke:uat": "node scripts/uat-e2e-smoke.mjs",
     "smoke:admin-builder": "COVERMATE_SMOKE_SUITE=admin-builder node scripts/smoke.mjs",
     "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
   }
 }

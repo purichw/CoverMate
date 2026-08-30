@@ -7,12 +7,20 @@ deployable `index.html`. Edit `src/visitor/*`, then run
 `npm run build:visitor`; `npm run check:bundles` verifies the generated artifact
 has not drifted.
 
+The broad local/CI quality gate is `npm run check:ci`. It validates generated
+visitor artifacts, shared contracts, security headers/rules invariants,
+Firestore/UAT boundaries, browser boot behavior, analytics/API assumptions,
+performance budgets, Admin/Operations regressions, and the local smoke suite.
+
 Start with [`PROJECT_MAP.md`](PROJECT_MAP.md) for the route, data, admin,
 asset, deployment, and verification map.
 
 Current workspace state can be ahead of production. Check `git status` and the
 release guardrail in [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 before assuming changes are live.
+
+GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
+manual workflow dispatches.
 
 ## Project Documents
 

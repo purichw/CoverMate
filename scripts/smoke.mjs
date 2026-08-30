@@ -2,16 +2,13 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
-import { loadPlaywright } from "./lib/playwright.mjs";
+import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
 
 const playwright = loadPlaywright();
 const { chromium } = playwright;
 
 const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";
 const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
-const chromePath =
-  process.env.CHROME_PATH ||
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 const viewports = [
   ["desktop", 1440, 900],
@@ -404,10 +401,7 @@ async function clickSectionColumnControl(page, id, direction) {
   await row.locator(selector).click();
 }
 
-const browser = await chromium.launch({
-  headless: true,
-  executablePath: chromePath
-});
+const browser = await launchChromium(chromium, { headless: true });
 
 const failures = [];
 

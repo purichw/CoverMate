@@ -11,6 +11,28 @@ production deploy.
 UAT is not a visual-only mode. It uses isolated Firestore CMS and lead
 collections so draft/publish tests and fake leads cannot touch production data.
 
+## UAT Trigger Policy
+
+Do not run hosted UAT smoke, create a fresh Vercel preview only for UAT, or seed
+UAT data for small work by default. UAT exists to reduce release risk, not to
+turn every edit into a full release ceremony.
+
+Skip hosted UAT for fast-pass changes such as copy edits, one-selector CSS or
+font/spacing tweaks, documentation-only changes, small image/icon swaps that do
+not affect CMS media contracts, and narrow visual fixes that can be proven with
+`git diff --check` plus one targeted local/browser check.
+
+Use hosted UAT when the change touches Firebase Auth, Firestore Rules, CMS
+live/draft/version paths, Admin Portal session or publish/save flows, public
+lead capture, Operations or Analytics APIs, environment resolution, Vercel
+deployment config/protection, route rewrites, production-like routing behavior,
+or any release-level regression where the owner explicitly asks for UAT.
+
+When a small task still includes `push deploy`, prefer the smallest safe release
+gate: inspect the diff, run the nearest targeted checks, deploy, and verify the
+production URL only as needed. State that hosted UAT was intentionally skipped
+because the diff did not touch UAT-triggering surfaces.
+
 ## Environment Resolution
 
 `covermate-environment.mjs` is the source of truth.

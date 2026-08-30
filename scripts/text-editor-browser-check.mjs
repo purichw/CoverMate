@@ -2,15 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { loadPlaywright } from "./lib/playwright.mjs";
+import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
 import { startStaticServer } from "./lib/static-server.mjs";
 
 const playwright = loadPlaywright();
 const { chromium } = playwright;
 const outputDir = process.env.COVERMATE_TEXT_QA_DIR || "/tmp/covermate-text-editor-qa";
-const chromePath =
-  process.env.CHROME_PATH ||
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 function firebaseMock() {
   return `
@@ -391,7 +388,7 @@ try {
   await fs.mkdir(outputDir, { recursive: true });
   const started = await startStaticServer({ ownerRoutesToRoot: true });
   server = started.server;
-  browser = await chromium.launch({ headless: true, executablePath: chromePath });
+  browser = await launchChromium(chromium, { headless: true });
   const { page, errors, baseUrl } = await newPage(browser, started.baseUrl);
 
   const inlineKey = await verifyInlineEmptyPersistence(page, baseUrl);

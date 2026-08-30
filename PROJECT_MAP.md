@@ -22,6 +22,8 @@ ephemeral static serving live in `scripts/lib/playwright.mjs` and
 `scripts/lib/static-server.mjs`. Do not reintroduce per-script template
 parsers, duplicate admin route constants, copied Playwright fallback paths, or
 fixed-port local servers in regression scripts.
+`npm run check:ci` is the automatable local/CI release gate, and GitHub Actions
+runs it on `main`, pull requests, and manual dispatch.
 The public Needs Calculator now follows the
 `covermate-reference-data-v0.1` methodology through the `fit.calculator` CMS
 payload, with Firestore live/draft values prevailing over embedded defaults.
@@ -53,6 +55,7 @@ template/runtime-dependency checks in the release runbook.
 - Seed missing UAT live/draft CMS state: `npm run uat:seed`
 - Hosted UAT E2E smoke: `npm run smoke:uat`
 - Local smoke: `npm run smoke`
+- Full local/CI gate: `npm run check:ci`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
 - Production URL: `https://covermate.vercel.app`
 - Vercel project: `covermate`
@@ -125,6 +128,9 @@ Detailed project documents:
 | `scripts/lib/uat-env.mjs` | Shared UAT smoke helper for local `.env.uat.local` loading, preview URL guards, Vercel protection-bypass headers, Firebase/gcloud credentials, and Firestore REST read/write helpers. It refuses non-UAT Firestore paths. |
 | `scripts/generate-visitor-bundle.mjs` | Generates `index.html` from `src/visitor/*`; `--check` is wired into `npm run check:bundles` to catch generated artifact drift. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
+| `scripts/ci-check.mjs` | Single local/CI release-gate runner. It runs static checks, browser checks, performance budgets, and local smoke against an ephemeral static server. |
+| `scripts/security-contract-check.mjs` | Static guard for Vercel security headers, Firestore deny-by-default/auth/lead validation rules, analytics PII boundaries, and server-side Operations API authorization. |
+| `scripts/performance-budget-check.mjs` | Playwright budget check for home and `/motor` mobile/desktop boot, LCP/CLS where browser entries are available, horizontal overflow, and payload budgets. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
 | `scripts/uat-environment-check.mjs` | Static/runtime UAT contract check for environment resolution, production-host override, preview namespace paths, server API routing, and rules coverage. |
 | `scripts/uat-seed.mjs` | Creates missing UAT `states/live` and `states/draft` documents from bundled defaults, or intentionally overwrites them with `--force`. Can add a fake seed lead with `--lead`. |

@@ -61,12 +61,16 @@ Implemented support:
 - `assets/covermate-og.png`, `robots.txt`, `sitemap.xml`, and manifest use
   shorter revalidation windows.
 - `scripts/validate-bundles.mjs` catches broken embedded template JSON quickly.
+- `npm run check:performance` exercises `/` and `/motor` on mobile and desktop
+  with browser-derived first-visible, LCP/CLS, overflow, and payload budgets.
 
 Open performance work:
 
 - Split generated `index.html` and admin bundles into source modules.
 - Reduce embedded font/resource duplication across exported HTML surfaces.
 - Add Lighthouse or WebPageTest evidence before paid acquisition.
+- Convert the lightweight local performance budget into Lighthouse CI or field
+  `web-vitals` monitoring when acquisition traffic grows.
 
 ## Accessibility
 
@@ -130,6 +134,12 @@ Implemented:
 - `npm run check:ops` can start its own local static server when
   `COVERMATE_URL` is not provided, while still allowing production or preview
   targets through that environment variable.
+- `npm run check:ci` is the single broad local/CI gate and is mirrored by
+  `.github/workflows/ci.yml`.
+- `npm run check:security` keeps Vercel headers, Firestore rules, GA PII
+  boundaries, and server-side Operations authorization from drifting.
+- `npm run check:performance` protects the current first-render and payload
+  budgets until a fuller Lighthouse/RUM system exists.
 
 Refactor direction:
 

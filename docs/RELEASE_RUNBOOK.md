@@ -44,8 +44,16 @@ python3 -m http.server 4177
 Run smoke checks against local:
 
 ```bash
+npm run check:ci
+```
+
+For a shorter manual split, run:
+
+```bash
 npm run check:bundles
 npm run check:contracts
+npm run check:security
+npm run check:performance
 npm run check:ids
 npm run check:uat
 npm run check:needs
@@ -59,6 +67,29 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 `npm run smoke:admin-builder` runs only the dedicated Admin builder flow for
 section structure, embedded hero coverage accordions, relationship cards,
 insurer logo items, and tier rows/columns.
+
+GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
+manual dispatch. CI installs Playwright Chromium and uses the shared browser
+launcher helper, so browser checks are no longer tied to macOS Chrome.app.
+
+## UAT Trigger Policy
+
+Do not treat UAT as a default gate just because the environment exists. Hosted
+UAT smoke, fresh UAT preview deploys, and UAT data seeding are reserved for
+changes that increase production-like risk.
+
+Skip UAT for fast-pass work: small copy edits, one-off CSS/font/spacing tweaks,
+docs-only edits, image/icon swaps that do not alter CMS media contracts, and
+narrow visual fixes with targeted local/browser evidence.
+
+Use UAT for Firebase Auth, Firestore Rules, CMS live/draft/version paths, Admin
+Portal session or publish/save flows, public lead capture, Operations or
+Analytics APIs, environment resolution, Vercel config/protection, route rewrites,
+production-like routing behavior, or explicit owner requests for UAT/regression.
+
+If a tiny task includes `push deploy`, run the smallest release gate that covers
+the diff and disclose that hosted UAT was skipped because no UAT-triggering
+surface changed.
 
 ## UAT Smoke
 

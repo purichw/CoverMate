@@ -167,13 +167,31 @@ clean while Vercel API files remain CommonJS.
 
 `scripts/lib/playwright.mjs` owns Playwright resolution for local and Codex
 runtime environments. Browser regression scripts must import it instead of
-duplicating absolute fallback paths.
+duplicating absolute fallback paths or hard-pinning Chrome.app. Local macOS can
+use the real Chrome app when present; CI falls back to Playwright Chromium.
 
 `scripts/lib/static-server.mjs` owns the ephemeral local static server used by
 browser regression scripts. It supports clean URLs and maps only owner
 public-page routes such as `/admin/edit`, `/admin/content`, and
 `/admin/preview` back to `index.html` when a check explicitly asks for that
 behavior.
+
+`scripts/ci-check.mjs` owns the broad automatable gate. It runs bundle/source,
+contract, security, UAT, calculator, text-editor, boot, analytics, operations,
+performance, whitespace, and smoke checks with a single command:
+`npm run check:ci`. GitHub Actions runs that command on pushes to `main`, pull
+requests, and manual dispatch.
+
+`scripts/security-contract-check.mjs` is a static guard for Vercel security
+headers, Firestore deny-by-default/admin/lead validation rules, GA PII
+boundaries, and server-side Operations API authorization. It complements, but
+does not replace, future Firebase emulator rule tests.
+
+`scripts/performance-budget-check.mjs` is a lightweight local/CI budget gate
+for `/` and `/motor` on mobile and desktop. It checks first visible render, raw
+template leaks, boot cloak release, horizontal overflow, LCP/CLS when available,
+and broad HTML/script payload limits. Lighthouse/WebPageTest or field
+web-vitals reporting is still needed before paid acquisition.
 
 `favicon.svg` and `favicon.ico` own the CoverMate browser icons. `vercel.json`
 owns clean URLs and static cache behavior.
