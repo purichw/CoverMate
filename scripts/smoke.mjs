@@ -8,7 +8,13 @@ const playwright = loadPlaywright();
 const { chromium } = playwright;
 
 const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";
+const baseOrigin = new URL(baseUrl).origin;
 const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
+const benignNavigationAbortPaths = new Set([
+  "/covermate-contract.js",
+  "/covermate-environment.mjs",
+  "/covermate-firebase.js"
+]);
 
 const viewports = [
   ["desktop", 1440, 900],
@@ -50,6 +56,16 @@ function extractDefaultSiteConfig() {
 }
 
 const defaultSiteConfig = extractDefaultSiteConfig();
+
+function isBenignNavigationAbort(url, failureText) {
+  if (failureText !== "net::ERR_ABORTED") return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.origin === baseOrigin && benignNavigationAbortPaths.has(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
 
 function renamedConfig(name) {
   const config = structuredClone(defaultSiteConfig);
@@ -1283,6 +1299,7 @@ for (const [name, width, height] of viewports) {
     const failureText = request.failure()?.errorText || "failed";
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
+    if (isBenignNavigationAbort(url, failureText)) return;
     if (
       failureText === "net::ERR_ABORTED" &&
       (url.endsWith("/favicon.svg") || url.endsWith("/covermate-firebase.js"))
