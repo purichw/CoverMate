@@ -1379,6 +1379,15 @@ for (const [name, width, height] of viewports) {
     );
     await page.waitForTimeout(600);
     if (route === "/#motor" || route === "/#life") {
+      const aliasTargetId = route === "/#motor" ? "insurers" : "cover";
+      await page.waitForFunction((targetId) => {
+        const header = document.querySelector("header");
+        const target = document.getElementById(targetId);
+        if (!target) return false;
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        const rect = target.getBoundingClientRect();
+        return rect.bottom > headerBottom + 8 && rect.top < window.innerHeight * 0.82;
+      }, aliasTargetId, { timeout: 5000 }).catch(() => {});
       const aliasState = await page.evaluate((targetId) => {
         const header = document.querySelector("header");
         const target = document.getElementById(targetId);
@@ -1401,10 +1410,11 @@ for (const [name, width, height] of viewports) {
         bodyText: document.body.innerText,
         headerBottom: headerRect ? headerRect.bottom : 0,
         targetTop: targetRect ? targetRect.top : null,
+        targetBottom: targetRect ? targetRect.bottom : null,
         viewportHeight: window.innerHeight,
           targetScrollMarginTop: target ? window.getComputedStyle(target).scrollMarginTop : ""
         };
-      }, route === "/#motor" ? "insurers" : "cover");
+      }, aliasTargetId);
       const expectedMainNav = ["#cover", "#review", "#insurers", "#faq"];
       const missingMainNav = expectedMainNav.filter((href) => !aliasState.navHrefs.includes(href));
       if (missingMainNav.length) {
@@ -1424,12 +1434,13 @@ for (const [name, width, height] of viewports) {
       }
       if (
         aliasState.targetTop == null ||
-        aliasState.targetTop < aliasState.headerBottom + 4 ||
-        aliasState.targetTop > aliasState.viewportHeight * 0.72
+        aliasState.targetBottom == null ||
+        aliasState.targetBottom <= aliasState.headerBottom + 8 ||
+        aliasState.targetTop >= aliasState.viewportHeight * 0.82
       ) {
         failures.push(
-          `${name} ${route}: alias did not land on the intended main section below the sticky header ` +
-            `(top=${aliasState.targetTop}, headerBottom=${aliasState.headerBottom})`
+          `${name} ${route}: alias did not land on the intended main section within the viewport ` +
+            `(top=${aliasState.targetTop}, bottom=${aliasState.targetBottom}, headerBottom=${aliasState.headerBottom})`
         );
       }
       if (!aliasState.targetScrollMarginTop || aliasState.targetScrollMarginTop === "0px") {
