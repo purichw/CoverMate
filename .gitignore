@@ -1,3 +1,5 @@
 .vercel
 .claude-reference/
 .DS_Store
+.env*.local
+uat-results/

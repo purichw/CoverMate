@@ -69,11 +69,18 @@ isolated UAT Firestore namespace (`sites/covermate-uat/*`,
 ```bash
 npm run check:uat
 COVERMATE_URL=<vercel-preview-url> npm run smoke
+npm run smoke:uat
 ```
 
 If admin sign-in fails on the preview URL, add that exact preview domain in
 Firebase Authentication -> Settings -> Authorized domains. Do not bypass
-Firebase Auth or the `admins/{uid}` allowlist for UAT.
+Firebase Auth or the `admins/{uid}` allowlist for UAT browser/admin flows.
+
+`npm run smoke:uat` expects `COVERMATE_UAT_URL` or `--url=<preview-url>`. It can
+use `VERCEL_AUTOMATION_BYPASS_SECRET` for deployment protection, a Firebase
+test-admin ID token/email-password for private API checks, or
+`COVERMATE_UAT_USE_GCLOUD=1` for Firestore readback. It refuses production URLs
+and writes fake leads only to `contactLeadsUat`.
 
 ## Production Smoke
 

@@ -71,3 +71,10 @@ draft/live/history content is Firestore-first. Production uses
 lives in `covermate-environment.mjs`, with production host
 `covermate.vercel.app` always resolving to production data. Browser-local
 storage is only a session marker or last-known CMS cache.
+
+For hosted UAT E2E, set `COVERMATE_UAT_URL` plus either a Firebase test-admin
+credential or `COVERMATE_UAT_USE_GCLOUD=1`, then run:
+
+```bash
+npm run smoke:uat
+```

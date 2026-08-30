@@ -174,8 +174,22 @@ configured.
 The same Firebase Auth project and `admins/{uid}` allowlist are used for
 production and UAT. Before using Google sign-in on a Vercel preview URL, add the
 preview domain shown by Vercel to Firebase Authentication -> Settings ->
-Authorized domains. Do not add auth bypasses for UAT; if login fails, fix the
-authorized domain or allowlist entry instead.
+Authorized domains. Do not add browser auth bypasses for UAT; if login fails,
+fix the authorized domain or allowlist entry instead.
+
+For automated UAT API smoke, create a dedicated test admin user when possible,
+then add that UID under `admins/{uid}` with `active: true`. Keep its password or
+ID token in `.env.uat.local` or the CI/Vercel environment, never in Git.
+
+```text
+COVERMATE_UAT_ADMIN_EMAIL=<test admin email>
+COVERMATE_UAT_ADMIN_PASSWORD=<test admin password>
+```
+
+When no Firebase test admin credential is available, `COVERMATE_UAT_USE_GCLOUD=1`
+lets local smoke checks read back UAT Firestore writes through the signed-in
+operator's Google Cloud IAM token. That mode is useful for data-path proof, but
+it does not validate the private `/api/ops` Firebase ID-token gate.
 
 ## Admin Analytics GA4 Data API
 

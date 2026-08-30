@@ -25,15 +25,47 @@ collections so draft/publish tests and fake leads cannot touch production data.
 The production host always wins. A production URL with `?cm_env=uat` still uses
 production data.
 
-## Auth
+## Auth And Test Credentials
 
 UAT uses the same Firebase project and the same `admins/{uid}` allowlist as
-production. There is no UAT auth bypass.
+production. There is no browser-side admin bypass: preview users must still sign
+in with Firebase Auth and pass the Firestore admin allowlist.
+
+Automation can use UAT-only credentials for smoke checks. Keep them in local env
+or Vercel settings; never commit them.
+
+```text
+COVERMATE_UAT_URL=<vercel-preview-url>
+VERCEL_AUTOMATION_BYPASS_SECRET=<preview protection bypass secret>
+COVERMATE_UAT_ADMIN_ID_TOKEN=<optional Firebase admin ID token>
+COVERMATE_UAT_ADMIN_EMAIL=<optional dedicated test admin email>
+COVERMATE_UAT_ADMIN_PASSWORD=<optional dedicated test admin password>
+COVERMATE_UAT_USE_GCLOUD=1
+```
+
+Credential options:
+
+- `COVERMATE_UAT_ADMIN_ID_TOKEN` or email/password verifies the same Firebase
+  admin path used by `/api/ops` and `/api/analytics`.
+- `COVERMATE_UAT_USE_GCLOUD=1` uses the local operator's Google Cloud IAM token
+  for Firestore readback. This proves the hosted browser writes to
+  `contactLeadsUat`, but it does not prove Firebase Rules/admin API auth.
+- Email/password works only if that provider is enabled in Firebase Auth. Google
+  admin sign-in still needs manual browser login or a copied ID token.
 
 Before testing admin flows on a Vercel preview URL, add that preview domain to
 Firebase Authentication -> Settings -> Authorized domains. If Google sign-in
 fails on preview, fix the domain or the admin allowlist; do not weaken the
 browser gate or Firestore Rules.
+
+Optional Vercel deployment-protection bypass setup:
+
+```bash
+npx vercel project protection enable covermate --protection-bypass --protection-bypass-secret "$VERCEL_AUTOMATION_BYPASS_SECRET"
+```
+
+The smoke harness sends this value only as the `x-vercel-protection-bypass`
+header when present.
 
 ## External Services
 
@@ -74,6 +106,14 @@ Admin, Operations, Analytics, or Firestore Rules:
 npm run check:uat
 ```
 
+Seed UAT site state when `sites/covermate-uat/states/live` or `draft` is still
+missing. This script creates missing UAT state documents only; use `--force`
+only when intentionally resetting UAT CMS state to bundled defaults.
+
+```bash
+npm run uat:seed
+```
+
 Run the relevant functional checks for the touched surface:
 
 ```bash
@@ -82,10 +122,13 @@ npm run check:analytics-api
 npm run check:ops
 ```
 
-For release-level work, run the smoke harness against the preview URL:
+For release-level work, run both the local mocked smoke and hosted UAT E2E
+smoke. `smoke:uat` refuses to run against production and writes one fake lead to
+`contactLeadsUat` with a `uat-e2e-*` contact marker.
 
 ```bash
 COVERMATE_URL=<vercel-preview-url> npm run smoke
+npm run smoke:uat
 ```
 
 ## Reset
@@ -97,6 +140,10 @@ sites/covermate-uat
 contactLeadsUat
 ```
 
+Prefer a targeted UAT reset in Firebase Console or a one-off script that checks
+the path prefix before writing. Do not delete `admins`; the same allowlist is
+shared by production and UAT.
+
 Never delete or bulk-edit these production resources while resetting UAT:
 
 ```text
@@ -106,7 +153,8 @@ admins
 ```
 
 If the UAT site has no `sites/covermate-uat/states/live` document yet, publish
-from the Admin editor in UAT once to seed the UAT live/draft state.
+from the Admin editor in UAT once, or run `npm run uat:seed`, to seed the UAT
+live/draft state.
 
 ## Promotion Rule
 
@@ -116,7 +164,9 @@ does not mean copying UAT Firestore data over production.
 Before production deploy:
 
 - confirm `npm run check:uat` passes
-- confirm the relevant route/API smoke checks pass against the preview URL
+- confirm `npm run smoke:uat` passes against the preview URL when UAT
+  credentials are available
+- confirm the relevant mocked route/API smoke checks pass against the preview URL
 - confirm any Firestore Rules changes have already been deployed deliberately
 - confirm no fake UAT leads or draft copy are copied into production collections
 - commit, push, and production deploy only after the owner explicitly asks in

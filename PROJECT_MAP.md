@@ -50,6 +50,8 @@ template/runtime-dependency checks in the release runbook.
 - Local bundle/source check: `npm run check:bundles`
 - Needs Calculator contract check: `npm run check:needs`
 - UAT namespace contract check: `npm run check:uat`
+- Seed missing UAT live/draft CMS state: `npm run uat:seed`
+- Hosted UAT E2E smoke: `npm run smoke:uat`
 - Local smoke: `npm run smoke`
 - Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
 - Production URL: `https://covermate.vercel.app`
@@ -120,10 +122,13 @@ Detailed project documents:
 | `scripts/lib/contract-loader.mjs` | Shared regression-script loader for `covermate-contract.js`, used to keep Node checks clean without changing the repo-wide CommonJS/ESM mode. |
 | `scripts/lib/playwright.mjs` | Shared Playwright resolver for local installs and the Codex bundled runtime path. |
 | `scripts/lib/static-server.mjs` | Shared ephemeral static server for browser regression scripts. It preserves clean URL behavior and only maps owner public-page routes to `index.html` when requested by a check. |
+| `scripts/lib/uat-env.mjs` | Shared UAT smoke helper for local `.env.uat.local` loading, preview URL guards, Vercel protection-bypass headers, Firebase/gcloud credentials, and Firestore REST read/write helpers. It refuses non-UAT Firestore paths. |
 | `scripts/generate-visitor-bundle.mjs` | Generates `index.html` from `src/visitor/*`; `--check` is wired into `npm run check:bundles` to catch generated artifact drift. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
 | `scripts/uat-environment-check.mjs` | Static/runtime UAT contract check for environment resolution, production-host override, preview namespace paths, server API routing, and rules coverage. |
+| `scripts/uat-seed.mjs` | Creates missing UAT `states/live` and `states/draft` documents from bundled defaults, or intentionally overwrites them with `--force`. Can add a fake seed lead with `--lead`. |
+| `scripts/uat-e2e-smoke.mjs` | Hosted UAT smoke against `COVERMATE_UAT_URL`. It verifies the browser resolves to UAT, submits one public fake lead, reads it back from `contactLeadsUat` when credentials are available, and optionally checks private admin APIs with a Firebase admin ID token. |
 | `scripts/apply-visitor-copy-update.mjs` | Guarded legacy one-off copy migration. It embeds a past public-copy brief and exits unless `--allow-legacy-copy-update` is passed; do not use it as product source of truth without reconciling current docs, live CMS, and production behavior first. |
 | `scripts/export-copy-inventory.mjs` | Exports visitor-visible Thai/English copy to `docs/content/` for external copy review. Admin/private UI copy is excluded unless explicitly requested with a future flag. |
 | `vercel.json` | Vercel settings, clean URLs, `/api/ops/:path*` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
