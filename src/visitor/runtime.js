@@ -1445,7 +1445,7 @@ class Component extends DCLogic {
       const header = document.querySelector('header');
       if (!el) return;
       const headerBottom = header ? header.getBoundingClientRect().bottom : 72;
-      const gap = 16;
+      const gap = 22;
       const top = Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - headerBottom - gap);
       const root = document.documentElement;
       const body = document.body;
@@ -1457,7 +1457,12 @@ class Component extends DCLogic {
       if (root) root.style.scrollBehavior = rootBehavior;
       if (body) body.style.scrollBehavior = bodyBehavior;
     };
-    requestAnimationFrame(() => { aimAnchor(); setTimeout(aimAnchor, 140); setTimeout(aimAnchor, 520); });
+    requestAnimationFrame(() => {
+      aimAnchor();
+      setTimeout(aimAnchor, 140);
+      setTimeout(aimAnchor, 520);
+      setTimeout(aimAnchor, 1050);
+    });
   }
 
   applyMode() {
