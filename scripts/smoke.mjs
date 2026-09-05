@@ -1401,8 +1401,11 @@ for (const [name, width, height] of viewports) {
       await page.locator('main h1').waitFor();
       await page.waitForTimeout(1000);
       const delivered = page.waitForResponse(response => {
-        if (new URL(response.url()).pathname !== '/api/telemetry') return false;
-        return response.request().postDataJSON()?.kind === 'LCP';
+        const url = new URL(response.url());
+        const request = response.request();
+        // Chromium omits postData for native sendBeacon requests. CSP reports are not pings.
+        return url.origin === baseOrigin && url.pathname === '/api/telemetry'
+          && request.resourceType() === 'ping' && request.headers()['content-type'] === 'application/json';
       }, { timeout: 15000 });
       await page.locator('main h1').click();
       const telemetryResponse = await delivered;
