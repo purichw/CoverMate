@@ -17,6 +17,7 @@ const benignNavigationAbortPaths = new Set([
   "/covermate-firebase-config.mjs",
   "/covermate-roles.mjs",
   "/covermate-public.mjs",
+  "/assets/telemetry.js",
   "/favicon.ico",
   "/assets/fonts.css"
 ]);
@@ -1388,6 +1389,7 @@ for (const [name, width, height] of viewports) {
       { timeout: 30000 }
     );
     await page.waitForTimeout(600);
+    await page.waitForFunction(() => window.__covermateTelemetryInstalled === true, null, { timeout: 5000 });
     if (route === "/#motor" || route === "/#life") {
       const aliasTargetId = route === "/#motor" ? "insurers" : "cover";
       await page.waitForFunction((targetId) => {

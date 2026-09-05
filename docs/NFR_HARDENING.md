@@ -127,6 +127,21 @@ strict-typechecked; this is not whole-project TypeScript conversion.
 
 ## Release prerequisites and rollback
 
+Activation evidence (2026-09-05): server secrets and the Node runtime option
+are configured for Preview/Production; Firestore rules were deployed after
+the working API/site. Real hosted UAT publish/form/Admin readback passed again
+after the rules change. Production App Check accepted a real token and rejected
+missing consent before writing any record. Anonymous draft/lead reads and
+direct UAT lead writes returned 403; unauthenticated APIs returned 401.
+
+The [first GitHub backup run](https://github.com/purichw/CoverMate/actions/runs/33947107195)
+succeeded using WIF. Its downloaded encrypted artifact decrypted and verified
+26 documents locally. Daily scheduling is active. The
+[production availability run](https://github.com/purichw/CoverMate/actions/runs/33947374828)
+passed home, motor, and Admin Login. Login was included in the self-hosted React
+resource map after the enforced CSP exposed its remaining CDN dependency.
+Scheduled success is not a substitute for keeping the recovery key separately.
+
 1. Configure `COVERMATE_SERVER_CREDENTIALS`, `COVERMATE_RATE_LIMIT_SECRET`, and
    `COVERMATE_RECAPTCHA_SITE_KEY` in Vercel server environments. The credential
    must never use a public/client env prefix. Keep local `.env*` and `.tools/`
