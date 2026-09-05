@@ -19,6 +19,18 @@ assert.doesNotMatch(policy, /unpkg\.com|localhost|127\.0\.0\.1/);
 const connectSources = policy.split(';').find(d => d.trim().startsWith('connect-src ')).trim().split(/\s+/);
 assert.ok(connectSources.includes('https://content-firebaseappcheck.googleapis.com'), 'App Check token exchange must not be blocked by CSP.');
 assert.equal(headerMap.get('x-frame-options'), 'DENY');
+for (const file of ['src/visitor/shell.html', 'admin/login/index.html']) {
+  const source = read(file);
+  const marker = '<script type="__bundler/ext_resources">';
+  const start = source.indexOf(marker) + marker.length;
+  assert.ok(start >= marker.length, `${file}: resource manifest missing`);
+  const resources = JSON.parse(source.slice(start, source.indexOf('</script>', start)));
+  for (const name of ['react', 'react-dom']) {
+    const entry = resources.find(item => item.id === `https://unpkg.com/${name}@18.3.1/umd/${name}.production.min.js`);
+    assert.equal(entry?.url, `/assets/vendor/${name}-18.3.1.min.js`, `${file}: React must be self-hosted under enforced CSP`);
+  }
+  assert.ok(source.includes('resourceMap[entry.id] = entry.url'), `${file}: local resource URLs must be applied`);
+}
 
 const adminHeaders = headers.find((entry) => entry.source === "/admin/(.*)");
 assert.ok(adminHeaders, "Admin routes must carry noindex headers.");

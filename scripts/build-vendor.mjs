@@ -10,7 +10,7 @@ for (const name of ['react', 'react-dom']) {
   fs.copyFileSync(path.join(root, 'umd', `${name}.production.min.js`), `assets/vendor/${name}-${version}.min.js`);
   fs.copyFileSync(path.join(root, 'LICENSE'), `assets/vendor/${name}-LICENSE.txt`);
 }
-const file = 'src/visitor/shell.html';
+for (const file of ['src/visitor/shell.html', 'admin/login/index.html']) {
 const source = fs.readFileSync(file, 'utf8');
 const selector = '<script type="__bundler/ext_resources">';
 const start = source.indexOf(selector) + selector.length;
@@ -29,4 +29,5 @@ for (const resource of resources) {
 }
 const next = source.slice(0, start) + JSON.stringify(resources) + source.slice(end);
 if (next !== source) fs.writeFileSync(file, next);
+}
 console.log('Vendored pinned React UMD assets and licences.');
