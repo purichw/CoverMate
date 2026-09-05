@@ -13,12 +13,12 @@ assert.equal(headerMap.get("x-content-type-options"), "nosniff");
 assert.equal(headerMap.get("referrer-policy"), "strict-origin-when-cross-origin");
 assert.match(headerMap.get("permissions-policy") || "", /camera=\(\), microphone=\(\), geolocation=\(\), payment=\(\)/);
 assert.match(headerMap.get("strict-transport-security") || "", /max-age=63072000/);
-assert.match(headerMap.get("content-security-policy-report-only") || "", /frame-ancestors 'none'/);
-assert.doesNotMatch(
-  headerMap.get("content-security-policy") || "",
-  /unsafe-inline|blob:/,
-  "Do not add an enforced CSP with the current exported inline/blob bundle requirements."
-);
+const policy = headerMap.get('content-security-policy') || '';
+for (const directive of ["default-src 'self'", "object-src 'none'", "frame-ancestors 'none'", "base-uri 'self'", 'report-uri /api/telemetry']) assert.ok(policy.includes(directive));
+assert.doesNotMatch(policy, /unpkg\.com|localhost|127\.0\.0\.1/);
+const connectSources = policy.split(';').find(d => d.trim().startsWith('connect-src ')).trim().split(/\s+/);
+assert.ok(connectSources.includes('https://content-firebaseappcheck.googleapis.com'), 'App Check token exchange must not be blocked by CSP.');
+assert.equal(headerMap.get('x-frame-options'), 'DENY');
 
 const adminHeaders = headers.find((entry) => entry.source === "/admin/(.*)");
 assert.ok(adminHeaders, "Admin routes must carry noindex headers.");
@@ -35,19 +35,24 @@ assert.match(rules, /function isUatOnlyAdmin\(\)/, "Rules must keep UAT-only adm
 assert.match(rules, /allow write: if false;/, "Admin allowlist writes must stay server/manual only.");
 assert.match(rules, /match \/contactLeads\/\{leadId\}/, "Production lead collection rules must exist.");
 assert.match(rules, /match \/contactLeadsUat\/\{leadId\}/, "UAT lead collection rules must exist.");
-assert.match(rules, /allow create: if validLeadCreate\(\) \|\| canWriteOpsRecords\(false\);/);
-assert.match(rules, /allow create: if validLeadCreate\(\) \|\| canWriteOpsRecords\(true\);/);
-assert.match(rules, /request\.resource\.data\.consent == true/);
-assert.match(rules, /request\.resource\.data\.createdAt == request\.time/);
-assert.match(rules, /request\.resource\.data\.updatedAt == request\.time/);
-assert.match(rules, /request\.resource\.data\.contact\.size\(\) > 0/);
+assert.match(rules, /allow create: if canWriteOpsRecords\(false\);/);
+assert.match(rules, /allow create: if canWriteOpsRecords\(true\);/);
 assert.match(rules, /allow delete: if false;/, "Lead deletion must stay blocked in client rules.");
 
 const firebaseClient = read("covermate-firebase.js");
 assert.doesNotMatch(firebaseClient, /sendBeacon\([^)]*(name|phone|email|lineId|contact|message)/i);
 assert.doesNotMatch(firebaseClient, /data:image\//, "Client should not persist base64/data-image payloads.");
 assert.match(firebaseClient, /submitContactLead/, "Public lead submission helper must remain present.");
-assert.match(firebaseClient, /COVERMATE_ENVIRONMENT\.leadCollection/, "Client lead writes must use the shared environment collection.");
+const leads = read('api/leads.js');
+assert.match(leads, /body\.consent !== true/);
+assert.match(leads, /!result\.contact/);
+assert.match(leads, /createdAt: FieldValue\.serverTimestamp\(\)/);
+assert.match(leads, /updatedAt: FieldValue\.serverTimestamp\(\)/);
+assert.match(leads, /verifyToken\(String\(token\)\)/);
+assert.match(leads, /db\.runTransaction/);
+assert.match(leads, /env\.leadCollection/, 'Server lead writes must use the shared environment collection.');
+assert.match(firebaseClient, /content-conflict/);
+assert.match(firebaseClient, /runTransaction/);
 
 const analytics = read("covermate-analytics.js");
 assert.match(analytics, /G-5TF3C235EF/, "GA4 measurement ID must stay explicit.");

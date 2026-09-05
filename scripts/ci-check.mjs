@@ -3,6 +3,10 @@ import { spawn } from "node:child_process";
 import { startStaticServer } from "./lib/static-server.mjs";
 
 const commands = [
+  ["node", ["scripts/build-vendor.mjs"]],
+  ["npm", ["run", "build:telemetry"]],
+  ["npm", ["run", "check:types"]],
+  ["npm", ["run", "check:nfr"]],
   ["npm", ["run", "build:visitor"]],
   ["npm", ["run", "check:bundles"]],
   ["npm", ["run", "check:contracts"]],

@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-08-30
+Last updated: 2026-09-05
 
 ## Production
 
@@ -140,8 +140,8 @@ Minimum checks:
 - policy review, claim help, renewal reminders, guides, fee transparency, and
   privacy/PDPA sections render when present in the live schema
 - contact form enquiry-type and coverage selects render
-- renewal reminder form renders, validates required contact, and writes only
-  through the active runtime Firestore lead collection
+- renewal reminder form renders, validates required contact, and writes through
+  the App Check-protected lead API into the active environment's collection
 - contact form lead-submit code is present and does not send personal contact
   details to GA event parameters
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
@@ -249,8 +249,8 @@ Minimum checks:
   `scripts/lib/contract-loader.mjs`, `admin/session.js`,
   `admin/analytics-data.js`, and `scripts/validate-bundles.mjs` parse as
   source-authored refactor helpers
-- Vercel security headers are present in `vercel.json`; CSP remains Report-Only
-  until exported inline/blob bundle requirements are removed
+- Vercel security headers are present in `vercel.json`; CSP is enforced with
+  documented inline/eval/blob exceptions required by the exported runtime
 - no horizontal overflow on covered viewports
 - admin controls meet mobile touch-target expectations on covered viewports
 
@@ -319,16 +319,22 @@ The expression should return `null`.
 Only run this section after the user explicitly approves commit, push, and
 deploy in the current task.
 
-Deploy production:
+For the server-side lead migration, configure Vercel server secrets and verify
+real App Check submission on a registered preview hostname first. See
+[NFR_HARDENING.md](NFR_HARDENING.md) for backup and hosted verification.
+
+Deploy production in this order:
 
 ```bash
-firebase deploy --only firestore:rules
 vercel deploy --prod --yes
+firebase deploy --only firestore:rules --project covermate-purich
 ```
 
-When a change touches public lead payloads or `firestore.rules`, deploy the
-Firestore rules before the Vercel production deploy so the browser payload and
-remote validator stay in lockstep.
+The candidate form uses the server API; the old form writes directly to
+Firestore. Deploy and verify the candidate API/site before denying anonymous
+direct writes with the new rules. Re-run the hosted UAT publish/form test after
+the rules deploy. Existing tabs may need a refresh. A rollback must restore
+compatible app and rules together, never CMS content automatically.
 
 Inspect production deployment:
 

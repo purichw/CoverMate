@@ -1,12 +1,9 @@
 const crypto = require("node:crypto");
+const { fetchWithTimeout, reportFailure } = require('../server/http.cjs');
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
-const PROJECT_ID = "covermate-purich";
-const FIREBASE_API_KEY = "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM";
-const DATABASE = "(default)";
-const FIRESTORE_ROOT = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/${DATABASE}/documents`;
-const IDENTITY_ROOT = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`;
+const { FIRESTORE_ROOT, IDENTITY_ROOT } = require('../server/firebase-rest.cjs');
 const OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GA_DATA_ROOT = "https://analyticsdata.googleapis.com/v1beta";
 const GA_SCOPE = "https://www.googleapis.com/auth/analytics.readonly";
@@ -23,6 +20,7 @@ const ROLE_ALIASES = {
   ops: "ops",
   operations: "ops",
   readonly: "readonly",
+  "read-only": "readonly",
   read: "readonly"
 };
 
@@ -71,6 +69,7 @@ module.exports = async function analyticsApi(req, res) {
     return send(res, 200, payload);
   } catch (error) {
     const status = Number(error.status || 500);
+    if (status >= 500) reportFailure('analytics', error);
     return send(res, status, {
       error: error.code || (status === 500 ? "server_error" : "request_error"),
       message: status === 500 ? "Analytics API failed." : error.message
@@ -98,7 +97,7 @@ async function authorize(req, environment) {
     throw httpError(403, "forbidden", "This UAT-only admin account cannot access production analytics.");
   }
 
-  const role = normalizeRole(admin.role || "owner");
+  const role = normalizeRole(admin.role);
   if (!VIEW_ROLES.has(role)) {
     throw httpError(403, "forbidden", "This role cannot view analytics.");
   }
@@ -419,7 +418,7 @@ async function googleAccessToken(config) {
   const unsigned = `${header}.${claim}`;
   const signature = crypto.createSign("RSA-SHA256").update(unsigned).sign(config.privateKey);
   const assertion = `${unsigned}.${signature.toString("base64url")}`;
-  const response = await fetch(OAUTH_TOKEN_URL, {
+  const response = await fetchWithTimeout(OAUTH_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -440,7 +439,7 @@ async function googleAccessToken(config) {
 }
 
 async function runReport(propertyId, accessToken, body) {
-  const response = await fetch(`${GA_DATA_ROOT}/properties/${propertyId}:runReport`, {
+  const response = await fetchWithTimeout(`${GA_DATA_ROOT}/properties/${propertyId}:runReport`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -508,7 +507,7 @@ function bearerToken(req) {
 }
 
 async function identityLookup(token) {
-  const response = await fetch(IDENTITY_ROOT, {
+  const response = await fetchWithTimeout(IDENTITY_ROOT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken: token })
@@ -521,7 +520,7 @@ async function identityLookup(token) {
 }
 
 async function firestoreGet(path, token) {
-  const response = await fetch(`${FIRESTORE_ROOT}/${path}`, {
+  const response = await fetchWithTimeout(`${FIRESTORE_ROOT}/${path}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   const payload = await response.json().catch(() => ({}));
@@ -553,7 +552,8 @@ function fromValue(value) {
 }
 
 function normalizeRole(value) {
-  return ROLE_ALIASES[clean(value, 40).toLowerCase().replace(/[^a-z]/g, "")] || "owner";
+  const key = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return Object.hasOwn(ROLE_ALIASES, key) ? ROLE_ALIASES[key] : "none";
 }
 
 function clean(value, max = 600) {

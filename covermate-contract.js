@@ -176,7 +176,7 @@ export function buildAdminSession(user = {}, admin = {}, now = Date.now()) {
     email: user.email || "",
     name: user.displayName || "",
     pic: user.photoURL || "",
-    role: admin.role || "admin",
+    role: admin.role || "none",
     ts: now,
     exp: now + SESSION_MS
   };

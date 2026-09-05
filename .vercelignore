@@ -1,0 +1,8 @@
+.tools/
+.env*
+uat-results/
+*-debug.log
+docs/
+scripts/
+firebase.emulators.json
+tsconfig.contracts.json

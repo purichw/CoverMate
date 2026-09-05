@@ -28,6 +28,8 @@ export function resolveStaticFileCandidates(urlPath, options = {}) {
   const fallbackFile = options.fallbackFile || "index.html";
   let pathname = decodeURIComponent(urlPath || "/").replace(/^\/+/, "");
   pathname = pathname.replace(/^"+|"+$/g, "");
+  if (pathname === 'admin/.image-slots.state.json') pathname = '.image-slots.state.json';
+  if (pathname !== '.image-slots.state.json' && pathname.split('/').some(part => part.startsWith('.'))) return [];
   const publicRoutesToRoot = options.publicRoutesToRoot !== false;
   if (
     !pathname ||
@@ -58,6 +60,8 @@ export function startStaticServer(options = {}) {
     }));
   const server = http.createServer(async (req, res) => {
     try {
+      if (options.headers) for (const [key, value] of Object.entries(options.headers)) res.setHeader(key, value);
+      if (options.onRequest && await options.onRequest(req, res)) return;
       const url = new URL(req.url || "/", `http://${host}`);
       const candidates = createFileCandidates(url.pathname);
       if (!candidates.length) {
@@ -84,7 +88,7 @@ export function startStaticServer(options = {}) {
   });
 
   return new Promise((resolve) => {
-    server.listen(0, host, () => {
+    server.listen(options.port || 0, host, () => {
       const address = server.address();
       resolve({ server, baseUrl: `http://${host}:${address.port}` });
     });

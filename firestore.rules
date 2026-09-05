@@ -13,7 +13,8 @@ service cloud.firestore {
     function isAdmin() {
       return signedIn()
         && exists(adminPath())
-        && get(adminPath()).data.active == true;
+        && get(adminPath()).data.active == true
+        && get(adminPath()).data.get('role', '') in ['owner', 'admin', 'administrator', 'advisor', 'adviser', 'ops', 'operations', 'readonly', 'read-only', 'read'];
     }
 
     function adminRole() {
@@ -21,7 +22,7 @@ service cloud.firestore {
     }
 
     function isUatOnlyAdmin() {
-      return isAdmin() && get(adminPath()).data.uatOnly == true;
+      return isAdmin() && get(adminPath()).data.get('uatOnly', false) == true;
     }
 
     function canAccessSite(siteId) {
@@ -37,46 +38,17 @@ service cloud.firestore {
         && adminRole() in ["owner", "admin", "administrator", "advisor", "adviser", "ops", "operations"];
     }
 
+    function canEditContent(siteId) {
+      return canAccessSite(siteId) && adminRole() in ['owner', 'admin', 'administrator'];
+    }
+
+    function validRevision() {
+      return request.resource.data.revision is int
+        && request.resource.data.revision == resource.data.get('revision', 0) + 1;
+    }
+
     function validSiteId(siteId) {
       return siteId in ["covermate", "covermate-uat"];
-    }
-
-    function validLeadString(value, max) {
-      return value is string && value.size() <= max;
-    }
-
-    function validLeadCreate() {
-      return request.resource.data.keys().hasOnly([
-          "name",
-          "contact",
-          "topic",
-          "qtype",
-          "coverage",
-          "consent",
-          "language",
-          "summary",
-          "sourcePath",
-          "status",
-          "read",
-          "createdAt",
-          "updatedAt"
-        ])
-        && validLeadString(request.resource.data.name, 120)
-        && validLeadString(request.resource.data.contact, 160)
-        && request.resource.data.contact.size() > 0
-        && validLeadString(request.resource.data.topic, 2000)
-        && validLeadString(request.resource.data.qtype, 40)
-        && request.resource.data.qtype in ["", "quote", "compare", "general", "review", "claim"]
-        && validLeadString(request.resource.data.coverage, 40)
-        && request.resource.data.coverage in ["", "life", "health", "motor", "accident", "savings", "unsure"]
-        && request.resource.data.consent == true
-        && request.resource.data.language in ["th", "en"]
-        && validLeadString(request.resource.data.summary, 1200)
-        && validLeadString(request.resource.data.sourcePath, 220)
-        && request.resource.data.status == "new"
-        && request.resource.data.read == false
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time;
     }
 
     match /admins/{uid} {
@@ -86,33 +58,38 @@ service cloud.firestore {
 
     match /sites/{siteId}/states/live {
       allow read: if validSiteId(siteId);
-      allow write: if validSiteId(siteId) && canAccessSite(siteId);
+      allow create: if validSiteId(siteId) && canEditContent(siteId) && request.resource.data.revision == 1;
+      allow update: if validSiteId(siteId) && canEditContent(siteId) && validRevision();
     }
 
     match /sites/{siteId}/states/draft {
-      allow read, write: if validSiteId(siteId) && canAccessSite(siteId);
+      allow read: if validSiteId(siteId) && canAccessSite(siteId);
+      allow create: if validSiteId(siteId) && canEditContent(siteId) && request.resource.data.revision == 1;
+      allow update: if validSiteId(siteId) && canEditContent(siteId) && validRevision();
     }
 
     match /sites/{siteId}/versions/{versionId} {
-      allow read, write: if validSiteId(siteId) && canAccessSite(siteId);
+      allow read: if validSiteId(siteId) && canAccessSite(siteId);
+      allow create: if validSiteId(siteId) && canEditContent(siteId);
     }
 
     match /contactLeads/{leadId} {
-      allow create: if validLeadCreate() || canWriteOpsRecords(false);
+      allow create: if canWriteOpsRecords(false);
       allow read: if canReadOpsRecords(false);
       allow update: if canWriteOpsRecords(false);
       allow delete: if false;
     }
 
     match /contactLeadsUat/{leadId} {
-      allow create: if validLeadCreate() || canWriteOpsRecords(true);
+      allow create: if canWriteOpsRecords(true);
       allow read: if canReadOpsRecords(true);
       allow update: if canWriteOpsRecords(true);
       allow delete: if false;
     }
 
     match /sites/{siteId}/analytics/{analyticsDoc} {
-      allow read, write: if validSiteId(siteId) && canAccessSite(siteId);
+      allow read: if validSiteId(siteId) && canAccessSite(siteId);
+      allow write: if validSiteId(siteId) && canEditContent(siteId);
     }
 
     match /{document=**} {

@@ -1,12 +1,9 @@
 const crypto = require("node:crypto");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const { fetchWithTimeout, reportFailure, readBody } = require('../server/http.cjs');
 
-const PROJECT_ID = "covermate-purich";
-const FIREBASE_API_KEY = "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM";
-const DATABASE = "(default)";
-const FIRESTORE_ROOT = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/${DATABASE}/documents`;
-const IDENTITY_ROOT = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`;
+const { PROJECT_ID, FIRESTORE_ROOT, IDENTITY_ROOT } = require('../server/firebase-rest.cjs');
 
 const MAX_LIMIT = 200;
 const STATUSES = new Set(["new", "contacting", "contacted", "consultation", "quotation", "considering", "converted", "later", "notinterested", "lost"]);
@@ -22,6 +19,7 @@ const ROLE_ALIASES = {
   ops: "ops",
   operations: "ops",
   readonly: "readonly",
+  "read-only": "readonly",
   read: "readonly"
 };
 
@@ -86,6 +84,7 @@ module.exports = async function opsApi(req, res) {
     return send(res, 404, { error: "not_found", message: "Unknown operations endpoint." });
   } catch (error) {
     const status = Number(error.status || 500);
+    if (status >= 500) reportFailure('ops', error);
     return send(res, status, {
       error: error.code || (status === 500 ? "server_error" : "request_error"),
       message: status === 500 ? "Operations API failed." : error.message,
@@ -152,7 +151,7 @@ async function authorize(req, permission, environment) {
     uid,
     email: account.email || "",
     name: stringValue(admin.name) || account.displayName || account.email || "CoverMate admin",
-    role: normalizeRole(admin.role || "owner"),
+    role: normalizeRole(admin.role),
     token,
     uatOnly: admin.uatOnly === true
   };
@@ -174,7 +173,7 @@ function bearerToken(req) {
 }
 
 async function identityLookup(token) {
-  const response = await fetch(IDENTITY_ROOT, {
+  const response = await fetchWithTimeout(IDENTITY_ROOT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken: token })
@@ -223,7 +222,7 @@ async function createLead(req, actor) {
   if (!contact) throw validationError("phone", "At least one contact channel is required.");
   if (body.consent !== true) throw validationError("consent", "PDPA consent is required.");
 
-  await firestoreCommit(actor.token, [
+  const writes = [
     {
       update: {
         name: docName(`${leadCollectionFor(actor)}/${id}`),
@@ -247,7 +246,7 @@ async function createLead(req, actor) {
         { fieldPath: "updatedAt", setToServerValue: "REQUEST_TIME" }
       ]
     }
-  ]);
+  ];
 
   const audit = auditEntry("Lead", `Lead ${displayId} - ${name}`, "", "Created", actor, now);
   const timeline = [timelineEntry("created", "Lead created", "", actor, now)];
@@ -275,10 +274,8 @@ async function createLead(req, actor) {
     audit: [audit]
   };
 
-  await updateLeadDocument(id, actor, {
-    ops,
-    timeline
-  });
+  Object.assign(writes[0].update.fields, toFields({ ops, timeline }));
+  await firestoreCommit(actor.token, writes);
 
   const lead = await getLead(id, actor);
   return { lead, taskId: `${id}:firstContact`, audit };
@@ -287,6 +284,7 @@ async function createLead(req, actor) {
 async function patchLead(id, req, actor) {
   const body = await readJson(req);
   const doc = await requireLeadDoc(id, actor);
+  checkClientRevision(req, doc);
   const data = docFields(doc);
   const ops = objectValue(data.ops);
   const now = new Date().toISOString();
@@ -319,7 +317,7 @@ async function patchLead(id, req, actor) {
   ops.audit = auditItems.concat(arrayValue(ops.audit)).slice(0, 120);
   updates.ops = ops;
   updates.timeline = auditItems.map((entry) => timelineEntry("status", entry.kind, `${entry.from} -> ${entry.to}`, actor, now)).concat(arrayValue(data.timeline)).slice(0, 120);
-  await updateLeadDocument(id, actor, updates);
+  await updateLeadDocument(id, actor, updates, doc.updateTime);
   return { audit: auditItems[0], lead: await getLead(id, actor) };
 }
 
@@ -329,6 +327,7 @@ async function updateLeadStatus(id, req, actor) {
   if (!STATUSES.has(next)) throw validationError("status", "Unknown lead status.");
 
   const doc = await requireLeadDoc(id, actor);
+  checkClientRevision(req, doc);
   const data = docFields(doc);
   const previous = normalizeStatus(data.status);
   const ops = objectValue(data.ops);
@@ -343,7 +342,7 @@ async function updateLeadStatus(id, req, actor) {
     read: next !== "new",
     ops,
     timeline: [timelineEntry("status", "Status changed", `${statusLabel(previous)} -> ${statusLabel(next)}`, actor, now)].concat(arrayValue(data.timeline)).slice(0, 120)
-  });
+  }, doc.updateTime);
 
   return { audit, lead: await getLead(id, actor) };
 }
@@ -354,6 +353,7 @@ async function addLeadNote(id, req, actor) {
   if (!note) throw validationError("note", "Note is required.");
 
   const doc = await requireLeadDoc(id, actor);
+  checkClientRevision(req, doc);
   const data = docFields(doc);
   const ops = objectValue(data.ops);
   const now = new Date().toISOString();
@@ -363,7 +363,7 @@ async function addLeadNote(id, req, actor) {
   await updateLeadDocument(id, actor, {
     ops,
     timeline: [timelineEntry("note", "Internal note", note, actor, now)].concat(arrayValue(data.timeline)).slice(0, 120)
-  });
+  }, doc.updateTime);
 
   return { audit, lead: await getLead(id, actor) };
 }
@@ -385,6 +385,7 @@ async function patchTask(taskId, req, actor) {
   if (!parsed) throw validationError("id", "Unknown task id.");
 
   const doc = await requireLeadDoc(parsed.leadId, actor);
+  checkClientRevision(req, doc);
   const data = docFields(doc);
   const ops = objectValue(data.ops);
   ops.tasks = objectValue(ops.tasks);
@@ -399,7 +400,7 @@ async function patchTask(taskId, req, actor) {
   await updateLeadDocument(parsed.leadId, actor, {
     ops,
     timeline: [timelineEntry("note", body.completed ? "Task completed" : "Task reopened", task.title || taskId, actor, task.updatedAt)].concat(arrayValue(data.timeline)).slice(0, 120)
-  });
+  }, doc.updateTime);
   return { audit, taskId };
 }
 
@@ -435,7 +436,7 @@ async function requireLeadDoc(id, actor) {
   return doc;
 }
 
-async function updateLeadDocument(id, actor, data) {
+async function updateLeadDocument(id, actor, data, expectedUpdateTime) {
   const payload = {
     writes: [
       {
@@ -444,7 +445,7 @@ async function updateLeadDocument(id, actor, data) {
           fields: toFields(data)
         },
         updateMask: { fieldPaths: Object.keys(data) },
-        currentDocument: { exists: true },
+        currentDocument: expectedUpdateTime ? { updateTime: expectedUpdateTime } : { exists: true },
         updateTransforms: [{ fieldPath: "updatedAt", setToServerValue: "REQUEST_TIME" }]
       }
     ]
@@ -453,7 +454,7 @@ async function updateLeadDocument(id, actor, data) {
 }
 
 async function firestoreGet(path, token) {
-  const response = await fetch(`${FIRESTORE_ROOT}/${path}`, {
+  const response = await fetchWithTimeout(`${FIRESTORE_ROOT}/${path}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   const payload = await response.json().catch(() => ({}));
@@ -462,7 +463,7 @@ async function firestoreGet(path, token) {
 }
 
 async function firestoreRunQuery(token, query) {
-  const response = await fetch(`${FIRESTORE_ROOT}:runQuery`, {
+  const response = await fetchWithTimeout(`${FIRESTORE_ROOT}:runQuery`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -476,7 +477,7 @@ async function firestoreRunQuery(token, query) {
 }
 
 async function firestoreCommit(token, writes) {
-  const response = await fetch(`${FIRESTORE_ROOT}:commit`, {
+  const response = await fetchWithTimeout(`${FIRESTORE_ROOT}:commit`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -485,6 +486,7 @@ async function firestoreCommit(token, writes) {
     body: JSON.stringify({ writes })
   });
   const payload = await response.json().catch(() => ({}));
+  if (!response.ok && ['FAILED_PRECONDITION', 'ABORTED'].includes(payload.error && payload.error.status)) throw httpError(409, 'edit_conflict', 'This record changed in another session. Refresh it before trying again.');
   if (!response.ok) throw httpError(response.status, "firestore_error", payload.error && payload.error.message || "Firestore write failed.");
   return payload;
 }
@@ -504,6 +506,7 @@ function normalizeLead(doc) {
   const audit = arrayValue(ops.audit);
   return {
     id,
+    revision: doc.updateTime,
     displayId,
     name: clean(data.name, 120) || "Unnamed lead",
     phone,
@@ -567,6 +570,7 @@ function taskFromLead(lead, kind, input) {
   return {
     id: `${lead.id}:${kind}`,
     leadId: lead.id,
+    revision: lead.revision,
     kind,
     title: input.title,
     dueAt: timestampIso(input.dueAt),
@@ -590,12 +594,12 @@ function parseTaskId(taskId) {
 }
 
 async function readJson(req) {
-  if (req.body && typeof req.body === "object") return req.body;
-  if (typeof req.body === "string") return JSON.parse(req.body || "{}");
-  const chunks = [];
-  for await (const chunk of req) chunks.push(Buffer.from(chunk));
-  const raw = Buffer.concat(chunks).toString("utf8");
-  return raw ? JSON.parse(raw) : {};
+  return readBody(req);
+}
+
+function checkClientRevision(req, doc) {
+  const expected = req.headers['if-match'];
+  if (expected && expected !== doc.updateTime) throw httpError(409, 'edit_conflict', 'This record changed in another session. Your input is unchanged; refresh the record before retrying.');
 }
 
 function send(res, status, payload) {
@@ -643,7 +647,7 @@ function randomDocId() {
 }
 
 function docName(path) {
-  return `projects/${PROJECT_ID}/databases/${DATABASE}/documents/${path}`;
+  return `projects/${PROJECT_ID}/databases/(default)/documents/${path}`;
 }
 
 function docFields(doc) {
@@ -698,7 +702,8 @@ function clean(value, max = 600) {
 }
 
 function normalizeRole(value) {
-  return ROLE_ALIASES[clean(value, 40).toLowerCase().replace(/[^a-z]/g, "")] || "owner";
+  const key = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return Object.hasOwn(ROLE_ALIASES, key) ? ROLE_ALIASES[key] : "none";
 }
 
 function normalizeStatus(value) {

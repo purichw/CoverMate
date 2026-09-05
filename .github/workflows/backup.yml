@@ -1,0 +1,32 @@
+name: Encrypted Firestore backup
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 20 * * *'
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --omit=dev
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.COVERMATE_BACKUP_WIF_PROVIDER }}
+          service_account: covermate-backup@covermate-purich.iam.gserviceaccount.com
+      - run: node scripts/backup.mjs create uat-results/backup.json.gz.enc
+        env:
+          COVERMATE_BACKUP_KEY: ${{ secrets.COVERMATE_BACKUP_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-firestore-${{ github.run_id }}
+          path: uat-results/backup.json.gz.enc
+          retention-days: 14
+          if-no-files-found: error

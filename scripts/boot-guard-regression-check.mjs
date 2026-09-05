@@ -16,7 +16,7 @@ function firebaseMock() {
       hydrateLocalContent: async () => null
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
-    export {};
+    export const hydrateLocalContent = async () => null;
   `;
 }
 
@@ -70,7 +70,7 @@ async function main() {
         );
       }
 
-      await page.route("**/covermate-firebase.js", async (route) => {
+      await page.route("**/covermate-public.mjs", async (route) => {
         await delay(firebaseDelayMs);
         if (remoteUrl) {
           await route.continue();

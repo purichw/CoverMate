@@ -3,3 +3,6 @@
 .DS_Store
 .env*.local
 uat-results/
+node_modules/
+.tools/
+*-debug.log

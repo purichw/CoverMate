@@ -1,0 +1,20 @@
+name: CoverMate production availability
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 */6 * * *'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/uptime-check.mjs

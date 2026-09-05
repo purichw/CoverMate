@@ -1,6 +1,6 @@
 # CoverMate Architecture
 
-Last updated: 2026-08-30
+Last updated: 2026-09-05 (candidate implementation; see NFR_HARDENING.md for deployment status)
 
 ## Current Shape
 
@@ -13,8 +13,8 @@ The current visitor bundle is maintained against the product specs, repository d
 
 Downloaded offline prototype HTML is not automatically portable. Some exports can depend on sidecar runtime files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw template placeholders like `{{ brandName }}`. Treat those files as historical references until they are compiled into self-contained HTML or shipped with a complete dependency folder.
 
-There is now one narrow backend API in this repo: `/api/ops/*`, deployed as a
-Vercel serverless function for the private Operations Portal. Admin identity is
+The backend APIs are `/api/ops/*`, `/api/analytics`, `/api/leads`, and
+`/api/telemetry`, deployed as Vercel serverless functions. Admin identity is
 backed by Firebase Auth plus Firestore `admins/{uid}` allowlist checks, and CMS
 content is Firestore-first through the active runtime namespace. The static
 bundle keeps browser-local caches only as last-known fallback state.
@@ -34,7 +34,8 @@ flowchart TD
   Launcher --> Contract
   Analytics --> Contract
   Public --> Live["Firestore: runtime states/live"]
-  Public --> Leads["Firestore: runtime lead collection"]
+  Public --> LeadAPI["/api/leads: App Check, validation, limits, idempotency"]
+  LeadAPI --> Leads["Firestore: runtime lead collection"]
   Public --> Store["localStorage fallback cache"]
   PublicAdmin --> Draft["Firestore: states/draft"]
   PublicAdmin --> Versions["Firestore: versions/*"]
@@ -87,10 +88,17 @@ must stay out of the header nav and sitemap.
 checks Firestore `admins/{uid}` before writing the browser-local
 `covermate-admin-session` cache and redirecting to `/admin`.
 
-`covermate-firebase.js` owns Firebase SDK loading, Google popup sign-in,
+`covermate-public.mjs` owns lightweight REST hydration of published CMS content
+and lead submissions through `/api/leads`. Firebase Auth and Firestore SDKs are
+not loaded for public first paint. App Check is loaded when a visitor submits.
+`covermate-firebase-config.mjs` owns public Firebase identifiers and the strictly
+loopback-only emulator switch. `covermate-roles.mjs` rejects unknown roles.
+
+`covermate-firebase.js` owns admin Firebase SDK loading, Google popup sign-in,
 Firestore admin allowlist checks, Firebase sign-out, live/draft hydration,
-draft saves, publish/restore writes, version-history reads, public lead
-submission, and admin lead reads. Firestore paths come from
+revision-checked draft saves, atomic publish/restore writes, version-history
+reads, a compatibility delegate for lead submission, and admin lead reads.
+Firestore paths come from
 `covermate-environment.mjs`: production uses `sites/covermate/*` and
 `contactLeads/*`, while UAT uses `sites/covermate-uat/*` and
 `contactLeadsUat/*`. The visitor page loads only the live CMS state; owner

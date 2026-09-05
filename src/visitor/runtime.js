@@ -598,6 +598,16 @@ class Component extends DCLogic {
   readJSON(k) { try { const r = window.localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
   writeJSON(k, v) { try { window.localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* quota */ } }
 
+  setLanguage(lang) {
+    this.setState({ lang: lang === 'en' ? 'en' : 'th' }, () => {
+      this.syncSeo();
+      requestAnimationFrame(() => {
+        this.applyText();
+        if (this.state.editMode) this.enableEdit();
+      });
+    });
+  }
+
   companyLogoCount(config) {
     const cfg = config && config.sections ? config : ((this.state && this.state.site && this.state.site.sections) ? this.state.site : DEFAULTS);
     const sec = ((cfg.sections || []).find(s => s && (s.id === 'insurers' || s.type === 'insurers'))) || {};
@@ -1819,7 +1829,8 @@ class Component extends DCLogic {
     const th = S.lang === 'th';
     const lk = th ? 'th' : 'en';
     const site = S.site;
-    const A = ACCENTS[site.theme.accent] || ACCENTS.terracotta;
+    const A = { ...(ACCENTS[site.theme.accent] || ACCENTS.terracotta) };
+    A.action = site.theme.accent === 'sage' ? 'var(--color-accent-2-700)' : site.theme.accent === 'ink' ? A.base : 'var(--color-accent-700)';
     const t = (o) => (o && (o[lk] !== undefined ? o[lk] : o.th)) || '';
 
     const routePage = S.routePage === 'motor' ? 'motor' : 'home';
@@ -2012,7 +2023,7 @@ class Component extends DCLogic {
     const sitList = situationKeys.map(k => ({
       key: k, on: activeSituationKey === k, paths: ICONS[situationConfig[k].icon] || ICONS.check,
       label: th ? situationConfig[k].th : situationConfig[k].en,
-      bg: activeSituationKey === k ? A.base : fitPal.card,
+      bg: activeSituationKey === k ? A.action : fitPal.card,
       fg: activeSituationKey === k ? A.on : fitPal.cardFg,
       pick: () => this.setState({ situation: k })
     }));
@@ -2292,10 +2303,11 @@ class Component extends DCLogic {
 
     return {
       th: th, en: !th,
-      A_base: A.base, A_deep: A.deep, A_mid: A.mid, A_soft: A.soft, A_text: A.text, A_light: A.light, A_on: A.on,
-      thBg: th ? A.base : 'transparent', thFg: th ? A.on : 'var(--color-neutral-700)',
-      enBg: !th ? A.base : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
-      setTH: () => this.setState({ lang: 'th' }), setEN: () => this.setState({ lang: 'en' }),
+      A_base: A.base, A_action: A.action, A_deep: A.deep, A_mid: A.mid, A_soft: A.soft, A_text: A.text, A_light: A.light, A_on: A.on,
+      thBg: th ? A.action : 'transparent', thFg: th ? A.on : 'var(--color-neutral-700)',
+      enBg: !th ? A.action : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
+      callLabel: th ? 'โทรหา CoverMate' : 'Call CoverMate',
+      setTH: () => this.setLanguage('th'), setEN: () => this.setLanguage('en'),
 
       advisorLogoPath: site.brand.advisorLogo || DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png',
       advisorLogo: assetURL(site.brand.advisorLogo || DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png'),
@@ -2400,8 +2412,7 @@ class Component extends DCLogic {
         }
         this.setState({ leadSubmitting: true, leadError: '', sent: false });
         try {
-          await import(window.location.origin + '/covermate-firebase.js');
-          const cm = window.CoverMateFirebase;
+          const cm = await import(window.location.origin + '/covermate-public.mjs');
           if (!cm || !cm.submitContactLead) throw new Error('Lead service unavailable.');
           await cm.submitContactLead(Object.assign({}, curForm, { language: langNow, summary: summary, sourcePath: window.location.pathname + window.location.search + window.location.hash }));
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
@@ -2446,8 +2457,7 @@ class Component extends DCLogic {
           : 'Renewal reminder: ' + kindLabel + ' · expires in ' + monthLabel + ' · remind 60 days ahead with a fresh comparison';
         this.setState({ renewSubmitting: true, renewError: '', renewSent: false });
         try {
-          await import(window.location.origin + '/covermate-firebase.js');
-          const cm = window.CoverMateFirebase;
+          const cm = await import(window.location.origin + '/covermate-public.mjs');
           if (!cm || !cm.submitContactLead) throw new Error('Lead service unavailable.');
           await cm.submitContactLead({
             name: '', contact: r.contact, topic: renewSummary,
@@ -2535,7 +2545,7 @@ class Component extends DCLogic {
       histList: histList, hasHist: histList.length > 0,
       tabVersions: S.tab === 'versions',
       goVersions: () => this.setState({ tab: 'versions' }),
-      tabVerBg: S.tab === 'versions' ? A.base : 'transparent', tabVerFg: S.tab === 'versions' ? A.on : 'var(--color-neutral-700)',
+      tabVerBg: S.tab === 'versions' ? A.action : 'transparent', tabVerFg: S.tab === 'versions' ? A.on : 'var(--color-neutral-700)',
       closeAdmin: () => {
         const ownerToolsToggle = document.getElementById('covermate-owner-tools-toggle');
         if (ownerToolsToggle) ownerToolsToggle.checked = false;
@@ -2560,10 +2570,10 @@ class Component extends DCLogic {
       tabSections: S.tab === 'sections', tabContent: S.tab === 'content', tabBrand: S.tab === 'brand', tabTheme: S.tab === 'theme',
       goSections: () => this.setState({ tab: 'sections' }), goContent: () => this.setState({ tab: 'content', sel: (selectedAdminPair && selectedAdminPair.s && selectedAdminPair.s.type !== 'hero' && !isEmbeddedCoverageSection(selectedAdminPair.s)) ? selectedAdminPair.s.id : firstContentAdminId }),
       goBrand: () => this.setState({ tab: 'brand' }), goTheme: () => this.setState({ tab: 'theme' }),
-      tabSecBg: S.tab === 'sections' ? A.base : 'transparent', tabSecFg: S.tab === 'sections' ? A.on : 'var(--color-neutral-700)',
-      tabConBg: S.tab === 'content' ? A.base : 'transparent', tabConFg: S.tab === 'content' ? A.on : 'var(--color-neutral-700)',
-      tabBraBg: S.tab === 'brand' ? A.base : 'transparent', tabBraFg: S.tab === 'brand' ? A.on : 'var(--color-neutral-700)',
-      tabThmBg: S.tab === 'theme' ? A.base : 'transparent', tabThmFg: S.tab === 'theme' ? A.on : 'var(--color-neutral-700)',
+      tabSecBg: S.tab === 'sections' ? A.action : 'transparent', tabSecFg: S.tab === 'sections' ? A.on : 'var(--color-neutral-700)',
+      tabConBg: S.tab === 'content' ? A.action : 'transparent', tabConFg: S.tab === 'content' ? A.on : 'var(--color-neutral-700)',
+      tabBraBg: S.tab === 'brand' ? A.action : 'transparent', tabBraFg: S.tab === 'brand' ? A.on : 'var(--color-neutral-700)',
+      tabThmBg: S.tab === 'theme' ? A.action : 'transparent', tabThmFg: S.tab === 'theme' ? A.on : 'var(--color-neutral-700)',
       secList: secList,
       curName: cur ? t(TYPE_LABEL[cur.type]) : '', curId: cur ? cur.id : '',
       editFields: editFields, editItems: editItems,

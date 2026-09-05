@@ -13,7 +13,12 @@ const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
 const benignNavigationAbortPaths = new Set([
   "/covermate-contract.js",
   "/covermate-environment.mjs",
-  "/covermate-firebase.js"
+  "/covermate-firebase.js",
+  "/covermate-firebase-config.mjs",
+  "/covermate-roles.mjs",
+  "/covermate-public.mjs",
+  "/favicon.ico",
+  "/assets/fonts.css"
 ]);
 
 const viewports = [
@@ -131,7 +136,7 @@ function remoteContentMock(remoteConfig, remoteText = {}) {
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
-    export {};
+    export const hydrateLocalContent = () => window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
   `;
 }
 
@@ -163,7 +168,7 @@ function adminPortalSessionMock() {
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
-    export {};
+    export const hydrateLocalContent = () => window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
   `;
 }
 
@@ -298,7 +303,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
-    export {};
+    export const hydrateLocalContent = () => window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
   `;
 }
 
@@ -467,7 +472,7 @@ async function verifyRemoteHydrationContract() {
   };
 
   const publicPage = await newSmokePage({ viewport: { width: 1024, height: 800 } });
-  await publicPage.route("**/covermate-firebase.js", (route) =>
+  await publicPage.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -550,7 +555,7 @@ async function verifyRemoteHydrationContract() {
   await publicPage.close();
 
   const ownerPage = await newSmokePage({ viewport: { width: 1024, height: 800 } });
-  await ownerPage.route("**/covermate-firebase.js", (route) =>
+  await ownerPage.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -609,7 +614,7 @@ async function verifyAdminActionWorkflow() {
     await dialog.dismiss().catch(() => {});
   });
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.route("**/covermate-firebase.js", (route) =>
+  await page.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -737,7 +742,7 @@ async function verifyAdminBuilderControls() {
   const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.route("**/covermate-firebase.js", (route) =>
+  await page.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -976,7 +981,7 @@ async function verifyAdminBuilderControls() {
 async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   const remoteConfig = renamedConfig("Public Chrome Guard Smoke");
   const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
-  await page.route("**/covermate-firebase.js", (route) =>
+  await page.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -1099,7 +1104,7 @@ async function verifyPreviewIsolationContract() {
   const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.route("**/covermate-firebase.js", (route) =>
+  await page.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -1293,13 +1298,18 @@ for (const [name, width, height] of viewports) {
 
   const failedRequests = [];
   const pageErrors = [];
+  let navigationStarted = 0;
+  page.on('request', request => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigationStarted = Date.now();
+  });
 
   page.on("requestfailed", (request) => {
     const url = request.url();
     const failureText = request.failure()?.errorText || "failed";
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
-    if (isBenignNavigationAbort(url, failureText)) return;
+    if (Date.now() - navigationStarted < 2500 && isBenignNavigationAbort(url, failureText)) return;
+    if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && /^https:\/\/firestore\.googleapis\.com\/v1\/projects\/[^/]+\/databases\/\(default\)\/documents\/sites\/[^/]+\/states\/live$/.test(url)) return;
     if (
       failureText === "net::ERR_ABORTED" &&
       (url.endsWith("/favicon.svg") || url.endsWith("/covermate-firebase.js"))
@@ -1889,7 +1899,7 @@ for (const [name, width, height] of viewports) {
       })
     );
   });
-  await page.route("**/covermate-firebase.js", (route) =>
+  await page.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -1989,7 +1999,7 @@ for (const [name, width, height] of viewports) {
   });
   const analyticsLocalOnlyErrors = [];
   analyticsLocalOnlyPage.on("pageerror", (error) => analyticsLocalOnlyErrors.push(error.message));
-  await analyticsLocalOnlyPage.route("**/covermate-firebase.js", (route) =>
+  await analyticsLocalOnlyPage.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({ status: 200, contentType: "application/javascript", body: analyticsLocalOnlyMock })
   );
   await analyticsLocalOnlyPage.addInitScript(() => {
@@ -2054,7 +2064,7 @@ for (const [name, width, height] of viewports) {
     analyticsFailedRequests.push(`${url} ${request.failure()?.errorText || "failed"}`);
   });
   analyticsPage.on("pageerror", (error) => analyticsPageErrors.push(error.message));
-  await analyticsPage.route("**/covermate-firebase.js", (route) =>
+  await analyticsPage.route("**/covermate-{firebase.js,public.mjs}", (route) =>
     route.fulfill({ status: 200, contentType: "application/javascript", body: analyticsMock })
   );
   await analyticsPage.addInitScript(() => {

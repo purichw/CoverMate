@@ -80,8 +80,8 @@ const state = {
   loading: new Set(DATA_RESOURCES),
   errors: {},
   pending: "",
-  role: "owner",
-  sessionRole: "owner",
+  role: "none",
+  sessionRole: "none",
   filters: {
     leadStatus: "all",
     leadInterest: "all",
@@ -117,7 +117,7 @@ async function init() {
     document.body.dataset.boot = "ready";
   }
 
-  state.sessionRole = normalizeRole(state.session.role || "owner");
+  state.sessionRole = normalizeRole(state.session.role);
   state.role = state.sessionRole;
   applySessionChrome();
   bindEvents();
@@ -201,9 +201,15 @@ async function apiFetch(path, options = {}) {
   headers.set("Authorization", `Bearer ${token}`);
   headers.set("Accept", "application/json");
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  if (['PATCH', 'PUT', 'POST'].includes(options.method) && path.includes('/')) {
+    const [resource, encodedId] = path.split('/');
+    const row = (state.data[resource] || []).find(item => item.id === decodeURIComponent(encodedId));
+    if (row?.revision) headers.set('If-Match', row.revision);
+  }
 
   const response = await fetch(withEnvironmentQuery(`/api/ops/${path}`, cm.environment), {
     ...options,
+    signal: options.signal || AbortSignal.timeout(15000),
     headers,
     body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
   });
@@ -1345,7 +1351,7 @@ function normalizeRole(value) {
   if (["adviser", "advisor"].includes(role)) return "advisor";
   if (["ops", "operations"].includes(role)) return "ops";
   if (["readonly", "read-only", "read"].includes(role)) return "readonly";
-  return "owner";
+  return "none";
 }
 
 function displayRole(role) {

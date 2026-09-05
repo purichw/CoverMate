@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "build:telemetry": "node scripts/build-telemetry.mjs",
+    "check:types": "tsc -p tsconfig.contracts.json",
+    "check:rules": "node scripts/rules-behavior-check.mjs",
+    "check:nfr": "node scripts/nfr-unit-check.mjs",
+    "smoke:nfr": "node scripts/nfr-e2e.mjs",
+    "check:emulators": "firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/emulator-suite.mjs\"",
+    "backup": "node scripts/backup.mjs create",
+    "check:uptime": "node scripts/uptime-check.mjs",
     "build:visitor": "node scripts/generate-visitor-bundle.mjs",
     "check:visitor-source": "node scripts/generate-visitor-bundle.mjs --check",
     "check:contracts": "node scripts/contract-regression-check.mjs",
@@ -26,6 +34,23 @@
     "smoke": "node scripts/smoke.mjs"
   },
   "devDependencies": {
-    "playwright": "^1.56.1"
+    "@axe-core/playwright": "^4.13.0",
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@types/node": "^22.20.1",
+    "esbuild": "^0.28.2",
+    "firebase": "^12.18.0",
+    "firebase-tools": "^15.29.0",
+    "playwright": "^1.56.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.3.0",
+    "google-auth-library": "^11.0.2",
+    "web-vitals": "^6.2.1"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

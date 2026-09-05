@@ -732,7 +732,7 @@ textarea.input { min-height: 90px; resize: vertical; }
     </div>
 
     <sc-if value="{{ showHeaderCta }}" hint-placeholder-val="{{ true }}">
-      <a data-om="desk" href="{{ lineUrl }}" style="flex:0 0 auto;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;background:{{ A_base }};color:{{ A_on }};font-size:14px;font-weight:700;white-space:nowrap;transition:transform .2s ease, background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-1px)" style-active="transform:translateY(0)">
+      <a data-om="desk" href="{{ lineUrl }}" style="flex:0 0 auto;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-size:14px;font-weight:700;white-space:nowrap;transition:transform .2s ease, background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-1px)" style-active="transform:translateY(0)">
         <svg sc-camel-view-box="0 0 24 24" style="width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
         {{ headerCta }}
       </a>
@@ -759,7 +759,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               <h1 style="margin:0;max-width:13ch;font-size:clamp(34px,3.65vw,54px);line-height:1.14;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)">{{ s.title }}</h1>
               <p style="margin:0;max-width:600px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500">{{ s.body }}</p>
               <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:2px">
-                <a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 30px;border-radius:999px;background:{{ A_base }};color:#fff;text-decoration:none;font-weight:900;font-size:18px;box-shadow:var(--shadow-md)"><span style="width:22px;height:22px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a>
+                <a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 30px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:900;font-size:18px;box-shadow:var(--shadow-md)"><span style="width:22px;height:22px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a>
                 <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
                   <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 28px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.34);color:var(--color-text);text-decoration:none;font-weight:900;font-size:17px;box-shadow:var(--shadow-xs)">{{ s.cta2 }}<span style="font-size:25px;line-height:0;transform:translateY(-1px)">↓</span></a>
                 </sc-if>
@@ -837,7 +837,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             <h1 data-reveal="1" style="margin:0;max-width:14ch;font-size:clamp(36px,5vw,60px);line-height:1.2;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)">{{ s.title }}</h1>
             <p data-reveal="2" style="margin:0;max-width:620px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500">{{ s.body }}</p>
             <div data-reveal="3" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-              <a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_base }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a>
+              <a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a>
               <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
                 <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.3);color:var(--color-text);text-decoration:none;font-weight:800">{{ s.cta2 }}<span style="font-size:22px;line-height:0">↓</span></a>
               </sc-if>
@@ -888,7 +888,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty">{{ s.title }}</h2>
           <p style="margin:0;font-size:16px;line-height:1.55;color:{{ s.muted }};max-width:52ch;text-wrap:balance">{{ s.body }}</p>
           <sc-if value="{{ s.hasCta1 }}" hint-placeholder-val="{{ false }}">
-            <a href="{{ s.cta1href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;margin-top:var(--space-2);padding:0 20px;border-radius:999px;background:{{ A_base }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-sm)">{{ s.cta1 }} <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+            <a href="{{ s.cta1href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;margin-top:var(--space-2);padding:0 20px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-sm)">{{ s.cta1 }} <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
           </sc-if>
         </div>
 
@@ -1039,7 +1039,7 @@ textarea.input { min-height: 90px; resize: vertical; }
                 </div>
                 <sc-for list="{{ recs }}" as="r" hint-placeholder-count="3">
                   <div style="display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-2) 0">
-                    <span style="width:27px;height:27px;flex:0 0 auto;border-radius:999px;background:{{ A_base }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:14px;padding-bottom:1px">{{ r.n }}</span>
+                    <span style="width:27px;height:27px;flex:0 0 auto;border-radius:999px;background:{{ A_action }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:14px;padding-bottom:1px">{{ r.n }}</span>
                     <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                       <span style="font-size:15px;font-weight:700;line-height:1.35">{{ r.title }}</span>
                       <span style="font-size:13.5px;line-height:1.55;color:var(--color-neutral-800);text-wrap:pretty">{{ r.why }}</span>
@@ -1048,7 +1048,7 @@ textarea.input { min-height: 90px; resize: vertical; }
                 </sc-for>
               </div>
               <sc-if value="{{ showTalkAnchor }}" hint-placeholder-val="{{ true }}">
-                <a href="#talk" style="display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_base }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
+                <a href="#talk" style="display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
                   <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ส่งตัวเลขนี้ให้เราดูต่อ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Send us these numbers</sc-if>
                   <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                 </a>
@@ -1073,7 +1073,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="4">
             <div data-reveal="{{ it.n }}" style="display:flex;flex-direction:column;gap:var(--space-3);min-width:0">
               <div style="display:flex;align-items:center;gap:var(--space-3)">
-                <span style="width:46px;height:46px;flex:0 0 auto;border-radius:999px;background:{{ A_base }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:20px;padding-bottom:2px">{{ it.n }}</span>
+                <span style="width:46px;height:46px;flex:0 0 auto;border-radius:999px;background:{{ A_action }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:20px;padding-bottom:2px">{{ it.n }}</span>
                 <span style="flex:1 1 auto;height:2px;border-radius:999px;background:{{ s.line }}"></span>
                 <svg sc-camel-view-box="0 0 24 24" style="width:19px;height:19px;flex:0 0 auto;fill:none;stroke:{{ s.line }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><sc-for list="{{ it.paths }}" as="d" hint-placeholder-count="1"><path d="{{ d }}"></path></sc-for></svg>
               </div>
@@ -1095,7 +1095,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty">{{ s.title }}</h2>
           <p style="margin:0;font-size:16px;line-height:1.55;color:{{ s.muted }};max-width:52ch;text-wrap:balance">{{ s.body }}</p>
           <sc-if value="{{ s.hasCta1 }}" hint-placeholder-val="{{ true }}">
-            <a data-home-motor-page-link="" href="{{ s.cta1href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;margin-top:var(--space-2);padding:0 21px;border-radius:999px;background:{{ A_base }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-sm);transition:transform .2s ease, background .2s ease" style-hover="background:{{ A_mid }};color:#fff;transform:translateY(-1px)" style-active="transform:translateY(0)">{{ s.cta1 }} <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+            <a data-home-motor-page-link="" href="{{ s.cta1href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;margin-top:var(--space-2);padding:0 21px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-sm);transition:transform .2s ease, background .2s ease" style-hover="background:{{ A_mid }};color:#fff;transform:translateY(-1px)" style-active="transform:translateY(0)">{{ s.cta1 }} <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
           </sc-if>
         </div>
         <div data-reveal="1" style="background:var(--color-bg);border-radius:var(--radius-lg);padding:clamp(20px,3vw,40px)">
@@ -1283,7 +1283,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="4">
             <div data-reveal="{{ it.n }}" style="display:flex;flex-direction:column;gap:var(--space-3);min-width:0">
               <div style="display:flex;align-items:center;gap:var(--space-3)">
-                <span style="width:46px;height:46px;flex:0 0 auto;border-radius:999px;background:{{ A_base }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:20px;padding-bottom:2px">{{ it.n }}</span>
+                <span style="width:46px;height:46px;flex:0 0 auto;border-radius:999px;background:{{ A_action }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:20px;padding-bottom:2px">{{ it.n }}</span>
                 <span style="flex:1 1 auto;height:2px;border-radius:999px;background:{{ s.line }}"></span>
                 <svg sc-camel-view-box="0 0 24 24" style="width:19px;height:19px;flex:0 0 auto;fill:none;stroke:{{ s.line }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><sc-for list="{{ it.paths }}" as="d" hint-placeholder-count="1"><path d="{{ d }}"></path></sc-for></svg>
               </div>
@@ -1371,7 +1371,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             </span>
           </label>
           <sc-if value="{{ renewNotSent }}" hint-placeholder-val="{{ true }}">
-            <button type="submit" disabled="{{ renewIncomplete }}" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_base }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)">
+            <button type="submit" disabled="{{ renewIncomplete }}" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)">
               <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ตั้งเตือนให้เราจำ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Remind me</sc-if>
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
             </button>
@@ -1412,7 +1412,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           </sc-for>
         </div>
         <div data-reveal="4" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4)">
-          <a href="{{ lineUrl }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 var(--space-6);border-radius:999px;background:{{ A_base }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
+          <a href="{{ lineUrl }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 var(--space-6);border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
             <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
             {{ s.cta1 }}
           </a>
@@ -1573,18 +1573,20 @@ textarea.input { min-height: 90px; resize: vertical; }
           <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty">{{ s.title }}</h2>
           <p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:44ch;text-wrap:pretty">{{ s.body }}</p>
         </div>
-        <dl data-reveal="1" style="margin:0;display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
+        <div data-reveal="1" style="margin:0;display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
+          <dl style="margin:0;display:flex;flex-direction:column;gap:var(--space-4)">
           <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="5">
             <div style="display:flex;flex-direction:column;gap:4px;padding-left:var(--space-3);border-left:2px solid {{ A_base }}">
               <dt style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:{{ s.kickerFg }}">{{ it.label }}</dt>
               <dd style="margin:0;font-size:15px;line-height:1.7;color:{{ s.muted }};text-wrap:pretty">{{ it.value }}</dd>
             </div>
           </sc-for>
+          </dl>
           <div style="display:flex;align-items:flex-start;gap:10px;padding:var(--space-4);border-radius:var(--radius-lg);background:{{ s.card }};color:{{ s.cardFg }};font-size:13.5px;line-height:1.65;text-wrap:pretty">
             <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;flex:0 0 auto;margin-top:3px;fill:none;stroke:{{ A_base }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
             {{ s.note }}
           </div>
-        </dl>
+        </div>
       </div>
     </section>
   </sc-if>
@@ -1618,7 +1620,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           </div>
 
           <div style="display:flex;flex-direction:column;gap:var(--space-2)">
-            <a href="{{ phoneUrl }}" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease" style-hover="background:{{ s.card }};color:{{ s.fg }}">
+            <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease" style-hover="background:{{ s.card }};color:{{ s.fg }}">
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:{{ A_light }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M13.83 19a17 17 0 0 1-8.83-8.83l2.4-1.7a1 1 0 0 0 .3-1.3L6.2 3.6a1 1 0 0 0-1.2-.5L2.5 4A2 2 0 0 0 1.2 6.3 20 20 0 0 0 17.7 22.8a2 2 0 0 0 2.3-1.3l.9-2.5a1 1 0 0 0-.5-1.2l-3.6-1.5a1 1 0 0 0-1.3.3z"></path></svg>
               {{ phone }}
             </a>
@@ -1690,7 +1692,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             </span>
           </label>
           <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
-            <button type="submit" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_base }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)">
+            <button type="submit" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)">
               <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ส่งข้อความ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Send message</sc-if>
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
             </button>
@@ -1768,7 +1770,7 @@ textarea.input { min-height: 90px; resize: vertical; }
       <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
         <div style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)">{{ footerContactHeading }}</div>
         <a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a>
-        <a href="{{ phoneUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a>
+        <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a>
         <a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a>
         <sc-if value="{{ hasFacebook }}" hint-placeholder-val="{{ true }}">
           <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">Facebook {{ facebookName }}</a>
@@ -1834,7 +1836,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           </summary>
           <div style="padding:0 0 18px;display:flex;flex-direction:column;gap:12px;min-width:0">
             <a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a>
-            <a href="{{ phoneUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a>
+            <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a>
             <a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a>
             <sc-if value="{{ hasFacebook }}" hint-placeholder-val="{{ true }}">
               <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">Facebook {{ facebookName }}</a>
@@ -1850,10 +1852,10 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 <sc-if value="{{ showSticky }}" hint-placeholder-val="{{ true }}">
 <div data-om="mob" style="position:sticky;bottom:0;z-index:35;display:flex;gap:var(--space-2);padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb, var(--color-bg) 92%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -2px 18px color-mix(in srgb,#2e2b25 14%,transparent)">
-  <a href="{{ phoneUrl }}" style="display:flex;align-items:center;justify-content:center;width:54px;height:54px;flex:0 0 auto;border-radius:999px;background:var(--color-surface);color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-300);color:var(--color-text)" style-active="background:var(--color-neutral-400)">
+  <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;justify-content:center;width:54px;height:54px;flex:0 0 auto;border-radius:999px;background:var(--color-surface);color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-300);color:var(--color-text)" style-active="background:var(--color-neutral-400)">
     <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M13.83 19a17 17 0 0 1-8.83-8.83l2.4-1.7a1 1 0 0 0 .3-1.3L6.2 3.6a1 1 0 0 0-1.2-.5L2.5 4A2 2 0 0 0 1.2 6.3 20 20 0 0 0 17.7 22.8a2 2 0 0 0 2.3-1.3l.9-2.5a1 1 0 0 0-.5-1.2l-3.6-1.5a1 1 0 0 0-1.3.3z"></path></svg>
   </a>
-  <a href="{{ lineUrl }}" style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:999px;background:{{ A_base }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;box-shadow:var(--shadow-md);transition:background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
+  <a href="{{ lineUrl }}" style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;box-shadow:var(--shadow-md);transition:background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
     <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
     {{ headerCta }}
   </a>

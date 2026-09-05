@@ -17,18 +17,10 @@ import {
   writeAdminSession as writeSession
 } from "./covermate-contract.js";
 import { resolveCoverMateEnvironment } from "./covermate-environment.mjs";
+import { canEditContent, normalizeAdminRole } from "./covermate-roles.mjs";
+import { firebaseConfig, emulatorEnabled, FIREBASE_VERSION } from './covermate-firebase-config.mjs';
 
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDpHoXdw0T8UUqNH6-OAhqT-XEJgwmzGIM",
-  authDomain: "covermate-purich.firebaseapp.com",
-  projectId: "covermate-purich",
-  storageBucket: "covermate-purich.firebasestorage.app",
-  messagingSenderId: "7468452473",
-  appId: "1:7468452473:web:52b47eef5362d4029fe2a8",
-  measurementId: "G-5TF3C235EF"
-};
-
-const FIREBASE_VERSION = "12.16.0";
+const FIREBASE_CONFIG = firebaseConfig();
 const LEAD_LIMIT = 250;
 const COVERMATE_ENVIRONMENT = resolveCoverMateEnvironment();
 const SITE_ID = COVERMATE_ENVIRONMENT.siteId;
@@ -53,6 +45,27 @@ const app = appMod.getApps().length
   : appMod.initializeApp(FIREBASE_CONFIG);
 const auth = authMod.getAuth(app);
 const db = firestoreMod.getFirestore(app);
+if (emulatorEnabled()) {
+  authMod.connectAuthEmulator(auth, 'http://127.0.0.1:9098', { disableWarnings: true });
+  firestoreMod.connectFirestoreEmulator(db, '127.0.0.1', 8088);
+}
+const loadedRevisions = new Map();
+let pendingWrite = Promise.resolve();
+function serializeWrite(operation) {
+  const result = pendingWrite.then(operation);
+  pendingWrite = result.catch(() => {});
+  return result;
+}
+
+function nextRevision(name, snapshot) {
+  const actual = snapshot.exists() ? Number(snapshot.data().revision || 0) : 0;
+  if (!loadedRevisions.has(name) || loadedRevisions.get(name) !== actual) {
+    const error = new Error('Content changed in another session. Your edits are preserved; reload the latest draft before saving.');
+    error.code = 'content-conflict';
+    throw error;
+  }
+  return actual + 1;
+}
 const provider = new authMod.GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
@@ -66,6 +79,7 @@ async function readAdmin(user) {
   if (!snap.exists()) return null;
   const admin = snap.data() || {};
   if (admin.active !== true) return null;
+  if (normalizeAdminRole(admin.role) === 'none') return null;
   if (admin.uatOnly === true && !COVERMATE_ENVIRONMENT.isUat) return null;
   return admin;
 }
@@ -121,13 +135,18 @@ function stateRef(name) {
 
 async function loadSiteState(name) {
   const snap = await firestoreMod.getDoc(stateRef(name));
+  loadedRevisions.set(name, snap.exists() ? Number(snap.data().revision || 0) : 0);
   return snap.exists() ? (snap.data() || null) : null;
 }
 
 async function saveSiteState(name, config, text) {
+  return serializeWrite(() => saveSiteStateNow(name, config, text));
+}
+
+async function saveSiteStateNow(name, config, text) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
-  if (!admin) throw new Error("Not authorized to save CoverMate content.");
+  if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to save CoverMate content.");
   const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
   const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const payload = {
@@ -140,7 +159,12 @@ async function saveSiteState(name, config, text) {
       role: admin.role || "admin"
     }
   };
-  await firestoreMod.setDoc(stateRef(name), payload, { merge: true });
+  await firestoreMod.runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(stateRef(name));
+    payload.revision = nextRevision(name, snapshot);
+    transaction.set(stateRef(name), payload);
+  });
+  loadedRevisions.set(name, payload.revision);
   cacheState(name, payload);
 }
 
@@ -151,11 +175,12 @@ function versionRef() {
 async function appendVersion(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
-  if (!admin) throw new Error("Not authorized to publish CoverMate content.");
+  if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to publish CoverMate content.");
   const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
   const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const ref = versionRef();
   const version = {
+    ...metadata,
     config: cleanConfig,
     text: cleanText,
     ts: Date.now(),
@@ -164,17 +189,20 @@ async function appendVersion(config, text, metadata = {}) {
       uid: user.uid,
       email: user.email || "",
       role: admin.role || "admin"
-    },
-    ...metadata
+    }
   };
   await firestoreMod.setDoc(ref, version);
   return { id: ref.id, ...version };
 }
 
 async function publishSiteState(config, text, metadata = {}) {
+  return serializeWrite(() => publishSiteStateNow(config, text, metadata));
+}
+
+async function publishSiteStateNow(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
-  if (!admin) throw new Error("Not authorized to publish CoverMate content.");
+  if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to publish CoverMate content.");
   const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
   const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
   const ref = versionRef();
@@ -191,18 +219,26 @@ async function publishSiteState(config, text, metadata = {}) {
     updatedBy: by
   };
   const version = {
+    ...metadata,
     config: cleanConfig,
     text: cleanText,
     ts,
     createdAt: firestoreMod.serverTimestamp(),
-    createdBy: by,
-    ...metadata
+    createdBy: by
   };
-  const batch = firestoreMod.writeBatch(db);
-  batch.set(stateRef("live"), livePayload, { merge: true });
-  batch.set(stateRef("draft"), livePayload, { merge: true });
-  batch.set(ref, version);
-  await batch.commit();
+  let liveRevision;
+  let draftRevision;
+  await firestoreMod.runTransaction(db, async (transaction) => {
+    const live = await transaction.get(stateRef('live'));
+    const draft = await transaction.get(stateRef('draft'));
+    liveRevision = nextRevision('live', live);
+    draftRevision = nextRevision('draft', draft);
+    transaction.set(stateRef('live'), { ...livePayload, revision: liveRevision });
+    transaction.set(stateRef('draft'), { ...livePayload, revision: draftRevision });
+    transaction.set(ref, version);
+  });
+  loadedRevisions.set('live', liveRevision);
+  loadedRevisions.set('draft', draftRevision);
   cacheState("live", livePayload);
   cacheState("draft", livePayload);
   const cachedHistory = readJSON(HISTORY_KEY);
@@ -224,27 +260,7 @@ async function loadVersions(limitCount = HISTORY_LIMIT) {
 }
 
 async function submitContactLead(input = {}) {
-  const sourcePath = cleanText(
-    input.sourcePath || window.location.pathname + window.location.search + window.location.hash,
-    220
-  );
-  const payload = {
-    name: cleanText(input.name, 120),
-    contact: cleanText(input.contact, 160),
-    topic: cleanText(input.topic, 2000),
-    qtype: cleanLeadChoice(input.qtype, LEAD_QTYPES),
-    coverage: cleanLeadChoice(input.coverage, LEAD_COVERAGES),
-    consent: input.consent === true,
-    language: cleanLeadChoice(input.language, LEAD_LANGS) || "th",
-    summary: cleanText(input.summary, 1200),
-    sourcePath,
-    status: "new",
-    read: false,
-    createdAt: firestoreMod.serverTimestamp(),
-    updatedAt: firestoreMod.serverTimestamp()
-  };
-  const ref = await firestoreMod.addDoc(firestoreMod.collection(db, LEAD_COLLECTION), payload);
-  return { id: ref.id, ...payload };
+  return (await import('./covermate-public.mjs')).submitContactLead(input);
 }
 
 async function loadContactLeads(limitCount = LEAD_LIMIT) {

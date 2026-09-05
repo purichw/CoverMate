@@ -14,7 +14,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -30,7 +30,22 @@ jobs:
 
       - name: Install Playwright browser
         run: |
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
 
       - name: Run CoverMate gate
         run: npm run check:ci
+
+      - name: Real Auth, Rules, API and Publish E2E
+        run: npm run check:emulators
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nfr-evidence
+          path: uat-results/nfr/
+          retention-days: 7

@@ -1,14 +1,19 @@
 # CoverMate Non-Functional Requirements
 
-Last updated: 2026-08-30
+Last updated: 2026-09-05
+
+The September hardening is implemented locally, not deployed yet. The current
+release prerequisites, evidence, cost constraints, and remaining exceptions are
+in [NFR_HARDENING.md](NFR_HARDENING.md).
 
 ## Security
 
 Implemented:
 
 - Firebase Auth plus Firestore `admins/{uid}` allowlist gates admin writes.
-- Firestore Rules validate public lead creates in both production
-  (`contactLeads/*`) and UAT (`contactLeadsUat/*`).
+- Public lead creates go through `/api/leads` with App Check, validation,
+  HMAC-keyed rate limits, and idempotency. Candidate Firestore rules deny direct
+  unauthenticated writes to both production and UAT lead collections.
 - Admin routes are `noindex,nofollow`.
 - Visitor GA tracking is suppressed for owner sessions and owner hashes.
 - Vercel sends security headers:
@@ -16,11 +21,12 @@ Implemented:
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
   - `Strict-Transport-Security`
-  - `Content-Security-Policy-Report-Only`
+  - Enforced `Content-Security-Policy`
 
-Current CSP is Report-Only because the exported browser bundle still uses
-inline scripts, inline styles, and blob URLs. Enforce CSP only after a source
-refactor removes or hashes those requirements.
+Candidate CSP enforces source/frame/object restrictions, but explicitly retains
+`unsafe-inline`, `unsafe-eval`, and blob scripts for the exported DC renderer.
+It is not a strict nonce/hash-based CSP. Removing runtime expression compilation
+requires a separate renderer migration, not a security-header-only change.
 
 ## Privacy
 
@@ -57,7 +63,7 @@ Targets:
 Implemented support:
 
 - First-paint exported splash and raw `<x-dc>` template are hidden.
-- Static assets under `/assets/*` use long-lived immutable caching.
+- Versioned fonts, insurer images, and logo assets use immutable caching.
 - `assets/covermate-og.png`, `robots.txt`, `sitemap.xml`, and manifest use
   shorter revalidation windows.
 - `scripts/validate-bundles.mjs` catches broken embedded template JSON quickly.
@@ -66,11 +72,12 @@ Implemented support:
 
 Open performance work:
 
-- Split generated `index.html` and admin bundles into source modules.
+- Continue splitting the source-authored visitor runtime when ownership demands it.
 - Reduce embedded font/resource duplication across exported HTML surfaces.
 - Add Lighthouse or WebPageTest evidence before paid acquisition.
-- Convert the lightweight local performance budget into Lighthouse CI or field
-  `web-vitals` monitoring when acquisition traffic grows.
+- Field `web-vitals` collection is prepared in `src/telemetry.js`; actual field
+  percentiles require deployment and real traffic. Local lab results are not
+  evidence that the field targets have been achieved.
 
 ## Accessibility
 
