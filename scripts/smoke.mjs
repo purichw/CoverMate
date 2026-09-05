@@ -18,7 +18,9 @@ const benignNavigationAbortPaths = new Set([
   "/covermate-roles.mjs",
   "/covermate-public.mjs",
   "/assets/telemetry.js",
+  "/api/telemetry",
   "/favicon.ico",
+  "/favicon.svg",
   "/assets/fonts.css"
 ]);
 
@@ -1310,6 +1312,10 @@ for (const [name, width, height] of viewports) {
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
     if (Date.now() - navigationStarted < 2500 && isBenignNavigationAbort(url, failureText)) return;
+    if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500) {
+      const parsed = new URL(url);
+      if (parsed.origin === 'https://www.googletagmanager.com' && ['/gtag/js', '/td'].includes(parsed.pathname)) return;
+    }
     if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && /^https:\/\/firestore\.googleapis\.com\/v1\/projects\/[^/]+\/databases\/\(default\)\/documents\/sites\/[^/]+\/states\/live$/.test(url)) return;
     if (
       failureText === "net::ERR_ABORTED" &&
@@ -1390,6 +1396,18 @@ for (const [name, width, height] of viewports) {
     );
     await page.waitForTimeout(600);
     await page.waitForFunction(() => window.__covermateTelemetryInstalled === true, null, { timeout: 5000 });
+    if (baseOrigin === 'https://covermate.vercel.app' && name === 'desktop' && route === '/') {
+      // Finalize a real LCP sample with a harmless first interaction, then prove delivery.
+      await page.locator('main h1').waitFor();
+      await page.waitForTimeout(1000);
+      const delivered = page.waitForResponse(response => {
+        if (new URL(response.url()).pathname !== '/api/telemetry') return false;
+        return response.request().postDataJSON()?.kind === 'LCP';
+      }, { timeout: 15000 });
+      await page.locator('main h1').click();
+      const telemetryResponse = await delivered;
+      if (telemetryResponse.status() !== 202) failures.push(`Production telemetry delivery: HTTP ${telemetryResponse.status()}`);
+    }
     if (route === "/#motor" || route === "/#life") {
       const aliasTargetId = route === "/#motor" ? "insurers" : "cover";
       await page.waitForFunction((targetId) => {

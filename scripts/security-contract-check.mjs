@@ -18,6 +18,7 @@ for (const directive of ["default-src 'self'", "object-src 'none'", "frame-ances
 assert.doesNotMatch(policy, /unpkg\.com|localhost|127\.0\.0\.1/);
 const connectSources = policy.split(';').find(d => d.trim().startsWith('connect-src ')).trim().split(/\s+/);
 assert.ok(connectSources.includes('https://content-firebaseappcheck.googleapis.com'), 'App Check token exchange must not be blocked by CSP.');
+assert.ok(connectSources.includes('https://www.googletagmanager.com'), 'Public Google tag diagnostics must not be blocked by CSP.');
 assert.equal(headerMap.get('x-frame-options'), 'DENY');
 for (const file of ['src/visitor/shell.html', 'admin/login/index.html']) {
   const source = read(file);

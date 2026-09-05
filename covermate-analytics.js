@@ -48,6 +48,12 @@
     return !!OWNER_HASHES[window.location.hash];
   }
 
+  function adminPath() {
+    var contract = window.CoverMateContract;
+    if (contract && contract.isAdminNamespacePath) return contract.isAdminNamespacePath(window.location.pathname);
+    return /^\/admin(?:\/|$)/.test(window.location.pathname);
+  }
+
   function ownerSession() {
     var contract = window.CoverMateContract;
     if (contract && contract.readAdminSession) return !!contract.readAdminSession();
@@ -64,6 +70,10 @@
   function canTrack() {
     if (!isAllowedHost()) {
       window.CoverMateAnalytics.reason = "non-production-host";
+      return false;
+    }
+    if (adminPath()) {
+      window.CoverMateAnalytics.reason = "admin-path";
       return false;
     }
     if (ownerHash()) {

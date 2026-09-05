@@ -142,6 +142,15 @@ passed home, motor, and Admin Login. Login was included in the self-hosted React
 resource map after the enforced CSP exposed its remaining CDN dependency.
 Scheduled success is not a substitute for keeping the recovery key separately.
 
+Final production smoke also exercises real LCP beacon delivery (HTTP 202),
+not just the installed flag. Exact telemetry/favicon/Google tag requests
+cancelled within 2.5 seconds of a document navigation are classified separately;
+active-page network failures and HTTP errors remain failures. Visitor analytics
+is suppressed across the entire `/admin/*` namespace before auth hydration,
+including when the shared route module has not loaded. Public Google tag
+diagnostics use the exact `www.googletagmanager.com` connect source, consistent
+with [Google's CSP guidance](https://developers.google.com/tag-platform/security/guides/csp).
+
 1. Configure `COVERMATE_SERVER_CREDENTIALS`, `COVERMATE_RATE_LIMIT_SECRET`, and
    `COVERMATE_RECAPTCHA_SITE_KEY` in Vercel server environments. The credential
    must never use a public/client env prefix. Keep local `.env*` and `.tools/`

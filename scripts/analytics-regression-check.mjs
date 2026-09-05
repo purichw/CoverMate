@@ -63,13 +63,13 @@ function assertNoPii(value, label) {
   }
 }
 
-async function routeStatic(page, firebaseBody = "export {};", analyticsPayload = null) {
+async function routeStatic(page, firebaseBody = "export {};", analyticsPayload = null, harnessOnly = false) {
   await page.route("**/*", (route) => {
     const url = new URL(route.request().url());
     if (url.hostname === "www.googletagmanager.com") {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: "" });
     }
-    if (url.pathname === "/" || url.pathname === "/index.html") {
+    if ((harnessOnly && route.request().isNavigationRequest()) || url.pathname === "/" || url.pathname === "/index.html") {
       return route.fulfill({ status: 200, contentType: "text/html", body: analyticsHarness });
     }
     if (url.pathname === "/covermate-contract.js") {
@@ -202,6 +202,35 @@ async function verifyPublicEvents(browser) {
   assert.equal(pageView.params.page_path, "/");
   assertNoPii(events, "public analytics events");
   await page.close();
+}
+
+async function verifyTrackingBoundaries(browser) {
+  for (const withoutContract of [false, true]) {
+    for (const [path, expected] of [
+      ['/admin', 'admin-path'], ['/admin/', 'admin-path'],
+      ['/admin/edit', 'admin-path'], ['/admin/content', 'admin-path'],
+      ['/admin/preview?page=motor', 'admin-path'], ['/admin/login', 'admin-path'],
+      ['/admin/analytics', 'admin-path'], ['/admin/ops', 'admin-path'],
+      ['/#admin', 'owner-hash'], ['/#edit', 'owner-hash'], ['/#preview', 'owner-hash'],
+      ['/motor', 'enabled'], ['/administrator', 'enabled']
+    ]) {
+      const page = await browser.newPage();
+      await routeStatic(page, 'export {};', null, true);
+      if (withoutContract) await page.route('**/covermate-contract.js', route => route.fulfill({ contentType: 'application/javascript', body: 'export {};' }));
+      await page.goto(`https://covermate.vercel.app${path}`);
+      await page.waitForFunction(() => window.CoverMateAnalytics?.reason !== 'not-initialized');
+      await page.locator('#line').click();
+      const state = await page.evaluate(() => ({
+        reason: window.CoverMateAnalytics.reason,
+        hasTag: Boolean(document.querySelector('script[src*="googletagmanager"]')),
+        events: window.dataLayer || []
+      }));
+      assert.equal(state.reason, expected, `${path}: suppression reason (fallback=${withoutContract})`);
+      assert.equal(state.hasTag, expected === 'enabled', `${path}: tag loading boundary`);
+      if (expected !== 'enabled') assert.deepEqual(state.events, [], `${path}: owner interactions must not be tracked`);
+      await page.close();
+    }
+  }
 }
 
 async function verifyAnalyticsRouteAuth(browser) {
@@ -337,6 +366,7 @@ async function verifyAnalyticsRouteAuth(browser) {
 const browser = await chromium.launch({ headless: true });
 try {
   await verifyPublicEvents(browser);
+  await verifyTrackingBoundaries(browser);
   await verifyAnalyticsRouteAuth(browser);
 } finally {
   await browser.close();
