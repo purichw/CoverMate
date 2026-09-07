@@ -341,13 +341,17 @@ const K_STRUCT = 'purich-struct-cards-v4';   // one-off structural migration (re
 const HIST_CAP = 20;
 
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
+const IMAGE_VERSIONS = /* COVERMATE_ASSET_VERSIONS */ {};
 
 function assetURL(p){
   try {
     var ref = String(p || '');
     if (!ref) return '';
     var R = (typeof window !== "undefined" && window.__resources) || null;
-    if (R && R[ref]) return R[ref];
+    if (R && R[ref]) ref = R[ref];
+    if (window.CoverMateContract && window.CoverMateContract.versionedAssetUrl) {
+      ref = window.CoverMateContract.versionedAssetUrl(ref, IMAGE_VERSIONS, window.location.origin);
+    }
     if (/^(https?:|data:|blob:|\/)/.test(ref)) return ref;
     if (ref.indexOf('assets/') === 0) return '/' + ref;
     return ref;
@@ -563,7 +567,10 @@ class Component extends DCLogic {
 
     this.textOv = {};
     this._routeChange = () => this.applyMode();
-    this._remoteRoute = () => this.applyMode();
+    this._remoteRoute = (event) => {
+      if (event.detail && event.detail.publicLive) this.applyLiveContent();
+      else this.applyMode();
+    };
     window.addEventListener('hashchange', this._routeChange);
     window.addEventListener('popstate', this._routeChange);
     window.addEventListener('covermate:remote-content-ready', this._remoteRoute);
@@ -1359,7 +1366,10 @@ class Component extends DCLogic {
     this.writeJSON(K_SCRUB, 1);
   }
 
-  loadLive() { return { config: this.normalizeConfig(this.readJSON(K_LIVE) || clone(DEFAULTS)), text: this.sanitizeTextOverrides(this.readJSON(K_LIVE_TEXT) || {}) }; }
+  loadLive() {
+    const remote = window.__covermateLiveState;
+    return { config: this.normalizeConfig((remote && remote.config) || this.readJSON(K_LIVE) || clone(DEFAULTS)), text: this.sanitizeTextOverrides(remote ? remote.text : (this.readJSON(K_LIVE_TEXT) || {})) };
+  }
   loadDraft() {
     const c = this.readJSON(K_DRAFT);
     const l = this.loadLive();
@@ -1475,6 +1485,19 @@ class Component extends DCLogic {
     });
   }
 
+  applyLiveContent() {
+    const contract = window.CoverMateContract;
+    if (contract.isAdminNamespacePath(location.pathname) || contract.isOwnerHash(location.hash) || this.state.admin || this.state.editMode || this.state.preview) return;
+    const src = this.loadLive();
+    this.restoreAppliedText();
+    this.textOv = clone(src.text || {});
+    // Merge only published content. Keep form/calculator values, language and navigation intact.
+    this.setState({ site: src.config }, () => {
+      this.syncSeo();
+      requestAnimationFrame(() => this.applyText());
+    });
+  }
+
   applyMode() {
     const publicView = this.consumePublicViewRequest();
     const h = window.location.hash;
@@ -1487,7 +1510,7 @@ class Component extends DCLogic {
     if (owner && !this.hasSession()) { window.location.replace('/admin/login'); return; }
     const anchor = owner || routePage === 'motor' ? '' : this.anchorFromHash(h);
     const currentOwner = this.state.admin || this.state.editMode || this.state.preview;
-    if (!publicView && !owner && anchor && anchor.indexOf('-focus') < 0 && !currentOwner) {
+    if (this._modeApplied && !publicView && !owner && anchor && anchor.indexOf('-focus') < 0 && !currentOwner) {
       this.scrollToAnchor(anchor);
       return;
     }
@@ -1507,6 +1530,7 @@ class Component extends DCLogic {
       return;
     }
     const src = owner ? this.loadDraft() : this.loadLive();
+    this._modeApplied = true;
     this.textOv = clone(src.text || {});
     try {
       if (preview) document.documentElement.setAttribute('data-covermate-preview', 'true');
@@ -1649,11 +1673,27 @@ class Component extends DCLogic {
   applyText() {
     if (!this.textOv) this.textOv = this.loadText();
     const ov = this.textOv;
+    if (!this._appliedText) this._appliedText = new WeakMap();
     this.eachEditable((el, key) => {
       el.setAttribute('data-ek', key);
-      if (Object.prototype.hasOwnProperty.call(ov, key) && el.textContent !== String(ov[key])) el.textContent = String(ov[key]);
+      if (Object.prototype.hasOwnProperty.call(ov, key)) {
+        const previous = this._appliedText.get(el);
+        const base = previous && el.textContent === previous.value ? previous.base : el.textContent;
+        const value = String(ov[key]);
+        this._appliedText.set(el, { base: base, value: value });
+        if (el.textContent !== value) el.textContent = value;
+      }
       this.markEditableEmpty(el);
     });
+  }
+
+  restoreAppliedText() {
+    if (!this._appliedText) return;
+    document.querySelectorAll('[data-ek]').forEach(el => {
+      const previous = this._appliedText.get(el);
+      if (previous && el.textContent === previous.value) el.textContent = previous.base;
+    });
+    this._appliedText = new WeakMap();
   }
 
   markEditableEmpty(el) {

@@ -87,11 +87,18 @@ try {
       await visitor.reload();
       await visitor.locator('#hero h1').waitFor();
       assert.equal(await visitor.locator('#hero h1').innerText(), original, 'Draft does not leak to Visitor.');
+      await visitor.locator('input[name=name]').fill('Unfinished visitor enquiry');
+      const visitorDocument = await visitor.evaluate(() => performance.timeOrigin);
       await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
       const publish = admin.getByRole('button', { name: /^Publish/ }).first();
       await publish.click();
       await admin.getByRole('button', { name: 'Publish', exact: true }).last().click();
       await poll(async () => Object.values((await db.doc('sites/covermate-uat/states/live').get()).data().text || {}).includes(marker));
+      await visitor.bringToFront();
+      await visitor.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await visitor.waitForFunction(value => document.querySelector('#hero h1')?.innerText.includes(value), marker);
+      assert.equal(await visitor.evaluate(() => performance.timeOrigin), visitorDocument, 'Publish must update an open Visitor without reload.');
+      assert.equal(await visitor.locator('input[name=name]').inputValue(), 'Unfinished visitor enquiry');
       const fresh = await browser.newContext({ viewport: { width: 390, height: 844 } });
       const freshPage = await fresh.newPage();
       await freshPage.goto(baseUrl + '/' + suffix);
@@ -131,7 +138,7 @@ try {
       assert.equal(conflict, true, 'Stale CMS writes must be rejected.');
       const checks = await new AxeBuilder({ page: freshPage }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
       fs.writeFileSync(`uat-results/nfr/${engine}-axe.json`, JSON.stringify(checks.violations, null, 2));
-      evidence.push({ engine, publish: 'real UI -> Auth/Firestore emulators -> fresh Visitor', blankSlot: true, languageIsolation: true, draftIsolation: true, conflictRejected: true, accessibilityViolations: checks.violations.map(v => ({ id: v.id, impact: v.impact, count: v.nodes.length })), navigationCancellations: navigationCancellations.length, errors });
+      evidence.push({ engine, publish: 'real UI -> Auth/Firestore emulators -> open and fresh Visitors', openVisitorUpdated: true, visitorFormPreserved: true, blankSlot: true, languageIsolation: true, draftIsolation: true, conflictRejected: true, accessibilityViolations: checks.violations.map(v => ({ id: v.id, impact: v.impact, count: v.nodes.length })), navigationCancellations: navigationCancellations.length, errors });
       assert.deepEqual(checks.violations, [], 'Automated accessibility violations.');
       assert.deepEqual(errors, [], 'Browser runtime errors.');
       await fresh.close();

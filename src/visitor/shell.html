@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         setStatus('Loading latest content...');
         if (!owner) {
           const publicContent = await import(window.location.origin + '/covermate-public.mjs');
+          publicContent.startLiveContentSync();
           return publicContent.hydrateLocalContent();
         }
         await import(window.location.origin + '/covermate-firebase.js');
@@ -238,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           remote.then((lateResult) => {
             if (!lateResult || (!lateResult.live && !lateResult.draft)) return;
             window.__covermateLateRemoteContent = lateResult;
-            window.dispatchEvent(new CustomEvent('covermate:remote-content-ready', { detail: lateResult }));
+            if (!lateResult.publicLive) window.dispatchEvent(new CustomEvent('covermate:remote-content-ready', { detail: lateResult }));
           }).catch(() => {});
           console.warn('[covermate] Remote content still loading; rendering temporary local cache.');
         }

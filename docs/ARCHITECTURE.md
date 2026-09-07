@@ -167,7 +167,18 @@ module instead of carrying local JSON-string scanners.
 `scripts/lib/visitor-source.mjs` owns the `src/visitor/*` to `index.html`
 composition boundary. Validation and targeted regression scripts that need the
 visitor template/runtime should import this module instead of parsing generated
-`index.html`.
+`index.html`. It also hashes local image bytes into the generated runtime's
+`IMAGE_VERSIONS` map; image replacements must regenerate the visitor bundle.
+`covermate-contract.js` owns same-origin asset URL versioning and leaves
+external/signed URLs untouched.
+
+`covermate-public.mjs` owns visible/online public live-content refresh and
+failure backoff. The visitor's `applyLiveContent` merges only CMS content,
+separately from `applyMode` navigation, so polling does not reset input or owner
+drafts. `npm run check:live-content` covers network failure/lifecycle scenarios
+in a local browser with controlled Firestore REST responses; `smoke:nfr` covers
+real UI publication against isolated Auth/Firestore emulators, including an
+already-open visitor. See DATA_CONTRACT.md for intervals and freshness limits.
 
 `scripts/lib/contract-loader.mjs` owns the regression-script import path for
 `covermate-contract.js`. Use it instead of direct Node imports so checks stay

@@ -993,6 +993,7 @@ export function cacheSiteState(name, state) {
   const clean = sanitizeStateDoc(state);
   if (!validStateDoc(clean)) return false;
   if (name === "live") {
+    if (typeof window !== "undefined") window.__covermateLiveState = clean;
     writeJSON(LIVE_CONFIG_KEY, clean.config);
     writeJSON(LIVE_TEXT_KEY, clean.text || {});
     return true;
@@ -1003,6 +1004,19 @@ export function cacheSiteState(name, state) {
     return true;
   }
   return false;
+}
+
+export function versionedAssetUrl(ref, versions = {}, origin = "") {
+  if (!ref || /^(data:|blob:)/i.test(ref)) return ref;
+  try {
+    const path = ref.startsWith("assets/") ? "/" + ref : ref;
+    const url = new URL(path, origin);
+    const version = versions[url.pathname];
+    // Leave external/signed media URLs untouched, including their query order.
+    if (url.origin !== origin || !version) return ref;
+    url.searchParams.set("cm_asset", version);
+    return url.pathname + url.search + url.hash;
+  } catch { return ref; }
 }
 
 export function cacheVersions(versions, limit = HISTORY_LIMIT) {
@@ -1096,6 +1110,7 @@ const contract = {
   sanitizeMotorCountConfig,
   sanitizeStateDoc,
   cacheSiteState,
+  versionedAssetUrl,
   cacheVersions
 };
 

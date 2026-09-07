@@ -16,6 +16,7 @@ const commands = [
   ["npm", ["run", "check:needs"]],
   ["npm", ["run", "check:text-editor"]],
   ["npm", ["run", "check:boot"]],
+  ["npm", ["run", "check:live-content"]],
   ["npm", ["run", "check:analytics"]],
   ["npm", ["run", "check:analytics-api"]],
   ["npm", ["run", "check:phase6"]],

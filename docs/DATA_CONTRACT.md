@@ -1,6 +1,6 @@
 # CoverMate Data Contract
 
-Last updated: 2026-08-30
+Last updated: 2026-09-07
 
 ## Persistence Model
 
@@ -22,6 +22,34 @@ Hard-coded defaults are only a cold-start fallback when no remote live document
 and no local cache exist. They must not reset or replace live/draft database
 content after Firestore has produced a valid document.
 
+Public freshness is owned by `covermate-public.mjs`: every live read uses
+`cache: 'no-store'` and a 10-second request timeout. Boot still allows a
+1.5-second fallback window, with late successful data applied in place. An open
+public tab checks live content every 60 seconds while visible/online, and on
+focus, visibility return, reconnect, BFCache resume, or a same-origin live-cache
+storage event. Bursts coalesce with a 5-second minimum gap; failed reads back off
+up to 5 minutes and retain the last valid state. Storage events trigger a server
+read, not publication of another tab's arbitrary local values.
+
+Content comparison includes normalized config and text, not just the CMS
+revision, so direct live-document edits are detected too. Unchanged content
+does not re-render. Changed content updates the page without document reload,
+anchor navigation, or resetting form/calculator values and language. A memory
+copy handles browsers where storage writes fail. Admin/edit/preview routes are
+excluded, including in-flight public responses after entering an owner route;
+drafts remain under the existing explicit save/publish and revision-conflict
+contract. This is bounded polling, not instantaneous realtime delivery.
+
+Local image references rendered by the visitor runtime carry a `cm_asset`
+content hash generated from the actual file bytes. Changing a file requires
+`npm run build:visitor` before deploy. Brand (including compiled image-slot
+fallbacks), insurer and relationship image paths revalidate; mutable insurer and
+relationship paths no longer advertise one-year immutability. External/signed URLs
+are not rewritten: replace their URL/version when replacing external media,
+because the remote host's caching is outside CoverMate's control. A code/asset
+deployment still requires a page load to use the new generated runtime; live
+CMS refresh does not reload executable code.
+
 The canonical runtime names and helpers for these keys live in
 `covermate-contract.js`. New source-authored runtime files should import that
 module instead of copying key strings or writing their own admin-session parser.
@@ -34,7 +62,7 @@ Implications:
   even if a query parameter requests UAT
 - Vercel preview hosts resolve to UAT data automatically
 - clearing site data removes only local caches and the session marker
-- a stale cache may render only when Firestore cannot be reached
+- stale cache may render during the bounded boot wait or when Firestore cannot be reached
 - localStorage is an admin-session cache, not the remote authorization source
 - local UAT should use a separate local port/origin from normal local
   development so the browser fallback cache stays isolated
