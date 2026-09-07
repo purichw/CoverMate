@@ -66,6 +66,9 @@ try {
   await page.clock.install();
   await page.goto(baseUrl + '/#talk');
   await page.locator('#hero h1').waitFor({ state: 'attached' });
+  // Finish initial anchor retries/font layout before measuring a background update.
+  await page.evaluate(() => document.fonts.ready);
+  await page.clock.runFor(1200);
   await page.getByRole('button', { name: 'Switch to English' }).click();
   const name = page.locator('input[name=name]');
   await name.fill('Keep my name');
@@ -85,7 +88,7 @@ try {
   const after = await page.evaluate(() => ({ id: window.__documentIdentity, scroll: scrollY, time: performance.timeOrigin, events: window.__readyEvents }));
   assert.equal(before.id, after.id);
   assert.equal(before.time, after.time);
-  assert.ok(Math.abs(before.scroll - after.scroll) < 3, 'Content refresh moved the form away from the reader');
+  assert.ok(Math.abs(before.scroll - after.scroll) < 3, `Content refresh moved the form away from the reader: ${JSON.stringify({ before, after })}`);
   assert.ok(page.url().endsWith('/#talk'));
   assert.equal(after.events, before.events + 1);
   console.log('PASS open-tab polling, direct DB edit without revision/updateTime bump, anchor route, input/focus/scroll/language preservation');
