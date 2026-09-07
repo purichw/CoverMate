@@ -139,6 +139,7 @@ function remoteContentMock(remoteConfig, remoteText = {}) {
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
+    export const startLiveContentSync = () => {};
     export const hydrateLocalContent = () => window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
   `;
 }
@@ -171,6 +172,7 @@ function adminPortalSessionMock() {
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
+    export const startLiveContentSync = () => {};
     export const hydrateLocalContent = () => window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
   `;
 }
@@ -306,6 +308,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
+    export const startLiveContentSync = () => {};
     export const hydrateLocalContent = () => window.CoverMateFirebase.hydrateLocalContent({ draft: false, versions: false });
   `;
 }
