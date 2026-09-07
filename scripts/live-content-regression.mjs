@@ -75,7 +75,12 @@ try {
   await page.locator('input[name=contact]').fill('test-contact');
   await page.locator('textarea[name=topic]').fill('Keep this unfinished message');
   await name.click();
-  const before = await page.evaluate(() => ({ id: window.__documentIdentity, scroll: scrollY, time: performance.timeOrigin, events: window.__readyEvents }));
+  const before = await page.evaluate(() => {
+    window.__refreshScrollCalls = [];
+    const original = window.scrollTo.bind(window);
+    window.scrollTo = (...args) => { window.__refreshScrollCalls.push(args); return original(...args); };
+    return { id: window.__documentIdentity, scroll: scrollY, formTop: document.querySelector('input[name=name]').getBoundingClientRect().top, heroHeight: document.querySelector('#hero').getBoundingClientRect().height, time: performance.timeOrigin, events: window.__readyEvents };
+  });
   const key = await page.locator('#hero h1[data-ek], #hero h1 [data-ek]').first().getAttribute('data-ek');
   assert.ok(key?.endsWith(':en'), `Expected English text slot, got ${key}`);
   const originalHeading = await page.locator('#hero h1').innerText();
@@ -85,12 +90,15 @@ try {
   assert.equal(await name.inputValue(), 'Keep my name');
   assert.equal(await page.locator('textarea[name=topic]').inputValue(), 'Keep this unfinished message');
   assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('name')), 'name');
-  const after = await page.evaluate(() => ({ id: window.__documentIdentity, scroll: scrollY, time: performance.timeOrigin, events: window.__readyEvents }));
+  const after = await page.evaluate(() => ({ id: window.__documentIdentity, scroll: scrollY, formTop: document.querySelector('input[name=name]').getBoundingClientRect().top, heroHeight: document.querySelector('#hero').getBoundingClientRect().height, time: performance.timeOrigin, events: window.__readyEvents }));
   assert.equal(before.id, after.id);
   assert.equal(before.time, after.time);
-  assert.ok(Math.abs(before.scroll - after.scroll) < 3, `Content refresh moved the form away from the reader: ${JSON.stringify({ before, after })}`);
+  // Native scroll anchoring can change scrollY when text above the form changes height.
+  assert.ok(Math.abs(before.formTop - after.formTop) < 3, `Content refresh moved the form away from the reader: ${JSON.stringify({ before, after })}`);
+  assert.deepEqual(await page.evaluate(() => window.__refreshScrollCalls), [], 'Background refresh explicitly navigated/scrolled the page');
   assert.ok(page.url().endsWith('/#talk'));
   assert.equal(after.events, before.events + 1);
+  console.log('Viewport preservation:', JSON.stringify({ before, after }));
   console.log('PASS open-tab polling, direct DB edit without revision/updateTime bump, anchor route, input/focus/scroll/language preservation');
 
   const refresh = () => page.evaluate(async () => (await import('/covermate-public.mjs')).hydrateLocalContent());
