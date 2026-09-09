@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-08-30
+Last updated: 2026-09-09
 
 ## Current State
 
@@ -103,7 +103,10 @@ Visible Admin chrome/action labels are intentionally English-only: `Panel`,
 `Edit text`, `Main`, `Save draft`, `Preview`, `Publish`, `Success`, and
 `Log out`.
 
-Insurer logos are present under `assets/ins`.
+Insurer logos are present under `assets/ins`. Active slot 13 now uses Aioi
+Bangkok Insurance at `assets/ins/13-aioi.png`; legacy ThaiVivat names or
+`assets/ins/13-thaivivat.png` references normalize to Aioi during visitor/Admin
+rendering so old CMS data does not revive the retired logo.
 
 The visitor bundle has been reconciled through the product specs, current implementation docs, and owner-supplied reference packages used during development. Those artifacts are historical inputs only; the repository, current docs, and Firestore live CMS state are the maintained source of truth.
 
@@ -248,10 +251,10 @@ unreachable, visitors fall back to embedded defaults or last-known local cache.
 Seed/publish live content before treating Admin Portal edits as production or
 UAT CMS content.
 
-The insurer-logo grid has 14 committed files and the public copy is aligned to
-that visible logo count. AIA and Srikrung Broker proof cards carry the related
-business context below the grid; confirm any future count/copy change with the
-business owner and add matching logo assets first.
+The insurer-logo grid has 14 active logo references and the public copy is
+aligned to that visible logo count. AIA and Srikrung Broker proof cards carry
+the related business context below the grid; confirm any future count/copy
+change with the business owner and add matching logo assets first.
 
 The embedded exported bundle is hard to maintain by hand. Run parse checks and
 visual smoke checks after bundle edits.

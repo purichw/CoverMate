@@ -297,6 +297,16 @@ const ACCENTS = {
   ink: { base: 'var(--color-neutral-800)', deep: 'var(--color-neutral-900)', mid: 'var(--color-neutral-800)', soft: 'var(--color-neutral-200)', text: 'var(--color-neutral-800)', light: 'var(--color-neutral-400)', on: 'var(--color-neutral-100)' }
 };
 
+const AIOI_INSURER = { th: 'ไอโออิ กรุงเทพ ประกันภัย', en: 'Aioi Bangkok Insurance' };
+const AIOI_LOGO = 'assets/ins/13-aioi.png';
+const LEGACY_INSURER_LOGOS = {
+  'assets/ins/13-thaivivat.png': AIOI_LOGO
+};
+function normalizeInsurerLogoRef(value) {
+  const ref = String(value || '').trim();
+  return LEGACY_INSURER_LOGOS[ref] || ref;
+}
+
 // One name → logo map, shared by the renderer and the migration. The grid resolves a
 // tile through this, so a stored config that predates `item.logo` still shows the
 // right mark whether or not the migration has run. Includes the short names shipped
@@ -308,13 +318,20 @@ const INS_LOGO = (function () {
   const d = DEFAULTS.sections.find(x => x.type === 'insurers');
   ((d && d.items) || []).forEach(it => { add(it.en && it.en.name, it.logo); add(it.th && it.th.name, it.logo); });
   [['วิริยะ', '01-viriyah'], ['ธนชาต', '07-thanachart'], ['เมืองไทย', '06-muang-thai'], ['เทเวศ', '05-deves'],
-   ['นวกิจ', '12-navakij'], ['ไทยวิวัฒน์', '13-thaivivat'], ['อลิอันซ์', '04-allianz'], ['allianz', '04-allianz'],
+   ['นวกิจ', '12-navakij'], ['ไอโออิ', '13-aioi'], ['ไอโออิ กรุงเทพ ประกันภัย', '13-aioi'], ['ไทยวิวัฒน์', '13-aioi'],
+   ['ไทยวิวัฒน์ประกันภัย', '13-aioi'], ['aioi', '13-aioi'], ['aioi bangkok insurance', '13-aioi'], ['thaivivat', '13-aioi'], ['อลิอันซ์', '04-allianz'], ['allianz', '04-allianz'],
    ['โตเกียวมารีน', '03-tokio-marine'], ['lmg', '09-chubb']].forEach(p => add(p[0], 'assets/ins/' + p[1] + '.png'));
   return m;
 })();
 
 // Names retired along with their logo. Applied at render time as well as in the migration.
-const INS_RENAME = { lmg: { th: 'ชับบ์สามัคคีประกันภัย', en: 'Chubb Samaggi' } };
+const INS_RENAME = {
+  lmg: { th: 'ชับบ์สามัคคีประกันภัย', en: 'Chubb Samaggi' },
+  'ไทยวิวัฒน์': AIOI_INSURER,
+  'ไทยวิวัฒน์ประกันภัย': AIOI_INSURER,
+  thaivivat: AIOI_INSURER,
+  'thaivivat insurance': AIOI_INSURER
+};
 
 function insTile(it, lk) {
   const en = String((it.en && it.en.name) || '').toLowerCase();
@@ -322,7 +339,7 @@ function insTile(it, lk) {
   const ren = INS_RENAME[en] || INS_RENAME[th] || null;
   const name = ren ? ren[lk] : ((it[lk] && it[lk].name) || (it.th && it.th.name) || '');
   return {
-    logo: it.logo || INS_LOGO[en] || INS_LOGO[th] || '',
+    logo: normalizeInsurerLogoRef(it.logo || INS_LOGO[en] || INS_LOGO[th] || ''),
     name: name,
     logoAlt: it.logoAlt || name
   };
@@ -1233,7 +1250,7 @@ class Component extends DCLogic {
           const thName = String((it.th && it.th.name) || '').toLowerCase();
           const ren = INS_RENAME[en] || INS_RENAME[thName] || null;
           if (ren) { it.th.name = ren.th; it.en.name = ren.en; }
-          if (!it.logo) it.logo = INS_LOGO[en] || INS_LOGO[thName] || (defItems[idx] && defItems[idx].logo) || '';
+          it.logo = normalizeInsurerLogoRef(it.logo || INS_LOGO[en] || INS_LOGO[thName] || (defItems[idx] && defItems[idx].logo) || '');
         });
       }
       if (s.type === 'contact') {

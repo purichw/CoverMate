@@ -1,5 +1,5 @@
 # CoverMate Website Page Text Inventory For ChatGPT Copy Review
-Generated: 2026-08-16T06:50:04.976Z
+Generated: 2026-09-09T04:30:15.060Z
 ## Source Precedence
 1. `production-live` entries, when present, were captured from `https://covermate.vercel.app` and should be treated as the current visible public website source.
 2. `repo-defaults` entries are the repository cold-start CMS payload. Firestore live content still prevails in production when it loads successfully.
@@ -23,27 +23,27 @@ Do not invent private owner-interface copy; this export is public visitor-site c
 ## Summary
 ```json
 {
-  "totalEntries": 579,
-  "editableEntries": 564,
+  "totalEntries": 581,
+  "editableEntries": 566,
   "protectedEntries": 10,
   "bySource": {
-    "repo-defaults": 579
+    "repo-defaults": 581
   },
   "bySurface": {
     "brand": 8,
     "contact": 8,
     "public-header": 11,
     "public-footer": 4,
-    "public-section": 548
+    "public-section": 550
   },
   "byLanguage": {
-    "th": 235,
-    "en": 289,
+    "th": 236,
+    "en": 290,
     "mixed": 40,
     "neutral": 15
   },
   "byCopyKind": {
-    "copy": 549,
+    "copy": 551,
     "protected": 10,
     "contact-or-number": 5,
     "short-label": 15
@@ -191,9 +191,11 @@ Do not invent private owner-interface copy; this export is public visitor-site c
 | `repo-defaults:sections.5.th.kicker` | th | public-section | sections.5.th.kicker | ประกันรถยนต์ · ในฐานะนายหน้า | Candidate for copy refinement. |
 | `repo-defaults:sections.5.th.title` | th | public-section | sections.5.th.title | ประกันรถยนต์<br>เปรียบเทียบได้ 14 แห่ง | Candidate for copy refinement. |
 | `repo-defaults:sections.5.th.body` | mixed | public-section | sections.5.th.body | สำหรับประกันรถยนต์ เราสามารถเปรียบเทียบข้อเสนอจากบริษัทประกันภัย 14 แห่ง เพื่อพิจารณาทางเลือกที่เหมาะสมกับคุณ ส่วนประกันชีวิตและสุขภาพดำเนินการผ่าน AIA | Candidate for copy refinement. |
+| `repo-defaults:sections.5.th.cta1` | th | public-section | sections.5.th.cta1 | ดูหน้าประกันรถยนต์โดยเฉพาะ | Candidate for copy refinement. |
 | `repo-defaults:sections.5.en.kicker` | en | public-section | sections.5.en.kicker | Motor insurance · as a broker | Candidate for copy refinement. |
 | `repo-defaults:sections.5.en.title` | en | public-section | sections.5.en.title | Motor insurance<br>compared across 14 insurers | Candidate for copy refinement. |
 | `repo-defaults:sections.5.en.body` | en | public-section | sections.5.en.body | For motor insurance, we compare options from 14 insurers. Life and health insurance is arranged through AIA. | Candidate for copy refinement. |
+| `repo-defaults:sections.5.en.cta1` | en | public-section | sections.5.en.cta1 | Open the dedicated motor page | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.0.th.name` | th | public-section | sections.5.items.0.th.name | วิริยะประกันภัย | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.0.en.name` | en | public-section | sections.5.items.0.en.name | Viriyah | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.1.th.name` | th | public-section | sections.5.items.1.th.name | กรุงเทพประกันภัย | Candidate for copy refinement. |
@@ -218,8 +220,8 @@ Do not invent private owner-interface copy; this export is public visitor-site c
 | `repo-defaults:sections.5.items.10.en.name` | en | public-section | sections.5.items.10.en.name | MSIG | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.11.th.name` | th | public-section | sections.5.items.11.th.name | นวกิจประกันภัย | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.11.en.name` | en | public-section | sections.5.items.11.en.name | Navakij | Candidate for copy refinement. |
-| `repo-defaults:sections.5.items.12.th.name` | th | public-section | sections.5.items.12.th.name | ไทยวิวัฒน์ประกันภัย | Candidate for copy refinement. |
-| `repo-defaults:sections.5.items.12.en.name` | en | public-section | sections.5.items.12.en.name | Thaivivat | Candidate for copy refinement. |
+| `repo-defaults:sections.5.items.12.th.name` | th | public-section | sections.5.items.12.th.name | ไอโออิ กรุงเทพ ประกันภัย | Candidate for copy refinement. |
+| `repo-defaults:sections.5.items.12.en.name` | en | public-section | sections.5.items.12.en.name | Aioi Bangkok Insurance | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.13.th.name` | th | public-section | sections.5.items.13.th.name | ซมโปะประกันภัย | Candidate for copy refinement. |
 | `repo-defaults:sections.5.items.13.en.name` | en | public-section | sections.5.items.13.en.name | Sompo | Candidate for copy refinement. |
 | `repo-defaults:sections.5.cards.0.th.kicker` | th | public-section | sections.5.cards.0.th.kicker | ประกันชีวิต+สุขภาพ · ในฐานะตัวแทน | Candidate for copy refinement. |

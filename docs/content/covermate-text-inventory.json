@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generatedAt": "2026-08-16T06:50:04.976Z",
+    "generatedAt": "2026-09-09T04:30:15.060Z",
     "productionUrl": "https://covermate.vercel.app",
     "repoRoot": "/Users/point/CoverMate",
     "liveCapturePath": null,
@@ -17,27 +17,27 @@
     ]
   },
   "summary": {
-    "totalEntries": 579,
-    "editableEntries": 564,
+    "totalEntries": 581,
+    "editableEntries": 566,
     "protectedEntries": 10,
     "bySource": {
-      "repo-defaults": 579
+      "repo-defaults": 581
     },
     "bySurface": {
       "brand": 8,
       "contact": 8,
       "public-header": 11,
       "public-footer": 4,
-      "public-section": 548
+      "public-section": 550
     },
     "byLanguage": {
-      "th": 235,
-      "en": 289,
+      "th": 236,
+      "en": 290,
       "mixed": 40,
       "neutral": 15
     },
     "byCopyKind": {
-      "copy": 549,
+      "copy": 551,
       "protected": 10,
       "contact-or-number": 5,
       "short-label": 15
@@ -4365,6 +4365,33 @@
       "repeatableId": null
     },
     {
+      "id": "repo-defaults:sections.5.th.cta1",
+      "source": "repo-defaults",
+      "sourceFile": "/Users/point/CoverMate/index.html",
+      "sourceCapturedAt": null,
+      "surface": "public-section",
+      "jsonPath": "sections.5.th.cta1",
+      "field": "cta1",
+      "language": "th",
+      "value": "ดูหน้าประกันรถยนต์โดยเฉพาะ",
+      "charCount": 26,
+      "hasThai": true,
+      "copyKind": "copy",
+      "editable": true,
+      "protected": false,
+      "visibility": "visitor-visible",
+      "editLocation": "Inline editor / Owner CMS > Content where structured controls exist",
+      "rewriteGuidance": "Candidate for copy refinement.",
+      "note": "Repository cold-start fallback; production live content prevails.",
+      "sectionId": "insurers",
+      "sectionType": "insurers",
+      "sectionOrder": 6,
+      "routeAnchor": "#insurers",
+      "repeatable": null,
+      "repeatableIndex": null,
+      "repeatableId": null
+    },
+    {
       "id": "repo-defaults:sections.5.en.kicker",
       "source": "repo-defaults",
       "sourceFile": "/Users/point/CoverMate/index.html",
@@ -4429,6 +4456,33 @@
       "language": "en",
       "value": "For motor insurance, we compare options from 14 insurers. Life and health insurance is arranged through AIA.",
       "charCount": 108,
+      "hasThai": false,
+      "copyKind": "copy",
+      "editable": true,
+      "protected": false,
+      "visibility": "visitor-visible",
+      "editLocation": "Inline editor / Owner CMS > Content where structured controls exist",
+      "rewriteGuidance": "Candidate for copy refinement.",
+      "note": "Repository cold-start fallback; production live content prevails.",
+      "sectionId": "insurers",
+      "sectionType": "insurers",
+      "sectionOrder": 6,
+      "routeAnchor": "#insurers",
+      "repeatable": null,
+      "repeatableIndex": null,
+      "repeatableId": null
+    },
+    {
+      "id": "repo-defaults:sections.5.en.cta1",
+      "source": "repo-defaults",
+      "sourceFile": "/Users/point/CoverMate/index.html",
+      "sourceCapturedAt": null,
+      "surface": "public-section",
+      "jsonPath": "sections.5.en.cta1",
+      "field": "cta1",
+      "language": "en",
+      "value": "Open the dedicated motor page",
+      "charCount": 29,
       "hasThai": false,
       "copyKind": "copy",
       "editable": true,
@@ -5102,8 +5156,8 @@
       "jsonPath": "sections.5.items.12.th.name",
       "field": "name",
       "language": "th",
-      "value": "ไทยวิวัฒน์ประกันภัย",
-      "charCount": 19,
+      "value": "ไอโออิ กรุงเทพ ประกันภัย",
+      "charCount": 24,
       "hasThai": true,
       "copyKind": "copy",
       "editable": true,
@@ -5129,8 +5183,8 @@
       "jsonPath": "sections.5.items.12.en.name",
       "field": "name",
       "language": "en",
-      "value": "Thaivivat",
-      "charCount": 9,
+      "value": "Aioi Bangkok Insurance",
+      "charCount": 22,
       "hasThai": false,
       "copyKind": "copy",
       "editable": true,

@@ -334,7 +334,7 @@ Production patches currently preserved in the bundles:
 
 Insurer logo files live in `assets/ins`.
 
-Current committed files:
+Current active bundle references:
 
 - `assets/ins/01-viriyah.png`
 - `assets/ins/02-bangkok.png`
@@ -348,18 +348,22 @@ Current committed files:
 - `assets/ins/10-axa.png`
 - `assets/ins/11-msig.png`
 - `assets/ins/12-navakij.png`
-- `assets/ins/13-thaivivat.png`
+- `assets/ins/13-aioi.png`
 - `assets/ins/14-sompo.png`
 
-The committed insurer grid currently has 14 logo files, is rendered from the
+The active insurer grid currently has 14 logo references, is rendered from the
 editable `insurers.items` content array, and includes AIA/Srikrung Broker
-relationship proof cards in the same section. The visible copy should follow the
-actual logo count unless business-approved copy says otherwise.
+relationship proof cards in the same section. Slot 13 is Aioi Bangkok Insurance.
+Legacy ThaiVivat names or `assets/ins/13-thaivivat.png` references may still
+appear in old CMS data or historical files, but runtime normalization maps them
+to `assets/ins/13-aioi.png` so current visitor/Admin rendering stays aligned.
+The visible copy should follow the actual logo count unless business-approved
+copy says otherwise.
 
 `assets/logos/aia-logo.png` is the committed loose source for the AIA proof-card
 logo and is also embedded into the current `index.html` bundle resource map.
-`assets/logos/srikrung-logo.png` is present in the embedded bundle resource map,
-but is not currently present as a loose repository file.
+`assets/logos/srikrung-logo.png` is also committed as a loose source file and
+embedded into the current `index.html` bundle resource map.
 
 ## Interaction Flows
 

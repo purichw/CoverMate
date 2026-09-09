@@ -565,12 +565,12 @@ const DEFAULTS = {
           }
         },
         {
-          "logo": "assets/ins/13-thaivivat.png",
+          "logo": "assets/ins/13-aioi.png",
           "th": {
-            "name": "ไทยวิวัฒน์ประกันภัย"
+            "name": "ไอโออิ กรุงเทพ ประกันภัย"
           },
           "en": {
-            "name": "Thaivivat"
+            "name": "Aioi Bangkok Insurance"
           }
         },
         {

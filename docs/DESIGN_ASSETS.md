@@ -137,15 +137,19 @@ Committed insurer logo files:
 | `assets/ins/10-axa.png` | Referenced by bundle |
 | `assets/ins/11-msig.png` | Referenced by bundle |
 | `assets/ins/12-navakij.png` | Referenced by bundle |
-| `assets/ins/13-thaivivat.png` | Referenced by bundle |
+| `assets/ins/13-aioi.png` | Aioi Bangkok Insurance; referenced by bundle |
 | `assets/ins/14-sompo.png` | Referenced by bundle |
 
-The visible grid currently uses 14 committed insurer logos, plus broker/agency
+The visible grid currently uses 14 active insurer logo references, plus broker/agency
 proof cards for AIA and Srikrung Broker supplied by current product reference
 data. The renderer is data-driven from `insurers.items[]`; `item.logo` is
-preferred and older/stale names resolve through the built-in logo map. The
-displayed insurer count must follow the active logo data. With the current
-committed logo set, product copy should say `14`; do not add a separate
+preferred and older/stale names resolve through the built-in logo map. Slot 13
+is Aioi Bangkok Insurance. Legacy ThaiVivat names or
+`assets/ins/13-thaivivat.png` references normalize to
+`assets/ins/13-aioi.png`; the old asset may exist only as historical/rollback
+material, not an active default or bundle reference. The displayed insurer count
+must follow the active logo data. With the current active logo set, product copy
+should say `14`; do not add a separate
 hard-coded logo count or revive stale higher-count claims.
 
 Relationship-card logo paths in the current product reference:

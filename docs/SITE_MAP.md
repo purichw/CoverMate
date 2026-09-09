@@ -159,13 +159,16 @@ Current committed files:
 - `10-axa.png`
 - `11-msig.png`
 - `12-navakij.png`
-- `13-thaivivat.png`
+- `13-aioi.png`
 - `14-sompo.png`
 
-The bundle currently expects these numbered filenames. Do not rename them
-without updating bundle references and smoke expectations together.
+The active bundle currently expects these numbered filenames. Slot 13 is Aioi
+Bangkok Insurance. Legacy ThaiVivat names or `13-thaivivat.png` references may
+exist in old CMS data or historical assets, but runtime normalization maps them
+to `13-aioi.png`. Do not rename active logo references without updating bundle
+references and smoke expectations together.
 
 The latest historical reference also renders relationship proof cards in the
 insurer section. `assets/logos/aia-logo.png` is present as a loose repo file and
 embedded in the bundle. `assets/logos/srikrung-logo.png` is present in the
-embedded bundle resource map, but is not currently present as a loose repo file.
+embedded bundle resource map and as a loose repo file.
