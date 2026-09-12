@@ -107,6 +107,11 @@ If admin sign-in fails on the preview URL, add that exact preview domain in
 Firebase Authentication -> Settings -> Authorized domains. Do not bypass
 Firebase Auth or the `admins/{uid}` allowlist for UAT browser/admin flows.
 
+Before testing hosted forms on a new preview, register its exact hostname in
+the existing reCAPTCHA Enterprise key's allowed domains, preserving all current
+domains and SCORE protection. Firebase Auth authorization and Vercel bypass do
+not authorize reCAPTCHA. See [UAT.md](UAT.md).
+
 `npm run smoke:uat` expects `COVERMATE_UAT_URL` or `--url=<preview-url>`. It can
 use `VERCEL_AUTOMATION_BYPASS_SECRET` for deployment protection, a Firebase
 test-admin ID token/email-password for private API checks, or

@@ -63,7 +63,7 @@ try {
   await licence.press('Tab');
   await poll(async () => (await refs[1].get()).data().config.licences.life.number === '9000000001');
   assert.notEqual((await refs[0].get()).data().config.licences.life.number, '9000000001', 'Licence edits remain draft-only.');
-  await admin.getByRole('button', { name: 'Close panel', exact: true }).click();
+  await admin.getByRole('button', { name: 'Close admin panel', exact: true }).click();
   await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
   await admin.getByRole('button', { name: /^Publish/ }).first().click();
   await admin.getByRole('button', { name: 'Publish', exact: true }).last().click();

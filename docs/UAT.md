@@ -1,6 +1,6 @@
 # CoverMate UAT Environment
 
-Last updated: 2026-08-30
+Last updated: 2026-09-12
 
 ## Purpose
 
@@ -86,6 +86,15 @@ Before testing admin flows on a Vercel preview URL, add that preview domain to
 Firebase Authentication -> Settings -> Authorized domains. If Google sign-in
 fails on preview, fix the domain or the admin allowlist; do not weaken the
 browser gate or Firestore Rules.
+
+Hosted lead forms also require that exact preview hostname in the existing
+reCAPTCHA Enterprise web key's allowed domains. This is separate from Firebase
+Auth authorized domains and Vercel deployment protection. A fresh preview URL
+is not automatically registered. Inspect the current key, preserve every existing
+domain, and append only the approved hostname; keep `allowAllDomains: false`
+and the existing SCORE integration. Never disable App Check for a passing test.
+An `appCheck/recaptcha-error` before any `/api/leads` POST usually warrants this
+domain check before investigating the form or API.
 
 Optional Vercel deployment-protection bypass setup:
 
