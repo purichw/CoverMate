@@ -20,6 +20,15 @@ Production can lag behind this local workspace while the release guardrail is
 active. Treat production claims as deployed-state checks, not proof that local
 uncommitted changes are live.
 
+Observed on 2026-09-12: Vercel's Git integration automatically deployed a push
+to `main` before the separately watched GitHub CI completed. Do not assume that
+omitting `vercel deploy --prod` keeps production unchanged. For releases that
+must wait for remote CI/UAT, verify the integration's deployment checks or stage
+the candidate on a non-production branch before pushing `main`. Changing that
+integration is a separate operational decision; this release did not change it.
+Documentation-only pushes may also trigger a deployment with identical runtime
+files. Verify the served runtime, not just a changing deployment identifier.
+
 ## Release Permission Guardrail
 
 Do not commit, push, or deploy until the user explicitly says to do so in the

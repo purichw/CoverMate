@@ -96,6 +96,14 @@ and the existing SCORE integration. Never disable App Check for a passing test.
 An `appCheck/recaptcha-error` before any `/api/leads` POST usually warrants this
 domain check before investigating the form or API.
 
+A valid token can still fail App Check when reCAPTCHA rates the automated
+browser below the existing 0.5 minimum. On 2026-09-12, headless verification
+scored 0.1 while a real in-app browser form submission passed. When this happens,
+retain the failed test result, verify the same hosted form through normal
+browser controls, and confirm the exact synthetic lead through Firestore and
+the authenticated UAT Admin API. Record that alternative evidence explicitly;
+do not claim the failed combined script passed or lower the protection level.
+
 Optional Vercel deployment-protection bypass setup:
 
 ```bash

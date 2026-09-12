@@ -2,13 +2,14 @@
 
 Last updated: 2026-09-12
 
-## Local CMS Ownership Update
+## CMS Ownership Release
 
 The 2026-09-12 request moves real hard-coded licence/brand data into Admin and
 removes fabricated optional-contact/image fallbacks. See
-[CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md). This local work is not a
-production deployment or database migration. Deploy code before applying the
-versioned migration; do not publish unrelated draft content to migrate fields.
+[CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md). Code `e2dba16` is deployed;
+schema version 1 was migrated independently into production live and draft after
+the compatible code was verified. No draft was published as part of migration.
+Release evidence and backup locations are in that document.
 
 ## Current State
 
@@ -46,15 +47,22 @@ Local workspace state can still be ahead of production between edits. Treat
 Vercel is deployed, Firestore Rules are deployed when rules changed, and
 production smoke passes.
 
-Previous verified production baseline before this update:
+Current CMS production release:
 
-- Date: 2026-08-02
-- Commit: `7fee3a3`
+- Date: 2026-09-12
+- Runtime commit: `e2dba16` (implementation `501628b`)
+- Vercel deployment: `dpl_DHtuH6z8Z4BSw7A97dByBaY5kbQk`
 - Production alias: `https://covermate.vercel.app`
 - Firestore Rules: no new rules change in this release; existing rules are
   deployed to Firebase project `covermate-purich`
-- Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
-  passed
+- GitHub CI: [34680894375](https://github.com/purichw/CoverMate/actions/runs/34680894375)
+  passed, including emulator Auth/Rules/API/Publish E2E
+- Hosted UAT: actual Admin edit/publish, fresh visitor, real App Check form
+  submission in the in-app browser, Firestore and authenticated Admin API readback
+- Post-migration production asset checks and
+  `COVERMATE_URL=https://covermate.vercel.app npm run smoke` passed
+- Vercel Git integration also deploys `main` automatically. A push is not a
+  staging-only action; see the release runbook before the next release.
 
 ## Product Decision Checkpoint
 
