@@ -7,7 +7,6 @@ import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 import { importCoverMateContract } from "./lib/contract-loader.mjs";
 
 const {
-  DEFAULT_ADVISOR_LOGO,
   DEFAULT_CONTACT,
   sanitizeMotorCountConfig
 } = await importCoverMateContract();
@@ -52,8 +51,8 @@ for (const pattern of [
   /data-admin-media-control="advisor-logo"/,
   /data-admin-logo-path="true"/,
   /data-admin-logo-alt="true"/,
-  /data-admin-compliance-lock="brand-credential"/,
-  /data-admin-compliance-lock="footer-legal"/,
+  /data-admin-credential="true"/,
+  /data-admin-legal="true"/,
   /data-admin-seo-title="true"/,
   /data-admin-seo-description="true"/,
   /data-admin-seo-guard="true"/
@@ -112,19 +111,15 @@ const dirtyConfig = {
 
 const clean = sanitizeMotorCountConfig(dirtyConfig, { repeatableIds: true });
 
-assert.equal(clean.brand.advisorLogo, DEFAULT_ADVISOR_LOGO, "data-image advisor logo falls back");
+assert.equal(clean.brand.advisorLogo, "", "invalid advisor logo clears without substituting a provider");
 assert.equal(clean.brand.advisorLogoAlt, "Proof logo", "advisor logo alt is cleaned");
-assert.match(clean.brand.credential.th, /AIA/);
-assert.match(clean.brand.credential.th, /นายหน้า/);
+assert.equal(clean.brand.credential.th, "bad", "Admin owns credential copy");
 assert.equal(clean.contact.lineUrl, DEFAULT_CONTACT.lineUrl, "invalid LINE URL falls back");
 assert.equal(clean.contact.facebookUrl, "", "invalid optional Facebook URL clears");
 assert.equal(clean.contact.email, DEFAULT_CONTACT.email, "invalid email falls back");
 assert.equal(clean.seo.title.th.length <= 68, true, "SEO title is length guarded");
 assert.equal(clean.seo.description.th.length <= 155, true, "SEO description is length guarded");
-assert.match(clean.footer.legal.th, /6401006221/);
-assert.match(clean.footer.legal.th, /6804008544/);
-assert.match(clean.footer.legal.th, /ว00287\/2534/);
-assert.doesNotMatch(clean.footer.legal.th, /5704011570/);
+assert.equal(clean.footer.legal.th, "old 5704011570", "Admin owns legal copy; structured licences are separate");
 assert.equal(clean.sections[0].items[0].logo, "", "invalid insurer item logo clears");
 assert.equal(clean.sections[0].items[1].logo, "assets/ins/01-viriyah.png");
 assert.equal(clean.sections[0].cards[0].logo, "", "invalid relationship-card logo clears");

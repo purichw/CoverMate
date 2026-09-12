@@ -1,6 +1,11 @@
 # CoverMate Website Current Product Spec
 
-Last updated: 2026-08-29
+Last updated: 2026-09-12
+
+CMS ownership update: real business data (licence numbers, provider logos, brand
+media) is editable in Admin and shared by Home/Motor/Footer. Optional blank
+contacts/media stay absent. [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md)
+supersedes historical read-only compliance/default-image statements below.
 
 Production baseline: `https://covermate.vercel.app`
 

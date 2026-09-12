@@ -32,6 +32,7 @@ const ICONS = {
 const L = (th, en) => ({ th: th, en: en });
 
 // COVERMATE_DEFAULTS_SOURCE
+// COVERMATE_CMS_SCHEMA_SOURCE
 const SCHEMA = {
   hero: { fields: [], item: null, cols: false },
   trust: { fields: [], item: ['label'], cols: true, addLabel: 'chip' },
@@ -297,49 +298,10 @@ const ACCENTS = {
   ink: { base: 'var(--color-neutral-800)', deep: 'var(--color-neutral-900)', mid: 'var(--color-neutral-800)', soft: 'var(--color-neutral-200)', text: 'var(--color-neutral-800)', light: 'var(--color-neutral-400)', on: 'var(--color-neutral-100)' }
 };
 
-const AIOI_INSURER = { th: 'ไอโออิ กรุงเทพ ประกันภัย', en: 'Aioi Bangkok Insurance' };
-const AIOI_LOGO = 'assets/ins/13-aioi.png';
-const LEGACY_INSURER_LOGOS = {
-  'assets/ins/13-thaivivat.png': AIOI_LOGO
-};
-function normalizeInsurerLogoRef(value) {
-  const ref = String(value || '').trim();
-  return LEGACY_INSURER_LOGOS[ref] || ref;
-}
-
-// One name → logo map, shared by the renderer and the migration. The grid resolves a
-// tile through this, so a stored config that predates `item.logo` still shows the
-// right mark whether or not the migration has run. Includes the short names shipped
-// before the list was expanded, and LMG, which never had a logo file — the panel
-// carries Chubb Samaggi in its place.
-const INS_LOGO = (function () {
-  const m = {};
-  const add = (k, v) => { if (k && v) m[String(k).toLowerCase()] = v; };
-  const d = DEFAULTS.sections.find(x => x.type === 'insurers');
-  ((d && d.items) || []).forEach(it => { add(it.en && it.en.name, it.logo); add(it.th && it.th.name, it.logo); });
-  [['วิริยะ', '01-viriyah'], ['ธนชาต', '07-thanachart'], ['เมืองไทย', '06-muang-thai'], ['เทเวศ', '05-deves'],
-   ['นวกิจ', '12-navakij'], ['ไอโออิ', '13-aioi'], ['ไอโออิ กรุงเทพ ประกันภัย', '13-aioi'], ['ไทยวิวัฒน์', '13-aioi'],
-   ['ไทยวิวัฒน์ประกันภัย', '13-aioi'], ['aioi', '13-aioi'], ['aioi bangkok insurance', '13-aioi'], ['thaivivat', '13-aioi'], ['อลิอันซ์', '04-allianz'], ['allianz', '04-allianz'],
-   ['โตเกียวมารีน', '03-tokio-marine'], ['lmg', '09-chubb']].forEach(p => add(p[0], 'assets/ins/' + p[1] + '.png'));
-  return m;
-})();
-
-// Names retired along with their logo. Applied at render time as well as in the migration.
-const INS_RENAME = {
-  lmg: { th: 'ชับบ์สามัคคีประกันภัย', en: 'Chubb Samaggi' },
-  'ไทยวิวัฒน์': AIOI_INSURER,
-  'ไทยวิวัฒน์ประกันภัย': AIOI_INSURER,
-  thaivivat: AIOI_INSURER,
-  'thaivivat insurance': AIOI_INSURER
-};
-
 function insTile(it, lk) {
-  const en = String((it.en && it.en.name) || '').toLowerCase();
-  const th = String((it.th && it.th.name) || '').toLowerCase();
-  const ren = INS_RENAME[en] || INS_RENAME[th] || null;
-  const name = ren ? ren[lk] : ((it[lk] && it[lk].name) || (it.th && it.th.name) || '');
+  const name = (it[lk] && it[lk].name) || '';
   return {
-    logo: normalizeInsurerLogoRef(it.logo || INS_LOGO[en] || INS_LOGO[th] || ''),
+    logo: it.logo || '',
     name: name,
     logoAlt: it.logoAlt || name
   };
@@ -353,7 +315,6 @@ const K_ADMIN_EVER = 'purich-admin-ever-v7'; // legacy owner marker cleared/igno
 const K_DRAFT = 'purich-draft-config-v3';    // working draft config
 const K_DRAFT_TEXT = 'purich-draft-text-v3'; // working draft inline-text overrides
 const K_HIST = 'purich-history-v3';          // published version snapshots (newest first)
-const K_SCRUB = 'purich-scrub-copy-v2';      // one-off copy migration flag (bump to re-run)
 const K_STRUCT = 'purich-struct-cards-v4';   // one-off structural migration (reference sections + cards + tiers + licence)
 const HIST_CAP = 20;
 
@@ -370,28 +331,11 @@ function assetURL(p){
       ref = window.CoverMateContract.versionedAssetUrl(ref, IMAGE_VERSIONS, window.location.origin);
     }
     if (/^(https?:|data:|blob:|\/)/.test(ref)) return ref;
-    if (ref.indexOf('assets/') === 0) return '/' + ref;
+    if (ref.indexOf('assets/') === 0 || /^favicon\.(svg|ico)$/.test(ref)) return '/' + ref;
     return ref;
   } catch(e){ return p; }
 }
 
-const DEFAULT_CONTACT_SAFE = {
-  lineId: '@CoverMate',
-  lineUrl: 'https://line.me/ti/p/~purich',
-  facebookName: 'CoverMate Insurance',
-  facebookUrl: 'https://www.facebook.com/covermate',
-  whatsapp: '',
-  phone: '08X-XXX-XXXX',
-  email: 'purich@example.com'
-};
-const PROTECTED_BRAND_CREDENTIAL = {
-  th: 'ตัวแทน AIA · นายหน้าประกันรถยนต์ · ดูแลถึงการเคลม',
-  en: 'AIA agent · motor broker · support through claims'
-};
-const PROTECTED_FOOTER_LEGAL = {
-  th: 'CoverMate · ตัวแทนประกันชีวิตและนายหน้าประกันวินาศภัยที่ได้รับใบอนุญาต · ใบอนุญาตตัวแทนประกันชีวิต 6401006221 · ใบอนุญาตนายหน้าประกันวินาศภัย 6804008544 · ประกันรถยนต์จัดผ่านศรีกรุงโบรคเกอร์ ใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · เนื้อหาบนหน้านี้เป็นข้อมูลเบื้องต้น ไม่ใช่ใบเสนอราคา',
-  en: 'CoverMate — insurance advisory · Licensed life agent (No. 6401006221) and non-life broker (No. 6804008544) · Motor cover placed through Srikrung Broker, non-life broker licence No. ว00287/2534 · Information here is indicative and is not a quotation.'
-};
 function cleanAdminText(value, limit) { return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit); }
 function cleanMediaRef(value, fallback) {
   const text = cleanAdminText(value, 500);
@@ -420,16 +364,6 @@ function cleanLocalizedSeo(value, limit) {
   const source = value && typeof value === 'object' ? value : {};
   return { th: cleanAdminText(source.th, limit), en: cleanAdminText(source.en, limit) };
 }
-function protectCredential(value, lang) {
-  const text = cleanAdminText(value, 180);
-  if (!text) return PROTECTED_BRAND_CREDENTIAL[lang];
-  if (lang === 'th') return (/AIA/.test(text) && /นายหน้า|ประกันรถยนต์/.test(text)) ? text : PROTECTED_BRAND_CREDENTIAL.th;
-  return (/AIA/i.test(text) && /(broker|motor)/i.test(text)) ? text : PROTECTED_BRAND_CREDENTIAL.en;
-}
-function protectFooterLegal(value, lang) {
-  const text = cleanAdminText(value, 1200).split('5704011570').join('ว00287/2534');
-  return ['6401006221', '6804008544', 'ว00287/2534'].every(token => text.indexOf(token) >= 0) ? text : PROTECTED_FOOTER_LEGAL[lang];
-}
 function acceptsMediaRef(value) { return !!cleanMediaRef(value, ''); }
 function acceptsHttpsUrl(value, allowEmpty) { const text = cleanAdminText(value, 500); return (!text && allowEmpty) || !!cleanHttpsUrl(text, ''); }
 function acceptsEmail(value) { return !!cleanEmailAddress(value, ''); }
@@ -438,23 +372,24 @@ function sanitizeCmsControlsConfig(cfg) {
   cfg.contact = cfg.contact && typeof cfg.contact === 'object' ? cfg.contact : {};
   cfg.footer = cfg.footer && typeof cfg.footer === 'object' ? cfg.footer : {};
   cfg.seo = cfg.seo && typeof cfg.seo === 'object' ? cfg.seo : {};
-  cfg.brand.advisorLogo = cleanMediaRef(cfg.brand.advisorLogo, DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png');
-  cfg.brand.advisorLogoAlt = cleanAdminText(cfg.brand.advisorLogoAlt || DEFAULTS.brand.advisorLogoAlt || 'AIA', 120) || 'AIA';
+  cfg.brand.advisorLogo = cleanMediaRef(cfg.brand.advisorLogo, '');
+  cfg.brand.advisorLogoAlt = cleanAdminText(cfg.brand.advisorLogoAlt, 120);
   cfg.brand.credential = cfg.brand.credential && typeof cfg.brand.credential === 'object' ? cfg.brand.credential : {};
-  cfg.brand.credential.th = protectCredential(cfg.brand.credential.th, 'th');
-  cfg.brand.credential.en = protectCredential(cfg.brand.credential.en, 'en');
-  cfg.contact.lineId = cleanAdminText(cfg.contact.lineId || DEFAULT_CONTACT_SAFE.lineId, 80) || DEFAULT_CONTACT_SAFE.lineId;
-  cfg.contact.lineUrl = cleanHttpsUrl(cfg.contact.lineUrl, DEFAULT_CONTACT_SAFE.lineUrl);
+  cfg.brand.credential.th = cleanAdminText(cfg.brand.credential.th, 180);
+  cfg.brand.credential.en = cleanAdminText(cfg.brand.credential.en, 180);
+  cfg.contact.lineId = cleanAdminText(cfg.contact.lineId, 80);
+  cfg.contact.lineUrl = cleanHttpsUrl(cfg.contact.lineUrl, '');
   cfg.contact.facebookName = cleanAdminText(cfg.contact.facebookName || '', 120);
   cfg.contact.facebookUrl = cleanHttpsUrl(cfg.contact.facebookUrl, '');
   cfg.contact.whatsapp = cleanPhoneLike(cfg.contact.whatsapp, '');
-  cfg.contact.phone = cleanPhoneLike(cfg.contact.phone, DEFAULT_CONTACT_SAFE.phone);
-  cfg.contact.email = cleanEmailAddress(cfg.contact.email, DEFAULT_CONTACT_SAFE.email);
+  cfg.contact.phone = /x{2,}/i.test(cfg.contact.phone || '') ? '' : cleanPhoneLike(cfg.contact.phone, '');
+  cfg.contact.email = /@example\.(com|org|net)$/i.test(cfg.contact.email || '') ? '' : cleanEmailAddress(cfg.contact.email, '');
   cfg.seo.title = cleanLocalizedSeo(cfg.seo.title, 68);
   cfg.seo.description = cleanLocalizedSeo(cfg.seo.description, 155);
   cfg.footer.legal = cfg.footer.legal && typeof cfg.footer.legal === 'object' ? cfg.footer.legal : {};
-  cfg.footer.legal.th = protectFooterLegal(cfg.footer.legal.th, 'th');
-  cfg.footer.legal.en = protectFooterLegal(cfg.footer.legal.en, 'en');
+  cfg.footer.legal.th = cleanAdminText(cfg.footer.legal.th, 2000);
+  cfg.footer.legal.en = cleanAdminText(cfg.footer.legal.en, 2000);
+  sanitizeCmsFields(cfg);
   (cfg.sections || []).forEach(section => {
     if (!section || section.type !== 'insurers') return;
     (section.items || []).forEach(item => { if (item) item.logo = cleanMediaRef(item.logo, ''); });
@@ -637,71 +572,16 @@ class Component extends DCLogic {
     const sec = ((cfg.sections || []).find(s => s && (s.id === 'insurers' || s.type === 'insurers'))) || {};
     const items = Array.isArray(sec.items) ? sec.items : [];
     const logos = items.filter(item => item && item.on !== false && String(item.logo || '').trim());
-    return logos.length || 14;
-  }
-
-  normalizeProductDecisionCopy(value) {
-    if (typeof value !== 'string') return value;
-    return value
-      .replace(/ไม่ต้องจัดการคนเดียว/g, 'ไม่จำเป็นต้องจัดการเพียงลำพัง')
-      .replace(/สู้คนเดียว/g, 'จัดการเพียงลำพัง')
-      .replace(/ชีวิตและสุขภาพ\s*ผมเป็นตัวแทน AIA โดยเฉพาะ/g, 'ชีวิตและสุขภาพ เราให้บริการผ่าน AIA โดยตรง')
-      .replace(/ผมเป็นตัวแทน AIA โดยเฉพาะ/g, 'เราให้บริการผ่าน AIA โดยตรง')
-      .replace(/ผมเป็นตัวแทน AIA/g, 'เราให้บริการผ่าน AIA')
-      .replace(/ผมจัดผ่าน/g, 'เราจัดผ่าน')
-      .replace(/ผมเทียบ/g, 'เราเปรียบเทียบ')
-      .replace(/ผมสรุป/g, 'เราสรุป')
-      .replace(/ผมดูแล/g, 'เราดูแล')
-      .replace(/ผมตอบกลับ/g, 'เราตอบกลับ')
-      .replace(/ผมตอบทุกข้อความเอง/g, 'เราตอบทุกข้อความด้วยตนเอง')
-      .replace(/ผมจะติดต่อกลับ/g, 'เราจะติดต่อกลับ')
-      .replace(/ผมจะทัก/g, 'เราจะทัก')
-      .replace(/ผมจะเตือน/g, 'เราจะเตือน')
-      .replace(/ติดต่อเรา/g, 'ติดต่อเรา')
-      .replace(/ส่งตัวเลขนี้ให้เราดูต่อ/g, 'ส่งตัวเลขนี้ให้เราดูต่อ')
-      .replace(/ตั้งเตือนให้เราจำ/g, 'ตั้งเตือนให้เราจำ')
-      .replace(/เกี่ยวกับเรา/g, 'เกี่ยวกับเรา')
-      .replace(/ค่าตอบแทนของเรา/g, 'ค่าตอบแทนของเรา')
-      .replace(/ไม่ขายเกิน/g, 'ไม่เสนอเกินความจำเป็น')
-      .replace(/ยิงเทียบ/g, 'เปรียบเทียบ')
-      .replace(/ยิงเบี้ย/g, 'เปรียบเทียบเบี้ย')
-      .replace(/สนใจปรึกษาครับ\/ค่ะ\s*—\s*สถานการณ์:/g, 'สนใจปรึกษาเรื่องประกัน — สถานการณ์:')
-      .replace(/สนใจปรึกษาครับ\/ค่ะ/g, 'สนใจปรึกษาเรื่องประกัน')
-      .replace(/แอดไลน์ ปรึกษาฟรี/g, 'ติดต่อเราทาง LINE')
-      .replace(/แอดไลน์ ขอเทียบเบี้ย/g, 'ติดต่อเราทาง LINE')
-      .replace(/Send us these numbers/g, 'Send us these numbers')
-      .replace(/What we do/g, 'What we do')
-      .replace(/What I get paid/g, 'How CoverMate is compensated')
-      .replace(/How CoverMate is compensated/g, 'How CoverMate is compensated')
-      .replace(/About me/g, 'About us')
-      .replace(/contact us directly on LINE/g, 'contact us directly on LINE')
-      .replace(/contact us/ig, 'contact us')
-      .replace(/As a broker, we compare/g, 'As a broker, we compare')
-      .replace(/I compare/g, 'We compare')
-      .replace(/Unit-linked plans are not offered/g, 'Unit-linked plans are not offered')
-      .replace(/Set\. I will message you 60 days ahead\./g, 'Set. We will message you 60 days ahead.')
-      .replace(/Thank you\. I will reply as soon as possible\./g, 'Thank you. We will reply as soon as possible.')
-      .replace(/Pick a policy and expiry month and I will remind you 60 days ahead\./g, 'Pick a policy and expiry month and we will remind you 60 days ahead.')
-      .replace(/I will remind you about/g, 'We will remind you about')
-      .replace(/hard sell/ig, 'sales pressure')
-      .replace(/chase the insurer/ig, 'coordinate with the insurer')
-      .replace(/fight it alone/ig, 'handle it alone')
-      .replace(/someone answers the phone/ig, 'you know who to contact')
-      .replace(/savings are thin/ig, 'the difference is limited')
-      .replace(/ตั้งตัวไม่ทัน/g, 'กรณีเร่งด่วน')
-      .replace(/ผม/g, 'เรา')
-      .replace(/ครับ\/ค่ะ/g, '')
-      .replace(/ครับ/g, '')
-      .replace(/ค่ะ/g, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
+    return logos.length;
   }
 
   normalizeInsurerCountCopy(value, count) {
     if (typeof value !== 'string') return value;
-    const n = Number(count) || this.companyLogoCount();
+    const n = Number.isFinite(Number(count)) ? Number(count) : this.companyLogoCount();
     if (!/(ประกันรถยนต์|บริษัท|เทียบ|เบี้ย|motor|insurer|broker|compare|comparison)/i.test(value)) return value;
     return value
+      .replace(/บริษัทประกันภัย\s*\d+\+?\s*แห่ง/g, function () { return 'บริษัทประกันภัย ' + n + ' แห่ง'; })
+      .replace(/เทียบ(เบี้ย)?ได้\s*\d+\+?\s*เจ้า/g, function (_, premium) { return 'เทียบ' + (premium || '') + 'ได้ ' + n + ' เจ้า'; })
       .replace(/บริษัทประกันภัยกว่า\s*\d+\+?\s*แห่ง/g, function () { return 'บริษัทประกันภัย ' + n + ' แห่ง'; })
       .replace(/บริษัทกว่า\s*\d+\+?\s*เจ้า/g, function () { return 'บริษัทประกันภัย ' + n + ' แห่ง'; })
       .replace(/เทียบเบี้ยกว่า\s*\d+\+?\s*บริษัท/g, function () { return 'จาก ' + n + ' บริษัทประกันภัย'; })
@@ -721,15 +601,16 @@ class Component extends DCLogic {
     const next = clone(text || {});
     const count = this.companyLogoCount();
     Object.keys(next).forEach((key) => {
-      const value = this.normalizeProductDecisionCopy(String(next[key] || ''));
+      const value = String(next[key] || '');
+      if (/^(08X-XXX-XXXX|purich@example\.com)$/i.test(value.trim())) { delete next[key]; return; }
       const isInsurerInlineText = /^insurers:\d+:(th|en)$/.test(key);
       const isContactTitleText = /^talk:\d+:(th|en)$/.test(key);
       next[key] = value;
       if (isInsurerInlineText) next[key] = this.normalizeInsurerCountCopy(value, count);
       if (isContactTitleText) {
-        next[key] = this.normalizeProductDecisionCopy(value
+        next[key] = value
           .replace(/ขอรับ\s*\n\s*คำปรึกษา/g, 'ขอรับคำปรึกษา')
-          .replace(/Request a\s*\n\s*consultation/ig, 'Request a consultation'));
+          .replace(/Request a\s*\n\s*consultation/ig, 'Request a consultation');
       }
     });
     return next;
@@ -970,16 +851,20 @@ class Component extends DCLogic {
   }
 
   setSeoMeta(kind, key, value) {
-    if (!value && value !== '') return;
     let el = document.head.querySelector('meta[' + kind + '="' + key + '"]');
+    if (!value) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('meta'); el.setAttribute(kind, key); document.head.appendChild(el); }
     el.setAttribute('content', value);
   }
 
   setSeoLink(rel, href) {
-    let el = document.head.querySelector('link[rel="' + rel + '"]');
+    const matches = [...document.head.querySelectorAll('link[rel="' + rel + '"]')];
+    let el = matches.shift();
+    matches.forEach(node => node.remove());
+    if (!href) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('link'); el.setAttribute('rel', rel); document.head.appendChild(el); }
     el.setAttribute('href', href);
+    if (rel === 'icon' || rel === 'apple-touch-icon') { el.removeAttribute('type'); el.removeAttribute('sizes'); }
   }
 
   seoGraph(site, lang, title, description, routePath) {
@@ -987,7 +872,8 @@ class Component extends DCLogic {
     const path = routePath === '/motor' ? '/motor' : '/';
     const base = root + path;
     const siteBase = root + '/';
-    const image = root + '/assets/covermate-og.png';
+    const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
+    const image = imageRef ? new URL(imageRef, root + '/').href : '';
     const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang)) || 'CoverMate';
     const isMotor = path === '/motor';
     const org = {
@@ -995,20 +881,19 @@ class Component extends DCLogic {
       '@id': siteBase + '#organization',
       name: brand,
       url: siteBase,
-      logo: { '@type': 'ImageObject', url: image, width: 1200, height: 630 },
+      ...(cmsMedia(cmsGet(site, 'brand.media.mark')) ? { logo: { '@type': 'ImageObject', url: new URL(cmsGet(site, 'brand.media.mark'), siteBase).href } } : {}),
       areaServed: { '@type': 'AdministrativeArea', name: 'Bangkok Metropolitan Region, Thailand' },
       knowsAbout: ['AIA life insurance', 'AIA health insurance', 'Motor insurance comparison', 'Insurance claims support'],
-      identifier: [
-        { '@type': 'PropertyValue', name: 'Life agent licence', value: '6401006221' },
-        { '@type': 'PropertyValue', name: 'Non-life broker licence', value: '6804008544' }
-      ]
+      identifier: ['life', 'nonLife'].filter(key => cmsGet(site, 'licences.' + key + '.number')).map(key => ({
+        '@type': 'PropertyValue', name: this.seoString(cmsGet(site, 'licences.' + key + '.label'), lang), value: cmsGet(site, 'licences.' + key + '.number')
+      }))
     };
     const phone = site.contact && this.seoClean(site.contact.phone);
     const email = site.contact && this.seoClean(site.contact.email);
     const lineUrl = site.contact && this.seoClean(site.contact.lineUrl);
     const facebookUrl = site.contact && this.seoClean(site.contact.facebookUrl);
     const sameAs = [lineUrl, facebookUrl].filter(url => /^https?:/.test(url || ''));
-    if (phone && !/[xX]/.test(phone)) org.telephone = phone;
+    if (phone && !/x{2,}/i.test(phone)) org.telephone = phone;
     if (email && !/@example.com$/i.test(email)) org.email = email;
     if (sameAs.length) org.sameAs = sameAs;
     if (org.telephone || org.email) {
@@ -1025,7 +910,7 @@ class Component extends DCLogic {
       '@graph': [
         { '@type': 'WebSite', '@id': siteBase + '#website', url: siteBase, name: brand, inLanguage: ['th-TH', 'en'], publisher: { '@id': siteBase + '#organization' } },
         org,
-        { '@type': 'WebPage', '@id': base + '#webpage', url: base, name: title, description: description, isPartOf: { '@id': siteBase + '#website' }, about: { '@id': siteBase + '#organization' }, primaryImageOfPage: { '@type': 'ImageObject', url: image, width: 1200, height: 630 }, inLanguage: ['th-TH', 'en'] },
+        { '@type': 'WebPage', '@id': base + '#webpage', url: base, name: title, description: description, isPartOf: { '@id': siteBase + '#website' }, about: { '@id': siteBase + '#organization' }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}), inLanguage: ['th-TH', 'en'] },
         { '@type': 'Service', '@id': base + '#insurance-advisory', name: isMotor ? (lang === 'th' ? 'ที่ปรึกษาและเปรียบเทียบประกันรถยนต์' : 'Motor insurance comparison advisory') : (lang === 'th' ? 'ที่ปรึกษาประกันชีวิต สุขภาพ และรถยนต์' : 'Life, health, and motor insurance advisory'), serviceType: isMotor ? 'Motor insurance comparison and broker advisory' : 'Insurance advisory and motor insurance comparison', provider: { '@id': siteBase + '#organization' }, areaServed: { '@type': 'AdministrativeArea', name: 'Bangkok Metropolitan Region, Thailand' }, audience: { '@type': 'Audience', audienceType: isMotor ? 'People comparing motor insurance in Thailand' : 'People comparing personal insurance in Thailand' } }
       ]
     };
@@ -1040,7 +925,8 @@ class Component extends DCLogic {
     const routePath = routePage === 'motor' ? '/motor' : '/';
     const root = 'https://covermate.vercel.app';
     const canonical = root + routePath;
-    const image = root + '/assets/covermate-og.png';
+    const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
+    const image = imageRef ? new URL(imageRef, root + '/').href : '';
     const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang)) || 'CoverMate';
     const motorPage = this.getMotorPage(site);
     const seo = routePage === 'motor' ? this.mergeDeepDefaults(site.seo || {}, motorPage.seo || {}) : (site.seo || {});
@@ -1048,15 +934,10 @@ class Component extends DCLogic {
     const seoDescription = this.seoClean(this.seoString(seo.description, lang));
     const heroSource = routePage === 'motor' ? motorPage.hero : ((site.sections || []).find(s => s.type === 'hero') || {});
     const heroBody = this.normalizeInsurerCountCopy(this.seoString(heroSource[lang] && heroSource[lang].body, lang), this.companyLogoCount(site));
-    const fallbackDesc = routePage === 'motor'
-      ? (lang === 'th' ? 'เปรียบเทียบประกันรถยนต์จาก 14 บริษัท พร้อมช่วยดูทุน ซ่อมห้างหรือซ่อมอู่ ค่าเสียหายส่วนแรก และเงื่อนไขสำคัญ' : 'Compare motor insurance from 14 insurers with advice on sums insured, repair options, excess and key conditions.')
-      : (lang === 'th' ? 'ปรึกษาประกันชีวิต สุขภาพ AIA และประกันรถยนต์เทียบเบี้ยกว่า 14 บริษัท ดูแลตั้งแต่เลือกแผนถึงเคลม โดยไม่มีค่าใช้จ่าย' : 'Insurance advisory for AIA life and health cover, plus motor insurance comparison across 14 insurers in Thailand.');
-    const defaultTitle = routePage === 'motor'
-      ? (lang === 'th' ? 'ประกันรถยนต์ | ' + brand + ' เทียบเบี้ยจาก 14 บริษัท' : 'Motor Insurance | ' + brand + ' compares 14 insurers')
-      : (lang === 'th' ? brand + ' | ที่ปรึกษาประกัน AIA และประกันรถยนต์' : brand + ' | AIA and motor insurance advisory');
+    const defaultTitle = brand;
     const rawTitle = owner ? 'CoverMate Admin' : (seoTitle || defaultTitle);
     const title = this.seoLimit(rawTitle, 68);
-    const description = this.seoLimit(owner ? 'Private CoverMate owner tools.' : (seoDescription || heroBody || fallbackDesc), 155);
+    const description = this.seoLimit(owner ? 'Private CoverMate owner tools.' : (seoDescription || heroBody), 155);
     document.documentElement.lang = lang === 'th' ? 'th-TH' : 'en';
     document.title = title;
     this.setSeoMeta('name', 'description', description);
@@ -1067,11 +948,15 @@ class Component extends DCLogic {
     this.setSeoMeta('property', 'og:description', description);
     this.setSeoMeta('property', 'og:image', image);
     this.setSeoMeta('property', 'og:image:secure_url', image);
-    this.setSeoMeta('property', 'og:image:alt', routePage === 'motor' ? 'CoverMate motor insurance comparison across 14 insurers' : 'CoverMate insurance advisory for life, health, and motor cover');
+    this.setSeoMeta('property', 'og:image:width', '');
+    this.setSeoMeta('property', 'og:image:height', '');
+    this.setSeoMeta('property', 'og:image:alt', image ? this.seoString(cmsGet(site, 'seo.imageAlt'), lang) : '');
     this.setSeoMeta('name', 'twitter:title', title);
     this.setSeoMeta('name', 'twitter:description', description);
     this.setSeoMeta('name', 'twitter:image', image);
     this.setSeoLink('canonical', canonical);
+    this.setSeoLink('icon', assetURL(cmsMedia(cmsGet(site, 'brand.media.favicon'))));
+    this.setSeoLink('apple-touch-icon', assetURL(cmsMedia(cmsGet(site, 'brand.media.mark'))));
     let json = document.getElementById('covermate-jsonld');
     if (!json) { json = document.createElement('script'); json.type = 'application/ld+json'; json.id = 'covermate-jsonld'; document.head.appendChild(json); }
     json.textContent = JSON.stringify(this.seoGraph(site, lang, title, description, routePath));
@@ -1088,7 +973,6 @@ class Component extends DCLogic {
       if (!this.readJSON(K_HIST)) this.writeJSON(K_HIST, [{ id: Date.now(), ts: Date.now(), config: seed, text: seedText }]);
     }
     if (!remote) {
-      this.scrubCopy();
       this.structSync();
     }
   }
@@ -1152,10 +1036,9 @@ class Component extends DCLogic {
   normalizeConfig(config, options) {
     const input = config && config.sections ? config : DEFAULTS;
     const hadMotorPage = !!(input && input.motorPage && typeof input.motorPage === 'object');
-    const hadMotorSections = hadMotorPage && Array.isArray(input.motorPage.sections) && input.motorPage.sections.length > 0;
-    const seedMotorSharedSections = !hadMotorPage || !hadMotorSections;
+    const seedMotorSharedSections = !hadMotorPage;
     const motorSharedRouteIds = new Set(['insurers', 'tiers', 'how', 'claim', 'renew', 'guides', 'faq', 'talk']);
-    const cfg = clone(input);
+    const cfg = migrateCmsContent(input);
     const shouldEnsureRepeatableIds = !!(options && options.repeatableIds);
     const mergeObj = (target, source) => Object.assign(clone(source || {}), target || {});
     cfg.brand = mergeObj(cfg.brand, DEFAULTS.brand);
@@ -1165,8 +1048,8 @@ class Component extends DCLogic {
     cfg.theme = mergeObj(cfg.theme, DEFAULTS.theme);
     cfg.seo = mergeObj(cfg.seo, DEFAULTS.seo);
     cfg.motorPage = this.mergeDeepDefaults(DEFAULTS.motorPage || {}, cfg.motorPage || {});
-    if (!Array.isArray(cfg.motorPage.nav) || !cfg.motorPage.nav.length) cfg.motorPage.nav = clone((DEFAULTS.motorPage && DEFAULTS.motorPage.nav) || []);
-    if (!Array.isArray(cfg.motorPage.sections) || !cfg.motorPage.sections.length) cfg.motorPage.sections = clone((DEFAULTS.motorPage && DEFAULTS.motorPage.sections) || []);
+    if (!Array.isArray(cfg.motorPage.nav)) cfg.motorPage.nav = [];
+    if (!Array.isArray(cfg.motorPage.sections)) cfg.motorPage.sections = [];
     cfg.off = cfg.off && typeof cfg.off === 'object' ? cfg.off : {};
     if (typeof cfg.stickyBar !== 'boolean') cfg.stickyBar = DEFAULTS.stickyBar;
     if (!Array.isArray(cfg.sections)) cfg.sections = clone(DEFAULTS.sections);
@@ -1177,16 +1060,6 @@ class Component extends DCLogic {
       return n;
     });
 
-    (DEFAULTS.header.nav || []).forEach((nav, idx) => {
-      if (cfg.header.nav.some(n => n && n.href === nav.href)) return;
-      let at = cfg.header.nav.length;
-      const prev = DEFAULTS.header.nav[idx - 1];
-      if (prev) {
-        const pi = cfg.header.nav.findIndex(n => n && n.href === prev.href);
-        if (pi >= 0) at = pi + 1;
-      }
-      cfg.header.nav.splice(at, 0, clone(nav));
-    });
     const seenNav = {};
     cfg.header.nav = cfg.header.nav.filter((nav) => {
       if (!nav) return false;
@@ -1196,9 +1069,7 @@ class Component extends DCLogic {
       seenNav[key] = true;
       return true;
     });
-    cfg.header.nav = clone(DEFAULTS.header.nav || []);
-    cfg.header.cta = clone(DEFAULTS.header.cta || cfg.header.cta || {});
-    cfg.sections = this.reorderKnownLegacySections(cfg.sections);
+    if (!input.cmsContentVersion) cfg.sections = this.reorderKnownLegacySections(cfg.sections);
 
     const defById = {};
     const defByType = {};
@@ -1216,7 +1087,7 @@ class Component extends DCLogic {
       }
       cfg.sections.splice(at, 0, clone(def));
     };
-    ['review', 'claim', 'renew', 'guides', 'fees', 'privacy', 'tiers'].forEach(ensureSection);
+    if (!input.cmsContentVersion) ['review', 'claim', 'renew', 'guides', 'fees', 'privacy', 'tiers'].forEach(ensureSection);
 
     cfg.sections.forEach(s => {
       if (!s) return;
@@ -1227,7 +1098,7 @@ class Component extends DCLogic {
         if (!s.bg) s.bg = def.bg;
         if (!s.cols) s.cols = def.cols;
         if (def.calculator) s.calculator = this.mergeDeepDefaults(def.calculator, s.calculator);
-        ['cta1href', 'cta2href', 'claimHref'].forEach(key => { if (def[key] && !s[key]) s[key] = def[key]; });
+        ['cta1href', 'cta2href', 'claimHref'].forEach(key => { if (def[key] && s[key] === undefined) s[key] = def[key]; });
         ['th', 'en'].forEach(lang => { s[lang] = Object.assign(clone(def[lang] || {}), s[lang] || {}); });
         if (!Array.isArray(s.items) && Array.isArray(def.items)) s.items = clone(def.items);
         if (!Array.isArray(s.cards) && Array.isArray(def.cards)) s.cards = clone(def.cards);
@@ -1240,17 +1111,11 @@ class Component extends DCLogic {
           });
         });
       }
-      if (s.type === 'insurers' && (!s.cards || !s.cards.length) && defByType.insurers) s.cards = clone(defByType.insurers.cards || []);
       if (s.type === 'insurers' && defByType.insurers) {
-        const defItems = defByType.insurers.items || [];
-        if (!Array.isArray(s.items) || !s.items.length) s.items = clone(defItems);
+        if (!Array.isArray(s.items)) s.items = [];
         (s.items || []).forEach((it, idx) => {
           it.th = it.th || {}; it.en = it.en || {};
-          const en = String((it.en && it.en.name) || '').toLowerCase();
-          const thName = String((it.th && it.th.name) || '').toLowerCase();
-          const ren = INS_RENAME[en] || INS_RENAME[thName] || null;
-          if (ren) { it.th.name = ren.th; it.en.name = ren.en; }
-          it.logo = normalizeInsurerLogoRef(it.logo || INS_LOGO[en] || INS_LOGO[thName] || (defItems[idx] && defItems[idx].logo) || '');
+          it.logo = it.logo || '';
         });
       }
       if (s.type === 'contact') {
@@ -1259,8 +1124,8 @@ class Component extends DCLogic {
       }
       if (s.type === 'tiers' && defByType.tiers) {
         const def = defByType.tiers;
-        if (!Array.isArray(s.heads) || !s.heads.length) s.heads = clone(def.heads || []);
-        if (!Array.isArray(s.items) || !s.items.length) s.items = clone(def.items || []);
+        if (!Array.isArray(s.heads)) s.heads = [];
+        if (!Array.isArray(s.items)) s.items = [];
         const headsLen = (s.heads || []).length;
         (s.items || []).forEach((it) => {
           it.th = it.th || {}; it.en = it.en || {};
@@ -1276,8 +1141,8 @@ class Component extends DCLogic {
             const isLife = (it.th && it.th.title === 'ประกันชีวิต') || (it.en && it.en.title === 'Life');
             if (isLife) {
               it.th = it.th || {}; it.en = it.en || {};
-              if (!it.th.note) it.th.note = defLife.th.note;
-              if (!it.en.note) it.en.note = defLife.en.note;
+              if (it.th.note === undefined) it.th.note = defLife.th.note;
+              if (it.en.note === undefined) it.en.note = defLife.en.note;
             }
           });
         }
@@ -1308,7 +1173,7 @@ class Component extends DCLogic {
     const normalizeLocalized = (obj) => {
       if (!obj || typeof obj !== 'object') return;
       Object.keys(obj).forEach((field) => {
-        if (typeof obj[field] === 'string') obj[field] = this.normalizeProductDecisionCopy(this.normalizeInsurerCountCopy(obj[field], insurerCount));
+        if (typeof obj[field] === 'string') obj[field] = this.normalizeInsurerCountCopy(obj[field], insurerCount);
         else if (obj[field] && typeof obj[field] === 'object') normalizeLocalized(obj[field]);
       });
     };
@@ -1324,11 +1189,6 @@ class Component extends DCLogic {
       });
     });
 
-    if (cfg.footer && cfg.footer.legal) {
-      ['th', 'en'].forEach(k => {
-        if (typeof cfg.footer.legal[k] === 'string') cfg.footer.legal[k] = cfg.footer.legal[k].split('5704011570').join('ว00287/2534');
-      });
-    }
     cfg.sections.forEach(section => this.suppressPlaceholderStories(section));
     ['hero', 'trust', 'cover'].forEach(key => this.suppressPlaceholderStories(cfg.motorPage && cfg.motorPage[key]));
     sanitizeCmsControlsConfig(cfg);
@@ -1351,36 +1211,6 @@ class Component extends DCLogic {
       this.writeJSON(K_HIST, hist);
     }
     this.writeJSON(K_STRUCT, 1);
-  }
-
-  // One-off content migration: the "5 years of experience" wording was retired.
-  // Rewrites already-published, draft, legacy and history copies in place.
-  scrubCopy() {
-    if (this.readJSON(K_SCRUB) === 1) return;
-    const swap = {
-      'ตัวแทน AIA · นายหน้าประกันรถยนต์ · ประสบการณ์ 5 ปี': 'ตัวแทน AIA · นายหน้าประกันรถยนต์ · ดูแลถึงการเคลม',
-      'AIA agent · motor broker · 5 yrs': 'AIA agent · motor broker · support through claims',
-      'ประสบการณ์': 'ความเชี่ยวชาญ',
-      '5 ปี': 'ชีวิต สุขภาพ และรถยนต์',
-      'Experience': 'Focus',
-      '5 years': 'Life, health and motor',
-      'CoverMate · ตัวแทนประกันชีวิตและนายหน้าประกันวินาศภัยที่ได้รับใบอนุญาต · ใบอนุญาตตัวแทนประกันชีวิต 6401006221 · ใบอนุญาตนายหน้าประกันวินาศภัย 6804008544 · เนื้อหาบนหน้านี้เป็นข้อมูลเบื้องต้น ไม่ใช่ใบเสนอราคา': 'CoverMate · ตัวแทนประกันชีวิตและนายหน้าประกันวินาศภัยที่ได้รับใบอนุญาต · ใบอนุญาตตัวแทนประกันชีวิต 6401006221 · ใบอนุญาตนายหน้าประกันวินาศภัย 6804008544 · ประกันรถยนต์จัดผ่านศรีกรุงโบรคเกอร์ ใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · เนื้อหาบนหน้านี้เป็นข้อมูลเบื้องต้น ไม่ใช่ใบเสนอราคา',
-      'CoverMate — insurance advisory · Licensed life agent (No. 6401006221) and non-life broker (No. 6804008544) · Information here is indicative and is not a quotation.': 'CoverMate — insurance advisory · Licensed life agent (No. 6401006221) and non-life broker (No. 6804008544) · Motor cover placed through Srikrung Broker, non-life broker licence No. ว00287/2534 · Information here is indicative and is not a quotation.'
-    };
-    const walk = (v) => {
-      if (typeof v === 'string') {
-        if (Object.prototype.hasOwnProperty.call(swap, v)) return swap[v];
-        return v.indexOf('ประสบการณ์ 5 ปี') >= 0 ? v.split('ประสบการณ์ 5 ปี').join('ดูแลถึงการเคลม') : v;
-      }
-      if (Array.isArray(v)) { for (let i = 0; i < v.length; i++) v[i] = walk(v[i]); return v; }
-      if (v && typeof v === 'object') { for (const k in v) if (Object.prototype.hasOwnProperty.call(v, k)) v[k] = walk(v[k]); return v; }
-      return v;
-    };
-    [K_LIVE, K_LIVE_TEXT, K_DRAFT, K_DRAFT_TEXT, K_HIST, STORE_KEY, TEXT_KEY].forEach((k) => {
-      const o = this.readJSON(k);
-      if (o) this.writeJSON(k, walk(o));
-    });
-    this.writeJSON(K_SCRUB, 1);
   }
 
   loadLive() {
@@ -1865,7 +1695,7 @@ class Component extends DCLogic {
     const shared = Array.isArray(source.sections) ? source.sections : [];
     const byId = new Map(shared.map(section => [section && section.id, section]));
     const local = { motor: motorPage.hero, 'motor-trust': motorPage.trust, 'motor-cover': motorPage.cover };
-    const order = Array.isArray(motorPage.sections) && motorPage.sections.length ? motorPage.sections : ((DEFAULTS.motorPage && DEFAULTS.motorPage.sections) || []);
+    const order = Array.isArray(motorPage.sections) ? motorPage.sections : [];
     const used = {};
     const out = [];
     const push = (id) => {
@@ -1876,8 +1706,6 @@ class Component extends DCLogic {
       out.push(clone(section));
     };
     order.forEach(push);
-    Object.keys(local).forEach(push);
-    ['insurers', 'tiers', 'how', 'claim', 'renew', 'guides', 'faq', 'talk'].forEach(push);
     return out;
   }
 
@@ -1888,7 +1716,47 @@ class Component extends DCLogic {
     const site = S.site;
     const A = { ...(ACCENTS[site.theme.accent] || ACCENTS.terracotta) };
     A.action = site.theme.accent === 'sage' ? 'var(--color-accent-2-700)' : site.theme.accent === 'ink' ? A.base : 'var(--color-accent-700)';
-    const t = (o) => (o && (o[lk] !== undefined ? o[lk] : o.th)) || '';
+    const t = (o) => resolveCmsContent((o && o[lk]) || '', site);
+    const media = site.brand.media || {};
+    const licences = site.licences || {};
+    const licenceText = key => {
+      const record = licences[key] || {};
+      return record.number ? (t(record.label) + ' ' + record.number).trim() : '';
+    };
+    const hasLine = !!site.contact.lineUrl;
+    const cmsText = path => t(cmsGet(site, path));
+    const cmsInput = (path, field) => {
+      const saved = cmsGet(site, path) || '';
+      const edits = S.cmsEdits || {};
+      return {
+        value: Object.prototype.hasOwnProperty.call(edits, path) ? edits[path] : saved,
+        change: (e) => this.setState({ cmsEdits: { ...(this.state.cmsEdits || {}), [path]: e.target.value } }),
+        commit: (e) => {
+          const value = e.target.value.trim();
+          const pending = { ...(this.state.cmsEdits || {}) };
+          delete pending[path];
+          this.setState({ cmsEdits: pending });
+          if (value && ((field.media && !cmsMedia(value)) || (field.url && !acceptsHttpsUrl(value, true)) || (field.email && !acceptsEmail(value)) || (field.nav && !/^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(value)))) {
+            const title = field.email ? 'Invalid email' : field.media ? 'Invalid media path' : 'Invalid contact link';
+            const body = field.email ? 'Enter a valid email address or leave it blank.' : field.nav ? 'Use a section anchor, / or /motor.' : field.media ? 'Use an assets/... path or an HTTPS image URL.' : 'Use a valid HTTPS URL or leave it blank.';
+            this.showActionToast({ kind: 'error', title: title, body: body });
+            return;
+          }
+          if (value !== saved) this.upd(x => cmsSet(x, path, value));
+        }
+      };
+    };
+    const cmsGroups = [...new Set(CMS_CONTENT_FIELDS.map(field => field.group))].map(group => ({
+      key: group, label: group,
+      fields: CMS_CONTENT_FIELDS.filter(field => field.group === group).map(field => {
+        const path = field.path + (field.localized ? '.' + lk : '');
+        const value = cmsGet(site, path) || '';
+        return { key: path, path: path, label: field.label, value: value,
+          hasImage: !!(field.media && value), image: field.media ? assetURL(value) : '',
+          ...cmsInput(path, field)
+        };
+      })
+    }));
 
     const routePage = S.routePage === 'motor' ? 'motor' : 'home';
     const motorPageConfig = this.getMotorPage(site);
@@ -1902,7 +1770,7 @@ class Component extends DCLogic {
           th: { kicker: 'ชีวิต · สุขภาพ · ตัวแทน AIA', title: 'ตอนที่ต้องใช้จริง\nไม่มีใครอ่านกรมธรรม์ทัน', body: 'ในฐานะตัวแทน AIA เราดูแลเรื่องชีวิตและสุขภาพเป็นหลัก — เลือกทุนให้พอกับภาระจริง เลือกค่าห้องให้พอกับโรงพยาบาลที่คุณใช้ และอธิบายข้อยกเว้นให้ครบก่อนเซ็น ไม่ใช่หลังเคลม', cta1: 'แอดไลน์ ปรึกษาฟรี', cta2: 'คำนวณทุนที่ควรมี', note: 'ไม่มีค่าที่ปรึกษา และเราไม่เสนอยูนิตลิงก์' },
           en: { kicker: 'Life · health · AIA agent', title: 'Nobody reads the policy\nat the moment it matters', body: 'As an AIA agent, life and health are my main work — matching the sum assured to real obligations, the room rate to the hospital you actually use, and explaining every exclusion before you sign rather than after you claim.', cta1: 'Add me on LINE', cta2: 'Estimate your cover', note: 'No advisory fee, and Unit-linked plans are not offered.' }, items: [] },
         { id: 'life-trust', type: 'trust', on: true, bg: 'bg', cols: 4, th: {}, en: {}, items: [
-          { icon: 'seal', th: { label: 'ตัวแทน AIA เลขที่ 6401006221' }, en: { label: 'AIA agent No. 6401006221' } },
+          { icon: 'seal', th: { label: ((licences.life || {}).label || {}).th + ' {{lifeLicence}}' }, en: { label: ((licences.life || {}).label || {}).en + ' {{lifeLicence}}' } },
           { icon: 'check', th: { label: 'ไม่เสนอยูนิตลิงก์' }, en: { label: 'No unit-linked plans' } },
           { icon: 'file', th: { label: 'อธิบายข้อยกเว้นก่อนเซ็น' }, en: { label: 'Exclusions explained upfront' } },
           { icon: 'shield', th: { label: 'ดูแลต่อเนื่องถึงการเคลม' }, en: { label: 'Support through claims' } } ] }
@@ -1936,7 +1804,8 @@ class Component extends DCLogic {
       const target = normalizeSectionHref(href).replace(/^#/, '');
       return target === 'top' || visibleAnchorIds.has(target);
     };
-    const sections = workSections.filter(s => s && s.on !== false).map(s => {
+    const sections = workSections.filter(s => s && s.on !== false).map(rawSection => {
+      const s = resolveCmsContent(rawSection, site);
       const p = this.pal(s.bg, A);
       const c = s[lk] || {};
       const headPairs = (s.heads || []).map((h, idx) => ({ h: h, idx: idx, id: (h && h.id) || '' })).filter(x => x.h && x.h.on !== false);
@@ -1997,8 +1866,8 @@ class Component extends DCLogic {
         };
       });
       const cta1href = s.cta1href || '';
-      const cta2href = s.cta2href || '#fit';
-      const heroClaimHref = (s[lk] && s[lk].claimHref) || s.claimHref || '#claim';
+      const cta2href = s.cta2href || '';
+      const heroClaimHref = s[lk] && s[lk].claimHref !== undefined ? s[lk].claimHref : (s.claimHref || '');
       const hideSelfMotorCta = routePage === 'motor' && s.type === 'insurers' && cta1href === '/motor';
       return {
         id: s.id, key: s.id, cols: s.cols,
@@ -2012,7 +1881,7 @@ class Component extends DCLogic {
         hl: s.bg === 'dark' ? 'var(--color-accent-300)' : 'var(--color-accent-700)',
         kicker: c.kicker || '', title: c.title || '', body: c.body || '', note: c.note || '',
         cta1: c.cta1 || '', cta1href: cta1href, hasCta1: !!(c.cta1 && sectionHrefAvailable(cta1href) && !hideSelfMotorCta), cta2: c.cta2 || '', cta2href: cta2href,
-        hasCta2: !!(c.cta2 && sectionHrefAvailable(cta2href)),
+        hasCta2: !!(c.cta2 && cta2href && sectionHrefAvailable(cta2href)),
         hasBody: !!c.body, hasKicker: !!c.kicker, hasNote: !!c.note,
         bg: p.bg, fg: p.fg, muted: p.muted, kickerFg: p.kicker, card: p.card, cardFg: p.cardFg,
         cardMuted: p.cardMuted, line: p.line, chip: p.chip, chipFg: p.chipFg,
@@ -2021,15 +1890,15 @@ class Component extends DCLogic {
         tierGrid: '116px repeat(' + Math.max(1, heads.length) + ',minmax(0,1fr)) minmax(178px,1.45fr)',
         tierColLabel: t(L('ชั้นประกัน', 'Class')), bestLabel: t(L('เหมาะกับใคร', 'Best for')),
         heroServices: heroServices, hasHeroServices: heroServices.length > 0,
-        heroAdvisorEyebrow: th ? 'ดูแลโดย' : 'Advised by',
-        heroLifeLicense: th ? 'ใบอนุญาตตัวแทนประกันชีวิต 6401006221' : 'Life agent licence No. 6401006221',
-        heroNonLifeLicense: th ? 'ใบอนุญาตนายหน้าประกันวินาศภัย 6804008544' : 'Non-life broker licence No. 6804008544',
-        heroVerifyLabel: th ? 'ตรวจสอบใบอนุญาตกับ คปภ.' : 'Verify licence with OIC',
-        heroAssistLabel: th ? 'วันนี้อยากให้ช่วยเรื่องไหน' : 'What would you like help with today?',
-        heroClaimText: c.claimText || (th ? 'เกิดอุบัติเหตุอยู่ตอนนี้ โทร 1669 ก่อนเสมอ แล้วค่อยติดต่อเรา' : 'In an accident right now, call 1669 first, then contact us'),
-        heroClaimLinkText: c.claimLinkText || (th ? 'ดูขั้นตอนเมื่อเกิดเหตุ' : 'See the accident guide'),
+        heroAdvisorEyebrow: cmsText('ui.advisorLabel'),
+        heroLifeLicense: licenceText('life'),
+        heroNonLifeLicense: licenceText('nonLife'),
+        heroVerifyLabel: cmsText('licences.verifyLabel'),
+        heroAssistLabel: cmsText('ui.coverageLabel'),
+        heroClaimText: c.claimText || '',
+        heroClaimLinkText: c.claimLinkText || '',
         heroClaimHref: heroClaimHref,
-        showHeroClaim: sectionHrefAvailable(heroClaimHref),
+        showHeroClaim: !!(c.claimText && heroClaimHref && sectionHrefAvailable(heroClaimHref)),
         items: (s.id === 'hero' && heroServices.length) ? heroServices : items,
         cards: (s.cards || []).filter(cd => cd && cd.on !== false).map((cd, i) => {
           const cc = cd[lk] || {};
@@ -2121,7 +1990,7 @@ class Component extends DCLogic {
       const pair = sharedAdminPair(id);
       if (pair) motorAdminPairs.push(pair);
     };
-    const motorAdminOrder = Array.isArray(motorPageConfig.sections) && motorPageConfig.sections.length ? motorPageConfig.sections : ((DEFAULTS.motorPage && DEFAULTS.motorPage.sections) || []);
+    const motorAdminOrder = Array.isArray(motorPageConfig.sections) ? motorPageConfig.sections : [];
     motorAdminOrder.forEach(pushMotorAdminPair);
     Object.keys(motorLocalMap).forEach(pushMotorAdminPair);
     const adminSectionPairs = routePage === 'motor' ? motorAdminPairs : homeAdminPairs;
@@ -2147,7 +2016,7 @@ class Component extends DCLogic {
       if (routePage !== 'motor') { this.move(pair.id, dir); return; }
       this.upd(draft => {
         const page = draft.motorPage = draft.motorPage || {};
-        let order = Array.isArray(page.sections) && page.sections.length ? page.sections.slice() : clone((DEFAULTS.motorPage && DEFAULTS.motorPage.sections) || []);
+        let order = Array.isArray(page.sections) ? page.sections.slice() : [];
         adminSectionPairs.forEach(p => { if (p && p.id && order.indexOf(p.id) < 0) order.push(p.id); });
         const i = order.indexOf(pair.id);
         const j = i + dir;
@@ -2307,12 +2176,6 @@ class Component extends DCLogic {
     if (f.coverage && COVER[f.coverage]) summary += (th ? ' · ความคุ้มครอง: ' : ' · Coverage: ') + COVER[f.coverage];
 
     const H = site.header, F = site.footer;
-    const navLabelFallback = (href) => {
-      const labels = th
-        ? { '#cover': 'ความคุ้มครอง', '#insurers': 'ประกันรถยนต์', '#claim': 'เกิดเหตุ', '#fit': 'คำนวณทุน', '#how': 'ขั้นตอน', '#faq': 'คำถามที่พบบ่อย', '#talk': 'ติดต่อ' }
-        : { '#cover': 'Cover', '#insurers': 'Motor', '#claim': 'Claims', '#fit': 'Calculator', '#how': 'Process', '#faq': 'FAQ', '#talk': 'Contact' };
-      return labels[href] || String(href || '').replace(/^#/, '');
-    };
     const publicNavItems = (() => {
       const seenHrefs = {};
       return (Array.isArray(H.nav) ? H.nav : []).reduce((items, n, i) => {
@@ -2325,7 +2188,8 @@ class Component extends DCLogic {
         if (seenHrefs[href]) return items;
         seenHrefs[href] = true;
         const rawLabel = typeof n.label === 'string' ? n.label : t(n.label);
-        const label = String(rawLabel || navLabelFallback(href)).trim();
+        const label = String(rawLabel || '').trim();
+        if (!label) return items;
         items.push({ key: 'n' + i, label: label, href: href });
         return items;
       }, []);
@@ -2336,7 +2200,8 @@ class Component extends DCLogic {
       if (!href) return items;
       if (!sectionHrefAvailable(href)) return items;
       const rawLabel = typeof n.label === 'string' ? n.label : t(n.label);
-      const label = String(rawLabel || navLabelFallback(href)).trim();
+      const label = String(rawLabel || '').trim();
+      if (!label) return items;
       items.push({ key: 'mn' + i, label: label, href: href });
       return items;
     }, []);
@@ -2363,12 +2228,41 @@ class Component extends DCLogic {
       A_base: A.base, A_action: A.action, A_deep: A.deep, A_mid: A.mid, A_soft: A.soft, A_text: A.text, A_light: A.light, A_on: A.on,
       thBg: th ? A.action : 'transparent', thFg: th ? A.on : 'var(--color-neutral-700)',
       enBg: !th ? A.action : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
-      callLabel: th ? 'โทรหา CoverMate' : 'Call CoverMate',
+      callLabel: cmsText('ui.callLabel'),
+      cmsGroups: cmsGroups,
+      headerCtaInput: cmsInput('header.cta.' + lk, {}),
+      adminHeroLinks: routePage === 'home' ? (site.sections || []).flatMap((section, index) => section.id === 'hero' ? [
+        { label: 'Hero secondary button destination', path: 'cta2href' },
+        { label: 'Hero accident guide destination', path: section[lk] && section[lk].claimHref !== undefined ? lk + '.claimHref' : 'claimHref' }
+      ].map(field => ({ label: field.label, key: field.path, input: cmsInput('sections.' + index + '.' + field.path, { nav: true }) })) : []) : [],
+      credentialInput: cmsInput('brand.credential.' + lk, {}),
+      legalInput: cmsInput('footer.legal.' + lk, {}),
+      advisorLogoInput: cmsInput('brand.advisorLogo', { media: true }),
+      lineUrlInput: cmsInput('contact.lineUrl', { url: true }),
+      facebookUrlInput: cmsInput('contact.facebookUrl', { url: true }),
+      emailInput: cmsInput('contact.email', { email: true }),
+      phoneInput: cmsInput('contact.phone', {}),
+      footLegalEditor: (F.legal || {})[lk] || '',
+      adminNavItems: (routePage === 'motor' ? motorPageConfig.nav : H.nav).map((nav, index) => ({
+        key: String(index), label: t(nav.label), href: nav.href || '', first: index === 0,
+        labelInput: cmsInput((routePage === 'motor' ? 'motorPage.nav.' : 'header.nav.') + index + '.label.' + lk, {}),
+        hrefInput: cmsInput((routePage === 'motor' ? 'motorPage.nav.' : 'header.nav.') + index + '.href', { nav: true }),
+        remove: () => this.upd(x => { (routePage === 'motor' ? x.motorPage.nav : x.header.nav).splice(index, 1); }),
+        up: () => { if (!index) return; this.upd(x => { const list = routePage === 'motor' ? x.motorPage.nav : x.header.nav; const item = list.splice(index, 1)[0]; list.splice(index - 1, 0, item); }); }
+      })),
+      addNavItem: () => this.upd(x => { (routePage === 'motor' ? x.motorPage.nav : x.header.nav).push({ label: { th: '', en: '' }, href: '' }); }),
+      consultationConsent: cmsText('ui.consultationConsent'),
+      submitPendingText: cmsText('ui.submitPending'),
+      submitSuccessText: cmsText('ui.submitSuccess'),
       setTH: () => this.setLanguage('th'), setEN: () => this.setLanguage('en'),
 
-      advisorLogoPath: site.brand.advisorLogo || DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png',
-      advisorLogo: assetURL(site.brand.advisorLogo || DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png'),
-      advisorLogoAlt: site.brand.advisorLogoAlt || DEFAULTS.brand.advisorLogoAlt || 'AIA',
+      advisorLogoPath: site.brand.advisorLogo || '',
+      advisorLogo: assetURL(site.brand.advisorLogo || ''),
+      advisorLogoAlt: site.brand.advisorLogoAlt || '',
+      hasAdvisorLogo: !!site.brand.advisorLogo,
+      advisorPhoto: assetURL(media.photo), hasAdvisorPhoto: !!media.photo,
+      lineQr: assetURL(media.lineQr), hasLineQr: !!media.lineQr,
+      footerAdvisorColumns: media.photo ? 'auto minmax(0,1fr)' : 'minmax(0,1fr)',
       insLogos: (() => {
         const sec = (site.sections || []).find(x => x.type === 'insurers');
         return ((sec && sec.items) || []).map((it, i) => {
@@ -2382,14 +2276,17 @@ class Component extends DCLogic {
         });
       })(),
       sections: sections,
-      brandLogoAlt: th ? 'CoverMate ที่ปรึกษาประกันภัย' : 'CoverMate Insurance Advisory',
-      brandWordmarkLogo: assetURL(th ? 'assets/brand/covermate-advisory-logo-th.png' : 'assets/brand/covermate-advisory-logo-en.png'),
-      footerBrandLogo: assetURL(th ? 'assets/brand/covermate-footer-logo-th.png' : 'assets/brand/covermate-footer-logo-en.png'),
-      brandMarkLogo: assetURL('assets/brand/covermate-mark.png'),
+      brandLogoAlt: [t(site.brand.name), t(site.brand.role)].filter(Boolean).join(' '),
+      brandWordmarkLogo: assetURL(t(media.headerLogo)),
+      footerBrandLogo: assetURL(t(media.footerLogo)),
+      hasHeaderLogo: !!t(media.headerLogo), hasFooterLogo: !!t(media.footerLogo),
+      brandMarkLogo: assetURL(media.mark),
       brandInitial: site.brand.initial,
       brandName: t(site.brand.name), brandFull: t(site.brand.fullName),
       brandRole: t(site.brand.role), brandCred: t(site.brand.credential),
       lineId: site.contact.lineId, lineUrl: site.contact.lineUrl,
+      hasLine: hasLine,
+      hasPhone: !!site.contact.phone, hasEmail: !!site.contact.email,
       facebookName: site.contact.facebookName || '', facebookUrl: site.contact.facebookUrl || '', hasFacebook: !!(site.contact.facebookName && /^https:/.test(site.contact.facebookUrl || '')),
       whatsapp: site.contact.whatsapp || '',
       phone: site.contact.phone, phoneUrl: 'tel:' + String(site.contact.phone).replace(/[^0-9+]/g, ''),
@@ -2401,20 +2298,23 @@ class Component extends DCLogic {
       headerShadow: S.scrolled ? 'var(--shadow-md)' : '0 1px 0 rgba(0,0,0,0)',
       headerBg: S.scrolled ? 'color-mix(in srgb, var(--color-bg) 88%, transparent)' : 'var(--color-bg)',
       markScale: S.scrolled ? 'scale(.88)' : 'none',
-      showNav: H.show && H.showNav, showHeaderCta: H.showCta, headerCta: t(H.cta),
+      showNav: H.show && H.showNav, showHeaderCta: H.showCta && hasLine && !!t(H.cta), headerCta: t(H.cta),
       navItems: routePage === 'motor' ? motorNavItems : publicNavItems,
       showTalkAnchor: showTalkAnchor,
       showPrivacyAnchor: showPrivacyAnchor,
       showFooterPrivacyNav: showPrivacyAnchor,
       showFooter: F.show, footTagline: t(F.tagline), footLegal: t(F.legal),
-      footerAiaLogo: assetURL('assets/logos/aia-logo.png'), footerAiaAlt: 'AIA',
-      footerSrikrungLogo: assetURL('assets/logos/srikrung-logo.png'), footerSrikrungAlt: 'Srikrung Broker',
-      footerLicenceHeading: th ? 'ใบอนุญาต' : 'Licences', footerNavHeading: th ? 'ไปที่' : 'Go to', footerContactHeading: th ? 'ติดต่อ' : 'Contact',
-      footerLifeLicence: th ? 'ใบอนุญาตตัวแทนประกันชีวิต 6401006221' : 'Life agent licence 6401006221',
-      footerNonLifeLicence: th ? 'ใบอนุญาตนายหน้าประกันวินาศภัย 6804008544' : 'Non-life broker licence 6804008544',
-      footerOicHref: 'https://smart.oic.or.th/eservice/Menu1',
-      footerOicLabel: th ? 'ตรวจสอบใบอนุญาตกับ คปภ. →' : 'Verify licence with OIC →',
-      footerPrivacyNavText: th ? 'ข้อมูลของคุณถูกใช้ทำอะไร' : 'How your information is used',
+      footerAiaLogo: assetURL((licences.life || {}).logo), footerAiaAlt: (licences.life || {}).logoAlt || '',
+      footerSrikrungLogo: assetURL((licences.nonLife || {}).logo), footerSrikrungAlt: (licences.nonLife || {}).logoAlt || '',
+      hasLifeLicence: !!licenceText('life'), hasNonLifeLicence: !!licenceText('nonLife'),
+      hasLifeLogo: !!(licences.life || {}).logo, hasNonLifeLogo: !!(licences.nonLife || {}).logo,
+      footerLicenceHeading: cmsText('footer.licenceHeading'), footerNavHeading: cmsText('footer.navHeading'), footerContactHeading: cmsText('footer.contactHeading'),
+      footerLifeLicence: licenceText('life'), footerNonLifeLicence: licenceText('nonLife'),
+      lifeLicenceColumns: (licences.life || {}).logo ? '58px minmax(0,1fr)' : 'minmax(0,1fr)',
+      nonLifeLicenceColumns: (licences.nonLife || {}).logo ? '58px minmax(0,1fr)' : 'minmax(0,1fr)',
+      footerOicHref: licences.verifyUrl || '', hasVerifyLink: !!licences.verifyUrl,
+      footerOicLabel: cmsText('licences.verifyLabel'),
+      footerPrivacyNavText: cmsText('footer.privacyLabel'),
       footGrid: this.grid(F.columns, Math.round(760 / Math.max(1, F.columns))),
       showSticky: site.stickyBar && !S.admin && !S.editMode && !S.preview,
 
@@ -2460,11 +2360,11 @@ class Component extends DCLogic {
         const curForm = Object.assign({}, this.state.form || {});
         const langNow = this.state.lang === 'en' ? 'en' : 'th';
         if (!String(curForm.contact || '').trim()) {
-          this.setState({ sent: false, leadError: langNow === 'th' ? 'กรุณาใส่ LINE ID หรือเบอร์โทรเพื่อให้ติดต่อกลับได้' : 'Please add a LINE ID or phone number so I can reply.' });
+          this.setState({ sent: false, leadError: cmsText('ui.contactRequired') });
           return;
         }
         if (curForm.consent !== true) {
-          this.setState({ sent: false, leadError: langNow === 'th' ? 'กรุณายืนยันการให้ติดต่อกลับและการใช้ข้อมูลก่อนส่งข้อความ' : 'Please confirm consent before sending your enquiry.' });
+          this.setState({ sent: false, leadError: cmsText('ui.consentRequired') });
           return;
         }
         this.setState({ leadSubmitting: true, leadError: '', sent: false });
@@ -2481,7 +2381,7 @@ class Component extends DCLogic {
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_error', { form_type: 'consultation' });
           }
-          this.setState({ sent: false, leadSubmitting: false, leadError: langNow === 'th' ? 'ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทัก LINE โดยตรงได้เลย' : 'Could not send yet. Please try again or contact us directly on LINE.' });
+          this.setState({ sent: false, leadSubmitting: false, leadError: cmsText('ui.submitError') });
         }
       },
 
@@ -2531,7 +2431,7 @@ class Component extends DCLogic {
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_error', { form_type: 'renewal_reminder' });
           }
-          this.setState({ renewSent: false, renewSubmitting: false, renewError: langNow === 'th' ? 'ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทัก LINE โดยตรงได้เลย' : 'Could not send yet. Please try again or contact us directly on LINE.' });
+          this.setState({ renewSent: false, renewSubmitting: false, renewError: cmsText('ui.submitError') });
         }
       },
       renewSummary: (function(){
@@ -2663,16 +2563,17 @@ class Component extends DCLogic {
       }),
 
       bName: t(site.brand.name), bFull: t(site.brand.fullName), bRole: t(site.brand.role), bCred: t(site.brand.credential),
-      advisorLogoLabel: 'Source: ' + (site.brand.advisorLogo || DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png'),
+      advisorLogoLabel: site.brand.advisorLogo || 'No image',
       onBName: (e) => { const v = e.target.value; this.upd(x => { x.brand.name[lk] = v; }); },
       onBFull: (e) => { const v = e.target.value; this.upd(x => { x.brand.fullName[lk] = v; }); },
       onBRole: (e) => { const v = e.target.value; this.upd(x => { x.brand.role[lk] = v; }); },
+      onBCred: (e) => { const v = e.target.value; this.upd(x => { x.brand.credential[lk] = v; }); },
       onBInit: (e) => { const v = e.target.value.slice(0, 2); this.upd(x => { x.brand.initial = v; }); },
       onAdvisorLogoPath: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); this.upd(x => { x.brand.advisorLogo = v; }); },
       onAdvisorLogoAlt: (e) => { const v = e.target.value; this.upd(x => { x.brand.advisorLogoAlt = v; }); },
-      resetAdvisorLogo: () => this.upd(x => { x.brand.advisorLogo = DEFAULTS.brand.advisorLogo || 'assets/logos/aia-logo.png'; x.brand.advisorLogoAlt = DEFAULTS.brand.advisorLogoAlt || 'AIA'; }),
+      resetAdvisorLogo: () => this.upd(x => { x.brand.advisorLogo = ''; x.brand.advisorLogoAlt = ''; }),
       onLineId: (e) => { const v = e.target.value; this.upd(x => { x.contact.lineId = v; }); },
-      onLineUrl: (e) => { const v = e.target.value; if (!acceptsHttpsUrl(v, false)) this.showActionToast({ kind: 'error', title: 'Invalid contact link', body: 'Use a valid HTTPS URL.' }); this.upd(x => { x.contact.lineUrl = v; }); },
+      onLineUrl: (e) => { const v = e.target.value; if (v && !acceptsHttpsUrl(v, true)) { this.showActionToast({ kind: 'error', title: 'Invalid contact link', body: 'Use a valid HTTPS URL.' }); return; } this.upd(x => { x.contact.lineUrl = v; }); },
       onFacebookName: (e) => { const v = e.target.value; this.upd(x => { x.contact.facebookName = v; }); },
       onFacebookUrl: (e) => { const v = e.target.value; if (v && !acceptsHttpsUrl(v, true)) this.showActionToast({ kind: 'error', title: 'Invalid contact link', body: 'Use a valid HTTPS URL or leave it blank.' }); this.upd(x => { x.contact.facebookUrl = v; }); },
       onWhatsapp: (e) => { const v = e.target.value; this.upd(x => { x.contact.whatsapp = v; }); },

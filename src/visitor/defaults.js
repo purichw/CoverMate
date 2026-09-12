@@ -36,8 +36,8 @@ const DEFAULTS = {
     "facebookName": "CoverMate Insurance",
     "facebookUrl": "https://www.facebook.com/covermate",
     "whatsapp": "",
-    "phone": "08X-XXX-XXXX",
-    "email": "purich@example.com",
+    "phone": "",
+    "email": "",
     "hours": {
       "th": "จันทร์–เสาร์ 9:00–20:00 น.",
       "en": "Mon–Sat, 9am–8pm"
@@ -140,6 +140,7 @@ const DEFAULTS = {
         "claimLinkText": "See the accident guide"
       },
       "items": [],
+      "cta2href": "#fit",
       "claimHref": "#claim"
     },
     {

@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-09-05
+Last updated: 2026-09-12
 
 ## Production
 
@@ -183,11 +183,11 @@ Minimum checks:
 - `/#admin` Brand & contact tab manages advisor/brand logo and global contact
   values without storing base64/data-image payloads in Firestore or bypassing
   the current media contract
-- `/#admin` Brand & contact displays credential and footer legal identity copy
-  as protected owner-readable content, with required licence identifiers intact
+- `/#admin` Brand & contact edits shared licence numbers, provider logos,
+  credential and legal copy; saved owner values and intentional blanks prevail
 - `/#admin` Theme & data exposes guarded SEO title/description controls only;
-  canonical, robots, social image, JSON-LD claim boundaries, and owner-route
-  noindex behavior remain code-owned
+  canonical, robots and owner-route noindex behavior remain code-owned; social
+  images and JSON-LD licence values use the shared CMS fields
 - `/#admin` builder controls can increase section columns, add insurer
   relationship cards, add coverage table columns, add tier rows, keep tier cell
   state aligned to the coverage headers, and persist the final mutation to the
@@ -359,6 +359,15 @@ Then commit and push only if the user explicitly approves that action in the
 current task.
 
 ## Rollback Guidance
+
+For the CMS ownership schema migration, deploy compatible code before applying
+`scripts/migrate-cms-content.mjs`. Rehearse on `covermate-uat` first. The script
+backs up both original state documents and uses conditional atomic writes.
+Never copy UAT data or publish unrelated draft data into live. See
+[CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md). After migration, old code
+cannot resolve licence tokens: do not roll back code alone. Prefer a forward
+fix; restoring old data requires explicit approval and reconciliation of any
+owner edits made since the backup.
 
 Do not use destructive git commands unless the user explicitly asks for them.
 

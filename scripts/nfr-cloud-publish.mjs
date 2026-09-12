@@ -55,14 +55,26 @@ try {
   await poll(async () => Object.values((await refs[1].get()).data().text || {}).includes(marker));
   assert.ok(!Object.values((await refs[0].get()).data().text || {}).includes(marker), 'Draft must not become live before Publish.');
   await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
+  await admin.getByRole('button', { name: 'Panel', exact: true }).click();
+  await admin.getByRole('button', { name: 'Brand & contact', exact: true }).click();
+  await admin.locator('[data-cms-group="Licences"] summary').click();
+  const licence = admin.locator('[data-cms-field="licences.life.number"]');
+  await licence.fill('9000000001');
+  await licence.press('Tab');
+  await poll(async () => (await refs[1].get()).data().config.licences.life.number === '9000000001');
+  assert.notEqual((await refs[0].get()).data().config.licences.life.number, '9000000001', 'Licence edits remain draft-only.');
+  await admin.getByRole('button', { name: 'Close panel', exact: true }).click();
+  await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
   await admin.getByRole('button', { name: /^Publish/ }).first().click();
   await admin.getByRole('button', { name: 'Publish', exact: true }).last().click();
   await poll(async () => Object.values((await refs[0].get()).data().text || {}).includes(marker));
+  assert.equal((await refs[0].get()).data().config.licences.life.number, '9000000001');
   const visitor = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await protectPreview(visitor, baseUrl);
   const page = await visitor.newPage();
   await page.goto(`${baseUrl}/?cm_env=uat`);
   await page.waitForFunction(marker => document.querySelector('#hero h1')?.textContent.includes(marker), marker, { timeout: 60000 });
+  await page.waitForFunction(() => document.querySelector('#hero')?.textContent.includes('9000000001') && document.querySelector('#covermate-jsonld')?.textContent.includes('9000000001'));
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
   console.log('Fresh Visitor sees published UAT text.');
   let hostedLeadReadback = false;
@@ -87,7 +99,7 @@ try {
   }
   await page.screenshot({ path: 'uat-results/nfr/cloud-publish-visitor.png' });
   await admin.screenshot({ path: 'uat-results/nfr/cloud-publish-admin.png' });
-  fs.writeFileSync('uat-results/nfr/cloud-publish.json', JSON.stringify({ backend: 'real Firebase Auth + Firestore', frontend: hosted ? hosted.origin : 'local candidate build', site: 'covermate-uat', auth: 'signed UAT-only custom token', draftIsolation: true, publishViaButton: true, freshVisitorReadback: true, hostedLeadReadback, productionContentWrites: 0 }, null, 2));
+  fs.writeFileSync('uat-results/nfr/cloud-publish.json', JSON.stringify({ backend: 'real Firebase Auth + Firestore', frontend: hosted ? hosted.origin : 'local candidate build', site: 'covermate-uat', auth: 'signed UAT-only custom token', draftIsolation: true, publishViaButton: true, freshVisitorReadback: true, cmsLicenceAndMetadata: true, hostedLeadReadback, productionContentWrites: 0 }, null, 2));
   console.log('Cloud UAT: real Admin edit/publish -> Firestore -> fresh Visitor passed.');
 } finally {
   if (browser) {

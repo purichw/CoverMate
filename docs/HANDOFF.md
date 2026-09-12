@@ -1,6 +1,14 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-09
+Last updated: 2026-09-12
+
+## Local CMS Ownership Update
+
+The 2026-09-12 request moves real hard-coded licence/brand data into Admin and
+removes fabricated optional-contact/image fallbacks. See
+[CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md). This local work is not a
+production deployment or database migration. Deploy code before applying the
+versioned migration; do not publish unrelated draft content to migrate fields.
 
 ## Current State
 
@@ -104,9 +112,9 @@ Visible Admin chrome/action labels are intentionally English-only: `Panel`,
 `Log out`.
 
 Insurer logos are present under `assets/ins`. Active slot 13 now uses Aioi
-Bangkok Insurance at `assets/ins/13-aioi.png`; legacy ThaiVivat names or
-`assets/ins/13-thaivivat.png` references normalize to Aioi during visitor/Admin
-rendering so old CMS data does not revive the retired logo.
+Bangkok Insurance at `assets/ins/13-aioi.png`. CMS schema version 1 migrates the
+exact legacy `assets/ins/13-thaivivat.png` entry once. Later Admin changes stay
+authoritative; logos are no longer guessed from a company name or list position.
 
 The visitor bundle has been reconciled through the product specs, current implementation docs, and owner-supplied reference packages used during development. Those artifacts are historical inputs only; the repository, current docs, and Firestore live CMS state are the maintained source of truth.
 

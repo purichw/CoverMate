@@ -789,13 +789,13 @@ async function verifyAdminBuilderControls() {
     failures.push(`admin builder: legacy binary upload controls are still rendered (${legacyUploadControls})`);
   }
   const complianceControlState = await page.evaluate(() => ({
-    credentialInputs: document.querySelectorAll('[data-admin-compliance-lock="brand-credential"] input, [data-admin-compliance-lock="brand-credential"] textarea').length,
-    footerLegalInputs: document.querySelectorAll('[data-admin-compliance-lock="footer-legal"] input, [data-admin-compliance-lock="footer-legal"] textarea').length,
+    credentialInputs: document.querySelectorAll('[data-admin-credential="true"]').length,
+    footerLegalInputs: document.querySelectorAll('[data-admin-legal="true"]').length,
     mediaControls: document.querySelectorAll('[data-admin-media-control="advisor-logo"]').length,
     seoGuards: document.querySelectorAll('[data-admin-seo-guard="true"]').length
   }));
-  if (complianceControlState.credentialInputs || complianceControlState.footerLegalInputs) {
-    failures.push("admin builder: protected compliance/legal copy is still directly editable");
+  if (complianceControlState.credentialInputs !== 1 || complianceControlState.footerLegalInputs !== 1) {
+    failures.push("admin builder: owner-managed credential/legal fields are missing");
   }
   if (complianceControlState.mediaControls !== 1) {
     failures.push("admin builder: advisor media metadata control is missing");
@@ -824,6 +824,10 @@ async function verifyAdminBuilderControls() {
   await changeField(adminAside.locator("label").filter({ hasText: "Email" }).locator("input"), "not-an-email");
   await waitForBodyText(page, /Invalid email/);
   await changeField(adminAside.locator("label").filter({ hasText: "Email" }).locator("input"), "owner@covermate.example");
+  await changeField(page.locator('[data-admin-credential="true"]'), "Owner-managed credential");
+  await changeField(page.locator('[data-admin-legal="true"]'), "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}");
+  await page.locator('[data-cms-group="Licences"] summary').click();
+  await changeField(page.locator('[data-cms-field="licences.life.number"]'), "9000000001");
   await clickAdminTab(page, "Theme & data");
   await changeField(page.locator('[data-admin-seo-title="true"]'), "CoverMate smoke SEO title");
   await changeField(page.locator('[data-admin-seo-description="true"]'), "Smoke-tested guarded SEO description for the CoverMate admin rebuild.");
@@ -838,7 +842,8 @@ async function verifyAdminBuilderControls() {
       seoDescription: config?.seo?.description?.th || "",
       seoGuard: document.querySelector('[data-admin-seo-guard="true"]')?.innerText || "",
       footerLegal: config?.footer?.legal?.th || "",
-      credential: config?.brand?.credential?.th || ""
+      credential: config?.brand?.credential?.th || "",
+      lifeLicence: config?.licences?.life?.number || ""
     };
   });
   if (cmsControlState.logo !== "assets/logos/srikrung-logo.png" || cmsControlState.logoAlt !== "Srikrung broker logo") {
@@ -856,11 +861,11 @@ async function verifyAdminBuilderControls() {
   if (!cmsControlState.seoGuard.includes("Canonical: https://covermate.vercel.app/") || !/admin, edit, and preview stay noindex/i.test(cmsControlState.seoGuard)) {
     failures.push("admin builder: SEO canonical/robots guard copy is missing");
   }
-  if (!cmsControlState.footerLegal.includes("6401006221") || !cmsControlState.footerLegal.includes("6804008544") || !cmsControlState.footerLegal.includes("ว00287/2534")) {
-    failures.push("admin builder: protected footer legal identifiers are missing");
+  if (cmsControlState.footerLegal !== "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}" || cmsControlState.lifeLicence !== "9000000001") {
+    failures.push("admin builder: owner-managed licence/template values were replaced");
   }
-  if (!cmsControlState.credential.includes("AIA") || !cmsControlState.credential.includes("นายหน้า")) {
-    failures.push("admin builder: protected brand credential was not preserved");
+  if (cmsControlState.credential !== "Owner-managed credential") {
+    failures.push("admin builder: owner credential was not preserved");
   }
 
   await clickAdminTab(page, "Sections");

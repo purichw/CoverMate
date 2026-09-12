@@ -31,7 +31,7 @@
   <meta name="twitter:title" content="CoverMate | ที่ปรึกษาประกัน AIA และประกันรถยนต์">
   <meta name="twitter:description" content="ปรึกษาประกันชีวิตและสุขภาพผ่าน AIA และประกันรถยนต์จาก 14 บริษัทประกันภัย พร้อมคำแนะนำชัดเจนโดยไม่มีค่าใช้จ่าย">
   <meta name="twitter:image" content="https://covermate.vercel.app/assets/covermate-og.png">
-  <script type="application/ld+json" id="covermate-jsonld">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://covermate.vercel.app/#website","url":"https://covermate.vercel.app/","name":"CoverMate","inLanguage":["th-TH","en"],"publisher":{"@id":"https://covermate.vercel.app/#organization"}},{"@type":["Organization","InsuranceAgency"],"@id":"https://covermate.vercel.app/#organization","name":"CoverMate","url":"https://covermate.vercel.app/","logo":{"@type":"ImageObject","url":"https://covermate.vercel.app/assets/brand/covermate-advisory-logo-th.png","width":1200,"height":375},"areaServed":{"@type":"AdministrativeArea","name":"Bangkok Metropolitan Region, Thailand"},"knowsAbout":["AIA life insurance","AIA health insurance","Motor insurance comparison","Insurance claims support"],"identifier":[{"@type":"PropertyValue","name":"Life agent licence","value":"6401006221"},{"@type":"PropertyValue","name":"Non-life broker licence","value":"6804008544"}]},{"@type":"WebPage","@id":"https://covermate.vercel.app/#webpage","url":"https://covermate.vercel.app/","name":"CoverMate | ที่ปรึกษาประกัน AIA และประกันรถยนต์","description":"ปรึกษาประกันชีวิตและสุขภาพผ่าน AIA และประกันรถยนต์จาก 14 บริษัทประกันภัย พร้อมคำแนะนำชัดเจนโดยไม่มีค่าใช้จ่าย","isPartOf":{"@id":"https://covermate.vercel.app/#website"},"about":{"@id":"https://covermate.vercel.app/#organization"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://covermate.vercel.app/assets/covermate-og.png","width":1200,"height":630},"inLanguage":["th-TH","en"]},{"@type":"Service","@id":"https://covermate.vercel.app/#insurance-advisory","name":"Life, health, and motor insurance advisory","serviceType":"Insurance advisory and motor insurance comparison","provider":{"@id":"https://covermate.vercel.app/#organization"},"areaServed":{"@type":"AdministrativeArea","name":"Bangkok Metropolitan Region, Thailand"},"audience":{"@type":"Audience","audienceType":"People comparing personal insurance in Thailand"}}]}</script>
+  <script type="application/ld+json" id="covermate-jsonld">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://covermate.vercel.app/#website","url":"https://covermate.vercel.app/","name":"CoverMate","inLanguage":["th-TH","en"],"publisher":{"@id":"https://covermate.vercel.app/#organization"}},{"@type":["Organization","InsuranceAgency"],"@id":"https://covermate.vercel.app/#organization","name":"CoverMate","url":"https://covermate.vercel.app/","logo":{"@type":"ImageObject","url":"https://covermate.vercel.app/assets/brand/covermate-advisory-logo-th.png","width":1200,"height":375},"areaServed":{"@type":"AdministrativeArea","name":"Bangkok Metropolitan Region, Thailand"},"knowsAbout":["AIA life insurance","AIA health insurance","Motor insurance comparison","Insurance claims support"]},{"@type":"WebPage","@id":"https://covermate.vercel.app/#webpage","url":"https://covermate.vercel.app/","name":"CoverMate | ที่ปรึกษาประกัน AIA และประกันรถยนต์","description":"ปรึกษาประกันชีวิตและสุขภาพผ่าน AIA และประกันรถยนต์จาก 14 บริษัทประกันภัย พร้อมคำแนะนำชัดเจนโดยไม่มีค่าใช้จ่าย","isPartOf":{"@id":"https://covermate.vercel.app/#website"},"about":{"@id":"https://covermate.vercel.app/#organization"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://covermate.vercel.app/assets/covermate-og.png","width":1200,"height":630},"inLanguage":["th-TH","en"]},{"@type":"Service","@id":"https://covermate.vercel.app/#insurance-advisory","name":"Life, health, and motor insurance advisory","serviceType":"Insurance advisory and motor insurance comparison","provider":{"@id":"https://covermate.vercel.app/#organization"},"areaServed":{"@type":"AdministrativeArea","name":"Bangkok Metropolitan Region, Thailand"},"audience":{"@type":"Audience","audienceType":"People comparing personal insurance in Thailand"}}]}</script>
 
 
 
@@ -54,6 +54,15 @@
 footer [data-cm-footer-mobile]{display:none!important}
 @media (max-width: 980px){footer [data-cm-footer-grid]{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media (max-width: 640px){footer [data-cm-footer-grid]{display:none!important}footer [data-cm-footer-mobile]{display:flex!important;padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}footer [data-cm-footer-mobile] summary::-webkit-details-marker{display:none}footer [data-cm-footer-mobile] details[open] .om-footer-chev{transform:rotate(180deg)}}
+.om-cms-field{display:flex;flex-direction:column;gap:6px;min-width:0;color:var(--color-text);font-size:13px}
+.om-cms-field>span{font-size:12px;font-weight:700;color:var(--color-neutral-700)}
+.om-cms-field input,.om-cms-field textarea{width:100%;box-sizing:border-box;font:inherit;line-height:1.5;padding:10px 12px;border:1px solid var(--color-neutral-300);border-radius:8px;background:var(--color-bg);color:var(--color-text)}
+.om-cms-field textarea{resize:vertical}
+.om-cms-field input:focus,.om-cms-field textarea:focus{outline:2px solid var(--color-accent);outline-offset:2px}
+.om-cms-group{border-top:1px solid var(--color-neutral-300);padding:10px 0}
+.om-cms-group>summary{padding:8px 0;font-size:14px;font-weight:800;cursor:pointer}
+.om-cms-fields{display:flex;flex-direction:column;gap:16px;padding:12px 0}
+.om-cms-image{display:block;width:auto;max-width:100%;height:64px;object-fit:contain;object-position:left}
 </style>
 <style id="covermate-responsive-touch-policy">
 @media (max-width: 700px), (pointer: coarse) {
@@ -714,7 +723,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   <div style="max-width:var(--wrap);margin:0 auto;padding:{{ headerPad }} clamp(12px,3.8vw,var(--gut));display:flex;align-items:center;gap:clamp(8px,2.4vw,var(--space-4));transition:padding .35s cubic-bezier(.22,.61,.36,1)">
     <a href="#top" style="display:flex;align-items:center;gap:var(--space-2);min-width:0;margin-right:auto;color:var(--color-text)" style-hover="color:var(--color-text)">
       <span style="display:inline-flex;align-items:center;min-width:0;max-width:min(56vw,310px)">
-        <img sc-camel-src="{{ brandWordmarkLogo }}" alt="{{ brandLogoAlt }}" style="width:clamp(184px,22vw,292px);height:auto;max-height:82px;object-fit:contain;object-position:left center;display:block;transform:{{ markScale }};transition:transform .35s cubic-bezier(.22,.61,.36,1)">
+        <sc-if value="{{ hasHeaderLogo }}"><img sc-camel-src="{{ brandWordmarkLogo }}" alt="{{ brandLogoAlt }}" style="width:clamp(184px,22vw,292px);height:auto;max-height:82px;object-fit:contain;object-position:left center;display:block;transform:{{ markScale }};transition:transform .35s cubic-bezier(.22,.61,.36,1)"></sc-if>
       </span>
     </a>
 
@@ -759,7 +768,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               <h1 style="margin:0;max-width:13ch;font-size:clamp(34px,3.65vw,54px);line-height:1.14;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)">{{ s.title }}</h1>
               <p style="margin:0;max-width:600px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500">{{ s.body }}</p>
               <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:2px">
-                <a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 30px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:900;font-size:18px;box-shadow:var(--shadow-md)"><span style="width:22px;height:22px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a>
+                <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 30px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:900;font-size:18px;box-shadow:var(--shadow-md)"><span style="width:22px;height:22px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a></sc-if>
                 <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
                   <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 28px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.34);color:var(--color-text);text-decoration:none;font-weight:900;font-size:17px;box-shadow:var(--shadow-xs)">{{ s.cta2 }}<span style="font-size:25px;line-height:0;transform:translateY(-1px)">↓</span></a>
                 </sc-if>
@@ -771,7 +780,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 
             <aside data-reveal="2" style="width:100%;max-width:560px;justify-self:end;border-radius:26px;background:rgba(239,222,190,.86);box-shadow:var(--shadow-md);padding:clamp(22px,2.4vw,32px);display:flex;flex-direction:column;gap:13px;min-width:0">
               <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center">
-                <span style="width:72px;height:72px;border-radius:999px;background:var(--color-surface);display:grid;place-items:center;box-shadow:var(--shadow-sm);overflow:hidden;flex:0 0 auto"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:56px;height:56px;object-fit:contain;display:block"></span>
+                <sc-if value="{{ hasAdvisorLogo }}"><span style="width:72px;height:72px;border-radius:999px;background:var(--color-surface);display:grid;place-items:center;box-shadow:var(--shadow-sm);overflow:hidden;flex:0 0 auto"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:56px;height:56px;object-fit:contain;display:block"></span></sc-if>
                 <div style="min-width:0">
                   <div style="font-size:12.5px;line-height:1.2;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:{{ A_deep }}">{{ s.heroAdvisorEyebrow }}</div>
                   <div style="font-size:clamp(23px,2vw,28px);line-height:1.16;font-weight:900;color:var(--color-text);margin-top:3px">{{ brandFull }}</div>
@@ -780,9 +789,9 @@ textarea.input { min-height: 90px; resize: vertical; }
               </div>
               <div style="height:1px;background:rgba(36,26,22,.14)"></div>
               <div style="display:flex;flex-direction:column;gap:10px;color:var(--color-neutral-800);font-size:clamp(14px,1.15vw,16px);line-height:1.45;font-weight:600">
-                <div>{{ s.heroLifeLicense }}</div>
-                <div>{{ s.heroNonLifeLicense }}</div>
-                <a href="https://eservice.oic.or.th/" target="_blank" rel="noopener" style="align-self:flex-start;color:{{ A_deep }};font-weight:900;text-decoration:underline;text-underline-offset:4px">{{ s.heroVerifyLabel }}</a>
+                <sc-if value="{{ hasLifeLicence }}"><div data-noedit="">{{ s.heroLifeLicense }}</div></sc-if>
+                <sc-if value="{{ hasNonLifeLicence }}"><div data-noedit="">{{ s.heroNonLifeLicense }}</div></sc-if>
+                <sc-if value="{{ hasVerifyLink }}"><a data-noedit="" href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:{{ A_deep }};font-weight:900;text-decoration:underline;text-underline-offset:4px">{{ s.heroVerifyLabel }}</a></sc-if>
               </div>
             </aside>
           </div>
@@ -837,7 +846,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             <h1 data-reveal="1" style="margin:0;max-width:14ch;font-size:clamp(36px,5vw,60px);line-height:1.2;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)">{{ s.title }}</h1>
             <p data-reveal="2" style="margin:0;max-width:620px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500">{{ s.body }}</p>
             <div data-reveal="3" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-              <a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a>
+              <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a></sc-if>
               <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
                 <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.3);color:var(--color-text);text-decoration:none;font-weight:800">{{ s.cta2 }}<span style="font-size:22px;line-height:0">↓</span></a>
               </sc-if>
@@ -849,7 +858,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 
           <div data-reveal="2" style="display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;min-width:0;padding-block:var(--space-3)">
             <div style="display:flex;align-items:center;gap:var(--space-3);padding:6px var(--space-4) 6px 6px;border-radius:999px;background:var(--color-surface);max-width:100%;box-shadow:var(--shadow-sm)">
-              <span style="width:56px;height:56px;border-radius:999px;background:var(--color-surface);display:grid;place-items:center;box-shadow:var(--shadow-sm);overflow:hidden;flex:0 0 auto"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:44px;height:44px;object-fit:contain;display:block"></span>
+              <sc-if value="{{ hasAdvisorLogo }}"><span style="width:56px;height:56px;border-radius:999px;background:var(--color-surface);display:grid;place-items:center;box-shadow:var(--shadow-sm);overflow:hidden;flex:0 0 auto"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:44px;height:44px;object-fit:contain;display:block"></span></sc-if>
               <span style="min-width:0;display:flex;flex-direction:column;line-height:1.2">
                 <span style="font-weight:900;color:var(--color-text);font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ brandFull }}</span>
                 <span style="font-size:12px;color:var(--color-neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ brandCred }}</span>
@@ -1220,11 +1229,11 @@ textarea.input { min-height: 90px; resize: vertical; }
   <sc-if value="{{ s.isAbout }}" hint-placeholder-val="{{ false }}">
     <section id="{{ s.id }}" data-screen-label="About" style="scroll-margin-top:clamp(86px,9vw,124px);background:{{ s.bg }};color:{{ s.fg }};border-top-left-radius:var(--radius-lg);border-top-right-radius:var(--radius-lg)">
       <div style="max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:grid;grid-template-columns:minmax(0,1fr);gap:calc(var(--space-4) * 1.25);align-items:start;justify-items:start">
-        <div data-reveal="" style="min-width:0;order:2;display:flex;justify-content:flex-start;align-items:flex-end;padding-block:var(--space-3)">
+        <sc-if value="{{ hasAdvisorPhoto }}"><div data-reveal="" style="min-width:0;order:2;display:flex;justify-content:flex-start;align-items:flex-end;padding-block:var(--space-3)">
           <div style="position:relative;width:132px;height:132px;flex:0 0 auto;border-radius:999px;overflow:hidden;background:var(--color-bg);box-shadow:var(--shadow-sm)">
-            <image-slot id="about-photo" shape="circle" class="washed" style="width:100%;height:100%" placeholder="รูป · photo"></image-slot>
+            <sc-if value="{{ hasAdvisorPhoto }}"><img sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" style="width:100%;height:100%;object-fit:cover;border-radius:999px"></sc-if>
           </div>
-        </div>
+        </div></sc-if>
         <div data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
           <div style="display:flex;flex-direction:column;gap:var(--space-2)">
             <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}">{{ s.kicker }}</div>
@@ -1412,10 +1421,10 @@ textarea.input { min-height: 90px; resize: vertical; }
           </sc-for>
         </div>
         <div data-reveal="4" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4)">
-          <a href="{{ lineUrl }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 var(--space-6);border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
+          <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 var(--space-6);border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
             <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
             {{ s.cta1 }}
-          </a>
+          </a></sc-if>
           <div style="flex:1 1 300px;min-width:0;font-size:13.5px;line-height:1.6;color:{{ s.muted }};text-wrap:pretty">{{ s.note }}</div>
         </div>
       </div>
@@ -1606,28 +1615,28 @@ textarea.input { min-height: 90px; resize: vertical; }
           </div>
 
           <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4);border-radius:var(--radius-lg);background:{{ s.card }}">
-            <image-slot id="line-qr" shape="rounded" radius="14" style="width:104px;height:104px;flex:0 0 auto" placeholder="QR LINE"></image-slot>
+            <sc-if value="{{ hasLineQr }}"><img sc-camel-src="{{ lineQr }}" alt="LINE QR" style="width:104px;height:104px;object-fit:contain;border-radius:14px"></sc-if>
             <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
               <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ s.muted }}">
                 <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">สแกนเพื่อแอดไลน์</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Scan to add on LINE</sc-if>
               </div>
-              <a href="{{ lineUrl }}" style="display:flex;align-items:center;gap:9px;color:{{ s.fg }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(18px,2vw,24px);line-height:1.2;word-break:break-all" style-hover="color:{{ A_light }}">
+              <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:flex;align-items:center;gap:9px;color:{{ s.fg }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(18px,2vw,24px);line-height:1.2;word-break:break-all" style-hover="color:{{ A_light }}">
                 <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
                 {{ lineId }}
-              </a>
+              </a></sc-if>
               <div style="font-size:12.5px;color:{{ s.muted }};line-height:1.5">{{ hours }}</div>
             </div>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:var(--space-2)">
-            <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease" style-hover="background:{{ s.card }};color:{{ s.fg }}">
+            <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease" style-hover="background:{{ s.card }};color:{{ s.fg }}">
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:{{ A_light }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M13.83 19a17 17 0 0 1-8.83-8.83l2.4-1.7a1 1 0 0 0 .3-1.3L6.2 3.6a1 1 0 0 0-1.2-.5L2.5 4A2 2 0 0 0 1.2 6.3 20 20 0 0 0 17.7 22.8a2 2 0 0 0 2.3-1.3l.9-2.5a1 1 0 0 0-.5-1.2l-3.6-1.5a1 1 0 0 0-1.3.3z"></path></svg>
               {{ phone }}
-            </a>
-            <a href="{{ mailUrl }}" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease;word-break:break-all" style-hover="background:{{ s.card }};color:{{ s.fg }}">
+            </a></sc-if>
+            <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease;word-break:break-all" style-hover="background:{{ s.card }};color:{{ s.fg }}">
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:{{ A_light }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path><path d="m2 7 10 6 10-6"></path></svg>
               {{ email }}
-            </a>
+            </a></sc-if>
             <sc-if value="{{ hasFacebook }}" hint-placeholder-val="true">
               <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:var(--space-3);padding:14px var(--space-4);border-radius:999px;background:transparent;border:1.5px solid {{ s.line }};color:{{ s.fg }};font-size:15px;font-weight:600;transition:background .22s ease;word-break:break-word" style-hover="background:{{ s.card }};color:{{ s.fg }}">
                 <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:{{ A_light }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
@@ -1685,7 +1694,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <label data-noedit="" style="display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;padding:var(--space-3);border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-surface) 78%,var(--color-bg));border:1.5px solid var(--color-neutral-300);cursor:pointer">
             <input type="checkbox" checked="{{ fConsent }}" sc-camel-on-change="{{ onConsent }}" aria-required="true" style="width:20px;height:20px;margin:1px 0 0;accent-color:{{ A_base }};cursor:pointer">
             <span style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.5;color:var(--color-neutral-800)">
-              <span><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ยินยอมให้ติดต่อกลับเรื่องที่ถามมา และให้ส่งข้อมูลต่อให้บริษัทประกันเฉพาะเมื่อขอใบเสนอราคาแล้ว</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">I agree to be contacted about this request and to share my details with insurers only when I request a quotation.</sc-if></span>
+              <span>{{ consultationConsent }}</span>
               <sc-if value="{{ showPrivacyAnchor }}" hint-placeholder-val="{{ true }}">
                 <a href="#privacy" style="color:var(--color-accent-700);font-weight:700;text-decoration:underline;text-underline-offset:2px"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">อ่านว่าข้อมูลถูกใช้อะไร</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Read how your data is used</sc-if></a>
               </sc-if>
@@ -1700,7 +1709,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <sc-if value="{{ leadPending }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:11px;min-height:54px;padding:0 var(--space-4);border-radius:999px;background:var(--color-surface);color:var(--color-neutral-800);font-size:14.5px;font-weight:700;animation:omRise .3s ease both">
               <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round;animation:omSpin .8s linear infinite"><path d="M21 12a9 9 0 0 1-9 9"></path><path d="M3 12a9 9 0 0 1 9-9"></path></svg>
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">กำลังบันทึกข้อมูล...</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Saving your enquiry...</sc-if>
+              <span data-noedit="">{{ submitPendingText }}</span>
             </div>
           </sc-if>
           <sc-if value="{{ hasLeadError }}" hint-placeholder-val="{{ false }}">
@@ -1712,7 +1721,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:11px;min-height:54px;padding:0 var(--space-4);border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);font-size:14.5px;font-weight:700;animation:omRise .3s ease both">
               <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg>
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ได้รับข้อมูลแล้ว เราจะติดต่อกลับโดยเร็วที่สุด</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Thank you. We will reply as soon as possible.</sc-if>
+              <span data-noedit="">{{ submitSuccessText }}</span>
             </div>
           </sc-if>
           <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-align:center">{{ s.note }}</div>
@@ -1729,12 +1738,12 @@ textarea.input { min-height: 90px; resize: vertical; }
     <div data-cm-footer-grid="true" style="display:grid;grid-template-columns:1.1fr 1.05fr .9fr 1.15fr;gap:clamp(22px,3vw,42px);align-items:start">
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
         <div style="display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0">
-          <img sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" style="width:min(280px,100%);height:auto;display:block;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(245,234,216,.22))">
+          <sc-if value="{{ hasFooterLogo }}"><img sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" style="width:min(280px,100%);height:auto;display:block;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(245,234,216,.22))"></sc-if>
         </div>
         <div style="font-size:15.5px;line-height:1.42;max-width:30ch;color:var(--color-neutral-300);font-weight:650;text-wrap:pretty">{{ footTagline }}</div>
         <div style="height:1px;background:var(--color-neutral-800);width:100%;max-width:310px"></div>
-        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:center;max-width:320px">
-          <span style="width:48px;height:48px;border-radius:999px;border:2px dashed color-mix(in srgb,var(--color-neutral-400) 58%,transparent);display:flex;align-items:center;justify-content:center;color:var(--color-neutral-400);font-size:12px;line-height:1.05;text-align:center">or<br>QR</span>
+        <div style="display:grid;grid-template-columns:{{ footerAdvisorColumns }};gap:var(--space-3);align-items:center;max-width:320px">
+          <sc-if value="{{ hasAdvisorPhoto }}"><img sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" style="width:48px;height:48px;border-radius:999px;object-fit:cover"></sc-if>
           <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
             <span style="font-size:15.5px;font-weight:900;color:var(--color-neutral-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ brandFull }}</span>
             <span style="font-size:13px;line-height:1.32;color:var(--color-neutral-500);font-weight:600;text-wrap:pretty">{{ brandCred }}</span>
@@ -1745,16 +1754,16 @@ textarea.input { min-height: 90px; resize: vertical; }
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
         <div style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)">{{ footerLicenceHeading }}</div>
         <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-          <div style="display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center">
-            <span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" style="width:46px;height:38px;object-fit:contain"></span>
-            <span style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerLifeLicence }}</span>
-          </div>
-          <div style="display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center">
-            <span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" style="width:48px;height:34px;object-fit:contain"></span>
-            <span style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerNonLifeLicence }}</span>
-          </div>
+          <sc-if value="{{ hasLifeLicence }}"><div style="display:grid;grid-template-columns:{{ lifeLicenceColumns }};gap:12px;align-items:center">
+            <sc-if value="{{ hasLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" style="width:46px;height:38px;object-fit:contain"></span></sc-if>
+            <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerLifeLicence }}</span>
+          </div></sc-if>
+          <sc-if value="{{ hasNonLifeLicence }}"><div style="display:grid;grid-template-columns:{{ nonLifeLicenceColumns }};gap:12px;align-items:center">
+            <sc-if value="{{ hasNonLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" style="width:48px;height:34px;object-fit:contain"></span></sc-if>
+            <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerNonLifeLicence }}</span>
+          </div></sc-if>
         </div>
-        <a href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:var(--color-neutral-300);font-size:13.5px;font-weight:800;text-decoration:underline;text-underline-offset:4px;line-height:1.3">{{ footerOicLabel }}</a>
+        <sc-if value="{{ hasVerifyLink }}"><a href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:var(--color-neutral-300);font-size:13.5px;font-weight:800;text-decoration:underline;text-underline-offset:4px;line-height:1.3">{{ footerOicLabel }}</a></sc-if>
       </div>
 
       <nav style="display:flex;flex-direction:column;gap:10px;min-width:0">
@@ -1769,9 +1778,9 @@ textarea.input { min-height: 90px; resize: vertical; }
 
       <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
         <div style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)">{{ footerContactHeading }}</div>
-        <a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a>
-        <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a>
-        <a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a>
+        <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a></sc-if>
+        <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a></sc-if>
+        <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a></sc-if>
         <sc-if value="{{ hasFacebook }}" hint-placeholder-val="{{ true }}">
           <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">Facebook {{ facebookName }}</a>
         </sc-if>
@@ -1782,12 +1791,12 @@ textarea.input { min-height: 90px; resize: vertical; }
     <div data-cm-footer-mobile="true" style="display:none;flex-direction:column;gap:18px">
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
         <div style="display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0">
-          <img sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" style="width:min(280px,100%);height:auto;display:block;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(245,234,216,.22))">
+          <sc-if value="{{ hasFooterLogo }}"><img sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" style="width:min(280px,100%);height:auto;display:block;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(245,234,216,.22))"></sc-if>
         </div>
         <div style="font-size:15.5px;line-height:1.42;max-width:30ch;color:var(--color-neutral-300);font-weight:650;text-wrap:pretty">{{ footTagline }}</div>
         <div style="height:1px;background:var(--color-neutral-800);width:100%"></div>
-        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-3);align-items:center;max-width:320px">
-          <span style="width:48px;height:48px;border-radius:999px;border:2px dashed color-mix(in srgb,var(--color-neutral-400) 58%,transparent);display:flex;align-items:center;justify-content:center;color:var(--color-neutral-400);font-size:12px;line-height:1.05;text-align:center">or<br>QR</span>
+        <div style="display:grid;grid-template-columns:{{ footerAdvisorColumns }};gap:var(--space-3);align-items:center;max-width:320px">
+          <sc-if value="{{ hasAdvisorPhoto }}"><img sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" style="width:48px;height:48px;border-radius:999px;object-fit:cover"></sc-if>
           <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
             <span style="font-size:15.5px;font-weight:900;color:var(--color-neutral-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ brandFull }}</span>
             <span style="font-size:13px;line-height:1.32;color:var(--color-neutral-500);font-weight:600;text-wrap:pretty">{{ brandCred }}</span>
@@ -1803,14 +1812,14 @@ textarea.input { min-height: 90px; resize: vertical; }
           </summary>
           <div style="padding:0 0 18px;display:flex;flex-direction:column;gap:var(--space-3)">
             <div style="display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center">
-              <span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" style="width:46px;height:38px;object-fit:contain"></span>
-              <span style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerLifeLicence }}</span>
+              <sc-if value="{{ hasLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" style="width:46px;height:38px;object-fit:contain"></span></sc-if>
+              <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerLifeLicence }}</span>
             </div>
             <div style="display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center">
-              <span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" style="width:48px;height:34px;object-fit:contain"></span>
-              <span style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerNonLifeLicence }}</span>
+              <sc-if value="{{ hasNonLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" style="width:48px;height:34px;object-fit:contain"></span></sc-if>
+              <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerNonLifeLicence }}</span>
             </div>
-            <a href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:var(--color-neutral-300);font-size:13.5px;font-weight:800;text-decoration:underline;text-underline-offset:4px;line-height:1.3">{{ footerOicLabel }}</a>
+            <sc-if value="{{ hasVerifyLink }}"><a href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:var(--color-neutral-300);font-size:13.5px;font-weight:800;text-decoration:underline;text-underline-offset:4px;line-height:1.3">{{ footerOicLabel }}</a></sc-if>
           </div>
         </details>
 
@@ -1835,9 +1844,9 @@ textarea.input { min-height: 90px; resize: vertical; }
             <svg class="om-footer-chev" sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:var(--color-neutral-400);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease;flex:0 0 auto"><path d="m6 9 6 6 6-6"></path></svg>
           </summary>
           <div style="padding:0 0 18px;display:flex;flex-direction:column;gap:12px;min-width:0">
-            <a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a>
-            <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a>
-            <a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a>
+            <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a></sc-if>
+            <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a></sc-if>
+            <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a></sc-if>
             <sc-if value="{{ hasFacebook }}" hint-placeholder-val="{{ true }}">
               <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">Facebook {{ facebookName }}</a>
             </sc-if>
@@ -1852,13 +1861,13 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 <sc-if value="{{ showSticky }}" hint-placeholder-val="{{ true }}">
 <div data-om="mob" style="position:sticky;bottom:0;z-index:35;display:flex;gap:var(--space-2);padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb, var(--color-bg) 92%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -2px 18px color-mix(in srgb,#2e2b25 14%,transparent)">
-  <a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;justify-content:center;width:54px;height:54px;flex:0 0 auto;border-radius:999px;background:var(--color-surface);color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-300);color:var(--color-text)" style-active="background:var(--color-neutral-400)">
+  <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;justify-content:center;width:54px;height:54px;flex:0 0 auto;border-radius:999px;background:var(--color-surface);color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-300);color:var(--color-text)" style-active="background:var(--color-neutral-400)">
     <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M13.83 19a17 17 0 0 1-8.83-8.83l2.4-1.7a1 1 0 0 0 .3-1.3L6.2 3.6a1 1 0 0 0-1.2-.5L2.5 4A2 2 0 0 0 1.2 6.3 20 20 0 0 0 17.7 22.8a2 2 0 0 0 2.3-1.3l.9-2.5a1 1 0 0 0-.5-1.2l-3.6-1.5a1 1 0 0 0-1.3.3z"></path></svg>
-  </a>
-  <a href="{{ lineUrl }}" style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;box-shadow:var(--shadow-md);transition:background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
+  </a></sc-if>
+  <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;box-shadow:var(--shadow-md);transition:background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
     <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
     {{ headerCta }}
-  </a>
+  </a></sc-if>
 </div>
 </sc-if>
 
@@ -2160,22 +2169,26 @@ textarea.input { min-height: 90px; resize: vertical; }
 
     <!-- BRAND TAB -->
     <sc-if value="{{ tabBrand }}" hint-placeholder-val="{{ false }}">
+      <div role="group" aria-label="Content language" style="display:flex;gap:4px;align-self:flex-start;padding:4px;background:var(--color-surface);border-radius:8px">
+        <button type="button" aria-label="Edit Thai content" aria-pressed="{{ th }}" sc-camel-on-click="{{ setTH }}" style="min-width:48px;min-height:40px;border:0;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ thBg }};color:{{ thFg }}">TH</button>
+        <button type="button" aria-label="Edit English content" aria-pressed="{{ en }}" sc-camel-on-click="{{ setEN }}" style="min-width:48px;min-height:40px;border:0;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ enBg }};color:{{ enFg }}">EN</button>
+      </div>
       <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-1)">Identity</div>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Monogram</span><input value="{{ brandInitial }}" sc-camel-on-change="{{ onBInit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Short name</span><input value="{{ bName }}" sc-camel-on-change="{{ onBName }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Full name</span><input value="{{ bFull }}" sc-camel-on-change="{{ onBFull }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Role line</span><input value="{{ bRole }}" sc-camel-on-change="{{ onBRole }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <div data-admin-compliance-lock="brand-credential" style="display:flex;flex-direction:column;gap:5px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Credential line</span><span style="font-size:13.5px;line-height:1.45;color:var(--color-neutral-800)">{{ bCred }}</span></div>
-      <div data-admin-media-control="advisor-logo" style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><div style="display:flex;align-items:center;gap:12px"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:52px;height:52px;border-radius:999px;object-fit:contain;background:var(--color-bg);box-shadow:var(--shadow-sm)"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:11.5px;font-weight:800;color:var(--color-neutral-700);letter-spacing:.06em;text-transform:uppercase">Advisor logo</span><span style="font-size:12px;line-height:1.4;color:var(--color-neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ advisorLogoLabel }}</span></div></div><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Logo path or HTTPS URL</span><input data-admin-logo-path="true" value="{{ advisorLogoPath }}" sc-camel-on-change="{{ onAdvisorLogoPath }}" placeholder="assets/logos/aia-logo.png" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:&quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,&quot;Noto Sans Thai&quot;,system-ui,sans-serif" style-focus="border-color:{{ A_base }}"></label><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Logo alt text</span><input data-admin-logo-alt="true" value="{{ advisorLogoAlt }}" sc-camel-on-change="{{ onAdvisorLogoAlt }}" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" sc-camel-on-click="{{ resetAdvisorLogo }}" style="min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 15px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">Reset to default logo</button></div></div>
+      <label class="om-cms-field"><span>Credential line</span><textarea rows="2" data-admin-credential="true" value="{{ credentialInput.value }}" sc-camel-on-change="{{ credentialInput.change }}" sc-camel-on-blur="{{ credentialInput.commit }}"></textarea></label>
+      <div data-admin-media-control="advisor-logo" style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><div style="display:flex;align-items:center;gap:12px"><sc-if value="{{ hasAdvisorLogo }}"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:52px;height:52px;border-radius:999px;object-fit:contain;background:var(--color-bg);box-shadow:var(--shadow-sm)"></sc-if><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:11.5px;font-weight:800;color:var(--color-neutral-700);letter-spacing:.06em;text-transform:uppercase">Advisor logo</span><span style="font-size:12px;line-height:1.4;color:var(--color-neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ advisorLogoLabel }}</span></div></div><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Logo path or HTTPS URL</span><input data-admin-logo-path="true" value="{{ advisorLogoInput.value }}" sc-camel-on-change="{{ advisorLogoInput.change }}" sc-camel-on-blur="{{ advisorLogoInput.commit }}" placeholder="assets/logos/aia-logo.png" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:&quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,&quot;Noto Sans Thai&quot;,system-ui,sans-serif" style-focus="border-color:{{ A_base }}"></label><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Logo alt text</span><input data-admin-logo-alt="true" value="{{ advisorLogoAlt }}" sc-camel-on-change="{{ onAdvisorLogoAlt }}" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" sc-camel-on-click="{{ resetAdvisorLogo }}" style="min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 15px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">Clear image</button></div></div>
 
       <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">Contact</div>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">LINE ID</span><input value="{{ lineId }}" sc-camel-on-change="{{ onLineId }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">LINE link</span><input value="{{ lineUrl }}" sc-camel-on-change="{{ onLineUrl }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">LINE link</span><input value="{{ lineUrlInput.value }}" sc-camel-on-change="{{ lineUrlInput.change }}" sc-camel-on-blur="{{ lineUrlInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Facebook name</span><input value="{{ facebookName }}" sc-camel-on-change="{{ onFacebookName }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Facebook link</span><input value="{{ facebookUrl }}" sc-camel-on-change="{{ onFacebookUrl }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Facebook link</span><input value="{{ facebookUrlInput.value }}" sc-camel-on-change="{{ facebookUrlInput.change }}" sc-camel-on-blur="{{ facebookUrlInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">WhatsApp</span><input value="{{ whatsapp }}" sc-camel-on-change="{{ onWhatsapp }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Phone</span><input value="{{ phone }}" sc-camel-on-change="{{ onPhone }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Email</span><input value="{{ email }}" sc-camel-on-change="{{ onEmail }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Phone</span><input value="{{ phoneInput.value }}" sc-camel-on-change="{{ phoneInput.change }}" sc-camel-on-blur="{{ phoneInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Email</span><input value="{{ emailInput.value }}" sc-camel-on-change="{{ emailInput.change }}" sc-camel-on-blur="{{ emailInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Hours</span><input value="{{ hours }}" sc-camel-on-change="{{ onHours }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Service area</span><input value="{{ area }}" sc-camel-on-change="{{ onArea }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
 
@@ -2213,7 +2226,42 @@ textarea.input { min-height: 90px; resize: vertical; }
         </span>
       </div>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Footer tagline</span><textarea rows="2" value="{{ footTagline }}" sc-camel-on-change="{{ onFootTag }}" style="font:inherit;font-size:14px;line-height:1.5;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical" style-focus="border-color:{{ A_base }}"></textarea></label>
-      <div data-admin-compliance-lock="footer-legal" style="display:flex;flex-direction:column;gap:5px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Footer legal line</span><span style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-800)">{{ footLegal }}</span></div>
+      <label class="om-cms-field"><span>Legal disclosure</span><textarea rows="4" data-admin-legal="true" value="{{ legalInput.value }}" sc-camel-on-change="{{ legalInput.change }}" sc-camel-on-blur="{{ legalInput.commit }}"></textarea></label>
+    </sc-if>
+
+    <sc-if value="{{ tabBrand }}">
+      <sc-for list="{{ cmsGroups }}" as="group">
+        <details class="om-cms-group" data-cms-group="{{ group.key }}">
+          <summary>{{ group.label }}</summary>
+          <div class="om-cms-fields">
+            <sc-for list="{{ group.fields }}" as="field">
+              <label class="om-cms-field">
+                <span>{{ field.label }}</span>
+                <sc-if value="{{ field.hasImage }}"><img class="om-cms-image" sc-camel-src="{{ field.image }}" alt="{{ field.label }}"></sc-if>
+                <textarea rows="2" data-cms-field="{{ field.path }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}" sc-camel-on-blur="{{ field.commit }}"></textarea>
+              </label>
+            </sc-for>
+          </div>
+        </details>
+      </sc-for>
+      <details class="om-cms-group" data-cms-group="Navigation">
+        <summary>Navigation</summary>
+        <div class="om-cms-fields">
+          <label class="om-cms-field"><span>Header button label</span><input data-cms-header-cta="true" value="{{ headerCtaInput.value }}" sc-camel-on-change="{{ headerCtaInput.change }}" sc-camel-on-blur="{{ headerCtaInput.commit }}"></label>
+          <sc-for list="{{ adminHeroLinks }}" as="link">
+            <label class="om-cms-field"><span>{{ link.label }}</span><input data-cms-hero-link="{{ link.key }}" value="{{ link.input.value }}" sc-camel-on-change="{{ link.input.change }}" sc-camel-on-blur="{{ link.input.commit }}"></label>
+          </sc-for>
+          <sc-for list="{{ adminNavItems }}" as="nav">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--color-neutral-300)">
+              <label class="om-cms-field"><span>Label</span><input data-cms-nav-label="{{ nav.key }}" value="{{ nav.labelInput.value }}" sc-camel-on-change="{{ nav.labelInput.change }}" sc-camel-on-blur="{{ nav.labelInput.commit }}"></label>
+              <button type="button" title="Remove link" aria-label="Remove link" sc-camel-on-click="{{ nav.remove }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              <label class="om-cms-field"><span>Destination</span><input value="{{ nav.hrefInput.value }}" sc-camel-on-change="{{ nav.hrefInput.change }}" sc-camel-on-blur="{{ nav.hrefInput.commit }}"></label>
+              <button type="button" title="Move link up" aria-label="Move link up" disabled="{{ nav.first }}" sc-camel-on-click="{{ nav.up }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="m6 15 6-6 6 6"/></svg></button>
+            </div>
+          </sc-for>
+          <button type="button" sc-camel-on-click="{{ addNavItem }}" style="align-self:flex-start;padding:10px 14px;border:1px solid var(--color-neutral-300);border-radius:8px;background:var(--color-bg);color:var(--color-text);font:inherit;cursor:pointer">Add link</button>
+        </div>
+      </details>
     </sc-if>
 
     <!-- THEME TAB -->

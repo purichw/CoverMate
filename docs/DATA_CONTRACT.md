@@ -213,9 +213,13 @@ fields include:
 | `brand.name.th/en` | string | Short display brand name. |
 | `brand.fullName.th/en` | string | Longer brand/advisor display name. |
 | `brand.role.th/en` | string | Role line under the brand. |
-| `brand.credential.th/en` | string | Protected advisor credential line; admin displays it read-only. |
-| `brand.advisorLogo` | string | Existing `assets/...` path or HTTPS URL for the personal advisor proof logo; defaults to `assets/logos/aia-logo.png`. |
+| `brand.credential.th/en` | string | Admin-editable advisor credential line. |
+| `brand.advisorLogo` | string | Optional `assets/...` path or HTTPS URL for the advisor proof logo; blank means no image. |
 | `brand.advisorLogoAlt` | string | Alt text for the advisor proof logo. |
+| `brand.media.*` | string / localized string | Header/footer logos, brand mark, advisor photo, LINE QR and favicon. |
+| `licences.*` | object | Shared life/non-life/broker numbers, provider logos and verification link. |
+| `ui.*` | localized string | Shared visitor headings, consent and submission messages. |
+| `cmsContentVersion` | number | One-time migration version; explicit blanks do not re-seed. |
 
 `brand.advisorLogo` is editable only as media metadata in the Brand & contact
 panel: an existing committed `assets/...` path or an HTTPS image URL, plus alt
@@ -250,9 +254,9 @@ Important guarded SEO fields include:
 | `seo.title.th/en` | string | Optional public page title override, sanitized to a short title. |
 | `seo.description.th/en` | string | Optional public meta/social description override. |
 
-The owner can edit only title and description. Canonical URL, robots directives,
-social image path, JSON-LD entity types, and admin noindex policy are locked in
-code. Public `/` remains indexable. `/admin`, `/admin/analytics`, `/#admin`,
+The owner can also edit `seo.image`, `seo.imageAlt.th/en`, and the brand favicon.
+Canonical URL, robots directives, JSON-LD entity types and admin noindex policy
+remain code-owned. Public `/` remains indexable. `/admin`, `/admin/analytics`, `/#admin`,
 `/#edit`, and `/#preview` remain `noindex`. Do not add arbitrary canonical,
 robots, testimonial/review/rating, PII, or unsupported claim controls.
 
@@ -261,10 +265,14 @@ hydrate/save/publish:
 
 - media references allow only `assets/...` or `https://...`;
 - contact URLs must be HTTPS and email must pass basic address validation;
-- compliance/legal identifiers remain owner-readable but not freely editable;
-- legacy Srikrung licence `5704011570` is normalized to `ว00287/2534`;
-- invalid media, contact, or SEO values fall back to approved defaults instead
-  of being written through to draft/live state.
+- licence identifiers and credential/legal copy are Admin-owned; no forced old values;
+- blank/invalid optional contacts and media clear instead of receiving fake
+  phone/email values or an unrelated provider logo;
+- empty menus and repeatable lists remain empty; logo count can be zero;
+- real values seed only absent fields in a versioned migration, never overwrite
+  an explicit blank or an existing Admin value.
+
+See [CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration and release ordering.
 
 ## Firestore Collections
 

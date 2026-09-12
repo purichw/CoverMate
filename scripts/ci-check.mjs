@@ -20,6 +20,7 @@ const commands = [
   ["npm", ["run", "check:analytics"]],
   ["npm", ["run", "check:analytics-api"]],
   ["npm", ["run", "check:phase6"]],
+  ["npm", ["run", "check:cms"]],
   ["npm", ["run", "check:ops"]],
   ["npm", ["run", "check:performance"]],
   ["git", ["diff", "--check"]]

@@ -370,29 +370,154 @@ export function repeatableContentIndex(list, id, fallbackIndex) {
   return fallbackIndex >= 0 && fallbackIndex < list.length ? fallbackIndex : -1;
 }
 
-export const MOTOR_INSURER_LOGO_COUNT_FALLBACK = 14;
 export const DEFAULT_ADVISOR_LOGO = "assets/logos/aia-logo.png";
 export const DEFAULT_ADVISOR_LOGO_ALT = "AIA";
 export const DEFAULT_CONTACT = {
-  lineId: "@CoverMate",
-  lineUrl: "https://line.me/ti/p/~purich",
-  facebookName: "CoverMate Insurance",
-  facebookUrl: "https://www.facebook.com/covermate",
+  lineId: "",
+  lineUrl: "",
+  facebookName: "",
+  facebookUrl: "",
   whatsapp: "",
-  phone: "08X-XXX-XXXX",
-  email: "purich@example.com"
+  phone: "",
+  email: ""
 };
+
+// COVERMATE_CMS_SCHEMA_BEGIN
+// Also embedded by the visitor generator so offline and remote reads agree.
+const CMS_CONTENT_VERSION = 1;
+const CMS_CONTENT_FIELDS = [
+  { path: 'brand.media.headerLogo', label: 'Header logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-advisory-logo-th.png', en: 'assets/brand/covermate-advisory-logo-en.png' } },
+  { path: 'brand.media.footerLogo', label: 'Footer logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-footer-logo-th.png', en: 'assets/brand/covermate-footer-logo-en.png' } },
+  { path: 'brand.media.mark', label: 'Brand icon', group: 'Brand images', media: true, seed: 'assets/brand/covermate-mark.png' },
+  { path: 'brand.media.photo', label: 'Advisor photo', group: 'Brand images', media: true, seed: '' },
+  { path: 'brand.media.lineQr', label: 'LINE QR image', group: 'Brand images', media: true, seed: '' },
+  { path: 'brand.media.favicon', label: 'Favicon', group: 'Brand images', media: true, seed: 'favicon.svg' },
+  { path: 'seo.image', label: 'Social sharing image', group: 'Brand images', media: true, seed: 'assets/covermate-og.png' },
+  { path: 'seo.imageAlt', label: 'Social image description', group: 'Brand images', localized: true, seed: { th: 'CoverMate ที่ปรึกษาประกันชีวิต สุขภาพ และรถยนต์', en: 'CoverMate insurance advisory for life, health, and motor cover' } },
+  { path: 'licences.life.number', label: 'Life agent licence number', group: 'Licences', seed: '6401006221' },
+  { path: 'licences.life.label', label: 'Life agent licence label', group: 'Licences', localized: true, seed: { th: 'ใบอนุญาตตัวแทนประกันชีวิต', en: 'Life agent licence' } },
+  { path: 'licences.life.logo', label: 'Life provider logo', group: 'Licences', media: true, seed: 'assets/logos/aia-logo.png' },
+  { path: 'licences.life.logoAlt', label: 'Life provider logo description', group: 'Licences', seed: 'AIA' },
+  { path: 'licences.nonLife.number', label: 'Non-life broker licence number', group: 'Licences', seed: '6804008544' },
+  { path: 'licences.nonLife.label', label: 'Non-life broker licence label', group: 'Licences', localized: true, seed: { th: 'ใบอนุญาตนายหน้าประกันวินาศภัย', en: 'Non-life broker licence' } },
+  { path: 'licences.nonLife.logo', label: 'Non-life provider logo', group: 'Licences', media: true, seed: 'assets/logos/srikrung-logo.png' },
+  { path: 'licences.nonLife.logoAlt', label: 'Non-life provider logo description', group: 'Licences', seed: 'Srikrung Broker' },
+  { path: 'licences.broker.number', label: 'Placement broker licence number', group: 'Licences', seed: 'ว00287/2534' },
+  { path: 'licences.verifyUrl', label: 'Licence verification link', group: 'Licences', url: true, seed: 'https://smart.oic.or.th/eservice/Menu1' },
+  { path: 'licences.verifyLabel', label: 'Licence verification label', group: 'Licences', localized: true, seed: { th: 'ตรวจสอบใบอนุญาตกับ คปภ.', en: 'Verify licence with OIC' } },
+  { path: 'footer.licenceHeading', label: 'Licence heading', group: 'Website labels', localized: true, seed: { th: 'ใบอนุญาต', en: 'Licences' } },
+  { path: 'footer.navHeading', label: 'Navigation heading', group: 'Website labels', localized: true, seed: { th: 'ไปที่', en: 'Go to' } },
+  { path: 'footer.contactHeading', label: 'Contact heading', group: 'Website labels', localized: true, seed: { th: 'ติดต่อ', en: 'Contact' } },
+  { path: 'footer.privacyLabel', label: 'Privacy link', group: 'Website labels', localized: true, seed: { th: 'ข้อมูลของคุณถูกใช้ทำอะไร', en: 'How your information is used' } },
+  { path: 'ui.advisorLabel', label: 'Advisor heading', group: 'Website labels', localized: true, seed: { th: 'ดูแลโดย', en: 'Advised by' } },
+  { path: 'ui.coverageLabel', label: 'Coverage cards heading', group: 'Website labels', localized: true, seed: { th: 'วันนี้อยากให้ช่วยเรื่องไหน', en: 'What would you like help with today?' } },
+  { path: 'ui.callLabel', label: 'Call button description', group: 'Website labels', localized: true, seed: { th: 'โทรหา CoverMate', en: 'Call CoverMate' } },
+  { path: 'ui.consultationConsent', label: 'Consultation consent', group: 'Form messages', localized: true, seed: { th: 'ยินยอมให้ติดต่อกลับเรื่องที่ถามมา และให้ส่งข้อมูลต่อให้บริษัทประกันเฉพาะเมื่อขอใบเสนอราคาแล้ว', en: 'I agree to be contacted about this request and to share my details with insurers only when I request a quotation.' } },
+  { path: 'ui.contactRequired', label: 'Contact required', group: 'Form messages', localized: true, seed: { th: 'กรุณาใส่ LINE ID หรือเบอร์โทรเพื่อให้ติดต่อกลับได้', en: 'Please add a LINE ID or phone number so we can reply.' } },
+  { path: 'ui.consentRequired', label: 'Consent required', group: 'Form messages', localized: true, seed: { th: 'กรุณายืนยันการให้ติดต่อกลับและการใช้ข้อมูลก่อนส่งข้อความ', en: 'Please confirm consent before sending your enquiry.' } },
+  { path: 'ui.submitError', label: 'Submission failed', group: 'Form messages', localized: true, seed: { th: 'ส่งไม่สำเร็จ กรุณาลองใหม่', en: 'Could not send yet. Please try again.' } },
+  { path: 'ui.submitPending', label: 'Submission pending', group: 'Form messages', localized: true, seed: { th: 'กำลังบันทึกข้อมูล...', en: 'Saving your enquiry...' } },
+  { path: 'ui.submitSuccess', label: 'Submission successful', group: 'Form messages', localized: true, seed: { th: 'ได้รับข้อมูลแล้ว เราจะติดต่อกลับโดยเร็วที่สุด', en: 'Thank you. We will reply as soon as possible.' } }
+];
+
+function cmsGet(config, path) {
+  return path.split('.').reduce((value, key) => value && typeof value === 'object' ? value[key] : undefined, config);
+}
+
+function cmsSet(config, path, value) {
+  const keys = path.split('.');
+  if (keys.some(key => ['__proto__', 'constructor', 'prototype'].includes(key))) throw new Error('Invalid CMS field path');
+  let target = config;
+  keys.slice(0, -1).forEach(key => {
+    if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+    target = target[key];
+  });
+  target[keys[keys.length - 1]] = value;
+}
+
+function cmsMedia(value) {
+  const text = String(value || '').trim();
+  if (/[\x00-\x1f<>"'\\]/.test(text) || text.includes('..')) return '';
+  if (/^https:\/\//i.test(text)) {
+    try { return new URL(text).protocol === 'https:' ? text : ''; } catch { return ''; }
+  }
+  const local = text.replace(/^\.\//, '').replace(/^\/+/, '');
+  return /^(assets\/[A-Za-z0-9._~!$&()*+,;=:@/%-]+|favicon\.(svg|ico))$/.test(local) ? local : '';
+}
+
+function migrateCmsContent(config) {
+  const next = JSON.parse(JSON.stringify(config || {}));
+  if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return next;
+  CMS_CONTENT_FIELDS.forEach(field => {
+    if (field.localized) {
+      ['th', 'en'].forEach(lang => {
+        if (cmsGet(next, field.path + '.' + lang) === undefined) cmsSet(next, field.path + '.' + lang, field.seed[lang]);
+      });
+    } else if (cmsGet(next, field.path) === undefined) cmsSet(next, field.path, field.seed);
+  });
+  const legacyLicences = { '6401006221': '{{lifeLicence}}', '6804008544': '{{nonLifeLicence}}', 'ว00287/2534': '{{brokerLicence}}' };
+  const migrateText = value => {
+    if (typeof value === 'string') return value.replace(/6401006221|6804008544|ว00287\/2534/g, number => legacyLicences[number]);
+    if (Array.isArray(value)) return value.map(migrateText);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, migrateText(entry)]));
+    return value;
+  };
+  if (next.sections) next.sections = migrateText(next.sections);
+  if (next.footer && next.footer.legal) next.footer.legal = migrateText(next.footer.legal);
+  (next.sections || []).filter(section => section && section.id === 'hero').forEach(section => {
+    if (section.cta2href === undefined) section.cta2href = '#fit';
+    if (section.claimHref === undefined) section.claimHref = '#claim';
+  });
+  // Retire the exact legacy insurer entry once; later owner edits remain authoritative.
+  (next.sections || []).filter(section => section && section.type === 'insurers').forEach(section => {
+    (section.items || []).forEach(item => {
+      if (!item || item.logo !== 'assets/ins/13-thaivivat.png') return;
+      item.logo = 'assets/ins/13-aioi.png';
+      if (item.th) item.th.name = 'ไอโออิ กรุงเทพ ประกันภัย';
+      if (item.en) item.en.name = 'Aioi Bangkok Insurance';
+      if (item.logoAlt) item.logoAlt = 'Aioi Bangkok Insurance';
+    });
+  });
+  next.cmsContentVersion = CMS_CONTENT_VERSION;
+  return next;
+}
+
+function resolveCmsContent(value, config) {
+  const fields = { lifeLicence: 'licences.life.number', nonLifeLicence: 'licences.nonLife.number', brokerLicence: 'licences.broker.number' };
+  if (typeof value === 'string') return value.replace(/\{\{(lifeLicence|nonLifeLicence|brokerLicence)\}\}/g, (_, key) => cmsGet(config, fields[key]) || '');
+  if (Array.isArray(value)) return value.map(entry => resolveCmsContent(entry, config));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, resolveCmsContent(entry, config)]));
+  return value;
+}
+
+function sanitizeCmsFields(config) {
+  CMS_CONTENT_FIELDS.forEach(field => {
+    const paths = field.localized ? ['th', 'en'].map(lang => field.path + '.' + lang) : [field.path];
+    paths.forEach(path => {
+      const value = cmsGet(config, path);
+      let text = String(value == null ? '' : value).trim().slice(0, field.media || field.url ? 500 : 2000);
+      if (field.media) text = cmsMedia(text);
+      if (field.url) { try { if (new URL(text).protocol !== 'https:') text = ''; } catch { text = ''; } }
+      cmsSet(config, path, text);
+    });
+  });
+  ['header', 'motorPage'].forEach(key => {
+    const owner = config[key];
+    if (!owner || !Array.isArray(owner.nav)) return;
+    owner.nav = owner.nav.filter(item => item && typeof item === 'object').map(item => {
+      const href = String(item.href || '').trim();
+      const label = typeof item.label === 'string' ? item.label : { th: String(item.label && item.label.th || '').trim().slice(0, 80), en: String(item.label && item.label.en || '').trim().slice(0, 80) };
+      return { ...item, label, href: /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(href) ? href : '' };
+    });
+  });
+  return config;
+}
+// COVERMATE_CMS_SCHEMA_END
+
+export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, cmsGet, cmsSet, cmsMedia, migrateCmsContent, resolveCmsContent, sanitizeCmsFields };
 export const DEFAULT_SEO = {
   title: { th: "", en: "" },
   description: { th: "", en: "" }
-};
-export const PROTECTED_BRAND_CREDENTIAL = {
-  th: "ตัวแทน AIA · นายหน้าประกันรถยนต์ · ดูแลถึงการเคลม",
-  en: "AIA agent · motor broker · support through claims"
-};
-export const PROTECTED_FOOTER_LEGAL = {
-  th: "CoverMate · ตัวแทนประกันชีวิตและนายหน้าประกันวินาศภัยที่ได้รับใบอนุญาต · ใบอนุญาตตัวแทนประกันชีวิต 6401006221 · ใบอนุญาตนายหน้าประกันวินาศภัย 6804008544 · ประกันรถยนต์จัดผ่านศรีกรุงโบรคเกอร์ ใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · เนื้อหาบนหน้านี้เป็นข้อมูลเบื้องต้น ไม่ใช่ใบเสนอราคา",
-  en: "CoverMate — insurance advisory · Licensed life agent (No. 6401006221) and non-life broker (No. 6804008544) · Motor cover placed through Srikrung Broker, non-life broker licence No. ว00287/2534 · Information here is indicative and is not a quotation."
 };
 export const PRODUCT_HEADER_NAV = [
   { label: { th: "ความคุ้มครอง", en: "Cover" }, href: "#cover" },
@@ -605,10 +730,10 @@ export function motorInsurerLogoCount(config) {
     ? insurerSection.items
     : [];
   const count = items.filter((item) => item && item.on !== false && String(item.logo || "").trim()).length;
-  return count || MOTOR_INSURER_LOGO_COUNT_FALLBACK;
+  return count;
 }
 
-function normalizeMotorCountCopy(value, count = MOTOR_INSURER_LOGO_COUNT_FALLBACK) {
+function normalizeMotorCountCopy(value, count = 0) {
   if (typeof value !== "string") return value;
   const text = value;
   const isMotorCountCopy =
@@ -616,6 +741,8 @@ function normalizeMotorCountCopy(value, count = MOTOR_INSURER_LOGO_COUNT_FALLBAC
     /(\d+\+?|\d+\s*เจ้า)/.test(text);
   if (!isMotorCountCopy) return text;
   return text
+    .replace(/บริษัทประกันภัย\s*\d+\+?\s*แห่ง/g, `บริษัทประกันภัย ${count} แห่ง`)
+    .replace(/เทียบ(เบี้ย)?ได้\s*\d+\+?\s*เจ้า/g, (_, premium) => `เทียบ${premium || ''}ได้ ${count} เจ้า`)
     .replace(/บริษัทประกันภัยกว่า\s*\d+\s*แห่ง/g, `บริษัทประกันภัย ${count} แห่ง`)
     .replace(/บริษัทกว่า\s*\d+\s*เจ้า/g, `บริษัทประกันภัย ${count} แห่ง`)
     .replace(/เทียบเบี้ยกว่า\s*\d+\s*บริษัท/g, `จาก ${count} บริษัทประกันภัย`)
@@ -632,76 +759,11 @@ function normalizeMotorCountCopy(value, count = MOTOR_INSURER_LOGO_COUNT_FALLBAC
     .replace(/compared across\s*\d+\+?/gi, `compared across ${count}`);
 }
 
-function normalizeProductDecisionCopy(value) {
-  if (typeof value !== "string") return value;
-  return value
-    .replace(/ไม่ต้องจัดการคนเดียว/g, "ไม่จำเป็นต้องจัดการเพียงลำพัง")
-    .replace(/สู้คนเดียว/g, "จัดการเพียงลำพัง")
-    .replace(/ประกันชีวิตและสุขภาพ\s*เราให้บริการผ่าน AIA โดยตรง/g, "ประกันชีวิตและสุขภาพดำเนินการผ่าน AIA")
-    .replace(/ชีวิตและสุขภาพ\s*เราให้บริการผ่าน AIA โดยตรง/g, "ชีวิตและสุขภาพดำเนินการผ่าน AIA")
-    .replace(/ชีวิตและสุขภาพ\s*ผมเป็นตัวแทน AIA โดยเฉพาะ/g, "ชีวิตและสุขภาพดำเนินการผ่าน AIA")
-    .replace(/เราให้บริการผ่าน AIA โดยตรง/g, "ดำเนินการผ่าน AIA")
-    .replace(/เราให้บริการผ่าน AIA/g, "ดำเนินการผ่าน AIA")
-    .replace(/ผมเป็นตัวแทน AIA โดยเฉพาะ/g, "ดำเนินการผ่าน AIA")
-    .replace(/ผมเป็นตัวแทน AIA/g, "ดำเนินการผ่าน AIA")
-    .replace(/ผมจัดผ่าน/g, "เราจัดผ่าน")
-    .replace(/ผมเทียบ/g, "เราเปรียบเทียบ")
-    .replace(/ผมสรุป/g, "เราสรุป")
-    .replace(/ผมดูแล/g, "เราดูแล")
-    .replace(/ผมตอบกลับ/g, "เราตอบกลับ")
-    .replace(/ผมตอบทุกข้อความเอง/g, "เราตอบทุกข้อความด้วยตนเอง")
-    .replace(/ผมจะติดต่อกลับ/g, "เราจะติดต่อกลับ")
-    .replace(/ผมจะทัก/g, "เราจะทัก")
-    .replace(/ผมจะเตือน/g, "เราจะเตือน")
-    .replace(/ติดต่อผม/g, "ติดต่อเรา")
-    .replace(/ส่งตัวเลขนี้ให้ผมดูต่อ/g, "ส่งตัวเลขนี้ให้เราดูต่อ")
-    .replace(/ตั้งเตือนให้ผมจำ/g, "ตั้งเตือนให้เราจำ")
-    .replace(/เกี่ยวกับผม/g, "เกี่ยวกับเรา")
-    .replace(/ค่าตอบแทนของผม/g, "ค่าตอบแทนของเรา")
-    .replace(/ไม่ขายเกิน/g, "ไม่เสนอเกินความจำเป็น")
-    .replace(/ยิงเทียบ/g, "เปรียบเทียบ")
-    .replace(/ยิงเบี้ย/g, "เปรียบเทียบเบี้ย")
-    .replace(/สนใจปรึกษาครับ\/ค่ะ\s*—\s*สถานการณ์:/g, "สนใจปรึกษาเรื่องประกัน — สถานการณ์:")
-    .replace(/สนใจปรึกษาครับ\/ค่ะ/g, "สนใจปรึกษาเรื่องประกัน")
-    .replace(/แอดไลน์ ปรึกษาฟรี/g, "ติดต่อเราทาง LINE")
-    .replace(/แอดไลน์ ขอเทียบเบี้ย/g, "ติดต่อเราทาง LINE")
-    .replace(/Send me these numbers/g, "Send us these numbers")
-    .replace(/What I did/g, "What we do")
-    .replace(/What I get paid/g, "How CoverMate is compensated")
-    .replace(/How I get paid/g, "How CoverMate is compensated")
-    .replace(/About me/g, "About us")
-    .replace(/contact me directly on LINE/g, "contact us directly on LINE")
-    .replace(/contact me/gi, "contact us")
-    .replace(/As a broker I compare/g, "As a broker, we compare")
-    .replace(/I compare/g, "We compare")
-    .replace(/I do not offer unit-linked plans/g, "Unit-linked plans are not offered")
-    .replace(/Set\. I will message you 60 days ahead\./g, "Set. We will message you 60 days ahead.")
-    .replace(/Thank you\. I will reply as soon as possible\./g, "Thank you. We will reply as soon as possible.")
-    .replace(/Pick a policy and expiry month and I will remind you 60 days ahead\./g, "Pick a policy and expiry month and we will remind you 60 days ahead.")
-    .replace(/I will remind you about/g, "We will remind you about")
-    .replace(/hard sell/gi, "sales pressure")
-    .replace(/chase the insurer/gi, "coordinate with the insurer")
-    .replace(/fight it alone/gi, "handle it alone")
-    .replace(/someone answers the phone/gi, "you know who to contact")
-    .replace(/savings are thin/gi, "the difference is limited")
-    .replace(/ตั้งตัวไม่ทัน/g, "กรณีเร่งด่วน")
-    .replace(/ผม/g, "เรา")
-    .replace(/ครับ\/ค่ะ/g, "")
-    .replace(/ครับ/g, "")
-    .replace(/ค่ะ/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
-function normalizeLocalizedStrings(target, count) {
-  if (!target || typeof target !== "object") return;
-  Object.keys(target).forEach((key) => {
-    const value = target[key];
-    if (typeof value === "string") {
-      target[key] = normalizeProductDecisionCopy(normalizeMotorCountCopy(value, count));
-    } else if (value && typeof value === "object") {
-      normalizeLocalizedStrings(value, count);
-    }
+function normalizeInsurerCountFields(target, count) {
+  if (!target || typeof target !== 'object') return;
+  Object.keys(target).forEach(key => {
+    if (typeof target[key] === 'string') target[key] = normalizeMotorCountCopy(target[key], count);
+    else normalizeInsurerCountFields(target[key], count);
   });
 }
 
@@ -808,26 +870,6 @@ function cleanLocalizedSeo(value, limit) {
   };
 }
 
-function protectCredential(value, lang) {
-  const text = cleanText(value, 180);
-  if (!text) return PROTECTED_BRAND_CREDENTIAL[lang];
-  if (lang === "th") {
-    return /AIA/.test(text) && /นายหน้า|ประกันรถยนต์/.test(text)
-      ? text
-      : PROTECTED_BRAND_CREDENTIAL.th;
-  }
-  return /AIA/i.test(text) && /(broker|motor)/i.test(text)
-    ? text
-    : PROTECTED_BRAND_CREDENTIAL.en;
-}
-
-function protectFooterLegal(value, lang) {
-  const text = cleanText(value, 1200).split("5704011570").join("ว00287/2534");
-  const required = ["6401006221", "6804008544", "ว00287/2534"];
-  if (required.every((token) => text.includes(token))) return text;
-  return PROTECTED_FOOTER_LEGAL[lang];
-}
-
 export function sanitizeCmsControlsConfig(config, options = {}) {
   const next = options.mutate ? (config || {}) : cloneJSON(config || {});
   next.brand = next.brand && typeof next.brand === "object" ? next.brand : {};
@@ -835,21 +877,21 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
   next.footer = next.footer && typeof next.footer === "object" ? next.footer : {};
   next.seo = next.seo && typeof next.seo === "object" ? next.seo : {};
 
-  next.brand.advisorLogo = cleanMediaReference(next.brand.advisorLogo, DEFAULT_ADVISOR_LOGO);
-  next.brand.advisorLogoAlt = cleanText(next.brand.advisorLogoAlt || DEFAULT_ADVISOR_LOGO_ALT, 120) || DEFAULT_ADVISOR_LOGO_ALT;
+  next.brand.advisorLogo = cleanMediaReference(next.brand.advisorLogo, "");
+  next.brand.advisorLogoAlt = cleanText(next.brand.advisorLogoAlt, 120);
   next.brand.credential = next.brand.credential && typeof next.brand.credential === "object"
     ? next.brand.credential
     : {};
-  next.brand.credential.th = protectCredential(next.brand.credential.th, "th");
-  next.brand.credential.en = protectCredential(next.brand.credential.en, "en");
+  next.brand.credential.th = cleanText(next.brand.credential.th, 180);
+  next.brand.credential.en = cleanText(next.brand.credential.en, 180);
 
-  next.contact.lineId = cleanText(next.contact.lineId || DEFAULT_CONTACT.lineId, 80) || DEFAULT_CONTACT.lineId;
-  next.contact.lineUrl = cleanHttpsUrl(next.contact.lineUrl, DEFAULT_CONTACT.lineUrl);
+  next.contact.lineId = cleanText(next.contact.lineId, 80);
+  next.contact.lineUrl = cleanHttpsUrl(next.contact.lineUrl, "");
   next.contact.facebookName = cleanText(next.contact.facebookName || "", 120);
   next.contact.facebookUrl = cleanHttpsUrl(next.contact.facebookUrl, "");
   next.contact.whatsapp = cleanPhoneLike(next.contact.whatsapp, "");
-  next.contact.phone = cleanPhoneLike(next.contact.phone, DEFAULT_CONTACT.phone);
-  next.contact.email = cleanEmailAddress(next.contact.email, DEFAULT_CONTACT.email);
+  next.contact.phone = /x{2,}/i.test(next.contact.phone || "") ? "" : cleanPhoneLike(next.contact.phone, "");
+  next.contact.email = /@example\.(com|org|net)$/i.test(next.contact.email || "") ? "" : cleanEmailAddress(next.contact.email, "");
 
   next.seo.title = cleanLocalizedSeo(next.seo.title, 68);
   next.seo.description = cleanLocalizedSeo(next.seo.description, 155);
@@ -857,8 +899,9 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
   next.footer.legal = next.footer.legal && typeof next.footer.legal === "object"
     ? next.footer.legal
     : {};
-  next.footer.legal.th = protectFooterLegal(next.footer.legal.th, "th");
-  next.footer.legal.en = protectFooterLegal(next.footer.legal.en, "en");
+  next.footer.legal.th = cleanText(next.footer.legal.th, 2000);
+  next.footer.legal.en = cleanText(next.footer.legal.en, 2000);
+  sanitizeCmsFields(next);
 
   editableContentSections(next).forEach((section) => {
     if (!section || typeof section !== "object") return;
@@ -895,22 +938,7 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
     if (!Array.isArray(next.motorPage.sections)) {
       next.motorPage.sections = [];
     }
-    if (Array.isArray(next.motorPage.nav)) {
-      next.motorPage.nav = next.motorPage.nav
-        .filter((item) => item && typeof item === "object")
-        .map((item) => ({
-          label: {
-            th: cleanText(item.label && item.label.th, 40),
-            en: cleanText(item.label && item.label.en, 40)
-          },
-          href: cleanText(item.href || "", 80)
-        }))
-        .filter((item) =>
-          item.label.th &&
-          item.label.en &&
-          (/^#[-A-Za-z0-9_]+$/.test(item.href) || item.href === "/")
-        );
-    }
+
   }
   return next;
 }
@@ -921,7 +949,8 @@ export function sanitizeMotorCountText(text, configOrCount) {
     ? configOrCount
     : motorInsurerLogoCount(configOrCount || {});
   Object.keys(next).forEach((key) => {
-    const value = normalizeProductDecisionCopy(String(next[key] || ""));
+    const value = String(next[key] || "");
+    if (/^(08X-XXX-XXXX|purich@example\.com)$/i.test(value.trim())) { delete next[key]; return; }
     const isInsurerInlineText = /^insurers:\d+:(th|en)$/.test(key);
     const isContactTitleText = /^talk:\d+:(th|en)$/.test(key);
     next[key] = value;
@@ -940,26 +969,18 @@ export function sanitizeMotorCountText(text, configOrCount) {
 }
 
 export function sanitizeMotorCountConfig(config, options = {}) {
-  const next = cloneJSON(config || {});
+  const isLegacy = Number(config && config.cmsContentVersion || 0) < CMS_CONTENT_VERSION;
+  const next = migrateCmsContent(config);
   next.header = next.header && typeof next.header === "object" ? next.header : {};
-  if (Array.isArray(next.header.nav)) {
-    next.header.nav = cloneJSON(PRODUCT_HEADER_NAV);
-  }
-  next.header.cta = cloneJSON(PRODUCT_HEADER_CTA);
+  if (next.header.nav === undefined) next.header.nav = cloneJSON(PRODUCT_HEADER_NAV);
+  if (next.header.cta === undefined) next.header.cta = cloneJSON(PRODUCT_HEADER_CTA);
   if (Array.isArray(next.sections)) {
-    next.sections = reorderKnownLegacySections(next.sections);
-    const insurerCount = motorInsurerLogoCount(next);
-    ["header", "brand", "footer", "contact", "seo", "motorPage"].forEach((key) => {
-      normalizeLocalizedStrings(next[key], insurerCount);
-    });
+    if (isLegacy) next.sections = reorderKnownLegacySections(next.sections);
+    const count = motorInsurerLogoCount(next);
+    ['header', 'brand', 'footer', 'contact', 'seo', 'motorPage', 'sections'].forEach(key => normalizeInsurerCountFields(next[key], count));
     editableContentSections(next).forEach((section) => {
       if (!section) return;
       ensureNeedsCalculatorSection(section);
-      normalizeLocalizedStrings(section, insurerCount);
-      normalizeLocalizedStrings(section.th, insurerCount);
-      normalizeLocalizedStrings(section.en, insurerCount);
-      normalizeLocalizedStrings(section.items, insurerCount);
-      normalizeLocalizedStrings(section.cards, insurerCount);
       suppressPlaceholderStories(section);
     });
     editableContentSections(next).forEach((section) => {
@@ -1026,6 +1047,14 @@ export function cacheVersions(versions, limit = HISTORY_LIMIT) {
 }
 
 const contract = {
+  CMS_CONTENT_VERSION,
+  CMS_CONTENT_FIELDS,
+  cmsGet,
+  cmsSet,
+  cmsMedia,
+  migrateCmsContent,
+  resolveCmsContent,
+  sanitizeCmsFields,
   SESSION_KEY,
   SESSION_MS,
   ADMIN_EVER_KEY,
@@ -1092,14 +1121,11 @@ const contract = {
   createRepeatableContentId,
   ensureRepeatableContentIds,
   repeatableContentIndex,
-  MOTOR_INSURER_LOGO_COUNT_FALLBACK,
   motorInsurerLogoCount,
   DEFAULT_ADVISOR_LOGO,
   DEFAULT_ADVISOR_LOGO_ALT,
   DEFAULT_CONTACT,
   DEFAULT_SEO,
-  PROTECTED_BRAND_CREDENTIAL,
-  PROTECTED_FOOTER_LEGAL,
   PRODUCT_HEADER_NAV,
   PRODUCT_HEADER_CTA,
   PRODUCT_SECTION_ORDER,

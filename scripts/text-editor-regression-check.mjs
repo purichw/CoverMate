@@ -120,6 +120,9 @@ assert.equal(heroRender.showHeroClaim, false, "hero claim prompt still links to 
 assert.equal(hiddenTargetRender.showTalkAnchor, false, "calculator CTA still links to hidden talk section");
 assert.equal(hiddenTargetRender.showPrivacyAnchor, false, "inline privacy links still point to hidden privacy section");
 assert.equal(hiddenTargetRender.showFooterPrivacyNav, false, "footer privacy nav still points to hidden privacy section");
+section(app.state.site, "fit").on = true;
+section(app.state.site, "hero").cta2href = "";
+assert.equal(app.renderVals().sections.find(item => item.id === "hero").hasCta2, false, "Intentional blank CTA destination must hide the link");
 
 console.log(JSON.stringify({
   checks: [

@@ -51,6 +51,7 @@ content, the runtime updates:
 - `meta[name="robots"]`
 - canonical link
 - Open Graph and Twitter title/description/image
+- favicon and touch icon from Admin-managed brand media
 - `script#covermate-jsonld`
 
 This keeps metadata aligned with Admin Portal edits to the live brand and hero
@@ -59,21 +60,29 @@ metadata.
 
 ## Guarded Admin SEO Controls
 
-The Admin CMS can manage only:
+The Admin CMS manages:
 
 - `seo.title.th/en`
 - `seo.description.th/en`
+- `seo.image` and `seo.imageAlt.th/en`
+- `brand.media.favicon` and `brand.media.mark`
+- structured `licences.life/nonLife` numbers and labels used in JSON-LD
 
 Those fields feed `document.title`, meta description, Open Graph title and
 description, and Twitter title and description after hydration. If the guarded
 fields are blank, the runtime falls back to the live brand and hero copy.
 
 The CMS must not expose arbitrary controls for canonical URL, robots directives,
-social image path, JSON-LD entity types, testimonials, ratings, reviews,
-addresses, PII, or unsupported licence/claim statements. Canonical remains
+JSON-LD entity types, testimonials, ratings, reviews, or unsupported claims. Canonical remains
 locked to the rendered public route: `https://covermate.vercel.app/` for Home
 and `https://covermate.vercel.app/motor` for the motor page. Public `/` and
 `/motor` remain `index,follow`; owner/admin routes remain `noindex,nofollow`.
+
+Blank media removes the corresponding hydrated metadata. Static HTML no longer
+asserts fixed licence numbers before Firestore hydration. Non-JavaScript crawlers
+still see committed boot title/description/social images; CMS publishing alone
+does not regenerate static HTML. Server-rendered social previews are a separate
+capability, not a guarantee of this client-rendered CMS.
 
 ## Structured Data
 

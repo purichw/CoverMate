@@ -1,6 +1,6 @@
 # CoverMate Admin/CMS Rebuild Decisions
 
-Last updated: 2026-08-29
+Last updated: 2026-09-12
 
 This is the authoritative decision record for the current Admin/CMS product.
 It records owner-approved behavior that future implementation and design work
@@ -34,7 +34,8 @@ Brand/compliance direction remains authoritative for Google Sans, Organic tokens
 | Analytics | Preserve deployed event history; expand by adding safe parameters/events only. | Audit `covermate-analytics.js` before any event-name change. |
 | Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, production `sites/covermate/*`/`contactLeads/*`, and UAT `sites/covermate-uat/*`/`contactLeadsUat/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project. UAT is isolated by runtime namespace, not by an auth bypass. |
 | CMS IA | Replace developer-like controls with owner-readable CMS. | Site structure rows, section editor, collapsed Advanced layout, stable repeatable IDs. |
-| Compliance | Licence/OIC, agent/broker, commission disclosure, and claim stories are protected. | No casual inline editing of regulated copy. |
+| Real business data | Existing licence/OIC details, provider identity, brand media and legal/credential copy belong to Admin/CMS. Preserve real values when migrating. | Shared licence fields drive all placements; never force an old value back after an owner edit or fabricate claims. |
+| Missing optional content | Blank contacts/images stay blank and hide on visitor pages. | No example phone/email, AIA image substitution, position-based insurer logo or empty-list refill. |
 
 ## Phase Plan
 

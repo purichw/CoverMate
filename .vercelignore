@@ -1,6 +1,7 @@
 .tools/
 .env*
 uat-results/
+exports/
 *-debug.log
 docs/
 scripts/

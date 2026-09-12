@@ -50,11 +50,15 @@ function assertSingleSlot(source, slot, label) {
 }
 
 export function readVisitorSources() {
+  const contract = readText(new URL('covermate-contract.js', ROOT));
+  assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_BEGIN', 'covermate-contract.js');
+  assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_END', 'covermate-contract.js');
   return {
     shell: readText(VISITOR_SOURCE_PATHS.shell),
     template: readText(VISITOR_SOURCE_PATHS.template),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
     runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
+    cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],
     imageVersions: readImageVersions()
   };
 }
@@ -62,7 +66,9 @@ export function readVisitorSources() {
 export function buildVisitorRuntime(sources = readVisitorSources()) {
   assertSingleSlot(sources.runtime, VISITOR_DEFAULTS_SLOT, "src/visitor/runtime.js");
   assertSingleSlot(sources.runtime, VISITOR_ASSET_VERSIONS_SLOT, "src/visitor/runtime.js");
+  assertSingleSlot(sources.runtime, '// COVERMATE_CMS_SCHEMA_SOURCE', 'src/visitor/runtime.js');
   return sources.runtime.replace(VISITOR_DEFAULTS_SLOT, () => sources.defaults.trimEnd())
+    .replace('// COVERMATE_CMS_SCHEMA_SOURCE', () => sources.cmsSchema)
     .replace(VISITOR_ASSET_VERSIONS_SLOT, () => JSON.stringify(sources.imageVersions || readImageVersions()));
 }
 
