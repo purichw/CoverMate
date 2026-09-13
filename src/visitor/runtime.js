@@ -865,7 +865,7 @@ class Component extends DCLogic {
     const base = root + path;
     const siteBase = root + '/';
     const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
-    const image = imageRef ? new URL(imageRef, root + '/').href : '';
+    const image = imageRef ? new URL(assetURL(imageRef), root + '/').href : '';
     const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang));
     const isMotor = path === '/motor';
     const metadata = key => this.seoClean(this.seoString(cmsGet(site, 'seo.' + key), lang));
@@ -924,7 +924,7 @@ class Component extends DCLogic {
     const root = 'https://covermate.vercel.app';
     const canonical = root + routePath;
     const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
-    const image = imageRef ? new URL(imageRef, root + '/').href : '';
+    const image = imageRef ? new URL(assetURL(imageRef), root + '/').href : '';
     const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang)) || 'CoverMate';
     const motorPage = this.getMotorPage(site);
     const seo = routePage === 'motor' ? this.mergeDeepDefaults(site.seo || {}, motorPage.seo || {}) : (site.seo || {});

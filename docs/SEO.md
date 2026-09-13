@@ -123,6 +123,12 @@ App/icon assets:
 
 The Open Graph image is not immutable-cached so social preview fixes can roll
 out without changing file names.
+The September 13 brand update replaces its obsolete green wordmark while
+preserving its 1200 x 630 dimensions and existing copy/layout. Static Open Graph,
+Twitter, and JSON-LD image URLs carry `v=20260913-mate-gold`. Runtime metadata
+uses the same asset-hash versioning as other bundled images, including root
+favicons. Admin-owned external/signed URLs and explicit blanks stay untouched.
+Favicon artwork and dimensions remain the existing symbol-only blue/gold set.
 
 ## Verification
 

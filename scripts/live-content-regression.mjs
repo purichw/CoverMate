@@ -12,6 +12,10 @@ const versions = readImageVersions();
 const logo = '/assets/logos/aia-logo.png';
 const version = versions[logo];
 assert.match(version, /^[a-f0-9]{16}$/);
+for (const asset of ['/favicon.svg', '/favicon.ico', '/assets/covermate-og.png']) {
+  assert.match(versions[asset], /^[a-f0-9]{16}$/);
+  assert.equal(versionedAssetUrl(asset, versions, origin), `${asset}?cm_asset=${versions[asset]}`);
+}
 assert.equal(versionedAssetUrl(logo, versions, origin), `${logo}?cm_asset=${version}`);
 assert.equal(versionedAssetUrl('assets/logos/aia-logo.png', versions, origin), `${logo}?cm_asset=${version}`);
 assert.equal(versionedAssetUrl(`${origin}${logo}?size=2#mark`, versions, origin), `${logo}?size=2&cm_asset=${version}#mark`);

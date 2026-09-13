@@ -1,6 +1,6 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-08-29
+Last updated: 2026-09-13
 
 ## Visual Source
 
@@ -69,8 +69,41 @@ Committed primary display logo files:
 The public renderer selects display logos from the active language. Header/admin
 chrome use the primary advisory files. Footer uses the footer-only files directly
 on the dark footer surface, with no white logo plate/background.
-`assets/brand/covermate-wordmark.png` remains a legacy fallback/reference asset,
-not the current primary display logo.
+`assets/brand/covermate-wordmark.png` is the compact, tagline-free derivative
+used in the static social preview, not a public CMS fallback.
+
+### Approved Mate Gold
+
+The September 13 adjustment changes only the `Mate` lettering to the approved
+deep metallic gold with a 5% brightness lift. Preserve the original glyphs,
+emblem, advisory lines, transparency, dimensions, and footer light outline.
+Do not regenerate the artwork or substitute fonts. Header/footer files stay
+1200 x 375, and their existing Admin-managed paths remain unchanged. Custom
+media and explicit blanks still take precedence; no CMS migration is needed.
+
+Reproduction source: original PNGs at commit
+`866cf42b79772862a0ae9813c3efa43d84f3496a`, not already-recoloured outputs.
+The approved SVG sRGB filter maps the original green channel through these
+17 equally spaced RGB table entries, with each channel multiplied by 1.05:
+
+```text
+1d1206 241706 311e08 432c0c 54380d 664515 81571d a07124 bd913e
+d4b060 bd8e34 916317 b07b25 c49943 cda64d d8b763 e3c780
+```
+
+Apply only inside x=816..1189, y=85..229. Footer outlines remain unchanged:
+only gold-coloured pixels (`R-B > 25` and `G-B > 10`) receive the filter there.
+Browser-canvas comparisons verify identical alpha and identical pixels outside
+the target area in all four files. The Thai primary output matches the approved
+preview exactly. Local evidence and the one-off application script are in
+`uat-results/mate-only-preview-20260913/` (ignored verification artifacts).
+
+The symbol-only blue/gold favicon set is already the correct artwork and stays
+byte-identical: SVG/PNG 64 x 64, ICO 64/48/32/16, touch icon 180, and app icons
+192/512. `assets/covermate-og.png` remains 1200 x 630 with its existing layout
+and copy; only its obsolete green wordmark is replaced. Its SVG embeds the same
+updated wordmark. Static metadata has a new cache version; runtime social media
+and root favicons use asset hashes, without overriding custom CMS URLs.
 
 ## Font Policy
 
@@ -93,8 +126,10 @@ This includes:
 - form fields, buttons, tabs, footers, and legal text
 
 The current stack is Google Sans, Google Sans Thai, Noto Sans Thai, then system
-fallbacks. Headings, logo text, admin controls, analytics charts, form text,
+fallbacks. Headings, admin controls, analytics charts, form text,
 footer/legal copy, and English UI labels should all stay on that same family.
+Lettering baked into approved logo artwork is not website typography and must
+retain its original shapes; never re-typeset it to match the UI font stack.
 
 The current HTML bundles include a historical `covermate-thai-font-policy`
 patch. Keep it unless replacing it with equivalent source-level CSS coverage.

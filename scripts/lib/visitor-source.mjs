@@ -38,6 +38,10 @@ export function readImageVersions(root = new URL("assets/", ROOT)) {
     }
   }
   visit(root, "/assets/");
+  for (const name of ["favicon.svg", "favicon.ico"]) {
+    const file = new URL("../" + name, root);
+    if (fs.existsSync(file)) versions["/" + name] = createHash("sha256").update(fs.readFileSync(file)).digest("hex").slice(0, 16);
+  }
   return versions;
 }
 
