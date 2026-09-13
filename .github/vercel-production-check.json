@@ -1,0 +1,12 @@
+{
+  "name": "CoverMate CI",
+  "requires": "deployment-url",
+  "blocks": "deployment-alias",
+  "targets": ["production"],
+  "source": {
+    "kind": "git-provider",
+    "provider": "github",
+    "externalCheckName": "verify"
+  },
+  "timeout": 3600
+}

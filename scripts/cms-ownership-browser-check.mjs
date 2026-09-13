@@ -9,7 +9,7 @@ import { toFirestoreFields } from './lib/uat-env.mjs';
 
 const contract = await importCoverMateContract();
 const defaults = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)'));
-let live = { config: contract.sanitizeMotorCountConfig(defaults), text: {}, revision: 1 };
+let live = { config: contract.sanitizeMotorCountConfig(defaults), text: { 'fit:9:th': 'ค่าใช้จ่ายเดิมจาก Inline', 'life:1:en': 'Existing life headline', 'life:2:en': 'Existing life description', 'talk:13:th': 'หัวข้อเดิมจาก Inline' }, revision: 1 };
 let draft = structuredClone(live);
 let saves = 0, publishes = 0;
 const output = path.resolve('uat-results/cms-ownership');
@@ -18,7 +18,7 @@ const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true })
 const browser = await launchChromium(loadPlaywright().chromium);
 const errors = [];
 try {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
   await context.route('**/v1/projects/**/documents/sites/**/states/live', route => route.fulfill({ json: { fields: toFirestoreFields(live) } }));
   await context.route('**/__cms-test-state', async route => {
     if (route.request().method() === 'GET') return route.fulfill({ json: { live, draft } });
@@ -47,8 +47,11 @@ try {
     localStorage.setItem('covermate-admin-session', JSON.stringify({ email: 'cms-test@example.com', role: 'owner', ts: Date.now(), exp: Date.now() + 86400000 }));
   });
   const page = await context.newPage();
+  page.setDefaultTimeout(30000);
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(baseUrl + '/admin/content');
+  await page.goto(baseUrl + '/admin/edit');
+  await page.locator('label[for="covermate-owner-tools-toggle"]').click();
+  await page.getByRole('button', { name: 'Panel', exact: true }).click();
   await page.getByRole('button', { name: 'Brand & contact', exact: true }).click();
   const group = name => page.locator(`[data-cms-group="${name}"]`);
   const openGroup = async name => { if (!await group(name).evaluate(el => el.open)) await group(name).locator('summary').click(); };
@@ -57,7 +60,34 @@ try {
     await input.fill(value);
     await input.press('Tab');
   };
+  await openGroup('Calculator labels');
+  assert.equal(await page.locator('[data-cms-field="publicCopy.calcSpending.th"]').inputValue(), 'ค่าใช้จ่ายเดิมจาก Inline', 'Existing inline copy is retained in Admin');
+  await edit('publicCopy.calcSpending.th', 'ค่าใช้จ่ายสำหรับครอบครัว');
+  assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), 'ค่าใช้จ่ายสำหรับครอบครัว', 'Old inline override cannot mask Admin edit');
+  const spendingLeaf = page.locator('[data-cms-copy="publicCopy.calcSpending"] [contenteditable="true"]');
+  await spendingLeaf.fill('');
+  await spendingLeaf.pressSequentially('Monthly budget');
+  assert.equal(await spendingLeaf.innerText(), 'Monthly budget', 'Typing keeps caret order');
+  await spendingLeaf.fill('แก้จากหน้าเว็บ');
+  await spendingLeaf.press('Tab');
+  assert.equal(await page.locator('[data-cms-field="publicCopy.calcSpending.th"]').inputValue(), 'แก้จากหน้าเว็บ', 'Inline edit updates canonical Admin field');
+  await openGroup('Form choices');
+  assert.equal(await page.locator('[data-cms-field="formOptions.query.quote.th"]').inputValue(), 'หัวข้อเดิมจาก Inline');
+  await edit('formOptions.query.quote.th', 'ขอรายละเอียดราคา');
+  assert.equal(await page.locator('#talk option[value="quote"]').innerText(), 'ขอรายละเอียดราคา');
+  await page.locator('#talk select[name="qtype"]').selectOption('quote');
   await page.getByRole('button', { name: 'Edit English content' }).click();
+  await openGroup('Calculator labels');
+  await edit('publicCopy.calcSpending.en', '');
+  await openGroup('Consultation form labels');
+  await edit('publicCopy.contactTitle.en', 'Contact our team');
+  await openGroup('Business metadata');
+  await edit('seo.areaServed', 'Owner service region');
+  await edit('seo.motorServiceName.en', 'Owner motor advisory');
+  await openGroup('Life focus');
+  await edit('lifeFocus.title.en', 'Owner life headline');
+  await page.locator('[data-cms-field="lifeFocus.title.en"]').scrollIntoViewIfNeeded();
+  await page.locator('aside').filter({ hasText: 'Admin portal' }).screenshot({ path: path.join(output, 'admin-copy-controls.png'), timeout: 60000 });
   await openGroup('Licences');
   await edit('licences.life.label.en', 'Licensed life adviser');
   await page.getByRole('button', { name: 'Edit Thai content' }).click();
@@ -114,6 +144,9 @@ try {
   await page.waitForFunction(() => document.body.innerText.includes('Published'));
   assert.equal(publishes, 1);
   assert.equal(live.config.licences.life.number, '9000000001');
+  assert.equal(live.config.publicCopy.calcSpending.th, 'แก้จากหน้าเว็บ');
+  assert.equal(live.config.publicCopy.calcSpending.en, '');
+  assert.equal(live.config.publicCopy.contactTitle.en, 'Contact our team');
 
   for (const [route, width] of [['/', 1440], ['/motor', 390]]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -124,6 +157,7 @@ try {
     const json = await page.locator('#covermate-jsonld').textContent();
     assert.ok(json.includes('9000000001') && json.includes('9000000002'), 'JSON-LD uses Admin licences');
     assert.ok(!json.includes('6401006221') && !json.includes('6804008544'), 'No old licence metadata');
+    assert.ok(json.includes('Owner service region'));
     assert.match(await page.locator('link[rel="icon"]').getAttribute('href'), /covermate-mark.png/);
     assert.equal(await page.locator('link[rel="icon"]').getAttribute('type'), null);
     assert.match(await page.locator('meta[property="og:image"]').getAttribute('content'), /covermate-mark.png/);
@@ -156,9 +190,20 @@ try {
   live.config.licences.nonLife.logo = '';
   await page.goto(baseUrl + '/');
   await page.getByRole('button', { name: 'Switch to English' }).click();
+  assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), '');
+  assert.equal(await page.locator('[data-cms-copy="publicCopy.contactTitle"]').innerText(), 'Contact our team');
   assert.equal(await page.locator('a[href*="line.me"],a[href*="facebook.com"]').count(), 0);
   assert.equal(await page.locator('header img,footer img').count(), 0);
   assert.match(await page.locator('footer').innerText(), /Licences|Go to/);
+  await page.goto(baseUrl + '/#life-focus');
+  await page.locator('#life h1').waitFor();
+  assert.equal(await page.locator('#life h1').innerText(), 'Owner life headline');
+  assert.equal(await page.locator('#life p[data-cms-copy="lifeFocus.body"]').innerText(), 'Existing life description');
+  const kicker = page.locator('#life [data-cms-copy="lifeFocus.kicker"]');
+  assert.equal(await kicker.innerText(), 'Life · health · AIA agent');
+  assert.equal(await kicker.locator('..').innerText(), 'Life · health · AIA agent', 'Decorative dot must not inherit editable text');
+  await page.locator('#life').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(output, 'life-focus-mobile.png') });
   assert.deepEqual(errors, []);
   console.log('PASS local browser CMS edit -> autosave -> preview -> reload -> publish -> Home/Motor, mobile footer, CMS assets/SEO and empty contact/media states');
   console.log(`Screenshots: ${output}`);

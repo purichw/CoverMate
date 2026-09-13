@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 
 ## Production
 
@@ -20,21 +20,45 @@ Production can lag behind this local workspace while the release guardrail is
 active. Treat production claims as deployed-state checks, not proof that local
 uncommitted changes are live.
 
-Observed on 2026-09-12: Vercel's Git integration automatically deployed a push
-to `main` before the separately watched GitHub CI completed. Do not assume that
-omitting `vercel deploy --prod` keeps production unchanged. For releases that
-must wait for remote CI/UAT, verify the integration's deployment checks or stage
-the candidate on a non-production branch before pushing `main`. Changing that
-integration is a separate operational decision; this release did not change it.
+The race observed on 2026-09-12 is now gated in the live Vercel project. The
+GitHub-backed `CoverMate CI` check requires job `verify` on the deployment's
+commit before production alias assignment. Production builds can still start
+on a `main` push; the existing live deployment remains assigned while the check
+is pending or unsuccessful. Preview deployments do not require this check.
 Documentation-only pushes may also trigger a deployment with identical runtime
 files. Verify the served runtime, not just a changing deployment identifier.
+
+### Production CI Gate
+
+- Check: `chk_36161e4d-9d2e-49b7-9669-ef6c103d6473`.
+- Desired configuration: `.github/vercel-production-check.json`.
+- Scope: production only; blocks `deployment-alias`; timeout 3600 seconds.
+- Existing `verify` job runs full CI plus emulator Auth/Rules/API/Publish E2E;
+  no second CI suite or mandatory UAT job was added.
+- Read-only drift check: `node scripts/check-deployment-gate.mjs`.
+- Keep the GitHub job name `verify` unique and stable. Rename the Vercel check's
+  `externalCheckName` together if that job is deliberately renamed.
+- Do not use `[skip ci]` for a commit intended for production promotion. A docs
+  commit may skip CI only when no promotion is needed; a later release must have
+  its own passing CI. Missing, canceled or timed-out checks require investigation,
+  not Force Promote. Force/bypass actions require explicit incident approval.
+- Prefer the Git-triggered deployment of the tested SHA. A manual CLI deployment
+  may lack Git check provenance; do not bypass checks to make it live.
+
+On 2026-09-13 the API readback confirmed the exact policy, GitHub repo/`main`
+link and automatic production aliasing. This is configuration verification, not
+an observed blocked-then-promoted deployment. For each authorized release, record pending/failure hold,
+successful check on the exact SHA, then alias/source readback. Until CI passes,
+do not report the candidate as live. Platform behavior and manual bypass details:
+[Vercel Deployment Checks](https://vercel.com/docs/deployment-checks).
 
 ## Release Permission Guardrail
 
 Do not commit, push, or deploy until the user explicitly says to do so in the
 current task. Local fixes, local verification, screenshots, and documentation
-updates are allowed while this guardrail is active, but GitHub and Vercel must
-stay untouched until the user gives a direct release instruction.
+updates are allowed while this guardrail is active. A separately requested
+operational configuration change (such as adding a CI gate) may update that
+specific setting; it does not authorize commit, push, deploy or data migration.
 
 ## Local Verification
 
@@ -340,7 +364,9 @@ real App Check submission on a registered preview hostname first. See
 Deploy production in this order:
 
 ```bash
-vercel deploy --prod --yes
+node scripts/check-deployment-gate.mjs
+# After the authorized push: wait for the exact SHA's verify check and Vercel alias.
+# Only if this release changes Firestore Rules, after compatible API/site verification:
 firebase deploy --only firestore:rules --project covermate-purich
 ```
 

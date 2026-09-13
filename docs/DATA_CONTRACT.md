@@ -219,7 +219,17 @@ fields include:
 | `brand.media.*` | string / localized string | Header/footer logos, brand mark, advisor photo, LINE QR and favicon. |
 | `licences.*` | object | Shared life/non-life/broker numbers, provider logos and verification link. |
 | `ui.*` | localized string | Shared visitor headings, consent and submission messages. |
+| `publicCopy.*` | localized string | Calculator/form labels and tokenized summaries (schema v2). |
+| `formOptions.*` | localized string | Visitor labels for fixed submitted enquiry/coverage/renewal IDs. |
+| `lifeFocus.*` | localized string | Legacy life-focus intro and trust labels. |
+| `cmsLegacyCopy` | string array | Pending localized paths for render-time adoption of legacy inline overrides; not visitor copy. |
 | `cmsContentVersion` | number | One-time migration version; explicit blanks do not re-seed. |
+
+Version 2 adds these CMS fields. Business JSON-LD descriptions also use
+CMS `seo` fields; blank optional properties are omitted. In-flight
+`text['cms:<path>.<language>']` edits fold into canonical config at the state
+boundary, while unrelated positional text keys remain untouched. See
+[CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration ordering.
 
 `brand.advisorLogo` is editable only as media metadata in the Brand & contact
 panel: an existing committed `assets/...` path or an HTTPS image URL, plus alt

@@ -841,18 +841,18 @@ textarea.input { min-height: 90px; resize: vertical; }
 
           <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
             <div data-reveal="" style="display:inline-flex;align-self:flex-start;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;background:var(--color-accent-2-300);color:var(--color-accent-2-900);font-size:12.5px;font-weight:700;letter-spacing:.04em">
-              <span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent-2-700);flex:0 0 auto"></span>{{ s.kicker }}
+              <span style="width:7px;height:7px;border-radius:999px;background:var(--color-accent-2-700);flex:0 0 auto"></span><span data-cms-copy="{{ s.cmsKicker }}">{{ s.kicker }}</span>
             </div>
-            <h1 data-reveal="1" style="margin:0;max-width:14ch;font-size:clamp(36px,5vw,60px);line-height:1.2;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)">{{ s.title }}</h1>
-            <p data-reveal="2" style="margin:0;max-width:620px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500">{{ s.body }}</p>
+            <h1 data-reveal="1" style="margin:0;max-width:14ch;font-size:clamp(36px,5vw,60px);line-height:1.2;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)" data-cms-copy="{{ s.cmsTitle }}">{{ s.title }}</h1>
+            <p data-reveal="2" style="margin:0;max-width:620px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500" data-cms-copy="{{ s.cmsBody }}">{{ s.body }}</p>
             <div data-reveal="3" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-              <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>{{ s.cta1 }}</a></sc-if>
+              <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span><span data-cms-copy="{{ s.cmsCta1 }}">{{ s.cta1 }}</span></a></sc-if>
               <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
-                <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.3);color:var(--color-text);text-decoration:none;font-weight:800">{{ s.cta2 }}<span style="font-size:22px;line-height:0">↓</span></a>
+                <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.3);color:var(--color-text);text-decoration:none;font-weight:800"><span data-cms-copy="{{ s.cmsCta2 }}">{{ s.cta2 }}</span><span style="font-size:22px;line-height:0">↓</span></a>
               </sc-if>
             </div>
             <div data-reveal="4" style="display:flex;align-items:center;gap:10px;color:var(--color-neutral-800);font-size:15px;font-weight:600">
-              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:{{ A_deep }};fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto"><path d="M20 6L9 17l-5-5"/></svg>{{ s.note }}
+              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:{{ A_deep }};fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto"><path d="M20 6L9 17l-5-5"/></svg><span data-cms-copy="{{ s.cmsNote }}">{{ s.note }}</span>
             </div>
           </div>
 
@@ -880,7 +880,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               <span style="width:30px;height:30px;flex:0 0 auto;border-radius:999px;background:{{ it.soft }};color:{{ it.deep }};display:flex;align-items:center;justify-content:center">
                 <svg sc-camel-view-box="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><sc-for list="{{ it.paths }}" as="d" hint-placeholder-count="1"><path d="{{ d }}"></path></sc-for></svg>
               </span>
-              <span style="min-width:0">{{ it.label }}</span>
+              <span style="min-width:0" data-cms-copy="{{ it.cmsPath }}">{{ it.label }}</span>
             </div>
           </sc-for>
         </div>
@@ -949,8 +949,8 @@ textarea.input { min-height: 90px; resize: vertical; }
           </div>
 
           <div data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3)">
-            <div style="font-size:13px;font-weight:700;color:{{ s.muted }};letter-spacing:.02em">
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">1 · ตอนนี้คุณอยู่ช่วงไหน</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">1 · Where are you right now?</sc-if>
+            <div style="font-size:13px;font-weight:700;color:{{ s.muted }};letter-spacing:.02em" data-cms-copy="publicCopy.calcSituation">
+              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcSituation }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcSituation }}</sc-if>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,168px),1fr));gap:var(--space-2)">
               <sc-for list="{{ sitList }}" as="o" hint-placeholder-count="4">
@@ -963,47 +963,47 @@ textarea.input { min-height: 90px; resize: vertical; }
           </div>
 
           <div data-reveal="2" style="display:flex;flex-direction:column;gap:var(--space-4);background:{{ s.card }};border-radius:var(--radius-lg);padding:var(--space-4)">
-            <div style="font-size:13px;font-weight:700;color:{{ s.muted }};letter-spacing:.02em">
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">2 · ข้อมูลสำหรับคำนวณเบื้องต้น</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">2 · Inputs for the first estimate</sc-if>
+            <div style="font-size:13px;font-weight:700;color:{{ s.muted }};letter-spacing:.02em" data-cms-copy="publicCopy.calcInputs">
+              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcInputs }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcInputs }}</sc-if>
             </div>
             <label style="display:flex;flex-direction:column;gap:var(--space-1)">
               <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ค่าใช้จ่ายจำเป็นต่อเดือน</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Essential monthly spending</sc-if></span>
+                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcSpending"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcSpending }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcSpending }}</sc-if></span>
                 <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ incomeLabel }}</span>
               </span>
               <input type="range" min="15000" max="400000" step="5000" value="{{ income }}" sc-camel-on-change="{{ onIncome }}" style="--fill:{{ incomePct }}">
             </label>
             <label style="display:flex;flex-direction:column;gap:var(--space-1)">
               <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ต้องดูแลต่ออีกกี่ปี</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Years of support</sc-if></span>
+                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcYears"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcYears }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcYears }}</sc-if></span>
                 <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ depsLabel }}</span>
               </span>
               <input type="range" min="0" max="4" step="1" value="{{ deps }}" sc-camel-on-change="{{ onDeps }}" style="--fill:{{ depsPct }}">
             </label>
             <label style="display:flex;flex-direction:column;gap:var(--space-1)">
               <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">หนี้และภาระอนาคต</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Debts and future obligations</sc-if></span>
+                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcDebt"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcDebt }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcDebt }}</sc-if></span>
                 <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ debtLabel }}</span>
               </span>
               <input type="range" min="0" max="12000000" step="250000" value="{{ debt }}" sc-camel-on-change="{{ onDebt }}" style="--fill:{{ debtPct }}">
             </label>
             <label style="display:flex;flex-direction:column;gap:var(--space-1)">
               <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">เงินสำรอง + ทุนเดิม</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Liquid assets + existing cover</sc-if></span>
+                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcResources"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcResources }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcResources }}</sc-if></span>
                 <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ resourcesLabel }}</span>
               </span>
               <input type="range" min="0" max="12000000" step="250000" value="{{ resources }}" sc-camel-on-change="{{ onResources }}" style="--fill:{{ resourcesPct }}">
             </label>
             <label style="display:flex;flex-direction:column;gap:var(--space-1)">
               <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ค่าห้องในกรมธรรม์เดิม</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Current room benefit</sc-if></span>
+                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcRoomBenefit"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcRoomBenefit }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcRoomBenefit }}</sc-if></span>
                 <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ roomBenefitLabel }}</span>
               </span>
               <input type="range" min="0" max="20000" step="500" value="{{ roomBenefit }}" sc-camel-on-change="{{ onRoomBenefit }}" style="--fill:{{ roomBenefitPct }}">
             </label>
             <label style="display:flex;flex-direction:column;gap:var(--space-1)">
               <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ระยะพักฟื้นที่ต้องมีเงินรองรับ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Recovery period to fund</sc-if></span>
+                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcRecovery"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcRecovery }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcRecovery }}</sc-if></span>
                 <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ recoveryLabel }}</span>
               </span>
               <input type="range" min="3" max="24" step="3" value="{{ recovery }}" sc-camel-on-change="{{ onRecovery }}" style="--fill:{{ recoveryPct }}">
@@ -1015,36 +1015,36 @@ textarea.input { min-height: 90px; resize: vertical; }
           <sc-if value="{{ noSit }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-6);border-radius:var(--radius-lg);border:2px dashed {{ s.line }};color:{{ s.muted }};font-size:14.5px;line-height:1.55">
               <svg sc-camel-view-box="0 0 24 24" style="width:22px;height:22px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m5 12 7-7 7 7"></path><path d="M12 19V5"></path></svg>
-              <span><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">เลือกช่วงชีวิตหนึ่งข้อ แล้วปรับตัวเลขด้านซ้ายเพื่อดูฐานคุ้มครองเบื้องต้น</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Pick a situation, then adjust the inputs to see a starting estimate.</sc-if></span>
+              <span data-cms-copy="publicCopy.calcHint"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcHint }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcHint }}</sc-if></span>
             </div>
           </sc-if>
 
           <sc-if value="{{ hasSit }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(20px,2.4vw,32px);box-shadow:var(--shadow-lg);animation:omRise .4s cubic-bezier(.22,.61,.36,1) both">
-              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ A_text }}">
-                <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ประมาณการสำหรับ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Estimate for</sc-if> · {{ sitName }}
+              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ A_text }}" data-cms-copy="publicCopy.calcEstimateFor">
+                <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcEstimateFor }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcEstimateFor }}</sc-if> · {{ sitName }}
               </div>
               <div style="display:flex;flex-direction:column;gap:2px">
-                <div style="font-size:13.5px;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ทุนชีวิตที่ควรเริ่มจาก</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Life need starting point</sc-if></div>
+                <div style="font-size:13.5px;color:var(--color-neutral-700)" data-cms-copy="publicCopy.calcLifeNeed"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcLifeNeed }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcLifeNeed }}</sc-if></div>
                 <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:clamp(34px,4.4vw,52px);line-height:1.08;color:{{ A_mid }};letter-spacing:0">{{ sumAssured }}</div>
               </div>
               <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:var(--space-2)">
                 <div style="background:var(--color-accent-2-200);border-radius:var(--radius-md);padding:var(--space-3);display:flex;flex-direction:column;gap:2px">
-                  <div style="font-size:12px;font-weight:600;color:var(--color-accent-2-800);line-height:1.35"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ส่วนต่างค่าห้องอ้างอิง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Reference room gap</sc-if></div>
+                  <div style="font-size:12px;font-weight:600;color:var(--color-accent-2-800);line-height:1.35" data-cms-copy="publicCopy.calcRoomGap"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcRoomGap }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcRoomGap }}</sc-if></div>
                   <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:22px;line-height:1.2;color:var(--color-accent-2-900)">{{ roomLabel }}</div>
                 </div>
                 <div style="background:var(--color-accent-2-200);border-radius:var(--radius-md);padding:var(--space-3);display:flex;flex-direction:column;gap:2px">
-                  <div style="font-size:12px;font-weight:600;color:var(--color-accent-2-800);line-height:1.35"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">เงินก้อนโรคร้ายแรง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">CI recovery buffer</sc-if></div>
+                  <div style="font-size:12px;font-weight:600;color:var(--color-accent-2-800);line-height:1.35" data-cms-copy="publicCopy.calcCiBuffer"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcCiBuffer }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcCiBuffer }}</sc-if></div>
                   <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:22px;line-height:1.2;color:var(--color-accent-2-900)">{{ lumpLabel }}</div>
                 </div>
               </div>
               <div style="background:var(--color-surface);border-radius:var(--radius-md);padding:var(--space-3);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap">
-                <span style="font-size:13px;font-weight:600;line-height:1.35"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">แหล่งข้อมูลอ้างอิง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Reference source</sc-if></span>
+                <span style="font-size:13px;font-weight:600;line-height:1.35" data-cms-copy="publicCopy.calcReference"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcReference }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcReference }}</sc-if></span>
                 <span style="font-size:15px;font-weight:700;white-space:nowrap;color:{{ A_mid }}">{{ budgetRange }}</span>
               </div>
               <div style="display:flex;flex-direction:column;gap:var(--space-1);margin-top:var(--space-1)">
-                <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">
-                  <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ข้อที่ควรตรวจต่อ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">What to review next</sc-if>
+                <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)" data-cms-copy="publicCopy.calcReview">
+                  <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcReview }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcReview }}</sc-if>
                 </div>
                 <sc-for list="{{ recs }}" as="r" hint-placeholder-count="3">
                   <div style="display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-2) 0">
@@ -1057,8 +1057,8 @@ textarea.input { min-height: 90px; resize: vertical; }
                 </sc-for>
               </div>
               <sc-if value="{{ showTalkAnchor }}" hint-placeholder-val="{{ true }}">
-                <a href="#talk" style="display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
-                  <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ส่งตัวเลขนี้ให้เราดูต่อ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Send us these numbers</sc-if>
+                <a href="#talk" style="display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)" data-cms-copy="publicCopy.calcSend">
+                  <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcSend }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcSend }}</sc-if>
                   <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                 </a>
               </sc-if>
@@ -1344,51 +1344,51 @@ textarea.input { min-height: 90px; resize: vertical; }
         </div>
 
         <form sc-camel-on-submit="{{ renewSubmit }}" data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(22px,2.6vw,34px);box-shadow:var(--shadow-lg);min-width:0">
-          <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3">
-            <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ตั้งเตือนต่ออายุ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Set a renewal reminder</sc-if>
+          <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3" data-cms-copy="publicCopy.renewalTitle">
+            <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalTitle }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalTitle }}</sc-if>
           </div>
           <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">กรมธรรม์ประเภทไหน</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Which policy</sc-if></span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.renewalPolicy"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalPolicy }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalPolicy }}</sc-if></span>
             <div style="position:relative;display:flex">
               <sc-raw-select value="{{ rKind }}" sc-camel-on-change="{{ onRKind }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
-                <sc-for list="{{ rKindOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                <sc-for list="{{ rKindOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option></sc-for>
               </sc-raw-select>
               <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
             </div>
           </label>
           <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">หมดอายุเดือนไหน</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Expires in</sc-if></span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.renewalMonth"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalMonth }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalMonth }}</sc-if></span>
             <div style="position:relative;display:flex">
               <sc-raw-select value="{{ rMonth }}" sc-camel-on-change="{{ onRMonth }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
-                <sc-for list="{{ rMonthOpts }}" as="o" hint-placeholder-count="13"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                <sc-for list="{{ rMonthOpts }}" as="o" hint-placeholder-count="13"><option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option></sc-for>
               </sc-raw-select>
               <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
             </div>
           </label>
           <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">LINE ID หรือเบอร์โทร</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">LINE ID or phone</sc-if></span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.renewalContact"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalContact }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalContact }}</sc-if></span>
             <input value="{{ rContact }}" sc-camel-on-change="{{ onRContact }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
           </label>
           <div data-noedit="" style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-700);background:var(--color-surface);border-radius:var(--radius-md);padding:var(--space-3);text-wrap:pretty">{{ renewSummary }}</div>
           <label data-noedit="" style="display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;padding:var(--space-3);border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-surface) 78%,var(--color-bg));border:1.5px solid var(--color-neutral-300);cursor:pointer">
             <input type="checkbox" checked="{{ rConsent }}" sc-camel-on-change="{{ onRConsent }}" aria-required="true" style="width:20px;height:20px;margin:1px 0 0;accent-color:{{ A_base }};cursor:pointer">
             <span style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.5;color:var(--color-neutral-800)">
-              <span><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ยินยอมให้ติดต่อกลับเพื่อแจ้งเตือนต่ออายุ และใช้ข้อมูลนี้เฉพาะการติดตามกรมธรรม์ที่ระบุ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">I agree to be contacted about this renewal reminder and to use this information only for the selected policy follow-up.</sc-if></span>
+              <span data-cms-copy="publicCopy.renewalConsent"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalConsent }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalConsent }}</sc-if></span>
               <sc-if value="{{ showPrivacyAnchor }}" hint-placeholder-val="{{ true }}">
-                <a href="#privacy" style="color:var(--color-accent-700);font-weight:700;text-decoration:underline;text-underline-offset:2px"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">อ่านว่าข้อมูลถูกใช้อะไร</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Read how your data is used</sc-if></a>
+                <a href="#privacy" style="color:var(--color-accent-700);font-weight:700;text-decoration:underline;text-underline-offset:2px" data-cms-copy="publicCopy.renewalPrivacy"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalPrivacy }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalPrivacy }}</sc-if></a>
               </sc-if>
             </span>
           </label>
           <sc-if value="{{ renewNotSent }}" hint-placeholder-val="{{ true }}">
-            <button type="submit" disabled="{{ renewIncomplete }}" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)">
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ตั้งเตือนให้เราจำ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Remind me</sc-if>
+            <button type="submit" disabled="{{ renewIncomplete }}" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)" data-cms-copy="publicCopy.renewalSubmit">
+              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalSubmit }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalSubmit }}</sc-if>
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
             </button>
           </sc-if>
           <sc-if value="{{ renewSent }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;align-items:center;gap:11px;min-height:54px;padding:0 var(--space-4);border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);font-size:14.5px;font-weight:700;animation:omRise .3s ease both">
+            <div style="display:flex;align-items:center;gap:11px;min-height:54px;padding:0 var(--space-4);border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);font-size:14.5px;font-weight:700;animation:omRise .3s ease both" data-cms-copy="publicCopy.renewalSuccess">
               <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg>
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ตั้งเตือนไว้แล้ว เราจะทักไปก่อน 60 วัน</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Set. We will message you 60 days ahead.</sc-if>
+              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalSuccess }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalSuccess }}</sc-if>
             </div>
           </sc-if>
           <sc-if value="{{ hasRenewError }}" hint-placeholder-val="{{ false }}">
@@ -1617,8 +1617,8 @@ textarea.input { min-height: 90px; resize: vertical; }
           <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4);border-radius:var(--radius-lg);background:{{ s.card }}">
             <sc-if value="{{ hasLineQr }}"><img sc-camel-src="{{ lineQr }}" alt="LINE QR" style="width:104px;height:104px;object-fit:contain;border-radius:14px"></sc-if>
             <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ s.muted }}">
-                <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">สแกนเพื่อแอดไลน์</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Scan to add on LINE</sc-if>
+              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ s.muted }}" data-cms-copy="publicCopy.contactScan">
+                <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactScan }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactScan }}</sc-if>
               </div>
               <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:flex;align-items:center;gap:9px;color:{{ s.fg }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(18px,2vw,24px);line-height:1.2;word-break:break-all" style-hover="color:{{ A_light }}">
                 <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
@@ -1651,35 +1651,35 @@ textarea.input { min-height: 90px; resize: vertical; }
         </div>
 
         <form sc-camel-on-submit="{{ submit }}" data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(22px,2.6vw,34px);box-shadow:var(--shadow-lg);min-width:0">
-          <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3">
-            <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">สอบถามหรือขอใบเสนอราคา</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Ask a question or request a quotation</sc-if>
+          <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3" data-cms-copy="publicCopy.contactTitle">
+            <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactTitle }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactTitle }}</sc-if>
           </div>
           <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ชื่อที่ให้เรียก</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">What should I call you</sc-if></span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactName"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactName }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactName }}</sc-if></span>
             <input name="name" autocomplete="name" value="{{ fName }}" sc-camel-on-change="{{ onName }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
           </label>
           <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">LINE ID หรือเบอร์โทร</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">LINE ID or phone</sc-if></span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactContact"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactContact }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactContact }}</sc-if></span>
             <input name="contact" required aria-required="true" autocomplete="tel" value="{{ fContact }}" sc-camel-on-change="{{ onContact }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
           </label>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:var(--space-3)">
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
-              <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">เรื่องที่ต้องการสอบถาม</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Type of enquiry</sc-if></span>
+              <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactTopic"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactTopic }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactTopic }}</sc-if></span>
               <div style="position:relative;display:flex">
                 <sc-raw-select name="qtype" value="{{ fQType }}" sc-camel-on-change="{{ onQType }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
                   <sc-for list="{{ qtypeOpts }}" as="o" hint-placeholder-count="6">
-                    <option value="{{ o.value }}">{{ o.label }}</option>
+                    <option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option>
                   </sc-for>
                 </sc-raw-select>
                 <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
               </div>
             </label>
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
-              <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ความคุ้มครองที่สนใจ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Coverage of interest</sc-if></span>
+              <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactCoverage"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactCoverage }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactCoverage }}</sc-if></span>
               <div style="position:relative;display:flex">
                 <sc-raw-select name="coverage" value="{{ fCoverage }}" sc-camel-on-change="{{ onCoverage }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
                   <sc-for list="{{ coverageOpts }}" as="o" hint-placeholder-count="7">
-                    <option value="{{ o.value }}">{{ o.label }}</option>
+                    <option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option>
                   </sc-for>
                 </sc-raw-select>
                 <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
@@ -1687,7 +1687,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             </label>
           </div>
           <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">รายละเอียดเพิ่มเติม (ถ้ามี)</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Anything else? (optional)</sc-if></span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactDetails"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactDetails }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactDetails }}</sc-if></span>
             <textarea name="topic" rows="3" value="{{ fTopic }}" sc-camel-on-change="{{ onTopic }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:var(--radius-md);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}"></textarea>
           </label>
           <div data-noedit="" style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-700);background:var(--color-surface);border-radius:var(--radius-md);padding:var(--space-3);text-wrap:pretty">{{ summary }}</div>
@@ -1696,13 +1696,13 @@ textarea.input { min-height: 90px; resize: vertical; }
             <span style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.5;color:var(--color-neutral-800)">
               <span>{{ consultationConsent }}</span>
               <sc-if value="{{ showPrivacyAnchor }}" hint-placeholder-val="{{ true }}">
-                <a href="#privacy" style="color:var(--color-accent-700);font-weight:700;text-decoration:underline;text-underline-offset:2px"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">อ่านว่าข้อมูลถูกใช้อะไร</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Read how your data is used</sc-if></a>
+                <a href="#privacy" style="color:var(--color-accent-700);font-weight:700;text-decoration:underline;text-underline-offset:2px" data-cms-copy="publicCopy.contactPrivacy"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactPrivacy }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactPrivacy }}</sc-if></a>
               </sc-if>
             </span>
           </label>
           <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
-            <button type="submit" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)">
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ส่งข้อความ</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Send message</sc-if>
+            <button type="submit" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)" data-cms-copy="publicCopy.contactSubmit">
+              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactSubmit }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactSubmit }}</sc-if>
               <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
             </button>
           </sc-if>

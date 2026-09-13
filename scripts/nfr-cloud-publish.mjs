@@ -7,6 +7,7 @@ import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 import { encryptBackup } from './lib/encrypted-backup.mjs';
 import { loadUatLocalEnv, resolveUatUrl, vercelBypassHeaders } from './lib/uat-env.mjs';
 loadUatLocalEnv();
+const cmsOnly = process.argv.includes('--cms-only');
 const hosted = process.env.COVERMATE_UAT_URL ? resolveUatUrl().url : null;
 if (hosted) {
   const response = await fetch(new URL('/api/leads', hosted), { headers: vercelBypassHeaders(), signal: AbortSignal.timeout(30000) });
@@ -63,12 +64,30 @@ try {
   await licence.press('Tab');
   await poll(async () => (await refs[1].get()).data().config.licences.life.number === '9000000001');
   assert.notEqual((await refs[0].get()).data().config.licences.life.number, '9000000001', 'Licence edits remain draft-only.');
+  await admin.locator('[data-cms-group="Calculator labels"] summary').click();
+  const spending = admin.locator('[data-cms-field="publicCopy.calcSpending.th"]');
+  await spending.fill(marker + ' spending');
+  await spending.press('Tab');
+  await poll(async () => (await refs[1].get()).data().config.publicCopy?.calcSpending?.th === marker + ' spending');
+  assert.notEqual((await refs[0].get()).data().config.publicCopy?.calcSpending?.th, marker + ' spending');
+  const inline = admin.locator('[data-cms-copy="publicCopy.calcSpending"] [contenteditable="true"]');
+  await inline.fill(marker + ' inline');
+  await inline.press('Tab');
+  await poll(async () => (await refs[1].get()).data().config.publicCopy?.calcSpending?.th === marker + ' inline');
+  assert.equal(await spending.inputValue(), marker + ' inline');
+  await admin.getByRole('button', { name: 'Edit English content' }).click();
+  await admin.locator('[data-cms-field="publicCopy.calcSpending.en"]').fill('');
+  await admin.locator('[data-cms-field="publicCopy.calcSpending.en"]').press('Tab');
+  await poll(async () => (await refs[1].get()).data().config.publicCopy?.calcSpending?.en === '');
+  await admin.getByRole('button', { name: 'Edit Thai content' }).click();
   await admin.getByRole('button', { name: 'Close admin panel', exact: true }).click();
   await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
   await admin.getByRole('button', { name: /^Publish/ }).first().click();
   await admin.getByRole('button', { name: 'Publish', exact: true }).last().click();
   await poll(async () => Object.values((await refs[0].get()).data().text || {}).includes(marker));
   assert.equal((await refs[0].get()).data().config.licences.life.number, '9000000001');
+  assert.deepEqual((await refs[0].get()).data().config.publicCopy.calcSpending, { th: marker + ' inline', en: '' });
+  assert.equal((await refs[0].get()).data().config.cmsContentVersion, 2);
   const visitor = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await protectPreview(visitor, baseUrl);
   const page = await visitor.newPage();
@@ -76,9 +95,13 @@ try {
   await page.waitForFunction(marker => document.querySelector('#hero h1')?.textContent.includes(marker), marker, { timeout: 60000 });
   await page.waitForFunction(() => document.querySelector('#hero')?.textContent.includes('9000000001') && document.querySelector('#covermate-jsonld')?.textContent.includes('9000000001'));
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
+  assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), marker + ' inline');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), '');
+  await page.getByRole('button', { name: 'Switch to Thai' }).click();
   console.log('Fresh Visitor sees published UAT text.');
   let hostedLeadReadback = false;
-  if (hosted) {
+  if (hosted && !cmsOnly) {
     const form = page.locator('form').filter({ has: page.locator('input[name=contact]') });
     await form.locator('input[name=name]').fill(marker);
     await form.locator('input[name=contact]').fill(`${uid}@example.test`);
@@ -99,7 +122,7 @@ try {
   }
   await page.screenshot({ path: 'uat-results/nfr/cloud-publish-visitor.png' });
   await admin.screenshot({ path: 'uat-results/nfr/cloud-publish-admin.png' });
-  fs.writeFileSync('uat-results/nfr/cloud-publish.json', JSON.stringify({ backend: 'real Firebase Auth + Firestore', frontend: hosted ? hosted.origin : 'local candidate build', site: 'covermate-uat', auth: 'signed UAT-only custom token', draftIsolation: true, publishViaButton: true, freshVisitorReadback: true, cmsLicenceAndMetadata: true, hostedLeadReadback, productionContentWrites: 0 }, null, 2));
+  fs.writeFileSync('uat-results/nfr/cloud-publish.json', JSON.stringify({ backend: 'real Firebase Auth + Firestore', frontend: hosted ? hosted.origin : 'local candidate build', site: 'covermate-uat', auth: 'signed UAT-only custom token', draftIsolation: true, publishViaButton: true, freshVisitorReadback: true, cmsLicenceAndMetadata: true, cmsV2InlineAdminSync: true, explicitEnglishBlank: true, hostedLeadReadback, hostedLeadSkipped: cmsOnly ? 'CMS-only release scope; lead API and App Check unchanged' : null, productionContentWrites: 0 }, null, 2));
   console.log('Cloud UAT: real Admin edit/publish -> Firestore -> fresh Visitor passed.');
 } finally {
   if (browser) {

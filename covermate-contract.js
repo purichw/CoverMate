@@ -384,8 +384,85 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 1;
+const CMS_CONTENT_VERSION = 2;
 const CMS_CONTENT_FIELDS = [
+  {"path":"publicCopy.consultationSummary","label":"Consultation summary","group":"Form messages","localized":true,"seed":{"th":"สนใจปรึกษาเรื่องประกัน — สถานการณ์: {{situation}} · รายได้ราว {{income}}/เดือน · ทุนชีวิตที่ควรมีประมาณ {{lifeNeed}}","en":"Hi — situation: {{situation}} · income about {{income}}/mo · suggested life cover around {{lifeNeed}}"}},
+  {"path":"publicCopy.consultationIntro","label":"Consultation summary without calculator","group":"Form messages","localized":true,"seed":{"th":"สนใจปรึกษาเรื่องประกัน","en":"Hi — I would like to talk about cover."}},
+  {"path":"publicCopy.summaryTopic","label":"Summary enquiry label","group":"Form messages","localized":true,"seed":{"th":"เรื่อง:","en":"Enquiry:"}},
+  {"path":"publicCopy.summaryCoverage","label":"Summary coverage label","group":"Form messages","localized":true,"seed":{"th":"ความคุ้มครอง:","en":"Coverage:"}},
+  {"path":"publicCopy.renewalSummary","label":"Renewal request summary","group":"Form messages","localized":true,"seed":{"th":"ตั้งเตือนต่ออายุ: {{policy}} · หมดอายุเดือน{{month}} · เตือนล่วงหน้า 60 วันพร้อมเทียบเบี้ยใหม่","en":"Renewal reminder: {{policy}} · expires in {{month}} · remind 60 days ahead with a fresh comparison"}},
+  {"path":"publicCopy.renewalHint","label":"Renewal selection hint","group":"Form messages","localized":true,"seed":{"th":"เลือกประเภทและเดือนที่หมดอายุ แล้วเราจะเตือนล่วงหน้า 60 วัน","en":"Pick a policy and expiry month and we will remind you 60 days ahead."}},
+  {"path":"publicCopy.renewalPreview","label":"Renewal summary preview","group":"Form messages","localized":true,"seed":{"th":"จะเตือนเรื่อง {{policy}} ล่วงหน้า 60 วันก่อนสิ้นเดือน{{month}} พร้อมเทียบเบี้ยใหม่ให้","en":"We will remind you about {{policy}} 60 days before the end of {{month}}, with a fresh comparison."}},
+  {"path":"lifeFocus.kicker","label":"Eyebrow","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ชีวิต · สุขภาพ · ตัวแทน AIA","en":"Life · health · AIA agent"}},
+  {"path":"lifeFocus.title","label":"Heading","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ตอนที่ต้องใช้จริง\nไม่มีใครอ่านกรมธรรม์ทัน","en":"Nobody reads the policy\nat the moment it matters"}},
+  {"path":"lifeFocus.body","label":"Description","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ในฐานะตัวแทน AIA เราดูแลเรื่องชีวิตและสุขภาพเป็นหลัก — เลือกทุนให้พอกับภาระจริง เลือกค่าห้องให้พอกับโรงพยาบาลที่คุณใช้ และอธิบายข้อยกเว้นให้ครบก่อนเซ็น ไม่ใช่หลังเคลม","en":"As an AIA agent, life and health are my main work — matching the sum assured to real obligations, the room rate to the hospital you actually use, and explaining every exclusion before you sign rather than after you claim."}},
+  {"path":"lifeFocus.cta1","label":"Primary button","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"แอดไลน์ ปรึกษาฟรี","en":"Add me on LINE"}},
+  {"path":"lifeFocus.cta2","label":"Secondary button","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"คำนวณทุนที่ควรมี","en":"Estimate your cover"}},
+  {"path":"lifeFocus.note","label":"Supporting note","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ไม่มีค่าที่ปรึกษา และเราไม่เสนอยูนิตลิงก์","en":"No advisory fee, and Unit-linked plans are not offered."}},
+  {"path":"lifeFocus.noUnitLinked","label":"Trust: unit-linked policy","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ไม่เสนอยูนิตลิงก์","en":"No unit-linked plans"}},
+  {"path":"lifeFocus.exclusions","label":"Trust: exclusions","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"อธิบายข้อยกเว้นก่อนเซ็น","en":"Exclusions explained upfront"}},
+  {"path":"lifeFocus.claims","label":"Trust: claims support","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ดูแลต่อเนื่องถึงการเคลม","en":"Support through claims"}},
+  {"path":"formOptions.topicPrompt","label":"topicPrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— เลือกหัวข้อ —","en":"— Select a topic —"}},
+  {"path":"formOptions.coveragePrompt","label":"coveragePrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— เลือกความคุ้มครอง —","en":"— Select coverage —"}},
+  {"path":"formOptions.policyPrompt","label":"policyPrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— ประกันประเภทไหน —","en":"— Which policy —"}},
+  {"path":"formOptions.monthPrompt","label":"monthPrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— หมดอายุเดือนไหน —","en":"— Expires which month —"}},
+  {"path":"formOptions.query.quote","label":"query / quote","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ขอใบเสนอราคา","en":"Request a quote"}},
+  {"path":"formOptions.query.compare","label":"query / compare","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"เปรียบเทียบแผน","en":"Compare plans"}},
+  {"path":"formOptions.query.general","label":"query / general","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"สอบถามทั่วไป","en":"General question"}},
+  {"path":"formOptions.query.review","label":"query / review","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ทบทวนกรมธรรม์เดิม","en":"Review my existing policy"}},
+  {"path":"formOptions.query.claim","label":"query / claim","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ช่วยเรื่องเคลม","en":"Help with a claim"}},
+  {"path":"formOptions.coverage.life","label":"coverage / life","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันชีวิต","en":"Life"}},
+  {"path":"formOptions.coverage.health","label":"coverage / health","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันสุขภาพ","en":"Health"}},
+  {"path":"formOptions.coverage.motor","label":"coverage / motor","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันรถยนต์","en":"Motor"}},
+  {"path":"formOptions.coverage.accident","label":"coverage / accident","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันอุบัติเหตุ","en":"Accident"}},
+  {"path":"formOptions.coverage.savings","label":"coverage / savings","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันสะสมทรัพย์","en":"Savings & retirement"}},
+  {"path":"formOptions.coverage.unsure","label":"coverage / unsure","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ยังไม่แน่ใจ","en":"Not sure yet"}},
+  {"path":"formOptions.renewal.motor","label":"renewal / motor","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันรถยนต์","en":"Motor"}},
+  {"path":"formOptions.renewal.compulsory","label":"renewal / compulsory","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"พ.ร.บ. รถยนต์","en":"Compulsory (พ.ร.บ.)"}},
+  {"path":"formOptions.renewal.health","label":"renewal / health","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันสุขภาพ","en":"Health"}},
+  {"path":"formOptions.renewal.life","label":"renewal / life","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันชีวิต","en":"Life"}},
+  {"path":"formOptions.renewal.accident","label":"renewal / accident","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันอุบัติเหตุ","en":"Personal accident"}},
+  {"path":"seo.areaServed","label":"Service area","group":"Business metadata","localized":false,"seed":"Bangkok Metropolitan Region, Thailand"},
+  {"path":"seo.knowsAbout","label":"Expertise (one per line)","group":"Business metadata","localized":false,"seed":"AIA life insurance\nAIA health insurance\nMotor insurance comparison\nInsurance claims support"},
+  {"path":"seo.homeServiceName","label":"Home service name","group":"Business metadata","localized":true,"seed":{"th":"ที่ปรึกษาประกันชีวิต สุขภาพ และรถยนต์","en":"Life, health, and motor insurance advisory"}},
+  {"path":"seo.motorServiceName","label":"Motor service name","group":"Business metadata","localized":true,"seed":{"th":"ที่ปรึกษาและเปรียบเทียบประกันรถยนต์","en":"Motor insurance comparison advisory"}},
+  {"path":"seo.homeServiceType","label":"Home service type","group":"Business metadata","localized":false,"seed":"Insurance advisory and motor insurance comparison"},
+  {"path":"seo.motorServiceType","label":"Motor service type","group":"Business metadata","localized":false,"seed":"Motor insurance comparison and broker advisory"},
+  {"path":"seo.homeAudience","label":"Home audience","group":"Business metadata","localized":false,"seed":"People comparing personal insurance in Thailand"},
+  {"path":"seo.motorAudience","label":"Motor audience","group":"Business metadata","localized":false,"seed":"People comparing motor insurance in Thailand"},
+  {"path":"publicCopy.calcSituation","label":"Situation","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"1 · ตอนนี้คุณอยู่ช่วงไหน","en":"1 · Where are you right now?"}},
+  {"path":"publicCopy.calcInputs","label":"Inputs","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"2 · ข้อมูลสำหรับคำนวณเบื้องต้น","en":"2 · Inputs for the first estimate"}},
+  {"path":"publicCopy.calcSpending","label":"Spending","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ค่าใช้จ่ายจำเป็นต่อเดือน","en":"Essential monthly spending"}},
+  {"path":"publicCopy.calcYears","label":"Years","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ต้องดูแลต่ออีกกี่ปี","en":"Years of support"}},
+  {"path":"publicCopy.calcDebt","label":"Debt","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"หนี้และภาระอนาคต","en":"Debts and future obligations"}},
+  {"path":"publicCopy.calcResources","label":"Resources","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"เงินสำรอง + ทุนเดิม","en":"Liquid assets + existing cover"}},
+  {"path":"publicCopy.calcRoomBenefit","label":"Room Benefit","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ค่าห้องในกรมธรรม์เดิม","en":"Current room benefit"}},
+  {"path":"publicCopy.calcRecovery","label":"Recovery","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ระยะพักฟื้นที่ต้องมีเงินรองรับ","en":"Recovery period to fund"}},
+  {"path":"publicCopy.calcHint","label":"Hint","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"เลือกช่วงชีวิตหนึ่งข้อ แล้วปรับตัวเลขด้านซ้ายเพื่อดูฐานคุ้มครองเบื้องต้น","en":"Pick a situation, then adjust the inputs to see a starting estimate."}},
+  {"path":"publicCopy.calcEstimateFor","label":"Estimate For","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ประมาณการสำหรับ","en":"Estimate for"}},
+  {"path":"publicCopy.calcLifeNeed","label":"Life Need","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ทุนชีวิตที่ควรเริ่มจาก","en":"Life need starting point"}},
+  {"path":"publicCopy.calcRoomGap","label":"Room Gap","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ส่วนต่างค่าห้องอ้างอิง","en":"Reference room gap"}},
+  {"path":"publicCopy.calcCiBuffer","label":"Ci Buffer","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"เงินก้อนโรคร้ายแรง","en":"CI recovery buffer"}},
+  {"path":"publicCopy.calcReference","label":"Reference","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"แหล่งข้อมูลอ้างอิง","en":"Reference source"}},
+  {"path":"publicCopy.calcReview","label":"Review","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ข้อที่ควรตรวจต่อ","en":"What to review next"}},
+  {"path":"publicCopy.calcSend","label":"Send","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ส่งตัวเลขนี้ให้เราดูต่อ","en":"Send us these numbers"}},
+  {"path":"publicCopy.renewalTitle","label":"Title","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"ตั้งเตือนต่ออายุ","en":"Set a renewal reminder"}},
+  {"path":"publicCopy.renewalPolicy","label":"Policy","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"กรมธรรม์ประเภทไหน","en":"Which policy"}},
+  {"path":"publicCopy.renewalMonth","label":"Month","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"หมดอายุเดือนไหน","en":"Expires in"}},
+  {"path":"publicCopy.renewalContact","label":"Contact","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"LINE ID หรือเบอร์โทร","en":"LINE ID or phone"}},
+  {"path":"publicCopy.renewalConsent","label":"Consent","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"ยินยอมให้ติดต่อกลับเพื่อแจ้งเตือนต่ออายุ และใช้ข้อมูลนี้เฉพาะการติดตามกรมธรรม์ที่ระบุ","en":"I agree to be contacted about this renewal reminder and to use this information only for the selected policy follow-up."}},
+  {"path":"publicCopy.renewalPrivacy","label":"Privacy","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"อ่านว่าข้อมูลถูกใช้อะไร","en":"Read how your data is used"}},
+  {"path":"publicCopy.renewalSubmit","label":"Submit","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"ตั้งเตือนให้เราจำ","en":"Remind me"}},
+  {"path":"publicCopy.renewalSuccess","label":"Success","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"ตั้งเตือนไว้แล้ว เราจะทักไปก่อน 60 วัน","en":"Set. We will message you 60 days ahead."}},
+  {"path":"publicCopy.contactScan","label":"Scan","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"สแกนเพื่อแอดไลน์","en":"Scan to add on LINE"}},
+  {"path":"publicCopy.contactTitle","label":"Title","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"สอบถามหรือขอใบเสนอราคา","en":"Ask a question or request a quotation"}},
+  {"path":"publicCopy.contactName","label":"Name","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"ชื่อที่ให้เรียก","en":"What should I call you"}},
+  {"path":"publicCopy.contactContact","label":"Contact","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"LINE ID หรือเบอร์โทร","en":"LINE ID or phone"}},
+  {"path":"publicCopy.contactTopic","label":"Topic","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"เรื่องที่ต้องการสอบถาม","en":"Type of enquiry"}},
+  {"path":"publicCopy.contactCoverage","label":"Coverage","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"ความคุ้มครองที่สนใจ","en":"Coverage of interest"}},
+  {"path":"publicCopy.contactDetails","label":"Details","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"รายละเอียดเพิ่มเติม (ถ้ามี)","en":"Anything else? (optional)"}},
+  {"path":"publicCopy.contactPrivacy","label":"Privacy","group":"Consultation form labels","localized":true,"legacyInline":false,"seed":{"th":"อ่านว่าข้อมูลถูกใช้อะไร","en":"Read how your data is used"}},
+  {"path":"publicCopy.contactSubmit","label":"Submit","group":"Consultation form labels","localized":true,"legacyInline":false,"seed":{"th":"ส่งข้อความ","en":"Send message"}},
   { path: 'brand.media.headerLogo', label: 'Header logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-advisory-logo-th.png', en: 'assets/brand/covermate-advisory-logo-en.png' } },
   { path: 'brand.media.footerLogo', label: 'Footer logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-footer-logo-th.png', en: 'assets/brand/covermate-footer-logo-en.png' } },
   { path: 'brand.media.mark', label: 'Brand icon', group: 'Brand images', media: true, seed: 'assets/brand/covermate-mark.png' },
@@ -448,36 +525,45 @@ function cmsMedia(value) {
 function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return next;
+  const previousVersion = Number(next.cmsContentVersion || 0);
+  const pending = new Set(Array.isArray(next.cmsLegacyCopy) ? next.cmsLegacyCopy : []);
   CMS_CONTENT_FIELDS.forEach(field => {
     if (field.localized) {
       ['th', 'en'].forEach(lang => {
-        if (cmsGet(next, field.path + '.' + lang) === undefined) cmsSet(next, field.path + '.' + lang, field.seed[lang]);
+        const path = field.path + '.' + lang;
+        if (cmsGet(next, path) === undefined) {
+          cmsSet(next, path, field.seed[lang]);
+          if (field.legacyInline) pending.add(path);
+        }
       });
     } else if (cmsGet(next, field.path) === undefined) cmsSet(next, field.path, field.seed);
   });
-  const legacyLicences = { '6401006221': '{{lifeLicence}}', '6804008544': '{{nonLifeLicence}}', 'ว00287/2534': '{{brokerLicence}}' };
-  const migrateText = value => {
-    if (typeof value === 'string') return value.replace(/6401006221|6804008544|ว00287\/2534/g, number => legacyLicences[number]);
-    if (Array.isArray(value)) return value.map(migrateText);
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, migrateText(entry)]));
-    return value;
-  };
-  if (next.sections) next.sections = migrateText(next.sections);
-  if (next.footer && next.footer.legal) next.footer.legal = migrateText(next.footer.legal);
-  (next.sections || []).filter(section => section && section.id === 'hero').forEach(section => {
-    if (section.cta2href === undefined) section.cta2href = '#fit';
-    if (section.claimHref === undefined) section.claimHref = '#claim';
-  });
-  // Retire the exact legacy insurer entry once; later owner edits remain authoritative.
-  (next.sections || []).filter(section => section && section.type === 'insurers').forEach(section => {
-    (section.items || []).forEach(item => {
-      if (!item || item.logo !== 'assets/ins/13-thaivivat.png') return;
-      item.logo = 'assets/ins/13-aioi.png';
-      if (item.th) item.th.name = 'ไอโออิ กรุงเทพ ประกันภัย';
-      if (item.en) item.en.name = 'Aioi Bangkok Insurance';
-      if (item.logoAlt) item.logoAlt = 'Aioi Bangkok Insurance';
+  next.cmsLegacyCopy = [...pending];
+  if (previousVersion < 1) {
+    const legacyLicences = { '6401006221': '{{lifeLicence}}', '6804008544': '{{nonLifeLicence}}', 'ว00287/2534': '{{brokerLicence}}' };
+    const migrateText = value => {
+      if (typeof value === 'string') return value.replace(/6401006221|6804008544|ว00287\/2534/g, number => legacyLicences[number]);
+      if (Array.isArray(value)) return value.map(migrateText);
+      if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, migrateText(entry)]));
+      return value;
+    };
+    if (next.sections) next.sections = migrateText(next.sections);
+    if (next.footer && next.footer.legal) next.footer.legal = migrateText(next.footer.legal);
+    (next.sections || []).filter(section => section && section.id === 'hero').forEach(section => {
+      if (section.cta2href === undefined) section.cta2href = '#fit';
+      if (section.claimHref === undefined) section.claimHref = '#claim';
     });
-  });
+    // Retire the exact legacy insurer entry once; later owner edits remain authoritative.
+    (next.sections || []).filter(section => section && section.type === 'insurers').forEach(section => {
+      (section.items || []).forEach(item => {
+        if (!item || item.logo !== 'assets/ins/13-thaivivat.png') return;
+        item.logo = 'assets/ins/13-aioi.png';
+        if (item.th) item.th.name = 'ไอโออิ กรุงเทพ ประกันภัย';
+        if (item.en) item.en.name = 'Aioi Bangkok Insurance';
+        if (item.logoAlt) item.logoAlt = 'Aioi Bangkok Insurance';
+      });
+    });
+  }
   next.cmsContentVersion = CMS_CONTENT_VERSION;
   return next;
 }
@@ -491,6 +577,8 @@ function resolveCmsContent(value, config) {
 }
 
 function sanitizeCmsFields(config) {
+  const legacyPaths = new Set(CMS_CONTENT_FIELDS.filter(field => field.legacyInline).flatMap(field => ['th', 'en'].map(lang => field.path + '.' + lang)));
+  config.cmsLegacyCopy = [...new Set(Array.isArray(config.cmsLegacyCopy) ? config.cmsLegacyCopy.filter(path => legacyPaths.has(path)) : [])];
   CMS_CONTENT_FIELDS.forEach(field => {
     const paths = field.localized ? ['th', 'en'].map(lang => field.path + '.' + lang) : [field.path];
     paths.forEach(path => {
@@ -511,6 +599,11 @@ function sanitizeCmsFields(config) {
     });
   });
   return config;
+}
+
+function setCmsCopy(config, path, value) {
+  cmsSet(config, path, value);
+  config.cmsLegacyCopy = (Array.isArray(config.cmsLegacyCopy) ? config.cmsLegacyCopy : []).filter(key => key !== path);
 }
 // COVERMATE_CMS_SCHEMA_END
 
@@ -969,7 +1062,7 @@ export function sanitizeMotorCountText(text, configOrCount) {
 }
 
 export function sanitizeMotorCountConfig(config, options = {}) {
-  const isLegacy = Number(config && config.cmsContentVersion || 0) < CMS_CONTENT_VERSION;
+  const isLegacy = Number(config && config.cmsContentVersion || 0) < 1;
   const next = migrateCmsContent(config);
   next.header = next.header && typeof next.header === "object" ? next.header : {};
   if (next.header.nav === undefined) next.header.nav = cloneJSON(PRODUCT_HEADER_NAV);
@@ -1000,13 +1093,21 @@ export function sanitizeMotorCountConfig(config, options = {}) {
   return next;
 }
 
-export function sanitizeStateDoc(state) {
+export function sanitizeStateDoc(state, options = {}) {
   if (!state || !state.config) return state;
-  const config = sanitizeMotorCountConfig(state.config);
+  const input = cloneJSON(state.config);
+  const text = { ...(state.text || {}) };
+  CMS_CONTENT_FIELDS.filter(field => field.localized).forEach(field => ['th', 'en'].forEach(lang => {
+    const path = field.path + '.' + lang;
+    if (!Object.prototype.hasOwnProperty.call(text, 'cms:' + path)) return;
+    setCmsCopy(input, path, text['cms:' + path]);
+    delete text['cms:' + path];
+  }));
+  const config = sanitizeMotorCountConfig(input, options);
   return {
     ...state,
     config,
-    text: sanitizeMotorCountText(state.text || {}, config)
+    text: sanitizeMotorCountText(text, config)
   };
 }
 

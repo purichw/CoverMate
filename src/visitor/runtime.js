@@ -103,14 +103,6 @@ function isEmbeddedCoverageSection(section) {
 
 const MULTILINE = { body: 1, a: 1, quote: 1, title: 1, b1: 1, b2: 1, b3: 1 };
 
-const RENEW_KIND = {
-  motor: { th: 'ประกันรถยนต์', en: 'Motor' },
-  compulsory: { th: 'พ.ร.บ. รถยนต์', en: 'Compulsory (พ.ร.บ.)' },
-  health: { th: 'ประกันสุขภาพ', en: 'Health' },
-  life: { th: 'ประกันชีวิต', en: 'Life' },
-  accident: { th: 'ประกันอุบัติเหตุ', en: 'Personal accident' }
-};
-
 const MONTHS = [
   { th: 'มกราคม', en: 'January' }, { th: 'กุมภาพันธ์', en: 'February' }, { th: 'มีนาคม', en: 'March' },
   { th: 'เมษายน', en: 'April' }, { th: 'พฤษภาคม', en: 'May' }, { th: 'มิถุนายน', en: 'June' },
@@ -654,7 +646,7 @@ class Component extends DCLogic {
   }
 
   currentSnapshot() {
-    const cfg = this.normalizeConfig(this.state.site || DEFAULTS, { repeatableIds: true });
+    const cfg = this.normalizeConfig(this.pendingInlineConfig(), { repeatableIds: true });
     const txt = this.sanitizeTextOverrides(this.textOv || {});
     return { config: clone(cfg), text: clone(txt) };
   }
@@ -835,7 +827,7 @@ class Component extends DCLogic {
 
   seoString(value, lang) {
     if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') return value[lang] || value.th || value.en || '';
+    if (value && typeof value === 'object') return value[lang] == null ? '' : value[lang];
     return '';
   }
 
@@ -874,16 +866,22 @@ class Component extends DCLogic {
     const siteBase = root + '/';
     const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
     const image = imageRef ? new URL(imageRef, root + '/').href : '';
-    const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang)) || 'CoverMate';
+    const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang));
     const isMotor = path === '/motor';
+    const metadata = key => this.seoClean(this.seoString(cmsGet(site, 'seo.' + key), lang));
+    const area = metadata('areaServed');
+    const expertise = String(cmsGet(site, 'seo.knowsAbout') || '').split('\n').map(item => this.seoClean(item)).filter(Boolean);
+    const serviceName = metadata(isMotor ? 'motorServiceName' : 'homeServiceName');
+    const serviceType = metadata(isMotor ? 'motorServiceType' : 'homeServiceType');
+    const audience = metadata(isMotor ? 'motorAudience' : 'homeAudience');
     const org = {
       '@type': ['Organization', 'InsuranceAgency'],
       '@id': siteBase + '#organization',
       name: brand,
       url: siteBase,
       ...(cmsMedia(cmsGet(site, 'brand.media.mark')) ? { logo: { '@type': 'ImageObject', url: new URL(cmsGet(site, 'brand.media.mark'), siteBase).href } } : {}),
-      areaServed: { '@type': 'AdministrativeArea', name: 'Bangkok Metropolitan Region, Thailand' },
-      knowsAbout: ['AIA life insurance', 'AIA health insurance', 'Motor insurance comparison', 'Insurance claims support'],
+      ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}),
+      ...(expertise.length ? { knowsAbout: expertise } : {}),
       identifier: ['life', 'nonLife'].filter(key => cmsGet(site, 'licences.' + key + '.number')).map(key => ({
         '@type': 'PropertyValue', name: this.seoString(cmsGet(site, 'licences.' + key + '.label'), lang), value: cmsGet(site, 'licences.' + key + '.number')
       }))
@@ -911,7 +909,7 @@ class Component extends DCLogic {
         { '@type': 'WebSite', '@id': siteBase + '#website', url: siteBase, name: brand, inLanguage: ['th-TH', 'en'], publisher: { '@id': siteBase + '#organization' } },
         org,
         { '@type': 'WebPage', '@id': base + '#webpage', url: base, name: title, description: description, isPartOf: { '@id': siteBase + '#website' }, about: { '@id': siteBase + '#organization' }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}), inLanguage: ['th-TH', 'en'] },
-        { '@type': 'Service', '@id': base + '#insurance-advisory', name: isMotor ? (lang === 'th' ? 'ที่ปรึกษาและเปรียบเทียบประกันรถยนต์' : 'Motor insurance comparison advisory') : (lang === 'th' ? 'ที่ปรึกษาประกันชีวิต สุขภาพ และรถยนต์' : 'Life, health, and motor insurance advisory'), serviceType: isMotor ? 'Motor insurance comparison and broker advisory' : 'Insurance advisory and motor insurance comparison', provider: { '@id': siteBase + '#organization' }, areaServed: { '@type': 'AdministrativeArea', name: 'Bangkok Metropolitan Region, Thailand' }, audience: { '@type': 'Audience', audienceType: isMotor ? 'People comparing motor insurance in Thailand' : 'People comparing personal insurance in Thailand' } }
+        { '@type': 'Service', '@id': base + '#insurance-advisory', ...(serviceName ? { name: serviceName } : {}), ...(serviceType ? { serviceType: serviceType } : {}), provider: { '@id': siteBase + '#organization' }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) }
       ]
     };
   }
@@ -1407,7 +1405,7 @@ class Component extends DCLogic {
   }
 
   persistDraft() {
-    const cfg = this.normalizeConfig(this.state.site, { repeatableIds: true }), txt = this.sanitizeTextOverrides(this.textOv || {});
+    const cfg = this.normalizeConfig(this.pendingInlineConfig(), { repeatableIds: true }), txt = this.sanitizeTextOverrides(this.textOv || {});
     this.textOv = clone(txt);
     this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
     this._lastSaved = Date.now();
@@ -1480,7 +1478,9 @@ class Component extends DCLogic {
     this.textOv = clone(txt);
     this.writeJSON(K_DRAFT_TEXT, txt);
     this._lastSaved = Date.now();
-    this.queueRemoteDraft(this.state.site, txt);
+    const config = this.pendingInlineConfig();
+    this.writeJSON(K_DRAFT, config);
+    this.queueRemoteDraft(config, txt);
   }
 
   editContainers() {
@@ -1501,7 +1501,7 @@ class Component extends DCLogic {
       if (el.querySelector('input,textarea,select,img,svg')) return false;
       const wasEditable = el.hasAttribute('data-ek') || el.classList.contains('om-editable') || el.getAttribute('contenteditable') === 'true';
       const txt = el.textContent;
-      if (!txt || !txt.trim()) return wasEditable;
+      if (!txt || !txt.trim()) return this.cmsCopyPath(el) ? !el.querySelector(SEL) : wasEditable;
       const kids = el.querySelectorAll(SEL);
       for (let i = 0; i < kids.length; i++) { const kt = kids[i].textContent; if (kt && kt.trim()) return false; }
       return true;
@@ -1521,8 +1521,24 @@ class Component extends DCLogic {
     if (!this.textOv) this.textOv = this.loadText();
     const ov = this.textOv;
     if (!this._appliedText) this._appliedText = new WeakMap();
+    let migratedSite;
     this.eachEditable((el, key) => {
       el.setAttribute('data-ek', key);
+      const path = this.cmsCopyPath(el);
+      if (path) {
+        const source = migratedSite || this.state.site;
+        if ((source.cmsLegacyCopy || []).includes(path)) {
+          if (!migratedSite) migratedSite = clone(source);
+          const field = CMS_CONTENT_FIELDS.find(field => path === field.path + '.' + this.state.lang);
+          const saved = cmsGet(source, path);
+          const useLegacy = field && saved === field.seed[this.state.lang] && Object.prototype.hasOwnProperty.call(ov, key);
+          setCmsCopy(migratedSite, path, useLegacy ? String(ov[key]) : saved);
+        }
+        const value = Object.prototype.hasOwnProperty.call(ov, 'cms:' + path) ? String(ov['cms:' + path]) : resolveCmsContent(cmsGet(migratedSite || source, path) || '', migratedSite || source);
+        if (el.textContent !== value) el.textContent = value;
+        this.markEditableEmpty(el);
+        return;
+      }
       if (Object.prototype.hasOwnProperty.call(ov, key)) {
         const previous = this._appliedText.get(el);
         const base = previous && el.textContent === previous.value ? previous.base : el.textContent;
@@ -1532,6 +1548,42 @@ class Component extends DCLogic {
       }
       this.markEditableEmpty(el);
     });
+    // Resolve old positional overrides using the actual rendered layout, not guessed indexes.
+    // Visitor reads stay local; the next owner save persists the resolved CMS values.
+    if (migratedSite) this.setState({ site: migratedSite });
+  }
+
+  cmsCopyPath(el) {
+    const anchor = el.closest('[data-cms-copy]');
+    const path = anchor && anchor.getAttribute('data-cms-copy');
+    return CMS_CONTENT_FIELDS.some(field => field.localized && field.path === path) ? path + '.' + this.state.lang : '';
+  }
+
+  pendingInlineConfig() {
+    const config = clone(this.state.site || DEFAULTS);
+    CMS_CONTENT_FIELDS.filter(field => field.localized).forEach(field => ['th', 'en'].forEach(lang => {
+      const path = field.path + '.' + lang;
+      if (Object.prototype.hasOwnProperty.call(this.textOv || {}, 'cms:' + path)) setCmsCopy(config, path, this.textOv['cms:' + path]);
+    }));
+    return config;
+  }
+
+  saveInlineText(el, commit) {
+    const path = this.cmsCopyPath(el);
+    if (!this.textOv) this.textOv = this.loadText();
+    if (path) {
+      this.textOv['cms:' + path] = el.textContent || '';
+      if (commit) {
+        const site = this.pendingInlineConfig();
+        delete this.textOv['cms:' + path];
+        this.save(site);
+      } else this.saveText();
+    } else {
+      if (!this.textOv) this.textOv = this.loadText();
+      this.textOv[el.getAttribute('data-ek')] = el.textContent || '';
+      this.saveText();
+    }
+    this.markEditableEmpty(el);
   }
 
   restoreAppliedText() {
@@ -1576,15 +1628,11 @@ class Component extends DCLogic {
       }
       if (!el.__omEdit) {
         el.__omEdit = true;
-        el.addEventListener('input', function () { if (!self.textOv) self.textOv = self.loadText(); self.textOv[el.getAttribute('data-ek')] = el.textContent || ''; self.markEditableEmpty(el); self.saveText(); });
+        el.addEventListener('input', function () { self.saveInlineText(el); });
         el.addEventListener('blur', function () {
-          if (!self.textOv) self.textOv = self.loadText();
-          const k = el.getAttribute('data-ek');
           const text = el.textContent || '';
           if (!text.trim()) el.textContent = '';
-          self.textOv[k] = el.textContent || '';
-          self.markEditableEmpty(el);
-          self.saveText();
+          self.saveInlineText(el, true);
         });
         el.addEventListener('click', function (e) { if (self.state.editMode) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
       }
@@ -1725,6 +1773,7 @@ class Component extends DCLogic {
     };
     const hasLine = !!site.contact.lineUrl;
     const cmsText = path => t(cmsGet(site, path));
+    const copyTemplate = (path, values) => cmsText(path).replace(/\{\{(situation|income|lifeNeed|policy|month)\}\}/g, (_, key) => String(values[key] == null ? '' : values[key]));
     const cmsInput = (path, field) => {
       const saved = cmsGet(site, path) || '';
       const edits = S.cmsEdits || {};
@@ -1734,6 +1783,7 @@ class Component extends DCLogic {
         commit: (e) => {
           const value = e.target.value.trim();
           const pending = { ...(this.state.cmsEdits || {}) };
+          const wasEdited = Object.prototype.hasOwnProperty.call(pending, path);
           delete pending[path];
           this.setState({ cmsEdits: pending });
           if (value && ((field.media && !cmsMedia(value)) || (field.url && !acceptsHttpsUrl(value, true)) || (field.email && !acceptsEmail(value)) || (field.nav && !/^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(value)))) {
@@ -1742,7 +1792,9 @@ class Component extends DCLogic {
             this.showActionToast({ kind: 'error', title: title, body: body });
             return;
           }
-          if (value !== saved) this.upd(x => cmsSet(x, path, value));
+          const pendingInline = Object.prototype.hasOwnProperty.call(this.textOv || {}, 'cms:' + path);
+          if (pendingInline) delete this.textOv['cms:' + path];
+          if (value !== saved || pendingInline || wasEdited) this.upd(x => setCmsCopy(x, path, value));
         }
       };
     };
@@ -1767,13 +1819,14 @@ class Component extends DCLogic {
       const lifeItems = cover ? (cover.items || []).filter(it => (it.th && it.th.title !== 'ประกันรถยนต์')) : [];
       workSections = [
         { id: 'life', type: 'hero', on: true, bg: 'bg', cols: 2, cta2href: '#fit',
-          th: { kicker: 'ชีวิต · สุขภาพ · ตัวแทน AIA', title: 'ตอนที่ต้องใช้จริง\nไม่มีใครอ่านกรมธรรม์ทัน', body: 'ในฐานะตัวแทน AIA เราดูแลเรื่องชีวิตและสุขภาพเป็นหลัก — เลือกทุนให้พอกับภาระจริง เลือกค่าห้องให้พอกับโรงพยาบาลที่คุณใช้ และอธิบายข้อยกเว้นให้ครบก่อนเซ็น ไม่ใช่หลังเคลม', cta1: 'แอดไลน์ ปรึกษาฟรี', cta2: 'คำนวณทุนที่ควรมี', note: 'ไม่มีค่าที่ปรึกษา และเราไม่เสนอยูนิตลิงก์' },
-          en: { kicker: 'Life · health · AIA agent', title: 'Nobody reads the policy\nat the moment it matters', body: 'As an AIA agent, life and health are my main work — matching the sum assured to real obligations, the room rate to the hospital you actually use, and explaining every exclusion before you sign rather than after you claim.', cta1: 'Add me on LINE', cta2: 'Estimate your cover', note: 'No advisory fee, and Unit-linked plans are not offered.' }, items: [] },
+          ...Object.fromEntries(['th', 'en'].map(lang => [lang, Object.fromEntries(['kicker', 'title', 'body', 'cta1', 'cta2', 'note'].map(key => [key, cmsGet(site, 'lifeFocus.' + key + '.' + lang) || '']))])),
+          items: [] },
         { id: 'life-trust', type: 'trust', on: true, bg: 'bg', cols: 4, th: {}, en: {}, items: [
-          { icon: 'seal', th: { label: ((licences.life || {}).label || {}).th + ' {{lifeLicence}}' }, en: { label: ((licences.life || {}).label || {}).en + ' {{lifeLicence}}' } },
-          { icon: 'check', th: { label: 'ไม่เสนอยูนิตลิงก์' }, en: { label: 'No unit-linked plans' } },
-          { icon: 'file', th: { label: 'อธิบายข้อยกเว้นก่อนเซ็น' }, en: { label: 'Exclusions explained upfront' } },
-          { icon: 'shield', th: { label: 'ดูแลต่อเนื่องถึงการเคลม' }, en: { label: 'Support through claims' } } ] }
+          { icon: 'seal', th: { label: (licences.life || {}).number ? (((licences.life || {}).label || {}).th || '') + ' {{lifeLicence}}' : '' }, en: { label: (licences.life || {}).number ? (((licences.life || {}).label || {}).en || '') + ' {{lifeLicence}}' : '' } },
+          ...[['noUnitLinked', 'check'], ['exclusions', 'file'], ['claims', 'shield']].map(([key, icon]) => ({
+            icon: icon, cmsPath: 'lifeFocus.' + key,
+            th: { label: cmsGet(site, 'lifeFocus.' + key + '.th') || '' }, en: { label: cmsGet(site, 'lifeFocus.' + key + '.en') || '' }
+          })) ] }
       ];
       if (cover) workSections.push(Object.assign({}, cover, { id: 'life-cover', bg: 'surface', cols: 3, items: lifeItems }));
       ['fit', 'review', 'how', 'faq', 'talk', 'privacy'].forEach(id => { const sec = find(id); if (sec) workSections.push(sec); });
@@ -1844,6 +1897,7 @@ class Component extends DCLogic {
             : { fill: A.base, soft: A.soft, deep: A.mid };
         return {
           n: String(i + 1), key: it.id || (s.id + '-' + i), slot: 'img-' + s.id + '-' + i,
+          cmsPath: it.cmsPath || '',
           paths: ICONS[it.icon] || ICONS.check,
           label: ic.label || '', value: ic.value || '', title: ic.title || '', sub: ic.sub || '',
           b1: ic.b1 || '', b2: ic.b2 || '', b3: ic.b3 || '', name: tile ? tile.name : (ic.name || ''),
@@ -1871,6 +1925,9 @@ class Component extends DCLogic {
       const hideSelfMotorCta = routePage === 'motor' && s.type === 'insurers' && cta1href === '/motor';
       return {
         id: s.id, key: s.id, cols: s.cols,
+        cmsKicker: s.id === 'life' ? 'lifeFocus.kicker' : '', cmsTitle: s.id === 'life' ? 'lifeFocus.title' : '',
+        cmsBody: s.id === 'life' ? 'lifeFocus.body' : '', cmsCta1: s.id === 'life' ? 'lifeFocus.cta1' : '',
+        cmsCta2: s.id === 'life' ? 'lifeFocus.cta2' : '', cmsNote: s.id === 'life' ? 'lifeFocus.note' : '',
         isHero: s.type === 'hero', isMainHero: s.type === 'hero' && s.id === 'hero', isFocusHero: s.type === 'hero' && s.id !== 'hero', isTrust: s.type === 'trust', isProducts: s.type === 'products',
         isFit: s.type === 'fit', isSteps: s.type === 'steps', isInsurers: s.type === 'insurers',
         isVoices: s.type === 'testimonials', isStories: s.type === 'stories', isAbout: s.type === 'about', isFaq: s.type === 'faq',
@@ -2162,18 +2219,14 @@ class Component extends DCLogic {
 
 
     const f = S.form;
-    const QUERY = th
-      ? { quote: 'ขอใบเสนอราคา', compare: 'เปรียบเทียบแผน', general: 'สอบถามทั่วไป', review: 'ทบทวนกรมธรรม์เดิม', claim: 'ช่วยเรื่องเคลม' }
-      : { quote: 'Request a quote', compare: 'Compare plans', general: 'General question', review: 'Review my existing policy', claim: 'Help with a claim' };
-    const COVER = th
-      ? { life: 'ประกันชีวิต', health: 'ประกันสุขภาพ', motor: 'ประกันรถยนต์', accident: 'ประกันอุบัติเหตุ', savings: 'ประกันสะสมทรัพย์', unsure: 'ยังไม่แน่ใจ' }
-      : { life: 'Life', health: 'Health', motor: 'Motor', accident: 'Accident', savings: 'Savings & retirement', unsure: 'Not sure yet' };
+    const QUERY = Object.fromEntries(['quote', 'compare', 'general', 'review', 'claim'].map(key => [key, cmsText('formOptions.query.' + key)]));
+    const COVER = Object.fromEntries(['life', 'health', 'motor', 'accident', 'savings', 'unsure'].map(key => [key, cmsText('formOptions.coverage.' + key)]));
+    const RENEW_KIND = Object.fromEntries(['motor', 'compulsory', 'health', 'life', 'accident'].map(key => [key, cmsGet(site, 'formOptions.renewal.' + key) || {}]));
     let summary = sit
-      ? (th ? 'สนใจปรึกษาเรื่องประกัน — สถานการณ์: ' + sit.th + ' · รายได้ราว ' + this.fmt(S.income) + '/เดือน · ทุนชีวิตที่ควรมีประมาณ ' + this.fmt(sumAssured)
-        : 'Hi — situation: ' + sit.en + ' · income about ' + this.fmt(S.income) + '/mo · suggested life cover around ' + this.fmt(sumAssured))
-      : (th ? 'สนใจปรึกษาเรื่องประกัน' : 'Hi — I would like to talk about cover.');
-    if (f.qtype && QUERY[f.qtype]) summary += (th ? ' · เรื่อง: ' : ' · Enquiry: ') + QUERY[f.qtype];
-    if (f.coverage && COVER[f.coverage]) summary += (th ? ' · ความคุ้มครอง: ' : ' · Coverage: ') + COVER[f.coverage];
+      ? copyTemplate('publicCopy.consultationSummary', { situation: sit[lk], income: this.fmt(S.income), lifeNeed: this.fmt(sumAssured) })
+      : cmsText('publicCopy.consultationIntro');
+    if (f.qtype && QUERY[f.qtype]) summary += ' · ' + cmsText('publicCopy.summaryTopic') + ' ' + QUERY[f.qtype];
+    if (f.coverage && COVER[f.coverage]) summary += ' · ' + cmsText('publicCopy.summaryCoverage') + ' ' + COVER[f.coverage];
 
     const H = site.header, F = site.footer;
     const publicNavItems = (() => {
@@ -2225,6 +2278,7 @@ class Component extends DCLogic {
 
     return {
       th: th, en: !th,
+      publicCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('publicCopy.')).map(field => [field.path.slice(11), cmsText(field.path)])),
       A_base: A.base, A_action: A.action, A_deep: A.deep, A_mid: A.mid, A_soft: A.soft, A_text: A.text, A_light: A.light, A_on: A.on,
       thBg: th ? A.action : 'transparent', thFg: th ? A.on : 'var(--color-neutral-700)',
       enBg: !th ? A.action : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
@@ -2344,8 +2398,8 @@ class Component extends DCLogic {
 
       fName: f.name, fContact: f.contact, fTopic: f.topic, summary: summary,
       fQType: f.qtype, fCoverage: f.coverage, fConsent: !!f.consent,
-      qtypeOpts: [{ value: '', label: th ? '— เลือกหัวข้อ —' : '— Select a topic —' }].concat(Object.keys(QUERY).map(k => ({ value: k, label: QUERY[k] }))),
-      coverageOpts: [{ value: '', label: th ? '— เลือกความคุ้มครอง —' : '— Select coverage —' }].concat(Object.keys(COVER).map(k => ({ value: k, label: COVER[k] }))),
+      qtypeOpts: [{ value: '', label: cmsText('formOptions.topicPrompt'), cmsPath: 'formOptions.topicPrompt' }].concat(Object.keys(QUERY).map(k => ({ value: k, label: QUERY[k], cmsPath: 'formOptions.query.' + k }))),
+      coverageOpts: [{ value: '', label: cmsText('formOptions.coveragePrompt'), cmsPath: 'formOptions.coveragePrompt' }].concat(Object.keys(COVER).map(k => ({ value: k, label: COVER[k], cmsPath: 'formOptions.coverage.' + k }))),
       onQType: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { qtype: v }), sent: false, leadError: '' })); },
       onCoverage: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { coverage: v }), sent: false, leadError: '' })); },
       onName: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { name: v }), sent: false, leadError: '' })); },
@@ -2389,9 +2443,9 @@ class Component extends DCLogic {
       renewSent: S.renewSent, renewNotSent: !S.renewSent,
       renewIncomplete: S.renewSubmitting || !(S.renew && S.renew.kind && S.renew.month && S.renew.contact && S.renew.consent),
       renewPending: S.renewSubmitting, hasRenewError: !!S.renewError, renewError: S.renewError,
-      rKindOpts: [{ value: '', label: th ? '— ประกันประเภทไหน —' : '— Which policy —' }].concat(
-        Object.keys(RENEW_KIND).map(k => ({ value: k, label: th ? RENEW_KIND[k].th : RENEW_KIND[k].en }))),
-      rMonthOpts: [{ value: '', label: th ? '— หมดอายุเดือนไหน —' : '— Expires which month —' }].concat(
+      rKindOpts: [{ value: '', label: cmsText('formOptions.policyPrompt'), cmsPath: 'formOptions.policyPrompt' }].concat(
+        Object.keys(RENEW_KIND).map(k => ({ value: k, label: th ? RENEW_KIND[k].th : RENEW_KIND[k].en, cmsPath: 'formOptions.renewal.' + k }))),
+      rMonthOpts: [{ value: '', label: cmsText('formOptions.monthPrompt'), cmsPath: 'formOptions.monthPrompt' }].concat(
         MONTHS.map((m, i) => ({ value: String(i + 1), label: th ? m.th : m.en }))),
       onRKind: (e) => { const v = e.target.value; this.setState(s2 => ({ renew: Object.assign({}, s2.renew, { kind: v }), renewSent: false, renewError: '' })); },
       onRMonth: (e) => { const v = e.target.value; this.setState(s2 => ({ renew: Object.assign({}, s2.renew, { month: v }), renewSent: false, renewError: '' })); },
@@ -2409,9 +2463,7 @@ class Component extends DCLogic {
         const kindLabel = langNow === 'th' ? kind.th : kind.en;
         const monthLabel = langNow === 'th' ? month.th : month.en;
         const coverageMap = { motor: 'motor', compulsory: 'motor', health: 'health', life: 'life', accident: 'accident' };
-        const renewSummary = langNow === 'th'
-          ? 'ตั้งเตือนต่ออายุ: ' + kindLabel + ' · หมดอายุเดือน' + monthLabel + ' · เตือนล่วงหน้า 60 วันพร้อมเทียบเบี้ยใหม่'
-          : 'Renewal reminder: ' + kindLabel + ' · expires in ' + monthLabel + ' · remind 60 days ahead with a fresh comparison';
+        const renewSummary = copyTemplate('publicCopy.renewalSummary', { policy: kindLabel, month: monthLabel });
         this.setState({ renewSubmitting: true, renewError: '', renewSent: false });
         try {
           const cm = await import(window.location.origin + '/covermate-public.mjs');
@@ -2435,13 +2487,12 @@ class Component extends DCLogic {
         }
       },
       renewSummary: (function(){
-        const r = S.renew || {}; if (!(r.kind && r.month)) return th ? 'เลือกประเภทและเดือนที่หมดอายุ แล้วเราจะเตือนล่วงหน้า 60 วัน' : 'Pick a policy and expiry month and we will remind you 60 days ahead.';
+        const r = S.renew || {}; if (!(r.kind && r.month)) return cmsText('publicCopy.renewalHint');
         const kind = RENEW_KIND[r.kind]; const month = MONTHS[Number(r.month) - 1];
-        if (!kind || !month) return th ? 'เลือกประเภทและเดือนที่หมดอายุ แล้วเราจะเตือนล่วงหน้า 60 วัน' : 'Pick a policy and expiry month and we will remind you 60 days ahead.';
+        if (!kind || !month) return cmsText('publicCopy.renewalHint');
         const k = th ? kind.th : kind.en;
         const m = th ? month.th : month.en;
-        return th ? 'จะเตือนเรื่อง ' + k + ' ล่วงหน้า 60 วันก่อนสิ้นเดือน' + m + ' พร้อมเทียบเบี้ยใหม่ให้'
-                  : 'We will remind you about ' + k + ' 60 days before the end of ' + m + ', with a fresh comparison.';
+        return copyTemplate('publicCopy.renewalPreview', { policy: k, month: m });
       })(),
 
       adminOpen: S.admin, adminClosed: !S.admin,

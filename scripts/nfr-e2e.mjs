@@ -88,7 +88,8 @@ try {
       await visitor.locator('#hero h1').waitFor();
       assert.equal(await visitor.locator('#hero h1').innerText(), original, 'Draft does not leak to Visitor.');
       await visitor.locator('input[name=name]').fill('Unfinished visitor enquiry');
-      const visitorDocument = await visitor.evaluate(() => performance.timeOrigin);
+      // Document identity is stable even when browser timestamps are rounded.
+      const visitorDocument = await visitor.evaluate(() => (window.__covermateDocumentTestId = crypto.randomUUID()));
       await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
       const publish = admin.getByRole('button', { name: /^Publish/ }).first();
       await publish.click();
@@ -97,7 +98,7 @@ try {
       await visitor.bringToFront();
       await visitor.evaluate(() => window.dispatchEvent(new Event('focus')));
       await visitor.waitForFunction(value => document.querySelector('#hero h1')?.innerText.includes(value), marker);
-      assert.equal(await visitor.evaluate(() => performance.timeOrigin), visitorDocument, 'Publish must update an open Visitor without reload.');
+      assert.equal(await visitor.evaluate(() => window.__covermateDocumentTestId), visitorDocument, 'Publish must update an open Visitor without reload.');
       assert.equal(await visitor.locator('input[name=name]').inputValue(), 'Unfinished visitor enquiry');
       const fresh = await browser.newContext({ viewport: { width: 390, height: 844 } });
       const freshPage = await fresh.newPage();

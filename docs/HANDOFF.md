@@ -1,6 +1,26 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
+
+## CMS V2 Release
+
+The user authorized push/deploy after the CMS/release-pipeline audit.
+CMS schema v2 covers legacy life-focus copy, Calculator/form
+labels and choices, summaries, and business JSON-LD fields now have matching
+Admin controls. Canonical fields, intentional blank translations and older
+inline edits are reconciled; see [CMS ownership](CMS_CONTENT_OWNERSHIP.md).
+Exact-source hosted UAT passed on 2026-09-13, including real Auth/Firestore
+Admin-to-inline sync, blank translations, draft isolation and Publish. UAT
+fixtures were restored and the test admin deactivated. See the hosted release
+verification section in the CMS ownership document for URL, backup and reports.
+
+The Vercel operational setting is already active: `CoverMate CI` requires
+GitHub job `verify` before production alias assignment, production only. Readback
+passed via `node scripts/check-deployment-gate.mjs`. No extra UAT or CI job was
+added. Release completion requires observing the gate on the pushed SHA, served
+source readback, then the conditional production migration and visitor check;
+do not infer live status from settings or source documentation alone.
+See [release runbook](RELEASE_RUNBOOK.md).
 
 ## CMS Ownership Release
 

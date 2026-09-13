@@ -67,10 +67,16 @@ The Admin CMS manages:
 - `seo.image` and `seo.imageAlt.th/en`
 - `brand.media.favicon` and `brand.media.mark`
 - structured `licences.life/nonLife` numbers and labels used in JSON-LD
+- v2: `seo.areaServed`, newline-separated `seo.knowsAbout`,
+  `homeServiceName/motorServiceName.th/en`, `homeServiceType/motorServiceType`,
+  and `homeAudience/motorAudience`
 
 Those fields feed `document.title`, meta description, Open Graph title and
 description, and Twitter title and description after hydration. If the guarded
 fields are blank, the runtime falls back to the live brand and hero copy.
+Optional v2 business-metadata properties instead disappear when blank. Localized
+SEO values no longer fall back across languages; this preserves an intentionally
+empty translation. Canonical routes and entity types remain code-owned.
 
 The CMS must not expose arbitrary controls for canonical URL, robots directives,
 JSON-LD entity types, testimonials, ratings, reviews, or unsupported claims. Canonical remains

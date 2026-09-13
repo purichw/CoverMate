@@ -57,6 +57,7 @@ app.state = Object.assign({}, app.state, { lang: "th", site: ensureRepeatableIds
 
 const fakeElement = {
   textContent: "Original text",
+  closest: () => null,
   attrs: {},
   classList: {
     contains: () => false,

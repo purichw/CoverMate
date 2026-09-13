@@ -1,7 +1,8 @@
 # CMS Content Ownership
 
-Updated: 2026-09-12. Production code and schema migration are deployed; see the
-release evidence below.
+Updated: 2026-09-13. Current code schema: version 2. Production rollout requires
+the matching CI-gated code deployment before the conditional database migration.
+Use deployment/source readback and the migration dry run to confirm live state.
 
 ## Owner Decision
 
@@ -21,6 +22,11 @@ absent. Firestore content wins, including deliberate blanks and empty arrays.
 | Shared headings, consent, submission feedback | `ui.*` |
 | Social image/description | `seo.image/imageAlt` |
 | Section copy, calculator references, emergency numbers | Existing section config and inline editor |
+| Calculator input/result labels | `publicCopy.calc*` |
+| Consultation/renewal labels, consent, summaries and feedback | `publicCopy.contact*`, `publicCopy.renewal*`, shared `ui.*` |
+| Form choice labels, with unchanged submitted IDs | `formOptions.*` |
+| Legacy life-focus intro and trust copy | `lifeFocus.*`; existing shared licence fields |
+| Business area, expertise, service names/types and audiences in JSON-LD | `seo.areaServed/knowsAbout/homeService*/motorService*/homeAudience/motorAudience` |
 
 `CMS_CONTENT_FIELDS` in `covermate-contract.js` defines fields and one-time seeds.
 The visitor generator embeds the same schema; Brand & contact generates the
@@ -53,7 +59,7 @@ site. Authentication uses the existing gcloud identity or
 The migration reads existing live/draft independently, never copies draft to
 live, and backs up original documents under ignored `uat-results/cms-migrations/`.
 A single atomic commit updates config/text/revision and update time using
-original update-time preconditions. Concurrent edits abort. Version 1 reruns
+original update-time preconditions. Concurrent edits abort. Current-version reruns
 write nothing. Publish history and leads are untouched. The exact legacy
 Thaivivat asset migrates once to the previously approved Aioi asset; later
 intentional Admin changes are not remapped.
@@ -77,15 +83,36 @@ entire inline-editor key model is outside this change.
 Only the exact known fake phone/email inline overrides are discarded, so they
 cannot reappear after the contact fields are cleared.
 
-## Remaining Code-Owned Copy
+## Version 2 Copy Ownership
 
-This is not a claim that every visitor string has left runtime code. Legacy
-`#life-focus` introductory copy/chips and some calculator/form UI labels still
-originate there; the legacy licence number now resolves the shared CMS field.
-JSON-LD service taxonomy/area descriptions and pre-JavaScript boot metadata also
-remain source-owned. These do not restore blank contact channels or replace
-configured licence numbers. A complete copy-schema migration of those surfaces
-is separate from this ownership update.
+Brand & contact now groups Life focus, Calculator labels, Consultation form
+labels, Renewal form labels, Form choices and Business metadata. Both languages
+are independently editable. Explicit blank translations do not borrow the
+other language, including JSON-LD. Form option IDs, validation and calculation
+formulas are unchanged; only their presentation labels move to the CMS.
+
+Summary templates accept `{{situation}}`, `{{income}}`, `{{lifeNeed}}`,
+`{{policy}}` and `{{month}}` as plain-text substitutions. `seo.knowsAbout` uses
+one entry per line. Clearing optional business metadata omits its JSON-LD property.
+
+Version 2 seeds only missing fields and does not replay v0 licence/insurer
+rewrites against v1 owner content. `cmsLegacyCopy` records new localized paths
+whose older positional inline overrides may need adoption. The renderer resolves
+those against the actual DOM index rather than guessing offsets across hidden
+cards or contact links. Only a still-seeded field may adopt an old override;
+explicit owner values win. Visiting a surface resolves its pending paths locally;
+the next owner save persists them. Unvisited surfaces remain pending safely.
+Original positional text entries are retained, but cannot mask a resolved field.
+This read-time adoption does not write production or publish a draft.
+
+Marked inline leaves and Admin controls use the same canonical config paths.
+During typing, `cms:<path>.<language>` entries preserve the caret and autosave;
+blur and state sanitation fold them into config. Admin edits clear any pending
+override for that field. Empty marked leaves retain their editing slot.
+
+Still code-owned: calendar month names, formatting units, technical routes and
+schema types, pre-JavaScript boot metadata, and unrelated story-section helper
+labels/trademark disclosure. This scoped pass is not a whole-site copy rewrite.
 
 ## Verification
 
@@ -110,6 +137,8 @@ controls, text-editor regression, live-content refresh, TypeScript, security
 contracts, generated bundle checks, full `npm run check:ci` and `git diff --check`.
 
 ## Production Release Evidence
+
+The evidence below is the earlier v1 release, not v2 release evidence.
 
 - Runtime commit: `e2dba169886e374599fea81bc87c7338ff807d3b`; implementation
   commit: `501628b`. Subsequent release-record edits are documentation only.
@@ -154,3 +183,56 @@ Backups and diagnostic artifacts are ignored local files, not public assets.
 Do not restore old code alone after this migration: old code cannot resolve
 licence tokens. Prefer a forward fix. A data restore requires explicit approval
 and reconciliation of any subsequent owner edits.
+
+## Local V2 Verification
+
+2026-09-13: CMS unit/browser checks passed, including legacy inline adoption,
+Admin-to-inline and inline-to-Admin edits, normal typing/caret order, blank
+English values with retained Thai, form choice IDs, draft/preview/publish/reload,
+life-focus copy, optional media and business metadata. Merely focusing and
+leaving an untouched Admin field does not discard a pending legacy override.
+Current screenshots under `uat-results/cms-ownership/` were inspected, including
+`admin-copy-controls.png` and `life-focus-mobile.png`.
+
+Calculator, Phase 6, contract, text-editor/browser and live-content refresh
+checks passed. The isolated Auth/Firestore emulator suite passed Rules/API
+checks, real publish on Chromium and WebKit, visitor form/readback, route/panel
+journeys and accessibility/reflow checks. The WebKit no-reload assertion now uses
+document identity rather than a browser timestamp that differed by 1 ms.
+Java was already available in the project; the emulator invocation required:
+
+```sh
+JAVA_HOME="$PWD/.tools/jdk-21.0.12.1+1-jre/Contents/Home" \
+PATH="$PWD/.tools/jdk-21.0.12.1+1-jre/Contents/Home/bin:$PATH" npm run check:emulators
+```
+
+Live deployment-gate configuration readback passed separately. The initial audit
+did not release code or modify production data. The subsequent authorized release
+adds the hosted evidence below; local test results alone are not deployment proof.
+
+## V2 Hosted Release Verification
+
+On 2026-09-13 the owner authorized push/deploy. Exact-source preview:
+`https://covermate-kssm82way-purichwc-1517s-projects.vercel.app`
+(`dpl_4vkQoCrmzbZ87skybwhExt2aQRaU`). HTML, contract and Firebase writer match
+the candidate source; only Vercel's preview feedback script is appended to HTML.
+
+UAT migration backed up live/draft independently to
+`uat-results/cms-migrations/covermate-uat-1789302405454.json`. Readback passed;
+the subsequent dry run reports no changes. Real hosted Firebase Auth and
+Firestore checks passed using an isolated UAT-only owner: new Calculator labels
+sync Admin-to-inline and inline-to-Admin, blank English remains blank, Thai is
+retained, draft is isolated, and Publish updates a fresh mobile visitor. The
+original UAT fixtures were restored and the temporary admin deactivated.
+
+Command: `COVERMATE_UAT_URL=<preview> node --env-file=.env.server.local
+scripts/nfr-cloud-publish.mjs --uat-cloud --cms-only`. This explicit scope skips
+lead submission because the lead API and App Check are unchanged; the default
+combined harness still tests hosted lead submission. Reports:
+`uat-results/nfr/cloud-publish.json` and `cms-v2-preview-source.json`.
+
+For production, wait for `verify` on the pushed SHA, confirm the configured
+Vercel check holds the alias until success, then verify served bytes and public
+Home/Motor CMS data. Apply the conditional production migration only after
+compatible code is live. Its output records the production backup path. Never
+promote UAT data or publish an existing production draft for this migration.

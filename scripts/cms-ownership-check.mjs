@@ -16,7 +16,7 @@ delete legacy.sections.find(s => s.id === 'hero').cta2href;
 legacy.sections.find(s => s.id === 'insurers').items[12].logo = 'assets/ins/13-thaivivat.png';
 const migrated = sanitize(legacy);
 assert.deepEqual(contract.sanitizeMotorCountText({ 'footer:18:th': 'purich@example.com', 'hero:0:th': 'ผมพร้อมช่วยครับ' }, migrated), { 'hero:0:th': 'ผมพร้อมช่วยครับ' });
-assert.equal(migrated.cmsContentVersion, 1);
+assert.equal(migrated.cmsContentVersion, 2);
 assert.equal(migrated.contact.phone, '');
 assert.equal(migrated.contact.email, '');
 assert.equal(migrated.licences.life.number, '6401006221');
@@ -70,6 +70,38 @@ const customBeforeMigration = { licences: { life: { number: 'KEEP' } }, brand: {
 assert.equal(migrateCmsContent(customBeforeMigration).licences.life.number, 'KEEP');
 assert.equal(migrateCmsContent(customBeforeMigration).brand.media.mark, '');
 
+const v1 = structuredClone(migrated);
+v1.cmsContentVersion = 1;
+delete v1.publicCopy;
+delete v1.lifeFocus;
+v1.sections.find(s => s.id === 'insurers').items[0].logo = 'assets/ins/13-thaivivat.png';
+v1.footer.legal.en = 'Owner chose literal 6401006221';
+v1.publicCopy = { calcSpending: { th: 'Owner spending', en: '' } };
+v1.cmsLegacyCopy = [];
+const v2 = sanitize(v1);
+assert.equal(v2.cmsContentVersion, 2);
+assert.deepEqual(v2.publicCopy.calcSpending, { th: 'Owner spending', en: '' });
+assert.ok(!v2.cmsLegacyCopy.includes('publicCopy.calcSpending.en'));
+assert.ok(v2.cmsLegacyCopy.includes('lifeFocus.title.th'));
+assert.equal(v2.sections.find(s => s.id === 'insurers').items[0].logo, 'assets/ins/13-thaivivat.png', 'v2 does not repeat the v0 insurer replacement');
+assert.equal(v2.footer.legal.en, 'Owner chose literal 6401006221', 'v2 does not rewrite v1 owner copy');
+assert.deepEqual(migrateCmsContent(v2), v2);
+const pendingEdit = contract.sanitizeStateDoc({ config: v2, text: { 'cms:publicCopy.calcSpending.en': '', 'cms:lifeFocus.title.th': 'แก้ก่อนออกจากหน้า', 'hero:0:th': 'Keep unrelated copy' } });
+assert.equal(pendingEdit.config.publicCopy.calcSpending.en, '');
+assert.equal(pendingEdit.config.lifeFocus.title.th, 'แก้ก่อนออกจากหน้า');
+assert.deepEqual(pendingEdit.text, { 'hero:0:th': 'Keep unrelated copy' });
+assert.ok(!pendingEdit.config.cmsLegacyCopy.includes('lifeFocus.title.th'));
+const blankCopy = structuredClone(v2);
+for (const field of contract.CMS_CONTENT_FIELDS.filter(field => field.localized)) {
+  cmsSet(blankCopy, field.path + '.th', 'ข้อความจากเจ้าของ');
+  cmsSet(blankCopy, field.path + '.en', '');
+}
+const roundTrip = sanitize(blankCopy);
+for (const field of contract.CMS_CONTENT_FIELDS.filter(field => field.localized && !field.media)) {
+  assert.equal(cmsGet(roundTrip, field.path + '.th'), 'ข้อความจากเจ้าของ', field.path);
+  assert.equal(cmsGet(roundTrip, field.path + '.en'), '', field.path);
+}
+
 const sandbox = { URL, DCLogic: class {}, window: { CoverMateContract: contract, location: { origin: 'http://localhost', pathname: '/' } } };
 vm.runInNewContext(buildVisitorRuntime() + '\nthis.Component = Component;', sandbox);
 const owner = sandbox.Component.prototype;
@@ -85,6 +117,14 @@ assert.equal(owner.companyLogoCount(normalized), 0);
 assert.equal(owner.normalizeInsurerCountCopy('เทียบเบี้ยได้ 14 เจ้า', 0), 'เทียบเบี้ยได้ 0 เจ้า');
 const identifiers = owner.seoGraph.call(owner, normalized, 'en', 'Title', 'Description', '/motor')['@graph'][1].identifier;
 assert.deepEqual(JSON.parse(JSON.stringify(identifiers.map(item => item.value))), ['9000000001', '9000000002']);
+normalized.seo.areaServed = '';
+normalized.seo.knowsAbout = '';
+normalized.seo.motorServiceName = { th: 'บริการของเรา', en: '' };
+normalized.seo.motorServiceType = '';
+normalized.seo.motorAudience = '';
+const graph = owner.seoGraph.call(owner, normalized, 'en', 'Title', 'Description', '/motor')['@graph'];
+assert.ok(!('areaServed' in graph[1]) && !('knowsAbout' in graph[1]));
+assert.ok(!('name' in graph[3]) && !('serviceType' in graph[3]) && !('audience' in graph[3]));
 
 const document = (name, config, revision) => ({ name: `projects/covermate-purich/databases/(default)/documents/sites/covermate-uat/states/${name}`, updateTime: '2026-09-12T00:00:00Z', fields: toFirestoreFields({ config, text: { 'hero:0:th': 'Keep inline copy' }, revision }) });
 const draft = structuredClone(legacy);

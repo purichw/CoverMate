@@ -11,8 +11,7 @@ import {
   readAdminSession as readSession,
   readJSON,
   removeKey,
-  sanitizeMotorCountConfig,
-  sanitizeMotorCountText,
+  sanitizeStateDoc,
   validStateDoc,
   writeAdminSession as writeSession
 } from "./covermate-contract.js";
@@ -147,8 +146,7 @@ async function saveSiteStateNow(name, config, text) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to save CoverMate content.");
-  const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
-  const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
+  const { config: cleanConfig, text: cleanText } = sanitizeStateDoc({ config, text: text || {} }, { repeatableIds: true });
   const payload = {
     config: cleanConfig,
     text: cleanText,
@@ -176,8 +174,7 @@ async function appendVersion(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to publish CoverMate content.");
-  const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
-  const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
+  const { config: cleanConfig, text: cleanText } = sanitizeStateDoc({ config, text: text || {} }, { repeatableIds: true });
   const ref = versionRef();
   const version = {
     ...metadata,
@@ -203,8 +200,7 @@ async function publishSiteStateNow(config, text, metadata = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to publish CoverMate content.");
-  const cleanConfig = sanitizeMotorCountConfig(config, { repeatableIds: true });
-  const cleanText = sanitizeMotorCountText(text || {}, cleanConfig);
+  const { config: cleanConfig, text: cleanText } = sanitizeStateDoc({ config, text: text || {} }, { repeatableIds: true });
   const ref = versionRef();
   const ts = Date.now();
   const by = {
