@@ -3,6 +3,7 @@ import vm from "node:vm";
 
 import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
+import { readImageVersions } from "./lib/visitor-source.mjs";
 
 const playwright = loadPlaywright();
 const { chromium } = playwright;
@@ -10,6 +11,8 @@ const { chromium } = playwright;
 const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";
 const baseOrigin = new URL(baseUrl).origin;
 const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
+const expectedSocialImage = new URL("https://covermate.vercel.app/assets/covermate-og.png");
+expectedSocialImage.searchParams.set("cm_asset", readImageVersions()["/assets/covermate-og.png"]);
 const benignNavigationAbortPaths = new Set([
   "/covermate-contract.js",
   "/covermate-environment.mjs",
@@ -1684,7 +1687,7 @@ for (const [name, width, height] of viewports) {
       if (state.seo.canonical !== expectedCanonical) {
         failures.push(`${name} ${route}: canonical is not ${expectedCanonical} (${state.seo.canonical})`);
       }
-      if (!state.seo.ogTitle || !state.seo.ogDescription || state.seo.ogImage !== "https://covermate.vercel.app/assets/covermate-og.png") {
+      if (!state.seo.ogTitle || !state.seo.ogDescription || state.seo.ogImage !== expectedSocialImage.href) {
         failures.push(`${name} ${route}: Open Graph metadata incomplete`);
       }
       if (

@@ -47,7 +47,7 @@ const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true })
 const browser = await loadPlaywright().chromium.launch({ headless: true });
 const errors = [];
 try {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   await context.route('**/v1/projects/**/documents/sites/**/states/live', async route => {
     requests++;
     const body = snapshot();
@@ -74,6 +74,13 @@ try {
   await page.evaluate(() => document.fonts.ready);
   await page.clock.runFor(1200);
   await page.getByRole('button', { name: 'Switch to English' }).click();
+  // The language switch loads a different logo/font set. Exclude that initial
+  // layout work from the background-refresh scroll preservation measurement.
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.querySelectorAll('header img')].map(img => img.decode()));
+  });
+  await page.clock.runFor(1200);
   const name = page.locator('input[name=name]');
   await name.fill('Keep my name');
   await page.locator('input[name=contact]').fill('test-contact');
@@ -91,6 +98,7 @@ try {
   live.text[key] = 'Published while this tab stays open';
   await page.clock.fastForward(61000);
   await page.waitForFunction(() => document.querySelector('#hero h1')?.textContent === 'Published while this tab stays open');
+  await page.clock.runFor(100);
   assert.equal(await name.inputValue(), 'Keep my name');
   assert.equal(await page.locator('textarea[name=topic]').inputValue(), 'Keep this unfinished message');
   assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('name')), 'name');
