@@ -1,14 +1,15 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-08-30
+Last updated: 2026-09-21. Candidate Home/CMS behavior is not yet in production;
+see [HANDOFF.md](HANDOFF.md) for release status.
 
 ## Visitor Journey
 
 1. Visitor lands on `/`, `/motor`, `/#motor`, `/#life`, or an unexposed
    compatibility hash.
-2. Visitor scans the offer, credibility bar, hero coverage accordions,
+2. Visitor scans enabled CMS content: offer, credibility bar, coverage categories,
    policy-review offer, calculator, process, insurer proof, motor tier comparison, claim
-   help, renewal reminders, guides, claim stories, about/license copy, FAQ, fee transparency,
+   help, renewal reminders, claim stories, about/license copy, consolidated FAQ, fee transparency,
    privacy/PDPA copy, and contact area.
 3. Visitor starts contact through LINE, phone, email, the consultation lead
    form, or the renewal reminder form.
@@ -18,12 +19,13 @@ Last updated: 2026-08-30
 
 `/motor` is the dedicated motor-insurance campaign page inside the same
 CoverMate product. It has motor-local navigation and canonical metadata, but it
-reuses shared CMS-backed insurer, tier, process, claim, renewal, guide, FAQ,
+reuses shared CMS-backed insurer, tier, process, claim, renewal, FAQ,
 contact, and footer data where appropriate.
 
 `/#motor` and `/#life` are legacy aliases into the home visitor site. They keep
 the same global navbar as `/`; `/#motor` re-aims to `#insurers`, while `/#life`
-re-aims to the hero coverage accordion cluster at `#cover` after hydration.
+re-aims to `#cover` after hydration. Candidate Home renders coverage as a compact
+standalone section. `#guides` aliases to FAQ after consolidation.
 
 Public navbar clicks are same-page anchor jumps, not route transitions. Clicking
 items such as `ขั้นตอน` / `#how` must scroll to the section without reloading or
@@ -35,9 +37,11 @@ navigation or sitemap.
 
 ## Lead Form Contract
 
-The current public forms save validated lead documents to Firestore through
-`CoverMateFirebase.submitContactLead()`. Public writes are limited by
-`firestore.rules`; admin users can read leads in `/admin/analytics`.
+Public forms use `covermate-public.mjs` and `/api/leads`, with App Check,
+consent validation, idempotency and abuse limits. The Firebase admin helper has
+a compatibility delegate. Direct unauthenticated Firestore writes are denied.
+The candidate preserves entered fields on uncertain/offline failures and uses
+CMS-owned feedback. See `HOME_REDESIGN.md` for disclosure/form behavior.
 
 The main consultation form asks for:
 
@@ -216,18 +220,16 @@ deleting, and supported reorder controls keep identity with the intended
 logical item. Tier coverage states still follow the existing `items[].st[]` to
 `heads[]` index alignment.
 
-The `cover` data source is embedded into the hero coverage accordions instead
-of rendered as a standalone public/Admin section. The Admin Sections list must
-not show `#cover`; the copy remains editable where it appears on the page in
-inline text-edit mode.
+Candidate Home restores `cover` as its own compact public/Admin section; inline
+and panel controls share semantic owners. Guides items are now edited in FAQ.
 
-The Brand & contact tab owns global brand identity, advisor logo reference/alt
-metadata, and contact values. It must not expose direct file upload, Firebase
-Storage upload, base64/data-image storage, or drag/drop image processing.
-Credential and footer legal identity copy are visible for owner context but
-locked against casual editing. The Theme & data tab owns guarded SEO
-title/description controls; canonical, robots, admin noindex, social image, and
-JSON-LD claim boundaries stay code-owned.
+The Brand & contact tab owns global identity, real licence/provider data, media
+and contacts. They are editable, not hard-coded/read-only legal placeholders.
+The candidate Images & crop flow supports ratio-locked crop/fit, recrop,
+cancel/clear/retry with signed Cloudinary uploads and a Free-plan quota guard.
+Hosted evidence is distinct from local checks; see `CMS_MEDIA.md` and `HANDOFF.md`.
+CMS owns SEO copy/social media/business facts; route-derived canonical, robots,
+private noindex and structured-data validation remain code-owned.
 
 ## Draft Preview Flow
 

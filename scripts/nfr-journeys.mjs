@@ -16,7 +16,7 @@ const account = await fetch('http://127.0.0.1:9098/identitytoolkit.googleapis.co
 assert.ok(account.localId);
 await db.doc(`admins/${account.localId}`).set({ role: 'owner', active: true, uatOnly: true });
 const { server, baseUrl } = await startNfrServer();
-const browser = await loadPlaywright().chromium.launch({ headless: true });
+const browser = await launchChromium(loadPlaywright().chromium);
 const suffix = '?cm_env=uat&cm_emulator=1';
 const report = { form: false, adminReadback: false, sameDocumentTabs: false, previewNamespace: false, publicNewTab: false, panelClose: false, motorNavigation: false, keyboardFaq: false, reflow320: false, axe: [] };
 try {
@@ -31,6 +31,7 @@ try {
   const fixture = `Journey ${Date.now()}`;
   await form.locator('input[name=name]').fill(fixture);
   await form.locator('input[name=contact]').fill('journey@example.test');
+  await form.locator('.hm-form-details > summary').click();
   await form.locator('select[name=coverage]').selectOption('motor');
   await form.locator('input[type=checkbox]').check();
   await visitorContext.setOffline(true);

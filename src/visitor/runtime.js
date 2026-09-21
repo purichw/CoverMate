@@ -33,8 +33,9 @@ const L = (th, en) => ({ th: th, en: en });
 
 // COVERMATE_DEFAULTS_SOURCE
 // COVERMATE_CMS_SCHEMA_SOURCE
+// COVERMATE_SEO_SOURCE
 const SCHEMA = {
-  hero: { fields: [], item: null, cols: false },
+  hero: { fields: ['kicker', 'title', 'body', 'cta1', 'cta2', 'note', 'claimText', 'claimLinkText'], item: null, cols: false },
   trust: { fields: [], item: ['label'], cols: true, addLabel: 'chip' },
   products: { fields: ['kicker', 'title', 'body'], item: ['title', 'sub', 'b1', 'b2', 'b3', 'note'], cols: true, addLabel: 'card' },
   fit: { fields: ['kicker', 'title', 'body', 'note'], item: null, cols: false },
@@ -43,13 +44,12 @@ const SCHEMA = {
   tiers: { fields: ['kicker', 'title', 'body', 'note'], item: ['label', 'note', 'value'], cols: false, addLabel: 'tier' },
   testimonials: { fields: ['kicker', 'title', 'body'], item: ['quote', 'name', 'meta'], cols: true, addLabel: 'quote' },
   about: { fields: ['kicker', 'title', 'body'], item: ['label', 'value'], cols: false, addLabel: 'fact' },
-  faq: { fields: ['kicker', 'title', 'body'], item: ['q', 'a'], cols: false, addLabel: 'question' },
+  faq: { fields: ['kicker', 'title', 'body'], item: ['q', 'a', 'label', 'meta'], cols: false, addLabel: 'question' },
   contact: { fields: ['kicker', 'title', 'body', 'note'], item: null, cols: false },
   claim: { fields: ['kicker', 'title', 'body', 'note'], item: ['title', 'body', 'value'], cols: true, addLabel: 'step', card: ['kicker', 'title', 'body'], addCardLabel: 'contact tile' },
-  renew: { fields: ['kicker', 'title', 'body', 'note'], item: ['label'], cols: false, addLabel: 'reason' },
-  review: { fields: ['kicker', 'title', 'body', 'cta1', 'note'], item: ['label'], cols: true, addLabel: 'check' },
+  renew: { fields: ['kicker', 'title', 'body', 'note'], item: ['title', 'body'], cols: false, addLabel: 'reason' },
+  review: { fields: ['kicker', 'title', 'body', 'cta1', 'note'], item: ['title', 'body'], cols: true, addLabel: 'check' },
   pdpa: { fields: ['kicker', 'title', 'body', 'note'], item: ['label', 'value'], cols: false, addLabel: 'row' },
-  guides: { fields: ['kicker', 'title', 'body'], item: ['label', 'meta', 'title', 'body'], cols: true, addLabel: 'guide' },
   stories: { fields: ['kicker', 'title', 'body', 'note'], item: ['label', 'value', 'valueNote', 'title', 'body', 'meta'], cols: true, addLabel: 'story' },
   fees: { fields: ['kicker', 'title', 'body', 'note'], item: ['label', 'value'], cols: false, addLabel: 'row', card: ['kicker', 'title', 'body'], addCardLabel: 'step' }
 };
@@ -60,7 +60,8 @@ const FIELD_LABEL = {
   sub: L('คำบรรยายย่อย', 'Subtitle'), b1: L('ข้อ 1', 'Bullet 1'), b2: L('ข้อ 2', 'Bullet 2'), b3: L('ข้อ 3', 'Bullet 3'),
   label: L('ป้าย', 'Label'), value: L('ค่า', 'Value'), name: L('ชื่อ', 'Name'), quote: L('คำพูด', 'Quote'),
   meta: L('รายละเอียด', 'Detail'), q: L('คำถาม', 'Question'), a: L('คำตอบ', 'Answer'),
-  valueNote: L('คำอธิบายใต้ตัวเลข', 'Note under the figure')
+  valueNote: L('คำอธิบายใต้ตัวเลข', 'Note under the figure'),
+  claimText: L('ข้อความช่วยเหลือเมื่อเกิดเหตุ', 'Claim help text'), claimLinkText: L('ป้ายลิงก์เมื่อเกิดเหตุ', 'Claim help link label')
 };
 
 const TYPE_LABEL = {
@@ -88,10 +89,9 @@ const SECTION_ADMIN_META = {
   tiers: { group: 'Motor', title: 'Motor tier table', role: 'Editable comparison matrix for Class 1, 2+, 3+, and related cover.' },
   claim: { group: 'Support', title: 'Claim help', role: 'Accident steps, hotlines, and claim documents support.' },
   renew: { group: 'Support', title: 'Renewal reminder', role: 'Opt-in reminder form for policy renewals.' },
-  guides: { group: 'Learning', title: 'Guides', role: 'SEO article cards and education entry points.' },
   voices: { group: 'Proof', title: 'Claim stories', role: 'Realistic claim-handling examples without fake testimonial claims.' },
   about: { group: 'Trust', title: 'About advisor', role: 'Licence, role, language, and operating context.' },
-  faq: { group: 'Trust', title: 'FAQ', role: 'Common objections and service expectations.' },
+  faq: { group: 'Trust', title: 'FAQ', role: 'Questions, service expectations and insurance reading. Edit answers, optional topics and reading times here.' },
   fees: { group: 'Trust', title: 'How CoverMate is compensated', role: 'Transparent compensation and fee-flow explanation.' },
   privacy: { group: 'Compliance', title: 'Privacy / PDPA', role: 'What data is collected, why, and how to request deletion.' },
   talk: { group: 'Conversion', title: 'Contact form', role: 'Final LINE/contact block and lead form.' }
@@ -383,6 +383,11 @@ function sanitizeCmsControlsConfig(cfg) {
   cfg.footer.legal.en = cleanAdminText(cfg.footer.legal.en, 2000);
   sanitizeCmsFields(cfg);
   (cfg.sections || []).forEach(section => {
+    (section?.items || []).forEach(item => {
+      if (!item) return;
+      ['illustration','photo'].forEach(key => { if (Object.prototype.hasOwnProperty.call(item, key)) item[key] = cleanMediaRef(item[key], ''); });
+      if (Object.prototype.hasOwnProperty.call(item, 'photoAlt')) item.photoAlt = cleanAdminText(item.photoAlt, 120);
+    });
     if (!section || section.type !== 'insurers') return;
     (section.items || []).forEach(item => { if (item) item.logo = cleanMediaRef(item.logo, ''); });
     (section.cards || []).forEach(card => { if (card) { card.logo = cleanMediaRef(card.logo, ''); card.logoAlt = cleanAdminText(card.logoAlt || '', 120); } });
@@ -457,7 +462,13 @@ function repeatableIndex(list, id, fallbackIndex) {
 // into the home-page insurer section so older links do not break.
 class Component extends DCLogic {
   state = {
-    lang: 'th',
+    menuOpen: false,
+    compactHome: window.innerWidth < 768,
+    touchInteraction: window.matchMedia?.('(any-pointer: coarse)')?.matches === true,
+    stickyVisible: false,
+    calculatorTouched: false,
+    shareCalculator: false,
+    lang: new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th',
     site: clone(DEFAULTS),
     routePage: 'home',
     admin: false,
@@ -506,11 +517,46 @@ class Component extends DCLogic {
     };
     window.addEventListener('scroll', this._onScroll, { passive: true });
     window.addEventListener('resize', this._onScroll, { passive: true });
+    this._touchQuery = window.matchMedia('(any-pointer: coarse)');
+    this._homeResize = () => {
+      const compactHome = window.innerWidth < 768, touchInteraction = this._touchQuery.matches;
+      if (compactHome !== this.state.compactHome || touchInteraction !== this.state.touchInteraction) this.setState({ compactHome, touchInteraction });
+      if (this.state.menuOpen && window.innerWidth >= 1200 && !touchInteraction) this.toggleMenu(false);
+    };
+    window.addEventListener('resize', this._homeResize, { passive: true });
+    this._touchQuery.addEventListener('change', this._homeResize);
     this._raf = requestAnimationFrame(() => this.sweep());
     this._timer = setInterval(() => this.sweep(), 400);
+    this._homeKeydown = event => {
+      if (!this.state.menuOpen) return;
+      if (event.key === 'Escape') { event.preventDefault(); this.toggleMenu(false); }
+      if (event.key !== 'Tab') return;
+      const items = [...document.querySelectorAll('.hm-menu-panel a,.hm-menu-panel button')].filter(el => el.getClientRects().length);
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    this._homeAnchorClick = event => {
+      const link = event.target.closest('a[href^="#"]');
+      if (!link || this.state.editMode || this.state.admin) return;
+      const anchor = this.anchorFromHash(link.getAttribute('href'));
+      if (anchor) this.scrollToAnchor(anchor);
+    };
+    this._homeToggle = event => {
+      const el = event.target;
+      if (!el.matches?.('.hm-cover-card') || !el.open) return;
+      el.parentElement.querySelectorAll('.hm-cover-card[open]').forEach(other => { if (other !== el) other.open = false; });
+    };
+    document.addEventListener('keydown', this._homeKeydown);
+    document.addEventListener('click', this._homeAnchorClick);
+    document.addEventListener('toggle', this._homeToggle, true);
 
     this.textOv = {};
-    this._routeChange = () => this.applyMode();
+    this._routeChange = () => {
+      const lang = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th';
+      if (lang !== this.state.lang) this.setLanguage(lang);
+      this.applyMode();
+    };
     this._remoteRoute = (event) => {
       if (event.detail && event.detail.publicLive) this.applyLiveContent();
       else this.applyMode();
@@ -523,6 +569,11 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    document.removeEventListener('keydown', this._homeKeydown);
+    document.removeEventListener('click', this._homeAnchorClick);
+    document.removeEventListener('toggle', this._homeToggle, true);
+    window.removeEventListener('resize', this._homeResize);
+    this._touchQuery?.removeEventListener('change', this._homeResize);
     window.removeEventListener('scroll', this._onScroll);
     window.removeEventListener('resize', this._onScroll);
     window.removeEventListener('hashchange', this._routeChange);
@@ -537,6 +588,8 @@ class Component extends DCLogic {
   }
 
   sweep() {
+    this.updateHomeSticky();
+    document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
     if (!nodes.length) return;
     const h = window.innerHeight || 800;
@@ -546,10 +599,40 @@ class Component extends DCLogic {
     }
   }
 
+  updateHomeSticky() {
+    if (this.state.routePage !== 'home') return;
+    const hero = document.getElementById('hero');
+    const inView = selector => [...document.querySelectorAll(selector)].some(el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top < innerHeight && r.bottom > 0; });
+    const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
+    const visible = !!hero && hero.getBoundingClientRect().bottom < 0 && !inView('#talk form, footer') && !editing;
+    if (visible !== this.state.stickyVisible) this.setState({ stickyVisible: visible });
+  }
+
+  toggleMenu(open, event) {
+    if (!open && event && event.target.closest('.hm-menu-panel') && !event.target.closest('a,button')) return;
+    if (open) {
+      // Safari does not focus buttons on pointer activation.
+      this._menuReturnFocus = event?.currentTarget || document.querySelector('header .hm-menu-button') || document.activeElement;
+      this._menuOverflow = document.body.style.overflow;
+    }
+    this.setState({ menuOpen: open }, () => requestAnimationFrame(() => {
+      document.body.style.overflow = open ? 'hidden' : (this._menuOverflow || '');
+      document.querySelectorAll('header,main,footer').forEach(el => { el.inert = open; });
+      if (open) document.querySelector('.hm-menu-panel button')?.focus();
+      else this._menuReturnFocus?.focus();
+    }));
+  }
+
   readJSON(k) { try { const r = window.localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
   writeJSON(k, v) { try { window.localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* quota */ } }
 
-  setLanguage(lang) {
+  setLanguage(lang, event) {
+    if (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey) return;
+    event?.preventDefault();
+    const address = new URL(window.location.href);
+    if (lang === 'en') address.searchParams.set('lang', 'en');
+    else address.searchParams.delete('lang');
+    window.history.replaceState(window.history.state, '', address.pathname + address.search + address.hash);
     this.setState({ lang: lang === 'en' ? 'en' : 'th' }, () => {
       this.syncSeo();
       requestAnimationFrame(() => {
@@ -825,23 +908,6 @@ class Component extends DCLogic {
     } catch (e) { return false; }
   }
 
-  seoString(value, lang) {
-    if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') return value[lang] == null ? '' : value[lang];
-    return '';
-  }
-
-  seoClean(value) {
-    return String(value || '').replace(/\s+/g, ' ').trim();
-  }
-
-  seoLimit(value, max) {
-    const clean = this.seoClean(value);
-    if (clean.length <= max) return clean;
-    const cut = clean.slice(0, max + 1).replace(/\s+\S*$/, '');
-    return (cut || clean.slice(0, max)).trim();
-  }
-
   setSeoMeta(kind, key, value) {
     let el = document.head.querySelector('meta[' + kind + '="' + key + '"]');
     if (!value) { if (el) el.remove(); return; }
@@ -859,105 +925,42 @@ class Component extends DCLogic {
     if (rel === 'icon' || rel === 'apple-touch-icon') { el.removeAttribute('type'); el.removeAttribute('sizes'); }
   }
 
-  seoGraph(site, lang, title, description, routePath) {
-    const root = 'https://covermate.vercel.app';
-    const path = routePath === '/motor' ? '/motor' : '/';
-    const base = root + path;
-    const siteBase = root + '/';
-    const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
-    const image = imageRef ? new URL(assetURL(imageRef), root + '/').href : '';
-    const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang));
-    const isMotor = path === '/motor';
-    const metadata = key => this.seoClean(this.seoString(cmsGet(site, 'seo.' + key), lang));
-    const area = metadata('areaServed');
-    const expertise = String(cmsGet(site, 'seo.knowsAbout') || '').split('\n').map(item => this.seoClean(item)).filter(Boolean);
-    const serviceName = metadata(isMotor ? 'motorServiceName' : 'homeServiceName');
-    const serviceType = metadata(isMotor ? 'motorServiceType' : 'homeServiceType');
-    const audience = metadata(isMotor ? 'motorAudience' : 'homeAudience');
-    const org = {
-      '@type': ['Organization', 'InsuranceAgency'],
-      '@id': siteBase + '#organization',
-      name: brand,
-      url: siteBase,
-      ...(cmsMedia(cmsGet(site, 'brand.media.mark')) ? { logo: { '@type': 'ImageObject', url: new URL(cmsGet(site, 'brand.media.mark'), siteBase).href } } : {}),
-      ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}),
-      ...(expertise.length ? { knowsAbout: expertise } : {}),
-      identifier: ['life', 'nonLife'].filter(key => cmsGet(site, 'licences.' + key + '.number')).map(key => ({
-        '@type': 'PropertyValue', name: this.seoString(cmsGet(site, 'licences.' + key + '.label'), lang), value: cmsGet(site, 'licences.' + key + '.number')
-      }))
-    };
-    const phone = site.contact && this.seoClean(site.contact.phone);
-    const email = site.contact && this.seoClean(site.contact.email);
-    const lineUrl = site.contact && this.seoClean(site.contact.lineUrl);
-    const facebookUrl = site.contact && this.seoClean(site.contact.facebookUrl);
-    const sameAs = [lineUrl, facebookUrl].filter(url => /^https?:/.test(url || ''));
-    if (phone && !/x{2,}/i.test(phone)) org.telephone = phone;
-    if (email && !/@example.com$/i.test(email)) org.email = email;
-    if (sameAs.length) org.sameAs = sameAs;
-    if (org.telephone || org.email) {
-      org.contactPoint = [{
-        '@type': 'ContactPoint',
-        contactType: 'customer service',
-        availableLanguage: ['Thai', 'English'],
-        telephone: org.telephone,
-        email: org.email
-      }];
-    }
-    return {
-      '@context': 'https://schema.org',
-      '@graph': [
-        { '@type': 'WebSite', '@id': siteBase + '#website', url: siteBase, name: brand, inLanguage: ['th-TH', 'en'], publisher: { '@id': siteBase + '#organization' } },
-        org,
-        { '@type': 'WebPage', '@id': base + '#webpage', url: base, name: title, description: description, isPartOf: { '@id': siteBase + '#website' }, about: { '@id': siteBase + '#organization' }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}), inLanguage: ['th-TH', 'en'] },
-        { '@type': 'Service', '@id': base + '#insurance-advisory', ...(serviceName ? { name: serviceName } : {}), ...(serviceType ? { serviceType: serviceType } : {}), provider: { '@id': siteBase + '#organization' }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) }
-      ]
-    };
+  languageHref(lang) {
+    const url = new URL(window.location.href);
+    if (lang === 'en') url.searchParams.set('lang', 'en');
+    else url.searchParams.delete('lang');
+    return url.pathname + url.search + url.hash;
   }
 
   syncSeo() {
     if (typeof document === 'undefined') return;
     const site = this.state.site || DEFAULTS;
-    const lang = this.state.lang === 'en' ? 'en' : 'th';
     const owner = this.state.admin || this.state.editMode || this.state.preview;
-    const routePage = this.state.routePage === 'motor' ? 'motor' : 'home';
-    const routePath = routePage === 'motor' ? '/motor' : '/';
-    const root = 'https://covermate.vercel.app';
-    const canonical = root + routePath;
-    const imageRef = cmsMedia(cmsGet(site, 'seo.image'));
-    const image = imageRef ? new URL(assetURL(imageRef), root + '/').href : '';
-    const brand = this.seoClean(this.seoString(site.brand && site.brand.name, lang)) || 'CoverMate';
-    const motorPage = this.getMotorPage(site);
-    const seo = routePage === 'motor' ? this.mergeDeepDefaults(site.seo || {}, motorPage.seo || {}) : (site.seo || {});
-    const seoTitle = this.seoClean(this.seoString(seo.title, lang));
-    const seoDescription = this.seoClean(this.seoString(seo.description, lang));
-    const heroSource = routePage === 'motor' ? motorPage.hero : ((site.sections || []).find(s => s.type === 'hero') || {});
-    const heroBody = this.normalizeInsurerCountCopy(this.seoString(heroSource[lang] && heroSource[lang].body, lang), this.companyLogoCount(site));
-    const defaultTitle = brand;
-    const rawTitle = owner ? 'CoverMate Admin' : (seoTitle || defaultTitle);
-    const title = this.seoLimit(rawTitle, 68);
-    const description = this.seoLimit(owner ? 'Private CoverMate owner tools.' : (seoDescription || heroBody), 155);
-    document.documentElement.lang = lang === 'th' ? 'th-TH' : 'en';
-    document.title = title;
-    this.setSeoMeta('name', 'description', description);
-    this.setSeoMeta('name', 'robots', owner ? 'noindex,nofollow,noarchive' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
-    this.setSeoMeta('property', 'og:locale', lang === 'th' ? 'th_TH' : 'en_US');
-    this.setSeoMeta('property', 'og:url', canonical);
-    this.setSeoMeta('property', 'og:title', title);
-    this.setSeoMeta('property', 'og:description', description);
-    this.setSeoMeta('property', 'og:image', image);
-    this.setSeoMeta('property', 'og:image:secure_url', image);
-    this.setSeoMeta('property', 'og:image:width', '');
-    this.setSeoMeta('property', 'og:image:height', '');
-    this.setSeoMeta('property', 'og:image:alt', image ? this.seoString(cmsGet(site, 'seo.imageAlt'), lang) : '');
-    this.setSeoMeta('name', 'twitter:title', title);
-    this.setSeoMeta('name', 'twitter:description', description);
-    this.setSeoMeta('name', 'twitter:image', image);
-    this.setSeoLink('canonical', canonical);
-    this.setSeoLink('icon', assetURL(cmsMedia(cmsGet(site, 'brand.media.favicon'))));
-    this.setSeoLink('apple-touch-icon', assetURL(cmsMedia(cmsGet(site, 'brand.media.mark'))));
+    const previewHost = window.location.hostname.endsWith('.vercel.app') && window.location.hostname !== 'covermate.vercel.app';
+    const productionHost = ['covermateinsurance.com', 'www.covermateinsurance.com', 'covermate.vercel.app'].includes(window.location.hostname);
+    const queryUat = ['uat', 'staging', 'preview'].includes(new URLSearchParams(window.location.search).get('cm_env'));
+    const uat = previewHost || (!productionHost && queryUat) || document.documentElement.dataset.covermateEnvironment === 'uat' || window.__covermateRemoteContent?.environment === 'uat';
+    const model = createSeoModel(site, {
+      path: this.state.routePage === 'motor' ? '/motor' : '/',
+      lang: this.state.lang, privatePage: owner, noindex: owner || uat, motorDefaults: DEFAULTS.motorPage, assetPath: assetURL
+    });
+    document.documentElement.lang = model.language;
+    document.title = model.title;
+    for (const [key, value] of Object.entries(model.meta)) this.setSeoMeta('name', key, value);
+    for (const [key, value] of Object.entries(model.properties)) this.setSeoMeta('property', key, value);
+    for (const key of ['og:image:type', 'og:image:width', 'og:image:height']) this.setSeoMeta('property', key, '');
+    this.setSeoLink('canonical', model.canonical);
+    for (const [rel, href] of Object.entries(model.icons)) this.setSeoLink(rel, href);
+    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach(node => node.remove());
+    for (const [lang, href] of Object.entries(model.alternates)) {
+      const link = document.createElement('link');
+      link.rel = 'alternate'; link.hreflang = lang; link.href = href;
+      document.head.appendChild(link);
+    }
     let json = document.getElementById('covermate-jsonld');
+    if (!model.graph) { json?.remove(); return; }
     if (!json) { json = document.createElement('script'); json.type = 'application/ld+json'; json.id = 'covermate-jsonld'; document.head.appendChild(json); }
-    json.textContent = JSON.stringify(this.seoGraph(site, lang, title, description, routePath));
+    json.textContent = JSON.stringify(model.graph);
   }
 
   migrate() {
@@ -1033,9 +1036,6 @@ class Component extends DCLogic {
   // nav anchors, language buckets, and newly-added fields.
   normalizeConfig(config, options) {
     const input = config && config.sections ? config : DEFAULTS;
-    const hadMotorPage = !!(input && input.motorPage && typeof input.motorPage === 'object');
-    const seedMotorSharedSections = !hadMotorPage;
-    const motorSharedRouteIds = new Set(['insurers', 'tiers', 'how', 'claim', 'renew', 'guides', 'faq', 'talk']);
     const cfg = migrateCmsContent(input);
     const shouldEnsureRepeatableIds = !!(options && options.repeatableIds);
     const mergeObj = (target, source) => Object.assign(clone(source || {}), target || {});
@@ -1085,14 +1085,13 @@ class Component extends DCLogic {
       }
       cfg.sections.splice(at, 0, clone(def));
     };
-    if (!input.cmsContentVersion) ['review', 'claim', 'renew', 'guides', 'fees', 'privacy', 'tiers'].forEach(ensureSection);
+    if (!input.cmsContentVersion) ['review', 'claim', 'renew', 'fees', 'privacy', 'tiers'].forEach(ensureSection);
 
     cfg.sections.forEach(s => {
       if (!s) return;
       const def = defById[s.id] || defByType[s.type];
       if (def) {
         if (typeof s.on !== 'boolean') s.on = def.on;
-        if (seedMotorSharedSections && motorSharedRouteIds.has(s.id) && def.on !== false) s.on = true;
         if (!s.bg) s.bg = def.bg;
         if (!s.cols) s.cols = def.cols;
         if (def.calculator) s.calculator = this.mergeDeepDefaults(def.calculator, s.calculator);
@@ -1266,8 +1265,16 @@ class Component extends DCLogic {
 
   publicPathForRoutePage(page) {
     const contract = window.CoverMateContract || {};
-    if (typeof contract.publicPathForRoutePage === 'function') return contract.publicPathForRoutePage(page);
-    return page === 'motor' ? '/motor' : '/';
+    const path = typeof contract.publicPathForRoutePage === 'function' ? contract.publicPathForRoutePage(page) : (page === 'motor' ? '/motor' : '/');
+    return this.localizedPublicHref(path);
+  }
+
+  localizedPublicHref(value) {
+    if (!/^\/(?:motor)?(?:[?#]|$)/.test(value || '')) return value;
+    const url = new URL(value, window.location.origin);
+    if (this.state.lang === 'en') url.searchParams.set('lang', 'en');
+    else url.searchParams.delete('lang');
+    return url.pathname + url.search + url.hash;
   }
 
   ownerPathForMode(mode, page) {
@@ -1297,7 +1304,7 @@ class Component extends DCLogic {
   }
 
   anchorFromHash(hash) {
-    const ALIAS = { motor: 'insurers', life: 'cover' };
+    const ALIAS = { motor: 'insurers', life: 'cover', guides: 'faq' };
     let anchor = (hash && hash.charAt(0) === '#') ? hash.slice(1) : '';
     if (ALIAS[anchor]) anchor = ALIAS[anchor];
     return anchor;
@@ -1305,10 +1312,15 @@ class Component extends DCLogic {
 
   scrollToAnchor(anchor) {
     if (!anchor || anchor.indexOf('-focus') >= 0) return;
+    let focused = false;
     const aimAnchor = () => {
       const el = document.getElementById(anchor);
       const header = document.querySelector('header');
       if (!el) return;
+      let ancestor = el.closest('details');
+      while (ancestor) { ancestor.open = true; ancestor = ancestor.parentElement?.closest('details'); }
+      const disclosure = el.querySelector('.hm-section-disclosure, .hm-renew-disclosure');
+      if (disclosure) disclosure.open = true;
       const headerBottom = header ? header.getBoundingClientRect().bottom : 72;
       const gap = 22;
       const top = Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - headerBottom - gap);
@@ -1321,6 +1333,11 @@ class Component extends DCLogic {
       window.scrollTo(0, top);
       if (root) root.style.scrollBehavior = rootBehavior;
       if (body) body.style.scrollBehavior = bodyBehavior;
+      if (!focused) {
+        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+        el.focus({ preventScroll: true });
+        focused = true;
+      }
     };
     requestAnimationFrame(() => {
       aimAnchor();
@@ -1333,11 +1350,19 @@ class Component extends DCLogic {
   applyLiveContent() {
     const contract = window.CoverMateContract;
     if (contract.isAdminNamespacePath(location.pathname) || contract.isOwnerHash(location.hash) || this.state.admin || this.state.editMode || this.state.preview) return;
-    const src = this.loadLive();
+    const src = adaptLegacyHomeCopy(this.loadLive().config, this.loadLive().text);
+    const old = this.state.site;
+    const form = {...this.state.form}, renew = {...this.state.renew};
+    let publicNoticeKey = '';
+    const changed = path => JSON.stringify(cmsGet(old, path)) !== JSON.stringify(cmsGet(src.config, path));
+    if (form.consent && changed('ui.consultationConsent')) { form.consent = false; publicNoticeKey = 'homeDesign.consentChanged'; }
+    if (renew.consent && changed('publicCopy.renewalConsent')) { renew.consent = false; publicNoticeKey = 'homeDesign.consentChanged'; }
+    const disabled = id => !(src.config.sections || []).some(section => section.id === id && section.on !== false);
+    if ((form.contact && disabled('talk')) || (renew.contact && disabled('renew'))) publicNoticeKey = 'homeDesign.formUnavailable';
     this.restoreAppliedText();
     this.textOv = clone(src.text || {});
     // Merge only published content. Keep form/calculator values, language and navigation intact.
-    this.setState({ site: src.config }, () => {
+    this.setState({ site: src.config, form, renew, publicNoticeKey }, () => {
       this.syncSeo();
       requestAnimationFrame(() => this.applyText());
     });
@@ -1374,7 +1399,8 @@ class Component extends DCLogic {
       }
       return;
     }
-    const src = owner ? this.loadDraft() : this.loadLive();
+    const loaded = owner ? this.loadDraft() : this.loadLive();
+    const src = adaptLegacyHomeCopy(loaded.config, loaded.text);
     this._modeApplied = true;
     this.textOv = clone(src.text || {});
     try {
@@ -1523,11 +1549,12 @@ class Component extends DCLogic {
     if (!this._appliedText) this._appliedText = new WeakMap();
     let migratedSite;
     this.eachEditable((el, key) => {
-      el.setAttribute('data-ek', key);
+      el.setAttribute('data-ek', this.cmsCopyPath(el) ? 'cms:' + this.cmsCopyPath(el) : key);
       const path = this.cmsCopyPath(el);
+      const legacyLayout = this.state.routePage !== 'home' || /^(fit|life|header|footer|sticky):/.test(key);
       if (path) {
         const source = migratedSite || this.state.site;
-        if ((source.cmsLegacyCopy || []).includes(path)) {
+        if (legacyLayout && (source.cmsLegacyCopy || []).includes(path)) {
           if (!migratedSite) migratedSite = clone(source);
           const field = CMS_CONTENT_FIELDS.find(field => path === field.path + '.' + this.state.lang);
           const saved = cmsGet(source, path);
@@ -1539,7 +1566,7 @@ class Component extends DCLogic {
         this.markEditableEmpty(el);
         return;
       }
-      if (Object.prototype.hasOwnProperty.call(ov, key)) {
+      if (legacyLayout && Object.prototype.hasOwnProperty.call(ov, key)) {
         const previous = this._appliedText.get(el);
         const base = previous && el.textContent === previous.value ? previous.base : el.textContent;
         const value = String(ov[key]);
@@ -1554,13 +1581,19 @@ class Component extends DCLogic {
   }
 
   cmsCopyPath(el) {
+    const semantic = el.closest('[data-content-path]')?.getAttribute('data-content-path');
+    if (semantic && isSemanticCopyPath(this.state.site, semantic)) return semantic;
     const anchor = el.closest('[data-cms-copy]');
     const path = anchor && anchor.getAttribute('data-cms-copy');
-    return CMS_CONTENT_FIELDS.some(field => field.localized && field.path === path) ? path + '.' + this.state.lang : '';
+    return path && (CMS_CONTENT_FIELDS.some(field => field.localized && field.path === path) || isSemanticCopyPath(this.state.site, path + '.' + this.state.lang)) ? path + '.' + this.state.lang : '';
   }
 
   pendingInlineConfig() {
     const config = clone(this.state.site || DEFAULTS);
+    Object.keys(this.textOv || {}).filter(key => key.startsWith('cms:')).forEach(key => {
+      const path = key.slice(4);
+      if (isSemanticCopyPath(config, path)) setCmsCopy(config, path, this.textOv[key]);
+    });
     CMS_CONTENT_FIELDS.filter(field => field.localized).forEach(field => ['th', 'en'].forEach(lang => {
       const path = field.path + '.' + lang;
       if (Object.prototype.hasOwnProperty.call(this.textOv || {}, 'cms:' + path)) setCmsCopy(config, path, this.textOv['cms:' + path]);
@@ -1620,7 +1653,8 @@ class Component extends DCLogic {
   enableEdit() {
     const self = this;
     this.eachEditable((el, key) => {
-      el.setAttribute('data-ek', key);
+      const path = this.cmsCopyPath(el);
+      el.setAttribute('data-ek', path ? 'cms:' + path : key);
       if (el.getAttribute('contenteditable') !== 'true') {
         el.setAttribute('contenteditable', 'true');
         el.setAttribute('spellcheck', 'false');
@@ -1657,7 +1691,14 @@ class Component extends DCLogic {
     return ['hero', 'trust', 'cover'].map(key => motor[key]).find(x => x && x.id === sectionId) || null;
   }
 
-  upd(fn) { const s = clone(this.state.site); fn(s); this.save(s); }
+  upd(fn) {
+    const s = this.pendingInlineConfig(), before = clone(s);
+    fn(s);
+    Object.keys(this.textOv || {}).filter(key => key.startsWith('cms:')).forEach(key => {
+      if (cmsGet(before, key.slice(4)) !== cmsGet(s, key.slice(4))) delete this.textOv[key];
+    });
+    this.save(s);
+  }
 
   secIdx(id) { return this.state.site.sections.findIndex(x => x.id === id); }
 
@@ -1678,6 +1719,10 @@ class Component extends DCLogic {
       const j = i + dir;
       if (!Array.isArray(list) || i < 0 || j < 0 || j >= list.length) return;
       const item = list[i]; list[i] = list[j]; list[j] = item;
+      if (key === 'heads') (section.items || []).forEach(row => {
+        const status = row.st || [];
+        const value = status[i]; status[i] = status[j]; status[j] = value;
+      });
     });
   }
 
@@ -1715,6 +1760,27 @@ class Component extends DCLogic {
   }
 
   fmt(n) { return '฿' + Math.round(n).toLocaleString('en-US'); }
+
+  async editMedia(path) {
+    if (!this.hasSession()) return;
+    const slot = cmsImageSlots(this.state.site,this.state.lang).find(item => item.path === path);
+    if (!slot) return;
+    try {
+      const editor = await import(window.location.origin + '/admin/media-editor.js');
+      await editor.editImage({slot,lang:'en',source:this.state.site.mediaEdits?.[path]?.source || slot.value,
+        getToken:async()=>{const firebase=await this.firebase();return firebase.getAdminIdToken(true);},
+        onApply:result=>{
+          if (!cmsImageSlots(this.state.site,this.state.lang).some(item=>item.path===path) || String(cmsGet(this.state.site,path) || '') !== slot.value) throw Error('This image changed while you were editing. Close and reopen the image editor.');
+          if (result.url && !cmsMedia(result.url)) throw Error('Invalid image URL.');
+          this.upd(config=>{cmsSet(config,path,result.url);config.mediaEdits=config.mediaEdits || {};config.mediaEdits[path]={output:result.url,source:result.sourceUrl};});
+        }
+      });
+    } catch (error) { this.showActionToast({kind:'error',title:'Image editor unavailable',body:error.message}); }
+  }
+
+  focusFormError(section) {
+    requestAnimationFrame(() => document.querySelector('#' + section + ' [role="alert"]')?.focus());
+  }
 
   fmtShort(n, th) {
     if (n >= 1000000) { const m = n / 1000000; return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + (th ? ' ล้าน' : 'M'); }
@@ -1805,6 +1871,7 @@ class Component extends DCLogic {
         const value = cmsGet(site, path) || '';
         return { key: path, path: path, label: field.label, value: value,
           hasImage: !!(field.media && value), image: field.media ? assetURL(value) : '',
+          isMedia:!!field.media, editImage:()=>this.editMedia(path),
           ...cmsInput(path, field)
         };
       })
@@ -1812,7 +1879,9 @@ class Component extends DCLogic {
 
     const routePage = S.routePage === 'motor' ? 'motor' : 'home';
     const motorPageConfig = this.getMotorPage(site);
-    let workSections = (routePage === 'motor' || S.motor) ? this.buildMotorPageSections(site) : (site.sections || []).filter(s => !isEmbeddedCoverageSection(s));
+    const isHome = routePage === 'home' && !S.motor && !S.life;
+    const homeDesign = site.homeDesign || {};
+    let workSections = (routePage === 'motor' || S.motor) ? this.buildMotorPageSections(site) : (site.sections || []);
     if (S.life) {
       const find = (id) => site.sections.find(x => x.id === id) || null;
       const cover = find('cover');
@@ -1822,9 +1891,9 @@ class Component extends DCLogic {
           ...Object.fromEntries(['th', 'en'].map(lang => [lang, Object.fromEntries(['kicker', 'title', 'body', 'cta1', 'cta2', 'note'].map(key => [key, cmsGet(site, 'lifeFocus.' + key + '.' + lang) || '']))])),
           items: [] },
         { id: 'life-trust', type: 'trust', on: true, bg: 'bg', cols: 4, th: {}, en: {}, items: [
-          { icon: 'seal', th: { label: (licences.life || {}).number ? (((licences.life || {}).label || {}).th || '') + ' {{lifeLicence}}' : '' }, en: { label: (licences.life || {}).number ? (((licences.life || {}).label || {}).en || '') + ' {{lifeLicence}}' : '' } },
+          { icon: 'seal', iconImage:cmsGet(site,'lifeFocus.licenceIcon'), th: { label: (licences.life || {}).number ? (((licences.life || {}).label || {}).th || '') + ' {{lifeLicence}}' : '' }, en: { label: (licences.life || {}).number ? (((licences.life || {}).label || {}).en || '') + ' {{lifeLicence}}' : '' } },
           ...[['noUnitLinked', 'check'], ['exclusions', 'file'], ['claims', 'shield']].map(([key, icon]) => ({
-            icon: icon, cmsPath: 'lifeFocus.' + key,
+            icon: icon, iconImage:cmsGet(site,'lifeFocus.'+key+'Icon'), cmsPath: 'lifeFocus.' + key,
             th: { label: cmsGet(site, 'lifeFocus.' + key + '.th') || '' }, en: { label: cmsGet(site, 'lifeFocus.' + key + '.en') || '' }
           })) ] }
       ];
@@ -1841,11 +1910,12 @@ class Component extends DCLogic {
     if (visibleAnchorIds.has('cover')) visibleAnchorIds.add('life');
     const contract = window.CoverMateContract || {};
     const normalizeSectionHref = (href) => {
-      if (typeof contract.normalizeSectionHref === 'function') return contract.normalizeSectionHref(href);
+      if (typeof contract.normalizeSectionHref === 'function') return this.localizedPublicHref(contract.normalizeSectionHref(href));
       const raw = String(href || '').trim();
       if (raw === '#motor') return '#insurers';
       if (raw === '#life') return '#cover';
-      return raw;
+      if (raw === '#guides') return '#faq';
+      return this.localizedPublicHref(raw);
     };
     const isSectionHref = (href) => {
       if (typeof contract.isSectionHref === 'function') return contract.isSectionHref(href);
@@ -1859,6 +1929,8 @@ class Component extends DCLogic {
     };
     const sections = workSections.filter(s => s && s.on !== false).map(rawSection => {
       const s = resolveCmsContent(rawSection, site);
+      const motorKey = ['hero','trust','cover'].find(key => motorPageConfig[key]?.id === s.id);
+      const sectionPath = motorKey ? 'motorPage.' + motorKey : 'sections.@' + (s.id === 'life-cover' ? 'cover' : s.id);
       const p = this.pal(s.bg, A);
       const c = s[lk] || {};
       const headPairs = (s.heads || []).map((h, idx) => ({ h: h, idx: idx, id: (h && h.id) || '' })).filter(x => x.h && x.h.on !== false);
@@ -1877,6 +1949,7 @@ class Component extends DCLogic {
             n: i + 1,
             key: 'hero-service-' + i + '-' + (ic.title || it.icon || ''),
             paths: ICONS[it.icon] || ICONS.check,
+            iconImage:assetURL(it.iconImage),hasIconImage:!!it.iconImage,hasVectorIcon:!it.iconImage,
             title: ic.title || '',
             sub: ic.sub || '',
             b1: ic.b1 || '',
@@ -1897,19 +1970,27 @@ class Component extends DCLogic {
             : { fill: A.base, soft: A.soft, deep: A.mid };
         return {
           n: String(i + 1), key: it.id || (s.id + '-' + i), slot: 'img-' + s.id + '-' + i,
+          contentId: it.id,
+          homeDetailId: 'home-tier-' + (it.id || (s.id + '-' + i)),
+          homeDetailHref: '#home-tier-' + (it.id || (s.id + '-' + i)),
+          illustration: assetURL(it.illustration || ''), hasIllustration: !!it.illustration,
+          copy: Object.fromEntries(['label','title','sub','body','b1','b2','b3','note','q','a','meta','value','name','quote','valueNote'].map(field => [field, sectionPath + '.items.@' + it.id + '.' + lk + '.' + field])),
+          photo: assetURL(it.photo || ''), photoAlt: it.photoAlt || '', hasPhoto: !!it.photo,
           cmsPath: it.cmsPath || '',
           paths: ICONS[it.icon] || ICONS.check,
+          iconImage:assetURL(it.iconImage),hasIconImage:!!it.iconImage,hasVectorIcon:!it.iconImage,
           label: ic.label || '', value: ic.value || '', title: ic.title || '', sub: ic.sub || '',
           b1: ic.b1 || '', b2: ic.b2 || '', b3: ic.b3 || '', name: tile ? tile.name : (ic.name || ''),
           quote: ic.quote || '', meta: ic.meta || '', q: ic.q || '', a: ic.a || '',
-          body: ic.body || '', fill: tone.fill, soft: tone.soft, deep: tone.deep,
+          body: ic.body || '', hasMetadata:!!(ic.label || ic.meta), fill: tone.fill, soft: tone.soft, deep: tone.deep,
           note: ic.note || '', hasNote: !!ic.note, valueNote: ic.valueNote || '',
           logo: tile ? assetURL(tile.logo) : '', logoAlt: tile ? (tile.logoAlt || tile.name) : '', hasLogo: !!(tile && tile.logo),
           cells: headPairs.map((hp, ci) => {
             const hd = heads[ci] || '';
             const v = (it.st || [])[hp.idx] || 'n';
             return {
-              key: (it.id || (s.id + '-' + i)) + '-' + (hp.id || hp.idx), head: hd,
+              key: (it.id || (s.id + '-' + i)) + '-' + (hp.id || hp.idx), headId: hp.id, head: hd, status: v,
+              statusLabel: cmsText(v === 'y' ? 'homeDesign.coveredLabel' : v === 'p' ? 'homeDesign.conditionalLabel' : 'homeDesign.notCoveredLabel'),
               bg: v === 'y' ? 'var(--color-accent-2)' : v === 'p' ? 'var(--color-accent-2-200)' : 'var(--color-neutral-200)',
               fg: v === 'y' ? 'var(--color-bg)' : v === 'p' ? 'var(--color-accent-2-900)' : 'var(--color-neutral-600)',
               headFg: v === 'n' ? p.cardMuted : p.cardFg,
@@ -1919,11 +2000,11 @@ class Component extends DCLogic {
           })
         };
       });
-      const cta1href = s.cta1href || '';
-      const cta2href = s.cta2href || '';
+      const cta1href = this.localizedPublicHref(s.cta1href || '');
+      const cta2href = this.localizedPublicHref(s.cta2href || '');
       const heroClaimHref = s[lk] && s[lk].claimHref !== undefined ? s[lk].claimHref : (s.claimHref || '');
-      const hideSelfMotorCta = routePage === 'motor' && s.type === 'insurers' && cta1href === '/motor';
-      return {
+      const hideSelfMotorCta = routePage === 'motor' && s.type === 'insurers' && s.cta1href === '/motor';
+      const sectionView = {
         id: s.id, key: s.id, cols: s.cols,
         cmsKicker: s.id === 'life' ? 'lifeFocus.kicker' : '', cmsTitle: s.id === 'life' ? 'lifeFocus.title' : '',
         cmsBody: s.id === 'life' ? 'lifeFocus.body' : '', cmsCta1: s.id === 'life' ? 'lifeFocus.cta1' : '',
@@ -1937,15 +2018,15 @@ class Component extends DCLogic {
         al: s.align === 'c' ? 'c' : 'l',
         hl: s.bg === 'dark' ? 'var(--color-accent-300)' : 'var(--color-accent-700)',
         kicker: c.kicker || '', title: c.title || '', body: c.body || '', note: c.note || '',
-        cta1: c.cta1 || '', cta1href: cta1href, hasCta1: !!(c.cta1 && sectionHrefAvailable(cta1href) && !hideSelfMotorCta), cta2: c.cta2 || '', cta2href: cta2href,
+        cta1: c.cta1 || '', cta1href: cta1href, hasCta1: !!(c.cta1 && cta1href && sectionHrefAvailable(cta1href) && !hideSelfMotorCta), cta2: c.cta2 || '', cta2href: cta2href,
         hasCta2: !!(c.cta2 && cta2href && sectionHrefAvailable(cta2href)),
         hasBody: !!c.body, hasKicker: !!c.kicker, hasNote: !!c.note,
         bg: p.bg, fg: p.fg, muted: p.muted, kickerFg: p.kicker, card: p.card, cardFg: p.cardFg,
         cardMuted: p.cardMuted, line: p.line, chip: p.chip, chipFg: p.chipFg,
         grid: this.grid(s.cols), gridTight: this.grid(s.cols, Math.round(900 / Math.max(1, s.cols))),
-        tierHeads: headPairs.map((hp, i) => ({ key: hp.id || (s.id + '-h' + i), label: heads[i] || '' })),
+        tierHeads: headPairs.map((hp, i) => ({ key: hp.id || (s.id + '-h' + i), label: heads[i] || '', copy:sectionPath + '.heads.@' + hp.id + '.' + lk })),
         tierGrid: '116px repeat(' + Math.max(1, heads.length) + ',minmax(0,1fr)) minmax(178px,1.45fr)',
-        tierColLabel: t(L('ชั้นประกัน', 'Class')), bestLabel: t(L('เหมาะกับใคร', 'Best for')),
+        tierColLabel: cmsText('publicCopy.tierClassLabel'), bestLabel: cmsText('publicCopy.tierBestLabel'),
         heroServices: heroServices, hasHeroServices: heroServices.length > 0,
         heroAdvisorEyebrow: cmsText('ui.advisorLabel'),
         heroLifeLicense: licenceText('life'),
@@ -1960,6 +2041,7 @@ class Component extends DCLogic {
         cards: (s.cards || []).filter(cd => cd && cd.on !== false).map((cd, i) => {
           const cc = cd[lk] || {};
           return { key: cd.id || (s.id + '-c' + i), logo: assetURL(cd.logo || ''), logoAlt: cd.logoAlt || '',
+            copy: Object.fromEntries(['kicker','title','body'].map(field => [field, sectionPath + '.cards.@' + cd.id + '.' + lk + '.' + field])),
             hasLogo: !!cd.logo,
             logoStyle: 'display:block;height:' + (cd.logoH || 36) + 'px;width:' + (cd.logoMaxW || 120) + 'px;flex:0 0 auto;background-image:url("' + assetURL(cd.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center center',
             n: cd.n || String(i + 1),
@@ -1967,6 +2049,27 @@ class Component extends DCLogic {
             tel: 'tel:' + String(cc.title || '').replace(/[^0-9+]/g, '') };
         })
       };
+      sectionView.copy = Object.fromEntries(['kicker','title','body','note','cta1','cta2','claimText','claimLinkText'].map(field => [field, sectionPath + '.' + lk + '.' + field]));
+      sectionView.isHomeLayout = isHome && ['hero','trust','products','insurers','tiers','faq','guides','about','review','steps','claim','fees','pdpa'].includes(s.type);
+      ['hero','trust','products','insurers','tiers','faq','guides','about','review','steps','claim'].forEach(type => { sectionView['home' + type[0].toUpperCase() + type.slice(1)] = s.type === type; });
+      sectionView.homeDisclosure = ['about','fees','pdpa'].includes(s.type);
+      sectionView.homeInformation = ['review','steps','claim'].includes(s.type);
+      sectionView.homeInformationExpanded = S.editMode || s.type === 'claim';
+      sectionView.homeHasContext = !!(c.body || c.note || (s.type === 'review' && c.cta1));
+      sectionView.homeType = s.type;
+      sectionView.homeStyle = '--band:' + p.bg + ';--ink:' + p.fg + ';--muted:' + p.muted + ';--eyebrow:' + p.kicker + ';--paper:' + p.card + ';--paper-ink:' + p.cardFg + ';--line:' + p.line + ';--columns:' + (s.cols || 3);
+      sectionView.homeStyle += ';--hm-action:' + A.action + ';--hm-card:' + (site.theme.radius === 'sharp' ? 8 : 16) + 'px;--hm-panel:' + (site.theme.radius === 'sharp' ? 12 : 24) + 'px;--hm-space:' + (site.theme.density === 'compact' ? 14 : 20) + 'px';
+      if (s.type === 'hero' && homeDesign.botanicalIllustration) sectionView.homeStyle += ';--hm-hero-art:url("' + assetURL(homeDesign.botanicalIllustration) + '")';
+      sectionView.homeTeaser = s.type === 'about' ? t(homeDesign.aboutTeaser) : '';
+      sectionView.homeStatement = t(homeDesign.heroStatement);
+      sectionView.homeHasStatement = !!t(homeDesign.heroStatement);
+      sectionView.homeHeroClass = t(homeDesign.heroStatement) ? 'hm-hero-grid has-statement' : 'hm-hero-grid';
+      sectionView.featured = (homeDesign.featuredTierIds || []).map(id => items.find(item => item.contentId === id)).filter(Boolean).map(item => ({...item, cells: (homeDesign.previewAxisIds || []).map(id => item.cells.find(cell => cell.headId === id)).filter(Boolean)}));
+      sectionView.hasFeatured = sectionView.featured.length > 0;
+      sectionView.openComparison = !sectionView.hasFeatured;
+      sectionView.taskLinks = (homeDesign.taskLinks || []).filter(link => link.on !== false && link.target && t(link.label) && sectionHrefAvailable(link.target)).map(link => ({key:link.id,label:t(link.label),href:normalizeSectionHref(link.target),copy:'homeDesign.taskLinks.@' + link.id + '.label.' + lk}));
+      if (sectionView.isHomeLayout) Object.keys(sectionView).filter(key => /^is[A-Z]/.test(key) && key !== 'isHomeLayout').forEach(key => { sectionView[key] = false; });
+      return sectionView;
     });
 
     const fitSectionRaw = (site.sections || []).find(x => x && x.type === 'fit') || {};
@@ -1990,22 +2093,20 @@ class Component extends DCLogic {
     const lifeNeed = Math.max(0, monthlyEssential * 12 * supportYears + obligations + transitionFinalCosts - resources);
     const sumAssured = Math.round(lifeNeed / 100000) * 100000;
     const roomRef = healthCalc.selectedRoomReference || DEFAULT_NEEDS_CALCULATOR.health.selectedRoomReference;
-    const roomDaily = Math.max(0, Number(roomRef.totalFixedDaily || roomRef.publishedPrice) || 0);
+    const roomDaily = Math.max(0, Number(roomRef.totalFixedDaily ?? roomRef.publishedPrice) || 0);
     const roomGap = Math.max(0, roomDaily - roomBenefit);
     const ciNeed = Math.max(0, monthlyEssential * recoveryMonths + Math.max(0, Number(ciCalc.oneOffRecoveryNonMedicalBudget) || 0) + Math.max(0, Number(ciCalc.chosenMedicalOopBuffer) || 0) - resources);
     const lump = Math.round(ciNeed / 100000) * 100000;
-    const sourceName = th
-      ? ((roomRef.hospitalName && roomRef.hospitalName.th) || roomRef.hospitalId || 'แหล่งอ้างอิง')
-      : ((roomRef.hospitalName && roomRef.hospitalName.en) || roomRef.hospitalId || 'Reference');
-    const roomTypeName = th
-      ? ((roomRef.roomType && roomRef.roomType.th) || roomRef.roomType || '')
-      : ((roomRef.roomType && roomRef.roomType.en) || roomRef.roomType || '');
-    const referenceLabel = sourceName + (roomTypeName ? ' · ' + roomTypeName : '') + ' · ' + this.fmt(roomDaily) + '/' + (roomRef.priceUnit || 'day') + ' · ' + (roomRef.confidenceLevel || 'A') + ' · ' + (roomRef.lastChecked || fitCalculator.datasetVersion);
+    const sourceName = t(roomRef.hospitalName);
+    const roomTypeName = typeof roomRef.roomType === 'string' ? roomRef.roomType : t(roomRef.roomType);
+    const referenceLabel = [sourceName, roomTypeName, this.fmt(roomDaily) + '/' + (roomRef.priceUnit || 'day'), roomRef.confidenceLevel, roomRef.lastChecked].filter(Boolean).join(' · ');
 
     const fitPal = this.pal((site.sections.find(x => x.type === 'fit') || {}).bg || 'dark', A);
     const sitList = situationKeys.map(k => ({
       key: k, on: activeSituationKey === k, paths: ICONS[situationConfig[k].icon] || ICONS.check,
+      iconImage:assetURL(situationConfig[k].iconImage),hasIconImage:!!situationConfig[k].iconImage,hasVectorIcon:!situationConfig[k].iconImage,
       label: th ? situationConfig[k].th : situationConfig[k].en,
+      copy:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+k+'.'+lk,
       bg: activeSituationKey === k ? A.action : fitPal.card,
       fg: activeSituationKey === k ? A.on : fitPal.cardFg,
       pick: () => this.setState({ situation: k })
@@ -2028,7 +2129,7 @@ class Component extends DCLogic {
       if (!parts.length) parts.push('Single block');
       return parts.join(' · ');
     };
-    const homeAdminPairs = (site.sections || []).map((s, i) => ({ source: 'sections', s: s, i: i, id: s && s.id })).filter(pair => pair.s && !isEmbeddedCoverageSection(pair.s));
+    const homeAdminPairs = (site.sections || []).map((s, i) => ({ source: 'sections', s: s, i: i, id: s && s.id })).filter(pair => pair.s);
     const motorLocalMap = {
       motor: { key: 'hero', s: motorPageConfig.hero },
       'motor-trust': { key: 'trust', s: motorPageConfig.trust },
@@ -2096,11 +2197,11 @@ class Component extends DCLogic {
       return {
         key: s.id, id: s.id, on: visible, sel: activeAdminSel === s.id,
         name: meta.title || t(TYPE_LABEL[s.type]), group: meta.group || 'Section', role: meta.role || '',
-        sub: s.id, summary: sectionSummary(s), canEditContent: s.type !== 'hero',
+        sub: s.id, summary: sectionSummary(s), canEditContent: !!SCHEMA[s.type],
         statusLabel: visible ? 'Visible' : 'Hidden',
         statusBg: visible ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)',
         statusFg: visible ? 'var(--color-accent-2-900)' : 'var(--color-accent-800)',
-        cols: String(s.cols), hasCols: !!(SCHEMA[s.type] || {}).cols,
+        cols: String(s.cols), hasCols: !!(SCHEMA[s.type] || {}).cols && (!isHome || !['trust','insurers','review','steps','claim'].includes(s.type)),
         bgName: s.bg, bgLabel: bgLabels[s.bg] || s.bg || 'Default',
         layoutLabel: s.type === 'tiers' ? 'Desktop table width' : 'Cards per row',
         rowBg: activeAdminSel === s.id ? A.soft : 'var(--color-bg)',
@@ -2112,13 +2213,51 @@ class Component extends DCLogic {
         up: () => moveAdminPair(pair, -1), down: () => moveAdminPair(pair, 1),
         pick: () => this.setState({ sel: s.id, tab: 'content' }),
         less: () => updatePair(pair, section => { section.cols = Math.max(1, (Number(section.cols) || 1) - 1); }),
-        more: () => updatePair(pair, section => { section.cols = Math.min(4, (Number(section.cols) || 1) + 1); }),
+        more: () => updatePair(pair, section => { section.cols = Math.min(isHome && section.type === 'products' ? 6 : 4, (Number(section.cols) || 1) + 1); }),
         cycleBg: () => updatePair(pair, section => { const o = ['bg', 'surface', 'sage', 'dark']; section.bg = o[(o.indexOf(section.bg) + 1) % o.length]; })
       };
     });
 
     const cur = selectedAdminPair ? selectedAdminPair.s : null;
     const sch = cur ? SCHEMA[cur.type] : null;
+    const curPath = selectedAdminPair?.source === 'motorPage' ? 'motorPage.' + selectedAdminPair.motorKey : 'sections.@' + cur?.id;
+    const editLinks = cur ? (cur.type === 'hero' ? ['cta2href','claimHref'] : ['cta1href'].filter(key => Object.prototype.hasOwnProperty.call(cur,key))).map(key => {
+      const localKey = key === 'claimHref' && cur[lk]?.claimHref !== undefined ? lk + '.' + key : key;
+      return {key, label:key === 'claimHref' ? 'Claim help destination' : key === 'cta2href' ? 'Secondary button destination' : 'Primary button destination', ...cmsInput(curPath + '.' + localKey,{nav:true})};
+    }) : [];
+    const calculatorFields = [];
+    if (cur?.type === 'fit') {
+      const add = (path,label,type='text') => {
+        const fullPath=curPath+'.calculator.'+path, current=cmsGet(site,fullPath);
+        calculatorFields.push({key:fullPath,label,value:Array.isArray(current)?current.join(', '):String(current ?? ''),type:type==='number'?'number':'text',
+          change:e=>{
+            let value=e.target.value.trim();
+            if(type==='number') {value=Number(value);if(!Number.isFinite(value)||value<0||value>1000000000)return;}
+            if(type==='list') {value=value.split(',').map(Number);if(!value.length||value.length>20||value.some(n=>!Number.isFinite(n)||n<=0||n>100)) {this.showActionToast({kind:'error',title:'Invalid options',body:'Use up to 20 positive numbers separated by commas.'});return;}}
+            if(type==='url'&&value&&!acceptsHttpsUrl(value,true)){this.showActionToast({kind:'error',title:'Invalid source URL',body:'Use an HTTPS source URL.'});return;}
+            this.upd(config=>cmsSet(config,fullPath,value));
+          }
+        });
+      };
+      add('datasetVersion','Dataset version');
+      add('sourcePackage','Source package');
+      for(const [key,label] of [['hospitalName.'+lk,'Hospital name'],['roomType.'+lk,'Room type'],['note.'+lk,'Reference note'],['lastChecked','Last checked (YYYY-MM-DD)'],['confidenceLevel','Confidence grade']]) add('health.selectedRoomReference.'+key,label);
+      add('health.selectedRoomReference.sourceUrl','Reference source URL','url');
+      add('health.selectedRoomReference.totalFixedDaily','Daily reference amount','number');
+      add('life.transitionFinalCosts','Transition / final costs','number');
+      add('life.supportYears','Support years (comma separated)','list');
+      add('criticalIllness.oneOffRecoveryNonMedicalBudget','One-off recovery budget','number');
+      add('criticalIllness.chosenMedicalOopBuffer','Medical OOP buffer','number');
+      for(const [id,situation] of Object.entries(cur.calculator?.situations || {})) {
+        if (!/^[\w-]+$/.test(id)) continue;
+        add('situations.'+id+'.'+lk,id+' / title');
+        add('situations.'+id+'.icon',id+' / icon');
+        (situation.recs || []).forEach((_rec,index)=>{
+          add('situations.'+id+'.recs.'+index+'.'+lk,id+' / advice '+(index+1));
+          add('situations.'+id+'.recs.'+index+'.w'+lk,id+' / explanation '+(index+1));
+        });
+      }
+    }
     const editFields = (cur && sch) ? sch.fields.map(f => ({
       key: f, label: t(FIELD_LABEL[f]), value: (cur[lk] && cur[lk][f]) || '',
       big: !!MULTILINE[f], small: !MULTILINE[f],
@@ -2137,15 +2276,29 @@ class Component extends DCLogic {
         visibilityLabel: hidden ? 'Restore' : 'Hide',
         upOpacity: ii === 0 ? '.42' : '1', downOpacity: ii === cur.items.length - 1 ? '.42' : '1',
         fields: sch.item.map(f => ({
-          key: f, label: t(FIELD_LABEL[f]), value: (it[lk] && it[lk][f]) || '',
+          key: f, label: t(cur.type === 'faq' && f === 'label' ? L('หมวด (ไม่บังคับ)', 'Topic (optional)') : cur.type === 'faq' && f === 'meta' ? L('เวลาอ่าน (ไม่บังคับ)', 'Reading time (optional)') : FIELD_LABEL[f]), value: (it[lk] && it[lk][f]) || '',
           big: !!MULTILINE[f], small: !MULTILINE[f],
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][f] = v; }); }
         })),
         hasCells: !!(cur.type === 'tiers'),
+        hasIcon: ['trust','products','review','steps','claim','renew'].includes(cur.type),
+        icon: it.icon || 'check',
+        iconOptions: Object.keys(ICONS).map(key => ({key,label:key})),
+        onIcon: e => { const value=e.target.value; if (ICONS[value]) updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].icon=value;}); },
+        hasTone: cur.type === 'products',
+        toneOptions: ['accent','sage','ink'].map(key => ({key,selected:(it.tone || 'accent') === key,color:key === 'sage' ? 'var(--color-accent-2)' : key === 'ink' ? 'var(--color-neutral-800)' : A.base, choose:()=>updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].tone=key;})})),
+        hasPhotoControl: cur.type === 'testimonials',
+        photoInput: cmsInput(curPath + '.items.@' + itemId + '.photo',{media:true}),
+        photoAltInput: cmsInput(curPath + '.items.@' + itemId + '.photoAlt',{}),
+        logoAltInput: cmsInput(curPath + '.items.@' + itemId + '.logoAlt',{}),
+        illustration: it.illustration || '',
+        illustrationThumb: assetURL(it.illustration || ''),
+        hasIllustration: !!it.illustration,
+        onIllustration: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind:'error', title:'Invalid media path', body:'Use an assets/... path or an HTTPS image URL.' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].illustration = v; }); },
         showLogo: !!(sch && sch.itemLogo),
         logo: it.logo || '',
         logoThumb: 'display:block;height:24px;width:24px;flex:0 0 auto;border-radius:6px;background-color:var(--color-bg);background-image:url("' + assetURL(it.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center',
-        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
+        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
         cells: (cur.type === 'tiers') ? (cur.heads || []).map((hd, ci) => {
           const v = (it.st || [])[ci] || 'n';
           return {
@@ -2178,6 +2331,8 @@ class Component extends DCLogic {
         stateBg: hidden ? 'var(--color-neutral-200)' : 'var(--color-accent-2-200)',
         stateFg: hidden ? 'var(--color-neutral-700)' : 'var(--color-accent-2-800)',
         visibilityLabel: hidden ? 'Restore' : 'Hide',
+        up: () => this.moveRepeatable(cur.id, 'heads', headId, hi, -1),
+        down: () => this.moveRepeatable(cur.id, 'heads', headId, hi, 1),
         onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'heads', headId, hi, (section, heads, idx) => { const h = heads[idx]; if (h) h[lk] = v; }); },
         toggleVisible: () => hidden ? this.restoreRepeatable(cur.id, 'heads', headId, hi) : this.removeRepeatable(cur.id, 'heads', headId, hi)
       };
@@ -2203,7 +2358,7 @@ class Component extends DCLogic {
         logo: showLogo ? (cd.logo || '') : '', logoAlt: cd.logoAlt || '',
         hasLogo: !!(showLogo && cd.logo),
         logoThumb: 'display:block;height:22px;width:88px;background-image:url("' + assetURL(cd.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center center',
-        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
+        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); return; } updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
         onLogoAlt: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logoAlt = v; }); },
         up: () => this.moveRepeatable(cur.id, 'cards', cardId, ci, -1),
         down: () => this.moveRepeatable(cur.id, 'cards', cardId, ci, 1),
@@ -2222,7 +2377,7 @@ class Component extends DCLogic {
     const QUERY = Object.fromEntries(['quote', 'compare', 'general', 'review', 'claim'].map(key => [key, cmsText('formOptions.query.' + key)]));
     const COVER = Object.fromEntries(['life', 'health', 'motor', 'accident', 'savings', 'unsure'].map(key => [key, cmsText('formOptions.coverage.' + key)]));
     const RENEW_KIND = Object.fromEntries(['motor', 'compulsory', 'health', 'life', 'accident'].map(key => [key, cmsGet(site, 'formOptions.renewal.' + key) || {}]));
-    let summary = sit
+    let summary = sit && S.calculatorTouched && S.shareCalculator
       ? copyTemplate('publicCopy.consultationSummary', { situation: sit[lk], income: this.fmt(S.income), lifeNeed: this.fmt(sumAssured) })
       : cmsText('publicCopy.consultationIntro');
     if (f.qtype && QUERY[f.qtype]) summary += ' · ' + cmsText('publicCopy.summaryTopic') + ' ' + QUERY[f.qtype];
@@ -2243,7 +2398,7 @@ class Component extends DCLogic {
         const rawLabel = typeof n.label === 'string' ? n.label : t(n.label);
         const label = String(rawLabel || '').trim();
         if (!label) return items;
-        items.push({ key: 'n' + i, label: label, href: href });
+        items.push({ key: 'n' + i, label: label, href: href, copy:'header.nav.' + i + '.label.' + lk });
         return items;
       }, []);
     })();
@@ -2255,7 +2410,7 @@ class Component extends DCLogic {
       const rawLabel = typeof n.label === 'string' ? n.label : t(n.label);
       const label = String(rawLabel || '').trim();
       if (!label) return items;
-      items.push({ key: 'mn' + i, label: label, href: href });
+      items.push({ key: 'mn' + i, label: label, href: this.localizedPublicHref(href), copy:'motorPage.nav.' + i + '.label.' + lk });
       return items;
     }, []);
     const showTalkAnchor = sectionHrefAvailable('#talk');
@@ -2278,12 +2433,43 @@ class Component extends DCLogic {
 
     return {
       th: th, en: !th,
+      isHome: isHome, notHome: !isHome, homeRoute: isHome ? 'home' : 'motor',
+      homeCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.localized && field.path.startsWith('homeDesign.')).map(field => [field.path.slice(11), cmsText(field.path)])),
+      homeWideDetails: (!S.compactHome && !S.touchInteraction) || S.editMode,
+      showContactChannels: !isHome || S.editMode,
+      publicNotice: S.publicNoticeKey ? cmsText(S.publicNoticeKey) : '',
+      footerGridStyle: '--footer-columns:' + Math.max(1, Math.min(4, Number(site.footer.columns) || 4)) + ';--footer-tablet-columns:' + Math.max(1, Math.min(2, Number(site.footer.columns) || 2)),
+      menuOpen: S.menuOpen,
+      openMenu: e => this.toggleMenu(true, e), closeMenu: e => this.toggleMenu(false, e),
+      shareCalculator: S.shareCalculator, canShareCalculator: S.calculatorTouched,
+      onShareCalculator: e => this.setState({ shareCalculator: !!e.target.checked }),
       publicCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('publicCopy.')).map(field => [field.path.slice(11), cmsText(field.path)])),
       A_base: A.base, A_action: A.action, A_deep: A.deep, A_mid: A.mid, A_soft: A.soft, A_text: A.text, A_light: A.light, A_on: A.on,
       thBg: th ? A.action : 'transparent', thFg: th ? A.on : 'var(--color-neutral-700)',
       enBg: !th ? A.action : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
       callLabel: cmsText('ui.callLabel'),
       cmsGroups: cmsGroups,
+      homeTierChoices: ((site.sections || []).find(section => section.id === 'tiers')?.items || []).map(item => ({
+        key:item.id, label:t({[lk]:item[lk]?.label}), checked:(homeDesign.featuredTierIds || []).includes(item.id),
+        toggle: e => this.upd(config => { const list = new Set(config.homeDesign.featuredTierIds || []); if (e.target.checked) list.add(item.id); else list.delete(item.id); config.homeDesign.featuredTierIds = [...list]; })
+      })),
+      homeAxisChoices: ((site.sections || []).find(section => section.id === 'tiers')?.heads || []).map(item => ({
+        key:item.id, label:t(item), checked:(homeDesign.previewAxisIds || []).includes(item.id),
+        toggle: e => this.upd(config => { const list = new Set(config.homeDesign.previewAxisIds || []); if (e.target.checked) list.add(item.id); else list.delete(item.id); config.homeDesign.previewAxisIds = [...list]; })
+      })),
+      homeTasks: (homeDesign.taskLinks || []).map((task,index) => ({
+        key:task.id, on:task.on !== false,
+        labelInput:cmsInput('homeDesign.taskLinks.@' + task.id + '.label.' + lk, {}),
+        targetInput:cmsInput('homeDesign.taskLinks.@' + task.id + '.target', {nav:true}),
+        toggle: () => this.upd(config => { config.homeDesign.taskLinks.find(item => item.id === task.id).on = task.on === false; }),
+        duplicate: () => this.upd(config => { config.homeDesign.taskLinks.splice(index+1,0,{...clone(task),id:'task-'+crypto.randomUUID()}); }),
+        up: () => this.upd(config => { const list=config.homeDesign.taskLinks; if(index>0) [list[index-1],list[index]]=[list[index],list[index-1]]; }),
+        down: () => this.upd(config => { const list=config.homeDesign.taskLinks; if(index<list.length-1) [list[index+1],list[index]]=[list[index],list[index+1]]; })
+      })),
+      addHomeTask: () => this.upd(config => { if(!Array.isArray(config.homeDesign.taskLinks)) config.homeDesign.taskLinks=[]; config.homeDesign.taskLinks.push({id:'task-'+crypto.randomUUID(),on:true,label:{th:'',en:''},target:''}); }),
+      homeCompact: site.theme.density === 'compact', homeSharp: site.theme.radius === 'sharp',
+      toggleHomeDensity: () => this.upd(config => { config.theme.density = config.theme.density === 'compact' ? 'comfortable' : 'compact'; }),
+      toggleHomeRadius: () => this.upd(config => { config.theme.radius = config.theme.radius === 'sharp' ? 'round' : 'sharp'; }),
       headerCtaInput: cmsInput('header.cta.' + lk, {}),
       adminHeroLinks: routePage === 'home' ? (site.sections || []).flatMap((section, index) => section.id === 'hero' ? [
         { label: 'Hero secondary button destination', path: 'cta2href' },
@@ -2292,6 +2478,8 @@ class Component extends DCLogic {
       credentialInput: cmsInput('brand.credential.' + lk, {}),
       legalInput: cmsInput('footer.legal.' + lk, {}),
       advisorLogoInput: cmsInput('brand.advisorLogo', { media: true }),
+      imageSlots:cmsImageSlots(site,lk).map(slot=>({...slot,image:assetURL(slot.value),hasImage:!!slot.value,edit:()=>this.editMedia(slot.path)})),
+      editAdvisorImage:()=>this.editMedia('brand.advisorLogo'),
       lineUrlInput: cmsInput('contact.lineUrl', { url: true }),
       facebookUrlInput: cmsInput('contact.facebookUrl', { url: true }),
       emailInput: cmsInput('contact.email', { email: true }),
@@ -2308,7 +2496,9 @@ class Component extends DCLogic {
       consultationConsent: cmsText('ui.consultationConsent'),
       submitPendingText: cmsText('ui.submitPending'),
       submitSuccessText: cmsText('ui.submitSuccess'),
-      setTH: () => this.setLanguage('th'), setEN: () => this.setLanguage('en'),
+      setTH: event => this.setLanguage('th', event), setEN: event => this.setLanguage('en', event),
+      languageTH: this.languageHref('th'), languageEN: this.languageHref('en'),
+      motorPageHref: this.publicPathForRoutePage('motor'),
 
       advisorLogoPath: site.brand.advisorLogo || '',
       advisorLogo: assetURL(site.brand.advisorLogo || ''),
@@ -2319,7 +2509,7 @@ class Component extends DCLogic {
       footerAdvisorColumns: media.photo ? 'auto minmax(0,1fr)' : 'minmax(0,1fr)',
       insLogos: (() => {
         const sec = (site.sections || []).find(x => x.type === 'insurers');
-        return ((sec && sec.items) || []).map((it, i) => {
+        return ((sec && sec.items) || []).filter(it => it && it.on !== false).map((it, i) => {
           const tile = insTile(it, lk);
           const box = 'display:flex;align-items:center;justify-content:center;width:clamp(72px,9vw,96px);aspect-ratio:1;border-radius:14px;background-color:var(--color-surface);box-shadow:var(--shadow-sm);animation:logoPop .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:' + (i * 45) + 'ms;transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s ease';
           return {
@@ -2330,6 +2520,13 @@ class Component extends DCLogic {
         });
       })(),
       sections: sections,
+      sectionGroups: sections.reduce((groups, section) => {
+        const cluster = isHome && ['about','review','how'].includes(section.id);
+        const last = groups[groups.length - 1];
+        if (cluster && last && last.cluster) last.sections.push(section);
+        else groups.push({key:section.id,cluster,className:cluster?'hm-cluster':'hm-section-group',style:cluster?'--cluster-bg:'+section.bg:'',sections:[section]});
+        return groups;
+      }, []),
       brandLogoAlt: [t(site.brand.name), t(site.brand.role)].filter(Boolean).join(' '),
       brandWordmarkLogo: assetURL(t(media.headerLogo)),
       footerBrandLogo: assetURL(t(media.footerLogo)),
@@ -2370,31 +2567,32 @@ class Component extends DCLogic {
       footerOicLabel: cmsText('licences.verifyLabel'),
       footerPrivacyNavText: cmsText('footer.privacyLabel'),
       footGrid: this.grid(F.columns, Math.round(760 / Math.max(1, F.columns))),
-      showSticky: site.stickyBar && !S.admin && !S.editMode && !S.preview,
+      showSticky: site.stickyBar && (!isHome || S.stickyVisible) && !S.menuOpen && !S.admin && !S.editMode && !S.preview,
 
       sitList: sitList,
-      hasSit: !!sit, noSit: !sit, sitName: sit ? (th ? sit.th : sit.en) : '',
+      hasSit: !!sit, noSit: !sit, sitName: sit ? (th ? sit.th : sit.en) : '', sitNamePath:sit?'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.'+lk:'',
       income: S.income, incomeLabel: this.fmt(S.income),
-      onIncome: (e) => this.setState({ income: Number(e.target.value) }),
-      deps: S.deps, depsLabel: supportYears + (th ? ' ปี' : (supportYears === 1 ? ' year' : ' years')),
-      onDeps: (e) => this.setState({ deps: Number(e.target.value) }),
+      onIncome: (e) => this.setState({ income: Number(e.target.value), calculatorTouched: true }),
+      deps: supportIndex, depsMax:Math.max(0,supportOptions.length-1), depsLabel: supportYears + (th ? ' ปี' : (supportYears === 1 ? ' year' : ' years')),
+      onDeps: (e) => this.setState({ deps: Number(e.target.value), calculatorTouched: true }),
       debt: S.debt, debtLabel: S.debt === 0 ? (th ? 'ไม่มี' : 'None') : this.fmt(S.debt),
-      onDebt: (e) => this.setState({ debt: Number(e.target.value) }),
+      onDebt: (e) => this.setState({ debt: Number(e.target.value), calculatorTouched: true }),
       resources: S.resources, resourcesLabel: S.resources === 0 ? (th ? 'ไม่มี' : 'None') : this.fmt(S.resources),
-      onResources: (e) => this.setState({ resources: Number(e.target.value) }),
+      onResources: (e) => this.setState({ resources: Number(e.target.value), calculatorTouched: true }),
       roomBenefit: S.roomBenefit, roomBenefitLabel: this.fmt(S.roomBenefit) + (th ? '/วัน' : '/day'),
-      onRoomBenefit: (e) => this.setState({ roomBenefit: Number(e.target.value) }),
+      onRoomBenefit: (e) => this.setState({ roomBenefit: Number(e.target.value), calculatorTouched: true }),
       recovery: S.recovery, recoveryLabel: S.recovery + (th ? ' เดือน' : (S.recovery === 1 ? ' month' : ' months')),
-      onRecovery: (e) => this.setState({ recovery: Number(e.target.value) }),
+      onRecovery: (e) => this.setState({ recovery: Number(e.target.value), calculatorTouched: true }),
       incomePct: Math.round((S.income - 15000) / (400000 - 15000) * 100) + '%',
-      depsPct: Math.round(S.deps / 4 * 100) + '%',
+      depsPct: Math.round(supportIndex / Math.max(1,supportOptions.length-1) * 100) + '%',
       debtPct: Math.round(S.debt / 12000000 * 100) + '%',
       resourcesPct: Math.round(S.resources / 12000000 * 100) + '%',
       roomBenefitPct: Math.round(S.roomBenefit / 20000 * 100) + '%',
       recoveryPct: Math.round((S.recovery - 3) / (24 - 3) * 100) + '%',
       sumAssured: this.fmt(sumAssured), roomLabel: this.fmt(roomGap), lumpLabel: this.fmtShort(lump, th),
       budgetRange: referenceLabel,
-      recs: sit ? sit.recs.map((r, i) => ({ key: 'r' + i, n: String(i + 1), title: th ? r.th : r.en, why: th ? r.wth : r.wen })) : [],
+      referenceSource:cleanHttpsUrl(roomRef.sourceUrl,''),hasReferenceSource:!!cleanHttpsUrl(roomRef.sourceUrl,''),referenceNote:t(roomRef.note),referenceNotePath:'sections.@'+fitSectionRaw.id+'.calculator.health.selectedRoomReference.note.'+lk,
+      recs: sit ? (sit.recs || []).map((r, i) => ({ key: 'r' + i, n: String(i + 1), title: th ? r.th : r.en, why: th ? r.wth : r.wen, titlePath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.recs.'+i+'.'+lk, whyPath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.recs.'+i+'.w'+lk })) : [],
 
       fName: f.name, fContact: f.contact, fTopic: f.topic, summary: summary,
       fQType: f.qtype, fCoverage: f.coverage, fConsent: !!f.consent,
@@ -2411,31 +2609,36 @@ class Component extends DCLogic {
       submit: async (e) => {
         e.preventDefault();
         if (this.state.leadSubmitting) return;
+        if (!(this.state.site.sections || []).some(section => section.id === 'talk' && section.on !== false)) { this.setState({ publicNoticeKey:'homeDesign.formUnavailable' }); return; }
         const curForm = Object.assign({}, this.state.form || {});
         const langNow = this.state.lang === 'en' ? 'en' : 'th';
         if (!String(curForm.contact || '').trim()) {
           this.setState({ sent: false, leadError: cmsText('ui.contactRequired') });
+          this.focusFormError('talk');
           return;
         }
         if (curForm.consent !== true) {
           this.setState({ sent: false, leadError: cmsText('ui.consentRequired') });
+          this.focusFormError('talk');
           return;
         }
         this.setState({ leadSubmitting: true, leadError: '', sent: false });
         try {
+          if (!navigator.onLine) throw new DOMException('Offline.', 'OfflineError');
           const cm = await import(window.location.origin + '/covermate-public.mjs');
           if (!cm || !cm.submitContactLead) throw new Error('Lead service unavailable.');
           await cm.submitContactLead(Object.assign({}, curForm, { language: langNow, summary: summary, sourcePath: window.location.pathname + window.location.search + window.location.hash }));
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_success', { form_type: 'consultation', enquiry_type: curForm.qtype || 'unspecified', coverage: curForm.coverage || 'unspecified' });
           }
-          this.setState({ sent: true, leadSubmitting: false, leadError: '' });
+          this.setState({ sent: JSON.stringify(this.state.form) === JSON.stringify(curForm), leadSubmitting: false, leadError: '' });
         } catch (err) {
-          console.warn('[covermate] Lead submit failed:', err);
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_error', { form_type: 'consultation' });
           }
-          this.setState({ sent: false, leadSubmitting: false, leadError: cmsText('ui.submitError') });
+          const path = !navigator.onLine ? 'homeDesign.offlineError' : ['TimeoutError','AbortError','UnconfirmedReceipt','TypeError'].includes(err.name) ? 'homeDesign.uncertainError' : 'ui.submitError';
+          this.setState({ sent: false, leadSubmitting: false, leadError: cmsText(path) });
+          this.focusFormError('talk');
         }
       },
 
@@ -2454,6 +2657,7 @@ class Component extends DCLogic {
       renewSubmit: async (e) => {
         e.preventDefault();
         if (this.state.renewSubmitting) return;
+        if (!(this.state.site.sections || []).some(section => section.id === 'renew' && section.on !== false)) { this.setState({ publicNoticeKey:'homeDesign.formUnavailable' }); return; }
         const r = Object.assign({}, this.state.renew || {});
         const langNow = this.state.lang === 'en' ? 'en' : 'th';
         if (!(r.kind && r.month && r.contact && r.consent)) return;
@@ -2466,6 +2670,7 @@ class Component extends DCLogic {
         const renewSummary = copyTemplate('publicCopy.renewalSummary', { policy: kindLabel, month: monthLabel });
         this.setState({ renewSubmitting: true, renewError: '', renewSent: false });
         try {
+          if (!navigator.onLine) throw new DOMException('Offline.', 'OfflineError');
           const cm = await import(window.location.origin + '/covermate-public.mjs');
           if (!cm || !cm.submitContactLead) throw new Error('Lead service unavailable.');
           await cm.submitContactLead({
@@ -2477,13 +2682,14 @@ class Component extends DCLogic {
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_success', { form_type: 'renewal_reminder', enquiry_type: 'review', coverage: coverageMap[r.kind] || 'unsure' });
           }
-          this.setState({ renewSent: true, renewSubmitting: false, renewError: '' });
+          this.setState({ renewSent: JSON.stringify(this.state.renew) === JSON.stringify(r), renewSubmitting: false, renewError: '' });
         } catch (err) {
-          console.warn('[covermate] Renewal reminder submit failed:', err);
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_error', { form_type: 'renewal_reminder' });
           }
-          this.setState({ renewSent: false, renewSubmitting: false, renewError: cmsText('ui.submitError') });
+          const path = !navigator.onLine ? 'homeDesign.offlineError' : ['TimeoutError','AbortError','UnconfirmedReceipt','TypeError'].includes(err.name) ? 'homeDesign.uncertainError' : 'ui.submitError';
+          this.setState({ renewSent: false, renewSubmitting: false, renewError: cmsText(path) });
+          this.focusFormError('renew');
         }
       },
       renewSummary: (function(){
@@ -2576,7 +2782,7 @@ class Component extends DCLogic {
         window.location.replace('/admin');
       },
       tabSections: S.tab === 'sections', tabContent: S.tab === 'content', tabBrand: S.tab === 'brand', tabTheme: S.tab === 'theme',
-      goSections: () => this.setState({ tab: 'sections' }), goContent: () => this.setState({ tab: 'content', sel: (selectedAdminPair && selectedAdminPair.s && selectedAdminPair.s.type !== 'hero' && !isEmbeddedCoverageSection(selectedAdminPair.s)) ? selectedAdminPair.s.id : firstContentAdminId }),
+      goSections: () => this.setState({ tab: 'sections' }), goContent: () => this.setState({ tab: 'content', sel: selectedAdminPair?.s.id || firstContentAdminId }),
       goBrand: () => this.setState({ tab: 'brand' }), goTheme: () => this.setState({ tab: 'theme' }),
       tabSecBg: S.tab === 'sections' ? A.action : 'transparent', tabSecFg: S.tab === 'sections' ? A.on : 'var(--color-neutral-700)',
       tabConBg: S.tab === 'content' ? A.action : 'transparent', tabConFg: S.tab === 'content' ? A.on : 'var(--color-neutral-700)',
@@ -2584,7 +2790,9 @@ class Component extends DCLogic {
       tabThmBg: S.tab === 'theme' ? A.action : 'transparent', tabThmFg: S.tab === 'theme' ? A.on : 'var(--color-neutral-700)',
       secList: secList,
       curName: cur ? t(TYPE_LABEL[cur.type]) : '', curId: cur ? cur.id : '',
-      editFields: editFields, editItems: editItems,
+      editFields: editFields, editItems: editItems, editLinks: editLinks,
+      hasCalculatorFields:calculatorFields.length>0,calculatorFields,
+      goMedia:()=>this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{const group=document.querySelector('[data-cms-group="Images & crop"]');if(group){group.open=true;group.scrollIntoView({block:'start'});}})),
       editHeads: editHeads, hasHeads: editHeads.length > 0,
       addHead: () => selectedSectionUpdater(c => {
         c.heads = c.heads || [];
@@ -2634,7 +2842,7 @@ class Component extends DCLogic {
       onArea: (e) => { const v = e.target.value; this.upd(x => { x.contact.area[lk] = v; }); },
       seoTitle: (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).title || {})[lk] || '',
       seoDescription: (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).description || {})[lk] || '',
-      seoCanonical: 'Canonical: https://covermate.vercel.app' + this.publicPathForRoutePage(routePage),
+      seoCanonical: 'Canonical: https://covermateinsurance.com' + this.publicPathForRoutePage(routePage),
       seoRobots: (routePage === 'motor' ? 'Public /motor is indexable; admin, edit, and preview stay noindex.' : 'Public / is indexable; admin, edit, and preview stay noindex.'),
       onSeoTitle: (e) => { const v = e.target.value; if (v.length > 68) this.showActionToast({ kind: 'error', title: 'SEO title too long', body: 'Keep the public title to 68 characters or fewer.' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.title = target.title || {}; target.title[lk] = v; }); },
       onSeoDescription: (e) => { const v = e.target.value; if (v.length > 155) this.showActionToast({ kind: 'error', title: 'Meta description too long', body: 'Keep the public description to 155 characters or fewer.' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.description = target.description || {}; target.description[lk] = v; }); },

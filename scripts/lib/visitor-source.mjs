@@ -1,5 +1,9 @@
 import fs from "node:fs";
+import vm from "node:vm";
 import { createHash } from "node:crypto";
+import { transformSync } from "esbuild";
+import { createSeoModel, renderSeoHead } from "../../covermate-seo.mjs";
+import { sanitizeStateDoc } from "../../covermate-contract.js";
 
 import {
   BUNDLER_TEMPLATE_OPEN,
@@ -59,10 +63,13 @@ export function readVisitorSources() {
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_END', 'covermate-contract.js');
   return {
     shell: readText(VISITOR_SOURCE_PATHS.shell),
-    template: readText(VISITOR_SOURCE_PATHS.template),
+    template: readText(VISITOR_SOURCE_PATHS.template)
+      .replace('<!-- COVERMATE_HOME_TEMPLATE -->', () => readText(new URL('src/visitor/home.html', ROOT)))
+      .replace('/* COVERMATE_HOME_STYLES */', () => readText(new URL('src/visitor/home.css', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
     runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
     cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],
+    seoSource: readText(new URL('covermate-seo.mjs', ROOT)).split('\nexport function renderSeoHead')[0].replace(/^export /gm, ''),
     imageVersions: readImageVersions()
   };
 }
@@ -73,18 +80,29 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
   assertSingleSlot(sources.runtime, '// COVERMATE_CMS_SCHEMA_SOURCE', 'src/visitor/runtime.js');
   return sources.runtime.replace(VISITOR_DEFAULTS_SLOT, () => sources.defaults.trimEnd())
     .replace('// COVERMATE_CMS_SCHEMA_SOURCE', () => sources.cmsSchema)
+    .replace('// COVERMATE_SEO_SOURCE', () => sources.seoSource)
     .replace(VISITOR_ASSET_VERSIONS_SLOT, () => JSON.stringify(sources.imageVersions || readImageVersions()));
 }
 
 export function buildVisitorTemplate(sources = readVisitorSources()) {
   assertSingleSlot(sources.template, VISITOR_RUNTIME_SLOT, "src/visitor/template.html");
-  const runtime = buildVisitorRuntime(sources);
-  return sources.template.replace(VISITOR_RUNTIME_SLOT, () => runtime.trimEnd());
+  const defaults = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
+  const runtime = buildVisitorRuntime({ ...sources, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' });
+  // Compact only the static CSS blocks, before inserting the runtime script.
+  const template = sources.template.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
+    (_, open, css, close) => open + transformSync(css, { loader: 'css', minifyWhitespace: true }).code + close);
+  return withDefaultSeo(template.replace(VISITOR_RUNTIME_SLOT, () => runtime.trimEnd()), sources);
+}
+
+function withDefaultSeo(html, sources) {
+  const raw = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
+  const site = sanitizeStateDoc({ config: raw, text: {}, revision: 1 }).config;
+  return html.replace('<!-- COVERMATE_SEO_HEAD -->', () => '<!-- COVERMATE_SEO_START -->\n' + renderSeoHead(createSeoModel(site)) + '\n<!-- COVERMATE_SEO_END -->');
 }
 
 export function buildVisitorIndex(sources = readVisitorSources()) {
   assertSingleSlot(sources.shell, VISITOR_TEMPLATE_SLOT, "src/visitor/shell.html");
   const template = buildVisitorTemplate(sources);
   const serializedTemplate = `${BUNDLER_TEMPLATE_OPEN}${serializeBundlerTemplate(template)}</script>`;
-  return sources.shell.replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
+  return withDefaultSeo(sources.shell, sources).replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
 }

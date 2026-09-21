@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-import { loadPlaywright } from "./lib/playwright.mjs";
+import { loadPlaywright, launchChromium } from "./lib/playwright.mjs";
 
 const playwright = loadPlaywright();
 const { chromium } = playwright;
@@ -119,7 +119,7 @@ async function routeStatic(page, firebaseBody = "export {};", analyticsPayload =
 async function verifyPublicEvents(browser) {
   const page = await browser.newPage();
   await routeStatic(page);
-  await page.goto("https://covermate.vercel.app/?name=Ari&email=point@example.com&phone=0891234567", {
+  await page.goto("https://covermateinsurance.com/?name=Ari&email=point@example.com&phone=0891234567", {
     waitUntil: "domcontentloaded"
   });
   await page.waitForFunction(() =>
@@ -198,7 +198,7 @@ async function verifyPublicEvents(browser) {
   assert.equal(success.params.coverage, "motor");
   assert.equal(success.params.enquiry_type, "quote");
   const pageView = events.find((event) => event.name === "page_view");
-  assert.equal(pageView.params.page_location, "https://covermate.vercel.app/");
+  assert.equal(pageView.params.page_location, "https://covermateinsurance.com/");
   assert.equal(pageView.params.page_path, "/");
   assertNoPii(events, "public analytics events");
   await page.close();
@@ -217,7 +217,7 @@ async function verifyTrackingBoundaries(browser) {
       const page = await browser.newPage();
       await routeStatic(page, 'export {};', null, true);
       if (withoutContract) await page.route('**/covermate-contract.js', route => route.fulfill({ contentType: 'application/javascript', body: 'export {};' }));
-      await page.goto(`https://covermate.vercel.app${path}`);
+      await page.goto(`https://covermateinsurance.com${path}`);
       await page.waitForFunction(() => window.CoverMateAnalytics?.reason !== 'not-initialized');
       await page.locator('#line').click();
       const state = await page.evaluate(() => ({
@@ -249,7 +249,7 @@ async function verifyAnalyticsRouteAuth(browser) {
         window.localStorage.setItem("covermate-admin-session", JSON.stringify(cached));
       }, session);
     }
-    await page.goto("https://covermate.vercel.app/admin/analytics", { waitUntil: "domcontentloaded" });
+    await page.goto("https://covermateinsurance.com/admin/analytics", { waitUntil: "domcontentloaded" });
     return page;
   }
 
@@ -363,7 +363,7 @@ async function verifyAnalyticsRouteAuth(browser) {
   await authorized.close();
 }
 
-const browser = await chromium.launch({ headless: true });
+const browser = await launchChromium(chromium, { headless: true });
 try {
   await verifyPublicEvents(browser);
   await verifyTrackingBoundaries(browser);

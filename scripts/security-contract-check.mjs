@@ -5,7 +5,7 @@ const read = (file) => fs.readFileSync(new URL(`../${file}`, import.meta.url), "
 
 const vercel = JSON.parse(read("vercel.json"));
 const headers = vercel.headers || [];
-const globalHeaders = headers.find((entry) => entry.source === "/(.*)");
+const globalHeaders = headers.find((entry) => entry.source === "/(.*)" && !entry.has && !entry.missing);
 assert.ok(globalHeaders, "vercel.json must define global security headers.");
 
 const headerMap = new Map((globalHeaders.headers || []).map((entry) => [entry.key.toLowerCase(), entry.value]));
@@ -69,7 +69,7 @@ assert.match(firebaseClient, /runTransaction/);
 
 const analytics = read("covermate-analytics.js");
 assert.match(analytics, /G-5TF3C235EF/, "GA4 measurement ID must stay explicit.");
-assert.match(analytics, /covermate\.vercel\.app/, "Visitor analytics must stay production-host scoped.");
+assert.match(analytics, /covermateinsurance\.com/, "Visitor analytics must stay production-host scoped.");
 assert.match(analytics, /eventParamWhitelist/, "Visitor analytics must keep an explicit event parameter whitelist.");
 assert.doesNotMatch(
   analytics,

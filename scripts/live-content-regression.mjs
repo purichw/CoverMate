@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { loadPlaywright } from './lib/playwright.mjs';
+import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import { readImageVersions, readVisitorSources, buildVisitorRuntime } from './lib/visitor-source.mjs';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 const { versionedAssetUrl } = await importCoverMateContract();
 
-const origin = 'https://covermate.vercel.app';
+const origin = 'https://covermateinsurance.com';
 const versions = readImageVersions();
 const logo = '/assets/logos/aia-logo.png';
 const version = versions[logo];
@@ -19,7 +19,7 @@ for (const asset of ['/favicon.svg', '/favicon.ico', '/assets/covermate-og.png']
 assert.equal(versionedAssetUrl(logo, versions, origin), `${logo}?cm_asset=${version}`);
 assert.equal(versionedAssetUrl('assets/logos/aia-logo.png', versions, origin), `${logo}?cm_asset=${version}`);
 assert.equal(versionedAssetUrl(`${origin}${logo}?size=2#mark`, versions, origin), `${logo}?size=2&cm_asset=${version}#mark`);
-for (const ref of ['https://other.example/a.png?signature=a%2Fb', 'data:image/png;base64,abc', 'blob:https://covermate.vercel.app/a']) {
+for (const ref of ['https://other.example/a.png?signature=a%2Fb', 'data:image/png;base64,abc', 'blob:https://covermateinsurance.com/a']) {
   assert.equal(versionedAssetUrl(ref, versions, origin), ref);
 }
 const sources = readVisitorSources();
@@ -44,7 +44,7 @@ let live = { config, text: {}, revision: 1 };
 let status = 200, requests = 0, delayNext;
 const snapshot = () => JSON.stringify({ fields: encode(live).mapValue.fields, updateTime: '2026-09-07T00:00:00Z' });
 const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true });
-const browser = await loadPlaywright().chromium.launch({ headless: true });
+const browser = await launchChromium(loadPlaywright().chromium, { headless: true });
 const errors = [];
 try {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
@@ -66,6 +66,7 @@ try {
     };
   });
   const page = await context.newPage();
+  page.setDefaultTimeout(15000);
   page.on('pageerror', error => errors.push(error.message));
   await page.clock.install();
   await page.goto(baseUrl + '/#talk');
@@ -73,7 +74,7 @@ try {
   // Finish initial anchor retries/font layout before measuring a background update.
   await page.evaluate(() => document.fonts.ready);
   await page.clock.runFor(1200);
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('link', { name: 'Switch to English' }).click();
   // The language switch loads a different logo/font set. Exclude that initial
   // layout work from the background-refresh scroll preservation measurement.
   await page.evaluate(async () => {
@@ -84,6 +85,7 @@ try {
   const name = page.locator('input[name=name]');
   await name.fill('Keep my name');
   await page.locator('input[name=contact]').fill('test-contact');
+  await page.locator('.hm-form-details > summary').click();
   await page.locator('textarea[name=topic]').fill('Keep this unfinished message');
   await name.click();
   const before = await page.evaluate(() => {
@@ -93,7 +95,7 @@ try {
     return { id: window.__documentIdentity, scroll: scrollY, formTop: document.querySelector('input[name=name]').getBoundingClientRect().top, heroHeight: document.querySelector('#hero').getBoundingClientRect().height, time: performance.timeOrigin, events: window.__readyEvents };
   });
   const key = await page.locator('#hero h1[data-ek], #hero h1 [data-ek]').first().getAttribute('data-ek');
-  assert.ok(key?.endsWith(':en'), `Expected English text slot, got ${key}`);
+  assert.match(key, /(?:\.en\.title|:en)$/, `Expected English text slot, got ${key}`);
   const originalHeading = await page.locator('#hero h1').innerText();
   live.text[key] = 'Published while this tab stays open';
   await page.clock.fastForward(61000);
@@ -108,7 +110,8 @@ try {
   // Native scroll anchoring can change scrollY when text above the form changes height.
   assert.ok(Math.abs(before.formTop - after.formTop) < 3, `Content refresh moved the form away from the reader: ${JSON.stringify({ before, after })}`);
   assert.deepEqual(await page.evaluate(() => window.__refreshScrollCalls), [], 'Background refresh explicitly navigated/scrolled the page');
-  assert.ok(page.url().endsWith('/#talk'));
+  assert.equal(new URL(page.url()).hash, '#talk');
+  assert.equal(new URL(page.url()).searchParams.get('lang'), 'en');
   assert.equal(after.events, before.events + 1);
   console.log('Viewport preservation:', JSON.stringify({ before, after }));
   console.log('PASS open-tab polling, direct DB edit without revision/updateTime bump, anchor route, input/focus/scroll/language preservation');
@@ -223,5 +226,6 @@ try {
   console.log('PASS versioned images render, no-store reads, Motor and storage-unavailable refresh');
 } finally {
   await browser.close();
+  server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
 }

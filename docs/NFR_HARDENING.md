@@ -35,7 +35,9 @@ Visitor browser context and persistent backend data.
 | CSP | Enforced source, frame, base, object, form restrictions; X-Frame-Options DENY | DC runtime still needs unsafe-inline/unsafe-eval/blob; this is not strict CSP |
 | Regression / maintenance | Real emulator Auth/Rules/API/Publish tests, Chromium/WebKit, axe, keyboard/reflow, targeted strict JS types, generated-source validation | Automated axe does not replace screen-reader testing on real devices |
 
-No Firebase billing plan was enabled. Managed backup/PITR was deliberately not
+At that September 5 activation, no Firebase billing plan was enabled. For the
+later Storage experiment and current Cloudinary/billing status, read `CMS_MEDIA.md`.
+Managed backup/PITR was deliberately not
 enabled, per the user's choice. Production content is not edited by the release
 checks; all form and publish fixtures use the isolated UAT namespace.
 

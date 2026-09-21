@@ -83,7 +83,7 @@ try {
       assert.equal(await heading.isVisible(), true, 'Blank editor slot persists.');
       await heading.fill(marker);
       await admin.locator('body').click({ position: { x: 1400, y: 950 } });
-      await poll(async () => Object.values((await db.doc('sites/covermate-uat/states/draft').get()).data().text || {}).includes(marker));
+      await poll(async () => (await db.doc('sites/covermate-uat/states/draft').get()).data().config.sections.find(section => section.id === 'hero').th.title === marker);
       await visitor.reload();
       await visitor.locator('#hero h1').waitFor();
       assert.equal(await visitor.locator('#hero h1').innerText(), original, 'Draft does not leak to Visitor.');
@@ -94,7 +94,7 @@ try {
       const publish = admin.getByRole('button', { name: /^Publish/ }).first();
       await publish.click();
       await admin.getByRole('button', { name: 'Publish', exact: true }).last().click();
-      await poll(async () => Object.values((await db.doc('sites/covermate-uat/states/live').get()).data().text || {}).includes(marker));
+      await poll(async () => (await db.doc('sites/covermate-uat/states/live').get()).data().config.sections.find(section => section.id === 'hero').th.title === marker);
       await visitor.bringToFront();
       await visitor.evaluate(() => window.dispatchEvent(new Event('focus')));
       await visitor.waitForFunction(value => document.querySelector('#hero h1')?.innerText.includes(value), marker);
@@ -109,10 +109,10 @@ try {
       await freshPage.screenshot({ path: `uat-results/nfr/${engine}-published-mobile.png`, fullPage: false });
       await admin.screenshot({ path: `uat-results/nfr/${engine}-admin-published.png`, fullPage: false });
       await admin.locator('[data-language-switch=en]').click();
-      await admin.waitForFunction(() => document.documentElement.lang === 'en' && document.querySelector('#hero h1 [data-ek]')?.getAttribute('data-ek').endsWith(':en'));
+      await admin.waitForFunction(() => document.documentElement.lang === 'en' && /(?:\.en\.title|:en)$/.test(document.querySelector('#hero h1[data-ek], #hero h1 [data-ek]')?.getAttribute('data-ek') || ''));
       await heading.fill(`${marker} English`);
       await heading.press('Tab');
-      await poll(async () => Object.values((await db.doc('sites/covermate-uat/states/draft').get()).data().text || {}).includes(`${marker} English`));
+      await poll(async () => (await db.doc('sites/covermate-uat/states/draft').get()).data().config.sections.find(section => section.id === 'hero').en.title === `${marker} English`);
       await admin.locator('[data-language-switch=th]').click();
       await admin.waitForFunction(value => document.documentElement.lang === 'th-TH' && document.querySelector('#hero h1')?.innerText.includes(value), marker);
       assert.equal(await heading.innerText(), marker, 'Switching languages preserves separate CMS overrides.');

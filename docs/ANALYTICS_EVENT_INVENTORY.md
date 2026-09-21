@@ -26,7 +26,7 @@ gating, and test coverage.
 
 Material findings:
 
-- Public analytics is production-only (`covermate.vercel.app`) and suppresses
+- Public analytics is production-only (`covermateinsurance.com`) and suppresses
   owner hashes and active admin sessions.
 - No deployed event name needs to be renamed for Phase 7.
 - `trackEvent()` now drops unknown event names and allowlists parameters so

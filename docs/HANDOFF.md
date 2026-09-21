@@ -1,6 +1,91 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-13
+Last updated: 2026-09-21
+
+## September 21 Release Checkpoint
+
+The owner selected Cloudinary Free and authorized all pending Home/CMS/media/
+SEO/browser changes for production. The earlier cost hold is superseded.
+This checkpoint is updated after deployment and the conditional CMS migration.
+
+| Surface | Verified state before push |
+| --- | --- |
+| Primary domain | `https://covermateinsurance.com`; Vercel hostname is redirect/history only |
+| Git | Based on `de0e8ba`; approved release changes ready to commit |
+| Production | Previous deployment `dpl_BoZyKc24AAtk6mJhKPPHZPp4yTNh`; migration not yet applied |
+| Hosted media UAT | `https://covermate-nztf447jg-purich-w.vercel.app`, deployment `dpl_BM5NuqmdA3AB3Tb9wVXmoKoeX7s6` |
+| CMS | Schema v5; fresh live/draft migration dry-run has no conflicts |
+| Local CI | Full `npm run check:ci` PASS, including Admin builder and responsive smoke |
+| Provider | Cloudinary Free, sensitive Preview/Production environment configured |
+
+### Verified Scope
+
+- Cloudinary real owner upload, crop/fit, source recrop on mobile, draft reload,
+  live isolation, Publish and fresh visitor delivery passed. UAT documents were
+  restored and the temporary UAT-only owner deactivated. No production upload.
+- Final local tests cover CMS/media/SEO contracts, auth/API boundaries, public
+  requests, Analytics, Operations, boot, live refresh, generated bundles and
+  performance. Generated HTML is 745,523 bytes, below the 750,000-byte budget.
+- Home screenshot review personally covered full TH desktop/tablet/mobile,
+  English mobile contact, and desktop/mobile crop dialogs. Local proposed Home
+  heights: TH 390px wide = 3,329px; 820 = 3,530px; 1440 = 2,823px.
+  EN 390 = 3,698px; 820 = 3,571px; 1440 = 2,885px. No horizontal overflow.
+  Initial hosted full-page captures missed scroll-reveal content; use the
+  inspected reduced-motion local captures and post-release captures instead.
+- SEO initial HTML and hydrated metadata share CMS ownership. Legacy inline
+  hero copy is adopted consistently and stale insurer counts are normalized.
+  Local Lighthouse 13.5.0 SEO scored 100 in eight route/language/device cases;
+  this is not a ranking guarantee or production score.
+- Production exact-SHA gate readback passed. GitHub `verify` must succeed
+  before Vercel assigns the production alias; no force promotion.
+- Guarded Home migration merges only reviewed old values, checks update times,
+  backs up existing states and updates live/draft independently. Dry-run and
+  conflict/idempotence tests passed. Never publish an unrelated draft.
+- Docs plus `covermate-new-chat`, `covermate-design-spec`,
+  `mockup-to-product` and `ui-ux-expert` were updated. The design-spec fallback
+  mirrors the repository spec. Unrelated `exports/` remains out of the release.
+
+### Cost Boundary
+
+Google Cloud Billing readback: `billingEnabled: false`, no linked billing
+account. It was already disabled when read; this task did not downgrade it.
+The unused empty bucket `covermate-purich.firebasestorage.app` in
+`ASIA-SOUTHEAST3` was not deleted. No Firebase Storage uploads were performed.
+
+Cloudinary `software-dev-projects` was Free with 0.27/25 shared credits before
+testing. New uploads fail closed at 80% credits, on an unverifiable allowance or
+a non-Free plan. This is not a CDN traffic cap or unlimited-zero-cost guarantee.
+No paid upgrade, Cloudinary transformation or AI add-on was requested.
+See [CMS media](CMS_MEDIA.md).
+
+### Remaining Release Actions
+
+Commit/push, observe exact-SHA GitHub CI and production alias, then apply the
+conditional CMS migration and run read-only production route/asset/metadata
+checks. Record final revision and results here. Do not infer deployment from
+a preview or local build.
+
+Real Safari/LINE/Edge device checks, live lead App Check from those devices,
+Search Console/Bing submission and compliance review are not certified by
+local engine tests. See [browser coverage](BROWSER_COMPATIBILITY.md) and
+[SEO ownership](SEO.md). Do not send real leads merely for smoke testing.
+
+Ignored evidence: `uat-results/media-hosted/`, `uat-results/home-redesign/`,
+`uat-results/seo/`, `uat-results/browser-compatibility/` and private migration
+backups. Credentials, backups and test reports are not release source.
+
+### Current Source Owners
+
+- [HOME_REDESIGN.md](HOME_REDESIGN.md): approved compact Home, visual materials,
+  responsive layout, schema v5 and reference proposal/migration.
+- [CMS_SITE_AUDIT.md](CMS_SITE_AUDIT.md): whole-site Admin parity, semantic content
+  owners and Calculator controls. Guides content now belongs to FAQ; `#guides`
+  redirects to `#faq`, with recovery-only legacy data.
+- [CMS_MEDIA.md](CMS_MEDIA.md): owner-only image crop/upload, ratio slots,
+  Cloudinary setup, source/output semantics and cost guards.
+- [SEO.md](SEO.md): primary domain, Home/Motor TH/EN initial HTML metadata,
+  reciprocal hreflang, sitemap and private/preview noindex.
+- [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md): CI-gated deployment and recovery.
 
 ## CMS V2 Release
 
@@ -35,7 +120,7 @@ Release evidence and backup locations are in that document.
 
 CoverMate is live at:
 
-[https://covermate.vercel.app](https://covermate.vercel.app)
+[https://covermateinsurance.com](https://covermateinsurance.com)
 
 The repo is a static Vercel site with three exported HTML surfaces and one
 source-authored private analytics surface:
@@ -63,16 +148,16 @@ Archived external handoff package:
   Firestore-backed CMS behavior, and live production before implementing.
 
 Local workspace state can still be ahead of production between edits. Treat
-`covermate.vercel.app` as current only after the relevant commit is pushed,
+`covermateinsurance.com` as current only after the relevant commit is pushed,
 Vercel is deployed, Firestore Rules are deployed when rules changed, and
 production smoke passes.
 
-Current CMS production release:
+Historical CMS ownership release (superseded by later releases above):
 
 - Date: 2026-09-12
 - Runtime commit: `e2dba16` (implementation `501628b`)
 - Vercel deployment: `dpl_DHtuH6z8Z4BSw7A97dByBaY5kbQk`
-- Production alias: `https://covermate.vercel.app`
+- Production alias: `https://covermateinsurance.com`
 - Firestore Rules: no new rules change in this release; existing rules are
   deployed to Firebase project `covermate-purich`
 - GitHub CI: [34680894375](https://github.com/purichw/CoverMate/actions/runs/34680894375)
@@ -80,7 +165,7 @@ Current CMS production release:
 - Hosted UAT: actual Admin edit/publish, fresh visitor, real App Check form
   submission in the in-app browser, Firestore and authenticated Admin API readback
 - Post-migration production asset checks and
-  `COVERMATE_URL=https://covermate.vercel.app npm run smoke` passed
+  `COVERMATE_URL=https://covermateinsurance.com npm run smoke` passed
 - Vercel Git integration also deploys `main` automatically. A push is not a
   staging-only action; see the release runbook before the next release.
 
@@ -170,9 +255,9 @@ visitor lead, and reads it back from `contactLeadsUat` when credentials are
 available. Dedicated Firebase test admins should be stored in `admins/{uid}` as
 `active: true`, `role: readonly`, and `uatOnly: true`; production host/API
 requests and production Firestore paths reject those accounts.
-Admin Analytics at `/admin/analytics` reads leads, renders KPI/trend/mix/recent
-lead views, and reserves GA4 traffic charts for a future secure Data API or
-Firestore export. Recent leads render as a desktop table and mobile labeled
+Admin Analytics at `/admin/analytics` reads leads and requests aggregate traffic
+from the implemented server-only `/api/analytics`. Missing credentials produce
+`Setup needed`, not fake traffic. Recent leads render as a desktop table and mobile labeled
 cards. The admin analytics page requires active Firebase admin verification and
 does not load visitor GA scripts.
 
@@ -194,9 +279,9 @@ Visitor-copy inventory for external copy review lives under
 `docs/content/covermate-text-inventory.*`. It contains public visitor-visible
 Thai/English text only and is an export aid, not the source of truth.
 
-Security headers are configured in `vercel.json`; CSP is currently
-`Content-Security-Policy-Report-Only` because the exported bundle still depends
-on inline script/style and blob URLs.
+Security headers are configured in `vercel.json`; CSP is enforced but retains
+the renderer's documented inline/eval/blob allowances. See the NFR documents;
+do not describe this as either report-only or a strict nonce-based policy.
 
 Visitor source now lives in `src/visitor/` and generates `index.html`.
 `npm run check:bundles` first verifies source-generated sync, then validates
@@ -262,7 +347,7 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 Run smoke against production:
 
 ```bash
-COVERMATE_URL=https://covermate.vercel.app npm run smoke
+COVERMATE_URL=https://covermateinsurance.com npm run smoke
 ```
 
 Deploy production:
@@ -312,9 +397,9 @@ Lead-form submission writes to Firestore. When `firestore.rules` changes, deploy
 Firestore Rules in the same release before relying on the tightened lead
 validation shape in production.
 
-Full GA traffic metrics in `/admin/analytics` still require a server-side GA4
-Data API endpoint or scheduled export into Firestore. The static browser app
-must not contain service-account credentials.
+The GA4 Data API endpoint exists. Availability depends on valid server-side
+property access and credentials; this docs pass did not verify that remote
+configuration. The browser must never contain service-account credentials.
 
 The Operations Portal is live for Leads, Tasks, and Audit. Customers,
 Consultations, Quotes, Policies, Renewals, Documents, and Insurers are

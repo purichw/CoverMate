@@ -1,10 +1,11 @@
 # CoverMate Non-Functional Requirements
 
-Last updated: 2026-09-05
+Last updated: 2026-09-21
 
-The September hardening is implemented locally, not deployed yet. The current
-release prerequisites, evidence, cost constraints, and remaining exceptions are
-in [NFR_HARDENING.md](NFR_HARDENING.md).
+The September 5 hardening activation is documented in
+[NFR_HARDENING.md](NFR_HARDENING.md). New Home/CMS/media/browser/SEO release
+evidence is tracked separately in [HANDOFF.md](HANDOFF.md); do not confuse the
+historical hardening baseline with a later candidate build.
 
 ## Security
 
@@ -12,7 +13,7 @@ Implemented:
 
 - Firebase Auth plus Firestore `admins/{uid}` allowlist gates admin writes.
 - Public lead creates go through `/api/leads` with App Check, validation,
-  HMAC-keyed rate limits, and idempotency. Candidate Firestore rules deny direct
+  HMAC-keyed rate limits, and idempotency. Firestore rules deny direct
   unauthenticated writes to both production and UAT lead collections.
 - Admin routes are `noindex,nofollow`.
 - Visitor GA tracking is suppressed for owner sessions and owner hashes.
@@ -23,7 +24,7 @@ Implemented:
   - `Strict-Transport-Security`
   - Enforced `Content-Security-Policy`
 
-Candidate CSP enforces source/frame/object restrictions, but explicitly retains
+CSP enforces source/frame/object restrictions, but explicitly retains
 `unsafe-inline`, `unsafe-eval`, and blob scripts for the exported DC renderer.
 It is not a strict nonce/hash-based CSP. Removing runtime expression compilation
 requires a separate renderer migration, not a security-header-only change.
@@ -80,6 +81,10 @@ Open performance work:
   evidence that the field targets have been achieved.
 
 ## Accessibility
+
+Browser support includes major desktop/mobile engines and LINE's iOS/Android
+in-app browser. See [BROWSER_COMPATIBILITY.md](BROWSER_COMPATIBILITY.md) for the
+support target, isolated test command and real-device evidence boundaries.
 
 Implemented support:
 

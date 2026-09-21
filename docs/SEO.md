@@ -1,158 +1,165 @@
-# CoverMate SEO Contract
+# CoverMate SEO
 
-Last updated: 2026-08-28
+Last updated: 2026-09-21. See `HANDOFF.md` for current preview/production evidence;
+the owner has authorized the complete release, including CMS-backed metadata.
 
-## Canonical Indexing
+## Primary Domain
 
-The indexable public URLs are:
+The only primary origin is `https://covermateinsurance.com`. Permanent 308
+redirects in `vercel.json` consolidate `www.covermateinsurance.com` and the old
+`covermate.vercel.app` hostname, preserving paths and query strings.
+The old hostname remains recognized as production for environment isolation;
+`?cm_env=uat` must never switch a production request into UAT.
 
-- `https://covermate.vercel.app/`
-- `https://covermate.vercel.app/motor`
+Current indexable URLs:
 
-`/#motor` is a legacy hash alias into the home page and must keep the same
-canonical URL as `/`. Do not add hash URLs to `sitemap.xml`; crawlers ignore
-URL fragments for separate indexing.
+- `https://covermateinsurance.com/`
+- `https://covermateinsurance.com/?lang=en`
+- `https://covermateinsurance.com/motor`
+- `https://covermateinsurance.com/motor?lang=en`
 
-Admin surfaces are private owner tools and must stay `noindex,nofollow`:
+Thai is the default. Each page has its own canonical and reciprocal
+`th-TH`, `en` and `x-default` links. Campaign parameters and fragments are not
+canonical; English language selection is. Language links are real anchors,
+with an in-place update for ordinary clicks so an unfinished form is retained.
+Internal Home/Motor links preserve language.
 
-- `/admin/login`
-- `/admin`
-- `/admin/analytics`
-- `/admin/content`
-- `/admin/edit`
-- `/admin/preview`
-- `/#admin`
-- `/#edit`
-- `/#preview`
+`sitemap.xml` contains those four URLs only. It omits invented/stale lastmod
+dates, priorities, admin pages and hash aliases. `robots.txt` advertises the
+new sitemap and excludes API endpoints. It allows crawling admin login HTML
+so crawlers can read its noindex directive; authentication remains the security
+boundary, not robots.txt.
 
-`robots.txt` also disallows `/admin` and points crawlers to the production
-sitemap.
+## Metadata Ownership
 
-## Metadata Layers
+`covermate-seo.mjs` builds a single model used by both the initial HTML and
+the visitor runtime. `api/page.js` delegates to `server/seo-page.mjs`, which
+reads only the public `sites/{siteId}/states/live` document. It uses the same
+CMS sanitizer as the browser, including semantic copy and insurer counts.
 
-The site is a static exported bundle that replaces the shell document with
-an embedded template at runtime. SEO metadata therefore exists in two places:
+The server replaces SEO in both the outer HTML head and the serialized
+embedded template. Parsing/serialization is shared with the build through
+`server/bundler-template.mjs`; scripts re-export this helper. Never regex-rewrite
+arbitrary serialized HTML. JSON-LD and attribute content are escaped.
 
-- the outer `index.html` head, which non-rendering crawlers and link previews
-  can see immediately;
-- the embedded template head, which becomes the live document after hydration.
+Admin keeps ownership of:
 
-Keep these layers aligned whenever changing title, description, canonical,
-Open Graph, Twitter, icon, or JSON-LD data.
+- Home: `seo.title.th/en`, `seo.description.th/en`.
+- Motor: `motorPage.seo.title.th/en`, `motorPage.seo.description.th/en`.
+- Shared social image and alt text: `seo.image`, `seo.imageAlt.th/en`.
+- Brand name, favicon and symbol: `brand.name`, `brand.media.favicon/mark`.
+- Licence labels/numbers and contact data.
+- Service names/types/audiences, expertise and service area in `seo`.
 
-## Dynamic Live Content
+Blank title uses the CMS brand plus CMS service name; blank description uses
+that route's CMS hero body. This is derived public copy, not hardcoded marketing.
+No cross-language copy substitution is introduced. Blank optional images and
+business details disappear rather than becoming placeholders. Legacy CMS
+documents without motor data use the same missing-field motor defaults as the
+visitor; explicit blank fields stay blank.
 
-The static metadata is only a fallback. After the app hydrates Firestore live
-content, the runtime updates:
+Canonical origin, route structure, robots rules and schema types remain code
+owned. Publishing content does not require a code deploy to refresh initial
+metadata after this wrapper is deployed.
 
-- `document.title`
-- `html[lang]`
-- `meta[name="description"]`
-- `meta[name="robots"]`
-- canonical link
-- Open Graph and Twitter title/description/image
-- favicon and touch icon from Admin-managed brand media
-- `script#covermate-jsonld`
+## Cache And Failure Policy
 
-This keeps metadata aligned with Admin Portal edits to the live brand and hero
-copy. Firestore live content must win over stale browser cache, including SEO
-metadata.
+- Published config is cached for 30 seconds per namespace per function instance.
+- Concurrent reads are deduplicated. UAT and production cannot share a cache entry.
+- Public successful HTML has a 30-second CDN cache and no browser max-age.
+  A published head change can take up to roughly 60 seconds to propagate through
+  both caches. There is no shared caching for owner/UAT pages or failures.
+- CMS fetch has a five-second timeout, including JSON body reading.
+- Failed/invalid reads return HTTP 503 with Retry-After: 60, not a fake-success
+  page. The boot shell still lets a visitor recover using existing client
+  cached/live content. No long-lived stale server metadata is served on errors.
+- No Firebase credentials or draft access are needed for the public head reader.
+- `build:visitor` also generates `server/asset-versions.json` so initial social
+  images and hydrated favicons share the existing content-hash cache busting.
+  External/signed media URLs and explicit blanks are preserved.
 
-## Guarded Admin SEO Controls
+The visual body remains client-rendered. This is server-rendered metadata,
+not a claim that all content is available to non-JavaScript crawlers.
 
-The Admin CMS manages:
+## Private And Preview Pages
 
-- `seo.title.th/en`
-- `seo.description.th/en`
-- `seo.image` and `seo.imageAlt.th/en`
-- `brand.media.favicon` and `brand.media.mark`
-- structured `licences.life/nonLife` numbers and labels used in JSON-LD
-- v2: `seo.areaServed`, newline-separated `seo.knowsAbout`,
-  `homeServiceName/motorServiceName.th/en`, `homeServiceType/motorServiceType`,
-  and `homeAudience/motorAudience`
+Admin/login/analytics/editor/preview remain noindex,nofollow,noarchive.
+Server headers also protect the exact `/admin` path, owner editor paths,
+and preview hosts. UAT has noindex in raw and hydrated metadata, even when
+a preview URL explicitly selects the production content namespace.
+Owner routes never fetch draft data through the public head function.
 
-Those fields feed `document.title`, meta description, Open Graph title and
-description, and Twitter title and description after hydration. If the guarded
-fields are blank, the runtime falls back to the live brand and hero copy.
-Optional v2 business-metadata properties instead disappear when blank. Localized
-SEO values no longer fall back across languages; this preserves an intentionally
-empty translation. Canonical routes and entity types remain code-owned.
+Legacy `#admin/#edit/#preview` hashes are not sent in HTTP requests. They receive
+the public initial head before the client applies private mode. Current owner
+links must use the protected `/admin/...` namespace instead.
 
-The CMS must not expose arbitrary controls for canonical URL, robots directives,
-JSON-LD entity types, testimonials, ratings, reviews, or unsupported claims. Canonical remains
-locked to the rendered public route: `https://covermate.vercel.app/` for Home
-and `https://covermate.vercel.app/motor` for the motor page. Public `/` and
-`/motor` remain `index,follow`; owner/admin routes remain `noindex,nofollow`.
+## Structured Data And Social Cards
 
-Blank media removes the corresponding hydrated metadata. Static HTML no longer
-asserts fixed licence numbers before Firestore hydration. Non-JavaScript crawlers
-still see committed boot title/description/social images; CMS publishing alone
-does not regenerate static HTML. Server-rendered social previews are a separate
-capability, not a guarantee of this client-rendered CMS.
+JSON-LD includes WebSite, Organization/InsuranceAgency, WebPage and a Service
+only when its CMS service name exists. WebPage language, URL and identity match
+the selected route/language. No ratings, testimonials, prices or addresses are
+invented. Placeholder phone/email values are excluded.
 
-## Structured Data
-
-Structured data lives in `script#covermate-jsonld` and uses JSON-LD. It is
-limited to facts represented by the public page:
-
-- `WebSite`
-- `Organization` / `InsuranceAgency`
-- `WebPage`
-- `Service`
-
-Do not add FAQ, review, rating, price, address, phone, email, fee, or claim
-structured data unless the same information is accurate, visible on the public
-page, and not a placeholder. The runtime intentionally omits placeholder
-phone/email values such as `08X-XXX-XXXX` and `purich@example.com`.
-
-## Social Assets
-
-Current share image:
-
-- `assets/covermate-og.png` - 1200 x 630 PNG
-- `assets/covermate-og.svg` - editable source
-
-App/icon assets:
-
-- `favicon.svg`
-- `favicon.ico`
-- `assets/apple-touch-icon.png`
-- `assets/icon-192.png`
-- `assets/icon-512.png`
-- `site.webmanifest`
-
-The Open Graph image is not immutable-cached so social preview fixes can roll
-out without changing file names.
-The September 13 brand update replaces its obsolete green wordmark while
-preserving its 1200 x 630 dimensions and existing copy/layout. Static Open Graph,
-Twitter, and JSON-LD image URLs carry `v=20260913-mate-gold`. Runtime metadata
-uses the same asset-hash versioning as other bundled images, including root
-favicons. Admin-owned external/signed URLs and explicit blanks stay untouched.
-Favicon artwork and dimensions remain the existing symbol-only blue/gold set.
+OG and Twitter/X receive the same title, description and image as the CMS model,
+including image alt text and locale. Blank social media is removed; do not
+hardcode dimensions for an arbitrary uploaded image. The default share image is
+`assets/covermate-og.png` (1200 x 630). LINE/social platforms maintain their own
+preview caches and may require a refresh after publishing.
 
 ## Verification
 
-Run:
-
 ```sh
-npm run smoke
+npm run build:visitor
+npm run check:seo
+npm run check:bundles
+npm run check:seo:browser
+npm run check:seo:lighthouse
 ```
 
-The smoke harness verifies:
+Only the inexpensive SEO contract check is added to normal CI. Lighthouse is
+an explicit SEO/release check, not a required run for every minor CSS edit.
+Reports go to `uat-results/seo/`; the browser harness uses an isolated local
+CMS fixture and never submits forms or publishes content.
 
-- `robots.txt`, `sitemap.xml`, `site.webmanifest`, and SEO images/icons load;
-- public routes are indexable and canonicalized to the matching production
-  route (`/` or `/motor`);
-- admin routes and owner modes are `noindex`;
-- Open Graph, Twitter, and JSON-LD metadata exist and parse;
-- remote Firestore live content updates SEO metadata instead of stale local
-  cache winning.
-- guarded Admin SEO controls can persist title/description without exposing
-  canonical or robots editors.
-- the expanded public section set, including claim help, renewal reminders, fee
-  transparency, and privacy/PDPA, renders without creating separate indexable
-  hash URLs.
-- `covermate-analytics.js` loads as a public static asset; Analytics itself is
-  production-only and must not be added to admin-only HTML surfaces.
-- `/admin/analytics` is `noindex,nofollow`, is not in `sitemap.xml`, and does
-  not load visitor GA scripts.
+Observed September 21:
+- Existing production Home already scored Lighthouse SEO 100 despite its wrong
+  old-domain canonical. Baseline: `uat-results/seo-before-home.json`.
+- Local new implementation scored 100 in all eight Home/Motor x TH/EN x
+  mobile/desktop cases with Lighthouse 13.5.0. This is the SEO category only,
+  not performance/accessibility/best-practices or real-world ranking.
+- Raw/hydrated canonical, language, JSON-LD, visible H1, switch preservation,
+  route navigation, CMS blanks/escaping, timeout/cache isolation and noindex
+  checks passed. The handoff CMS fixture was used for the recorded visual run.
+
+## Release And Search Ownership
+
+Before calling this live:
+1. Deploy the exact tested source through the existing release gate.
+2. Read raw HTTP responses on all four URLs without JavaScript. Confirm status
+   200, correct CMS title/description/canonical/hreflang and social images.
+3. Confirm old-host/www redirects retain `/motor?lang=en&utm_source=...`, that
+   a nonexistent URL remains 404, and UAT/admin responses have noindex.
+4. Confirm Firebase Auth authorized domains, App Check/reCAPTCHA allowed domains,
+   and GA4 web stream settings include covermateinsurance.com. Do not weaken
+   Auth/App Check to get a test pass. Domain-scoped local storage means an old
+   admin session/cache will not transfer to the new origin; sign in again.
+5. Verify the domain property in Google Search Console and Bing Webmaster Tools,
+   submit the new sitemap, inspect both languages/routes and request indexing.
+   Assess Change of Address from the old property if applicable and owned.
+6. Review real Search Console indexing/Core Web Vitals and Rich Results Test
+   output. These tools require hosted content and appropriate owner access.
+
+Search Console/Bing submission and account verification are separate owner
+operations, not implied by deployment or a Lighthouse score. Historical snapshot
+manifests and old exports remain factual archives, not current domain guidance.
+
+## References
+
+- [Google JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)
+- [Google multilingual sites](https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites)
+- [Google robots.txt limitations](https://developers.google.com/search/docs/crawling-indexing/robots/intro)
+- [Lighthouse documentation](https://developer.chrome.com/docs/lighthouse)
+- [Vercel redirects, rewrites and function configuration](https://vercel.com/docs/project-configuration/vercel-json)
+
+A Lighthouse 100 is a reproducible technical check, not a Google compliance
+certificate, indexing promise or search-ranking guarantee.

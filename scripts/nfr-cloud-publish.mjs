@@ -96,9 +96,9 @@ try {
   await page.waitForFunction(() => document.querySelector('#hero')?.textContent.includes('9000000001') && document.querySelector('#covermate-jsonld')?.textContent.includes('9000000001'));
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
   assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), marker + ' inline');
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('link', { name: 'Switch to English' }).click();
   assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), '');
-  await page.getByRole('button', { name: 'Switch to Thai' }).click();
+  await page.getByRole('link', { name: 'Switch to Thai' }).click();
   console.log('Fresh Visitor sees published UAT text.');
   let hostedLeadReadback = false;
   if (hosted && !cmsOnly) {

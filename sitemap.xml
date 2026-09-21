@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://covermate.vercel.app/</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <loc>https://covermateinsurance.com/</loc>
   </url>
   <url>
-    <loc>https://covermate.vercel.app/motor</loc>
-    <lastmod>2026-08-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <loc>https://covermateinsurance.com/motor</loc>
   </url>
+  <url><loc>https://covermateinsurance.com/?lang=en</loc></url>
+  <url><loc>https://covermateinsurance.com/motor?lang=en</loc></url>
 </urlset>

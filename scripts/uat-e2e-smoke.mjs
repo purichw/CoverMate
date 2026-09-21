@@ -114,7 +114,7 @@ try {
   }
 
   const productionGuard = resolveCoverMateEnvironment({
-    host: "covermate.vercel.app",
+    host: "covermateinsurance.com",
     url: "/?cm_env=uat"
   });
 

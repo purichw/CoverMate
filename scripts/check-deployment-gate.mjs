@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const expected = JSON.parse(fs.readFileSync(new URL('../.github/vercel-production-check.json', import.meta.url), 'utf8'));
-const scope = 'purichwc-1517s-projects';
+const scope = 'team_YrvoFhGxq1xp83XzkHci5rNx';
 const read = args => JSON.parse(execFileSync('vercel', args.concat(['--scope', scope]), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
 const project = read(['api', '/v9/projects/prj_AraOMyb7pLZrYhcxu70cpRhqfH1F', '--raw']);
 const { checks } = read(['project', 'checks', 'covermate', '--format', 'json']);

@@ -1,6 +1,9 @@
 # CoverMate Data Contract
 
-Last updated: 2026-09-07
+Last updated: 2026-09-21
+
+Candidate schema is v5; production migration/publish for this candidate has not
+occurred. See [HANDOFF.md](HANDOFF.md) and [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md).
 
 ## Persistence Model
 
@@ -58,7 +61,7 @@ Implications:
 
 - production and local development read the production Firestore live/draft
   documents unless local development explicitly opts into UAT with `cm_env=uat`
-- production host `covermate.vercel.app` always resolves to production data,
+- production host `covermateinsurance.com` always resolves to production data,
   even if a query parameter requests UAT
 - Vercel preview hosts resolve to UAT data automatically
 - clearing site data removes only local caches and the session marker
@@ -101,8 +104,12 @@ Runtime normalization fills missing sections and fields from `DEFAULTS` without
 overwriting edited copy.
 
 Current section types include `hero`, `trust`, `products`, `review`, `fit`,
-`steps`, `insurers`, `tiers`, `claim`, `renew`, `guides`, `stories`, `about`,
+`steps`, `insurers`, `tiers`, `claim`, `renew`, `stories`, `about`,
 `faq`, `fees`, `pdpa`, and `contact`.
+
+Legacy `guides` is migration input, not a separate v4+ renderer or Admin owner:
+items move into FAQ; `cmsArchives.guides` is recovery-only. Home composition,
+artwork, task links and featured-tier/axis IDs live under `homeDesign`.
 
 The `fit` section also owns the public needs-calculator methodology under
 `fit.calculator`. The canonical contract is documented in
@@ -231,12 +238,13 @@ CMS `seo` fields; blank optional properties are omitted. In-flight
 boundary, while unrelated positional text keys remain untouched. See
 [CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration ordering.
 
-`brand.advisorLogo` is editable only as media metadata in the Brand & contact
-panel: an existing committed `assets/...` path or an HTTPS image URL, plus alt
-text. Direct binary upload, Firebase Storage upload, base64/data-image storage,
-drag/drop image processing, and inline `/#edit` image replacement are not
-approved. The value is part of draft/live config and must follow the same
-Firestore-first cache rules as other CMS content.
+Media fields remain committed asset paths or HTTPS URL strings plus supported
+alt metadata. The approved candidate adds `cmsImageSlots()` and ratio-locked
+Admin crop/fit. `mediaEdits[canonicalPath]` stores source/output URLs for recrop,
+not binaries. Explicit blank or direct replacement invalidates old source
+metadata. Cloudinary Free is the approved upload adapter, replacing Firebase
+Storage. See [CMS_MEDIA.md](CMS_MEDIA.md). All references retain
+the same draft/live/cache ownership as other CMS content.
 
 Important dynamic contact fields include:
 
@@ -295,7 +303,7 @@ See [CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration and release 
 | `sites/covermate/states/live` | Public read; admin write. | Canonical published visitor CMS state. |
 | `sites/covermate/states/draft` | Admin read/write. | Canonical working draft state for owner modes. |
 | `sites/covermate/versions/{versionId}` | Admin read/write. | Canonical publish/restore history, newest first by `ts`. |
-| `contactLeads/{leadId}` | Validated public create; active admin read; owner/adviser/ops create/update; client delete blocked. | Canonical lead capture store for the public consultation form, renewal reminder form, Admin Analytics, and Operations Portal workflow state. |
+| `contactLeads/{leadId}` | Public submission through `/api/leads` only; direct unauthenticated writes denied; role-gated admin reads/updates; client delete blocked. | Canonical lead capture store for consultation, renewal, Analytics and Operations; API verifies App Check/consent/limits/idempotency. |
 | `sites/covermate/analytics/{analyticsDoc}` | Admin read/write. | Reserved GA4/Data API summaries or scheduled analytics exports. |
 | `sites/covermate-uat/states/live` | Public read; admin write. | UAT published visitor CMS state for Vercel preview/local UAT. |
 | `sites/covermate-uat/states/draft` | Admin read/write. | UAT working draft state for owner modes. |

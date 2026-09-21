@@ -5,10 +5,13 @@ import { startStaticServer } from "./lib/static-server.mjs";
 const commands = [
   ["node", ["scripts/build-vendor.mjs"]],
   ["npm", ["run", "build:telemetry"]],
+  ["npm", ["run", "build:media"]],
   ["npm", ["run", "check:types"]],
   ["npm", ["run", "check:nfr"]],
+  ["npm", ["run", "check:public-request"]],
   ["npm", ["run", "build:visitor"]],
   ["npm", ["run", "check:bundles"]],
+  ["npm", ["run", "check:seo"]],
   ["npm", ["run", "check:contracts"]],
   ["npm", ["run", "check:security"]],
   ["npm", ["run", "check:ids"]],
@@ -21,6 +24,8 @@ const commands = [
   ["npm", ["run", "check:analytics-api"]],
   ["npm", ["run", "check:phase6"]],
   ["npm", ["run", "check:cms"]],
+  ["npm", ["run", "check:cms:site"]],
+  ["npm", ["run", "check:media"]],
   ["npm", ["run", "check:ops"]],
   ["npm", ["run", "check:performance"]],
   ["git", ["diff", "--check"]]

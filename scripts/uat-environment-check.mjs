@@ -7,7 +7,7 @@ import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 const repoFile = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 const production = resolveCoverMateEnvironment({
-  host: "covermate.vercel.app",
+  host: "covermateinsurance.com",
   url: "/?cm_env=uat"
 });
 assert.equal(production.name, "production", "Production host must ignore explicit UAT query params.");

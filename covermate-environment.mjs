@@ -1,4 +1,5 @@
-const PRODUCTION_HOSTS = new Set(["covermate.vercel.app"]);
+// Legacy host stays production-isolated until its permanent redirect completes.
+const PRODUCTION_HOSTS = new Set(["covermateinsurance.com", "www.covermateinsurance.com", "covermate.vercel.app"]);
 const UAT_QUERY_VALUES = new Set(["uat", "staging", "preview"]);
 const PRODUCTION_QUERY_VALUES = new Set(["prod", "production", "live"]);
 

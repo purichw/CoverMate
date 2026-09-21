@@ -1,6 +1,19 @@
 # CoverMate UAT Environment
 
-Last updated: 2026-09-12
+Last updated: 2026-09-21
+
+## Cloudinary Media Checks
+
+For a media/API release, `scripts/media-hosted-smoke.mjs --write-uat` exercises
+real owner upload, draft reload/isolation, original-source recropping, Publish
+and fresh visitor readback. Set `COVERMATE_UAT_URL` to the exact preview and
+`COVERMATE_HANDOFF_DIR` to the approved Home handoff. It requires server test
+credentials, creates a temporary `uatOnly` owner, backs up existing UAT states
+under ignored `uat-results/media-hosted/`, restores them conditionally and
+deactivates the owner. It uploads only a small public brand-mark source/output
+pair under `covermate/cms-media/covermate-uat/`; no production content writes.
+No automatic asset deletion: inspect references before any later cleanup.
+Use this only for media/CMS release risk, not ordinary copy or CSS edits.
 
 ## Purpose
 
@@ -39,7 +52,7 @@ because the diff did not touch UAT-triggering surfaces.
 
 | Runtime | Environment | CMS namespace | Lead collection |
 | --- | --- | --- | --- |
-| `https://covermate.vercel.app` | Production | `sites/covermate/*` | `contactLeads/*` |
+| `https://covermateinsurance.com` | Production | `sites/covermate/*` | `contactLeads/*` |
 | Any Vercel preview host ending in `.vercel.app`, except the production host | UAT | `sites/covermate-uat/*` | `contactLeadsUat/*` |
 | Local URL with `?cm_env=uat` | UAT | `sites/covermate-uat/*` | `contactLeadsUat/*` |
 | Local URL without `?cm_env=uat` | Production-shaped local dev | `sites/covermate/*` | `contactLeads/*` |
@@ -115,7 +128,7 @@ header when present.
 
 ## External Services
 
-- Public GA4 tracking loads only on `covermate.vercel.app`, so preview/local UAT
+- Public GA4 tracking loads only on `covermateinsurance.com`, so preview/local UAT
   visitor clicks do not pollute production GA4.
 - `/api/analytics` returns production GA4 data only in production. UAT returns
   `Setup needed` unless Vercel Preview has `COVERMATE_UAT_GA4_PROPERTY_ID`,

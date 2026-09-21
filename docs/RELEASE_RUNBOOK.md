@@ -1,16 +1,38 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-09-13
+Last updated: 2026-09-21
+
+## Current Authorization
+
+The owner explicitly resumed the September 21 release, selected Cloudinary Free,
+and requested all pending work on production. The earlier hold is superseded;
+Firebase Storage remains rejected. [HANDOFF.md](HANDOFF.md) records deployment,
+CMS migration and check status. [CMS_MEDIA.md](CMS_MEDIA.md) owns credentials,
+cost boundaries and hosted upload checks. Do not bypass the exact-SHA CI gate.
 
 ## Production
 
 Production URL:
 
-[https://covermate.vercel.app](https://covermate.vercel.app)
+[https://covermateinsurance.com](https://covermateinsurance.com)
+
+Domain/SEO release note (September 21, local implementation): the primary origin
+is now the apex custom domain. Follow [SEO release checks](SEO.md#release-and-search-ownership)
+for old-host/www redirects, all four route/language raw HTML heads, CMS-backed
+social previews, private/UAT noindex, and Firebase/GA4/Search Console/Bing
+domain configuration. `build:visitor` also regenerates the server image hash
+map; ship it with `api/page.js` and `server/seo-page.mjs`. This routing change
+warrants a targeted hosted check, not a claim that local Lighthouse proves live
+behavior. Do not change account configuration or submit site properties without
+the appropriate owner authorization/access.
 
 Vercel project:
 
 `covermate`
+
+Current team slug: `purich-w`. The read-only deployment-gate script uses stable
+scope `team_YrvoFhGxq1xp83XzkHci5rNx` and project
+`prj_AraOMyb7pLZrYhcxu70cpRhqfH1F`; do not restore the retired team slug.
 
 GitHub remote:
 
@@ -98,7 +120,7 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 
 `npm run smoke` defaults to `http://localhost:4177`.
 `npm run smoke:admin-builder` runs only the dedicated Admin builder flow for
-section structure, embedded hero coverage accordions, relationship cards,
+section structure, coverage controls, relationship cards,
 insurer logo items, and tier rows/columns.
 
 GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
@@ -106,6 +128,13 @@ manual dispatch. CI installs Playwright Chromium and uses the shared browser
 launcher helper, so browser checks are no longer tied to macOS Chrome.app.
 
 ## UAT Trigger Policy
+
+Shared visitor navigation, bootstrap, forms or browser-capability changes also
+use the relevant cross-engine checks in
+[BROWSER_COMPATIBILITY.md](BROWSER_COMPATIBILITY.md). Before a LINE-focused
+release, complete its real LINE iOS/Android UAT checklist. Engine emulation is
+not proof of the actual in-app browser or App Check. This does not add a full
+browser/UAT matrix to tiny copy or spacing tasks.
 
 Do not treat UAT as a default gate just because the environment exists. Hosted
 UAT smoke, fresh UAT preview deploys, and UAT data seeding are reserved for
@@ -159,7 +188,7 @@ When a dedicated UAT test admin is used, its `admins/{uid}` document should have
 After production deployment:
 
 ```bash
-COVERMATE_URL=https://covermate.vercel.app npm run smoke
+COVERMATE_URL=https://covermateinsurance.com npm run smoke
 ```
 
 Minimum checks:
@@ -189,7 +218,7 @@ Minimum checks:
 - `/motor` renders the dedicated motor-insurance campaign page with its own
   local motor-page nav, `Home` link, 14-logo insurer grid, motor tier
   comparison, claim/renewal/guides/FAQ/contact sections, and canonical
-  `https://covermate.vercel.app/motor`
+  `https://covermateinsurance.com/motor`
 - public navbar anchor jumps, including `#fit`, scroll in-place without
   rebuilding the main visitor DOM or flashing the page
 - `/admin/login` loads
@@ -272,7 +301,7 @@ Minimum checks:
 - owner modes hydrate Firestore draft/version data as needed, and publish writes
   `states/live`, `states/draft`, and a version document
 - `/` and `/motor` remain indexable with canonicals
-  `https://covermate.vercel.app/` and `https://covermate.vercel.app/motor`;
+  `https://covermateinsurance.com/` and `https://covermateinsurance.com/motor`;
   `/#motor` remains a hash alias with the home canonical
 - `/admin`, `/admin/login`, `/#admin`, `/#edit`, and `/#preview` remain
   `noindex`
@@ -281,7 +310,7 @@ Minimum checks:
 - Firestore live content updates SEO title/description/JSON-LD after hydration;
   stale local cache must not win
 - `covermate-analytics.js` loads as a static asset, uses GA4 measurement ID
-  `G-5TF3C235EF`, runs only on `covermate.vercel.app`, and suppresses owner
+  `G-5TF3C235EF`, runs only on `covermateinsurance.com`, and suppresses owner
   hashes/admin sessions
 - `src/visitor/*`, `scripts/lib/visitor-source.mjs`,
   `scripts/lib/contract-loader.mjs`, `admin/session.js`,
@@ -379,7 +408,7 @@ compatible app and rules together, never CMS content automatically.
 Inspect production deployment:
 
 ```bash
-vercel inspect covermate.vercel.app
+vercel inspect covermateinsurance.com
 ```
 
 Confirm the production deployment points to the expected commit before closing

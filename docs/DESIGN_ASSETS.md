@@ -1,14 +1,20 @@
 # CoverMate Design And Assets
 
-Last updated: 2026-09-13
+Last updated: 2026-09-21
+
+The current local Home redesign follows the explicitly approved September
+handoff, including ivory/white/sage material contrast, botanical illustration,
+and three individually CMS-owned tier illustrations. Its media paths, generation provenance
+and non-production status are documented in [Home redesign](HOME_REDESIGN.md).
+The real logos and their approved gold treatment below are unchanged.
 
 ## Visual Source
 
-The maintained visual source is the production implementation in this repository
-plus current product docs and Firestore-backed CMS data. Historical screenshots,
-offline prototypes, or downloaded references may be used only when the owner
-explicitly supplies them for the current task, and they must be reconciled
-against current product decisions before implementation.
+For Home redesign, the owner-selected September handoff and later supplied
+references own the visual target, including density and materials. Existing
+production is a baseline, not a veto on that approved redesign. Firestore still
+owns actual copy, media and visibility. Older references below are historical;
+see `HOME_REDESIGN.md` for the selected set and current deviations.
 
 Archived/reference inputs that can still inform implementation when explicitly
 supplied or reopened by the owner:
@@ -194,11 +200,11 @@ Relationship-card logo paths in the current product reference:
 | `assets/logos/aia-logo.png` | Life/health representative proof card; committed PNG with transparent background and embedded into the bundle resource map. |
 | `assets/logos/srikrung-logo.png` | Motor broker proof card; committed PNG with transparent background and embedded into the bundle resource map. |
 
-Admin media controls manage references and metadata only. Owners can set an
-existing `assets/...` path or HTTPS image URL and provide alt text where the CMS
-supports it. Direct binary upload, Firebase Storage upload, base64/data-image
-storage, drag/drop image processing, and media-library behavior are outside the
-approved CoverMate surface until explicitly approved.
+All visitor content images now have approved Admin replacement/crop requirements,
+including content icon overrides, favicon and social preview. Paths/HTTPS URLs
+remain supported; blank stays blank. The crop UI uses signed Cloudinary Free
+uploads; Firebase Storage is not used.
+See `CMS_MEDIA.md`; never put binary/base64 image data in Firestore.
 
 ## Favicon
 
@@ -229,9 +235,12 @@ full-bleed background tile.
 When changing these assets, visually inspect `assets/covermate-og.png` so text
 does not crop in social previews.
 
-## Logo Animation Contract
+## Insurer Logo Presentation
 
-The motor-insurance section should show insurer logos in a calm animation area.
+The redesigned Home uses a compact static grid like the approved reference.
+The dedicated Motor route retains its existing calm animated presentation.
+Do not restore the old Home animation merely because this document once
+described it as universal.
 
 Animation requirements:
 
@@ -242,12 +251,13 @@ Animation requirements:
 - avoid layout shift when logos load
 - keep logos legible on mobile
 - do not blur, darken, crop, or mask logos in a way that makes them hard to read
-- keep the relationship proof cards below the animated logo grid visible on
-  desktop and mobile
+- keep the relationship proof available below the grid on desktop and mobile;
+  Home uses a visible details disclosure to preserve its compact composition
 
 ## Screenshot QA
 
-For visual changes, capture at least:
+Scope captures to the changed surface. For a full release, relevant surfaces
+include:
 
 - desktop visitor site
 - mobile visitor site
@@ -261,4 +271,11 @@ For visual changes, capture at least:
 - admin analytics
 
 Use snapshots or contact sheets when comparing against supplied references.
+Personally open and inspect the reference and rendered screenshots before
+handoff. Check whole-page density plus actual-size top/middle/footer crops,
+TH/EN wrapping, equal peer-card geometry, disclosure padding, and visible logo
+artwork size (not just its white image canvas). Tablet layout should resemble
+desktop but work without hover; do not call emulation real-device LINE/Safari QA.
+The Home target is approximately 3-4 viewports with the documented collapsed
+fixture, not a fixed-height cap for arbitrary CMS content. Maintain Admin parity.
 Generated reference extraction/audit artifacts may live locally under `.reference-artifacts/`; that directory should remain ignored so heavy screenshot evidence does not get committed accidentally.

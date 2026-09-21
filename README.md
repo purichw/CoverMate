@@ -1,6 +1,14 @@
 # CoverMate
 
-Static CoverMate visitor and admin surfaces for Vercel.
+CoverMate visitor and admin surfaces for Vercel, with Firebase Auth/Firestore
+and serverless APIs. Primary domain: `https://covermateinsurance.com`.
+
+**September 21 checkpoint:** Home redesign, CMS schema v5, media tools and
+CMS-backed SEO are uncommitted candidate work, not the production release.
+A protected preview exists but predates the latest local generator changes.
+The owner selected Cloudinary Free and resumed full production deployment;
+Firebase Storage is not used. Start with [`docs/HANDOFF.md`](docs/HANDOFF.md) for exact status and
+[`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md) for the media/cost decision.
 
 Visitor code is source-authored in `src/visitor/` and generated into the
 deployable `index.html`. Edit `src/visitor/*`, then run
@@ -23,6 +31,17 @@ GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
 manual workflow dispatches.
 
 ## Project Documents
+
+- [`docs/BROWSER_COMPATIBILITY.md`](docs/BROWSER_COMPATIBILITY.md) - visitor
+  browser support, LINE in-app priority, isolated cross-engine checks and
+  real-device release checklist
+- [`docs/CMS_SITE_AUDIT.md`](docs/CMS_SITE_AUDIT.md) - whole-site
+  CMS/Admin parity repairs and verification boundaries
+- [`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md) - image slots, crop/upload workflow,
+  `build:media`, Cloudinary Free cost guard and owner/UAT security
+
+- [`docs/HOME_REDESIGN.md`](docs/HOME_REDESIGN.md) - no-portrait Home
+  implementation, local preview, CMS owners and verification boundaries
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - static/export architecture,
   boundaries, deployment shape, and future options
@@ -77,7 +96,7 @@ draft/live/history content is Firestore-first. Production uses
 `sites/covermate/*` and `contactLeads/*`; Vercel preview/UAT uses
 `sites/covermate-uat/*` and `contactLeadsUat/*`. Runtime environment selection
 lives in `covermate-environment.mjs`, with production host
-`covermate.vercel.app` always resolving to production data. Browser-local
+`covermateinsurance.com` always resolving to production data. Browser-local
 storage is only a session marker or last-known CMS cache.
 
 For hosted UAT E2E, set `COVERMATE_UAT_URL` plus either a Firebase test-admin

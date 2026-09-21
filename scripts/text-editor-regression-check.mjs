@@ -17,11 +17,13 @@ const runtime = buildVisitorRuntime();
 const sandbox = {
   result: null,
   console,
+  URLSearchParams,
+  URL,
   setTimeout,
   clearTimeout,
   requestAnimationFrame: (fn) => fn(),
   window: {
-    location: { protocol: "http:", pathname: "/", search: "", hash: "", origin: "http://localhost" },
+    location: { protocol: "http:", pathname: "/", search: "", hash: "", origin: "http://localhost", href: "http://localhost/" },
     localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     addEventListener: () => {},
     removeEventListener: () => {}
@@ -53,11 +55,11 @@ const app = new Component();
 app.readJSON = () => null;
 app.writeJSON = () => {};
 app.queueRemoteDraft = () => {};
-app.state = Object.assign({}, app.state, { lang: "th", site: ensureRepeatableIds(clone(DEFAULTS)) });
+app.state = Object.assign({}, app.state, { lang: "th", site: app.normalizeConfig(clone(DEFAULTS), { repeatableIds: true }) });
 
 const fakeElement = {
   textContent: "Original text",
-  closest: () => null,
+  closest: selector => selector === '[data-content-path]' ? { getAttribute: () => 'sections.@hero.th.kicker' } : null,
   attrs: {},
   classList: {
     contains: () => false,
@@ -72,7 +74,7 @@ const fakeElement = {
   }
 };
 
-app.textOv = { "hero:0:th": "" };
+app.textOv = { "cms:sections.@hero.th.kicker": "" };
 app.eachEditable = (callback) => callback(fakeElement, "hero:0:th");
 app.applyText();
 

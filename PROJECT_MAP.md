@@ -3,16 +3,15 @@
 Purpose: make the static CoverMate visitor/admin site easy to navigate, verify,
 and safely edit in later sessions.
 
-Current state: this repo is a Vercel-hosted static export plus a narrow Vercel
-serverless Operations API. The UI is maintained as large exported HTML
-bundles plus source-authored helpers, with production patches applied in the
-wrapper and embedded bundle strings. Firebase Auth, Firestore CMS persistence, lead capture, Admin
+Current state: source-authored visitor files generate a Vercel-hosted HTML
+bundle, alongside private admin surfaces and serverless APIs. Do not hand-edit
+the generated bundle as the lasting implementation. Firebase Auth, Firestore CMS persistence, lead capture, Admin
 Analytics, and the source-authored Operations Portal route are implemented.
 Operations is live today for Dashboard, Leads, Tasks, and Audit; Customers,
 Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden
 until their production Firestore/API contracts exist.
 Shared runtime environment routing lives in `covermate-environment.mjs`.
-Production host `covermate.vercel.app` resolves to production Firestore data;
+Production host `covermateinsurance.com` resolves to production Firestore data;
 Vercel preview hosts and explicit local `cm_env=uat` resolve to UAT Firestore
 data under `sites/covermate-uat/*` and `contactLeadsUat/*`. Shared
 route/storage contracts live in `covermate-contract.js`; shared
@@ -30,6 +29,13 @@ payload, with Firestore live/draft values prevailing over embedded defaults.
 Future commit, push, Vercel deploy, or Firestore Rules deploy actions still
 require explicit owner approval in the current task.
 
+September 21 checkpoint: Home/CMS v5/media/SEO/browser changes are uncommitted
+candidate work until deployment readback. The owner resumed full production
+release using Cloudinary Free. Its adapter replaces Firebase Storage; the empty
+Bangkok bucket remains unused. Cloud Billing readback reports billing disabled.
+[HANDOFF.md](docs/HANDOFF.md) owns status; [CMS_MEDIA.md](docs/CMS_MEDIA.md) owns
+the backend/cost decision. Deployment requires exact-SHA CI and endpoint evidence.
+
 Product decision checkpoint: the 2026-08-11 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
 launcher-card count, insurer-count copy, or Operations scope. `/admin` is now
@@ -38,10 +44,11 @@ and Settings in one sidebar. Stub/planned admin modules stay hidden until their
 real contracts exist. Future bugs should be fixed as defects unless the owner
 explicitly reopens the product decision.
 
-External prototype checkpoint: offline prototype exports and screenshots are
-historical inputs only. They are not source of truth for production unless the
-owner explicitly reintroduces them in the current task and they pass the raw
-template/runtime-dependency checks in the release runbook.
+Visual authority: the owner explicitly selected the September Home handoff and
+subsequent desktop/tablet/mobile references. Their composition supersedes older
+Home geometry; live CMS still owns actual content. Historical exports remain
+historical. A broken prototype runtime does not invalidate a usable screenshot
+as a visual reference. See [HOME_REDESIGN.md](docs/HOME_REDESIGN.md).
 
 ## How To Run / Verify
 
@@ -56,8 +63,8 @@ template/runtime-dependency checks in the release runbook.
 - Hosted UAT E2E smoke: `npm run smoke:uat`
 - Local smoke: `npm run smoke`
 - Full local/CI gate: `npm run check:ci`
-- Production smoke: `COVERMATE_URL=https://covermate.vercel.app npm run smoke`
-- Production URL: `https://covermate.vercel.app`
+- Production smoke: `COVERMATE_URL=https://covermateinsurance.com npm run smoke`
+- Production URL: `https://covermateinsurance.com`
 - Vercel project: `covermate`
 - GitHub remote: `https://github.com/purichw/CoverMate.git`
 
@@ -87,6 +94,12 @@ Detailed project documents:
 - [`docs/DESIGN_ASSETS.md`](docs/DESIGN_ASSETS.md)
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 - [`docs/HANDOFF.md`](docs/HANDOFF.md)
+- [`docs/HOME_REDESIGN.md`](docs/HOME_REDESIGN.md)
+- [`docs/CMS_CONTENT_OWNERSHIP.md`](docs/CMS_CONTENT_OWNERSHIP.md)
+- [`docs/CMS_SITE_AUDIT.md`](docs/CMS_SITE_AUDIT.md)
+- [`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md)
+- [`docs/BROWSER_COMPATIBILITY.md`](docs/BROWSER_COMPATIBILITY.md)
+- [`docs/covermate-website-full-design-spec.md`](docs/covermate-website-full-design-spec.md)
 
 ## Top-Level Files
 
@@ -99,7 +112,7 @@ Detailed project documents:
 | `src/visitor/runtime.js` | Source `text/x-dc` visitor runtime injected into the template. Route, admin namespace, repeatable-item, and visible-section decisions should call `covermate-contract.js` helpers instead of duplicating contracts. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
 | `admin/index.html` | Private single-shell Admin Portal. Home, Operations, Website content, Analytics, and Settings switch client-side through the shared sidebar. Has an early session gate and verified Firebase admin session check that redirect unauthenticated visitors to `/admin/login`. |
-| `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore lead analytics now, mobile-readable recent lead cards, and GA4 Data API/export placeholders for traffic metrics. |
+| `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore leads and server-only GA4 API aggregates, or an explicit setup-needed state when unconfigured. |
 | `admin/ops/index.html` | Compatibility shim into `/admin#operations`. It must stay tiny and must not grow into a second Admin Portal shell. |
 | `admin/ops/app.js` | Operations module controller loaded by `admin/index.html`. Calls `/api/ops/*` with the active Firebase ID token, renders only live Operations tabs for Leads/Tasks/Audit, hides unavailable admin modules, and sends supported workflow mutations to the server. |
 | `api/ops.js` | Vercel serverless Operations API. Verifies Firebase ID tokens, checks `admins/{uid}`, enforces role permissions, reads/writes the runtime lead collection (`contactLeads/*` in production, `contactLeadsUat/*` in UAT), returns server-produced audit entries, and marks planned resources as `not_wired` instead of pretending they are empty live datasets. |
@@ -115,8 +128,14 @@ Detailed project documents:
 | `assets/covermate-og.svg` / `assets/covermate-og.png` | Editable source and 1200x630 Open Graph image for social previews and structured-data image references. |
 | `assets/apple-touch-icon.png`, `assets/icon-192.png`, `assets/icon-512.png` | Browser/mobile icon assets referenced by the manifest and page head. |
 | `favicon.svg` / `favicon.ico` | CoverMate shield browser icons. SVG is referenced in page heads; ICO covers legacy browser probes. |
-| `robots.txt` | Public crawler policy. Allows the visitor site, disallows `/admin`, and points to the production sitemap. |
-| `sitemap.xml` | Production canonical sitemap. Includes `https://covermate.vercel.app/` and `https://covermate.vercel.app/motor`; hash aliases and admin routes must stay out. |
+| `robots.txt` | Public crawler policy and primary-domain sitemap. Pending SEO allows crawlers to read Admin noindex; authentication, not robots, protects private data. |
+| `src/visitor/home.html`, `home.css` | Compact Home-specific template and styles; existing Motor/shared owners remain in `template.html`. |
+| `src/admin/media-editor.js`, `media-editor.css` | Ratio-locked crop UI source; `build:media` generates owner-only assets. |
+| `api/media.js`, `server/cloudinary.cjs` | Owner-only PNG validation, site isolation, Cloudinary signed immutable uploads and Free-plan quota guard. |
+| `covermate-seo.mjs` | Shared CMS metadata model for initial HTML and hydrated visitor head. |
+| `api/page.js`, `server/seo-page.mjs` | Published CMS-backed HTML head for Home/Motor and private owner boot heads; no draft reads. |
+| `server/asset-versions.json` | Generated image hash map used by server metadata. Regenerated with `build:visitor`. |
+| `sitemap.xml` | Four production URLs: Home and Motor in Thai and `?lang=en`; hash aliases and admin routes stay out. |
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness using the shared Playwright loader. |
@@ -325,8 +344,8 @@ Production patches currently preserved in the bundles:
   `Editing on page` and `Tools` visible; opening `Tools -> Panel` shows the
   control panel without leaving the editor route.
 - Same-page public anchors scroll in place without rebuilding the visitor DOM.
-- `#cover` is embedded in the hero accordion cluster; it is not a standalone
-  public/Admin section.
+- The candidate Home restores `#cover` as its own compact CMS/Admin section.
+  The old embedded-only rule is superseded; Guides are merged into FAQ in v4.
 - Home keeps one motor nav item only. `/motor` is the dedicated motor campaign
   route; `/#motor` remains a legacy home alias to `#insurers`.
 
@@ -354,9 +373,8 @@ Current active bundle references:
 The active insurer grid currently has 14 logo references, is rendered from the
 editable `insurers.items` content array, and includes AIA/Srikrung Broker
 relationship proof cards in the same section. Slot 13 is Aioi Bangkok Insurance.
-Legacy ThaiVivat names or `assets/ins/13-thaivivat.png` references may still
-appear in old CMS data or historical files, but runtime normalization maps them
-to `assets/ins/13-aioi.png` so current visitor/Admin rendering stays aligned.
+The one-time CMS v1 migration maps the exact legacy ThaiVivat asset to Aioi.
+Later Admin values and explicit blanks win; do not guess logos by slot or name.
 The visible copy should follow the actual logo count unless business-approved
 copy says otherwise.
 
@@ -374,10 +392,12 @@ embedded into the current `index.html` bundle resource map.
    steps, FAQ, and contact entry points.
 3. Language toggle switches Thai/English copy.
 4. Insurer logos render from editable content in the motor/insurer section.
-5. Motor tier comparison renders as a desktop table and mobile stacked cards.
-6. Policy review, claim help, renewal reminder, guide, fee transparency, and
-   privacy/PDPA sections render as part of the single visitor page.
-7. Contact CTAs link to LINE/tel/email placeholders from the current bundle.
+5. Home uses three featured illustrated tiers and a disclosed full comparison;
+   Motor keeps its table/mobile-card view. All five classes remain CMS-owned.
+6. Policy review, claim help, renewal, fees and privacy remain available when
+   enabled in CMS. Former guide items now belong to FAQ in the candidate schema.
+7. Contact CTAs use configured CMS LINE/tel/email values. Missing channels hide;
+   there are no fabricated contact placeholders.
 8. The consultation lead form includes enquiry type and coverage selects before
    the freeform detail field.
 9. The renewal reminder form writes to the same validated lead path with
@@ -445,7 +465,7 @@ embedded into the current `index.html` bundle resource map.
 - Keep owner hash checks, admin-session parsing, and CMS fallback cache writes
   routed through `covermate-contract.js` instead of reintroducing duplicate
   constants in page-specific files.
-- Keep public lead writes validated by Firestore Rules; do not make
+- Keep public lead writes behind `/api/leads` validation/App Check; do not make
   `contactLeads/*` or `contactLeadsUat/*` a free-form public write path.
 - Keep visitor GA off admin-only surfaces, including `/admin/analytics`.
 - Keep OIC licence link and licence copy intact unless the business owner
@@ -459,9 +479,9 @@ embedded into the current `index.html` bundle resource map.
 | HTML bundle route/auth/content changes | `npm run smoke`, plus targeted Playwright interaction for the changed flow. |
 | Source-authored admin pages | `npm run check:bundles`, `npm run smoke`, and desktop/mobile screenshot evidence. |
 | Firestore rules or lead data changes | Rules syntax/deploy planning, `npm run smoke`, and a scoped allow/deny review. |
-| Visual/font/responsive changes | `npm run smoke`, computed style or screenshot evidence, and desktop/mobile viewport checks. |
-| Insurer logo changes | `npm run smoke`, asset 4xx check, count expectation update if needed. |
-| Vercel/deploy changes | `vercel deploy --prod --yes`, then `COVERMATE_URL=https://covermate.vercel.app npm run smoke`. |
+| Narrow visual/font/responsive changes | `git diff --check` and personally inspected targeted desktop/mobile evidence; broaden only when shared behavior or release risk changes. |
+| Insurer logo changes | Targeted asset/optical-size check; update count expectations only if active data changes. |
+| Vercel/deploy changes | Current owner authorization, release-gate checks, exact-SHA CI and deployed source/smoke readback; do not bypass the Git-linked production check. |
 | Documentation-only changes | `git diff --check`; markdown lint only if the repo later adds one. |
 
 ## Relevant Skills
@@ -483,8 +503,8 @@ embedded into the current `index.html` bundle resource map.
 - Auth/security: Firebase Auth, Firestore allowlist, CMS persistence, lead
   capture, and Firestore Rules are active in production. Redeploy Firestore
   Rules deliberately whenever `firestore.rules` changes.
-- Full GA traffic charts in `/admin/analytics` still need a server-side GA4 Data
-  API endpoint or scheduled export into Firestore.
+- GA4 endpoint exists; verify server credentials/property access before claiming
+  traffic is connected. Never expose credentials to the browser.
 - Asset count: current insurer logo grid and public copy are aligned at 14.
   Relationship proof cards carry the AIA/Srikrung business context.
 - Firestore live/draft may still contain legacy stale fields until the owner
@@ -497,8 +517,8 @@ embedded into the current `index.html` bundle resource map.
 
 1. Read `README.md` and this `PROJECT_MAP.md`.
 2. Check `git status --short --branch`.
-3. For code/UI changes, inspect the target bundle and avoid unescaped edits inside
-   JSON template strings.
+3. Inspect the owning source files and current handoff, not generated HTML or
+   historical screenshots alone. Preserve unrelated dirty-tree work.
 4. Run the relevant verification from the matrix.
 5. Commit, push, or deploy only after the user explicitly says to do so in the
    current task.

@@ -189,13 +189,14 @@ try {
   live.config.licences.life.logo = '';
   live.config.licences.nonLife.logo = '';
   await page.goto(baseUrl + '/');
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('link', { name: 'Switch to English' }).click();
+  await page.locator('.hm-contact-more > summary').click();
   assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), '');
   assert.equal(await page.locator('[data-cms-copy="publicCopy.contactTitle"]').innerText(), 'Contact our team');
   assert.equal(await page.locator('a[href*="line.me"],a[href*="facebook.com"]').count(), 0);
   assert.equal(await page.locator('header img,footer img').count(), 0);
   assert.match(await page.locator('footer').innerText(), /Licences|Go to/);
-  await page.goto(baseUrl + '/#life-focus');
+  await page.goto(baseUrl + '/?lang=en#life-focus');
   await page.locator('#life h1').waitFor();
   assert.equal(await page.locator('#life h1').innerText(), 'Owner life headline');
   assert.equal(await page.locator('#life p[data-cms-copy="lifeFocus.body"]').innerText(), 'Existing life description');

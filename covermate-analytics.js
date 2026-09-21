@@ -4,7 +4,7 @@
   if (window.CoverMateAnalytics && window.CoverMateAnalytics.installed) return;
 
   var MEASUREMENT_ID = "G-5TF3C235EF";
-  var ALLOWED_HOSTS = ["covermate.vercel.app"];
+  var ALLOWED_HOSTS = ["covermateinsurance.com"];
   var OWNER_HASHES = { "#admin": true, "#edit": true, "#preview": true };
   var EVENT_DEBOUNCE_MS = 800;
   var LEAD_QTYPES = { quote: true, compare: true, general: true, review: true, claim: true, unspecified: true };

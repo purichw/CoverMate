@@ -1,6 +1,16 @@
 # CoverMate Needs Calculator Contract
 
-Last updated: 2026-08-16
+Last updated: 2026-09-21
+
+## Unreleased Admin Parity
+
+Content > Needs calculator > Calculator data & sources now edits bilingual
+situation/recommendation copy, hospital/room/note, source URL, date, confidence,
+daily reference, support-year options and consumed numeric assumptions. The
+support-years slider follows the configured option count. Source URL/note are
+rendered rather than merely stored. Absent grade/name do not invent replacements.
+The mathematical models below are unchanged. Calculator content icons can also
+use cropped uploaded images through Brand & contact > Images & crop.
 
 ## Purpose
 

@@ -1,6 +1,16 @@
 # CMS Content Ownership
 
-Updated: 2026-09-13. Current code schema: version 2. Production rollout requires
+Updated: 2026-09-21. Local code schema: version 5, not yet deployed. Version 3 adds
+Home design media/copy and ID-based featured classes, axes and task controls.
+Version 4 consolidates the former Guides into FAQ. Admin FAQ owns the question,
+answer, optional topic and reading time in both languages. The old section is
+retained only as `cmsArchives.guides` for recovery, never as a public fallback.
+Version 5 reconciles section/Admin field names and legacy navigation labels.
+The whole-site follow-up adds canonical Motor/inline ownership, calculator
+data controls, and the image crop/upload workflow. See [audit](CMS_SITE_AUDIT.md)
+and [media operations](CMS_MEDIA.md) for scope and hosted verification limits.
+See [Home redesign](HOME_REDESIGN.md) before using the v2 release history below.
+Production rollout requires
 the matching CI-gated code deployment before the conditional database migration.
 Use deployment/source readback and the migration dry run to confirm live state.
 
@@ -18,10 +28,18 @@ absent. Firestore content wins, including deliberate blanks and empty arrays.
 | Menu labels/order/targets and header CTA | `header.nav/cta`, `motorPage.nav`, Brand & contact for selected page |
 | Home Hero secondary/accident link destinations | `sections[hero].cta2href/claimHref`, Brand & contact > Navigation |
 | Insurer logos/count and relationship cards | `sections[insurers].items/cards`; never guess a logo by position |
+| Home tier illustrations | `sections.@tiers.items.@id.illustration`; same row's Admin editor |
+| FAQ and former reading items | `sections.@faq.items.@id.{th,en}.{q,a,label,meta}`; FAQ row editor |
+| Home quote/artwork and disclosure labels | `homeDesign.*`, Brand & contact > Home design |
+| Featured tiers, comparison axes and task links | Stable IDs in `homeDesign`, Home composition controls |
 | Footer headings/privacy link | `footer.licenceHeading/navHeading/contactHeading/privacyLabel` |
 | Shared headings, consent, submission feedback | `ui.*` |
 | Social image/description | `seo.image/imageAlt` |
-| Section copy, calculator references, emergency numbers | Existing section config and inline editor |
+| Section copy and emergency numbers | Section editor and canonical inline paths |
+| Calculator situations, recommendations and reference data | `sections.@fit.calculator`, Content > Calculator data & sources |
+| All image slots, including optional content icon overrides | Brand & contact > Images & crop; `cmsImageSlots()` inventory |
+| Original image for recropping | `mediaEdits[canonicalPath].source`; output remains the existing string media field |
+| Motor trademark, tier/story helper labels | `publicCopy.*`, Shared section labels |
 | Calculator input/result labels | `publicCopy.calc*` |
 | Consultation/renewal labels, consent, summaries and feedback | `publicCopy.contact*`, `publicCopy.renewal*`, shared `ui.*` |
 | Form choice labels, with unchanged submitted IDs | `formOptions.*` |
@@ -30,8 +48,11 @@ absent. Firestore content wins, including deliberate blanks and empty arrays.
 
 `CMS_CONTENT_FIELDS` in `covermate-contract.js` defines fields and one-time seeds.
 The visitor generator embeds the same schema; Brand & contact generates the
-matching controls. Local asset paths and HTTPS images are supported. This change
-does not create a binary-upload service.
+matching controls. Local asset paths and HTTPS images remain supported. The
+unreleased image editor currently targets the owner-only `/api/media` endpoint.
+Its backend is signed Cloudinary Free with owner authorization and UAT isolation.
+See [media decision](CMS_MEDIA.md#backend-decision-and-cost-boundary).
+No binary data is stored in CMS documents.
 
 ## Licence Synchronization
 
@@ -111,8 +132,8 @@ blur and state sanitation fold them into config. Admin edits clear any pending
 override for that field. Empty marked leaves retain their editing slot.
 
 Still code-owned: calendar month names, formatting units, technical routes and
-schema types, pre-JavaScript boot metadata, and unrelated story-section helper
-labels/trademark disclosure. This scoped pass is not a whole-site copy rewrite.
+schema types, and pre-JavaScript boot metadata. Story helper labels and the Motor
+trademark disclosure moved to Admin in the unreleased version-5 audit.
 
 ## Verification
 
@@ -158,7 +179,7 @@ The evidence below is the earlier v1 release, not v2 release evidence.
   real in-app browser controls, followed by Firestore and authenticated UAT
   Operations API readback: `uat-results/cms-release/hosted-browser-form.json`.
   No debug token, spoofing or reduced threshold was used.
-- Production: `https://covermate.vercel.app`, verified CLI deployment
+- Production: `https://covermateinsurance.com`, verified CLI deployment
   `dpl_DHtuH6z8Z4BSw7A97dByBaY5kbQk`, unique URL
   `https://covermate-rf07m6jrb-purichwc-1517s-projects.vercel.app`.
   HTML and contract match local bytes (`uat-results/cms-release/production-source.json`).
@@ -175,7 +196,7 @@ The evidence below is the earlier v1 release, not v2 release evidence.
   Google Analytics beacon failures are recorded separately, not a claim of GA
   delivery verification. Use `production/motor-mobile-settled.png` for the
   completed entrance-animation frame.
-- `COVERMATE_URL=https://covermate.vercel.app npm run smoke` passed after the
+- `COVERMATE_URL=https://covermateinsurance.com npm run smoke` passed after the
   production migration. Owner writes in this suite are mocked; real hosted
   authentication/publish/form evidence is the separate UAT verification above.
 

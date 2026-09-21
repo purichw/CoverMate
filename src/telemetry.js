@@ -6,7 +6,7 @@ if (!window.__covermateTelemetryInstalled) {
   const kinds = new Set();
   const allowed = new Set(['runtime_error', 'unhandled_rejection', 'resource_error', 'content_timeout', 'content_error', 'lead_error', 'csp', 'LCP', 'INP', 'CLS']);
   const emit = (kind, value) => {
-    if (location.hostname !== 'covermate.vercel.app' || !allowed.has(kind) || sent >= 12 || kinds.has(kind)) return;
+    if (location.hostname !== 'covermateinsurance.com' || !allowed.has(kind) || sent >= 12 || kinds.has(kind)) return;
     kinds.add(kind);
     sent += 1;
     const body = JSON.stringify({ kind, route: location.pathname, device: matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop', value });

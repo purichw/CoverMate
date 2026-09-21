@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 Visitor analytics is collected by `covermate-analytics.js` on production only:
 
-- host must be `covermate.vercel.app`
+- host must be `covermateinsurance.com`
 - owner hashes `#admin`, `#edit`, and `#preview` are suppressed
 - active `covermate-admin-session` suppresses tracking
 - no visitor name, phone, LINE ID, email, or message text is sent to GA4

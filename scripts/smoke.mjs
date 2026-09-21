@@ -11,7 +11,7 @@ const { chromium } = playwright;
 const baseUrl = process.env.COVERMATE_URL || "http://localhost:4177";
 const baseOrigin = new URL(baseUrl).origin;
 const smokeSuite = process.env.COVERMATE_SMOKE_SUITE || "all";
-const expectedSocialImage = new URL("https://covermate.vercel.app/assets/covermate-og.png");
+const expectedSocialImage = new URL("https://covermateinsurance.com/assets/covermate-og.png");
 expectedSocialImage.searchParams.set("cm_asset", readImageVersions()["/assets/covermate-og.png"]);
 const benignNavigationAbortPaths = new Set([
   "/covermate-contract.js",
@@ -544,7 +544,12 @@ async function verifyRemoteHydrationContract() {
     const main = document.querySelector("main");
     if (main) main.__covermateSmokeStable = true;
   });
-  await publicPage.locator('header nav a[href="#faq"]').first().click();
+  if (await publicPage.locator('header .hm-menu-button').isVisible()) {
+    await publicPage.locator('header .hm-menu-button').click();
+    await publicPage.locator('.hm-menu nav a[href="#faq"]').click();
+  } else {
+    await publicPage.locator('header nav a[href="#faq"]').first().click();
+  }
   await publicPage.waitForTimeout(700);
   const anchorState = await publicPage.evaluate(() => ({
     hash: window.location.hash,
@@ -777,8 +782,8 @@ async function verifyAdminBuilderControls() {
 
   await clickAdminTab(page, "Sections");
   const heroContentEditCount = await page.locator('[data-admin-section-row="hero"] [data-admin-section-edit="hero"]').count();
-  if (heroContentEditCount !== 0) {
-    failures.push("admin builder: hero still exposes structured Edit content even though hero copy is inline-edit only");
+  if (heroContentEditCount !== 1) {
+    failures.push("admin builder: hero must expose structured content editing alongside inline editing");
   }
 
   await clickAdminTab(page, "Brand & contact");
@@ -861,7 +866,7 @@ async function verifyAdminBuilderControls() {
   ) {
     failures.push("admin builder: guarded SEO title/description did not persist");
   }
-  if (!cmsControlState.seoGuard.includes("Canonical: https://covermate.vercel.app/") || !/admin, edit, and preview stay noindex/i.test(cmsControlState.seoGuard)) {
+  if (!cmsControlState.seoGuard.includes("Canonical: https://covermateinsurance.com/") || !/admin, edit, and preview stay noindex/i.test(cmsControlState.seoGuard)) {
     failures.push("admin builder: SEO canonical/robots guard copy is missing");
   }
   if (cmsControlState.footerLegal !== "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}" || cmsControlState.lifeLicence !== "9000000001") {
@@ -878,23 +883,23 @@ async function verifyAdminBuilderControls() {
       adminCoverRows: document.querySelectorAll('[data-admin-section-row="cover"]').length,
       standaloneCoverSections: document.querySelectorAll("section#cover").length,
       anchorTag: anchor?.tagName || "",
-      accordionCount: document.querySelectorAll("[data-hero-cover-card]").length
+      accordionCount: document.querySelectorAll("#cover .hm-cover-card").length
     };
   });
-  if (coverageAccordionState.adminCoverRows !== 0) {
-    failures.push("admin builder: embedded #cover still appears as a standalone admin section");
+  if (coverageAccordionState.adminCoverRows !== 1) {
+    failures.push("admin builder: standalone Coverage must have one editable Admin section");
   }
-  if (coverageAccordionState.standaloneCoverSections !== 0 || coverageAccordionState.anchorTag !== "DIV") {
-    failures.push(`admin builder: #cover should be the hero accordion anchor, not a standalone section (${JSON.stringify(coverageAccordionState)})`);
+  if (coverageAccordionState.standaloneCoverSections !== 1 || coverageAccordionState.anchorTag !== "SECTION") {
+    failures.push(`admin builder: #cover should be one standalone section (${JSON.stringify(coverageAccordionState)})`);
   }
   if (coverageAccordionState.accordionCount < 6) {
     failures.push(`admin builder: hero coverage accordions are missing (${coverageAccordionState.accordionCount})`);
   }
-  const firstCoverageAccordion = page.locator("[data-hero-cover-card]").first();
+  const firstCoverageAccordion = page.locator("#cover .hm-cover-card").first();
   await firstCoverageAccordion.scrollIntoViewIfNeeded();
   await firstCoverageAccordion.locator("summary").click();
   await page.waitForFunction(
-    () => Boolean(document.querySelector("[data-hero-cover-card]")?.open),
+    () => Boolean(document.querySelector("#cover .hm-cover-card")?.open),
     null,
     { timeout: 5000 }
   ).catch(() => failures.push("admin builder: first hero coverage accordion did not open"));
@@ -1249,18 +1254,18 @@ async function verifyStaticSeoFiles() {
   const robotsResponse = await fetch(new URL("/robots.txt", baseUrl));
   const robots = await robotsResponse.text();
   if (!robotsResponse.ok) failures.push(`seo /robots.txt: HTTP ${robotsResponse.status}`);
-  if (!/Sitemap:\s*https:\/\/covermate\.vercel\.app\/sitemap\.xml/.test(robots)) {
+  if (!/Sitemap:\s*https:\/\/covermateinsurance\.com\/sitemap\.xml/.test(robots)) {
     failures.push("seo /robots.txt: missing production sitemap directive");
   }
-  if (!/Disallow:\s*\/admin\/?/.test(robots)) {
-    failures.push("seo /robots.txt: admin routes are not disallowed");
+  if (/Disallow:\s*\/admin\/?/.test(robots)) {
+    failures.push("seo /robots.txt: admin must be crawlable so its noindex directives can be read");
   }
 
   const sitemapResponse = await fetch(new URL("/sitemap.xml", baseUrl));
   const sitemap = await sitemapResponse.text();
   if (!sitemapResponse.ok) failures.push(`seo /sitemap.xml: HTTP ${sitemapResponse.status}`);
   const locs = Array.from(sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)).map((match) => match[1]);
-  if (!locs.includes("https://covermate.vercel.app/")) {
+  if (!locs.includes("https://covermateinsurance.com/")) {
     failures.push("seo /sitemap.xml: missing canonical public root");
   }
   if (locs.some((loc) => /#|\/admin/.test(loc))) {
@@ -1330,7 +1335,8 @@ for (const [name, width, height] of viewports) {
     if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && /^https:\/\/firestore\.googleapis\.com\/v1\/projects\/[^/]+\/databases\/\(default\)\/documents\/sites\/[^/]+\/states\/live$/.test(url)) return;
     if (
       failureText === "net::ERR_ABORTED" &&
-      (url.endsWith("/favicon.svg") || url.endsWith("/covermate-firebase.js"))
+      [baseOrigin, 'https://covermateinsurance.com'].includes(new URL(url).origin) &&
+      ['/favicon.svg', '/covermate-firebase.js'].includes(new URL(url).pathname)
     ) {
       return;
     }
@@ -1407,7 +1413,7 @@ for (const [name, width, height] of viewports) {
     );
     await page.waitForTimeout(600);
     await page.waitForFunction(() => window.__covermateTelemetryInstalled === true, null, { timeout: 5000 });
-    if (baseOrigin === 'https://covermate.vercel.app' && name === 'desktop' && route === '/') {
+    if (baseOrigin === 'https://covermateinsurance.com' && name === 'desktop' && route === '/') {
       // Finalize a real LCP sample with a harmless first interaction, then prove delivery.
       await page.locator('main h1').waitFor();
       await page.waitForTimeout(1000);
@@ -1495,6 +1501,13 @@ for (const [name, width, height] of viewports) {
       const insurers = page.locator("#insurers");
       if (await insurers.count()) {
         await insurers.scrollIntoViewIfNeeded();
+        const relationship = insurers.locator('details.hm-relationship');
+        if (await relationship.count() && !(await relationship.evaluate(el => el.open))) {
+          await relationship.locator('summary').click();
+        }
+        await insurers.locator('img').evaluateAll(async images => {
+          for (const image of images) { image.loading = 'eager'; await image.decode().catch(() => {}); }
+        });
         await page.waitForTimeout(900);
       }
     }
@@ -1587,6 +1600,8 @@ for (const [name, width, height] of viewports) {
         visibleSectionIds: Array.from(document.querySelectorAll("section[id]"))
           .filter(isVisible)
           .map((section) => section.id),
+        disabledSectionIds: (JSON.parse(localStorage.getItem('purich-live-config-v3') || '{}').sections || [])
+          .filter(section => section.on === false).map(section => section.id),
         h1Text: Array.from(document.querySelectorAll("h1")).map((heading) =>
           (heading.textContent || "").trim()
         ).join(" | "),
@@ -1670,8 +1685,8 @@ for (const [name, width, height] of viewports) {
     }
     if (seoVisitorRoutes.has(route)) {
       const expectedCanonical = route === "/motor"
-        ? "https://covermate.vercel.app/motor"
-        : "https://covermate.vercel.app/";
+        ? "https://covermateinsurance.com/motor"
+        : "https://covermateinsurance.com/";
       if (!/^th($|-TH$)/i.test(state.seo.htmlLang)) {
         failures.push(`${name} ${route}: missing Thai html lang (${state.seo.htmlLang})`);
       }
@@ -1780,7 +1795,7 @@ for (const [name, width, height] of viewports) {
       }
     }
     if (route === "/motor") {
-      for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "tiers", "how", "claim", "renew", "guides", "faq", "talk"]) {
+      for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "tiers", "how", "claim", "renew", "faq", "talk"].filter(id => !state.disabledSectionIds.includes(id))) {
         if (!state.visibleSectionIds.includes(id)) {
           failures.push(`${name} ${route}: missing dedicated motor section #${id}`);
         }
@@ -2226,7 +2241,7 @@ for (const [name, width, height] of viewports) {
   }
 
   for (const [tabName, expectedText] of [
-    ["Content", "ITEM 1"],
+    ["Content", "#hero"],
     ["Brand & contact", "Credential line"],
     ["Theme & data", "SEO"],
     ["Versions", "Every Publish is saved here"]
@@ -2240,6 +2255,9 @@ for (const [name, width, height] of viewports) {
     }));
     if (!tabState.text.includes(expectedText)) {
       failures.push(`${name} /admin/content ${tabName}: expected tab content missing`);
+    }
+    if (tabName === 'Content' && !(await page.locator('[data-admin-copy-key]').count())) {
+      failures.push(`${name} /admin/content: selected section has no editable copy fields`);
     }
     if (tabState.text.includes("[object Object]")) {
       failures.push(`${name} /admin/content ${tabName}: rendered object placeholder text`);

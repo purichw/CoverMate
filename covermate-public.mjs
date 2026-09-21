@@ -88,17 +88,27 @@ function decodeFields(fields) {
   return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, decodeValue(value)]));
 }
 
+// AbortController also works in WebViews without AbortSignal.timeout. Keep the
+// timeout active through body decoding, then release it on every outcome.
+async function fetchJSON(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return { response, data: await response.json() };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function hydrateLocalContent() {
   if (!publicRoute()) return Promise.resolve({ live: false, source: 'skipped' });
   if (inFlight) return inFlight;
   lastAttempt = Date.now();
   const generation = routeGeneration;
   inFlight = (async () => {
-    const response = await fetch(`${publicFirestoreRoot()}/sites/${environment.siteId}/states/live`, {
-      cache: 'no-store', signal: AbortSignal.timeout(10000)
-    });
+    const { response, data: snapshot } = await fetchJSON(`${publicFirestoreRoot()}/sites/${environment.siteId}/states/live`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Published content unavailable (${response.status}).`);
-    const snapshot = await response.json();
     const live = sanitizeStateDoc(decodeFields(snapshot.fields || {}));
     if (!validStateDoc(live)) throw new Error('Invalid published content. Keeping the last known good state.');
     if (!publicRoute() || generation !== routeGeneration) return { live: false, source: 'skipped' };
@@ -126,8 +136,7 @@ export function hydrateLocalContent() {
 async function appCheckToken() {
   if (emulatorEnabled()) return '';
   if (!appCheckPromise) appCheckPromise = (async () => {
-    const response = await fetch('/api/leads', { signal: AbortSignal.timeout(10000) });
-    const settings = await response.json();
+    const { response, data: settings } = await fetchJSON('/api/leads');
     if (!response.ok || !settings.siteKey) throw new Error('Lead protection is unavailable.');
     const [app, check] = await Promise.all([
       import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`),
@@ -151,13 +160,17 @@ export async function submitContactLead(input = {}) {
   };
   const signature = JSON.stringify(payload);
   if (!pendingIds.has(signature)) pendingIds.set(signature, crypto.randomUUID());
-  const token = await appCheckToken();
-  const response = await fetch(`/api/leads?cm_env=${environment.name}`, {
+  let tokenTimer;
+  const token = await Promise.race([
+    appCheckToken(),
+    new Promise((_, reject) => { tokenTimer = setTimeout(() => reject(new DOMException('Verification timed out.', 'TimeoutError')), 15000); })
+  ]).finally(() => clearTimeout(tokenTimer));
+  const { response, data: result } = await fetchJSON(`/api/leads?cm_env=${environment.name}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': token, 'Idempotency-Key': pendingIds.get(signature) },
-    body: signature, signal: AbortSignal.timeout(15000)
-  });
-  const result = await response.json();
+    body: signature
+  }, 15000);
   if (!response.ok) throw new Error(result.message || 'Could not send your enquiry.');
+  if (typeof result.id !== 'string' || !/^[a-f0-9]{64}$/.test(result.id)) throw new DOMException('Receipt was not confirmed.', 'UnconfirmedReceipt');
   pendingIds.delete(signature);
   return result;
 }

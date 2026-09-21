@@ -1,5 +1,5 @@
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
-const base = process.env.COVERMATE_URL || 'https://covermate.vercel.app';
+const base = process.env.COVERMATE_URL || 'https://covermateinsurance.com';
 const { chromium } = loadPlaywright();
 const browser = await launchChromium(chromium, { headless: true });
 try {

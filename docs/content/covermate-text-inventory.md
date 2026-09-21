@@ -1,7 +1,7 @@
 # CoverMate Website Page Text Inventory For ChatGPT Copy Review
 Generated: 2026-09-09T04:30:15.060Z
 ## Source Precedence
-1. `production-live` entries, when present, were captured from `https://covermate.vercel.app` and should be treated as the current visible public website source.
+1. `production-live` entries, when present, were captured from `https://covermateinsurance.com` and should be treated as the current visible public website source.
 2. `repo-defaults` entries are the repository cold-start CMS payload. Firestore live content still prevails in production when it loads successfully.
 3. Inline-editor overrides from Firestore/local production state are already applied into matching public rows when a live capture is provided.
 4. This export includes Thai and English text that visitors can see on the public site: header, footer, brand/contact text, and public page sections.

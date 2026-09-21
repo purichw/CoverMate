@@ -1,0 +1,327 @@
+# Home Redesign: Local Draft
+
+Updated 2026-09-21. See [HANDOFF.md](HANDOFF.md) for the exact release revision,
+production migration and verification status.
+A protected preview was created before the latest generator changes; the owner
+has resumed production release with Cloudinary. See [HANDOFF.md](HANDOFF.md)
+for the current exact-source checks, deployment and CMS migration status.
+The authorized input is `covermate-home-codex-handoff-v1.0`, specifically the
+approved no-large-portrait Desktop, Tablet and Mobile references. Later owner
+direction explicitly includes the palette, contrast, icons and illustrations,
+not merely rearrangement of the previous page.
+
+## Implementation Owners
+
+| Surface | Owner and behavior |
+| --- | --- |
+| Home sections | `src/visitor/home.html` and `home.css`, composed by `scripts/lib/visitor-source.mjs` |
+| Shared shell, forms, Motor | `src/visitor/template.html`; shared form/API changes are tested on existing paths |
+| Projection, navigation, editor | `src/visitor/runtime.js` |
+| Schema v5 and semantic paths | `covermate-contract.js`; embedded into the visitor build |
+| Deployable output | Generated `index.html`; never hand-edit |
+| Optional statement, hero artwork, labels | `homeDesign.*`, Brand & contact > Home design |
+| Per-class illustration | `sections.@tiers.items.@id.illustration`, existing section row editor |
+| Featured tiers and preview axes | Stable item/head ID arrays in Home composition controls |
+| Task shortcuts | Separate ID-bearing `homeDesign.taskLinks`; not insurance categories |
+| Original text, items, matrix, visibility/order | Existing `config.sections`, shared by Home/Motor where applicable |
+
+The real logo files and Google Sans families are unchanged. Home uses warmer
+ivory/white surfaces, sage insurer/contact bands, terracotta actions, restrained
+shadows, outlined icon medallions and optional integrated hero artwork. The existing icon
+path registry remains the shared icon source. Reference people, fabricated
+social accounts, company lists, hours and browser/device frames are not copied.
+
+No fixed section order is imposed by rendering. Adjacent About/Review/How may
+share a responsive band; separating or reordering them in Admin keeps the owner
+order. Coverage has its own single `#cover` section again. Old embedded-only
+Admin navigation no longer excludes it. Unknown section types are not routed
+into the new Home template accidentally.
+
+## Compact Reference Composition
+
+The owner's September 21 follow-up overrides the earlier conservative spacing:
+the default Home should fit about 3-4 viewports, not a stack of enlarged sections.
+The rejected intermediate measured 6,383px TH / 6,824px EN at 390x844. The revised
+composition measures about 3,100px TH / 3,260px EN at that viewport, and about
+2,800px at 1440x900. These are measurements of the supplied local content in its
+initial collapsed state, not a CSS height cap or a limit on future CMS content.
+
+- Hero copy and the illustrated quote share columns on mobile. Proof stays
+  available in a small disclosure. The existing font family/logo artwork stay.
+- Six coverage categories form a compact six-column desktop / three-column
+  mobile grid. Opening one reveals its complete copy and closes its peer.
+- About, review and workflow form connected short bands. Secondary explanations
+  are disclosed, with all original fields still editable. Empty explanation
+  controls are omitted rather than rendered as dead buttons.
+- Fourteen real logos use seven desktop / five mobile columns. No reference
+  insurer is inserted or substituted to make a screenshot match.
+- Three illustrated featured motor classes stay side by side even on mobile.
+  Their content expands, while all five classes/axes remain in the comparison.
+- Contact has two mobile field columns; original consent, contact rules,
+  optional fields and the separate renewal form remain functional.
+- FAQ stays a compact grid and now includes the four former reading items.
+  There is no separate Guides section or Admin section. Fee explanations and
+  privacy retain their disclosures; `#guides` aliases to `#faq`.
+- Footer has four proposed desktop columns and a small mobile accordion row.
+  `footer.columns` remains an Admin value, not a forced runtime override.
+- Desktop body type is 16px; dense mobile introductory/supporting copy is 14px,
+  tablet introductory copy is 15px, compact labels 12-14px, and inputs remain 16px. No viewport-scaled type or
+  whole-page zoom is used to achieve the height target.
+
+Faithful adaptation does not mean copying false evidence: the live-source claim
+section is disabled, so the reference's support-photo strip is not fabricated or
+silently enabled. The supplied reference coverage assertions, employee photos,
+social identities and operating hours are not a data source.
+
+## Tablet Layout And Touch Behavior
+
+The September 21 tablet direction is desktop-like composition with mobile
+interaction, not a enlarged single-column phone view. Layout and input
+capabilities are separate:
+
+- From 768px, Home retains a three-part hero when its CMS statement is enabled,
+  six category columns, seven insurer columns, three motor classes, and the
+  side-by-side advisory/contact bands. Split-screen below 768px uses the phone
+  arrangement. No user-agent or physical-device-name detection is used.
+- `(any-pointer: coarse)` enables touch navigation at every width, including
+  large landscape tablets and hybrid input. Home and Motor share the existing
+  menu with their own CMS navigation items, focus return, Escape and background
+  scroll locking. Narrow mouse windows below 1200px also use this menu.
+- Touch visitors tap to expand Home proof/tier details. Owner edit mode keeps
+  fields expanded. Rotation within the tablet range preserves open details.
+  Footer disclosure columns retain a desktop-like horizontal arrangement on
+  touch tablets; the desktop footer remains unchanged for mouse users.
+- Motor uses its desktop comparison table from 768px with local horizontal
+  scrolling, rather than a tall stack of phone cards. The table can receive
+  keyboard focus. Phone cards remain below 768px.
+- Touch controls and summaries are at least 44px high; form text remains 16px.
+  The Admin crop dialog retains its fixed action row and scrollable content.
+  All content, links, images, ratios and editing owners are still shared CMS data.
+
+Local checks:
+
+```sh
+node scripts/tablet-responsive-check.mjs http://127.0.0.1:58081/
+npm run check:cms:site:browser -- --tablet /path/to/covermate-home-codex-handoff-v1.0
+```
+
+The responsive harness covers 768/820/1024/1180/1366px iPad-class and
+800/1280/1600px Android-tablet-class layouts, portrait/landscape, split view,
+phone and mouse desktop, with TH/EN content. Chromium touch emulation is not
+physical iPad Safari or Samsung Internet verification. This tablet pass used
+Chromium; the later [browser pass](BROWSER_COMPATIBILITY.md) adds focused
+Firefox/WebKit coverage. Evidence: `uat-results/tablet-responsive/` and
+`uat-results/cms-site-audit-tablet/`; neither harness publishes or submits leads.
+
+## Local Proposal, Not a Database Import
+
+```sh
+npm run build:visitor
+node scripts/home-redesign-preview.mjs /path/to/covermate-home-codex-handoff-v1.0
+node scripts/home-redesign-check.mjs /path/to/covermate-home-codex-handoff-v1.0
+npm run check:faq -- /path/to/covermate-home-codex-handoff-v1.0
+```
+
+The read-only preview uses the explicitly supplied public snapshot, stages the
+bilingual proposed copy and section arrangement in memory, and writes an ignored
+`uat-results/home-redesign/proposed-draft-diff.json` for review. Each staged
+change carries the old value/hash and proposed value. Unmapped copy proposals
+are reported, not silently published. `/api/leads` is disabled in this preview;
+Admin verification uses the separate isolated browser harness.
+
+This is not an importable backup. Do not run a live migration, publish a draft,
+push or deploy from these instructions. Those operations require separate owner
+authorization and the normal release gate. Production content/order is not
+replaced with the reference snapshot by any runtime code.
+
+### Authorized Release Migration
+
+The owner subsequently authorized the complete production release. Use
+`scripts/release-home-content.mjs --site=covermate` for a read-only plan against
+fresh live and draft states, with `COVERMATE_HANDOFF_DIR` set to the handoff.
+`--apply` is only for that authorized release, after compatible code is deployed.
+The planner coalesces repeated copy aliases, compares each original/proposed
+value, reorders current objects by ID rather than importing reference objects,
+and refuses conflicts. Live/draft are independent conditional writes guarded
+by Firestore updateTime, with ignored local backup and immediate readback.
+Re-running must be a no-op; never publish an unrelated draft or wholesale import
+the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
+
+## Preserved Data Contracts
+
+- Schema v4 moves the legacy `guides.items` into `faq.items`, after the existing
+  questions, without rewriting copy. `title/body` become `q/a`; optional
+  `label/meta` remain editable in the FAQ Admin row and appear inside the answer.
+  Stable IDs, collision handling, bilingual blanks and hidden flags are retained.
+  `cmsArchives.guides` is a recovery snapshot, never a rendered/editable fallback.
+  Deleting or hiding a migrated FAQ item cannot re-import it from that archive.
+  Legacy guide semantic overrides are adopted once; unsupported positional
+  overrides remain available for review. Migration is read-time/local until a
+  separately authorized save/publish. The original legacy defaults still provide
+  the migration input for a new/old configuration, not a second live owner.
+
+- Six enabled categories, insurer records and full five-class/five-axis matrix
+  remain data-driven. Featured cards only filter the projection by durable IDs.
+- Column moves swap the corresponding status-array positions before rendering;
+  preview axis lookup uses the head ID, not the new display index.
+- Successful CMS values, empty arrays, blank images and blank translations win.
+  An unreadable insurer image shows its configured company name, not a made-up
+  replacement logo. The dynamic count token counts enabled records, not image
+  load successes.
+- Explicit `claim.on:false` is preserved when an older record lacks `motorPage`.
+  Claim remains absent in the supplied local proposal. Fit and Voices remain off.
+- `cms:sections.@section.items.@item.th.field` and card equivalents are canonical
+  inline owners. Known old Hero/Insurer intro overrides are translated before
+  applying the new layout. A documented legacy consultation choice override is
+  also migrated while its legacy flag is pending. Unknown positional overrides
+  are retained for review and are **not applied to different nodes** in Home.
+  Review any additional live-only legacy overrides before release; the supplied
+  public snapshot contains four known migrated overrides, not every future state.
+- Locale switches and published refresh preserve typed form state. Header/Footer
+  retain existing ownership. Closing Panel keeps the current Editor route.
+- Home nav Motor links stay in-page; the explicit Motor action goes to `/motor`.
+  Legacy `#motor` and `#life` scroll to `#insurers` and `#cover`. Deep links open
+  privacy/about/renewal/comparison disclosures before scrolling.
+
+## Forms and Safety
+
+Consultation still submits the original name/contact/qtype/coverage/topic,
+language, consent and summary contract. Name is optional, contact accepts LINE
+ID or phone. Optional details collapse on Home without losing their value.
+Renewal is a separate disclosed form, not nested in consultation.
+
+Calculator financial values enter an enquiry only after a real calculator input
+change **and** an explicit include-estimate checkbox. Changing language, loading
+CMS or having hidden default calculator state does not opt in.
+
+The public lead service keeps its existing idempotency key on failed/unconfirmed
+requests, bounds verification time, and requires the API's 64-character record
+ID before returning success. Offline/uncertain messages have CMS owners; fields
+remain populated and errors receive focus. Raw submission exceptions are no
+longer logged by the visitor runtime. The API, App Check and consent validators
+are not bypassed in real service code.
+
+Browser fixtures explicitly mock Auth/Firestore/App Check and lead responses.
+Their success is not persistence proof. The emulator suite separately exercises
+real local Auth, Rules, API transactions and Admin publishing; never production.
+
+## Assets
+
+Created with the built-in image-generation tool, then encoded as WebP without
+changing the composition or transparency. Original PNG masters are retained.
+
+| Asset | Role | Web payload |
+| --- | --- | --- |
+| `assets/brand/home-hero-background-v2.webp` | Full-width cream/sage/peach background with flat illustrated foliage | 33,124 bytes |
+| `assets/brand/home-tier-1-v1.webp` | Class 1: silver car, gold check shield and ring | 49,234 bytes |
+| `assets/brand/home-tier-2-plus-v1.webp` | Class 2+: car, shield, collision/theft/fire motifs | 47,102 bytes |
+| `assets/brand/home-tier-3-plus-v1.webp` | Class 3+: car, people shield and second-car silhouette | 35,886 bytes |
+
+The owner rejected the detached, overly realistic botanical branch on September
+21. The unused `home-botanical-v1` PNG/WebP files are retained as an earlier local
+iteration, not referenced by the current seed. The replacement covers the entire
+hero instead of the statement block. On mobile it is bottom-aligned with a soft
+top mask, so the artwork does not stretch or create a hard horizontal seam.
+The proof card has an opaque cream surface to keep foliage out of licence text.
+
+Admin label: **Hero background artwork**, under Brand & contact > Home design.
+The existing `homeDesign.botanicalIllustration` storage key is intentionally
+preserved. Blank remains blank; custom media wins. This change does not alter
+logos, fonts, copy or production CMS values.
+
+The earlier `home-motor-illustration-v1` asset is also retained but unused.
+Each new class image was generated separately with the built-in image tool using
+the owner-supplied `codex-clipboard-b11acf38-4e39-470a-b74c-5fcac6906ef6.png`.
+The prompt asked for background extraction of the left/middle/right artwork:
+isolate the silver car and its corresponding shield/symbols, retain composition
+and proportions, transparent square canvas with 6% safe padding, no card,
+text, button or surrounding page. These are generated adaptations of the
+reference, not exact source-pixel crops. PNG masters accompany each WebP.
+
+The motifs are decorative, not policy terms. Actual coverage comes from the
+unchanged source matrix. No asset depicts a real employee, insured vehicle or
+endorsement. **Tier illustration (optional)** in the Admin row editor controls
+each durable row's path; editing/reordering and explicit blank/unsafe values are
+covered by the local browser harness. No production CMS media was written.
+
+### Hero Background Generation Prompt
+
+Tool: built-in `image_gen`, with the owner's September 21 banner crop as the
+style reference. PNG master: `assets/brand/home-hero-background-v2.png`.
+
+> Use case: style-transfer. Asset type: full-width website hero BACKGROUND ONLY,
+> wide landscape 3:1 aspect ratio, ideally 2400x800. Use the supplied website crop
+> strictly as a visual style reference for its integrated cream/sage/peach
+> background. Reconstruct that background as a finished seamless composition
+> WITHOUT ANY UI, text, numbers, letters, logos, cards, icons, people or
+> portraits. Warm pale ivory base (#faf5e9). Large pale sage green organic
+> flowing color fields connected to the top and right edges and gently sweeping
+> toward the lower center; a soft light peach field sweeping along the lower
+> edge from center toward right. Broad calm flat color areas with lightly
+> brushed paper texture, not blurred circles, not isolated orbs. Preserve a
+> quiet almost blank ivory LEFT 40% so real HTML headline and paragraph can go
+> there. A single small stylized botanical sprig at 65% horizontal position,
+> from 88% down to 42% of canvas height; only 5 or 6 simplified sage leaves,
+> softly tapered geometric leaf silhouettes with a single subtle center vein,
+> entirely two-dimensional graphic illustration, NOT photographic, NOT a
+> realistic cutout, NOT detailed veins, NOT 3D. Sprig belongs within the
+> overlapping background planes like the reference, rather than floating as a
+> standalone object. Right quarter mostly soft pale sage/ivory, suitable behind
+> a real HTML proof card. Low contrast, refined, warm and reassuring, integrated
+> edge-to-edge art direction matching the reference closely. No gradients
+> resembling spotlights, no bokeh, no shadows cast by leaves. Do not reproduce
+> screenshot frame or web components. Output only the usable wide background
+> bitmap.
+
+## Evidence and Remaining Reviews
+
+### Lessons From Owner Review
+
+- Matching section order alone was insufficient. The accepted direction also
+  owns section density, color/contrast bands, icon weight, integrated artwork,
+  card alignment, footer composition and details below the first viewport.
+- Compactness is a composition requirement on desktop and mobile. The owner's
+  roughly 3-4 viewport target is project-specific, measured with real TH/EN
+  content and collapsed disclosures; it is not permission to shrink the page,
+  hide required capabilities, clip text or erase CMS data.
+- Inspect visible artwork, not just image element dimensions: logos with baked-in
+  white padding looked tiny inside apparently large tiles. Match optical size
+  and equal surrounding clearance without cropping actual marks or changing identity.
+- FAQ, coverage and process peer cards need equal closed-state geometry with
+  long Thai/English labels. Disclosure text needs real inline padding and a
+  reserved plus/chevron area. Expansion must still grow naturally.
+- Tablet composition should resemble desktop while coarse-pointer behavior is
+  touch-first. Desktop width is not evidence of a mouse or hover capability.
+- Personally open current desktop/mobile/tablet images before handoff. A passing
+  harness, saved PNG, or successful build is not visual approval. Compare readable
+  top/middle/footer crops plus full-page rhythm; record remaining deviations.
+- New copy/media must have matching Admin owners, blank handling and draft/preview
+  behavior. The local proposal is not the production CMS or owner approval to publish.
+- Do not treat obsolete embedded-only coverage, separate Guides, or media-upload
+  prohibitions as reasons to resist the owner's explicitly approved redesign.
+
+Current screenshots and structured results are under `uat-results/home-redesign/`.
+`snapshot-provenance.json` records the six TH/EN captures at 390, 820 and 1440px.
+`visual-review.json` distinguishes personally inspected evidence from captures.
+`acceptance-results.json` maps the supplied 107-case plan conservatively:
+partial coverage remains NOT_RUN and owner decisions remain BLOCKED, not PASS.
+
+`browser-checks.json` covers 32 viewport/locale combinations plus Home menu,
+disclosures, forms, consent changes, media and authenticated mock Admin editing.
+Source checks and CMS ownership/browser checks passed. The real local emulator
+suite was rerun successfully with `COVERMATE_NFR_BROWSER=chromium`: Auth/Rules,
+API persistence, Admin lead readback/publishing, Home/Motor and contrast checks.
+That backend run predates the final compact CSS/template pass; the final pass
+reruns targeted browser/form/Admin and bundle checks, not the entire backend
+suite. That original pass did not run WebKit. A subsequent focused cross-browser
+pass installed project-local Firefox/WebKit runtimes; see
+[browser compatibility](BROWSER_COMPATIBILITY.md) and
+`uat-results/browser-compatibility/report.json` for its exact engine versions,
+profiles and results. This does not convert the original full acceptance plan
+or actual Safari/LINE-device checks into PASS.
+
+Before a separately authorized release, resolve the handoff's owner-review
+queue: LINE account identity, regulated insurance/tax claims, compensation,
+emergency wording, privacy retention and renewal operations. A received renewal
+lead is not proof of a reminder scheduler. No legal/compliance approval or
+real-user conversion improvement is claimed by this redesign.

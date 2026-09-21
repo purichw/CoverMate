@@ -1,16 +1,33 @@
 # CoverMate Website Current Product Spec
 
-Last updated: 2026-09-12
+Last updated: 2026-09-21
+
+## Current Authority And Release State
+
+The owner-approved September Home redesign supersedes the older expanded-page
+geometry in this document. Its canonical implementation/acceptance record is
+[HOME_REDESIGN.md](HOME_REDESIGN.md): compact desktop/mobile composition, integrated
+illustrated background, ivory/sage/terracotta contrast, real enlarged insurer
+marks, per-tier illustrations, and desktop-like tablet layout with touch behavior.
+The target is roughly 3-4 viewports for the documented initial collapsed fixture,
+not mandatory whitespace, a hard page height or permission to hide product data.
+
+[HANDOFF.md](HANDOFF.md) owns the exact release revision and current production
+evidence; do not infer live status from this design spec alone. The owner selected
+Cloudinary Free and authorized the Home/CMS v5/SEO/media release. Hosted UAT
+verified upload, recrop, draft isolation and Publish. The upload adapter replaces
+Firebase Storage while retaining Auth/Firestore. See [CMS_MEDIA.md](CMS_MEDIA.md).
 
 CMS ownership update: real business data (licence numbers, provider logos, brand
 media) is editable in Admin and shared by Home/Motor/Footer. Optional blank
 contacts/media stay absent. [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md)
 supersedes historical read-only compliance/default-image statements below.
 
-Production baseline: `https://covermate.vercel.app`
+Production baseline: `https://covermateinsurance.com`
 
-Implementation baseline: current production bundle in this repository. Use the
-latest git commit/deployment record for the exact deployed revision.
+Implementation baseline: current source and generated candidate bundle in this
+repository. Use deployment/source readback for the exact production revision;
+local git HEAD alone cannot establish which working-tree edits are live.
 
 Audience: future maintainers, design partners, product owners, and implementation agents updating the website/admin product.
 
@@ -22,7 +39,7 @@ This spec records the current product and visual contract so future updates are 
 
 ## Snapshot Evidence
 
-Most recent complete production suite:
+Historical production snapshot suite (not current redesign acceptance):
 
 - Snapshot folder: `/Users/point/CoverMate/docs/snapshots/production-2026-07-31`
 - Manifest: `/Users/point/CoverMate/docs/snapshots/production-2026-07-31/manifest.json`
@@ -74,7 +91,9 @@ The following screenshots are historical ad-hoc visual evidence from production.
 
 These screenshots were captured from production on 2026-07-31 with mixed routes, viewports, and auth states. Do not treat them as exhaustive proof of every public/admin screen.
 
-For release evidence, design handoff evidence, or "all screens" visual QA, capture a complete production snapshot suite instead:
+For a requested full-site archive or complete design handoff, capture the full
+matrix below. Ordinary releases use the touched-risk subset; narrow visual edits
+do not require unrelated routes or hosted UAT. Never label a subset complete:
 
 - public full-page desktop/tablet/mobile;
 - anchor states for `#cover`, `#fit`, `#insurers`, `#motor`, `#claim`, and `#talk`;
@@ -100,19 +119,20 @@ Latest local needs-calculator evidence:
 
 Use this precedence order:
 
-1. Production site at `https://covermate.vercel.app`; verify the deployed commit for the current release in Vercel or `git log`.
-2. Repository implementation in `/Users/point/CoverMate`.
-3. Project docs in `/Users/point/CoverMate/docs`.
-4. Firestore live CMS state in the active runtime namespace when present:
-   production `sites/covermate/states/live`; UAT
-   `sites/covermate-uat/states/live`.
-5. Archived external handoff packages or downloaded SPEC files only when the
-   owner explicitly supplies or reopens them for the current task. Reconcile
-   them against the repo, current docs, Firestore-backed CMS behavior, and live
-   production before implementing.
-6. Earlier offline prototypes and screenshots only as historical visual calibration.
+1. Latest explicit owner direction determines scope and the selected visual target.
+2. For the approved Home rebuild, start with the supplied
+   `covermate-home-codex-handoff-v1.0/CODEX_IMPLEMENTATION_PROMPT.md` and the
+   selected desktop/tablet/mobile references plus subsequent owner corrections.
+3. Firestore live/draft owns actual business content in the intended namespace;
+   a mockup is not evidence for licence numbers, insurers, hours or testimonials.
+4. Current source and maintained docs own existing behavior/security/data
+   contracts unless the owner explicitly changes them. Production readback
+   establishes deployed state, not a veto on a newly approved redesign.
+5. Historical exports/snapshots remain historical, including old section tables.
 
-If older references conflict with this spec or the live site, this spec and the live implementation win.
+Preserve semantics and capabilities, not rejected legacy geometry. Never revive
+the old no-separate-Motor, embedded-only-coverage, mandatory Guides, or no-crop
+constraints against newer explicit owner decisions.
 
 ## External Prototype Guardrail
 
@@ -130,9 +150,9 @@ A valid portable prototype must:
   `{{ n.label }}`, `sc-if`, `sc-for`, `x-dc`, or `[object Object]`;
 - render public, admin, edit, preview, and relevant route states after reload.
 
-If an offline prototype fails those checks, do not patch production around it.
-Update the prototype or request a complete self-contained export before using it
-as evidence.
+If a portable export fails these checks, do not call it runnable evidence or
+copy its broken runtime. Supplied screenshots still remain usable visual input;
+missing prototype JavaScript is not a blocker to faithful implementation.
 
 ## Design Update Brief
 
@@ -150,7 +170,9 @@ Future external designs, local prototypes, or handoff updates must reflect the c
   navbar may have its own local motor anchors plus a `Home` link.
 - `/#motor-focus` is legacy/unexposed compatibility only; `/motor` is the
   current dedicated motor-page design source.
-- Add the expanded public sections that now exist after the original reference: policy review, claims, renewal reminder, guides, fee transparency, and PDPA/privacy.
+- Preserve enabled policy review, claim, renewal, fee and privacy capabilities
+  through the compact composition/disclosures. Guides are consolidated into FAQ;
+  do not restore a separate reading section or force disabled sections visible.
 - Admin Portal Home target has four primary modules: `Operations`,
   `Website content`, `Analytics`, and `Settings`. The home lives inside the
   same admin shell as those modules; `/admin/ops` remains only a compatibility
@@ -184,16 +206,20 @@ The design language is warm, organic, advisory, and owner-operated:
 - Primary actions are terracotta/orange.
 - Trust and proof surfaces lean sage/green.
 - Dark sections use deep brown with terracotta cards, not black or blue.
-- Decorative geometry is limited to oversized soft circles/organic curves integrated into page backgrounds.
-- Avoid generic SaaS dashboards, blue/purple gradients, stock illustration hero art, sharp enterprise chrome, or crowded marketplace comparison tables.
+- Use integrated flat sage/peach artwork matching the approved reference, not
+  detached realistic leaves, decorative orbs, or generic stock substitutes.
+- Avoid generic SaaS styling or crowded comparison surfaces; do not use this
+  caution to discard the owner's approved illustrations and contrast treatments.
 
 The product should feel personal, careful, and financially credible. It should not feel salesy, over-designed, or like a landing-page template.
 
 ## Implementation Anchors
 
-Primary files:
+Primary source files (do not hand-edit generated visitor HTML):
 
-- Public visitor site and owner hash modes: `/Users/point/CoverMate/index.html`
+- Home: `/Users/point/CoverMate/src/visitor/home.html` and `home.css`
+- Shared/Motor/owner modes: `/Users/point/CoverMate/src/visitor/template.html` and `runtime.js`
+- Generated deploy artifact: `/Users/point/CoverMate/index.html`
 - Admin Portal shell: `/Users/point/CoverMate/admin/index.html`
 - Admin login: `/Users/point/CoverMate/admin/login/index.html`
 - Admin analytics: `/Users/point/CoverMate/admin/analytics/index.html`
@@ -349,10 +375,15 @@ Guardrails:
 
 ## Visitor Section Order
 
-The current public page has 16 visible live sections plus one embedded `cover`
-data source. `cover` is no longer a standalone public/Admin section; its
-product details render inside the hero coverage accordion cluster, and the
-`#cover` anchor lands there for existing nav and `/#life` compatibility.
+Current order/visibility comes from CMS; the approved candidate may group
+adjacent About/Review/How into compact bands without rewriting their owners.
+`cover` is standalone and editable in Admin again. `guides` migrates into FAQ;
+`#guides` redirects there. Claim/Fit/Voices being disabled in the supplied local
+snapshot is not permission to fabricate them for a screenshot. See
+`HOME_REDESIGN.md` for the proposed arrangement and exact visibility rules.
+
+The table below is the **historical pre-redesign structure**, retained only to
+explain legacy IDs/migration input. It is not a mandatory visible section order:
 
 | Order | ID | Type | Background | Columns | Content Count |
 | --- | --- | --- | --- | --- | --- |
@@ -374,7 +405,8 @@ product details render inside the hero coverage accordion cluster, and the
 | 15 | `privacy` | PDPA/privacy | cream | 2 | 5 privacy bullets |
 | 16 | `talk` | Contact | dark | 2 | contact panel + lead form |
 
-Design updates should include all sections. Do not stop at older shorter reference pages.
+Preserve still-supported content and reachable workflows, not the historical
+expanded layout. Do not reintroduce the archived Guides owner.
 
 ## Dedicated Motor Page
 
@@ -384,25 +416,29 @@ search traffic that should not land midway through the broader home page.
 
 Page contract:
 
-- Canonical URL: `https://covermate.vercel.app/motor`
+- Canonical URL: `https://covermateinsurance.com/motor`
 - SEO: indexable `WebPage` metadata distinct from `/`, while keeping the same
   CoverMate `InsuranceAgency` identity.
 - Header: same brand, language control, and LINE CTA, with local motor-page nav
   for `Home`, motor coverage, insurers, tier comparison/process, and contact.
 - Section order: `motor`, `motor-trust`, `motor-cover`, `insurers`, `tiers`,
-  `how`, `claim`, `renew`, `guides`, `faq`, `talk`.
+  `how`, `claim`, `renew`, `faq`, `talk` (subject to CMS visibility/order).
 - Data model: local hero/trust/coverage blocks live under `motorPage.*`;
-  shared insurer logos, tier table, process, claim, renewal, guides, FAQ, and
+  shared insurer logos, tier table, process, claim, renewal, consolidated FAQ, and
   contact content reuse the CMS-backed arrays used by Home.
 - Admin: `/admin/content?page=motor`, `/admin/edit?page=motor`, and
   `/admin/preview?page=motor` must stay reachable from owner tools and must not
   leak owner chrome onto `/motor` or `/`.
 - Firestore fallback: if a pre-`motorPage` live document loads, the runtime
-  seeds the missing motor-page schema and keeps required shared motor sections
-  visible for the new route. Once Firestore has `motorPage`, live Firestore
+  seeds missing schema without overriding an explicit shared `on:false`.
+  Once Firestore has `motorPage`, live Firestore
   values win over local fallback/cache.
 
 ## Visitor Component Specs
+
+Use the current compact composition in `HOME_REDESIGN.md` over older component
+dimensions below. Existing CMS strings, Google Sans, brand logos, controls and
+business semantics remain authoritative; no screenshot-only hard-coded copy.
 
 ### Hero
 
@@ -416,7 +452,7 @@ Required elements:
 - Primary LINE consultation button.
 - Secondary calculator/assessment button.
 - Personal advisor proof row with AIA logo.
-- Organic green background circle and soft peach shape.
+- Integrated flat sage/peach illustrated backdrop, with quiet copy space.
 - Trust bar hint visible below the first viewport.
 
 The hero must not become a split hero with a generic image card. The brand/value proposition is the first-viewport signal.
@@ -432,19 +468,17 @@ Structure:
 
 Keep pills stable and readable across widths.
 
-### Hero Coverage Accordions
+### Coverage Accordions
 
 Purpose: show coverage categories the advisor can help with.
 
 Structure:
 
-- Embedded in the hero assist-card cluster under the coverage prompt.
-- `#cover` is an anchor on this cluster, not on a standalone section.
+- Compact standalone Home section at `#cover`, also reachable from `/#life`.
 - Product cards use circular icon chips, title, short subtitle, and accordion expand affordance.
 - Product types currently include life, health, disease/critical illness, personal accident, home, and motor.
 - Expanded details use the existing `cover.items[*].b1/b2/b3/note` data.
-- The Admin Sections list must not show `#cover`; owners edit this copy inline
-  where it appears on the page.
+- Admin Sections and inline editing use the same coverage owners.
 
 Rows should feel like actionable advisory categories, not commodity cards.
 
@@ -810,9 +844,10 @@ Required capabilities:
   the object.
 - Brand & contact tab: edit brand text, advisor logo path/alt metadata,
   contact links, guarded SEO title/description, footer copy, and
-  header/sticky visibility. It must not expose direct file upload, Firebase
-  Storage upload, base64/data-image storage, crop tools, or drag/drop image
-  processing.
+  header/sticky visibility. The approved local Images & crop UI adds replace,
+  ratio-lock, fit, source recrop, clear and cancel. Cloudinary Free is the signed
+  upload backend; see `CMS_MEDIA.md`. No base64/binary
+  image data belongs in Firestore.
 - Theme & data tab: accent selection, import/export, reset/restore.
 - Draft save, preview, publish, status/success feedback.
 - Explicit `Save draft` and `Publish` must open custom confirmation dialogs, not
@@ -923,7 +958,7 @@ Lead privacy:
 Public GA4:
 
 - Measurement ID: `G-5TF3C235EF`.
-- Loads only on `covermate.vercel.app`.
+- Loads only on `covermateinsurance.com`.
 - Suppresses owner hashes and active admin sessions.
 - Tracks only the deployed aggregate event inventory:
   `page_view`, `line_click`, `phone_click`, `email_click`, `language_change`,
@@ -945,13 +980,18 @@ Private admin analytics:
 
 Public visitor routes:
 
-- `/` is indexable with canonical `https://covermate.vercel.app/`.
-- `/motor` is indexable with canonical `https://covermate.vercel.app/motor`.
-- Thai and English metadata.
-- OG/Twitter image: `https://covermate.vercel.app/assets/covermate-og.png`.
+- `/` is indexable with canonical `https://covermateinsurance.com/`.
+- `/motor` is indexable with canonical `https://covermateinsurance.com/motor`.
+- Thai root URLs and stable English `?lang=en` URLs, each self-canonical,
+  with reciprocal hreflang. Changing language preserves the current form.
+- OG/Twitter image: `https://covermateinsurance.com/assets/covermate-og.png`.
 - JSON-LD includes Website, Organization/InsuranceAgency, WebPage, and Service.
-- Sitemap and robots should include both public visitor routes and exclude admin
-  routes, owner modes, and hash aliases.
+- Sitemap contains Home/Motor in both languages, never admin or hash URLs.
+  Admin is crawlable so noindex can be read; it is not crawl-blocked as a
+  substitute for authentication. API endpoints are excluded from crawling.
+- Initial HTML and hydrated metadata share `covermate-seo.mjs` and published
+  CMS fields via `api/page.js`; visual body rendering remains client-side.
+  See `docs/SEO.md` for unpublished implementation status and hosted checks.
 
 Admin routes:
 
@@ -992,8 +1032,9 @@ Do not replace specific insurer logos with generic placeholders. If a design moc
 ## Security And NFR Guardrails
 
 - Firebase admin access is allowlist-based at `admins/{uid}`.
-- Security rules validate public lead creates.
-- CSP is currently report-only because the generated bundle uses inline code.
+- Public leads go through App Check/validation in `/api/leads`; direct anonymous
+  Firestore writes are denied.
+- CSP is enforced with documented inline/eval/blob renderer allowances.
 - Static site should preserve fast first paint and avoid visual flashes such as raw template/icon blocks before hydration.
 - NFR targets remain: LCP <= 2.5s, INP <= 200ms, CLS <= 0.1 where feasible for this static site.
 
@@ -1010,7 +1051,7 @@ Do:
 - Keep Firestore-first live content behavior visible in design copy/states.
 - Keep unbuilt admin modules hidden instead of showing fake records or
   not-wired surfaces.
-- Add breathing room where cards or text are crowded.
+- Match compact reference rhythm while preserving readable text and touch areas.
 
 Do not:
 
@@ -1039,9 +1080,14 @@ Public visitor:
 - Header has one motor nav item and no duplicate `ประกันรถยนต์`.
 - `/#motor` is represented as an alias to the motor insurer section, not a
   separate surface; `/motor` is the dedicated motor campaign route.
-- All visible sections are represented in the design, including motor tier
-  comparison, while `cover` is represented as hero accordions rather than a
-  standalone band.
+- All in-scope enabled content is represented, including the compact standalone
+  coverage grid, illustrated featured tiers and consolidated FAQ.
+- Peer FAQ/category/process cards have stable equal closed geometry; labels and
+  disclosure icons have proper padding, long TH/EN copy and natural expansion.
+- Insurer artwork is optically large and consistently padded inside its tiles.
+- Tablet follows desktop composition with touch menus/disclosures, not hover-only controls.
+- Actual-size and full-page desktop/mobile evidence is personally inspected;
+  a passed build, DOM check or saved screenshot is not fidelity approval.
 - Hero first viewport matches the current warm organic direction.
 - AIA logo appears with the current transparent red asset.
 - Motor insurer logo grid is present, credible, and driven by editable
@@ -1066,7 +1112,7 @@ Admin:
 - Closing the control panel while editing returns to the same editor context;
   use `Public site` only when intentionally opening the clean public route in a
   new tab.
-- Analytics page includes GA4 installed status, Data API placeholder, KPI cards, charts, and recent leads states.
+- Analytics uses the existing server Data API, or honest setup/error/empty states.
 - Analytics mobile spacing is comfortable.
 
 System:
@@ -1081,7 +1127,7 @@ System:
 
 These are intentionally not required for the current visual design unless the owner asks:
 
-- GA4 Data API backend or scheduled GA4 export into Firestore.
+- Optional scheduled GA4 export (the server Data API already exists).
 - Full source refactor out of embedded generated HTML into component modules.
 - Richer authenticated production smoke harness.
 - Additional real customer story assets.

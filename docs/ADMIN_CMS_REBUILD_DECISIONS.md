@@ -1,6 +1,6 @@
 # CoverMate Admin/CMS Rebuild Decisions
 
-Last updated: 2026-09-12
+Last updated: 2026-09-21
 
 This is the authoritative decision record for the current Admin/CMS product.
 It records owner-approved behavior that future implementation and design work
@@ -11,8 +11,9 @@ Panel leak, or stale higher-count insurer copy are stale.
 ## Source Precedence
 
 1. Latest explicit owner intent.
-2. Current repository implementation and production docs.
-3. Current product specs supplied by the owner, only where additive and non-conflicting.
+2. Owner-selected current references/handoffs for the explicitly redesigned surface.
+3. Current repository and production docs for behavior, plus Firestore live/draft
+   for actual content. Local candidate code is not proof of deployment.
 4. Brand/compliance direction for Google Sans, Organic visual system, voice, licence/OIC wording, AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 5. Historical offline prototypes or screenshots as visual evidence only, never as product authority.
 
@@ -28,8 +29,10 @@ Brand/compliance direction remains authoritative for Google Sans, Organic tokens
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Admin stays on Admin URLs. Direct `/admin/content` close returns to `/admin`; a panel opened from `/admin/edit` closes back to the same editor. | `Main` returns to `/admin`. `Public site` opens a new clean public tab and must not move the current Admin tab. |
 | Draft preview | Private `/#preview`, draft data only, one top preview bar. | No edit dock, drawer, screen switcher, or public admin marker. |
-| Public site | Keep the canonical continuous page, but `cover` is now embedded in the hero accordion cluster rather than a standalone section. | Do not replace current public page with the shorter standalone or reintroduce a separate coverage-products band. |
-| Motor entry points | `/motor` is the dedicated motor-insurance campaign page in the same product. `#motor -> #insurers` remains a legacy Home alias; `#life -> #cover` where `#cover` is the hero accordion cluster. | `/motor` may have local motor nav plus a Home link. Home still has one motor nav item only, no duplicated motor labels. |
+| Public site | Owner-approved compact Home redesign supersedes the old geometry. `cover` is a standalone compact Home/Admin section again. | Keep real journeys and CMS section order/visibility, not mandatory expanded legacy bands. See HOME_REDESIGN.md. |
+| Motor entry points | `/motor` is the dedicated motor-insurance campaign page in the same product. `#motor -> #insurers` and `#life -> #cover` remain Home aliases. | `/motor` has local motor nav plus a Home link. Home keeps one in-page Motor item and an explicit path to the campaign. |
+| Reading items | No separate Guides public/Admin section in candidate v4+. Existing items move into FAQ with stable identity and bilingual content. | `#guides -> #faq`; recovery archive is never a display fallback. |
+| Media editing | All visitor content images can be replaced and cropped to slot ratios through Admin. | UI exists locally; Firebase Storage rejected, provider replacement pending. No binary data in Firestore, no production activation yet. |
 | Insurer count copy | Public/Admin visible insurer-count copy follows active `insurers.items` logo data. | Current committed logo count is `14`; do not reintroduce stale higher-count claims unless logo data and owner approval both support the new count. |
 | Analytics | Preserve deployed event history; expand by adding safe parameters/events only. | Audit `covermate-analytics.js` before any event-name change. |
 | Firestore/auth | Preserve Firebase Auth, `admins/{uid}.active === true`, production `sites/covermate/*`/`contactLeads/*`, and UAT `sites/covermate-uat/*`/`contactLeadsUat/*`. | The Operations API is a narrow Vercel function that uses the existing Firebase/Firestore project. UAT is isolated by runtime namespace, not by an auth bypass. |
@@ -38,6 +41,9 @@ Brand/compliance direction remains authoritative for Google Sans, Organic tokens
 | Missing optional content | Blank contacts/images stay blank and hide on visitor pages. | No example phone/email, AIA image substitution, position-based insurer logo or empty-list refill. |
 
 ## Phase Plan
+
+The phases below are historical context, not a requirement to redo completed
+work. September candidate/release status is maintained in `HANDOFF.md`.
 
 Phase 0 records decisions and captures/keeps baseline evidence.
 

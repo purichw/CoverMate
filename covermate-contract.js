@@ -245,6 +245,7 @@ export function normalizeSectionHref(href = "") {
   const raw = String(href || "").trim();
   if (raw === "#motor") return "#insurers";
   if (raw === "#life") return "#cover";
+  if (raw === "#guides") return "#faq";
   return raw;
 }
 
@@ -384,8 +385,33 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 2;
+const CMS_CONTENT_VERSION = 5;
 const CMS_CONTENT_FIELDS = [
+  {path:'publicCopy.motorLogoNotice',label:'Motor insurer logo note',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้',en:'Logos are trademarks of their owners · shown as the insurers I can quote and compare'}},
+  {path:'publicCopy.tierClassLabel',label:'Comparison: class heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'ชั้นประกัน',en:'Class'}},
+  {path:'publicCopy.tierBestLabel',label:'Comparison: suitability heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เหมาะกับใคร',en:'Best for'}},
+  {path:'publicCopy.storyEventLabel',label:'Story: event heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เกิดอะไรขึ้น',en:'What happened'}},
+  {path:'publicCopy.storyActionLabel',label:'Story: response heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เราทำอะไร',en:'What we do'}},
+  {path:'homeDesign.botanicalIllustration',label:'Hero background artwork',group:'Home design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
+  {path:'homeDesign.heroStatement',label:'Optional hero statement',group:'Home design',localized:true,seed:{th:'',en:''}},
+  {path:'homeDesign.aboutTeaser',label:'Optional about teaser',group:'Home design',localized:true,seed:{th:'',en:''}},
+  {path:'homeDesign.detailsLabel',label:'Read more',group:'Home design',localized:true,seed:{th:'อ่านเพิ่มเติม',en:'Read more'}},
+  {path:'homeDesign.comparisonLabel',label:'Full comparison',group:'Home design',localized:true,seed:{th:'เปรียบเทียบความคุ้มครองทุกชั้น',en:'Compare all cover levels'}},
+  {path:'homeDesign.motorLabel',label:'Motor page link',group:'Home design',localized:true,seed:{th:'ดูประกันรถยนต์ทั้งหมด',en:'Explore motor insurance'}},
+  {path:'homeDesign.menuLabel',label:'Navigation menu',group:'Home design',localized:true,seed:{th:'เมนู',en:'Menu'}},
+  {path:'homeDesign.closeLabel',label:'Close menu',group:'Home design',localized:true,seed:{th:'ปิดเมนู',en:'Close menu'}},
+  {path:'homeDesign.optionalLabel',label:'Optional form details',group:'Home design',localized:true,seed:{th:'รายละเอียดเพิ่มเติม (ไม่บังคับ)',en:'Additional details (optional)'}},
+  {path:'homeDesign.contactChannelsLabel',label:'Contact channels disclosure',group:'Home design',localized:true,seed:{th:'ช่องทางติดต่อและเวลาทำการ',en:'Contact details & hours'}},
+  {path:'homeDesign.consentChanged',label:'Updated consent notice',group:'Form messages',localized:true,seed:{th:'ข้อความยินยอมมีการอัปเดต กรุณาอ่านและยืนยันใหม่ก่อนส่ง ข้อมูลที่กรอกยังอยู่',en:'The consent text has changed. Please read and confirm it again before sending. Your entries are still here.'}},
+  {path:'homeDesign.formUnavailable',label:'Form unavailable notice',group:'Form messages',localized:true,seed:{th:'แบบฟอร์มนี้ปิดรับชั่วคราว ข้อมูลของคุณยังไม่ได้ถูกส่ง สามารถติดต่อผ่านช่องทางที่แสดงบนเว็บไซต์',en:'This form is temporarily unavailable. Your information has not been sent. Please use the contact channels shown on the site.'}},
+  {path:'homeDesign.returnLabel',label:'Return to consultation',group:'Home design',localized:true,seed:{th:'กลับไปที่แบบฟอร์ม',en:'Return to the form'}},
+  {path:'homeDesign.includeCalculator',label:'Explicit calculator sharing',group:'Home design',localized:true,seed:{th:'แนบผลประเมินนี้ในคำปรึกษา',en:'Include this estimate in my enquiry'}},
+  {path:'homeDesign.logoNotice',label:'Insurer logo note',group:'Home design',localized:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของแต่ละบริษัท',en:'Logos are trademarks of their respective owners.'}},
+  {path:'homeDesign.coveredLabel',label:'Matrix: covered',group:'Home design',localized:true,seed:{th:'คุ้มครอง',en:'Covered'}},
+  {path:'homeDesign.conditionalLabel',label:'Matrix: conditional',group:'Home design',localized:true,seed:{th:'มีเงื่อนไข',en:'Conditional'}},
+  {path:'homeDesign.notCoveredLabel',label:'Matrix: not covered',group:'Home design',localized:true,seed:{th:'ไม่คุ้มครอง',en:'Not covered'}},
+  {path:'homeDesign.offlineError',label:'Offline form message',group:'Home design',localized:true,seed:{th:'ขณะนี้ออฟไลน์ ข้อมูลที่กรอกยังอยู่ กรุณาเชื่อมต่อแล้วลองอีกครั้ง',en:'You are offline. Your entries are still here; reconnect and try again.'}},
+  {path:'homeDesign.uncertainError',label:'Unconfirmed submission',group:'Home design',localized:true,seed:{th:'ยังยืนยันการรับข้อมูลไม่ได้ ข้อมูลที่กรอกยังอยู่ กรุณาลองอีกครั้งหรือติดต่อทาง LINE',en:'We could not confirm receipt. Your entries are still here. Retry or contact us on LINE.'}},
   {"path":"publicCopy.consultationSummary","label":"Consultation summary","group":"Form messages","localized":true,"seed":{"th":"สนใจปรึกษาเรื่องประกัน — สถานการณ์: {{situation}} · รายได้ราว {{income}}/เดือน · ทุนชีวิตที่ควรมีประมาณ {{lifeNeed}}","en":"Hi — situation: {{situation}} · income about {{income}}/mo · suggested life cover around {{lifeNeed}}"}},
   {"path":"publicCopy.consultationIntro","label":"Consultation summary without calculator","group":"Form messages","localized":true,"seed":{"th":"สนใจปรึกษาเรื่องประกัน","en":"Hi — I would like to talk about cover."}},
   {"path":"publicCopy.summaryTopic","label":"Summary enquiry label","group":"Form messages","localized":true,"seed":{"th":"เรื่อง:","en":"Enquiry:"}},
@@ -466,6 +492,10 @@ const CMS_CONTENT_FIELDS = [
   { path: 'brand.media.headerLogo', label: 'Header logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-advisory-logo-th.png', en: 'assets/brand/covermate-advisory-logo-en.png' } },
   { path: 'brand.media.footerLogo', label: 'Footer logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-footer-logo-th.png', en: 'assets/brand/covermate-footer-logo-en.png' } },
   { path: 'brand.media.mark', label: 'Brand icon', group: 'Brand images', media: true, seed: 'assets/brand/covermate-mark.png' },
+  { path: 'lifeFocus.licenceIcon', label: 'Life focus: licence icon', group: 'Life focus', media: true, seed: '' },
+  { path: 'lifeFocus.noUnitLinkedIcon', label: 'Life focus: unit-linked policy icon', group: 'Life focus', media: true, seed: '' },
+  { path: 'lifeFocus.exclusionsIcon', label: 'Life focus: exclusions icon', group: 'Life focus', media: true, seed: '' },
+  { path: 'lifeFocus.claimsIcon', label: 'Life focus: claims icon', group: 'Life focus', media: true, seed: '' },
   { path: 'brand.media.photo', label: 'Advisor photo', group: 'Brand images', media: true, seed: '' },
   { path: 'brand.media.lineQr', label: 'LINE QR image', group: 'Brand images', media: true, seed: '' },
   { path: 'brand.media.favicon', label: 'Favicon', group: 'Brand images', media: true, seed: 'favicon.svg' },
@@ -498,7 +528,7 @@ const CMS_CONTENT_FIELDS = [
 ];
 
 function cmsGet(config, path) {
-  return path.split('.').reduce((value, key) => value && typeof value === 'object' ? value[key] : undefined, config);
+  return path.split('.').reduce((value, key) => Array.isArray(value) && key.startsWith('@') ? value.find(item => item && item.id === key.slice(1)) : value && typeof value === 'object' ? value[key] : undefined, config);
 }
 
 function cmsSet(config, path, value) {
@@ -506,6 +536,11 @@ function cmsSet(config, path, value) {
   if (keys.some(key => ['__proto__', 'constructor', 'prototype'].includes(key))) throw new Error('Invalid CMS field path');
   let target = config;
   keys.slice(0, -1).forEach(key => {
+    if (Array.isArray(target) && key.startsWith('@')) {
+      target = target.find(item => item && item.id === key.slice(1));
+      if (!target) throw new Error('Missing CMS content ID');
+      return;
+    }
     if (!target[key] || typeof target[key] !== 'object') target[key] = {};
     target = target[key];
   });
@@ -522,10 +557,87 @@ function cmsMedia(value) {
   return /^(assets\/[A-Za-z0-9._~!$&()*+,;=:@/%-]+|favicon\.(svg|ico))$/.test(local) ? local : '';
 }
 
+// The same slot inventory drives Admin controls, crop ratios and media validation.
+function cmsImageSlots(config, lang = 'th') {
+  const slots = [];
+  const add = (path, label, width = 512, height = 512) => slots.push({path, label, width, height, value:cmsMedia(cmsGet(config, path))});
+  CMS_CONTENT_FIELDS.filter(field => field.media).forEach(field => {
+    const size = /\.(headerLogo|footerLogo)$/.test(field.path) ? [1200,375]
+      : field.path === 'seo.image' ? [1200,630]
+      : field.path === 'homeDesign.botanicalIllustration' ? [1800,600] : [512,512];
+    add(field.path + (field.localized ? '.' + lang : ''), field.label + (field.localized ? ' (' + lang.toUpperCase() + ')' : ''), ...size);
+  });
+  add('brand.advisorLogo', 'Advisor logo');
+  const sections = (config.sections || []).map(section => ({section, path:'sections.@' + section.id}));
+  for (const key of ['hero','trust','cover']) if (config.motorPage?.[key]) sections.push({section:config.motorPage[key],path:'motorPage.' + key});
+  for (const {section, path} of sections) {
+    for (const [index, item] of (section.items || []).entries()) {
+      const base = path + '.items.@' + item.id;
+      const label = section.id + ' / ' + (item[lang]?.title || item[lang]?.label || item.name || String(index + 1));
+      if (section.type === 'insurers' || Object.hasOwn(item,'logo')) add(base + '.logo',label + ' / logo',416,288);
+      if (section.type === 'tiers') add(base + '.illustration',label + ' / illustration');
+      if (section.type === 'testimonials') add(base + '.photo',label + ' / photo');
+      if (['trust','products','review','steps','claim','renew'].includes(section.type)) add(base + '.iconImage',label + ' / icon');
+    }
+    for (const [index, card] of (section.cards || []).entries()) {
+      if (section.type === 'insurers' || Object.hasOwn(card,'logo')) add(path + '.cards.@' + card.id + '.logo',section.id + ' / card ' + (index+1) + ' / logo',600,240);
+    }
+    if (section.type === 'fit') for (const [id, situation] of Object.entries(section.calculator?.situations || {})) {
+      if (/^[\w-]+$/.test(id)) add(path + '.calculator.situations.' + id + '.iconImage','Calculator / ' + (situation[lang] || id) + ' / icon');
+    }
+  }
+  return slots;
+}
+
+function mergeGuidesIntoFaq(config) {
+  const guides = (config.sections || []).find(section => section && section.id === 'guides' && section.type === 'guides');
+  if (!guides) return config;
+  let faq = config.sections.find(section => section && section.id === 'faq');
+  if (!faq) {
+    faq = { id:'faq', type:'faq', on:guides.on !== false, bg:guides.bg || 'bg', cols:1,
+      th:{kicker:'',title:'คำถามที่พบบ่อย',body:''}, en:{kicker:'',title:'Frequently asked questions',body:''}, items:[] };
+    config.sections.splice(config.sections.indexOf(guides), 0, faq);
+  }
+  if (!Array.isArray(faq.items)) faq.items = [];
+  const used = new Set(faq.items.map(item => item && item.id));
+  const imported = new Set(faq.items.map(item => item && item.sourceGuideId).filter(Boolean));
+  (guides.items || []).filter(item => item && typeof item === 'object').forEach((item, index) => {
+    const sourceId = item.id || 'guide-' + (index + 1);
+    if (imported.has(sourceId)) return;
+    const baseId = /^[\w-]{1,120}$/.test(sourceId) ? sourceId : 'guide-' + (index + 1);
+    let id = baseId, suffix = 1;
+    while (used.has(id)) id = baseId.slice(0, 110) + '-guide-' + suffix++;
+    used.add(id);
+    const entry = { ...item, id, sourceGuideId:sourceId, on:guides.on !== false && item.on !== false };
+    ['th','en'].forEach(lang => {
+      const { title = '', body = '', ...metadata } = item[lang] || {};
+      entry[lang] = { ...metadata, q:title, a:body };
+    });
+    faq.items.push(entry);
+    imported.add(sourceId);
+  });
+  // Recovery snapshot only; the FAQ items are the sole editable/rendered owners.
+  config.cmsArchives = { ...config.cmsArchives, guides:JSON.parse(JSON.stringify(guides)) };
+  config.sections = config.sections.filter(section => section !== guides);
+  if (Array.isArray(config.motorPage?.sections)) config.motorPage.sections = config.motorPage.sections.filter(id => id !== 'guides');
+  return config;
+}
+
 function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
-  if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return next;
+  if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  if (previousVersion < 5) {
+    ['header','motorPage'].forEach(key => (next[key]?.nav || []).forEach(item => {
+      if (typeof item.label === 'string') item.label = {th:item.label,en:item.label};
+    }));
+    (next.sections || []).filter(section => ['review','renew'].includes(section.type)).forEach(section => {
+      (section.items || []).forEach(item => ['th','en'].forEach(lang => {
+        const copy = item[lang];
+        if (copy && copy.title === undefined && typeof copy.label === 'string') copy.title = copy.label;
+      }));
+    });
+  }
   const pending = new Set(Array.isArray(next.cmsLegacyCopy) ? next.cmsLegacyCopy : []);
   CMS_CONTENT_FIELDS.forEach(field => {
     if (field.localized) {
@@ -539,6 +651,11 @@ function migrateCmsContent(config) {
     } else if (cmsGet(next, field.path) === undefined) cmsSet(next, field.path, field.seed);
   });
   next.cmsLegacyCopy = [...pending];
+  next.homeDesign.schemaVersion = 1;
+  next.homeDesign.preset = 'warm-advisory-no-portrait';
+  ['featuredTierIds', 'previewAxisIds', 'taskLinks'].forEach(key => {
+    if (!Array.isArray(next.homeDesign[key])) next.homeDesign[key] = [];
+  });
   if (previousVersion < 1) {
     const legacyLicences = { '6401006221': '{{lifeLicence}}', '6804008544': '{{nonLifeLicence}}', 'ว00287/2534': '{{brokerLicence}}' };
     const migrateText = value => {
@@ -565,12 +682,16 @@ function migrateCmsContent(config) {
     });
   }
   next.cmsContentVersion = CMS_CONTENT_VERSION;
-  return next;
+  return mergeGuidesIntoFaq(next);
 }
 
 function resolveCmsContent(value, config) {
   const fields = { lifeLicence: 'licences.life.number', nonLifeLicence: 'licences.nonLife.number', brokerLicence: 'licences.broker.number' };
-  if (typeof value === 'string') return value.replace(/\{\{(lifeLicence|nonLifeLicence|brokerLicence)\}\}/g, (_, key) => cmsGet(config, fields[key]) || '');
+  if (typeof value === 'string') return value.replace(/\{\{(lifeLicence|nonLifeLicence|brokerLicence|activeMotorInsurerCount)\}\}/g, (_, key) => {
+    if (key !== 'activeMotorInsurerCount') return cmsGet(config, fields[key]) || '';
+    const section = (config.sections || []).find(item => item.id === 'insurers');
+    return Array.isArray(section?.items) ? String(section.items.filter(item => item && item.on !== false).length) : '';
+  });
   if (Array.isArray(value)) return value.map(entry => resolveCmsContent(entry, config));
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, resolveCmsContent(entry, config)]));
   return value;
@@ -589,6 +710,18 @@ function sanitizeCmsFields(config) {
       cmsSet(config, path, text);
     });
   });
+  const design = config.homeDesign;
+  for (const key of ['featuredTierIds', 'previewAxisIds']) {
+    design[key] = [...new Set((Array.isArray(design[key]) ? design[key] : []).filter(id => typeof id === 'string' && /^[\w-]{1,120}$/.test(id)))].slice(0, 50);
+  }
+  const taskIds = new Set();
+  design.taskLinks = (Array.isArray(design.taskLinks) ? design.taskLinks : []).filter(task => task && typeof task === 'object').slice(0, 20).map((task, index) => {
+    let id = typeof task.id === 'string' && /^[\w-]{1,120}$/.test(task.id) ? task.id : 'home-task-' + index;
+    while (taskIds.has(id)) id += '-copy';
+    taskIds.add(id);
+    const target = String(task.target || '').trim();
+    return { id, on:task.on !== false, label:{ th:String(task.label?.th || '').trim().slice(0, 160), en:String(task.label?.en || '').trim().slice(0, 160) }, target:/^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(target) ? target : '' };
+  });
   ['header', 'motorPage'].forEach(key => {
     const owner = config[key];
     if (!owner || !Array.isArray(owner.nav)) return;
@@ -598,6 +731,7 @@ function sanitizeCmsFields(config) {
       return { ...item, label, href: /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(href) ? href : '' };
     });
   });
+  sanitizeCmsMediaAndLinks(config);
   return config;
 }
 
@@ -605,9 +739,70 @@ function setCmsCopy(config, path, value) {
   cmsSet(config, path, value);
   config.cmsLegacyCopy = (Array.isArray(config.cmsLegacyCopy) ? config.cmsLegacyCopy : []).filter(key => key !== path);
 }
+
+function isSemanticCopyPath(config, path) {
+  const section = /^(?:(?:sections\.@[\w-]+|motorPage\.(?:hero|trust|cover))\.(?:(?:items|cards)\.@[\w-]+\.)?(?:th|en)\.[A-Za-z][A-Za-z0-9]*|sections\.@[\w-]+\.heads\.@[\w-]+\.(?:th|en))$/;
+  const shared = /^(?:(?:brand\.(?:name|fullName|role|credential)|contact\.(?:hours|area)|footer\.(?:tagline|legal)|header\.cta)\.(?:th|en)|(?:header|motorPage)\.nav\.\d+\.label\.(?:th|en)|homeDesign\.taskLinks\.@[\w-]+\.label\.(?:th|en))$/;
+  const calculator = /^sections\.@[\w-]+\.calculator\.(?:situations\.[\w-]+\.(?:(?:th|en)|recs\.\d+\.(?:th|en|wth|wen))|health\.selectedRoomReference\.(?:hospitalName|roomType|note)\.(?:th|en))$/;
+  return (section.test(path) || shared.test(path) || calculator.test(path)) && typeof cmsGet(config, path) === 'string';
+}
+
+function adoptLegacyGuideCopy(next, text) {
+  const faq = (next.sections || []).find(section => section && section.id === 'faq');
+  (faq?.items || []).filter(item => item && item.sourceGuideId).forEach(item => {
+    ['th','en'].forEach(lang => Object.entries({title:'q',body:'a',label:'label',meta:'meta'}).forEach(([oldField, field]) => {
+      const oldKey = 'cms:sections.@guides.items.@' + item.sourceGuideId + '.' + lang + '.' + oldField;
+      if (!Object.prototype.hasOwnProperty.call(text, oldKey)) return;
+      const path = 'sections.@faq.items.@' + item.id + '.' + lang + '.' + field;
+      setCmsCopy(next, path, String(text['cms:' + path] ?? text[oldKey]));
+      delete text[oldKey];
+    }));
+  });
+}
+
+function sanitizeCmsMediaAndLinks(config) {
+  const sections = [...(config.sections || []), ...['hero','trust','cover'].map(key => config.motorPage?.[key])].filter(Boolean);
+  for (const section of sections) {
+    for (const owner of [section,section.th,section.en].filter(Boolean)) for (const key of ['cta1href','cta2href','claimHref']) {
+      if (Object.hasOwn(owner,key)) owner[key] = /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(String(owner[key] || '')) ? owner[key] : '';
+    }
+  }
+  const imageSlots = [...cmsImageSlots(config,'th'), ...cmsImageSlots(config,'en')];
+  imageSlots.forEach(slot => { if (cmsGet(config,slot.path) !== undefined) cmsSet(config,slot.path,slot.value); });
+  const edits = config.mediaEdits || {};
+  config.mediaEdits = Object.fromEntries(imageSlots.filter(slot => edits[slot.path] && edits[slot.path].output === slot.value).map(slot => {
+    const edit = edits[slot.path];
+    return [slot.path,{output:slot.value,source:cmsMedia(edit.source)}];
+  }));
+}
+
+// These three heading positions predate both layouts. Unknown positions are
+// retained for review, never applied to a different text node in the new Home.
+function adaptLegacyHomeCopy(config, overrides) {
+  const next = JSON.parse(JSON.stringify(config));
+  const text = { ...overrides };
+  adoptLegacyGuideCopy(next, text);
+  ['hero', 'insurers'].forEach(id => ['kicker','title','body'].forEach((field, index) => ['th','en'].forEach(lang => {
+    const key = id + ':' + index + ':' + lang;
+    const path = 'sections.@' + id + '.' + lang + '.' + field;
+    if (!Object.prototype.hasOwnProperty.call(text, key) || !isSemanticCopyPath(next, path)) return;
+    setCmsCopy(next, path, String(text[key]));
+    delete text[key];
+  })));
+  // Legacy selector option ownership already covered by the CMS regression fixture.
+  ['th','en'].forEach(lang => {
+    const key = 'talk:13:' + lang;
+    const path = 'formOptions.query.quote.' + lang;
+    if (!(next.cmsLegacyCopy || []).includes(path) || !Object.prototype.hasOwnProperty.call(text, key)) return;
+    const field = CMS_CONTENT_FIELDS.find(field => field.path === 'formOptions.query.quote');
+    if (cmsGet(next, path) === field.seed[lang]) setCmsCopy(next, path, String(text[key]));
+    delete text[key];
+  });
+  return { config: next, text };
+}
 // COVERMATE_CMS_SCHEMA_END
 
-export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, cmsGet, cmsSet, cmsMedia, migrateCmsContent, resolveCmsContent, sanitizeCmsFields };
+export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, cmsGet, cmsSet, cmsMedia, cmsImageSlots, migrateCmsContent, resolveCmsContent, sanitizeCmsFields, isSemanticCopyPath, adaptLegacyHomeCopy };
 export const DEFAULT_SEO = {
   title: { th: "", en: "" },
   description: { th: "", en: "" }
@@ -1004,6 +1199,11 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
         if (Object.prototype.hasOwnProperty.call(item, "logo")) {
           item.logo = cleanMediaReference(item.logo, "");
         }
+        if (Object.prototype.hasOwnProperty.call(item, "illustration")) {
+          item.illustration = cleanMediaReference(item.illustration, "");
+        }
+        if (Object.prototype.hasOwnProperty.call(item, "photo")) item.photo = cleanMediaReference(item.photo, "");
+        if (Object.prototype.hasOwnProperty.call(item, "photoAlt")) item.photoAlt = cleanText(item.photoAlt, 120);
         if (Object.prototype.hasOwnProperty.call(item, "logoAlt")) {
           item.logoAlt = cleanText(item.logoAlt || "", 120);
         }
@@ -1044,7 +1244,7 @@ export function sanitizeMotorCountText(text, configOrCount) {
   Object.keys(next).forEach((key) => {
     const value = String(next[key] || "");
     if (/^(08X-XXX-XXXX|purich@example\.com)$/i.test(value.trim())) { delete next[key]; return; }
-    const isInsurerInlineText = /^insurers:\d+:(th|en)$/.test(key);
+    const isInsurerInlineText = /^(hero|insurers):\d+:(th|en)$/.test(key);
     const isContactTitleText = /^talk:\d+:(th|en)$/.test(key);
     next[key] = value;
     if (isInsurerInlineText) {
@@ -1097,6 +1297,13 @@ export function sanitizeStateDoc(state, options = {}) {
   if (!state || !state.config) return state;
   const input = cloneJSON(state.config);
   const text = { ...(state.text || {}) };
+  adoptLegacyGuideCopy(input, text);
+  Object.keys(text).filter(key => key.startsWith('cms:')).forEach(key => {
+    const path = key.slice(4);
+    if (!isSemanticCopyPath(input, path)) return;
+    setCmsCopy(input, path, String(text[key]).slice(0, 10000));
+    delete text[key];
+  });
   CMS_CONTENT_FIELDS.filter(field => field.localized).forEach(field => ['th', 'en'].forEach(lang => {
     const path = field.path + '.' + lang;
     if (!Object.prototype.hasOwnProperty.call(text, 'cms:' + path)) return;
@@ -1153,6 +1360,7 @@ const contract = {
   cmsGet,
   cmsSet,
   cmsMedia,
+  cmsImageSlots,
   migrateCmsContent,
   resolveCmsContent,
   sanitizeCmsFields,

@@ -1,13 +1,25 @@
 # CoverMate Firebase Setup
 
-Last updated: 2026-08-30
+Last updated: 2026-09-21
+
+## Storage And Billing Checkpoint
+
+Firebase Auth and Firestore remain in use. The owner rejected **Firebase
+Storage**, not Firebase as a whole. During the paused release attempt the owner
+enabled Blaze, the Storage API was enabled, and an empty default bucket was
+created in `ASIA-SOUTHEAST3`. No upload occurred in that attempt. September 21
+readback now reports `billingEnabled: false` with no linked account; the unused
+bucket was not deleted. Cloudinary Free replaces the upload adapter. Do not
+re-enable billing or change permissions from these notes. See
+[CMS_MEDIA.md](CMS_MEDIA.md) for configuration and cost boundaries.
 
 ## Project
 
 - Firebase project ID: `covermate-purich`
 - Console overview:
   `https://console.firebase.google.com/u/0/project/covermate-purich/overview`
-- Web config is embedded in `/covermate-firebase.js`.
+- Shared web config is in `covermate-firebase-config.mjs`; public and admin
+  helpers consume it. The unused Storage bucket config has been removed.
 - Google Analytics/Firebase measurement ID: `G-5TF3C235EF`.
 - Current role: real admin identity, Firestore allowlist, and Firestore-backed
   CMS live/draft/version persistence, contact lead capture, and private lead
@@ -38,7 +50,7 @@ project must be trusted intentionally.
 
 In Authentication settings, authorized domains should include:
 
-- `covermate.vercel.app`
+- `covermateinsurance.com`
 - `localhost`
 - `127.0.0.1`
 
@@ -155,9 +167,10 @@ UAT/preview:
 contactLeadsUat/<auto-id>
 ```
 
-Public creates are allowed only when the submitted document matches the field
-allowlist, length caps, enum values, `status: "new"`, `read: false`, and
-Firestore server timestamp checks in `firestore.rules`.
+Visitors submit through `/api/leads`, which enforces App Check, field allowlists,
+length/enum/consent validation, abuse limits and idempotency before a server
+write. Direct unauthenticated Firestore creates are denied by `firestore.rules`.
+See [DATA_CONTRACT.md](DATA_CONTRACT.md) and [NFR_HARDENING.md](NFR_HARDENING.md).
 
 The consultation form writes visitor name, contact, enquiry type, coverage, and
 details. The renewal reminder form uses the same validated collection with
