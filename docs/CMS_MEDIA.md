@@ -26,7 +26,8 @@ no fallback to Firebase Storage. Auth and Firestore continue on existing paths.
 
 Cloudinary cloud `software-dev-projects` was verified as **Free** with 0.27 of
 25 shared credits used (1.08%) before testing. This is a point-in-time account-wide
-reading, not a reservation or a guarantee about future traffic. References:
+reading, not a reservation or a guarantee about future traffic. A later
+September 21 readback reported 0.08/25 (0.32%), still Free. References:
 [Cloudinary](https://cloudinary.com/documentation/billing_and_plans),
 [Supabase](https://supabase.com/pricing),
 [R2](https://developers.cloudflare.com/r2/pricing/),

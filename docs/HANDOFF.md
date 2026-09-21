@@ -6,17 +6,20 @@ Last updated: 2026-09-21
 
 The owner selected Cloudinary Free and authorized all pending Home/CMS/media/
 SEO/browser changes for production. The earlier cost hold is superseded.
-This checkpoint is updated after deployment and the conditional CMS migration.
+The runtime and conditional CMS migration are live. Documentation/verification-only commits
+after the runtime below do not change the verified public artifact.
 
-| Surface | Verified state before push |
+| Surface | Verified release state |
 | --- | --- |
 | Primary domain | `https://covermateinsurance.com`; Vercel hostname is redirect/history only |
-| Git | Runtime release committed/pushed as `48087e7`; lockfile compatibility repair follows |
-| Production | Previous deployment `dpl_BoZyKc24AAtk6mJhKPPHZPp4yTNh`; migration not yet applied |
+| Git | Runtime `947d4384117c81cffb687a9ad87bee9ab8688768`, pushed to `main` |
+| Production | `dpl_FH4MhxcSWbDabidAnttUUXqr3YQp`; primary alias assigned after exact-SHA CI passed |
 | Hosted media UAT | `https://covermate-nztf447jg-purich-w.vercel.app`, deployment `dpl_BM5NuqmdA3AB3Tb9wVXmoKoeX7s6` |
-| CMS | Schema v5; fresh live/draft migration dry-run has no conflicts |
+| CMS | Schema v5, live and draft revision 3; independent conditional migration and readback verified |
 | Local CI | Full `npm run check:ci` PASS, including Admin builder and responsive smoke |
 | Provider | Cloudinary Free, sensitive Preview/Production environment configured |
+| Hosted CI | [35623627414](https://github.com/purichw/CoverMate/actions/runs/35623627414) PASS, including real emulator Auth/Rules/API/Publish E2E |
+| Production checks | Home/Motor TH/EN, 390/820/1440 Home, served-file hashes, media, SEO, redirects, private noindex and unauthenticated upload rejection PASS |
 
 ### Verified Scope
 
@@ -27,17 +30,20 @@ This checkpoint is updated after deployment and the conditional CMS migration.
   requests, Analytics, Operations, boot, live refresh, generated bundles and
   performance. Generated HTML is 745,523 bytes, below the 750,000-byte budget.
 - Home screenshot review personally covered full TH desktop/tablet/mobile,
-  English mobile contact, and desktop/mobile crop dialogs. Local proposed Home
+  full EN desktop/tablet/mobile, and desktop/mobile crop dialogs. Deployed Home
   heights: TH 390px wide = 3,329px; 820 = 3,530px; 1440 = 2,823px.
   EN 390 = 3,698px; 820 = 3,571px; 1440 = 2,885px. No horizontal overflow.
-  Initial hosted full-page captures missed scroll-reveal content; use the
-  inspected reduced-motion local captures and post-release captures instead.
+  Initial UAT full-page captures missed scroll-reveal content; use the inspected
+  reduced-motion production captures in `uat-results/release/` instead.
 - SEO initial HTML and hydrated metadata share CMS ownership. Legacy inline
   hero copy is adopted consistently and stale insurer counts are normalized.
   Local Lighthouse 13.5.0 SEO scored 100 in eight route/language/device cases;
   this is not a ranking guarantee or production score.
 - Production exact-SHA gate readback passed. GitHub `verify` must succeed
   before Vercel assigns the production alias; no force promotion.
+- Root-only `middleware.js` ensures Home reaches the initial-HTML SEO wrapper
+  before Vercel serves static `index.html`. The protected routing preview and
+  final production raw HTML both verified Thai/English canonical metadata.
 - Guarded Home migration merges only reviewed old values, checks update times,
   backs up existing states and updates live/draft independently. Dry-run and
   conflict/idempotence tests passed. Never publish an unrelated draft.
@@ -53,40 +59,48 @@ The unused empty bucket `covermate-purich.firebasestorage.app` in
 `ASIA-SOUTHEAST3` was not deleted. No Firebase Storage uploads were performed.
 
 Cloudinary `software-dev-projects` was Free with 0.27/25 shared credits before
-testing. New uploads fail closed at 80% credits, on an unverifiable allowance or
+testing; the later September 21 readback was 0.08/25 (0.32%). These are
+point-in-time provider readings, not a reservation. New uploads fail closed at
+80% credits, on an unverifiable allowance or
 a non-Free plan. This is not a CDN traffic cap or unlimited-zero-cost guarantee.
 No paid upgrade, Cloudinary transformation or AI add-on was requested.
 See [CMS media](CMS_MEDIA.md).
 
-### Remaining Release Actions
+### Migration And Recovery
 
-Commit/push, observe exact-SHA GitHub CI and production alias, then apply the
-conditional CMS migration and run read-only production route/asset/metadata
-checks. Record final revision and results here. Do not infer deployment from
-a preview or local build.
+The migration committed at `2026-09-21T16:01:11.368Z`. Live and draft were
+merged separately with update-time preconditions, not published together.
+Readback confirmed config/text deep equality and revision 3 for both states.
+A fresh dry-run reports `changed: false`, no applied changes and no conflicts.
+The first readback check compared JSON key ordering and reported a false
+difference; semantic comparison and a reordered-map regression test now cover
+Firestore's map ordering. No second production write was needed.
 
-The first GitHub run for `48087e7` stopped at `npm ci`: the npm 10 runner
-found transitive proxy-agent dependencies missing from the npm 11 lockfile.
-Vercel built `dpl_F9C6sjn4vehaocn31Srmv1h78PgV` but its production alias check
-failed and the custom domain stayed on the previous release. Regenerate the
-lockfile with npm 10.9.4 and require the next exact-SHA run to pass; no bypass.
+Private pre-migration backup (ignored, mode 0600):
+`uat-results/cms-migrations/covermate-home-1790006471169.json`.
+Do not replay it over later owner edits. A rollback requires fresh diff/update
+times and the release runbook. Previous pre-redesign runtime:
+`de0e8ba`, deployment `dpl_BoZyKc24AAtk6mJhKPPHZPp4yTNh`.
 
-`b63eca7` repaired the lockfile; GitHub's complete application gate passed.
-Its emulator step found an ambiguous test-server header selector after preview
-noindex headers were added. The harness now selects unconditional global
-headers; the security-header generator follows the same rule and retains
-Cloudinary. Browser cleanup now closes the browser directly and terminates
-the emulator Firestore client. Full local `check:emulators` exited 0 using the
-project-local Java 21 runtime: Rules/API, Chromium/WebKit Admin Publish, live
-visitor updates, forms/Admin readback, navigation and TH/EN accessibility passed.
-No security assertion or production gate was removed.
+Release repairs retained all security checks: npm 10 lockfile compatibility,
+unconditional test-server header selection, and browser/Firestore cleanup.
+The final local emulator suite and exact-SHA hosted CI passed. No force
+promotion or gate bypass occurred.
+
+Read-only production report: `uat-results/release/production-report.json`.
+Personal screenshot review: `uat-results/release/visual-review.md`.
+Media report: `uat-results/release/assets/asset-smoke-results.json`; Home had
+27 image elements and one CSS background, Motor eight image elements and 16
+CSS backgrounds. No broken/incomplete images, stale Firebase Storage URLs,
+asset request failures, console errors or page errors were observed.
+No production leads, uploads or unrelated drafts were created for smoke tests.
 
 Real Safari/LINE/Edge device checks, live lead App Check from those devices,
 Search Console/Bing submission and compliance review are not certified by
 local engine tests. See [browser coverage](BROWSER_COMPATIBILITY.md) and
 [SEO ownership](SEO.md). Do not send real leads merely for smoke testing.
 
-Ignored evidence: `uat-results/media-hosted/`, `uat-results/home-redesign/`,
+Ignored evidence: `uat-results/release/`, `uat-results/media-hosted/`, `uat-results/home-redesign/`,
 `uat-results/seo/`, `uat-results/browser-compatibility/` and private migration
 backups. Credentials, backups and test reports are not release source.
 

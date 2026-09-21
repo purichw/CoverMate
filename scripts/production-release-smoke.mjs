@@ -72,12 +72,16 @@ try {
     const response = await fetch(origin + path);
     assert.equal(response.status, 200);
     assert.match(response.headers.get('x-robots-tag'), /noindex/);
+    await response.arrayBuffer();
   }
-  assert.equal((await fetch(origin + '/api/media', { method: 'POST' })).status, 401);
+  const deniedUpload = await fetch(origin + '/api/media', { method: 'POST' });
+  assert.equal(deniedUpload.status, 401);
+  await deniedUpload.arrayBuffer();
   for (const host of ['covermate.vercel.app', 'www.covermateinsurance.com']) {
     const response = await fetch(`https://${host}/motor?lang=en`, { redirect: 'manual' });
     assert.equal(response.status, 308);
     assert.equal(response.headers.get('location'), origin + '/motor?lang=en');
+    await response.arrayBuffer();
   }
   const sitemap = await fetch(origin + '/sitemap.xml').then(r => r.text());
   assert.equal((sitemap.match(/<loc>/g) || []).length, 4);
