@@ -132,8 +132,9 @@ try {
 } finally {
   fs.writeFileSync('uat-results/nfr/journeys.json', JSON.stringify(report, null, 2));
   console.log('Closing journey browser.');
-  for (const context of browser.contexts()) await context.close();
   await browser.close();
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
+  await db.terminate();
+  console.log('Journey browser, server and Firestore client closed.');
 }

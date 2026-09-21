@@ -1,6 +1,6 @@
 # CMS Content Ownership
 
-Updated: 2026-09-21. Local code schema: version 5, not yet deployed. Version 3 adds
+Updated: 2026-09-21. Code schema: version 5; deployed state is in HANDOFF.md. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
 Version 4 consolidates the former Guides into FAQ. Admin FAQ owns the question,
 answer, optional topic and reading time in both languages. The old section is
@@ -49,7 +49,7 @@ absent. Firestore content wins, including deliberate blanks and empty arrays.
 `CMS_CONTENT_FIELDS` in `covermate-contract.js` defines fields and one-time seeds.
 The visitor generator embeds the same schema; Brand & contact generates the
 matching controls. Local asset paths and HTTPS images remain supported. The
-unreleased image editor currently targets the owner-only `/api/media` endpoint.
+image editor targets the owner-only `/api/media` endpoint.
 Its backend is signed Cloudinary Free with owner authorization and UAT isolation.
 See [media decision](CMS_MEDIA.md#backend-decision-and-cost-boundary).
 No binary data is stored in CMS documents.
@@ -132,8 +132,9 @@ blur and state sanitation fold them into config. Admin edits clear any pending
 override for that field. Empty marked leaves retain their editing slot.
 
 Still code-owned: calendar month names, formatting units, technical routes and
-schema types, and pre-JavaScript boot metadata. Story helper labels and the Motor
-trademark disclosure moved to Admin in the unreleased version-5 audit.
+schema types, and private/bootstrap scaffolding. Public initial HTML metadata
+reads published CMS through `api/page.js`. Story helper labels and the Motor
+trademark disclosure moved to Admin in the version-5 audit.
 
 ## Verification
 

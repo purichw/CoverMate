@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-09-21. This map includes the unreleased candidate Home/CMS/SEO
+Last updated: 2026-09-21. This map includes the Home/CMS/SEO
 changes. See [HANDOFF.md](HANDOFF.md) for actual release state, not route presence
 in the working tree alone.
 
@@ -8,8 +8,8 @@ in the working tree alone.
 
 | Route | Audience | Purpose | Source |
 | --- | --- | --- | --- |
-| `/` | Visitor | Compact Home | `src/visitor/home.html`, `home.css`, generated `index.html`; candidate `api/page.js` head wrapper |
-| `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `src/visitor/template.html`, generated `index.html`; candidate `api/page.js` head wrapper |
+| `/` | Visitor | Compact Home | `src/visitor/home.html`, `home.css`, generated `index.html`; `api/page.js` head wrapper |
+| `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `src/visitor/template.html`, generated `index.html`; `api/page.js` head wrapper |
 | `/#motor` | Visitor | Legacy alias to the home motor-insurance / insurer section | `index.html` |
 | `/#life` | Visitor | Alias to the Home `#cover` section | `index.html` |
 | `/#guides` | Visitor | Legacy alias to consolidated `#faq` | `covermate-contract.js`, `src/visitor/runtime.js` |

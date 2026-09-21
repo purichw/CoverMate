@@ -71,6 +71,16 @@ Vercel built `dpl_F9C6sjn4vehaocn31Srmv1h78PgV` but its production alias check
 failed and the custom domain stayed on the previous release. Regenerate the
 lockfile with npm 10.9.4 and require the next exact-SHA run to pass; no bypass.
 
+`b63eca7` repaired the lockfile; GitHub's complete application gate passed.
+Its emulator step found an ambiguous test-server header selector after preview
+noindex headers were added. The harness now selects unconditional global
+headers; the security-header generator follows the same rule and retains
+Cloudinary. Browser cleanup now closes the browser directly and terminates
+the emulator Firestore client. Full local `check:emulators` exited 0 using the
+project-local Java 21 runtime: Rules/API, Chromium/WebKit Admin Publish, live
+visitor updates, forms/Admin readback, navigation and TH/EN accessibility passed.
+No security assertion or production gate was removed.
+
 Real Safari/LINE/Edge device checks, live lead App Check from those devices,
 Search Console/Bing submission and compliance review are not certified by
 local engine tests. See [browser coverage](BROWSER_COMPATIBILITY.md) and

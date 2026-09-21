@@ -29,8 +29,8 @@ payload, with Firestore live/draft values prevailing over embedded defaults.
 Future commit, push, Vercel deploy, or Firestore Rules deploy actions still
 require explicit owner approval in the current task.
 
-September 21 checkpoint: Home/CMS v5/media/SEO/browser changes are uncommitted
-candidate work until deployment readback. The owner resumed full production
+September 21 checkpoint: Home/CMS v5/media/SEO/browser source is recorded in the
+release history below and HANDOFF.md. The owner resumed full production
 release using Cloudinary Free. Its adapter replaces Firebase Storage; the empty
 Bangkok bucket remains unused. Cloud Billing readback reports billing disabled.
 [HANDOFF.md](docs/HANDOFF.md) owns status; [CMS_MEDIA.md](docs/CMS_MEDIA.md) owns

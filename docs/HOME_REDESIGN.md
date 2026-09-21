@@ -320,6 +320,13 @@ pass installed project-local Firefox/WebKit runtimes; see
 profiles and results. This does not convert the original full acceptance plan
 or actual Safari/LINE-device checks into PASS.
 
+September 21 release rerun: the final emulator suite passed both Chromium and
+WebKit for authenticated draft/Publish/open-visitor refresh, plus the real
+emulator form/API/Admin journeys and TH/EN Home/Motor accessibility. Test-server
+header selection was updated for preview noindex and cleanup now closes all
+resources. This supersedes the earlier Chromium-only backend evidence, not the
+remaining real-device/compliance items.
+
 Before a separately authorized release, resolve the handoff's owner-review
 queue: LINE account identity, regulated insurance/tax claims, compensation,
 emergency wording, privacy retention and renewal operations. A received renewal

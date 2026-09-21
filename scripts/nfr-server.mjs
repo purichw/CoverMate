@@ -4,7 +4,8 @@ import { startStaticServer } from './lib/static-server.mjs';
 const require = createRequire(import.meta.url);
 export async function startNfrServer() {
   const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
-  const headers = Object.fromEntries(config.headers.find(item => item.source === '/(.*)').headers.map(item => [item.key, item.value]));
+  const globalHeaders = config.headers.find(item => item.source === '/(.*)' && !item.has && !item.missing);
+  const headers = Object.fromEntries(globalHeaders.headers.map(item => [item.key, item.value]));
   // Local integration uses real Auth/Firestore emulators, not a production bypass.
   headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace("connect-src 'self'", "connect-src 'self' http://127.0.0.1:8088 http://127.0.0.1:9098");
   if (process.env.COVERMATE_TEST_MODE === 'emulator') headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace('frame-src ', 'frame-src http://127.0.0.1:9098 ');
