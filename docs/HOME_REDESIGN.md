@@ -195,6 +195,8 @@ the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
 - The mobile/touch contact bar stays visible at every scroll position, including
   Hero, contact inputs and Footer. Its CMS switch and contact URLs remain
   authoritative; menus and owner modes still suppress the underlying bar.
+  Root scroll padding reserves space for the sticky header and contact bar so
+  browser-driven focus/scroll-into-view does not place controls behind them.
 - The redundant Motor link beside the Home tier heading is removed on every
   viewport. The insurer-section entry into `/motor` remains available.
 

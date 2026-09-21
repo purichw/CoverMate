@@ -55,6 +55,11 @@ try {
         }
       }
       if (route === '/') {
+        const relationship = page.locator('#insurers details.hm-relationship');
+        await page.locator('#insurers').scrollIntoViewIfNeeded();
+        await relationship.locator('summary').click();
+        assert.equal(await relationship.evaluate(el => el.open),true,'Disclosure remains clickable above the persistent bar');
+        await relationship.locator('summary').click();
         await page.locator('#talk input[name="contact"]').focus();
         await page.waitForTimeout(500);
         assert.ok(await sticky.isVisible(),'Form focus does not hide the CTA');

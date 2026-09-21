@@ -379,6 +379,10 @@ textarea.input { min-height: 90px; resize: vertical; }
 <style>
   :root { --wrap: 1180px; --gut: clamp(20px, 4.2vw, 60px); --sec: clamp(56px, 7.5vw, 112px); }
   html { scroll-behavior: smooth; }
+  html:has(header) { scroll-padding-top: 104px; }
+  @media (max-width: 899px), (any-pointer: coarse) {
+    html:has([data-cm-sticky]) { scroll-padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+  }
   body { margin:0; background: var(--color-bg); color: var(--color-text);
          font-family: "Google Sans", "Google Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
          -webkit-font-smoothing: antialiased; overflow-x: hidden; }
