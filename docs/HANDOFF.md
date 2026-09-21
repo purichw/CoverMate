@@ -11,7 +11,7 @@ This checkpoint is updated after deployment and the conditional CMS migration.
 | Surface | Verified state before push |
 | --- | --- |
 | Primary domain | `https://covermateinsurance.com`; Vercel hostname is redirect/history only |
-| Git | Based on `de0e8ba`; approved release changes ready to commit |
+| Git | Runtime release committed/pushed as `48087e7`; lockfile compatibility repair follows |
 | Production | Previous deployment `dpl_BoZyKc24AAtk6mJhKPPHZPp4yTNh`; migration not yet applied |
 | Hosted media UAT | `https://covermate-nztf447jg-purich-w.vercel.app`, deployment `dpl_BM5NuqmdA3AB3Tb9wVXmoKoeX7s6` |
 | CMS | Schema v5; fresh live/draft migration dry-run has no conflicts |
@@ -64,6 +64,12 @@ Commit/push, observe exact-SHA GitHub CI and production alias, then apply the
 conditional CMS migration and run read-only production route/asset/metadata
 checks. Record final revision and results here. Do not infer deployment from
 a preview or local build.
+
+The first GitHub run for `48087e7` stopped at `npm ci`: the npm 10 runner
+found transitive proxy-agent dependencies missing from the npm 11 lockfile.
+Vercel built `dpl_F9C6sjn4vehaocn31Srmv1h78PgV` but its production alias check
+failed and the custom domain stayed on the previous release. Regenerate the
+lockfile with npm 10.9.4 and require the next exact-SHA run to pass; no bypass.
 
 Real Safari/LINE/Edge device checks, live lead App Check from those devices,
 Search Console/Bing submission and compliance review are not certified by

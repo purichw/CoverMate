@@ -90,6 +90,12 @@ Install dependencies:
 npm install
 ```
 
+CI uses Node 22 and its npm 10 lockfile semantics. After dependency changes,
+validate with `npm exec --yes --package=npm@10.9.4 -- npm ci --dry-run --ignore-scripts`.
+If npm 11 leaves missing transitive entries, regenerate using
+`npm exec --yes --package=npm@10.9.4 -- npm install --package-lock-only --ignore-scripts`.
+Do not skip the lockfile check or switch CI to a mutable `npm install`.
+
 Run a local static server:
 
 ```bash
@@ -188,8 +194,16 @@ When a dedicated UAT test admin is used, its `admins/{uid}` document should have
 After production deployment:
 
 ```bash
+COVERMATE_HANDOFF_DIR=/path/to/covermate-home-codex-handoff-v1.0 node scripts/release-home-content.mjs --site=covermate
+# Apply only after reviewing the dry-run; see HOME_REDESIGN.md.
+node scripts/production-release-smoke.mjs
 COVERMATE_URL=https://covermateinsurance.com npm run smoke
 ```
+
+The focused production-release smoke is read-only: TH/EN Home/Motor, CMS v5,
+responsive snapshots, exact served assets, private noindex, upload rejection,
+canonical redirects and sitemap. Personally inspect its captured images.
+It does not log in, submit enquiries or publish CMS data.
 
 Minimum checks:
 
