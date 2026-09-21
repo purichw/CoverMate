@@ -41,7 +41,8 @@ try {
       assert.equal(new Set(geometry.map(card=>Math.round(card.top))).size,1,'Three cards remain side by side');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No page overflow');
       const tiers = page.locator('[data-home-section="tiers"]');
-      assert.equal(await tiers.locator('.hm-heading a').getAttribute('href'),lang==='th'?'/motor':'/motor?lang=en');
+      assert.equal(await tiers.locator('.hm-heading a').count(),0,'No redundant Motor link beside tier heading');
+      assert.ok(await page.locator('#insurers a[href^="/motor"]').first().isVisible(),'Separate Motor entry stays available');
       const comparison = page.locator('#home-tier-comparison');
       const summary = comparison.locator('summary');
       assert.equal(await summary.evaluate(el=>getComputedStyle(el).fontSize),'18px');

@@ -55,7 +55,7 @@
     </sc-if>
 
     <sc-if value="{{ s.homeTiers }}">
-      <div class="hm-heading"><div class="hm-section-copy"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></div><a class="hm-text-link" href="{{ motorPageHref }}"><span data-cms-copy="homeDesign.motorLabel">{{ homeCopy.motorLabel }}</span><span aria-hidden="true">→</span></a></div>
+      <div class="hm-heading"><div class="hm-section-copy"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></div></div>
       <div class="hm-tier-grid"><sc-for list="{{ s.featured }}" as="it"><article class="hm-tier-card" data-content-id="{{ it.key }}">
         <div class="hm-tier-title">
           <sc-if value="{{ it.hasIllustration }}"><img sc-camel-src="{{ it.illustration }}" alt="" width="112" height="112" loading="lazy"></sc-if>

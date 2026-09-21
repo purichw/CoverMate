@@ -1,6 +1,6 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Home Interaction Follow-Up
 
@@ -13,8 +13,19 @@ Source changes after the release recorded below:
 - Home navigation uses `/#motor` at the unchanged `insurers` DOM/CMS section.
   Old `/#insurers` URLs normalize with `replaceState`, preserving queries.
   The dedicated `/motor` route and its local `#insurers` anchor are unchanged.
+- The redundant link beside the Home tier heading is removed at every width;
+  the separate insurer-section Motor entry stays available.
+- The mobile/touch LINE bar remains visible throughout scrolling. CMS enablement
+  and contact ownership stay intact; menus and owner modes still hide it.
+- Home/Motor anchors use one native smooth scroll, with instant reduced-motion
+  and initial deep-link paths. Old re-aim timers are removed; `#top` no longer
+  opens the first disclosure and the Motor header no longer changes height on
+  scroll. Hash observers still receive changes for analytics and live refresh.
 - Targeted checks: `scripts/home-tier-cards-check.mjs` and
   `scripts/home-motor-anchor-check.mjs` take the reviewed handoff directory.
+  `scripts/sticky-contact-check.mjs` covers persistent contact controls;
+  `scripts/anchor-scroll-check.mjs <handoff-dir> [chromium|webkit|firefox]`
+  covers smooth motion, rapid navigation, history, manual scroll and reduced motion.
   CMS/route checks, generated-bundle checks and the exact-SHA hosted `verify`
   gate still apply. No Firestore write, schema-version change or billing change
   is part of this follow-up. Do not replay the old Home content migration.
@@ -22,6 +33,10 @@ Source changes after the release recorded below:
 The owner authorized push/deploy. Confirm the actual deployment's SHA and
 primary-domain readback before treating this source checkpoint as live; the
 release table below records the previous verified runtime.
+The last verified production before this pending September 22 follow-up is
+`593c8667693e67f5acda02b3e7cca350ba539e5b`, deployment
+`dpl_DsWERTkJfLMFuY91kZnAjGLoNJoc`, with exact-SHA CI run `35628355099` passed.
+This follow-up changes code only; do not migrate or publish CMS documents.
 
 ## September 21 Release Checkpoint
 

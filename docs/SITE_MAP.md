@@ -118,6 +118,10 @@ anchors. Home links use `/#motor`, which keeps the global navigation and scrolls
 to the unchanged DOM/CMS section ID `insurers`. Old `/#insurers` URLs are replaced
 with `/#motor`, preserving query parameters and history position. `/#life`
 re-aims to `#cover`. Hidden destinations are not exposed as dead links.
+Same-page anchor clicks scroll smoothly once, retain the rendered content and
+update browser history. Reduced motion uses an instant landing. Back/Forward,
+menu closure and anchor focus must not cause repeated jumps; `#top` only returns
+to the top and does not expand any section.
 
 `/#motor-focus` and `/#life-focus` render focused campaign variants from the
 legacy reference set. They stay unexposed in the header nav and sitemap.

@@ -187,6 +187,16 @@ the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
   goes to `/motor`. The `insurers` DOM/CMS ID stays unchanged and old `#insurers`
   URLs normalize to `#motor`. Legacy `#life` scrolls to `#cover`. Deep links open
   privacy/about/renewal/comparison disclosures before scrolling.
+- Same-page anchor clicks have one native smooth scroll in either direction;
+  initial deep links and reduced-motion users land without animation. No delayed
+  re-aim timers may override a newer anchor or manual scrolling. `#top` must not
+  open a disclosure. Motor header height stays stable during scrolling. Hash
+  events still notify analytics/live refresh without triggering a second scroll.
+- The mobile/touch contact bar stays visible at every scroll position, including
+  Hero, contact inputs and Footer. Its CMS switch and contact URLs remain
+  authoritative; menus and owner modes still suppress the underlying bar.
+- The redundant Motor link beside the Home tier heading is removed on every
+  viewport. The insurer-section entry into `/motor` remains available.
 
 ## Forms and Safety
 

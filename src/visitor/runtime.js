@@ -465,7 +465,6 @@ class Component extends DCLogic {
     menuOpen: false,
     compactHome: window.innerWidth < 768,
     touchInteraction: window.matchMedia?.('(any-pointer: coarse)')?.matches === true,
-    stickyVisible: false,
     calculatorTouched: false,
     shareCalculator: false,
     lang: new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th',
@@ -537,10 +536,20 @@ class Component extends DCLogic {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
     this._homeAnchorClick = event => {
-      const link = event.target.closest('a[href^="#"]');
-      if (!link || this.state.editMode || this.state.admin) return;
-      const anchor = this.anchorFromHash(link.getAttribute('href'));
-      if (anchor) this.scrollToAnchor(anchor);
+      const link = event.target.closest('a[href]');
+      if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.hasAttribute('download') || (link.target && link.target !== '_self') || this.state.editMode || this.state.admin || this.state.preview) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || !url.hash || window.CoverMateContract.isOwnerHash(url.hash)) return;
+      const anchor = this.anchorFromHash(url.hash);
+      if (!anchor || anchor.includes('-focus') || !document.getElementById(anchor)) return;
+      event.preventDefault();
+      if (this.state.routePage === 'home' && url.hash === '#insurers') url.hash = '#motor';
+      // Own the scroll once: native hash navigation would also fire popstate/hashchange.
+      const oldURL = location.href;
+      if (url.href !== oldURL) window.history.pushState(null, '', url.pathname + url.search + url.hash);
+      this._routeLocation = location.href;
+      if (location.href !== oldURL) window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL: location.href }));
+      this.scrollToAnchor(anchor);
     };
     this._homeToggle = event => {
       const el = event.target;
@@ -553,6 +562,7 @@ class Component extends DCLogic {
 
     this.textOv = {};
     this._routeChange = () => {
+      if (this._routeLocation === location.href) return;
       const lang = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th';
       if (lang !== this.state.lang) this.setLanguage(lang);
       this.applyMode();
@@ -580,6 +590,8 @@ class Component extends DCLogic {
     window.removeEventListener('popstate', this._routeChange);
     window.removeEventListener('covermate:remote-content-ready', this._remoteRoute);
     cancelAnimationFrame(this._raf);
+    cancelAnimationFrame(this._anchorRaf);
+    this._anchorRequest = null;
     clearInterval(this._timer);
     clearTimeout(this._remoteDraftT);
     clearTimeout(this._flashT);
@@ -588,7 +600,6 @@ class Component extends DCLogic {
   }
 
   sweep() {
-    this.updateHomeSticky();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
     if (!nodes.length) return;
@@ -597,15 +608,6 @@ class Component extends DCLogic {
       const r = nodes[i].getBoundingClientRect();
       if (r.top < h * 0.94 && r.bottom > 0) nodes[i].classList.add('om-in');
     }
-  }
-
-  updateHomeSticky() {
-    if (this.state.routePage !== 'home') return;
-    const hero = document.getElementById('hero');
-    const inView = selector => [...document.querySelectorAll(selector)].some(el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top < innerHeight && r.bottom > 0; });
-    const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
-    const visible = !!hero && hero.getBoundingClientRect().bottom < 0 && !inView('#talk form, footer') && !editing;
-    if (visible !== this.state.stickyVisible) this.setState({ stickyVisible: visible });
   }
 
   toggleMenu(open, event) {
@@ -619,7 +621,7 @@ class Component extends DCLogic {
       document.body.style.overflow = open ? 'hidden' : (this._menuOverflow || '');
       document.querySelectorAll('header,main,footer').forEach(el => { el.inert = open; });
       if (open) document.querySelector('.hm-menu-panel button')?.focus();
-      else this._menuReturnFocus?.focus();
+      else this._menuReturnFocus?.focus({ preventScroll: true });
     }));
   }
 
@@ -633,6 +635,7 @@ class Component extends DCLogic {
     if (lang === 'en') address.searchParams.set('lang', 'en');
     else address.searchParams.delete('lang');
     window.history.replaceState(window.history.state, '', address.pathname + address.search + address.hash);
+    this._routeLocation = window.location.href;
     this.setState({ lang: lang === 'en' ? 'en' : 'th' }, () => {
       this.syncSeo();
       requestAnimationFrame(() => {
@@ -1298,48 +1301,36 @@ class Component extends DCLogic {
     }
   }
 
-  anchorFromHash(hash) {
-    const ALIAS = { motor: 'insurers', life: 'cover', guides: 'faq' };
+  anchorFromHash(hash, routePage = this.state.routePage) {
+    const ALIAS = { life: 'cover', guides: 'faq', ...(routePage === 'home' ? { motor: 'insurers' } : {}) };
     let anchor = (hash && hash.charAt(0) === '#') ? hash.slice(1) : '';
     if (ALIAS[anchor]) anchor = ALIAS[anchor];
     return anchor;
   }
 
-  scrollToAnchor(anchor) {
+  scrollToAnchor(anchor, { smooth = true, waitForFonts = false } = {}) {
     if (!anchor || anchor.indexOf('-focus') >= 0) return;
-    let focused = false;
+    cancelAnimationFrame(this._anchorRaf);
+    const request = this._anchorRequest = {};
     const aimAnchor = () => {
+      if (this._anchorRequest !== request) return;
       const el = document.getElementById(anchor);
       const header = document.querySelector('header');
       if (!el) return;
       let ancestor = el.closest('details');
       while (ancestor) { ancestor.open = true; ancestor = ancestor.parentElement?.closest('details'); }
-      const disclosure = el.querySelector('.hm-section-disclosure, .hm-renew-disclosure');
+      const disclosure = anchor === 'top' ? null : el.querySelector('.hm-section-disclosure, .hm-renew-disclosure');
       if (disclosure) disclosure.open = true;
-      const headerBottom = header ? header.getBoundingClientRect().bottom : 72;
+      const headerBottom = header && ['sticky', 'fixed'].includes(getComputedStyle(header).position) ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
       const gap = 22;
-      const top = Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - headerBottom - gap);
-      const root = document.documentElement;
-      const body = document.body;
-      const rootBehavior = root ? root.style.scrollBehavior : '';
-      const bodyBehavior = body ? body.style.scrollBehavior : '';
-      if (root) root.style.scrollBehavior = 'auto';
-      if (body) body.style.scrollBehavior = 'auto';
-      window.scrollTo(0, top);
-      if (root) root.style.scrollBehavior = rootBehavior;
-      if (body) body.style.scrollBehavior = bodyBehavior;
-      if (!focused) {
-        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
-        el.focus({ preventScroll: true });
-        focused = true;
-      }
+      const top = anchor === 'top' ? 0 : Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - headerBottom - gap);
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+      el.focus({ preventScroll: true });
+      window.scrollTo({ top, behavior: smooth && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'instant' });
     };
-    requestAnimationFrame(() => {
-      aimAnchor();
-      setTimeout(aimAnchor, 140);
-      setTimeout(aimAnchor, 520);
-      setTimeout(aimAnchor, 1050);
-    });
+    const schedule = () => { if (this._anchorRequest === request) this._anchorRaf = requestAnimationFrame(aimAnchor); };
+    if (waitForFonts && document.fonts) document.fonts.ready.then(schedule);
+    else schedule();
   }
 
   applyLiveContent() {
@@ -1371,15 +1362,17 @@ class Component extends DCLogic {
       window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#motor');
     }
     const h = window.location.hash;
+    this._routeLocation = window.location.href;
     const admin = pathMode === 'admin' || h === '#admin';
     const editMode = pathMode === 'edit' || h === '#edit';
     const preview = pathMode === 'preview' || h === '#preview';
     const owner = admin || editMode || preview;
     if (owner && !this.hasSession()) { window.location.replace('/admin/login'); return; }
-    const anchor = owner || routePage === 'motor' ? '' : this.anchorFromHash(h);
+    const anchor = owner ? '' : this.anchorFromHash(h, routePage);
     const currentOwner = this.state.admin || this.state.editMode || this.state.preview;
-    if (this._modeApplied && !publicView && !owner && anchor && anchor.indexOf('-focus') < 0 && !currentOwner) {
-      this.scrollToAnchor(anchor);
+    const samePublicPage = routePage === this.state.routePage && this.state.motor === (routePage === 'motor' || h === '#motor-focus') && this.state.life === (h === '#life-focus');
+    if (this._modeApplied && !publicView && !owner && !currentOwner && samePublicPage && !anchor.includes('-focus')) {
+      this.scrollToAnchor(anchor || 'top');
       return;
     }
     const ownerKey = window.location.pathname + window.location.search + h;
@@ -1423,7 +1416,7 @@ class Component extends DCLogic {
     this.setState({ site: src.config, routePage: routePage, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
       this.syncSeo();
       requestAnimationFrame(() => this.applyText());
-      if (anchor && !owner && routePage !== 'motor' && anchor.indexOf('-focus') < 0) this.scrollToAnchor(anchor);
+      if (anchor && !owner && anchor.indexOf('-focus') < 0) this.scrollToAnchor(anchor, { smooth: false, waitForFonts: true });
       if (editMode) this.enableEdit();
     });
   }
@@ -2542,7 +2535,8 @@ class Component extends DCLogic {
       hours: t(site.contact.hours), area: t(site.contact.area),
 
       showHeader: H.show, headerPos: H.sticky ? 'sticky' : 'relative',
-      headerPad: S.scrolled ? '8px' : '15px',
+      // Keep document geometry stable while the header shadow/logo react to scrolling.
+      headerPad: '15px',
       headerShadow: S.scrolled ? 'var(--shadow-md)' : '0 1px 0 rgba(0,0,0,0)',
       headerBg: S.scrolled ? 'color-mix(in srgb, var(--color-bg) 88%, transparent)' : 'var(--color-bg)',
       markScale: S.scrolled ? 'scale(.88)' : 'none',
@@ -2564,7 +2558,7 @@ class Component extends DCLogic {
       footerOicLabel: cmsText('licences.verifyLabel'),
       footerPrivacyNavText: cmsText('footer.privacyLabel'),
       footGrid: this.grid(F.columns, Math.round(760 / Math.max(1, F.columns))),
-      showSticky: site.stickyBar && (!isHome || S.stickyVisible) && !S.menuOpen && !S.admin && !S.editMode && !S.preview,
+      showSticky: site.stickyBar && !S.menuOpen && !S.admin && !S.editMode && !S.preview,
 
       sitList: sitList,
       hasSit: !!sit, noSit: !sit, sitName: sit ? (th ? sit.th : sit.en) : '', sitNamePath:sit?'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.'+lk:'',

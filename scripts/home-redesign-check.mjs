@@ -184,7 +184,7 @@ try {
   pass('F13,F19','Published refresh retains form entries, clears consent when wording changes and announces a disabled form without submitting.');
   await page.locator('#talk input[name="contact"]').focus();
   await page.waitForTimeout(500);
-  assert.equal(await page.locator('[data-om="mob"][style*="position:sticky"]').count(),0);
+  assert.equal(await page.locator('[data-cm-sticky]').count(),1,'Contact form focus does not remove the LINE bar');
   const tierSource=live.config.sections.find(section=>section.id==='tiers');
   const item=tierSource.items.find(item=>item.illustration);
   const featured=page.locator('.hm-tier-card[data-content-id="'+item.id+'"]');
