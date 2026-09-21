@@ -21,7 +21,7 @@ try {
     assert.ok(raw.includes(`<link rel="canonical" href="${origin + path + suffix}">`));
     assert.ok(raw.includes('content="index,follow'));
     await page.waitForFunction(() => window.__covermateRemoteContent?.live === true);
-    await page.locator('main h1').waitFor();
+    await page.locator('main h1:visible').first().waitFor();
     const metadata = await page.evaluate(() => ({
       title: document.title, language: document.documentElement.lang,
       canonical: document.querySelector('link[rel=canonical]')?.href,

@@ -37,6 +37,14 @@ the visitor runtime. `api/page.js` delegates to `server/seo-page.mjs`, which
 reads only the public `sites/{siteId}/states/live` document. It uses the same
 CMS sanitizer as the browser, including semantic copy and insurer counts.
 
+Home also needs the root-only `middleware.js` rewrite. Vercel serves an existing
+`index.html` before `vercel.json` rewrites, so the JSON root rule alone does not
+reach the CMS-backed wrapper. Middleware preserves language/campaign parameters
+and sets the internal route to `/`; it does not run for assets, APIs or Admin.
+Always check raw `/?lang=en` HTML on a hosted deployment, not only hydrated DOM.
+See [Vercel routing precedence](https://vercel.com/docs/project-configuration/vercel-json)
+and [middleware API](https://vercel.com/docs/routing-middleware/api).
+
 The server replaces SEO in both the outer HTML head and the serialized
 embedded template. Parsing/serialization is shared with the build through
 `server/bundler-template.mjs`; scripts re-export this helper. Never regex-rewrite

@@ -90,6 +90,15 @@ assert.equal(offline.statusCode, 503); assert.equal(offline.headers['Retry-After
 assert.ok(offline.body.includes('__bundler/template'), 'Visitors can still recover via client cached/live content during an origin fetch outage');
 
 const vercel = JSON.parse(fs.readFileSync('vercel.json'));
+const { default: homeMiddleware, config: middlewareConfig } = await import('../middleware.js');
+assert.equal(middlewareConfig.matcher, '/', 'Only Home needs a before-filesystem rewrite');
+const homeRewrite = homeMiddleware(new Request('https://covermateinsurance.com/?lang=en&utm_source=line&route=/admin/edit'));
+const rewritten = new URL(homeRewrite.headers.get('x-middleware-rewrite'));
+assert.equal(rewritten.pathname, '/api/page');
+assert.equal(rewritten.searchParams.get('route'), '/');
+assert.equal(rewritten.searchParams.get('lang'), 'en');
+assert.equal(rewritten.searchParams.get('utm_source'), 'line');
+assert.equal(homeMiddleware(new Request('https://covermateinsurance.com/api/media')), undefined);
 for (const host of ['covermate.vercel.app', 'www.covermateinsurance.com']) {
   const redirect = vercel.redirects.find(rule => rule.has?.some(match => match.value === host));
   assert.equal(redirect.destination, 'https://covermateinsurance.com/:path*'); assert.equal(redirect.permanent, true);

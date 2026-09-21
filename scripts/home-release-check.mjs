@@ -11,6 +11,14 @@ assert.equal(first.next.config.cmsContentVersion,5);
 const again = await planHomeRelease(first.next,fixture);
 assert.deepEqual(again.conflicts,[]);
 assert.equal(again.changed,false,'Release proposal is idempotent, including aliased copy');
+// Firestore can return map keys in a different order without changing values.
+const reorderKeys = value => Array.isArray(value) ? value.map(reorderKeys)
+  : value && typeof value === 'object'
+    ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reorderKeys(item)]))
+    : value;
+const reordered = await planHomeRelease(reorderKeys(first.next),fixture);
+assert.deepEqual(reordered.conflicts,[]);
+assert.equal(reordered.changed,false,'Firestore map key order does not create another migration');
 const edited = structuredClone(first.next);
 edited.config.sections.find(s=>s.id==='hero').th.body='Newer owner draft';
 const conflict = await planHomeRelease(edited,fixture);

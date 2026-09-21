@@ -60,6 +60,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@vercel/functions": "3.9.8",
     "cropperjs": "1.6.2",
     "firebase-admin": "^14.3.0",
     "google-auth-library": "^11.0.2",

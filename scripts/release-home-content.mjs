@@ -1,12 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import { execFileSync } from 'node:child_process';
 import { createHomeFixture } from './lib/home-redesign-fixture.mjs';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 import { fromFirestoreFields, toFirestoreFields } from './lib/uat-env.mjs';
 
-const equal = (a,b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+const equal = (a,b) => isDeepStrictEqual(a ?? null, b ?? null);
 export async function planHomeRelease(state, fixture) {
   const contract = await importCoverMateContract();
   const normalized = contract.sanitizeStateDoc(state);
