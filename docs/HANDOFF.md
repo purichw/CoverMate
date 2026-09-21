@@ -2,6 +2,27 @@
 
 Last updated: 2026-09-21
 
+## Home Interaction Follow-Up
+
+Source changes after the release recorded below:
+
+- Featured motor tiers are static CMS cards; per-card detail links and collapse
+  controls are removed. Complete comparison remains available separately.
+- The comparison disclosure uses the theme action color with white 18px bold
+  text and a minimum 64px target. CMS copy and native keyboard behavior remain.
+- Home navigation uses `/#motor` at the unchanged `insurers` DOM/CMS section.
+  Old `/#insurers` URLs normalize with `replaceState`, preserving queries.
+  The dedicated `/motor` route and its local `#insurers` anchor are unchanged.
+- Targeted checks: `scripts/home-tier-cards-check.mjs` and
+  `scripts/home-motor-anchor-check.mjs` take the reviewed handoff directory.
+  CMS/route checks, generated-bundle checks and the exact-SHA hosted `verify`
+  gate still apply. No Firestore write, schema-version change or billing change
+  is part of this follow-up. Do not replay the old Home content migration.
+
+The owner authorized push/deploy. Confirm the actual deployment's SHA and
+primary-domain readback before treating this source checkpoint as live; the
+release table below records the previous verified runtime.
+
 ## September 21 Release Checkpoint
 
 The owner selected Cloudinary Free and authorized all pending Home/CMS/media/

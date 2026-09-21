@@ -32,7 +32,7 @@ try {
         const metrics = await page.evaluate(()=>({width:innerWidth,height:document.documentElement.scrollHeight,scrollWidth:document.documentElement.scrollWidth,touch:matchMedia('(any-pointer:coarse)').matches,
           heroColumns:document.querySelector('.hm-hero-grid')&&getComputedStyle(document.querySelector('.hm-hero-grid')).gridTemplateColumns.split(' ').length,
           productColumns:document.querySelector('.hm-cover-grid')&&getComputedStyle(document.querySelector('.hm-cover-grid')).gridTemplateColumns.split(' ').length,
-          tiersOpen:[...document.querySelectorAll('.hm-tier-card')].filter(e=>e.open).length,
+          staticTiers:document.querySelectorAll('article.hm-tier-card').length,
           failedImages:[...document.querySelectorAll('main img')].filter(e=>e.getClientRects().length&&!e.naturalWidth).map(e=>e.src)}));
         assert.equal(metrics.touch,touch,name);
         assert.ok(metrics.scrollWidth<=width,`${name} ${route} ${lang}: overflow`);
@@ -40,17 +40,19 @@ try {
         if(route==='home') {
           assert.equal(metrics.heroColumns,width>=768?3:2,name+' hero composition');
           assert.equal(metrics.productColumns,width>=768?6:3,name+' product composition');
-          assert.equal(metrics.tiersOpen,touch?0:3,name+' disclosure input mode');
-          const tier=page.locator('.hm-tier-card').first();
+          assert.equal(metrics.staticTiers,3,name+' static tier cards');
+          assert.equal(await page.locator('.hm-tier-card :is(summary,a,button,.hm-plus)').count(),0);
+          assert.ok(await page.locator('.hm-tier-detail').first().isVisible());
+          const proof=page.locator('.hm-proof-details');
           if(touch){
-            await tier.locator('summary').tap();assert.equal(await tier.evaluate(e=>e.open),true);
+            await proof.locator('summary').tap();assert.equal(await proof.evaluate(e=>e.open),true);
             if(name==='ipad-portrait'&&lang==='th'){
               await page.setViewportSize({width:height,height:width});
-              assert.equal(await tier.evaluate(e=>e.open),true,'Rotation preserves expanded content');
+              assert.equal(await proof.evaluate(e=>e.open),true,'Rotation preserves expanded content');
               assert.ok(await page.locator('header .hm-menu-button').isVisible(),'Rotation keeps touch navigation');
               await page.setViewportSize({width,height});
             }
-            await tier.locator('summary').tap();
+            await proof.locator('summary').tap();
           }
           const faq=page.locator('.hm-faq-grid details').first();
           await faq.locator('summary').click();assert.equal(await faq.evaluate(e=>e.open),true);await faq.locator('summary').click();

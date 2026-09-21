@@ -80,23 +80,21 @@ html[data-covermate-route="home"] {
 .hm-relationship-grid > p { grid-column:1/-1; }
 .hm-tier-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
 .hm-tier-card { border:1px solid #2e2b2512; border-radius:var(--hm-card,16px); background:var(--color-bg); color:var(--color-text); padding:12px; min-width:0; box-shadow:0 4px 16px #2e2b2508; }
-.hm-tier-card > summary { display:flex; flex-direction:column; gap:8px; }
 .hm-tier-detail { padding-top:8px; display:flex; flex-direction:column; gap:8px; }
 .hm-tier-detail > p { font-size:14px; min-height:3.3em; }
 .hm-tier-title { display:flex; align-items:center; justify-content:center; gap:16px; width:100%; }
-.hm-tier-title .hm-plus { margin-left:auto; }
-.hm-tier-card[open] .hm-tier-title .hm-plus { transform:rotate(45deg); }
-.hm-tier-title svg { width:56px; height:42px; color:var(--color-accent-2-800); stroke-width:1.3; }
 .hm-tier-title h3 { font-size:22px; }
 .hm-tier-title img { width:84px; height:84px; object-fit:contain; flex:none; }
-.hm-tier-card summary > p { font-size:16px; text-align:center; }
-.hm-tier-detail > a { align-self:center; }
 .hm-status-list { padding:0; margin:0; list-style:none; display:flex; flex-direction:column; gap:4px; }
 .hm-status-list li { display:flex; align-items:flex-start; gap:10px; font-size:14px; line-height:1.55; }
 .hm-status-list svg { width:22px; height:22px; border-radius:50%; padding:3px; }
 .hm-status-list small { display:block; font-size:14px; font-weight:400; }
-.hm-comparison { margin-top:8px; background:transparent; border:0; }
-.hm-comparison > summary { padding:0; min-height:40px; font-size:14px; }
+.hm-disclosure.hm-comparison { margin-top:12px; border-color:var(--hm-action,var(--color-accent-700)); }
+.hm-disclosure.hm-comparison > summary { min-height:64px; padding:16px 20px; gap:16px; font-size:18px; font-weight:700; background:var(--hm-action,var(--color-accent-700)); color:#fff; border-radius:calc(var(--hm-card,16px) - 1px); }
+.hm-comparison > summary > .hm-plus { width:32px; height:32px; font-size:28px; background:#ffffff24; border:1px solid #ffffff66; border-radius:50%; }
+.hm-comparison[open] > summary { border-bottom-left-radius:0; border-bottom-right-radius:0; }
+.hm-comparison > .hm-detail { padding-top:20px; }
+@media(hover:hover) { .hm-comparison > summary:hover { filter:brightness(.92); } }
 .hm-comparison-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:24px; }
 .hm-comparison-grid > p { grid-column:1/-1; }
 .hm-comparison-card { min-width:0; display:flex; flex-direction:column; gap:16px; }
@@ -221,7 +219,6 @@ html[data-covermate-route="home"] .hm-contact-channels > :is(a,div) { padding:6p
   .hm-tier-title h3 { font-size:20px; }
   .hm-tier-detail > p,.hm-tier-detail > .hm-status-list { margin-left:112px; }
   .hm-tier-detail > .hm-status-list { min-height:126px; }
-  .hm-tier-detail > a { border:1px solid var(--color-accent-700); border-radius:999px; min-height:36px; padding:4px 18px; margin-top:4px; text-decoration:none; }
 }
 @media(min-width:768px) and (max-width:1199px) { .hm-tier-detail > .hm-status-list { min-height:126px; } }
 @media(min-width:1200px) { .hm-logo-grid { grid-template-columns:repeat(7,minmax(0,1fr)); } }
@@ -279,11 +276,8 @@ html[data-covermate-route="home"] .hm-contact-channels > :is(a,div) { padding:6p
   .hm-statement > p { font-size:18px; }
   .hm-statement-stroke { margin-top:0; height:8px; }
   [data-home-section="hero"] { background-size:auto 100%; background-position:58% center; }
-  .hm-tier-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; align-items:start; }
+  .hm-tier-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
   .hm-tier-title { flex-direction:column; gap:4px; position:relative; }
-  .hm-tier-title .hm-plus { position:absolute; right:-6px; top:-6px; width:20px; height:20px; font-size:20px; }
-  .hm-tier-card[open] { grid-column:1/-1; }
-  .hm-tier-card[open] .hm-tier-title { flex-direction:row; }
   .hm-tier-detail > p { min-height:0; }
   .hm-heading { gap:12px; align-items:start; }
   .hm-insurer-band { grid-template-columns:1fr; gap:12px; }
@@ -323,6 +317,10 @@ html[data-covermate-route="home"] .hm-contact-channels > :is(a,div) { padding:6p
   .hm-tier-card { padding:10px 6px; }
   .hm-tier-title img { width:72px; height:72px; }
   .hm-tier-title h3 { font-size:16px; }
+  .hm-tier-detail { gap:6px; }
+  .hm-tier-detail > p,.hm-tier-detail .hm-status-list :is(li,small) { font-size:12px; overflow-wrap:anywhere; }
+  .hm-tier-detail .hm-status-list li { gap:4px; }
+  .hm-tier-detail .hm-status-list svg { width:16px; height:16px; flex:none; padding:2px; margin-top:2px; }
   .hm-benefits { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
   .hm-benefits details[open] { grid-column:1/-1; }
   .hm-benefits summary { min-height:94px; padding:8px 6px 14px; }
@@ -342,7 +340,7 @@ html[data-covermate-route="home"] .hm-contact-channels > :is(a,div) { padding:6p
   .hm-disclosure > summary { padding:10px; font-size:14px; }
   .hm-faq-grid > .hm-disclosure > summary { min-height:calc(3em + 20px); }
   .hm-disclosure .hm-plus { width:18px; font-size:20px; }
-  .hm-relationship > summary,.hm-comparison > summary { padding:4px 12px; }
+  .hm-relationship > summary { padding:4px 12px; }
   .hm-detail { padding:0 12px 16px; }
   html[data-covermate-route="home"] header > div { padding:6px 12px !important; gap:6px !important; min-height:60px; }
   html[data-covermate-route="home"] header img { width:142px !important; }

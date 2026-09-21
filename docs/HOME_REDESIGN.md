@@ -56,7 +56,10 @@ initial collapsed state, not a CSS height cap or a limit on future CMS content.
 - Fourteen real logos use seven desktop / five mobile columns. No reference
   insurer is inserted or substituted to make a screenshot match.
 - Three illustrated featured motor classes stay side by side even on mobile.
-  Their content expands, while all five classes/axes remain in the comparison.
+  They are static cards with visible CMS copy, without per-card detail links or
+  collapse controls. All five classes/axes remain in the separate comparison.
+  Its disclosure uses the CMS theme action color, white 18px bold text and a
+  minimum 64px target, with native keyboard/touch expansion and visible focus.
 - Contact has two mobile field columns; original consent, contact rules,
   optional fields and the separate renewal form remain functional.
 - FAQ stays a compact grid and now includes the four former reading items.
@@ -87,7 +90,8 @@ capabilities are separate:
   large landscape tablets and hybrid input. Home and Motor share the existing
   menu with their own CMS navigation items, focus return, Escape and background
   scroll locking. Narrow mouse windows below 1200px also use this menu.
-- Touch visitors tap to expand Home proof/tier details. Owner edit mode keeps
+- Touch visitors tap to expand Home proof details. Featured tier cards remain
+  visible without toggles at every width. Owner edit mode keeps
   fields expanded. Rotation within the tablet range preserves open details.
   Footer disclosure columns retain a desktop-like horizontal arrangement on
   touch tablets; the desktop footer remains unchanged for mouse users.
@@ -179,8 +183,9 @@ the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
   public snapshot contains four known migrated overrides, not every future state.
 - Locale switches and published refresh preserve typed form state. Header/Footer
   retain existing ownership. Closing Panel keeps the current Editor route.
-- Home nav Motor links stay in-page; the explicit Motor action goes to `/motor`.
-  Legacy `#motor` and `#life` scroll to `#insurers` and `#cover`. Deep links open
+- Home nav Motor links use `#motor` and stay in-page; the explicit Motor action
+  goes to `/motor`. The `insurers` DOM/CMS ID stays unchanged and old `#insurers`
+  URLs normalize to `#motor`. Legacy `#life` scrolls to `#cover`. Deep links open
   privacy/about/renewal/comparison disclosures before scrolling.
 
 ## Forms and Safety

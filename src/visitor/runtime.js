@@ -458,7 +458,7 @@ function repeatableIndex(list, id, fallbackIndex) {
   return fallbackIndex >= 0 && fallbackIndex < list.length ? fallbackIndex : -1;
 }
 
-// /motor is the dedicated public motor landing page. Legacy #motor still aliases
+// /motor is the dedicated public motor landing page. Home #motor still aliases
 // into the home-page insurer section so older links do not break.
 class Component extends DCLogic {
   state = {
@@ -1052,16 +1052,9 @@ class Component extends DCLogic {
     if (typeof cfg.stickyBar !== 'boolean') cfg.stickyBar = DEFAULTS.stickyBar;
     if (!Array.isArray(cfg.sections)) cfg.sections = clone(DEFAULTS.sections);
     if (!Array.isArray(cfg.header.nav)) cfg.header.nav = clone(DEFAULTS.header.nav || []);
-    cfg.header.nav = cfg.header.nav.map((nav) => {
-      const n = clone(nav || {});
-      if (n.href === '#motor') n.href = '#insurers';
-      return n;
-    });
-
     const seenNav = {};
     cfg.header.nav = cfg.header.nav.filter((nav) => {
       if (!nav) return false;
-      if (nav.href === '#motor') nav.href = '#insurers';
       const key = nav.href || JSON.stringify(nav.label || {});
       if (seenNav[key]) return false;
       seenNav[key] = true;
@@ -1270,8 +1263,10 @@ class Component extends DCLogic {
   }
 
   localizedPublicHref(value) {
+    if (value === '#insurers' && this.state.routePage !== 'motor') return '#motor';
     if (!/^\/(?:motor)?(?:[?#]|$)/.test(value || '')) return value;
     const url = new URL(value, window.location.origin);
+    if (url.pathname === '/' && url.hash === '#insurers') url.hash = '#motor';
     if (this.state.lang === 'en') url.searchParams.set('lang', 'en');
     else url.searchParams.delete('lang');
     return url.pathname + url.search + url.hash;
@@ -1370,9 +1365,12 @@ class Component extends DCLogic {
 
   applyMode() {
     const publicView = this.consumePublicViewRequest();
-    const h = window.location.hash;
     const pathMode = this.ownerModeFromPath(window.location.pathname);
     const routePage = this.routePageFromLocation(window.location.pathname, window.location.search);
+    if (!pathMode && routePage === 'home' && window.location.hash === '#insurers') {
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#motor');
+    }
+    const h = window.location.hash;
     const admin = pathMode === 'admin' || h === '#admin';
     const editMode = pathMode === 'edit' || h === '#edit';
     const preview = pathMode === 'preview' || h === '#preview';
@@ -1912,7 +1910,7 @@ class Component extends DCLogic {
     const normalizeSectionHref = (href) => {
       if (typeof contract.normalizeSectionHref === 'function') return this.localizedPublicHref(contract.normalizeSectionHref(href));
       const raw = String(href || '').trim();
-      if (raw === '#motor') return '#insurers';
+      if (raw === '#motor') return this.localizedPublicHref('#insurers');
       if (raw === '#life') return '#cover';
       if (raw === '#guides') return '#faq';
       return this.localizedPublicHref(raw);
@@ -1972,7 +1970,6 @@ class Component extends DCLogic {
           n: String(i + 1), key: it.id || (s.id + '-' + i), slot: 'img-' + s.id + '-' + i,
           contentId: it.id,
           homeDetailId: 'home-tier-' + (it.id || (s.id + '-' + i)),
-          homeDetailHref: '#home-tier-' + (it.id || (s.id + '-' + i)),
           illustration: assetURL(it.illustration || ''), hasIllustration: !!it.illustration,
           copy: Object.fromEntries(['label','title','sub','body','b1','b2','b3','note','q','a','meta','value','name','quote','valueNote'].map(field => [field, sectionPath + '.items.@' + it.id + '.' + lk + '.' + field])),
           photo: assetURL(it.photo || ''), photoAlt: it.photoAlt || '', hasPhoto: !!it.photo,

@@ -14,6 +14,7 @@ const {
   repeatableContentIndex,
   routePageFromLocationParts,
   sectionHrefAvailable,
+  sanitizeStateDoc,
   visibleSectionAnchorIds
 } = await importCoverMateContract();
 
@@ -73,6 +74,16 @@ assert.equal(sectionHrefAvailable("#fit", anchors), false);
 assert.equal(sectionHrefAvailable("#life", anchors), false);
 assert.equal(sectionHrefAvailable("#top", anchors), true);
 assert.equal(sectionHrefAvailable("/motor", anchors), true);
+
+const navState = sanitizeStateDoc({config:{...config,
+  header:{nav:[{label:{th:'รถยนต์',en:'Motor'},href:'#insurers'}]},
+  motorPage:{nav:[{label:{th:'บริษัทประกัน',en:'Insurers'},href:'#insurers'}]}
+}});
+assert.equal(navState.config.header.nav[0].href,'#motor','Home CMS uses the public motor anchor');
+assert.equal(navState.config.header.nav[0].label.en,'Motor','Keep Admin labels');
+assert.equal(navState.config.motorPage.nav[0].href,'#insurers','Motor page local anchor is unchanged');
+assert.equal(sectionHrefAvailable('#motor',new Set(['insurers'])),true,'Resolve public anchor to unchanged section ID');
+assert.equal(sectionHrefAvailable('#motor',new Set()),false,'Hidden insurers must not leave a dead link');
 
 assert.deepEqual(
   filterLinksByVisibleSections([

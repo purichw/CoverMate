@@ -80,8 +80,8 @@ Routes:
 - `/` public visitor site
 - `/motor` dedicated motor-insurance campaign page inside the same CoverMate
   product
-- `/#motor` legacy visitor alias into the home motor-insurance / insurer
-  section
+- `/#motor` public anchor into the home motor-insurance / insurer section;
+  old `/#insurers` links resolve to the same section
 - `/#admin`, `/#edit`, and `/#preview` owner modes inside the visitor bundle
 - `/admin/content?page=motor`, `/admin/edit?page=motor`, and
   `/admin/preview?page=motor` owner modes scoped to the dedicated motor page

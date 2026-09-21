@@ -160,12 +160,13 @@ try {
   await page.keyboard.press('Enter');
   await page.locator('.hm-cover-card summary').nth(1).click();
   assert.equal(await page.locator('.hm-cover-card[open]').count(),1);
-  await page.locator('.hm-tier-card > summary').first().click();
-  await page.locator('.hm-tier-detail > a').first().click();
-  await page.waitForFunction(()=>document.activeElement?.id.startsWith('home-tier-'));
+  assert.equal(await page.locator('article.hm-tier-card').count(),3);
+  assert.equal(await page.locator('.hm-tier-card :is(summary,a,button,.hm-plus)').count(),0);
+  assert.ok(await page.locator('.hm-tier-detail').first().isVisible());
+  await page.locator('#home-tier-comparison > summary').click();
   assert.equal(await page.locator('#home-tier-comparison').evaluate(el=>el.open),true);
   await shot('mobile-tier-expanded');
-  pass('D02,N09','Keyboard coverage opening closes peer; tier detail opens complete comparison and focuses selected class.');
+  pass('D02,N09','Keyboard coverage opening closes peer; featured tiers are static CMS cards, with the full comparison available separately.');
   await page.locator('#talk input[name="contact"]').fill('synthetic-refresh-id');
   await page.locator('#talk input[type="checkbox"]').last().check();
   live.config.ui.consultationConsent.en += ' Updated test consent.';

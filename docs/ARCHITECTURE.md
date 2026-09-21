@@ -93,9 +93,10 @@ compatibility, but current admin UI must generate `/admin/...` paths instead.
 `/motor` is the dedicated motor-insurance campaign page in the same bundle. It
 has its own local motor-page nav and canonical metadata while reusing shared
 Firestore-backed insurer, tier, process, claim, renewal, guide, FAQ, contact,
-and footer data. `/#motor` and `/#life` are legacy aliases into the home page,
-re-aimed to `#insurers` and `#cover` after hydration while preserving the home
-navbar. `/#motor-focus` and `/#life-focus` are legacy unexposed variants and
+and footer data. Home uses the public `/#motor` anchor for the unchanged
+`insurers` DOM/CMS section; old `/#insurers` URLs normalize to `/#motor`.
+The legacy `/#life` alias targets `#cover`. Both preserve the Home navbar.
+`/#motor-focus` and `/#life-focus` are legacy unexposed variants and
 must stay out of the header nav and sitemap.
 
 `admin/login/index.html` owns the admin sign-in surface. Firebase Google sign-in

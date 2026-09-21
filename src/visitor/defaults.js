@@ -76,7 +76,7 @@ const DEFAULTS = {
           "th": "ประกันรถยนต์",
           "en": "Motor"
         },
-        "href": "#insurers"
+        "href": "#motor"
       },
       {
         "label": {

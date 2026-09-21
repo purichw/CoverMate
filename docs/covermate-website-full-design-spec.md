@@ -162,11 +162,12 @@ Future external designs, local prototypes, or handoff updates must reflect the c
 - The public product now has two visitor entry points in the same CoverMate
   site: `/` is the full home page, and `/motor` is the dedicated
   motor-insurance campaign page for motor-specific ads/search.
-- `/#motor` remains a backward-compatible home-page alias that scrolls to
-  `#insurers`; it is not the campaign route. Use `/motor` for motor-only
+- `/#motor` is the public Home anchor that scrolls to the unchanged
+  `insurers` DOM/CMS section; old `/#insurers` URLs normalize to it.
+  It is not the campaign route. Use `/motor` for motor-only
   landing links.
 - The home visitor navbar must show only one motor item: Thai
-  `ประกันรถยนต์`, English `Motor`, pointing to `#insurers`. The `/motor`
+  `ประกันรถยนต์`, English `Motor`, pointing to `#motor`. The `/motor`
   navbar may have its own local motor anchors plus a `Home` link.
 - `/#motor-focus` is legacy/unexposed compatibility only; `/motor` is the
   current dedicated motor-page design source.
@@ -245,7 +246,7 @@ Supporting docs:
 | --- | --- | --- | --- |
 | `/` | Public home page | Prospective customers | Indexable |
 | `/motor` | Dedicated motor-insurance campaign page | Prospective motor customers from motor-specific ads/search | Indexable |
-| `/#motor` | Backward-compatible alias into home `#insurers` | Existing links / home-page context | Same document as `/`; not sitemap |
+| `/#motor` | Public Home anchor into the `insurers` DOM/CMS section | Home navigation; accepts old `/#insurers` links | Same document as `/`; not sitemap |
 | `/#life` | Alias into public `#cover` section | Prospective life/health customers | Same page, no separate surface |
 | `/#motor-focus` | Legacy unexposed motor campaign variant | Compatibility only | Same page, no sitemap/nav exposure |
 | `/#life-focus` | Unexposed life/health campaign variant | Campaign visitors when explicitly linked | Same page, no sitemap/nav exposure |
@@ -353,7 +354,7 @@ Components:
 - Nav:
   - `#cover`: `ความคุ้มครอง` / `Cover`
   - `#review`: `ตรวจกรมธรรม์` / `Policy review`
-  - `#insurers`: `ประกันรถยนต์` / `Motor`
+  - `#motor`: `ประกันรถยนต์` / `Motor` (DOM/CMS section remains `insurers`)
   - `#fit`: `เครื่องมือ` / `Resources`
   - `#faq`: `คำถามที่พบบ่อย` / `FAQ`
 - Language segmented control: `TH` and `EN`.
@@ -704,7 +705,7 @@ Visitor interactions:
   DOM or causing a visible flicker.
 - `/motor` renders the dedicated motor page with its own local nav and
   canonical metadata.
-- `/#motor` remains a legacy alias to the home motor insurer anchor behavior.
+- `/#motor` is the public Home motor insurer anchor; `/#insurers` is its old URL.
 - `/#life` normalizes to the coverage anchor behavior.
 - `/#motor-focus` and `/#life-focus` render legacy unexposed campaign variants and
   must not appear in the public header nav or sitemap.

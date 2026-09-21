@@ -526,8 +526,8 @@ async function verifyRemoteHydrationContract() {
     failures.push("remote hydration: insurer count did not normalize to the current 14-logo product copy");
   }
   if (
-    publicState.navHrefs.includes("#motor") ||
-    publicState.navHrefs.filter((href) => href === "#insurers").length !== 1
+    publicState.navHrefs.includes("#insurers") ||
+    publicState.navHrefs.filter((href) => href === "#motor").length !== 1
   ) {
     failures.push(`remote hydration: motor nav alias was not normalized (${publicState.navHrefs.join(", ")})`);
   }
@@ -1465,7 +1465,7 @@ for (const [name, width, height] of viewports) {
           targetScrollMarginTop: target ? window.getComputedStyle(target).scrollMarginTop : ""
         };
       }, aliasTargetId);
-      const expectedMainNav = ["#cover", "#review", "#insurers", "#faq"];
+      const expectedMainNav = ["#cover", "#review", "#motor", "#faq"];
       const missingMainNav = expectedMainNav.filter((href) => !aliasState.navHrefs.includes(href));
       if (missingMainNav.length) {
         failures.push(`${name} ${route}: alias should keep main nav, missing ${missingMainNav.join(", ")}`);
@@ -1553,7 +1553,7 @@ for (const [name, width, height] of viewports) {
         .filter((text) => /LINE|ไลน์/i.test(text))
         .join(" | ");
       const missingAnchors = navHrefs.filter(
-        (href) => href.startsWith("#") && !document.getElementById(href.slice(1))
+        (href) => href.startsWith("#") && !document.getElementById(window.CoverMateContract.normalizeSectionHref(href).slice(1))
       );
       const jsonLdText = document.getElementById("covermate-jsonld")?.textContent || "";
       let jsonLd = null;

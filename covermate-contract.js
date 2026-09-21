@@ -726,7 +726,8 @@ function sanitizeCmsFields(config) {
     const owner = config[key];
     if (!owner || !Array.isArray(owner.nav)) return;
     owner.nav = owner.nav.filter(item => item && typeof item === 'object').map(item => {
-      const href = String(item.href || '').trim();
+      let href = String(item.href || '').trim();
+      if (key === 'header' && href === '#insurers') href = '#motor';
       const label = typeof item.label === 'string' ? item.label : { th: String(item.label && item.label.th || '').trim().slice(0, 80), en: String(item.label && item.label.en || '').trim().slice(0, 80) };
       return { ...item, label, href: /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(href) ? href : '' };
     });
@@ -810,7 +811,7 @@ export const DEFAULT_SEO = {
 export const PRODUCT_HEADER_NAV = [
   { label: { th: "ความคุ้มครอง", en: "Cover" }, href: "#cover" },
   { label: { th: "ตรวจกรมธรรม์", en: "Policy review" }, href: "#review" },
-  { label: { th: "ประกันรถยนต์", en: "Motor" }, href: "#insurers" },
+  { label: { th: "ประกันรถยนต์", en: "Motor" }, href: "#motor" },
   { label: { th: "เครื่องมือ", en: "Resources" }, href: "#fit" },
   { label: { th: "คำถามที่พบบ่อย", en: "FAQ" }, href: "#faq" }
 ];

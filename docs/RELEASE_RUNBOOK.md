@@ -226,9 +226,10 @@ Minimum checks:
 - contact form lead-submit code is present and does not send personal contact
   details to GA event parameters
 - `/#motor` keeps the same global navbar as `/`, does not expose the hidden
-  motor-variant nav, includes the current `#review`, `#insurers`, `#fit`, and
+  motor-variant nav, includes the current `#review`, `#motor`, `#fit`, and
   `#faq` anchors, and lands on
-  `#insurers` below the sticky header
+  the unchanged `insurers` DOM/CMS section below the sticky header; old
+  `/#insurers` URLs normalize to `/#motor` without adding a history entry
 - `/motor` renders the dedicated motor-insurance campaign page with its own
   local motor-page nav, `Home` link, 14-logo insurer grid, motor tier
   comparison, claim/renewal/guides/FAQ/contact sections, and canonical

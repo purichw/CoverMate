@@ -10,7 +10,8 @@ in the working tree alone.
 | --- | --- | --- | --- |
 | `/` | Visitor | Compact Home | `src/visitor/home.html`, `home.css`, generated `index.html`; `api/page.js` head wrapper |
 | `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `src/visitor/template.html`, generated `index.html`; `api/page.js` head wrapper |
-| `/#motor` | Visitor | Legacy alias to the home motor-insurance / insurer section | `index.html` |
+| `/#motor` | Visitor | Public Home motor-insurance anchor; same insurer section | `index.html` |
+| `/#insurers` | Visitor | Compatibility URL, replaced with `/#motor` without adding history | `index.html` |
 | `/#life` | Visitor | Alias to the Home `#cover` section | `index.html` |
 | `/#guides` | Visitor | Legacy alias to consolidated `#faq` | `covermate-contract.js`, `src/visitor/runtime.js` |
 | `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the legacy reference set | `index.html` |
@@ -113,9 +114,10 @@ process, contact, and other content sections remain on the continuous page but
 are not all primary header nav items.
 
 `/motor` uses dedicated motor-page navigation with a `Home` link and local
-anchors. `/#motor` keeps the same global navigation as `/` and re-aims to
-`#insurers` after hydration for backward compatibility. `/#life` behaves the
-same way and re-aims to `#cover`. Hidden destinations are not exposed as dead links.
+anchors. Home links use `/#motor`, which keeps the global navigation and scrolls
+to the unchanged DOM/CMS section ID `insurers`. Old `/#insurers` URLs are replaced
+with `/#motor`, preserving query parameters and history position. `/#life`
+re-aims to `#cover`. Hidden destinations are not exposed as dead links.
 
 `/#motor-focus` and `/#life-focus` render focused campaign variants from the
 legacy reference set. They stay unexposed in the header nav and sitemap.
