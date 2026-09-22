@@ -1,5 +1,5 @@
 <sc-if value="{{ s.isHomeLayout }}">
-<section id="{{ s.id }}" class="hm-band" data-home-section="{{ s.homeType }}" style="{{ s.homeStyle }}">
+<section id="{{ s.id }}" class="hm-band" data-home-section="{{ s.homeType }}" data-cms-background="{{ s.mediaBackgroundPath }}" style="{{ s.homeStyle }}">
   <div class="hm-wrap">
     <sc-if value="{{ s.homeHero }}">
       <div class="{{ s.homeHeroClass }}">
@@ -17,7 +17,7 @@
         <aside class="hm-proof">
           <details class="hm-proof-details" open="{{ homeWideDetails }}">
           <summary class="hm-proof-heading">
-            <sc-if value="{{ hasAdvisorLogo }}"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" width="56" height="56"></sc-if>
+            <sc-if value="{{ hasAdvisorLogo }}"><img data-cms-image="brand.advisorLogo" sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" width="56" height="56"></sc-if>
             <div><span class="hm-help" data-cms-copy="ui.advisorLabel">{{ s.heroAdvisorEyebrow }}</span><strong data-cms-copy="brand.fullName">{{ brandFull }}</strong><p data-cms-copy="brand.credential">{{ brandCred }}</p></div>
             <span class="hm-plus" aria-hidden="true">+</span>
           </summary>
@@ -32,14 +32,14 @@
       </div>
     </sc-if>
 
-    <sc-if value="{{ s.homeTrust }}"><ul class="hm-trust"><sc-for list="{{ s.items }}" as="it"><li><sc-if value="{{ it.hasIconImage }}"><img sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></li></sc-for></ul></sc-if>
+    <sc-if value="{{ s.homeTrust }}"><ul class="hm-trust"><sc-for list="{{ s.items }}" as="it"><li><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></li></sc-for></ul></sc-if>
 
     <sc-if value="{{ s.homeProducts }}">
       <div class="hm-heading"><h2 data-cms-copy="ui.coverageLabel">{{ s.heroAssistLabel }}</h2><div class="hm-actions"><sc-for list="{{ s.taskLinks }}" as="link"><a class="hm-text-link" href="{{ link.href }}"><span data-content-path="{{ link.copy }}">{{ link.label }}</span> <span aria-hidden="true">→</span></a></sc-for></div></div>
       <div class="hm-cover-grid">
         <sc-for list="{{ s.items }}" as="it">
           <details data-content-id="{{ it.key }}" class="hm-cover-card" name="home-coverage" style="--tile:{{ it.soft }};--tile-icon:{{ it.fill }}">
-            <summary><span class="hm-icon"><sc-if value="{{ it.hasIconImage }}"><img sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></span><strong data-content-path="{{ it.copy.title }}">{{ it.title }}</strong><span class="hm-plus" aria-hidden="true">+</span></summary>
+            <summary><span class="hm-icon"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></span><strong data-content-path="{{ it.copy.title }}">{{ it.title }}</strong><span class="hm-plus" aria-hidden="true">+</span></summary>
             <div class="hm-detail"><p class="hm-help" data-content-path="{{ it.copy.sub }}">{{ it.sub }}</p><ul class="hm-bullets"><sc-if value="{{ it.b1 }}"><li data-content-path="{{ it.copy.b1 }}">{{ it.b1 }}</li></sc-if><sc-if value="{{ it.b2 }}"><li data-content-path="{{ it.copy.b2 }}">{{ it.b2 }}</li></sc-if><sc-if value="{{ it.b3 }}"><li data-content-path="{{ it.copy.b3 }}">{{ it.b3 }}</li></sc-if></ul><sc-if value="{{ it.hasNote }}"><p class="hm-help" data-content-path="{{ it.copy.note }}">{{ it.note }}</p></sc-if></div>
           </details>
         </sc-for>
@@ -49,7 +49,7 @@
     <sc-if value="{{ s.homeInsurers }}">
       <div class="hm-insurer-band">
         <div class="hm-section-copy"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><sc-if value="{{ s.hasCta1 }}"><a class="hm-text-link" href="{{ s.cta1href }}"><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span><span aria-hidden="true">→</span></a></sc-if></div>
-        <div class="hm-logo-grid"><sc-for list="{{ s.items }}" as="it"><div class="hm-logo-tile" data-content-id="{{ it.key }}"><sc-if value="{{ it.hasLogo }}"><img sc-camel-src="{{ it.logo }}" alt="{{ it.logoAlt }}" loading="lazy" width="104" height="72"></sc-if><span class="hm-logo-name">{{ it.name }}</span></div></sc-for></div>
+        <div class="hm-logo-grid"><sc-for list="{{ s.items }}" as="it"><div class="hm-logo-tile" data-content-id="{{ it.key }}"><sc-if value="{{ it.hasLogo }}"><img data-cms-image="{{ it.mediaLogoPath }}" sc-camel-src="{{ it.logo }}" alt="{{ it.logoAlt }}" loading="lazy" width="104" height="72"></sc-if><span class="hm-logo-name">{{ it.name }}</span></div></sc-for></div>
       </div>
     </sc-if>
 
@@ -57,7 +57,7 @@
       <div class="hm-heading"><div class="hm-section-copy"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></div></div>
       <div class="hm-tier-grid"><sc-for list="{{ s.featured }}" as="it"><article class="hm-tier-card" data-content-id="{{ it.key }}">
         <div class="hm-tier-title">
-          <sc-if value="{{ it.hasIllustration }}"><img sc-camel-src="{{ it.illustration }}" alt="" width="112" height="112" loading="lazy"></sc-if>
+          <sc-if value="{{ it.hasIllustration }}"><img data-cms-image="{{ it.mediaIllustrationPath }}" sc-camel-src="{{ it.illustration }}" alt="" width="112" height="112" loading="lazy"></sc-if>
           <h3 data-content-path="{{ it.copy.label }}">{{ it.label }}</h3>
         </div>
         <div class="hm-tier-detail"><p data-content-path="{{ it.copy.value }}">{{ it.value }}</p><ul class="hm-status-list" data-noedit><sc-for list="{{ it.cells }}" as="cell"><li data-head-id="{{ cell.headId }}" data-status="{{ cell.status }}"><svg viewBox="0 0 24 24" role="img" aria-label="{{ cell.statusLabel }}" style="color:{{ cell.fg }};background:{{ cell.bg }}"><path d="{{ cell.d }}"/></svg><span>{{ cell.head }}<sc-if value="{{ cell.hasNote }}"><small>{{ cell.note }}</small></sc-if></span></li></sc-for></ul></div>
@@ -67,7 +67,7 @@
 
     <sc-if value="{{ s.homeInformation }}">
       <div class="hm-advisory"><div class="hm-section-copy"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><sc-if value="{{ s.homeHasContext }}"><details class="hm-context" open="{{ editMode }}"><summary data-cms-copy="homeDesign.detailsLabel">{{ homeCopy.detailsLabel }}</summary><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p><sc-if value="{{ s.hasNote }}"><p class="hm-help" data-content-path="{{ s.copy.note }}">{{ s.note }}</p></sc-if><sc-if value="{{ s.homeReview }}"><sc-if value="{{ hasLine }}"><a class="hm-text-link" href="{{ lineUrl }}" data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</a></sc-if></sc-if></details></sc-if></div>
-        <div class="hm-benefits"><sc-for list="{{ s.items }}" as="it"><details data-content-id="{{ it.key }}" open="{{ s.homeInformationExpanded }}"><summary><span class="hm-icon" style="--tile-icon:{{ it.deep }};--tile:{{ it.soft }}"><sc-if value="{{ s.homeSteps }}"><sc-if value="{{ it.hasIconImage }}"><img sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><span aria-hidden="true">{{ it.n }}</span></sc-if></sc-if><sc-if value="{{ s.homeReview }}"><sc-if value="{{ it.hasIconImage }}"><img sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></sc-if><sc-if value="{{ s.homeClaim }}"><sc-if value="{{ it.hasIconImage }}"><img sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></sc-if></span><h3 data-content-path="{{ it.copy.title }}">{{ it.title }}</h3><span class="hm-plus" aria-hidden="true">+</span></summary><div class="hm-benefit-detail"><p data-content-path="{{ it.copy.body }}">{{ it.body }}</p><sc-if value="{{ it.value }}"><p data-content-path="{{ it.copy.value }}">{{ it.value }}</p></sc-if></div></details></sc-for></div>
+        <div class="hm-benefits"><sc-for list="{{ s.items }}" as="it"><details data-content-id="{{ it.key }}" open="{{ s.homeInformationExpanded }}"><summary><span class="hm-icon" style="--tile-icon:{{ it.deep }};--tile:{{ it.soft }}"><sc-if value="{{ s.homeSteps }}"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><span aria-hidden="true">{{ it.n }}</span></sc-if></sc-if><sc-if value="{{ s.homeReview }}"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></sc-if><sc-if value="{{ s.homeClaim }}"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></sc-if></span><h3 data-content-path="{{ it.copy.title }}">{{ it.title }}</h3><span class="hm-plus" aria-hidden="true">+</span></summary><div class="hm-benefit-detail"><p data-content-path="{{ it.copy.body }}">{{ it.body }}</p><sc-if value="{{ it.value }}"><p data-content-path="{{ it.copy.value }}">{{ it.value }}</p></sc-if></div></details></sc-for></div>
       </div>
       <sc-if value="{{ s.homeClaim }}"><div class="hm-emergency"><sc-for list="{{ s.cards }}" as="cd"><article><p data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p><a href="{{ cd.tel }}" data-content-path="{{ cd.copy.title }}">{{ cd.title }}</a><p data-content-path="{{ cd.copy.body }}">{{ cd.body }}</p></article></sc-for></div></sc-if>
     </sc-if>

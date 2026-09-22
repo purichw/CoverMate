@@ -2,6 +2,32 @@
 
 Last updated: 2026-09-23
 
+## September 23 Inline Image Editing Release
+
+- Owner authorized push and production deployment of the completed inline
+  image feature. In `/admin/edit`, visible logos/images open the existing
+  ratio-aware crop/upload dialog; backgrounds have a separate edit control.
+  Favicon, social images and absent slots remain in Images & crop.
+- Explicit semantic media paths preserve localized logos and repeatable IDs.
+  Overlay buttons leave public layout intact and do not activate an image's
+  underlying link/disclosure. Preview/public routes have no image edit overlay.
+- Existing Cloudinary upload authorization, source metadata, Draft autosave,
+  conflict handling and explicit Publish behavior are reused without backend,
+  schema, Rules or production CMS changes. No existing draft is published.
+- The new `check:media:inline` browser regression is included in CI. Isolated
+  checks cover desktop/mobile, TH/EN, Home/Motor, keyboard/cancel focus,
+  upload failure/retry, Draft reload/source recrop and stable reordered owners.
+- Release smoke now honors the existing CMS `on: false` settings for Fees and
+  Privacy when checking their copy, consistent with the other optional sections.
+  Enabled sections retain their content assertions; no CMS values were changed.
+- Release preparation uses `.tools/inline-media-release-20260923`, excluding
+  unrelated public bootstrap/SEO/performance work and `exports/`. Promotion
+  requires the exact commit's GitHub `verify` and production alias readback.
+  Source preparation is not evidence of deployment; the final release report
+  records the resulting SHA/deployment and read-only live UI/asset checks.
+- Recovery is the preceding production deployment
+  `dpl_1qJKWpKdNuA77uEyV7zxZPFzejnt`; no data migration needs reversal.
+
 ## September 23 Domain Redirect Follow-Up
 
 - Owner reported cream-only Home on `covermate.vercel.app` and

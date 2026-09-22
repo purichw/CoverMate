@@ -1858,10 +1858,10 @@ for (const [name, width, height] of viewports) {
     if (mainVisitorRoutes.has(route) && !/ไม่ต้อง(?:จำ|กังวลเรื่อง)วันหมดอายุ|ช่วยเตือนล่วงหน้า|renewal dates|keep track/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: renewal reminder section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|ค่าตอบแทนในการให้บริการ|How CoverMate is compensated|service compensation|commission comes from/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !state.disabledSectionIds.includes("fees") && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|ค่าตอบแทนในการให้บริการ|How CoverMate is compensated|service compensation|commission comes from/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: fee transparency section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/ข้อมูลที่คุณส่ง(?:มา|ให้เรา)|ถูกใช้(?:ทำ|อย่าง)ไร|What happens to|data you send|privacy/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !state.disabledSectionIds.includes("privacy") && !/ข้อมูลที่คุณส่ง(?:มา|ให้เรา)|ถูกใช้(?:ทำ|อย่าง)ไร|What happens to|data you send|privacy/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: privacy / PDPA section is missing`);
     }
     if (mainVisitorRoutes.has(route) && /ขอรับ\s*\n\s*คำปรึกษา|Request a\s*\n\s*consultation/.test(state.contactHeadingText)) {

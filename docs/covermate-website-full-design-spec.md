@@ -806,9 +806,12 @@ Behavior:
   slot records an intentional blank value and leaves a visible placeholder such
   as `ว่าง - คลิกเพื่อใส่ข้อความ` / `Empty - click to add text` so the owner can
   type into it again.
-- Media is not changed through inline binary upload. The advisor proof logo is
-  managed as metadata in the owner panel through `brand.advisorLogo` and
-  `brand.advisorLogoAlt`, defaulting to `assets/logos/aia-logo.png`.
+- Visible logos/images have click-to-edit crop/upload controls in the inline
+  editor, using the same Cloudinary dialog and Draft/Publish semantics as the
+  panel. See `CMS_MEDIA.md` and `HANDOFF.md` for release status. The advisor logo
+  remains `brand.advisorLogo`/`brand.advisorLogoAlt`. Explicit per-image owners
+  prevent edits to another slot that happens to use the same image file.
+  Favicon, social metadata and absent images remain accessible in Images & crop.
 - Edits support Thai and English separately.
 - Owner bar should provide a route back to `Main`, switch to `Panel`, `Save
   draft`, `Preview`, `Publish`, finish the mode, and `Log out`.

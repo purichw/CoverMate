@@ -39,6 +39,7 @@
     "check:cms:site": "node scripts/cms-site-audit-check.mjs",
     "check:cms:site:browser": "node scripts/cms-site-audit-check.mjs --browser",
     "check:media": "node scripts/media-editor-check.mjs",
+    "check:media:inline": "node scripts/inline-media-browser-check.mjs",
     "check:faq": "node scripts/faq-consolidation-check.mjs",
     "check:ops": "node scripts/ops-portal-regression-check.mjs",
     "uat:seed": "node scripts/uat-seed.mjs",

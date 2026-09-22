@@ -68,8 +68,13 @@ September 21 readback reported 0.08/25 (0.32%), still Free. References:
 
 ## Operator Flow
 
-1. Open the Editor panel, Brand & contact, then Images & crop. The language
-   selector chooses the independent Thai or English brand-logo owner.
+1. In `/admin/edit`, click a visible logo/image (outlined with a small pencil)
+   to open its crop/upload dialog. Keyboard users can activate the named
+   `Edit image: ...` button. Background artwork has an `Edit background` button.
+   The September 23 inline-entry release is tracked in `HANDOFF.md`.
+   The existing alternative is Tools > Panel > Brand & contact > Images & crop;
+   use it for favicon, social sharing images, absent images and the full inventory.
+   The language selector chooses the independent Thai or English logo owner.
 2. Choose a slot. Select a local PNG/JPEG/WebP/SVG, or load the current asset
    path/HTTPS URL. Remote sources must permit CORS for browser canvas access;
    otherwise select a local file. There is no unrestricted server URL proxy.
@@ -79,6 +84,20 @@ September 21 readback reported 0.08/25 (0.32%), still Free. References:
 4. Use image in draft uploads a new source/output pair and changes only the
    selected CMS owner. Save draft and Publish keep their existing semantics.
    Cancel makes no change; Clear image removes the optional image reference.
+
+The inline buttons use explicit `data-cms-image`/`data-cms-background` owners,
+validated against `cmsImageSlots()`. Repeated logos retain their own semantic
+IDs even when two owners use the same file or a list is reordered. Controls
+exist only in edit mode; preview and visitor routes retain normal links and
+disclosures. The overlay leaves public image markup/layout unchanged and
+reuses the same owner-authorized upload endpoint, source metadata, conflict
+check and draft save path as the panel. It does not bypass Publish.
+
+Local inline-entry verification (2026-09-23): Home/Motor, Thai/English owners,
+desktop/mobile, keyboard/cancel focus, background controls, upload failure/retry,
+Draft save/reload/source recrop, reordered item IDs and public/preview exclusion
+passed with isolated Auth/CMS/storage adapters. No production CMS or Cloudinary
+write was made. Evidence: `uat-results/inline-media/report.json` and screenshots.
 
 All public image owners are enumerated by `cmsImageSlots()` in
 `covermate-contract.js`: localized Header/Footer, brand mark, advisor logo/photo,
@@ -157,6 +176,7 @@ local PASS alone does not prove deployed credentials or future zero-cost operati
 npm run build:media
 npm run build:visitor
 npm run check:media
+npm run check:media:inline
 npm run check:cms:site:browser -- /path/to/covermate-home-codex-handoff-v1.0
 ```
 

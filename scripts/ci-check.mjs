@@ -26,6 +26,7 @@ const commands = [
   ["npm", ["run", "check:cms"]],
   ["npm", ["run", "check:cms:site"]],
   ["npm", ["run", "check:media"]],
+  ["npm", ["run", "check:media:inline"]],
   ["npm", ["run", "check:ops"]],
   ["npm", ["run", "check:performance"]],
   ["git", ["diff", "--check"]]

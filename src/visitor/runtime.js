@@ -579,6 +579,7 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    this.clearInlineMedia();
     document.removeEventListener('keydown', this._homeKeydown);
     document.removeEventListener('click', this._homeAnchorClick);
     document.removeEventListener('toggle', this._homeToggle, true);
@@ -600,6 +601,7 @@ class Component extends DCLogic {
   }
 
   sweep() {
+    this.syncInlineMedia();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
     if (!nodes.length) return;
@@ -1632,6 +1634,7 @@ class Component extends DCLogic {
   }
 
   disableEdit() {
+    this.clearInlineMedia();
     document.querySelectorAll('.om-editable,[contenteditable="true"][data-ek]').forEach((el) => {
       el.removeAttribute('contenteditable');
       el.removeAttribute('spellcheck');
@@ -1642,6 +1645,7 @@ class Component extends DCLogic {
   }
 
   enableEdit() {
+    this.syncInlineMedia();
     const self = this;
     this.eachEditable((el, key) => {
       const path = this.cmsCopyPath(el);
@@ -1752,6 +1756,71 @@ class Component extends DCLogic {
 
   fmt(n) { return '฿' + Math.round(n).toLocaleString('en-US'); }
 
+  clearInlineMedia() {
+    this._inlineMediaLayer?.remove();
+    this._inlineMediaLayer = null;
+    this._inlineMediaButtons = new Map();
+  }
+
+  syncInlineMedia() {
+    if (!this.state.editMode || this.state.preview || !this.hasSession() || this.state.menuOpen) {
+      if (this._inlineMediaLayer) this.clearInlineMedia();
+      return;
+    }
+    // Keep real buttons outside links, summaries and calculator buttons. The
+    // overlay follows the image without wrapping it or changing public layout.
+    if (!this._inlineMediaLayer) {
+      this._inlineMediaLayer = document.createElement('div');
+      this._inlineMediaLayer.className = 'om-inline-media-layer';
+      this._inlineMediaLayer.setAttribute('data-noedit', 'true');
+      document.body.append(this._inlineMediaLayer);
+      this._inlineMediaButtons = new Map();
+    }
+    const slots = new Map(cmsImageSlots(this.state.site, this.state.lang).map(slot => [slot.path, slot]));
+    const header = document.querySelector('header');
+    const headerBottom = header && ['sticky', 'fixed'].includes(getComputedStyle(header).position) ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+    const seen = new Set();
+    document.querySelectorAll('header [data-cms-image], main [data-cms-image], footer [data-cms-image], main [data-cms-background]').forEach(image => {
+      const background = image.hasAttribute('data-cms-background');
+      const path = image.getAttribute(background ? 'data-cms-background' : 'data-cms-image');
+      const slot = slots.get(path);
+      if (!slot || !image.getClientRects().length || (image.checkVisibility && !image.checkVisibility({ visibilityProperty: true }))) return;
+      let rect = image.getBoundingClientRect();
+      const compactBackground = background && innerWidth <= 600;
+      if (background) rect = { left: rect.right - (compactBackground ? 52 : 168), right: rect.right - 12, top: rect.top + 12, bottom: rect.top + 52 };
+      let left = Math.max(0, rect.left), right = Math.min(innerWidth, rect.right);
+      let top = Math.max(image.closest('header') ? 0 : headerBottom, rect.top), bottom = Math.min(innerHeight, rect.bottom);
+      for (let parent = image.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+        const style = getComputedStyle(parent), box = parent.getBoundingClientRect();
+        if (/(hidden|clip|auto|scroll)/.test(style.overflowX)) { left = Math.max(left, box.left); right = Math.min(right, box.right); }
+        if (/(hidden|clip|auto|scroll)/.test(style.overflowY)) { top = Math.max(top, box.top); bottom = Math.min(bottom, box.bottom); }
+      }
+      if (right - left < 12 || bottom - top < 12) return;
+      seen.add(image);
+      let button = this._inlineMediaButtons.get(image);
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.addEventListener('click', () => {
+          if (!this.state.editMode || this.state.preview || !this.hasSession()) return;
+          button.focus({ preventScroll: true });
+          this.editMedia(button.getAttribute('data-inline-media'));
+        });
+        this._inlineMediaLayer.append(button);
+        this._inlineMediaButtons.set(image, button);
+      }
+      button.className = 'om-inline-media-button' + (background ? ' om-inline-media-background' : right - left < 48 || bottom - top < 40 ? ' om-inline-media-small' : '');
+      button.setAttribute('data-inline-media', path);
+      button.setAttribute('aria-label', 'Edit image: ' + slot.label);
+      button.setAttribute('aria-haspopup', 'dialog');
+      button.title = 'Edit image: ' + slot.label;
+      button.textContent = background ? (compactBackground ? '✎' : 'Edit background') : '';
+      button.style.cssText = `left:${left}px;top:${top}px;width:${right-left}px;height:${bottom-top}px`;
+    });
+    this._inlineMediaButtons.forEach((button, image) => {
+      if (!seen.has(image)) { button.remove(); this._inlineMediaButtons.delete(image); }
+    });
+  }
 
   async editMedia(path) {
     if (!this.hasSession()) return;
@@ -1965,6 +2034,10 @@ class Component extends DCLogic {
           contentId: it.id,
           homeDetailId: 'home-tier-' + (it.id || (s.id + '-' + i)),
           illustration: assetURL(it.illustration || ''), hasIllustration: !!it.illustration,
+          mediaIllustrationPath: sectionPath + '.items.@' + it.id + '.illustration',
+          mediaLogoPath: sectionPath + '.items.@' + it.id + '.logo',
+          mediaPhotoPath: sectionPath + '.items.@' + it.id + '.photo',
+          mediaIconPath: s.id === 'life-trust' ? (it.cmsPath ? it.cmsPath + 'Icon' : 'lifeFocus.licenceIcon') : sectionPath + '.items.@' + it.id + '.iconImage',
           copy: Object.fromEntries(['label','title','sub','body','b1','b2','b3','note','q','a','meta','value','name','quote','valueNote'].map(field => [field, sectionPath + '.items.@' + it.id + '.' + lk + '.' + field])),
           photo: assetURL(it.photo || ''), photoAlt: it.photoAlt || '', hasPhoto: !!it.photo,
           cmsPath: it.cmsPath || '',
@@ -2032,6 +2105,7 @@ class Component extends DCLogic {
         cards: (s.cards || []).filter(cd => cd && cd.on !== false).map((cd, i) => {
           const cc = cd[lk] || {};
           return { key: cd.id || (s.id + '-c' + i), logo: assetURL(cd.logo || ''), logoAlt: cd.logoAlt || '',
+            mediaLogoPath: sectionPath + '.cards.@' + cd.id + '.logo',
             copy: Object.fromEntries(['kicker','title','body'].map(field => [field, sectionPath + '.cards.@' + cd.id + '.' + lk + '.' + field])),
             hasLogo: !!cd.logo,
             logoStyle: 'display:block;height:' + (cd.logoH || 36) + 'px;width:' + (cd.logoMaxW || 120) + 'px;flex:0 0 auto;background-image:url("' + assetURL(cd.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center center',
@@ -2048,6 +2122,8 @@ class Component extends DCLogic {
       sectionView.homeInformationExpanded = S.editMode || s.type === 'claim';
       sectionView.homeHasContext = !!(c.body || c.note || (s.type === 'review' && c.cta1));
       sectionView.homeType = s.type;
+      sectionView.mediaBackgroundPath = s.type === 'hero' ? 'homeDesign.botanicalIllustration' : '';
+      sectionView.contactMediaBackgroundPath = isHome ? 'homeDesign.contactBackground' : '';
       sectionView.homeStyle = '--band:' + p.bg + ';--ink:' + p.fg + ';--muted:' + p.muted + ';--eyebrow:' + p.kicker + ';--paper:' + p.card + ';--paper-ink:' + p.cardFg + ';--line:' + p.line + ';--columns:' + (s.cols || 3);
       sectionView.homeStyle += ';--hm-action:' + A.action + ';--hm-card:' + (site.theme.radius === 'sharp' ? 8 : 16) + 'px;--hm-panel:' + (site.theme.radius === 'sharp' ? 12 : 24) + 'px;--hm-space:' + (site.theme.density === 'compact' ? 14 : 20) + 'px';
       if (s.type === 'hero' && homeDesign.botanicalIllustration) sectionView.homeStyle += ';--hm-hero-art:url("' + assetURL(homeDesign.botanicalIllustration) + '")';
@@ -2098,6 +2174,7 @@ class Component extends DCLogic {
     const sitList = situationKeys.map(k => ({
       key: k, on: activeSituationKey === k, paths: ICONS[situationConfig[k].icon] || ICONS.check,
       iconImage:assetURL(situationConfig[k].iconImage),hasIconImage:!!situationConfig[k].iconImage,hasVectorIcon:!situationConfig[k].iconImage,
+      mediaIconPath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+k+'.iconImage',
       label: th ? situationConfig[k].th : situationConfig[k].en,
       copy:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+k+'.'+lk,
       bg: activeSituationKey === k ? A.action : fitPal.card,
@@ -2523,6 +2600,7 @@ class Component extends DCLogic {
           const box = 'display:flex;align-items:center;justify-content:center;width:clamp(72px,9vw,96px);aspect-ratio:1;border-radius:14px;background-color:var(--color-surface);box-shadow:var(--shadow-sm);animation:logoPop .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:' + (i * 45) + 'ms;transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s ease';
           return {
             key: 'ins' + i, name: tile.name, hasLogo: !!tile.logo, noLogo: !tile.logo,
+            mediaLogoPath:'sections.@'+sec.id+'.items.@'+it.id+'.logo',
             style: box + ';background-image:url("' + assetURL(tile.logo) + '");background-repeat:no-repeat;background-size:contain;background-position:center',
             textStyle: box + ';padding:8px;text-align:center;font-size:12px;font-weight:700;line-height:1.25;color:var(--color-neutral-800);text-wrap:balance'
           };
@@ -2540,6 +2618,7 @@ class Component extends DCLogic {
       }, []),
       brandLogoAlt: [t(site.brand.name), t(site.brand.role)].filter(Boolean).join(' '),
       brandWordmarkLogo: assetURL(t(media.headerLogo)),
+      headerLogoPath:'brand.media.headerLogo.'+lk,
       footerBrandLogo: assetURL(t(media.footerLogo)),
       footerLogoPath:'brand.media.footerLogo.'+lk,
       hasHeaderLogo: !!t(media.headerLogo), hasFooterLogo: !!t(media.footerLogo),
