@@ -378,7 +378,7 @@ const DEFAULTS = {
     {
       "id": "how",
       "type": "steps",
-      "on": true,
+      "on": false,
       "bg": "bg",
       "cols": 4,
       "th": {
@@ -618,7 +618,7 @@ const DEFAULTS = {
           }
         }
       ],
-      "cta1href": "/motor"
+      "cta1href": ""
     },
     {
       "id": "fit",

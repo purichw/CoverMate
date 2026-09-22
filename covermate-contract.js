@@ -385,7 +385,7 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 5;
+const CMS_CONTENT_VERSION = 8;
 const CMS_CONTENT_FIELDS = [
   {path:'publicCopy.motorLogoNotice',label:'Motor insurer logo note',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้',en:'Logos are trademarks of their owners · shown as the insurers I can quote and compare'}},
   {path:'publicCopy.tierClassLabel',label:'Comparison: class heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'ชั้นประกัน',en:'Class'}},
@@ -393,6 +393,10 @@ const CMS_CONTENT_FIELDS = [
   {path:'publicCopy.storyEventLabel',label:'Story: event heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เกิดอะไรขึ้น',en:'What happened'}},
   {path:'publicCopy.storyActionLabel',label:'Story: response heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เราทำอะไร',en:'What we do'}},
   {path:'homeDesign.botanicalIllustration',label:'Hero background artwork',group:'Home design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
+  {path:'homeDesign.licenceEyebrow',label:'Licence section: eyebrow',group:'Home licences',localized:true,seed:{th:'ABOUT COVERMATE',en:'ABOUT COVERMATE'}},
+  {path:'homeDesign.licenceTitle',label:'Licence section: heading',group:'Home licences',localized:true,seed:{th:'ใบอนุญาตและบทบาทการให้บริการ',en:'Our licences and advisory roles'}},
+  {path:'homeDesign.licenceStatement',label:'Licence section: statement',group:'Home licences',localized:true,seed:{th:'มั่นใจได้ เพราะเราดำเนินการ\nอย่างถูกต้องและโปร่งใส',en:'Confidence through\nprofessional, transparent service'}},
+  {path:'homeDesign.licenceBackground',label:'Licence section: background artwork',group:'Home licences',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   {path:'homeDesign.heroStatement',label:'Optional hero statement',group:'Home design',localized:true,seed:{th:'',en:''}},
   {path:'homeDesign.aboutTeaser',label:'Optional about teaser',group:'Home design',localized:true,seed:{th:'',en:''}},
   {path:'homeDesign.detailsLabel',label:'Read more',group:'Home design',localized:true,seed:{th:'อ่านเพิ่มเติม',en:'Read more'}},
@@ -401,7 +405,26 @@ const CMS_CONTENT_FIELDS = [
   {path:'homeDesign.menuLabel',label:'Navigation menu',group:'Home design',localized:true,seed:{th:'เมนู',en:'Menu'}},
   {path:'homeDesign.closeLabel',label:'Close menu',group:'Home design',localized:true,seed:{th:'ปิดเมนู',en:'Close menu'}},
   {path:'homeDesign.optionalLabel',label:'Optional form details',group:'Home design',localized:true,seed:{th:'รายละเอียดเพิ่มเติม (ไม่บังคับ)',en:'Additional details (optional)'}},
-  {path:'homeDesign.contactChannelsLabel',label:'Contact channels disclosure',group:'Home design',localized:true,seed:{th:'ช่องทางติดต่อและเวลาทำการ',en:'Contact details & hours'}},
+  {path:'homeDesign.contactChannelsLabel',label:'Contact channels heading',group:'Home design',localized:true,seed:{th:'ช่องทางติดต่อและเวลาทำการ',en:'Contact details & hours'}},
+  {path:'homeDesign.contactFormHeading',label:'Form heading',group:'Home contact',localized:true,seed:{th:'ส่งคำถามถึงเรา',en:'Send us your question'}},
+  {path:'homeDesign.contactFormHelper',label:'Form introduction',group:'Home contact',localized:true,seed:{th:'ฝากข้อมูลไว้ แล้วเราจะติดต่อกลับตามช่องทางที่คุณระบุ',en:'Leave your details and we will reply through your chosen contact channel.'}},
+  {path:'homeDesign.contactLineLabel',label:'LINE label',group:'Home contact',localized:true,seed:{th:'พูดคุยกับเราได้ที่',en:'Chat with us on LINE'}},
+  {path:'homeDesign.contactFacebookHelper',label:'Facebook helper',group:'Home contact',localized:true,seed:{th:'ติดตามข่าวสารหรือส่งข้อความถึงเรา',en:'Follow our updates or send us a message'}},
+  {path:'homeDesign.contactHoursLabel',label:'Hours label',group:'Home contact',localized:true,seed:{th:'เวลาทำการ',en:'Business hours'}},
+  {path:'homeDesign.contactAreaLabel',label:'Service area label',group:'Home contact',localized:true,seed:{th:'พื้นที่ให้บริการ',en:'Service area'}},
+  {path:'homeDesign.contactReassurance',label:'Reassurance',group:'Home contact',localized:true,seed:{th:'สอบถามก่อนได้ ไม่จำเป็นต้องตัดสินใจทันที',en:'Ask us first. There is no need to decide right away.'}},
+  {path:'homeDesign.contactNamePlaceholder',label:'Name placeholder',group:'Home contact',localized:true,seed:{th:'เช่น ชื่อเล่นของคุณ',en:'For example, your preferred name'}},
+  {path:'homeDesign.contactContactPlaceholder',label:'Contact placeholder',group:'Home contact',localized:true,seed:{th:'เช่น LINE ID หรือเบอร์โทรของคุณ',en:'Your LINE ID or phone number'}},
+  {path:'homeDesign.contactDetailsPlaceholder',label:'Details placeholder',group:'Home contact',localized:true,seed:{th:'เล่าเรื่องที่อยากให้เราช่วยดูเพิ่มเติม',en:'Tell us what you would like help with'}},
+  {path:'homeDesign.contactBackground',label:'Background artwork',group:'Home contact',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
+  ...['line','facebook','hours','area','reassurance','form'].map(key => ({path:'homeDesign.contactIcon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Home contact',media:true,seed:['line','facebook'].includes(key)?'assets/brand/'+key+'-icon.svg':''})),
+  {path:'footer.licenceHelper',label:'Licence introduction',group:'Footer design',localized:true,seed:{th:'ข้อมูลใบอนุญาตที่ตรวจสอบได้',en:'Verifiable licence information'}},
+  {path:'footer.navHelper',label:'Navigation introduction',group:'Footer design',localized:true,seed:{th:'ข้อมูลที่คุณอาจสนใจ',en:'Explore useful information'}},
+  {path:'footer.contactHelper',label:'Contact introduction',group:'Footer design',localized:true,seed:{th:'เราพร้อมดูแลคุณ',en:'We are here to help'}},
+  {path:'footer.statement',label:'Closing statement',group:'Footer design',localized:true,seed:{th:'ดูแล...ในทุกช่วงของชีวิต',en:'Here for every stage of life'}},
+  {path:'footer.categoryLine',label:'Closing brand line',group:'Footer design',localized:true,seed:{th:'LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER',en:'LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER'}},
+  {path:'footer.backgroundArt',label:'Background artwork',group:'Footer design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
+  ...['licence','nav','contact','line','facebook','hours'].map(key => ({path:'footer.icon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Footer design',media:true,seed:['line','facebook'].includes(key)?'assets/brand/'+key+'-icon.svg':''})),
   {path:'homeDesign.consentChanged',label:'Updated consent notice',group:'Form messages',localized:true,seed:{th:'ข้อความยินยอมมีการอัปเดต กรุณาอ่านและยืนยันใหม่ก่อนส่ง ข้อมูลที่กรอกยังอยู่',en:'The consent text has changed. Please read and confirm it again before sending. Your entries are still here.'}},
   {path:'homeDesign.formUnavailable',label:'Form unavailable notice',group:'Form messages',localized:true,seed:{th:'แบบฟอร์มนี้ปิดรับชั่วคราว ข้อมูลของคุณยังไม่ได้ถูกส่ง สามารถติดต่อผ่านช่องทางที่แสดงบนเว็บไซต์',en:'This form is temporarily unavailable. Your information has not been sent. Please use the contact channels shown on the site.'}},
   {path:'homeDesign.returnLabel',label:'Return to consultation',group:'Home design',localized:true,seed:{th:'กลับไปที่แบบฟอร์ม',en:'Return to the form'}},
@@ -564,7 +587,7 @@ function cmsImageSlots(config, lang = 'th') {
   CMS_CONTENT_FIELDS.filter(field => field.media).forEach(field => {
     const size = /\.(headerLogo|footerLogo)$/.test(field.path) ? [1200,375]
       : field.path === 'seo.image' ? [1200,630]
-      : field.path === 'homeDesign.botanicalIllustration' ? [1800,600] : [512,512];
+      : ['homeDesign.botanicalIllustration','homeDesign.licenceBackground','homeDesign.contactBackground','footer.backgroundArt'].includes(field.path) ? [1800,600] : [512,512];
     add(field.path + (field.localized ? '.' + lang : ''), field.label + (field.localized ? ' (' + lang.toUpperCase() + ')' : ''), ...size);
   });
   add('brand.advisorLogo', 'Advisor logo');
@@ -627,6 +650,18 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Seed only newly introduced presentation fields; intentional blanks stay blank.
+  if (previousVersion >= 5) {
+    CMS_CONTENT_FIELDS.filter(field => field.group === 'Footer design' || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+      if (field.localized) ['th','en'].forEach(lang => {
+        const path = field.path + '.' + lang;
+        if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);
+      });
+      else if (cmsGet(next, field.path) === undefined) cmsSet(next, field.path, field.seed);
+    });
+    next.cmsContentVersion = CMS_CONTENT_VERSION;
+    return mergeGuidesIntoFaq(next);
+  }
   if (previousVersion < 5) {
     ['header','motorPage'].forEach(key => (next[key]?.nav || []).forEach(item => {
       if (typeof item.label === 'string') item.label = {th:item.label,en:item.label};

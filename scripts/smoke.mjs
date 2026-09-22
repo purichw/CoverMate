@@ -1587,7 +1587,7 @@ for (const [name, width, height] of viewports) {
           style.opacity !== "0"
         );
       };
-      const homeMotorLinks = Array.from(document.querySelectorAll('main #insurers a[href="/motor"]'))
+      const homeMotorLinks = Array.from(document.querySelectorAll('main a[href^="/motor"],footer a[href^="/motor"]'))
         .map((anchor) => ({
           text: (anchor.textContent || "").replace(/\s+/g, " ").trim(),
           visible: isVisible(anchor)
@@ -1645,7 +1645,9 @@ for (const [name, width, height] of viewports) {
         htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
         requiredConsentCheckboxCount:
           document.querySelectorAll('form input[type="checkbox"][aria-required="true"]').length,
-        hasRelationshipProof: /AIA|Srikrung|ศรีกรุง/i.test(insurerText),
+        hasRelationshipProof: /AIA/.test(document.querySelector('#licences')?.innerText || insurerText)
+          && /Srikrung|ศรีกรุง/i.test(document.querySelector('#licences')?.innerText || insurerText),
+        hasFinalLicenceSection: Boolean(document.querySelector('main > section#licences:last-child')),
         missingAnchors,
         duplicateHeaderNavLabels: headerNavLabels.filter(
           (label, index, labels) => labels.indexOf(label) !== index
@@ -1744,16 +1746,18 @@ for (const [name, width, height] of viewports) {
       const howIndex = state.sectionIds.indexOf("how");
       const insurersIndex = state.sectionIds.indexOf("insurers");
       const fitIndex = state.sectionIds.indexOf("fit");
-      if (!(reviewIndex >= 0 && howIndex > reviewIndex && insurersIndex > howIndex)) {
-        failures.push(`${name} ${route}: public section order should be review > how > insurers (${state.sectionIds.join(", ")})`);
+      if (!(reviewIndex >= 0 && insurersIndex > reviewIndex &&
+        (state.disabledSectionIds.includes('how') ? howIndex === -1 : howIndex > reviewIndex && howIndex < insurersIndex))) {
+        failures.push(`${name} ${route}: review/insurers order or CMS workflow visibility is wrong (${state.sectionIds.join(", ")})`);
       }
       if (fitIndex >= 0 && fitIndex < insurersIndex) {
         failures.push(`${name} ${route}: visible resources section should follow insurers (${state.sectionIds.join(", ")})`);
       }
       const visibleHomeMotorLinks = state.homeMotorLinks.filter((link) => link.visible);
-      if (visibleHomeMotorLinks.length !== 1 || !/ประกันรถยนต์|Motor/i.test(visibleHomeMotorLinks[0]?.text || "")) {
-        failures.push(`${name} ${route}: home is missing the dedicated /motor CTA (${JSON.stringify(state.homeMotorLinks)})`);
+      if (visibleHomeMotorLinks.length !== 0) {
+        failures.push(`${name} ${route}: retired dedicated /motor CTA is visible (${JSON.stringify(state.homeMotorLinks)})`);
       }
+      if (!state.hasFinalLicenceSection) failures.push(`${name} ${route}: licences must be the final main section`);
     }
     if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
@@ -1782,7 +1786,7 @@ for (const [name, width, height] of viewports) {
       })})`);
     }
     if (route === "/#motor-focus") {
-      for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "how", "talk"]) {
+      for (const id of ["motor", "motor-trust", "motor-cover", "insurers", "how", "talk"].filter(id => !state.disabledSectionIds.includes(id))) {
         if (!state.visibleSectionIds.includes(id)) {
           failures.push(`${name} ${route}: missing focused motor section #${id}`);
         }
@@ -1814,7 +1818,7 @@ for (const [name, width, height] of viewports) {
       }
     }
     if (route === "/#life-focus") {
-      for (const id of ["life", "life-trust", "life-cover", "review", "how", "faq", "talk", "privacy"]) {
+      for (const id of ["life", "life-trust", "life-cover", "review", "how", "faq", "talk", "privacy"].filter(id => !state.disabledSectionIds.includes(id))) {
         if (!state.sectionIds.includes(id)) {
           failures.push(`${name} ${route}: missing focused life section #${id}`);
         }

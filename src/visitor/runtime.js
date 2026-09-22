@@ -1752,6 +1752,7 @@ class Component extends DCLogic {
 
   fmt(n) { return '฿' + Math.round(n).toLocaleString('en-US'); }
 
+
   async editMedia(path) {
     if (!this.hasSession()) return;
     const slot = cmsImageSlots(this.state.site,this.state.lang).find(item => item.path === path);
@@ -1993,7 +1994,7 @@ class Component extends DCLogic {
       const cta1href = this.localizedPublicHref(s.cta1href || '');
       const cta2href = this.localizedPublicHref(s.cta2href || '');
       const heroClaimHref = s[lk] && s[lk].claimHref !== undefined ? s[lk].claimHref : (s.claimHref || '');
-      const hideSelfMotorCta = routePage === 'motor' && s.type === 'insurers' && s.cta1href === '/motor';
+      const hideSelfMotorCta = s.type === 'insurers' && /^\/motor(?:[/?#]|$)/.test(cta1href);
       const sectionView = {
         id: s.id, key: s.id, cols: s.cols,
         cmsKicker: s.id === 'life' ? 'lifeFocus.kicker' : '', cmsTitle: s.id === 'life' ? 'lifeFocus.title' : '',
@@ -2050,6 +2051,8 @@ class Component extends DCLogic {
       sectionView.homeStyle = '--band:' + p.bg + ';--ink:' + p.fg + ';--muted:' + p.muted + ';--eyebrow:' + p.kicker + ';--paper:' + p.card + ';--paper-ink:' + p.cardFg + ';--line:' + p.line + ';--columns:' + (s.cols || 3);
       sectionView.homeStyle += ';--hm-action:' + A.action + ';--hm-card:' + (site.theme.radius === 'sharp' ? 8 : 16) + 'px;--hm-panel:' + (site.theme.radius === 'sharp' ? 12 : 24) + 'px;--hm-space:' + (site.theme.density === 'compact' ? 14 : 20) + 'px';
       if (s.type === 'hero' && homeDesign.botanicalIllustration) sectionView.homeStyle += ';--hm-hero-art:url("' + assetURL(homeDesign.botanicalIllustration) + '")';
+      if (s.type === 'insurers') sectionView.homeLicenceStyle = sectionView.homeStyle + (homeDesign.licenceBackground ? ';--hm-licence-art:url("' + assetURL(homeDesign.licenceBackground) + '")' : '');
+      if (s.type === 'contact') sectionView.contactStyle = '--contact-ink:'+p.fg+';--contact-muted:'+p.muted+';--contact-link:'+sectionView.hl+';scroll-margin-top:110px;position:relative;overflow:hidden;background:'+p.bg+';color:'+p.fg+(isHome && homeDesign.contactBackground ? ';--cm-contact-art:url("' + assetURL(homeDesign.contactBackground) + '")' : '');
       sectionView.homeTeaser = s.type === 'about' ? t(homeDesign.aboutTeaser) : '';
       sectionView.homeStatement = t(homeDesign.heroStatement);
       sectionView.homeHasStatement = !!t(homeDesign.heroStatement);
@@ -2426,7 +2429,6 @@ class Component extends DCLogic {
       isHome: isHome, notHome: !isHome, homeRoute: isHome ? 'home' : 'motor',
       homeCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.localized && field.path.startsWith('homeDesign.')).map(field => [field.path.slice(11), cmsText(field.path)])),
       homeWideDetails: (!S.compactHome && !S.touchInteraction) || S.editMode,
-      showContactChannels: !isHome || S.editMode,
       publicNotice: S.publicNoticeKey ? cmsText(S.publicNoticeKey) : '',
       footerGridStyle: '--footer-columns:' + Math.max(1, Math.min(4, Number(site.footer.columns) || 4)) + ';--footer-tablet-columns:' + Math.max(1, Math.min(2, Number(site.footer.columns) || 2)),
       menuOpen: S.menuOpen,
@@ -2496,6 +2498,23 @@ class Component extends DCLogic {
       hasAdvisorLogo: !!site.brand.advisorLogo,
       advisorPhoto: assetURL(media.photo), hasAdvisorPhoto: !!media.photo,
       lineQr: assetURL(media.lineQr), hasLineQr: !!media.lineQr,
+      homeContactMethods: [
+        {key:'line',title:site.contact.lineId,label:cmsText('homeDesign.contactLineLabel'),labelPath:'homeDesign.contactLineLabel',titlePath:'contact.lineId',href:site.contact.lineUrl,paths:ICONS.chat},
+        {key:'facebook',title:site.contact.facebookName,label:'Facebook',helper:cmsText('homeDesign.contactFacebookHelper'),helperPath:'homeDesign.contactFacebookHelper',titlePath:'contact.facebookName',href:site.contact.facebookUrl,paths:['M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z']},
+        {key:'hours',title:t(site.contact.hours),label:cmsText('homeDesign.contactHoursLabel'),labelPath:'homeDesign.contactHoursLabel',titlePath:'contact.hours',paths:ICONS.clock,info:true},
+        {key:'area',title:t(site.contact.area),label:cmsText('homeDesign.contactAreaLabel'),labelPath:'homeDesign.contactAreaLabel',titlePath:'contact.area',paths:ICONS.pin,info:true},
+        {key:'phone',title:site.contact.phone,titlePath:'contact.phone',href:site.contact.phone ? 'tel:'+site.contact.phone.replace(/[^+\d]/g,'') : '',paths:ICONS.phone},
+        {key:'email',title:site.contact.email,titlePath:'contact.email',href:site.contact.email ? 'mailto:'+site.contact.email : '',paths:ICONS.mail}
+      ].filter(row => row.title && (row.info || row.href)).map(row => {
+        const iconPath='homeDesign.contactIcon'+row.key[0].toUpperCase()+row.key.slice(1),icon=cmsGet(site,iconPath)||'';
+        return {...row,action:!row.info,mobileHours:row.key==='line'?t(site.contact.hours):'',iconPath,icon:assetURL(icon),hasIcon:!!icon,className:'cm-contact-method cm-contact-'+row.key+(icon==='assets/brand/'+row.key+'-icon.svg'?' cm-icon-monochrome':'')};
+      }),
+      contactChatPaths:ICONS.chat, contactShieldPaths:ICONS.shield,
+      contactFormIcon:assetURL(homeDesign.contactIconForm || ''),
+      contactReassuranceIcon:assetURL(homeDesign.contactIconReassurance || ''),
+      contactNamePlaceholder:isHome ? cmsText('homeDesign.contactNamePlaceholder') : '',
+      contactContactPlaceholder:isHome ? cmsText('homeDesign.contactContactPlaceholder') : '',
+      contactDetailsPlaceholder:isHome ? cmsText('homeDesign.contactDetailsPlaceholder') : '',
       footerAdvisorColumns: media.photo ? 'auto minmax(0,1fr)' : 'minmax(0,1fr)',
       insLogos: (() => {
         const sec = (site.sections || []).find(x => x.type === 'insurers');
@@ -2510,6 +2529,8 @@ class Component extends DCLogic {
         });
       })(),
       sections: sections,
+      homeLicenceSections: isHome ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
+      licenceFilePaths: ICONS.file,
       sectionGroups: sections.reduce((groups, section) => {
         const cluster = isHome && ['about','review','how'].includes(section.id);
         const last = groups[groups.length - 1];
@@ -2520,6 +2541,7 @@ class Component extends DCLogic {
       brandLogoAlt: [t(site.brand.name), t(site.brand.role)].filter(Boolean).join(' '),
       brandWordmarkLogo: assetURL(t(media.headerLogo)),
       footerBrandLogo: assetURL(t(media.footerLogo)),
+      footerLogoPath:'brand.media.footerLogo.'+lk,
       hasHeaderLogo: !!t(media.headerLogo), hasFooterLogo: !!t(media.footerLogo),
       brandMarkLogo: assetURL(media.mark),
       brandInitial: site.brand.initial,
@@ -2546,12 +2568,20 @@ class Component extends DCLogic {
       showPrivacyAnchor: showPrivacyAnchor,
       showFooterPrivacyNav: showPrivacyAnchor,
       showFooter: F.show, footTagline: t(F.tagline), footLegal: t(F.legal),
+      footerStyle:'--footer-columns:'+Math.max(1,Math.min(4,Number(F.columns)||4))+';--footer-tablet-columns:'+Math.max(1,Math.min(2,Number(F.columns)||2))+(F.backgroundArt?';--footer-art:url("'+assetURL(F.backgroundArt)+'")':''),
+      footerCopy:Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Footer design' && field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)])),
+      footerIcons:Object.fromEntries(['licence','nav','contact','line','facebook','hours'].map(key=>{
+        const path='footer.icon'+key[0].toUpperCase()+key.slice(1),image=cmsGet(site,path)||'';
+        return [key,{path,image:assetURL(image),className:'cm-footer-icon'+(image==='assets/brand/'+key+'-icon.svg'?' cm-icon-monochrome':''),paths:ICONS[{licence:'shield',nav:'file',contact:'chat',line:'chat',facebook:'users',hours:'clock'}[key]]}];
+      })),
       footerAiaLogo: assetURL((licences.life || {}).logo), footerAiaAlt: (licences.life || {}).logoAlt || '',
       footerSrikrungLogo: assetURL((licences.nonLife || {}).logo), footerSrikrungAlt: (licences.nonLife || {}).logoAlt || '',
       hasLifeLicence: !!licenceText('life'), hasNonLifeLicence: !!licenceText('nonLife'),
       hasLifeLogo: !!(licences.life || {}).logo, hasNonLifeLogo: !!(licences.nonLife || {}).logo,
       footerLicenceHeading: cmsText('footer.licenceHeading'), footerNavHeading: cmsText('footer.navHeading'), footerContactHeading: cmsText('footer.contactHeading'),
       footerLifeLicence: licenceText('life'), footerNonLifeLicence: licenceText('nonLife'),
+      footerLifeLabel:t(licences.life?.label),footerLifeNumber:licences.life?.number||'',
+      footerNonLifeLabel:t(licences.nonLife?.label),footerNonLifeNumber:licences.nonLife?.number||'',
       lifeLicenceColumns: (licences.life || {}).logo ? '58px minmax(0,1fr)' : 'minmax(0,1fr)',
       nonLifeLicenceColumns: (licences.nonLife || {}).logo ? '58px minmax(0,1fr)' : 'minmax(0,1fr)',
       footerOicHref: licences.verifyUrl || '', hasVerifyLink: !!licences.verifyUrl,
@@ -2587,6 +2617,10 @@ class Component extends DCLogic {
 
       fName: f.name, fContact: f.contact, fTopic: f.topic, summary: summary,
       fQType: f.qtype, fCoverage: f.coverage, fConsent: !!f.consent,
+      contactCoverageOpen: !isHome || !!f.coverage,
+      contactInvalid:!!S.leadError && !String(f.contact || '').trim(),
+      consentInvalid:!!S.leadError && !!String(f.contact || '').trim() && !f.consent,
+      contactErrorId:S.leadError ? 'contact-form-error' : '',
       qtypeOpts: [{ value: '', label: cmsText('formOptions.topicPrompt'), cmsPath: 'formOptions.topicPrompt' }].concat(Object.keys(QUERY).map(k => ({ value: k, label: QUERY[k], cmsPath: 'formOptions.query.' + k }))),
       coverageOpts: [{ value: '', label: cmsText('formOptions.coveragePrompt'), cmsPath: 'formOptions.coveragePrompt' }].concat(Object.keys(COVER).map(k => ({ value: k, label: COVER[k], cmsPath: 'formOptions.coverage.' + k }))),
       onQType: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { qtype: v }), sent: false, leadError: '' })); },

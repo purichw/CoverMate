@@ -81,6 +81,16 @@ try {
   await edit('publicCopy.calcSpending.en', '');
   await openGroup('Consultation form labels');
   await edit('publicCopy.contactTitle.en', 'Contact our team');
+  await openGroup('Home contact');
+  await edit('homeDesign.contactFormHeading.en', 'Ask our team');
+  await edit('homeDesign.contactNamePlaceholder.en', 'Your preferred name');
+  assert.equal(await page.locator('.cm-contact-form-heading h3').innerText(), 'Ask our team');
+  assert.equal(await page.locator('#talk input[name="name"]').getAttribute('placeholder'), 'Your preferred name');
+  await openGroup('Footer design');
+  await edit('footer.statement.en', 'Owner footer statement');
+  await edit('footer.iconLine', 'assets/brand/covermate-mark.png');
+  assert.equal(await page.locator('.cm-footer-statement').innerText(), 'Owner footer statement');
+  assert.equal(await page.locator('.cm-footer-line img').evaluate(el=>getComputedStyle(el).filter), 'none', 'Custom images retain original colors');
   await openGroup('Business metadata');
   await edit('seo.areaServed', 'Owner service region');
   await edit('seo.motorServiceName.en', 'Owner motor advisory');
@@ -90,6 +100,11 @@ try {
   await page.locator('aside').filter({ hasText: 'Admin portal' }).screenshot({ path: path.join(output, 'admin-copy-controls.png'), timeout: 60000 });
   await openGroup('Licences');
   await edit('licences.life.label.en', 'Licensed life adviser');
+  await openGroup('Home licences');
+  await edit('homeDesign.licenceTitle.en', 'Our regulated advisory roles');
+  await edit('homeDesign.licenceBackground', '');
+  assert.equal(await page.locator('#home-licence-title').innerText(), 'Our regulated advisory roles');
+  assert.equal(await page.locator('#licences').evaluate(el => getComputedStyle(el, '::before').backgroundImage), 'none', 'Cleared artwork has no fallback');
   await page.getByRole('button', { name: 'Edit Thai content' }).click();
   await openGroup('Licences');
   await page.locator('[data-cms-field="licences.life.number"]').scrollIntoViewIfNeeded();
@@ -170,7 +185,7 @@ try {
       assert.equal(await page.locator('footer [data-noedit]').filter({ hasText: '9000000001' }).count() > 0, true);
     } else {
       await page.locator('footer').scrollIntoViewIfNeeded();
-      await page.locator('footer summary').first().click();
+      assert.equal(await page.locator('footer summary').count(),0,'Footer details stay expanded on mobile');
       assert.match(await page.locator('footer').innerText(), /9000000001/);
     }
     await page.waitForTimeout(700);
@@ -190,11 +205,12 @@ try {
   live.config.licences.nonLife.logo = '';
   await page.goto(baseUrl + '/');
   await page.getByRole('link', { name: 'Switch to English' }).click();
-  await page.locator('.hm-contact-more > summary').click();
+  await page.locator('.cm-contact-form-heading').waitFor({state:'visible'});
+  assert.equal(await page.locator('details.hm-contact-more').count(), 0, 'Contact channels are permanently expanded');
   assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), '');
-  assert.equal(await page.locator('[data-cms-copy="publicCopy.contactTitle"]').innerText(), 'Contact our team');
+  assert.equal(await page.locator('[data-cms-copy="homeDesign.contactFormHeading"]').innerText(), 'Ask our team');
   assert.equal(await page.locator('a[href*="line.me"],a[href*="facebook.com"]').count(), 0);
-  assert.equal(await page.locator('header img,footer img').count(), 0);
+  assert.equal(await page.locator('header img,.cm-footer-logo,.cm-footer-provider img').count(), 0);
   assert.match(await page.locator('footer').innerText(), /Licences|Go to/);
   await page.goto(baseUrl + '/?lang=en#life-focus');
   await page.locator('#life h1').waitFor();

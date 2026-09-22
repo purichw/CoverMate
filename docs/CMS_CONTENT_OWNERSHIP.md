@@ -1,11 +1,17 @@
 # CMS Content Ownership
 
-Updated: 2026-09-21. Code schema: version 5; deployed state is in HANDOFF.md. Version 3 adds
+Updated: 2026-09-22. Code schema: version 8; deployed state is in HANDOFF.md. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
 Version 4 consolidates the former Guides into FAQ. Admin FAQ owns the question,
 answer, optional topic and reading time in both languages. The old section is
 retained only as `cmsArchives.guides` for recovery, never as a public fallback.
 Version 5 reconciles section/Admin field names and legacy navigation labels.
+Version 6 adds the Home licence section's presentation fields without moving
+or rewriting its existing insurer card data. The section renders before Footer;
+its heading/eyebrow/statement/background are under Brand & contact > Home licences.
+Versions 7/8 add Home contact and Footer design presentation fields. Their
+one-time seeds preserve existing channel values, section order, owner copy and
+deliberate blanks. No production publish is implied by these source migrations.
 The whole-site follow-up adds canonical Motor/inline ownership, calculator
 data controls, and the image crop/upload workflow. See [audit](CMS_SITE_AUDIT.md)
 and [media operations](CMS_MEDIA.md) for scope and hosted verification limits.
@@ -31,8 +37,11 @@ absent. Firestore content wins, including deliberate blanks and empty arrays.
 | Home tier illustrations | `sections.@tiers.items.@id.illustration`; same row's Admin editor |
 | FAQ and former reading items | `sections.@faq.items.@id.{th,en}.{q,a,label,meta}`; FAQ row editor |
 | Home quote/artwork and disclosure labels | `homeDesign.*`, Brand & contact > Home design |
+| Home final licence section presentation | `homeDesign.licenceEyebrow/Title/Statement/Background`, Brand & contact > Home licences; existing insurer cards retain their owners |
 | Featured tiers, comparison axes and task links | Stable IDs in `homeDesign`, Home composition controls |
 | Footer headings/privacy link | `footer.licenceHeading/navHeading/contactHeading/privacyLabel` |
+| Footer helper/closing copy, icons and art | `footer.licenceHelper/navHelper/contactHelper/statement/categoryLine`, `footer.icon*`, `footer.backgroundArt`; Brand & contact > Footer design |
+| Home Contact form heading/helpers/placeholders/icons/art | `homeDesign.contact*`; Brand & contact > Home contact (channel heading retains its existing Home design field) |
 | Shared headings, consent, submission feedback | `ui.*` |
 | Social image/description | `seo.image/imageAlt` |
 | Section copy and emergency numbers | Section editor and canonical inline paths |

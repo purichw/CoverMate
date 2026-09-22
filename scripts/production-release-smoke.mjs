@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
+import sharp from 'sharp';
+import { CMS_CONTENT_VERSION } from '../covermate-contract.js';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 
 // Read-only production verification: no sign-in, enquiries or CMS writes.
@@ -34,11 +36,21 @@ try {
     }));
     assert.equal(metadata.canonical, origin + path + suffix);
     assert.equal(metadata.language, lang === 'th' ? 'th-TH' : 'en');
-    assert.equal(metadata.schema, 5);
+    assert.equal(metadata.schema, CMS_CONTENT_VERSION);
     assert.equal(metadata.alternates.length, 3);
     assert.equal(metadata.retiredGuides, false);
     assert.equal(metadata.ownerChrome, false);
     assert.ok(metadata.faq >= 9);
+    assert.equal(await page.locator('footer.cm-footer').count(), 1);
+    assert.equal(await page.locator('footer details').count(), 0);
+    if (path === '/') {
+      assert.equal(await page.locator('.cm-contact-info').count(), 1);
+      assert.equal(await page.locator('#talk form').count(), 1);
+      assert.equal(await page.locator('#licences').count(), 1);
+      assert.equal(await page.locator('#insurers .hm-relationship').count(), 0);
+      assert.equal(await page.locator('a[href^="/motor"]').count(), 0);
+      assert.ok(await page.locator('#licences').evaluate(el => el.parentElement.lastElementChild === el));
+    }
     const widths = path === '/' ? [390, 820, 1440] : [390, 1440];
     for (const width of widths) {
       await page.setViewportSize({ width, height: width === 820 ? 1180 : width === 390 ? 844 : 900 });
@@ -54,13 +66,22 @@ try {
         const file = `${out}/prod-${lang}-${width}.png`;
         await page.screenshot({ path: file, fullPage: true });
         report.captures.push({ path, lang, file, ...geometry, personallyInspected: false });
+        if (lang === 'th' && [390,1440].includes(width)) {
+          await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+          const full = await page.screenshot({ fullPage: true });
+          const size = await sharp(full).metadata();
+          for (const [name, selector] of [['contact','#talk'],['licences','#licences'],['footer','footer']]) {
+            const box = await page.locator(selector).evaluate(el => ({ top: Math.max(0,Math.floor(el.getBoundingClientRect().top + scrollY) - 20), height: Math.ceil(el.getBoundingClientRect().height) + 40 }));
+            await sharp(full).extract({ left: 0, top: box.top, width, height: Math.min(box.height,size.height-box.top) }).png().toFile(`${out}/prod-${name}-${width}.png`);
+          }
+        }
       }
     }
     assert.deepEqual(errors, []);
     report.routes.push({ path, lang, status: response.status(), ...metadata });
     await page.close();
   }
-  for (const path of ['/covermate-contract.js', '/covermate-seo.mjs', '/covermate-public.mjs', '/admin/media-editor.js', '/assets/brand/home-hero-background-v2.webp', '/assets/brand/home-tier-1-v1.webp', '/assets/brand/home-tier-2-plus-v1.webp', '/assets/brand/home-tier-3-plus-v1.webp']) {
+  for (const path of ['/covermate-contract.js', '/covermate-seo.mjs', '/covermate-public.mjs', '/admin/media-editor.js', '/assets/brand/home-hero-background-v2.webp', '/assets/brand/home-tier-1-v1.webp', '/assets/brand/home-tier-2-plus-v1.webp', '/assets/brand/home-tier-3-plus-v1.webp', '/assets/brand/line-icon.svg', '/assets/brand/facebook-icon.svg']) {
     const response = await fetch(origin + path);
     assert.equal(response.status, 200, path);
     const bytes = Buffer.from(await response.arrayBuffer());
@@ -87,7 +108,7 @@ try {
   assert.equal((sitemap.match(/<loc>/g) || []).length, 4);
   assert.ok(!sitemap.includes('covermate.vercel.app'));
   report.result = 'PASS';
-  console.log('PASS production: Home/Motor TH/EN, CMS v5, responsive assets, exact served files, private noindex, upload auth, redirects and sitemap. No writes.');
+  console.log(`PASS production: Home/Motor TH/EN, CMS v${CMS_CONTENT_VERSION}, Contact/Footer/licences, responsive assets, exact served files, private noindex, upload auth, redirects and sitemap. No writes.`);
 } finally {
   await browser.close();
   fs.writeFileSync(out + '/production-report.json', JSON.stringify(report, null, 2));

@@ -27,9 +27,6 @@
 
 <script src="14db2649-8e0c-4b21-980d-f8e6e882d265"></script>
 <style id="covermate-template-cloak">html,body{min-height:100%;background:#f5ead8}x-dc{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-footer [data-cm-footer-mobile]{display:none!important}
-@media (max-width: 980px){footer [data-cm-footer-grid]{grid-template-columns:repeat(var(--footer-tablet-columns,2),minmax(0,1fr))!important}}
-@media (max-width: 640px){footer [data-cm-footer-grid]{display:none!important}footer [data-cm-footer-mobile]{display:flex!important;padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}footer [data-cm-footer-mobile] summary::-webkit-details-marker{display:none}footer [data-cm-footer-mobile] details[open] .om-footer-chev{transform:rotate(180deg)}}
 .om-cms-field{display:flex;flex-direction:column;gap:6px;min-width:0;color:var(--color-text);font-size:13px}
 .om-cms-field>span{font-size:12px;font-weight:700;color:var(--color-neutral-700)}
 .om-cms-field input,.om-cms-field textarea,.om-cms-field select{width:100%;box-sizing:border-box;font:inherit;line-height:1.5;padding:10px 12px;border:1px solid var(--color-neutral-300);border-radius:8px;background:var(--color-bg);color:var(--color-text)}
@@ -1597,18 +1594,53 @@ textarea.input { min-height: 90px; resize: vertical; }
 
   <!-- ─── CONTACT ─── -->
   <sc-if value="{{ s.isContact }}" hint-placeholder-val="{{ false }}">
-    <section id="{{ s.id }}" data-screen-label="Contact" style="--contact-ink:{{ s.fg }};--contact-muted:{{ s.muted }};--contact-link:{{ s.hl }};scroll-margin-top:clamp(86px,9vw,124px);position:relative;overflow:hidden;background:{{ s.bg }};color:{{ s.fg }}">
+    <section id="{{ s.id }}" data-screen-label="Contact" style="{{ s.contactStyle }}">
       <div style="position:absolute;bottom:-16vw;right:-10vw;width:40vw;height:40vw;min-width:280px;min-height:280px;border-radius:999px;background:{{ s.card }};opacity:.5;pointer-events:none"></div>
       <div style="position:relative;max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(28px,4vw,64px);align-items:start">
 
-        <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
+        <sc-if value="{{ isHome }}">
+          <div class="cm-contact-info">
+            <div class="cm-contact-intro">
+              <p class="cm-contact-kicker" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p>
+              <h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2>
+              <p data-content-path="{{ s.copy.body }}">{{ s.body }}</p>
+            </div>
+            <div class="cm-contact-methods">
+              <h3 data-cms-copy="homeDesign.contactChannelsLabel">{{ homeCopy.contactChannelsLabel }}</h3>
+              <sc-for list="{{ homeContactMethods }}" as="method">
+                <div class="{{ method.className }}">
+                  <span class="cm-contact-icon" aria-hidden="true">
+                    <sc-if value="{{ method.hasIcon }}"><img sc-camel-src="{{ method.icon }}" alt="" data-cms-image="{{ method.iconPath }}"></sc-if>
+                    <sc-if value="{{ !method.hasIcon }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ method.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if>
+                  </span>
+                  <div class="cm-contact-method-copy">
+                    <sc-if value="{{ method.label }}"><span class="cm-contact-label" data-cms-copy="{{ method.labelPath }}">{{ method.label }}</span></sc-if>
+                    <sc-if value="{{ method.action }}"><a href="{{ method.href }}" data-cms-copy="{{ method.titlePath }}">{{ method.title }}</a></sc-if>
+                    <sc-if value="{{ method.info }}"><strong data-cms-copy="{{ method.titlePath }}">{{ method.title }}</strong></sc-if>
+                    <sc-if value="{{ method.helper }}"><span class="cm-contact-helper" data-cms-copy="{{ method.helperPath }}">{{ method.helper }}</span></sc-if>
+                    <sc-if value="{{ method.mobileHours }}"><span class="cm-contact-mobile-hours" data-cms-copy="contact.hours">{{ method.mobileHours }}</span></sc-if>
+                  </div>
+                  <sc-if value="{{ method.action }}"><svg class="cm-contact-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></sc-if>
+                </div>
+              </sc-for>
+              <sc-if value="{{ homeCopy.contactReassurance }}"><div class="cm-contact-reassurance">
+                <span class="cm-contact-icon" aria-hidden="true">
+                  <sc-if value="{{ contactReassuranceIcon }}"><img sc-camel-src="{{ contactReassuranceIcon }}" alt=""></sc-if>
+                  <sc-if value="{{ !contactReassuranceIcon }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ contactShieldPaths }}" as="path"><path d="{{ path }}"></path></sc-for><path d="m9 12 2 2 4-4"></path></svg></sc-if>
+                </span>
+                <p data-cms-copy="homeDesign.contactReassurance">{{ homeCopy.contactReassurance }}</p>
+              </div></sc-if>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notHome }}"><div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
           <div style="display:flex;flex-direction:column;gap:var(--space-2)">
             <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
             <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(28px,4vw,48px);line-height:1.14;color:{{ s.fg }};white-space:nowrap;text-wrap:nowrap;max-width:100%" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
             <sc-if value="{{ notHome }}"><p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:42ch;text-wrap:pretty" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p></sc-if>
           </div>
 
-          <details class="hm-contact-more" open="{{ showContactChannels }}"><summary data-cms-copy="homeDesign.contactChannelsLabel">{{ homeCopy.contactChannelsLabel }}</summary>
+          <div class="hm-contact-more"><h3 data-cms-copy="homeDesign.contactChannelsLabel">{{ homeCopy.contactChannelsLabel }}</h3>
           <sc-if value="{{ isHome }}"><p style="margin:0 0 12px;font-size:14px;line-height:1.6" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p><p data-cms-copy="publicCopy.contactTitle">{{ publicCopy.contactTitle }}</p></sc-if>
           <div class="hm-contact-line" style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4);border-radius:var(--radius-lg);background:{{ s.card }}">
             <sc-if value="{{ hasLineQr }}"><img sc-camel-src="{{ lineQr }}" alt="LINE QR" style="width:104px;height:104px;object-fit:contain;border-radius:14px"></sc-if>
@@ -1644,20 +1676,27 @@ textarea.input { min-height: 90px; resize: vertical; }
               <span data-cms-copy="contact.area">{{ area }}</span>
             </div>
           </div>
-          </details>
-        </div>
+          </div>
+        </div></sc-if>
 
         <form sc-camel-on-submit="{{ submit }}" aria-busy="{{ leadPending }}" data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(22px,2.6vw,34px);box-shadow:var(--shadow-lg);min-width:0">
+          <sc-if value="{{ isHome }}"><div class="cm-contact-form-heading">
+            <span class="cm-contact-icon" aria-hidden="true">
+              <sc-if value="{{ contactFormIcon }}"><img sc-camel-src="{{ contactFormIcon }}" alt=""></sc-if>
+              <sc-if value="{{ !contactFormIcon }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ contactChatPaths }}" as="path"><path d="{{ path }}"></path></sc-for><path d="M8 11h.01M12 11h.01M16 11h.01"></path></svg></sc-if>
+            </span>
+            <div><h3 data-cms-copy="homeDesign.contactFormHeading">{{ homeCopy.contactFormHeading }}</h3><p data-cms-copy="homeDesign.contactFormHelper">{{ homeCopy.contactFormHelper }}</p></div>
+          </div></sc-if>
           <sc-if value="{{ notHome }}"><div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3" data-cms-copy="publicCopy.contactTitle">
             <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactTitle }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactTitle }}</sc-if>
           </div></sc-if>
           <label style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactName"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactName }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactName }}</sc-if></span>
-            <input name="name" autocomplete="name" value="{{ fName }}" sc-camel-on-change="{{ onName }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+            <input name="name" autocomplete="name" placeholder="{{ contactNamePlaceholder }}" value="{{ fName }}" sc-camel-on-change="{{ onName }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
           </label>
           <label style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactContact"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactContact }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactContact }}</sc-if></span>
-            <input name="contact" required aria-required="true" autocomplete="tel" value="{{ fContact }}" sc-camel-on-change="{{ onContact }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+            <input name="contact" required aria-required="true" aria-invalid="{{ contactInvalid }}" aria-describedby="{{ contactErrorId }}" autocomplete="tel" placeholder="{{ contactContactPlaceholder }}" value="{{ fContact }}" sc-camel-on-change="{{ onContact }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
           </label>
           <div class="hm-enquiry-type" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:var(--space-3)">
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
@@ -1672,7 +1711,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               </div>
             </label>
           </div>
-          <details class="hm-form-details" open="{{ notHome }}"><summary data-cms-copy="homeDesign.optionalLabel">{{ homeCopy.optionalLabel }}</summary>
+          <details class="hm-form-details" open="{{ contactCoverageOpen }}"><summary data-cms-copy="publicCopy.contactCoverage">{{ publicCopy.contactCoverage }}</summary>
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
               <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactCoverage"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactCoverage }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactCoverage }}</sc-if></span>
               <div style="position:relative;display:flex">
@@ -1684,15 +1723,15 @@ textarea.input { min-height: 90px; resize: vertical; }
                 <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
               </div>
             </label>
-          <label style="display:flex;flex-direction:column;gap:5px">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactDetails"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactDetails }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactDetails }}</sc-if></span>
-            <textarea name="topic" rows="3" value="{{ fTopic }}" sc-camel-on-change="{{ onTopic }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:var(--radius-md);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}"></textarea>
-          </label>
           </details>
+          <label class="cm-contact-details" style="display:flex;flex-direction:column;gap:5px">
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactDetails"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactDetails }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactDetails }}</sc-if></span>
+            <textarea name="topic" rows="3" placeholder="{{ contactDetailsPlaceholder }}" value="{{ fTopic }}" sc-camel-on-change="{{ onTopic }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:var(--radius-md);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}"></textarea>
+          </label>
           <sc-if value="{{ canShareCalculator }}"><label data-noedit class="hm-share-calculator"><input type="checkbox" checked="{{ shareCalculator }}" sc-camel-on-change="{{ onShareCalculator }}"><span data-cms-copy="homeDesign.includeCalculator">{{ homeCopy.includeCalculator }}</span></label></sc-if>
           <div data-noedit="" data-consultation-summary style="font-size:14px;line-height:1.55;color:var(--color-neutral-700);border-radius:var(--radius-md);text-wrap:pretty">{{ summary }}</div>
           <label data-noedit="" style="display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;padding:var(--space-3);border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-surface) 78%,var(--color-bg));border:1.5px solid var(--color-neutral-300);cursor:pointer">
-            <input type="checkbox" checked="{{ fConsent }}" sc-camel-on-change="{{ onConsent }}" aria-required="true" style="width:20px;height:20px;margin:1px 0 0;accent-color:{{ A_base }};cursor:pointer">
+            <input type="checkbox" checked="{{ fConsent }}" sc-camel-on-change="{{ onConsent }}" aria-required="true" aria-invalid="{{ consentInvalid }}" aria-describedby="{{ contactErrorId }}" style="width:20px;height:20px;margin:1px 0 0;accent-color:{{ A_base }};cursor:pointer">
             <span style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.5;color:var(--color-neutral-800)">
               <span><span data-cms-copy="ui.consultationConsent">{{ consultationConsent }}</span></span>
               <sc-if value="{{ showPrivacyAnchor }}" hint-placeholder-val="{{ true }}">
@@ -1713,7 +1752,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             </div>
           </sc-if>
           <sc-if value="{{ hasLeadError }}" hint-placeholder-val="{{ false }}">
-            <div role="alert" tabindex="-1" style="display:flex;align-items:center;gap:11px;min-height:54px;padding:0 var(--space-4);border-radius:var(--radius-md);background:var(--color-accent-100);color:var(--color-accent-800);font-size:14px;font-weight:700;line-height:1.45;animation:omRise .3s ease both">
+            <div id="contact-form-error" role="alert" tabindex="-1" style="display:flex;align-items:center;gap:11px;min-height:54px;padding:0 var(--space-4);border-radius:var(--radius-md);background:var(--color-accent-100);color:var(--color-accent-800);font-size:14px;font-weight:700;line-height:1.45;animation:omRise .3s ease both">
               <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>
               {{ leadError }}
             </div>
@@ -1724,7 +1763,9 @@ textarea.input { min-height: 90px; resize: vertical; }
               <span data-noedit=""><span data-cms-copy="ui.submitSuccess">{{ submitSuccessText }}</span></span>
             </div>
           </sc-if>
-          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-align:center" data-content-path="{{ s.copy.note }}"><span data-content-path="{{ s.copy.note }}">{{ s.note }}</span></div>
+          <div class="cm-contact-alternative" style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-align:center">
+            <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" data-content-path="{{ s.copy.note }}">{{ s.note }}</a></sc-if>
+          </div>
         </form>
       </div>
     </section>
@@ -1732,129 +1773,81 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 </sc-for>
 </div></sc-for>
+<sc-for list="{{ homeLicenceSections }}" as="s">
+  <section id="licences" class="hm-band hm-licence-band" data-home-section="licences" style="{{ s.homeLicenceStyle }}" aria-labelledby="home-licence-title">
+    <div class="hm-wrap">
+      <div class="hm-licence-heading">
+        <div class="hm-section-copy">
+          <sc-if value="{{ homeCopy.licenceEyebrow }}"><p class="hm-eyebrow" data-cms-copy="homeDesign.licenceEyebrow">{{ homeCopy.licenceEyebrow }}</p></sc-if>
+          <h2 id="home-licence-title" data-cms-copy="homeDesign.licenceTitle">{{ homeCopy.licenceTitle }}</h2>
+          <sc-if value="{{ s.hasBody }}"><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></sc-if>
+        </div>
+        <sc-if value="{{ homeCopy.licenceStatement }}"><div class="hm-licence-statement"><p data-cms-copy="homeDesign.licenceStatement">{{ homeCopy.licenceStatement }}</p><span class="hm-statement-stroke" aria-hidden="true"></span></div></sc-if>
+      </div>
+      <div class="hm-licence-grid">
+        <sc-for list="{{ s.cards }}" as="cd">
+          <article class="hm-licence-card" data-content-id="{{ cd.key }}">
+            <sc-if value="{{ cd.hasLogo }}"><div class="hm-licence-logo"><img sc-camel-src="{{ cd.logo }}" alt="{{ cd.logoAlt }}" width="136" height="160" loading="lazy"></div></sc-if>
+            <div class="hm-licence-copy">
+              <p class="hm-eyebrow" data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p>
+              <h3 data-content-path="{{ cd.copy.title }}">{{ cd.title }}</h3>
+              <div class="hm-licence-description"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ licenceFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg><p data-content-path="{{ cd.copy.body }}">{{ cd.body }}</p></div>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+      <sc-if value="{{ homeCopy.logoNotice }}"><p class="hm-licence-notice hm-help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span data-cms-copy="homeDesign.logoNotice">{{ homeCopy.logoNotice }}</span></p></sc-if>
+    </div>
+  </section>
+</sc-for>
 </main>
 <sc-if value="{{ showFooter }}" hint-placeholder-val="{{ true }}">
-<footer style="background:var(--color-neutral-900);color:var(--color-neutral-300)">
-  <div style="max-width:min(var(--wrap),1500px);margin:0 auto;padding:clamp(34px,4vw,54px) var(--gut) clamp(22px,2.8vw,34px);display:flex;flex-direction:column;gap:clamp(20px,2.4vw,30px)">
-    <div data-cm-footer-grid="true" style="{{ footerGridStyle }};display:grid;grid-template-columns:repeat(var(--footer-columns,4),minmax(0,1fr));gap:clamp(22px,3vw,42px);align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
-        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0">
-          <sc-if value="{{ hasFooterLogo }}"><img sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" style="width:min(280px,100%);height:auto;display:block;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(245,234,216,.22))"></sc-if>
-        </div>
-        <div style="font-size:15.5px;line-height:1.42;max-width:30ch;color:var(--color-neutral-300);font-weight:650;text-wrap:pretty"><span data-cms-copy="footer.tagline">{{ footTagline }}</span></div>
-        <div style="height:1px;background:var(--color-neutral-800);width:100%;max-width:310px"></div>
-        <div style="display:grid;grid-template-columns:{{ footerAdvisorColumns }};gap:var(--space-3);align-items:center;max-width:320px">
-          <sc-if value="{{ hasAdvisorPhoto }}"><img sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" style="width:48px;height:48px;border-radius:999px;object-fit:cover"></sc-if>
-          <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
-            <span style="font-size:15.5px;font-weight:900;color:var(--color-neutral-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span data-cms-copy="brand.fullName">{{ brandFull }}</span></span>
-            <span style="font-size:13px;line-height:1.32;color:var(--color-neutral-500);font-weight:600;text-wrap:pretty"><span data-cms-copy="brand.credential">{{ brandCred }}</span></span>
-          </span>
+<footer class="cm-footer" style="{{ footerStyle }}">
+  <div class="cm-footer-inner">
+    <div class="cm-footer-grid" data-cm-footer-grid="true">
+      <div class="cm-footer-brand">
+        <sc-if value="{{ hasFooterLogo }}"><img class="cm-footer-logo" sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" data-cms-image="{{ footerLogoPath }}"></sc-if>
+        <p class="cm-footer-tagline" data-cms-copy="footer.tagline">{{ footTagline }}</p>
+        <div class="cm-footer-advisor">
+          <sc-if value="{{ hasAdvisorPhoto }}"><img sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}"></sc-if>
+          <div><p class="cm-footer-name" data-cms-copy="brand.fullName">{{ brandFull }}</p><p class="cm-footer-credential" data-cms-copy="brand.credential">{{ brandCred }}</p></div>
         </div>
       </div>
-
-      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
-        <div style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)"><span data-cms-copy="footer.licenceHeading">{{ footerLicenceHeading }}</span></div>
-        <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-          <sc-if value="{{ hasLifeLicence }}"><div style="display:grid;grid-template-columns:{{ lifeLicenceColumns }};gap:12px;align-items:center">
-            <sc-if value="{{ hasLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" style="width:46px;height:38px;object-fit:contain"></span></sc-if>
-            <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerLifeLicence }}</span>
+      <div class="cm-footer-licences">
+        <div class="cm-footer-heading"><span class="{{ footerIcons.licence.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.licence.image }}"><img sc-camel-src="{{ footerIcons.licence.image }}" alt="" data-cms-image="{{ footerIcons.licence.path }}"></sc-if><sc-if value="{{ !footerIcons.licence.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.licence.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.licenceHeading">{{ footerLicenceHeading }}</h3><p data-cms-copy="footer.licenceHelper">{{ footerCopy.licenceHelper }}</p></div></div>
+        <div class="cm-footer-licence-list">
+          <sc-if value="{{ hasLifeLicence }}"><div class="cm-footer-licence">
+            <sc-if value="{{ hasLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" data-cms-image="licences.life.logo"></span></sc-if>
+            <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerLifeLabel }}</span><span>{{ footerLifeNumber }}</span></span>
           </div></sc-if>
-          <sc-if value="{{ hasNonLifeLicence }}"><div style="display:grid;grid-template-columns:{{ nonLifeLicenceColumns }};gap:12px;align-items:center">
-            <sc-if value="{{ hasNonLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" style="width:48px;height:34px;object-fit:contain"></span></sc-if>
-            <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerNonLifeLicence }}</span>
+          <sc-if value="{{ hasNonLifeLicence }}"><div class="cm-footer-licence">
+            <sc-if value="{{ hasNonLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" data-cms-image="licences.nonLife.logo"></span></sc-if>
+            <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerNonLifeLabel }}</span><span>{{ footerNonLifeNumber }}</span></span>
           </div></sc-if>
         </div>
-        <sc-if value="{{ hasVerifyLink }}"><a href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:var(--color-neutral-300);font-size:13.5px;font-weight:800;text-decoration:underline;text-underline-offset:4px;line-height:1.3"><span data-cms-copy="licences.verifyLabel">{{ footerOicLabel }}</span></a></sc-if>
+        <sc-if value="{{ hasVerifyLink }}"><a class="cm-footer-verify" href="{{ footerOicHref }}" target="_blank" rel="noopener"><span data-cms-copy="licences.verifyLabel">{{ footerOicLabel }}</span><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"></path></svg></a></sc-if>
       </div>
-
-      <nav style="display:flex;flex-direction:column;gap:10px;min-width:0">
-        <div style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)"><span data-cms-copy="footer.navHeading">{{ footerNavHeading }}</span></div>
-        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
-          <a href="{{ n.href }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:700;text-decoration:none;padding:1px 0;transition:color .2s ease" style-hover="color:var(--color-neutral-100)"><span data-content-path="{{ n.copy }}">{{ n.label }}</span></a>
-        </sc-for>
-        <sc-if value="{{ showFooterPrivacyNav }}" hint-placeholder-val="{{ true }}">
-          <a href="#privacy" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:700;text-decoration:none;padding:1px 0;transition:color .2s ease" style-hover="color:var(--color-neutral-100)"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span></a>
-        </sc-if>
+      <nav class="cm-footer-nav" aria-label="{{ footerNavHeading }}">
+        <div class="cm-footer-heading"><span class="{{ footerIcons.nav.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.nav.image }}"><img sc-camel-src="{{ footerIcons.nav.image }}" alt="" data-cms-image="{{ footerIcons.nav.path }}"></sc-if><sc-if value="{{ !footerIcons.nav.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.nav.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.navHeading">{{ footerNavHeading }}</h3><p data-cms-copy="footer.navHelper">{{ footerCopy.navHelper }}</p></div></div>
+        <div class="cm-footer-links">
+          <sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-for>
+          <sc-if value="{{ showFooterPrivacyNav }}"><a href="#privacy"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+        </div>
       </nav>
-
-      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
-        <div style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)"><span data-cms-copy="footer.contactHeading">{{ footerContactHeading }}</span></div>
-        <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a></sc-if>
-        <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a></sc-if>
-        <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a></sc-if>
-        <sc-if value="{{ hasFacebook }}" hint-placeholder-val="{{ true }}">
-          <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">Facebook {{ facebookName }}</a>
-        </sc-if>
-        <div style="font-size:14px;line-height:1.28;color:var(--color-neutral-500);font-weight:650;margin-top:0"><span data-cms-copy="contact.hours">{{ hours }}</span></div>
+      <div class="cm-footer-contact">
+        <div class="cm-footer-heading"><span class="{{ footerIcons.contact.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.contact.image }}"><img sc-camel-src="{{ footerIcons.contact.image }}" alt="" data-cms-image="{{ footerIcons.contact.path }}"></sc-if><sc-if value="{{ !footerIcons.contact.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.contact.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.contactHeading">{{ footerContactHeading }}</h3><p data-cms-copy="footer.contactHelper">{{ footerCopy.contactHelper }}</p></div></div>
+        <div class="cm-footer-links">
+          <sc-if value="{{ hasLine }}"><a class="cm-footer-social cm-footer-line" href="{{ lineUrl }}"><span class="{{ footerIcons.line.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.line.image }}"><img sc-camel-src="{{ footerIcons.line.image }}" alt="" data-cms-image="{{ footerIcons.line.path }}"></sc-if><sc-if value="{{ !footerIcons.line.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.line.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span>LINE {{ lineId }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ hasFacebook }}"><a class="cm-footer-social cm-footer-facebook" href="{{ facebookUrl }}" target="_blank" rel="noopener"><span class="{{ footerIcons.facebook.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.facebook.image }}"><img sc-camel-src="{{ footerIcons.facebook.image }}" alt="" data-cms-image="{{ footerIcons.facebook.path }}"></sc-if><sc-if value="{{ !footerIcons.facebook.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.facebook.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span>Facebook {{ facebookName }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}"><span>{{ phone }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}"><span>{{ email }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+        </div>
+        <sc-if value="{{ hours }}"><div class="cm-footer-hours"><span class="{{ footerIcons.hours.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.hours.image }}"><img sc-camel-src="{{ footerIcons.hours.image }}" alt="" data-cms-image="{{ footerIcons.hours.path }}"></sc-if><sc-if value="{{ !footerIcons.hours.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.hours.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span data-cms-copy="contact.hours">{{ hours }}</span></div></sc-if>
       </div>
     </div>
-
-    <div data-cm-footer-mobile="true" style="display:none;flex-direction:column;gap:18px">
-      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
-        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0">
-          <sc-if value="{{ hasFooterLogo }}"><img sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" style="width:min(280px,100%);height:auto;display:block;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(245,234,216,.22))"></sc-if>
-        </div>
-        <div style="font-size:15.5px;line-height:1.42;max-width:30ch;color:var(--color-neutral-300);font-weight:650;text-wrap:pretty"><span data-cms-copy="footer.tagline">{{ footTagline }}</span></div>
-        <div style="height:1px;background:var(--color-neutral-800);width:100%"></div>
-        <div style="display:grid;grid-template-columns:{{ footerAdvisorColumns }};gap:var(--space-3);align-items:center;max-width:320px">
-          <sc-if value="{{ hasAdvisorPhoto }}"><img sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" style="width:48px;height:48px;border-radius:999px;object-fit:cover"></sc-if>
-          <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
-            <span style="font-size:15.5px;font-weight:900;color:var(--color-neutral-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span data-cms-copy="brand.fullName">{{ brandFull }}</span></span>
-            <span style="font-size:13px;line-height:1.32;color:var(--color-neutral-500);font-weight:600;text-wrap:pretty"><span data-cms-copy="brand.credential">{{ brandCred }}</span></span>
-          </span>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;border-top:1px solid var(--color-neutral-800);border-bottom:1px solid var(--color-neutral-800)">
-        <details>
-          <summary style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:0;cursor:pointer;color:var(--color-neutral-300)">
-            <span style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)"><span data-cms-copy="footer.licenceHeading">{{ footerLicenceHeading }}</span></span>
-            <svg class="om-footer-chev" sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:var(--color-neutral-400);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease;flex:0 0 auto"><path d="m6 9 6 6 6-6"></path></svg>
-          </summary>
-          <div style="padding:0 0 18px;display:flex;flex-direction:column;gap:var(--space-3)">
-            <div style="display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center">
-              <sc-if value="{{ hasLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" style="width:46px;height:38px;object-fit:contain"></span></sc-if>
-              <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerLifeLicence }}</span>
-            </div>
-            <div style="display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center">
-              <sc-if value="{{ hasNonLifeLogo }}"><span style="width:58px;height:46px;border-radius:9px;background:var(--color-neutral-100);display:grid;place-items:center;overflow:hidden"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" style="width:48px;height:34px;object-fit:contain"></span></sc-if>
-              <span data-noedit="true" style="font-size:14px;line-height:1.32;color:var(--color-neutral-300);font-weight:650">{{ footerNonLifeLicence }}</span>
-            </div>
-            <sc-if value="{{ hasVerifyLink }}"><a href="{{ footerOicHref }}" target="_blank" rel="noopener" style="align-self:flex-start;color:var(--color-neutral-300);font-size:13.5px;font-weight:800;text-decoration:underline;text-underline-offset:4px;line-height:1.3"><span data-cms-copy="licences.verifyLabel">{{ footerOicLabel }}</span></a></sc-if>
-          </div>
-        </details>
-
-        <details>
-          <summary style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:0;border-top:1px solid var(--color-neutral-800);cursor:pointer;color:var(--color-neutral-300)">
-            <span style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)"><span data-cms-copy="footer.navHeading">{{ footerNavHeading }}</span></span>
-            <svg class="om-footer-chev" sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:var(--color-neutral-400);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease;flex:0 0 auto"><path d="m6 9 6 6 6-6"></path></svg>
-          </summary>
-          <nav style="padding:0 0 18px;display:flex;flex-direction:column;gap:12px;min-width:0">
-            <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
-              <a href="{{ n.href }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:700;text-decoration:none;padding:1px 0;transition:color .2s ease" style-hover="color:var(--color-neutral-100)"><span data-content-path="{{ n.copy }}">{{ n.label }}</span></a>
-            </sc-for>
-            <sc-if value="{{ showFooterPrivacyNav }}" hint-placeholder-val="{{ true }}">
-              <a href="#privacy" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:700;text-decoration:none;padding:1px 0;transition:color .2s ease" style-hover="color:var(--color-neutral-100)"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span></a>
-            </sc-if>
-          </nav>
-        </details>
-
-        <details>
-          <summary style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:0;border-top:1px solid var(--color-neutral-800);cursor:pointer;color:var(--color-neutral-300)">
-            <span style="font-size:13px;font-weight:900;letter-spacing:.12em;color:var(--color-neutral-500)"><span data-cms-copy="footer.contactHeading">{{ footerContactHeading }}</span></span>
-            <svg class="om-footer-chev" sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:var(--color-neutral-400);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease;flex:0 0 auto"><path d="m6 9 6 6 6-6"></path></svg>
-          </summary>
-          <div style="padding:0 0 18px;display:flex;flex-direction:column;gap:12px;min-width:0">
-            <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">LINE {{ lineId }}</a></sc-if>
-            <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ phone }}</a></sc-if>
-            <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">{{ email }}</a></sc-if>
-            <sc-if value="{{ hasFacebook }}" hint-placeholder-val="{{ true }}">
-              <a href="{{ facebookUrl }}" target="_blank" rel="noopener" style="color:var(--color-neutral-300);font-size:15.5px;line-height:1.25;font-weight:750;text-decoration:none;word-break:break-word;transition:color .2s ease" style-hover="color:var(--color-neutral-100)">Facebook {{ facebookName }}</a>
-            </sc-if>
-            <div style="font-size:14px;line-height:1.28;color:var(--color-neutral-500);font-weight:650;margin-top:0"><span data-cms-copy="contact.hours">{{ hours }}</span></div>
-          </div>
-        </details>
-      </div>
+    <div class="cm-footer-bottom">
+      <p class="cm-footer-category" data-cms-copy="footer.categoryLine">{{ footerCopy.categoryLine }}</p>
+      <sc-if value="{{ footerCopy.statement }}"><p class="cm-footer-statement" data-cms-copy="footer.statement">{{ footerCopy.statement }}</p></sc-if>
     </div>
   </div>
 </footer>

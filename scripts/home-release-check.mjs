@@ -7,7 +7,7 @@ original.config.contact.email = 'preserve@example.test';
 const first = await planHomeRelease(original,fixture);
 assert.deepEqual(first.conflicts,[]);
 assert.equal(first.next.config.contact.email,'preserve@example.test');
-assert.equal(first.next.config.cmsContentVersion,5);
+assert.equal(first.next.config.cmsContentVersion,fixture.state.config.cmsContentVersion);
 const again = await planHomeRelease(first.next,fixture);
 assert.deepEqual(again.conflicts,[]);
 assert.equal(again.changed,false,'Release proposal is idempotent, including aliased copy');

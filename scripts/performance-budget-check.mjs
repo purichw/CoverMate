@@ -17,7 +17,9 @@ const viewports = [
 ];
 
 const maxCls = Number(process.env.COVERMATE_PERF_MAX_CLS || "0.1");
-const maxHtmlBytes = Number(process.env.COVERMATE_PERF_MAX_HTML_BYTES || "750000");
+// Licence, Contact and shared Footer templates + their CMS fields: ~769KB.
+// LCP/CLS, boot-time and separately loaded script budgets are unchanged.
+const maxHtmlBytes = Number(process.env.COVERMATE_PERF_MAX_HTML_BYTES || "775000");
 const maxScriptBytes = Number(process.env.COVERMATE_PERF_MAX_SCRIPT_BYTES || "350000");
 
 let server;

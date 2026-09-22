@@ -85,7 +85,7 @@ try {
   await page.getByRole('button', { name: /^Publish/ }).first().click();
   await page.getByRole('button', { name: 'Publish', exact: true }).last().click();
   await poll(async () => (await refs[0].get()).data()?.config?.brand?.media?.favicon === media.url);
-  assert.equal((await refs[0].get()).data().config.cmsContentVersion, 5);
+  assert.equal((await refs[0].get()).data().config.cmsContentVersion, fixture.state.config.cmsContentVersion);
   const publicContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await publicContext.route('**/*', route => route.continue({ headers: { ...route.request().headers(), ...(new URL(route.request().url()).origin === host ? vercelBypassHeaders() : {}) } }));
   const visitor = await publicContext.newPage();

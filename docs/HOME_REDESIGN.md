@@ -60,12 +60,13 @@ initial collapsed state, not a CSS height cap or a limit on future CMS content.
   collapse controls. All five classes/axes remain in the separate comparison.
   Its disclosure uses the CMS theme action color, white 18px bold text and a
   minimum 64px target, with native keyboard/touch expansion and visible focus.
-- Contact has two mobile field columns; original consent, contact rules,
-  optional fields and the separate renewal form remain functional.
+- Contact uses one mobile field column, two name/contact columns on desktop,
+  and retains the original consent, contact rules and separate renewal form.
 - FAQ stays a compact grid and now includes the four former reading items.
   There is no separate Guides section or Admin section. Fee explanations and
   privacy retain their disclosures; `#guides` aliases to `#faq`.
-- Footer has four proposed desktop columns and a small mobile accordion row.
+- Footer has four proposed desktop columns, two tablet columns and expanded
+  mobile groups, using the owner's September 22 Footer references.
   `footer.columns` remains an Admin value, not a forced runtime override.
 - Desktop body type is 16px; dense mobile introductory/supporting copy is 14px,
   tablet introductory copy is 15px, compact labels 12-14px, and inputs remain 16px. No viewport-scaled type or
@@ -183,8 +184,9 @@ the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
   public snapshot contains four known migrated overrides, not every future state.
 - Locale switches and published refresh preserve typed form state. Header/Footer
   retain existing ownership. Closing Panel keeps the current Editor route.
-- Home nav Motor links use `#motor` and stay in-page; the explicit Motor action
-  goes to `/motor`. The `insurers` DOM/CMS ID stays unchanged and old `#insurers`
+- Home nav Motor links use `#motor` and stay in-page. No public cross-page link
+  leads to `/motor`; that route remains available directly. The `insurers`
+  DOM/CMS ID stays unchanged and old `#insurers`
   URLs normalize to `#motor`. Legacy `#life` scrolls to `#cover`. Deep links open
   privacy/about/renewal/comparison disclosures before scrolling.
 - Same-page anchor clicks have one native smooth scroll in either direction;
@@ -197,15 +199,40 @@ the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
   authoritative; menus and owner modes still suppress the underlying bar.
   Root scroll padding reserves space for the sticky header and contact bar so
   browser-driven focus/scroll-into-view does not place controls behind them.
-- The redundant Motor link beside the Home tier heading is removed on every
-  viewport. The insurer-section entry into `/motor` remains available.
+- Both the Motor link beside the Home tier heading and the insurer-section
+  entry into `/motor` are removed on every viewport. Partial-coverage notes use
+  a pale surface and accent border without increasing font size (14px on
+  desktop/tablet, 12px on mobile); note text remains CMS-owned.
+
+## Licence Section
+
+Home licence/relationship details are the final main section before Footer,
+always expanded. The former insurer-band disclosure is removed. Card content,
+logos and visibility still belong to `sections.@insurers.cards`, and its intro
+still belongs to `sections.@insurers.{th,en}.body`. Hero/Footer licence summaries
+and Motor remain unchanged. The section heading, eyebrow, statement and 3:1
+background are editable under Brand & contact > Home licences (code schema v6).
+Desktop/tablet use two equal-height cards; mobile stacks them with contained logos.
 
 ## Forms and Safety
 
 Consultation still submits the original name/contact/qtype/coverage/topic,
 language, consent and summary contract. Name is optional, contact accepts LINE
-ID or phone. Optional details collapse on Home without losing their value.
+ID or phone. Details stay visible on all devices; coverage interest retains an
+optional disclosure which opens when a coverage is prefilled.
 Renewal is a separate disclosed form, not nested in consultation.
+Contact channels and business hours are always expanded, not a disclosure.
+Home text inputs/selects are 48px high with 16px text; the submit action is 52px
+and full-width within the form card. Desktop uses roughly 40/60 information/form
+columns; below 900px they stack. Mobile groups the contact methods into one
+surface. Actual contact data, consent and API remain unchanged. The latest
+handoff requires the original details field even though its mobile mock omits it.
+
+Contact and Footer presentation fields are in the shared schema v8, editable
+under Brand & contact > Home contact / Footer design. Backgrounds have 3:1
+crop slots and icons 1:1. Existing CMS logos and licence values remain canonical.
+No mock QR, motor-only introduction, response-time promise or artificial 500
+character limit is added. Local screenshots are under `uat-results/contact-redesign/`.
 
 Calculator financial values enter an enquiry only after a real calculator input
 change **and** an explicit include-estimate checkbox. Changing language, loading

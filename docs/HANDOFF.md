@@ -2,6 +2,108 @@
 
 Last updated: 2026-09-22
 
+## September 22 Release Candidate
+
+- Owner authorized push and production deployment after the Contact/Footer
+  review. The local-status notes below describe development evidence; promotion
+  must still wait for the exact commit's GitHub `verify` check and Vercel alias.
+- Release includes Contact, shared Footer, final licence section, compact review
+  cards, hidden workflow defaults, removed standalone Motor links and tier notes.
+  Schema v8 is a read-time presentation migration; do not publish CMS documents.
+- The unfinished inline-image overlay helpers are excluded from this release.
+  Their original working-tree source and unrelated `exports/` remain untouched.
+- Candidate preparation is isolated under `.tools/release-20260922`; only its
+  reviewed files/bundle are staged. Existing Admin image/crop controls remain.
+- Read-only production verification: `node scripts/production-release-smoke.mjs`.
+  Do not run hosted upload tests or submit real leads for this UI release.
+
+## Contact And Footer Redesign (Local, Not Deployed)
+
+- Implements the Contact redesign handoff and the owner's two new Footer
+  references. This supersedes the earlier compact-form dimensions below.
+  Home Contact has a sage botanical band, separate channel tiles on desktop,
+  grouped mobile channels, and one warm-white form. Controls are 48px with
+  16px text; the full-width submit action is 52px. Tablet reflows below 900px.
+- Details remain visible on every device; coverage interest retains an optional
+  disclosure. Name remains optional, contact accepts LINE ID or phone, and
+  consent, topic IDs, summary, API and destinations are unchanged. No sample
+  lead was sent to production. No QR is inserted: the current CMS slot is empty.
+- Footer is one shared responsive tree on Home/Motor: four desktop columns,
+  two tablet columns, and expanded mobile groups. Existing logo, credentials,
+  licence numbers, verification, navigation, contact data and column controls
+  remain authoritative. No new `/motor` public link was introduced.
+- Code schema v8 adds `Home contact` and `Footer design` groups for presentation
+  copy, placeholders, icon overrides and artwork. Background crop is 3:1;
+  icons are 1:1. Custom icon replacements retain their original colors.
+  Migrations preserve intentional blanks and never publish automatically.
+- `scripts/contact-footer-check.mjs <home-handoff-dir>` passes 16 TH/EN
+  viewports (320-1440px), form failure/pending/confirmed-success, data retention,
+  channel blanks, visibility, media replacement and Motor-contact isolation.
+  Local evidence is in `uat-results/contact-redesign/`; desktop/mobile/tablet
+  renders were personally inspected. This is not a production/device test.
+- Final Chromium capture measures Contact/Footer at 799/424px on 1440px
+  desktop and 1399/1171px on 390px mobile. Contact remains taller than the
+  mobile image because the real details/coverage controls and readable 16px
+  input text are retained. Reference scaling is inferred, not pixel parity.
+  Mobile hours sit beneath LINE, with a separate hours row when LINE is absent.
+- Targeted Firefox/WebKit layout checks pass at 1440/768/390/320px. CMS migration
+  and mocked Admin edit/autosave/preview/publish checks pass, as do bundle sync
+  and performance budgets. These are local browser-engine checks, not physical
+  Safari/iOS, LINE Browser or production tests; no full release suite was run.
+- The generated HTML is about 769KB after both redesigns. Its allowance is
+  explicitly adjusted from 760KB to 775KB; script/LCP/CLS/boot limits stay intact.
+- No production CMS write, push, deploy, billing or infrastructure change.
+
+## Final Licence Section (Local)
+
+- Home moves the AIA/Srikrung relationship cards out of the insurer-logo
+  disclosure into the last main section, immediately before Footer. Cards stay
+  expanded, side by side on desktop/tablet and stacked on mobile. Hero/Footer
+  licence summaries and the standalone Motor layout are unchanged.
+- Reuses `sections.@insurers.cards` and its intro, visibility and semantic copy
+  owners; no live text, licence number or logo is copied into the template.
+- Code schema v6 adds only four presentation fields under `Home licences` in
+  Brand & contact: eyebrow, title, statement and background (3:1 crop/fit).
+  The v5 upgrade preserves every existing field, including deliberate blanks;
+  no production CMS write or publish was performed for this move.
+- `scripts/home-licences-check.mjs <handoff-dir>` covers TH/EN at
+  1440/820/390px, media loading, placement, CMS edits/blanks/visibility and Motor
+  isolation. CMS unit and mocked Admin autosave/preview/publish checks also pass.
+  Visual evidence is under ignored `uat-results/home-licences/`.
+- The new section adds about 5KB beyond the former 750KB HTML allowance; the
+  cap is now 760KB. Script, LCP, CLS and boot-time limits remain unchanged.
+- This source, along with the follow-ups below, is not pushed/deployed yet.
+
+## Contact And Motor Link Follow-Up
+
+- Local source now keeps contact channels and business hours permanently
+  expanded. Home inputs/selects are 44px high with 16px text; the submit button
+  is content-width on desktop/tablet and full-width on mobile.
+- The default insurer CTA no longer links to `/motor`. Public Home links stay
+  within `#motor`; the standalone route, metadata and Admin remain intact.
+  Live/draft CMS contain no `/motor` link override, so no CMS write was needed.
+- Partial-coverage notes use a pale surface and accent border, retaining their
+  14px desktop/tablet and 12px mobile font sizes. Their CMS text is unchanged.
+- These source changes are not pushed/deployed yet. Targeted TH/EN checks passed
+  at 1440/820/390px, including contact visibility, control sizes, validation and
+  consent guards, no public Motor links and no overflow. Direct Motor access
+  also passed. No real lead was submitted. Screenshots were personally inspected
+  under ignored `uat-results/contact-compact/`; broader release gates were not run.
+
+## Review Spacing And Process Visibility
+
+- Owner approved hiding "How it works" on both Home and Motor. The existing
+  `sections.@how.on` CMS switch is now false in live and draft (revision 4).
+  All four items remain editable and can be restored through Admin. Other fields
+  were verified unchanged; no unrelated draft was published.
+- Local source reduces review icons to 32px and Thai desktop cards to 88px,
+  gives the heading 12px separation, and moves the disclosure plus to the top.
+  Outer section edges retain alignment with the insurer band's content gutters.
+- The spacing CSS and matching cold-start default are not pushed/deployed yet.
+  Targeted TH/EN checks passed at 1440/820/390px, including equal closed cards,
+  disclosure interactions and no horizontal overflow. Evidence and the private
+  pre-change CMS backup are under ignored `uat-results/review-spacing/`.
+
 ## Home Interaction Follow-Up
 
 Source changes after the release recorded below:
@@ -13,8 +115,9 @@ Source changes after the release recorded below:
 - Home navigation uses `/#motor` at the unchanged `insurers` DOM/CMS section.
   Old `/#insurers` URLs normalize with `replaceState`, preserving queries.
   The dedicated `/motor` route and its local `#insurers` anchor are unchanged.
-- The redundant link beside the Home tier heading is removed at every width;
-  the separate insurer-section Motor entry stays available.
+- The redundant link beside the Home tier heading was removed at every width.
+  This release retained the insurer-section Motor entry; the newer local
+  follow-up above removes that entry too.
 - The mobile/touch LINE bar remains visible throughout scrolling. CMS enablement
   and contact ownership stay intact; menus and owner modes still hide it.
 - Home/Motor anchors use one native smooth scroll, with instant reduced-motion
@@ -30,13 +133,12 @@ Source changes after the release recorded below:
   gate still apply. No Firestore write, schema-version change or billing change
   is part of this follow-up. Do not replay the old Home content migration.
 
-The owner authorized push/deploy. Confirm the actual deployment's SHA and
-primary-domain readback before treating this source checkpoint as live; the
-release table below records the previous verified runtime.
-The last verified production before this pending September 22 follow-up is
-`593c8667693e67f5acda02b3e7cca350ba539e5b`, deployment
-`dpl_DsWERTkJfLMFuY91kZnAjGLoNJoc`, with exact-SHA CI run `35628355099` passed.
-This follow-up changes code only; do not migrate or publish CMS documents.
+Deployed production is `6a7de2ca2e4b3d979b2d311c8863e7d97645f064`, deployment
+`dpl_GdSMmAysBwWuW6R7f7Jp2av4NVxa`. Exact-SHA CI run `35634629244` passed;
+the primary-domain alias and visitor bundle were verified. Eight read-only
+production cases passed across Home/Motor, TH/EN and 390/1440px. Screenshots
+were personally inspected in `uat-results/navigation-production/`. The anchor
+release changed code only; the later approved CMS visibility change is above.
 
 ## September 21 Release Checkpoint
 

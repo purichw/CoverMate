@@ -7,6 +7,7 @@ import { toFirestoreFields } from './lib/uat-env.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 
 const fixture = await createHomeFixture(process.argv[2]);
+fixture.state.config.sections.find(section=>section.id==='insurers').cta1href='/motor';
 const output = path.resolve('uat-results/home-tier-cards');
 fs.mkdirSync(output, { recursive:true });
 const { server, baseUrl } = await startStaticServer();
@@ -42,7 +43,7 @@ try {
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No page overflow');
       const tiers = page.locator('[data-home-section="tiers"]');
       assert.equal(await tiers.locator('.hm-heading a').count(),0,'No redundant Motor link beside tier heading');
-      assert.ok(await page.locator('#insurers a[href^="/motor"]').first().isVisible(),'Separate Motor entry stays available');
+      assert.equal(await page.locator('a[href^="/motor"]').count(),0,'No public link to the standalone Motor campaign');
       const comparison = page.locator('#home-tier-comparison');
       const summary = comparison.locator('summary');
       assert.equal(await summary.evaluate(el=>getComputedStyle(el).fontSize),'18px');
@@ -54,7 +55,7 @@ try {
       await page.keyboard.press('Space');
       assert.equal(await comparison.evaluate(el=>el.open),false);
       await tiers.screenshot({path:path.join(output,`${lang}-${width}.png`)});
-      console.log(`PASS ${lang} ${width}px: static cards, CMS copy, equal geometry, Motor link and comparison. Heights ${geometry[0].height}px.`);
+      console.log(`PASS ${lang} ${width}px: static cards, CMS copy, equal geometry, no Motor campaign link and comparison. Heights ${geometry[0].height}px.`);
     }
     assert.deepEqual(errors,[]);
     await context.close();

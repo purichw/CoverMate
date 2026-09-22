@@ -29,6 +29,44 @@ assert.equal(migrated.sections.find(s => s.id === 'insurers').items[12].logo, 'a
 assert.deepEqual(migrateCmsContent(migrated), migrated, 'Migration is idempotent');
 assert.equal(legacy.contact.phone, '08X-XXX-XXXX', 'Migration does not mutate source');
 
+const v5 = structuredClone(migrated);
+v5.cmsContentVersion = 5;
+for (const field of contract.CMS_CONTENT_FIELDS.filter(field => field.group === 'Home licences')) delete v5.homeDesign[field.path.split('.').at(-1)];
+v5.homeDesign.licenceTitle = { th: 'หัวข้อของเจ้าของ', en: '' };
+v5.homeDesign.licenceBackground = '';
+const v6 = migrateCmsContent(v5);
+assert.deepEqual(v6.sections, v5.sections, 'Moving licence cards does not rewrite content, order or visibility');
+assert.deepEqual(v6.licences, v5.licences, 'Licence values are preserved');
+assert.deepEqual(v6.homeDesign.licenceTitle, v5.homeDesign.licenceTitle, 'Owner copy and intentional blanks survive');
+assert.equal(v6.homeDesign.licenceBackground, '', 'Cleared artwork stays cleared');
+assert.ok(v6.homeDesign.licenceStatement.th);
+assert.deepEqual(migrateCmsContent(v6), v6, 'Licence presentation migration is idempotent');
+const licenceArt = contract.cmsImageSlots(v6).find(slot => slot.path === 'homeDesign.licenceBackground');
+assert.equal(licenceArt.width / licenceArt.height, 3, 'Admin background crop ratio');
+
+for (const version of [6,7]) {
+  const older=structuredClone(migrated);
+  older.cmsContentVersion=version;
+  delete older.footer.statement;
+  older.footer.backgroundArt='';
+  older.homeDesign.contactFormHeading={th:'หัวข้อเจ้าของ',en:''};
+  const current=migrateCmsContent(older);
+  assert.deepEqual(current.sections,older.sections,'Presentation migration preserves sections');
+  assert.deepEqual(current.contact,older.contact,'Presentation migration preserves actual channels');
+  assert.deepEqual(current.homeDesign.contactFormHeading,older.homeDesign.contactFormHeading);
+  assert.equal(current.footer.backgroundArt,'');
+  assert.ok(current.footer.statement.th);
+  assert.deepEqual(migrateCmsContent(current),current);
+}
+for (const path of ['homeDesign.contactBackground','footer.backgroundArt']) {
+  const slot=contract.cmsImageSlots(migrated).find(slot=>slot.path===path);
+  assert.equal(slot.width/slot.height,3);
+}
+for (const path of ['homeDesign.contactIconLine','footer.iconLine']) {
+  const slot=contract.cmsImageSlots(migrated).find(slot=>slot.path===path);
+  assert.equal(slot.width/slot.height,1);
+}
+
 const edited = structuredClone(migrated);
 edited.licences.life.number = '9000000001';
 edited.licences.nonLife.number = '9000000002';

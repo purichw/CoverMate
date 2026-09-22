@@ -677,10 +677,11 @@ Purpose: final conversion without pressure.
 
 Structure:
 
-- Dark brown band.
-- Left contact copy and LINE card.
-- Right form card.
-- Thai heading `ขอรับคำปรึกษา` must remain a one-line phrase on desktop.
+- Home: sage botanical band per the September 22 Contact handoff; Motor retains
+  its existing contact composition. Current CMS heading/copy wins over older wording.
+- Left contact channels, hours and service area, always expanded.
+- Right warm-white form card; below 900px the columns stack. Mobile fields are
+  single-column with 48px controls and 16px input text.
 - Fields: name, LINE/phone, enquiry type, coverage interest, message/details.
 - CTA uses terracotta and clear arrow/icon.
 
@@ -692,9 +693,14 @@ Purpose: credibility, navigation, and legal details.
 
 Structure:
 
-- Dark footer.
-- Brand summary, nav links, contact details, legal copy, OIC verify link.
-- Footer links should be readable and not cramped on mobile.
+- Dark brown footer with gold accents, subtle botanical/wave decoration and
+  existing brand imagery, matching the September 22 owner references.
+- One shared tree: brand, licence cards, quick links and contacts. Desktop has
+  the CMS column count (default four); tablet caps at two; mobile stacks all
+  groups expanded. OIC, licence and channel data keep their original owners.
+- CMS v8 adds helper/closing copy, icons and background under Footer design.
+- Links have at least 44px touch targets and visible keyboard focus. No new
+  link to the dedicated `/motor` route is added to Home.
 
 ## Public Interactions And States
 
