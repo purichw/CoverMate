@@ -106,8 +106,12 @@ try {
   await owner.close();
 
   await visitor.goto(baseUrl + '/' + suffix);
-  await visitor.locator('a[href="/motor"]').first().click();
-  await visitor.waitForURL(url => url.pathname === '/motor');
+  await visitor.locator('#hero h1').waitFor();
+  assert.equal(await visitor.locator('a[href^="/motor"]').count(), 0, 'Home does not advertise the standalone Motor campaign.');
+  await visitor.locator('footer a[href="#motor"]').click();
+  await visitor.waitForURL(url => url.pathname === '/' && url.hash === '#motor');
+  await visitor.locator('#insurers').waitFor();
+  await visitor.goto(baseUrl + '/motor' + suffix);
   await visitor.locator('main').waitFor();
   report.motorNavigation = true;
   for (const route of ['/', '/motor']) {

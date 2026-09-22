@@ -62,6 +62,10 @@ try {
             return route.fulfill({ json: { id: 'a'.repeat(64) } });
           }
           if (url.pathname === '/covermate-public.mjs') return route.fulfill({ contentType: 'application/javascript', body: publicFixture });
+          // The canonical SEO favicon is absolute; keep this fixture offline.
+          if (url.origin === 'https://covermateinsurance.com' && url.pathname === '/favicon.svg') {
+            return route.fulfill({ contentType: 'image/svg+xml', body: fs.readFileSync('favicon.svg','utf8') });
+          }
           if (url.hostname === 'line.me') return route.fulfill({ contentType: 'text/plain', body: 'Intercepted LINE link; no real app launched.' });
           if (url.pathname.startsWith('/api/')) return route.fulfill({ json: { ok: true } });
           if (url.origin !== baseUrl) {
@@ -137,17 +141,19 @@ try {
             await page.locator('.hm-menu').waitFor({ state: 'detached' });
             pass('Touch menu, focus trap, Escape, focus return and anchor closure');
           }
-          // Complete navigation round trip using actual links and browser history.
-          const motorLink = page.locator('a[href="/motor"]').filter({ visible: true }).first();
-          await activate(motorLink);
-          await page.waitForURL('**/motor'); await settle();
+          // Home keeps the motor anchor; the standalone campaign remains addressable.
+          assert.equal(await page.locator('a[href^="/motor"]').count(),0);
+          await activate(page.locator('footer a[href="#motor"]'));
+          await page.waitForURL(url=>url.pathname==='/' && url.hash==='#motor');
+          await settle();
+          await page.goto(baseUrl + '/motor'); await settle();
           for (const lang of ['th', 'en']) {
             await activate(page.locator(`[data-language-switch="${lang}"]`).first());
             await settle(); await geometry('motor ' + lang);
           }
           await page.goBack(); await settle();
           assert.equal(new URL(page.url()).pathname, '/');
-          pass('Home/Motor and browser Back');
+          pass('Home motor anchor, direct Motor campaign and browser Back');
           await page.goto(baseUrl + '/#talk'); await settle();
           await activate(page.locator('[data-language-switch="th"]').first());
           const contact = page.locator('#talk input[name="contact"]');
