@@ -1,8 +1,44 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-22
+Last updated: 2026-09-23
 
-## September 22 Release Candidate
+## September 23 Domain Redirect Follow-Up
+
+- Owner reported cream-only Home on `covermate.vercel.app` and
+  `www.covermateinsurance.com`, and authorized a fix, push and production deploy.
+- Reproduced with fresh HTTP/browser checks: `/` returned 200 at the alias,
+  while `/motor` redirected correctly. The Home middleware rewrite bypassed
+  the configured host redirect. Asset redirects then crossed origins and CSP
+  blocked the scripts; no service-worker/cache explanation was needed.
+- Root middleware now returns a 308 to the canonical origin before rewriting.
+  Its existing root-only scope stays unchanged; other routes retain the JSON
+  redirects. Query parameters are preserved and preview/local hosts stay local.
+- `check:seo` covers GET/HEAD on both alias roots, query preservation and
+  preview isolation. `scripts/production-domain-smoke.mjs` checks root/deep
+  redirects plus rendered desktop/mobile, reload, language, hash and CSP errors.
+  Production promotion still requires this fix's exact-SHA CI and hosted checks.
+- The brief cream screen on the canonical domain is the existing boot guard,
+  intentionally hiding the unpacked template until rendering/content hydration.
+  It is separate from this alias failure and is not redesigned in this fix.
+
+## September 22 Release (Deployed)
+
+- `4602f11c7ef630c8938e8c5186a38c35a5b01d65` passed GitHub `verify`
+  run `35741900693`, attempt 2, including Auth/Rules/API/Publish emulator tests.
+  Vercel `dpl_1qJKWpKdNuA77uEyV7zxZPFzejnt` passed the alias check and became
+  production without bypass. The first attempt had a transient CLS failure;
+  pinned local verification and the retry passed without changing its budget.
+- Read-only production smoke passed Home/Motor TH/EN, schema v8, exact served
+  assets, responsive layout, Admin noindex, media authorization and sitemap.
+  Asset smoke found zero broken/incomplete images, CSP or failed asset requests
+  on the canonical domain. Contact/licences/Footer desktop/mobile and the Thai
+  tablet capture were personally inspected under `uat-results/release/`.
+- The original old-host test covered only `/motor`, missing the root-only bug
+  above. Do not treat that earlier redirect result as evidence for alias Home.
+- The earlier local-only development notes below are historical and superseded
+  by this deployed record. Physical Safari/LINE device UAT was not performed.
+
+### Preparation Record
 
 - Owner authorized push and production deployment after the Contact/Footer
   review. The local-status notes below describe development evidence; promotion

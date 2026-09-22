@@ -1,13 +1,15 @@
 # CoverMate SEO
 
-Last updated: 2026-09-21. See `HANDOFF.md` for current preview/production evidence;
+Last updated: 2026-09-23. See `HANDOFF.md` for current preview/production evidence;
 the owner has authorized the complete release, including CMS-backed metadata.
 
 ## Primary Domain
 
 The only primary origin is `https://covermateinsurance.com`. Permanent 308
 redirects in `vercel.json` consolidate `www.covermateinsurance.com` and the old
-`covermate.vercel.app` hostname, preserving paths and query strings.
+`covermate.vercel.app` hostname, preserving paths and query strings. The root-only
+middleware must also redirect these hosts before its Home rewrite; otherwise
+Home can stay on the alias while redirected scripts/styles are blocked by CSP.
 The old hostname remains recognized as production for environment isolation;
 `?cm_env=uat` must never switch a production request into UAT.
 
@@ -145,8 +147,11 @@ Before calling this live:
 1. Deploy the exact tested source through the existing release gate.
 2. Read raw HTTP responses on all four URLs without JavaScript. Confirm status
    200, correct CMS title/description/canonical/hreflang and social images.
-3. Confirm old-host/www redirects retain `/motor?lang=en&utm_source=...`, that
-   a nonexistent URL remains 404, and UAT/admin responses have noindex.
+3. Run `node scripts/production-domain-smoke.mjs` for both alias hosts. Confirm
+   `/`, `/?lang=en&utm_source=line`, and `/motor?lang=en` redirect, then verify
+   actual rendered Home, reload, and query/hash preservation without CSP errors.
+   A deep-route redirect alone does not cover root middleware. Confirm separately
+   that a nonexistent URL remains 404 and UAT/admin responses have noindex.
 4. Confirm Firebase Auth authorized domains, App Check/reCAPTCHA allowed domains,
    and GA4 web stream settings include covermateinsurance.com. Do not weaken
    Auth/App Check to get a test pass. Domain-scoped local storage means an old

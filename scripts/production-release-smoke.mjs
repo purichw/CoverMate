@@ -99,10 +99,12 @@ try {
   assert.equal(deniedUpload.status, 401);
   await deniedUpload.arrayBuffer();
   for (const host of ['covermate.vercel.app', 'www.covermateinsurance.com']) {
-    const response = await fetch(`https://${host}/motor?lang=en`, { redirect: 'manual' });
-    assert.equal(response.status, 308);
-    assert.equal(response.headers.get('location'), origin + '/motor?lang=en');
-    await response.arrayBuffer();
+    for (const path of ['/', '/?lang=en&utm_source=line', '/motor?lang=en']) {
+      const response = await fetch(`https://${host}${path}`, { redirect: 'manual' });
+      assert.equal(response.status, 308, host + path);
+      assert.equal(response.headers.get('location'), origin + path);
+      await response.arrayBuffer();
+    }
   }
   const sitemap = await fetch(origin + '/sitemap.xml').then(r => r.text());
   assert.equal((sitemap.match(/<loc>/g) || []).length, 4);

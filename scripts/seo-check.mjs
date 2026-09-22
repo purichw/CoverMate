@@ -100,8 +100,19 @@ assert.equal(rewritten.searchParams.get('lang'), 'en');
 assert.equal(rewritten.searchParams.get('utm_source'), 'line');
 assert.equal(homeMiddleware(new Request('https://covermateinsurance.com/api/media')), undefined);
 for (const host of ['covermate.vercel.app', 'www.covermateinsurance.com']) {
+  for (const method of ['GET', 'HEAD']) for (const search of ['', '?lang=en&utm_source=line&route=/admin/edit']) {
+    const response = homeMiddleware(new Request(`https://${host}/${search}`, { method }));
+    assert.equal(response.status, 308, `${host} Home ${method} must redirect before rewriting`);
+    assert.equal(response.headers.get('location'), `https://covermateinsurance.com/${search}`);
+    assert.equal(response.headers.get('x-middleware-rewrite'), null);
+  }
   const redirect = vercel.redirects.find(rule => rule.has?.some(match => match.value === host));
   assert.equal(redirect.destination, 'https://covermateinsurance.com/:path*'); assert.equal(redirect.permanent, true);
+}
+for (const host of ['covermate-git-uat-example.vercel.app', 'localhost:4177', 'covermate.vercel.app.example.org']) {
+  const response = homeMiddleware(new Request(`https://${host}/?lang=en`));
+  assert.equal(response.headers.get('location'), null, 'Do not redirect preview/local/unknown hosts');
+  assert.equal(new URL(response.headers.get('x-middleware-rewrite')).host, host);
 }
 for (const route of ['/', '/motor', '/admin/content', '/admin/edit', '/admin/preview']) {
   assert.equal(vercel.rewrites.find(rule => rule.source === route).destination, '/api/page?route=' + route);
