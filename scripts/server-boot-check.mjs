@@ -59,6 +59,34 @@ try {
     }
     await page.close();
   }
+  for (const blockedStorage of [false, true]) {
+    let requests = 0;
+    const context = await browser.newContext();
+    await context.route('**/v1/projects/**/documents/sites/**/states/live', async route => {
+      requests++;
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await route.fulfill({ json: { fields: toFirestoreFields(state) } });
+    });
+    if (blockedStorage) await context.addInitScript(() => {
+      Storage.prototype.setItem = Storage.prototype.getItem = () => { throw new Error('Storage unavailable'); };
+    });
+    const page = await context.newPage();
+    await page.goto(baseUrl);
+    await page.waitForFunction(() => document.querySelector('main h1')?.textContent === 'Published content on the first render');
+    assert.equal(await page.evaluate(() => window.__covermateRemoteContent.source), 'server');
+    assert.equal(requests, 0, 'No duplicate CMS fetch during initial boot');
+    assert.equal(await page.locator('#covermate-published-state').count(), 0, 'Snapshot consumed once');
+    const input = page.locator('input[name=name]');
+    await input.fill('Keep my unsent name');
+    state.config.sections.find(section => section.id === 'hero').th.title = 'Published after boot';
+    await page.evaluate(async () => (await import('/covermate-public.mjs')).hydrateLocalContent());
+    await page.waitForFunction(() => document.querySelector('main h1')?.textContent === 'Published after boot');
+    assert.equal(requests, 1, 'Later refresh still reads published state');
+    assert.equal(await input.inputValue(), 'Keep my unsent name');
+    state.config.sections.find(section => section.id === 'hero').th.title = 'Published content on the first render';
+    report.checks.push({ blockedStorage, liveUpdate: true, formPreserved: true });
+    await context.close();
+  }
   for (const fallback of ['missing', 'invalid', 'mismatch']) {
     mode = fallback;
     const page = await browser.newPage();
@@ -74,7 +102,7 @@ try {
   assert.ok(!ownerHtml.includes('id="covermate-published-state"'), 'Owner routes never get a public seed');
   assert.deepEqual(report.errors, []);
   report.result = 'PASS';
-  console.log('PASS server boot: Home/Motor TH/EN mobile/desktop, stale-cache precedence, no duplicate read, unchanged CLS limit, later refresh, missing/invalid/mismatched fallback and owner isolation.');
+  console.log('PASS server boot: Home/Motor TH/EN mobile/desktop, stale-cache precedence, no duplicate read, unchanged CLS limit, later refresh, storage-denied/form preservation, missing/invalid/mismatched fallback and owner isolation.');
 } finally {
   fs.writeFileSync('uat-results/server-boot/report.json', JSON.stringify(report, null, 2));
   await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
