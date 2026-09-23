@@ -90,3 +90,11 @@ blocked. The harness now awaits the previous document's fonts before explicit
 navigation and also asserts no failed font faces on rendered visitor routes;
 network-error assertions remain enabled. Retry CI on the follow-up SHA before
 production. This follow-up changes the harness, not shipped runtime files.
+
+CI `35892540660` (`6ac93a9`) passed the complete main gate, Rules, real Cases
+and lead APIs, and Chromium/WebKit Publish E2E. Its final journey still expected
+the retired inline form alert. That journey now verifies offline unknown
+delivery/read-only draft, known rejection/edit preservation, immutable retry,
+the actual API receipt and authenticated Admin readback against the new panels.
+Local emulator ports were already occupied, so they were left untouched; the
+next exact-SHA CI must supply isolated integration evidence before promotion.
