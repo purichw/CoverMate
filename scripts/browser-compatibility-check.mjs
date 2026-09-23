@@ -63,8 +63,8 @@ try {
           }
           if (url.pathname === '/covermate-public.mjs') return route.fulfill({ contentType: 'application/javascript', body: publicFixture });
           // The canonical SEO favicon is absolute; keep this fixture offline.
-          if (url.origin === 'https://covermateinsurance.com' && url.pathname === '/favicon.svg') {
-            return route.fulfill({ contentType: 'image/svg+xml', body: fs.readFileSync('favicon.svg','utf8') });
+          if (url.origin === 'https://covermateinsurance.com' && ['/favicon.svg', '/assets/brand/covermate-mark.png'].includes(url.pathname)) {
+            return route.fulfill({ path: url.pathname.slice(1) });
           }
           if (url.hostname === 'line.me') return route.fulfill({ contentType: 'text/plain', body: 'Intercepted LINE link; no real app launched.' });
           if (url.pathname.startsWith('/api/')) return route.fulfill({ json: { ok: true } });

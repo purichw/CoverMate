@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+import { createPageHandler } from "../server/seo-page.mjs";
 
 import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
 import { startStaticServer } from "./lib/static-server.mjs";
@@ -21,11 +24,17 @@ const maxCls = Number(process.env.COVERMATE_PERF_MAX_CLS || "0.1");
 // LCP/CLS, boot-time and separately loaded script budgets are unchanged.
 const maxHtmlBytes = Number(process.env.COVERMATE_PERF_MAX_HTML_BYTES || "775000");
 const maxScriptBytes = Number(process.env.COVERMATE_PERF_MAX_SCRIPT_BYTES || "350000");
+// Published CMS JSON is variable content, measured separately from the shell.
+const maxPublishedBytes = 250000;
 
 let server;
 let baseUrl = process.env.COVERMATE_URL || "";
 if (!baseUrl) {
-  const started = await startStaticServer({ ownerRoutesToRoot: true });
+  const config = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)'));
+  const handler = createPageHandler({ readPublished: async () => ({ config, text: {} }) });
+  const started = await startStaticServer({ ownerRoutesToRoot: true, onRequest: async (req, res) => {
+    if (['/', '/motor'].includes(new URL(req.url, 'http://localhost').pathname)) { await handler(req, res); return true; }
+  } });
   server = started.server;
   baseUrl = started.baseUrl;
 }
@@ -51,11 +60,14 @@ try {
         failedRequests.push(`${request.method()} ${url}: ${request.failure()?.errorText || "failed"}`);
       });
       await page.addInitScript(() => {
-        window.__covermatePerf = { cls: 0, lcp: 0, longTasks: [] };
+        window.__covermatePerf = { cls: 0, lcp: 0, longTasks: [], shifts: [] };
         try {
           new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
-              if (!entry.hadRecentInput) window.__covermatePerf.cls += entry.value || 0;
+              if (!entry.hadRecentInput) {
+                window.__covermatePerf.cls += entry.value || 0;
+                window.__covermatePerf.shifts.push({ time: entry.startTime, value: entry.value, sources: entry.sources.map(source => ({ tag: source.node?.tagName, id: source.node?.id, class: source.node?.className })) });
+              }
             }
           }).observe({ type: "layout-shift", buffered: true });
         } catch {}
@@ -76,7 +88,8 @@ try {
       });
 
       const start = Date.now();
-      await page.goto(`${baseUrl}${route.path}`, { waitUntil: "domcontentloaded" });
+      const response = await page.goto(`${baseUrl}${route.path}`, { waitUntil: "domcontentloaded" });
+      const raw = await response.text();
       await page.waitForFunction(
         () => document.body && getComputedStyle(document.body).visibility !== "hidden" && (document.body.innerText || "").trim().length > 300,
         null,
@@ -101,15 +114,20 @@ try {
           title: document.title,
           textLength: (document.body.innerText || "").trim().length,
           rawTemplateVisible: /\\n\\n\\n\\n|__COVERMATE_|sc-if|sc-for|\{\{/.test(document.body.innerText || ""),
-          htmlBooting: document.documentElement.classList.contains("covermate-booting"),
+          htmlBooting: document.documentElement.hasAttribute("data-covermate-booting"),
           scrollOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
           htmlBytes,
           scriptBytes,
           cls: window.__covermatePerf?.cls || 0,
+          shifts: window.__covermatePerf?.shifts || [],
           lcp: window.__covermatePerf?.lcp || 0,
           maxLongTask: Math.max(0, ...(window.__covermatePerf?.longTasks || []))
         };
       });
+      const publishedBytes = await page.evaluate(raw => {
+        const seed = new DOMParser().parseFromString(raw, 'text/html').getElementById('covermate-published-state');
+        return seed ? new TextEncoder().encode(seed.outerHTML).length : 0;
+      }, raw);
 
       results.push({
         route: route.label,
@@ -118,6 +136,7 @@ try {
         lcp: Math.round(state.lcp),
         cls: Number(state.cls.toFixed(4)),
         htmlBytes: state.htmlBytes,
+        publishedBytes,
         scriptBytes: state.scriptBytes,
         maxLongTask: state.maxLongTask
       });
@@ -131,9 +150,10 @@ try {
       if (state.lcp > 0) {
         assert.ok(state.lcp <= viewport.maxLcpMs, `${route.label} ${viewport.label}: LCP ${state.lcp}ms, budget ${viewport.maxLcpMs}ms.`);
       }
-      assert.ok(state.cls <= maxCls, `${route.label} ${viewport.label}: CLS ${state.cls}, budget ${maxCls}.`);
+      assert.ok(state.cls <= maxCls, `${route.label} ${viewport.label}: CLS ${state.cls}, budget ${maxCls}. Sources: ${JSON.stringify(state.shifts)}`);
       if (state.htmlBytes > 0) {
-        assert.ok(state.htmlBytes <= maxHtmlBytes, `${route.label} ${viewport.label}: HTML ${state.htmlBytes} bytes, budget ${maxHtmlBytes}.`);
+        assert.ok(state.htmlBytes - publishedBytes <= maxHtmlBytes, `${route.label} ${viewport.label}: shell HTML ${state.htmlBytes - publishedBytes} bytes, budget ${maxHtmlBytes}.`);
+        assert.ok(publishedBytes <= maxPublishedBytes, `${route.label} ${viewport.label}: CMS payload ${publishedBytes} bytes, budget ${maxPublishedBytes}.`);
       }
       assert.ok(state.scriptBytes <= maxScriptBytes, `${route.label} ${viewport.label}: scripts ${state.scriptBytes} bytes, budget ${maxScriptBytes}.`);
 

@@ -89,6 +89,8 @@ document.addEventListener('DOMContentLoaded', async function() {
       /* Keep fallback reveal non-fatal. */
     }
   }
+  // The app releases the guard after installing its content and loading fonts.
+  window.__covermateReveal = revealCoverMate;
   scheduleReveal(FIRST_BOOT_REVEAL_MS);
   function installTemplateGuard(source) {
     const guard =
@@ -527,7 +529,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
       window.Babel.transformScriptTags();
     }
-    revealCoverMate();
+    // Keep the bounded fallback; React signals the first completed render.
   } catch (err) {
     revealCoverMate();
     setStatus('Error unpacking: ' + err.message);

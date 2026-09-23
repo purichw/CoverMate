@@ -105,6 +105,26 @@ export function hydrateLocalContent() {
   if (!publicRoute()) return Promise.resolve({ live: false, source: 'skipped' });
   if (inFlight) return inFlight;
   lastAttempt = Date.now();
+  // Reuse the same public state that produced this response's SEO. The next
+  // scheduled refresh still verifies the live document, including direct edits.
+  const seed = document.getElementById('covermate-published-state');
+  if (seed) {
+    seed.remove();
+    try {
+      const snapshot = JSON.parse(seed.textContent);
+      const live = sanitizeStateDoc(snapshot.state);
+      if (snapshot.siteId === environment.siteId && validStateDoc(live)) {
+        cacheSiteState('live', live);
+        lastSignature = stableJSON({ config: live.config, text: live.text });
+        failures = 0;
+        const result = { live: true, publicLive: true, changed: true, draft: false, versions: false, source: 'server', environment: environment.name, siteId: environment.siteId };
+        window.__covermateRemoteContent = result;
+        window.dispatchEvent(new CustomEvent('covermate:remote-content-ready', { detail: result }));
+        scheduleRefresh();
+        return Promise.resolve(result);
+      }
+    } catch { /* Invalid/mismatched snapshots use the existing remote fallback. */ }
+  }
   const generation = routeGeneration;
   inFlight = (async () => {
     const { response, data: snapshot } = await fetchJSON(`${publicFirestoreRoot()}/sites/${environment.siteId}/states/live`, { cache: 'no-store' });

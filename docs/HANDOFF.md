@@ -20,11 +20,28 @@ Last updated: 2026-09-23
 - Release smoke now honors the existing CMS `on: false` settings for Fees and
   Privacy when checking their copy, consistent with the other optional sections.
   Enabled sections retain their content assertions; no CMS values were changed.
-- Release preparation uses `.tools/inline-media-release-20260923`, excluding
-  unrelated public bootstrap/SEO/performance work and `exports/`. Promotion
-  requires the exact commit's GitHub `verify` and production alias readback.
-  Source preparation is not evidence of deployment; the final release report
-  records the resulting SHA/deployment and read-only live UI/asset checks.
+- Feature commit `790f29a` was pushed, but GitHub run `35797015898` failed
+  the existing CLS limit (0.322 vs 0.1), also seen on the preceding commit.
+  Vercel correctly held its production alias. Delaying the browser's live read
+  reproduced the default-content flash after the 1.5-second boot deadline.
+- The release therefore incorporates the reviewed pending public bootstrap
+  work: seed only published config/text from the existing SEO response, validate
+  its namespace client-side, and keep ordinary remote refresh/fallback behavior.
+  The first render now releases its guard after content and fonts are ready;
+  the existing bounded reveal fallback remains. Owner draft/publish paths and
+  typography are unchanged. `exports/` stays outside this release.
+- `scripts/server-boot-check.mjs` covers Home/Motor TH/EN phone/desktop,
+  stale-cache precedence, zero duplicate boot reads, later remote refresh,
+  missing/invalid/mismatched seeds and owner isolation. Local CLS is zero
+  in the performance fixture; the 0.1 limit is unchanged. The static shell's
+  775 KB budget is unchanged; variable published JSON has a separate 250 KB cap.
+- WebKit and Firefox phone follow-ups passed Home/Motor TH/EN and existing
+  interaction checks. Firefox's offline fixture now serves the canonical PNG
+  favicon locally, alongside its existing SVG fixture. Physical-device UAT
+  is not part of this evidence.
+- Promotion still requires the exact commit's GitHub `verify` and production
+  alias readback. Source preparation is not deployment evidence; the final
+  release report records the SHA/deployment and read-only live UI/asset checks.
 - Recovery is the preceding production deployment
   `dpl_1qJKWpKdNuA77uEyV7zxZPFzejnt`; no data migration needs reversal.
 

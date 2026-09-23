@@ -1417,7 +1417,14 @@ class Component extends DCLogic {
     if (!editMode) this.disableEdit();
     this.setState({ site: src.config, routePage: routePage, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
       this.syncSeo();
-      requestAnimationFrame(() => this.applyText());
+      requestAnimationFrame(() => {
+        this.applyText();
+        const reveal = window.__covermateReveal;
+        if (reveal) {
+          delete window.__covermateReveal;
+          (document.fonts ? document.fonts.ready : Promise.resolve()).then(reveal);
+        }
+      });
       if (anchor && !owner && anchor.indexOf('-focus') < 0) this.scrollToAnchor(anchor, { smooth: false, waitForFonts: true });
       if (editMode) this.enableEdit();
     });

@@ -83,11 +83,20 @@ for (const [url, host, noindex] of [
 }
 const head = response(); await handler({ method: 'HEAD', url: '/', headers: { host: 'covermateinsurance.com' } }, head);
 assert.equal(head.statusCode, 200); assert.equal(head.body, '');
+const seeded = response();
+const publishedState = { config, text: { 'test:escape': '</script><script>window.injected=true</script>' }, updatedBy: 'must-not-embed' };
+await createPageHandler({ readPublished: async () => publishedState })({ method: 'GET', url: '/', headers: { host: 'covermateinsurance.com' } }, seeded);
+assert.equal((seeded.body.match(/id="covermate-published-state"/g) || []).length, 1);
+assert.ok(!seeded.body.includes('</script><script>window.injected=true'));
+assert.ok(!seeded.body.includes('must-not-embed'), 'Embed public config/text only, not state metadata');
+const ownerSeed = response(); await handler({ method: 'GET', url: '/admin/edit', headers: {} }, ownerSeed);
+assert.ok(!ownerSeed.body.includes('id="covermate-published-state"'), 'Never seed public content into owner workspace');
 const missingRoute = response(); await handler({ method: 'GET', url: '/not-a-route', headers: {} }, missingRoute);
 assert.equal(missingRoute.statusCode, 404);
 const offline = response(); await createPageHandler({ readPublished: async () => { throw new Error('offline'); } })({ method: 'GET', url: '/', headers: {} }, offline);
 assert.equal(offline.statusCode, 503); assert.equal(offline.headers['Retry-After'], '60');
 assert.ok(offline.body.includes('__bundler/template'), 'Visitors can still recover via client cached/live content during an origin fetch outage');
+assert.ok(!offline.body.includes('id="covermate-published-state"'), 'Outages must not advertise defaults as published state');
 
 const vercel = JSON.parse(fs.readFileSync('vercel.json'));
 const { default: homeMiddleware, config: middlewareConfig } = await import('../middleware.js');

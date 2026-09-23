@@ -21,7 +21,14 @@ export function renderPublicPage(html, config, options) {
       .replace(/(<html\b[^>]*\blang=")[^"]*(")/, '$1' + model.language + '$2')
       .replace('<html ', '<html data-covermate-environment="' + (options?.noindex && !options?.privatePage ? 'uat' : 'production') + '" ');
   }
-  return replaceHead(replaceBundlerTemplate(html, replaceHead(extractBundlerTemplate(html))));
+  let rendered = replaceHead(replaceBundlerTemplate(html, replaceHead(extractBundlerTemplate(html))));
+  if (options?.publishedState && !options.privatePage) {
+    const { config, text } = sanitizeStateDoc(options.publishedState);
+    const snapshot = JSON.stringify({ siteId: options.siteId, state: { config, text } })
+      .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+    rendered = rendered.replace('</head>', `<script id="covermate-published-state" type="application/json">${snapshot}</script>\n</head>`);
+  }
+  return rendered;
 }
 
 function decode(value) {
@@ -31,12 +38,12 @@ function decode(value) {
   return value.stringValue ?? value.booleanValue ?? value.doubleValue ?? value.timestampValue ?? null;
 }
 
-export function createPublishedReader({ fetcher = fetch, now = Date.now, timeoutMs = 5000 } = {}) {
+export function createPublishedReader({ fetcher = fetch, now = Date.now, timeoutMs = 5000, includeState = false } = {}) {
   const cache = new Map(), pending = new Map();
   return async siteId => {
     if (!['covermate', 'covermate-uat'].includes(siteId)) throw new Error('Unknown public site.');
     const entry = cache.get(siteId);
-    if (entry && now() - entry.at < 30000) return entry.config;
+    if (entry && now() - entry.at < 30000) return entry.value;
     if (pending.has(siteId)) return pending.get(siteId);
     const request = (async () => {
       const controller = new AbortController();
@@ -48,9 +55,10 @@ export function createPublishedReader({ fetcher = fetch, now = Date.now, timeout
         const doc = await response.json();
         const live = sanitizeStateDoc(decode({ mapValue: { fields: doc.fields || {} } }));
         if (!validStateDoc(live)) throw new Error('Invalid published config.');
-        const config = adaptLegacyHomeCopy(live.config, live.text).config;
-        cache.set(siteId, { at: now(), config });
-        return config;
+        const adapted = adaptLegacyHomeCopy(live.config, live.text);
+        const value = includeState ? { config: adapted.config, text: adapted.text } : adapted.config;
+        cache.set(siteId, { at: now(), value });
+        return value;
       } finally { clearTimeout(timer); }
     })();
     pending.set(siteId, request);
@@ -58,7 +66,7 @@ export function createPublishedReader({ fetcher = fetch, now = Date.now, timeout
   };
 }
 
-export function createPageHandler({ readPublished = createPublishedReader(), readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
+export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
   // The same legacy motor defaults as the visitor, used only for absent fields.
   const source = fs.readFileSync(new URL('../src/visitor/defaults.js', import.meta.url), 'utf8');
   const motorDefaults = JSON.parse(source.slice(source.indexOf('{'), source.lastIndexOf('}') + 1)).motorPage;
@@ -78,8 +86,9 @@ export function createPageHandler({ readPublished = createPublishedReader(), rea
     const noindex = owner || environment.isUat || isVercelPreviewHost(environment.host);
     if (noindex) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     try {
-      const config = owner ? {} : await readPublished(environment.siteId);
-      const html = renderPublicPage(readHtml(), config, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults });
+      const published = owner ? null : await readPublished(environment.siteId);
+      const state = published && (validStateDoc(published) ? published : { config: published, text: {} });
+      const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, publishedState: state, siteId: environment.siteId });
       if (!noindex) res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30');
       res.statusCode = 200;
       res.end(req.method === 'HEAD' ? '' : html);
