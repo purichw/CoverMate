@@ -6,7 +6,19 @@ const { renderAdminEmail } = require('./admin-email-template.cjs');
 
 const COLLECTION = 'caseEmailOutbox';
 const RETRY_WINDOW = 23 * 60 * 60 * 1000; // Stay inside Resend's 24-hour deduplication window.
+const NEVER = Number.MAX_SAFE_INTEGER;
+const C = require('./cases-contract.cjs');
 const emailPattern = /^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/;
+
+// Explicitly project the information authorized for owner emails. Never copy a
+// whole case, internal working note, calculator snapshot or privacy receipt.
+function emailData(record) {
+  const contact = Object.fromEntries(['name', 'phone', 'lineId', 'email', 'rawContact'].map(key => [key, record.contact?.[key] || null]));
+  return { contact, interestType: record.interestType || 'other', enquiryTopic: record.enquiryTopic || '',
+    message: Array.from(String(record.originalSubmission?.message || '')).slice(0, 240).join('') };
+}
+const followUpId = record => `follow-up-${C.hash(`${record.id}:${record.followUpRevision}`)}`;
+const activeFollowUp = record => record && !C.closed(record.status) && record.followUp?.reminderEnabled === true && Number.isFinite(Date.parse(record.followUp.dueAt));
 
 function createNotifier({ values = process.env, request = fetch, now = Date.now, sleep = pause } = {}) {
   const production = environment => environment?.isProduction === true && environment?.isUat === false &&
@@ -32,41 +44,79 @@ function createNotifier({ values = process.env, request = fetch, now = Date.now,
     } catch { /* Invalid/empty published media uses the readable brand name. */ }
     return {
       from: config.from, to: [config.to],
-      ...renderAdminEmail({ kind: job.kind, caseNumber: job.caseNumber, createdAt: job.createdAt, logoUrl })
+      ...renderAdminEmail({ ...job.emailData, kind: job.kind, caseId: job.caseId, caseNumber: job.caseNumber, createdAt: job.createdAt,
+        followUpAt: job.followUpAt, overdueCases: job.overdueCases, totalOverdue: job.totalOverdue, summaryDate: job.summaryDate, logoUrl })
     };
   }
   function stage(tx, db, record, environment) {
     if (!production(environment)) return;
     tx.create(db.collection(COLLECTION).doc(record.id), {
       kind: 'new_case', caseId: record.id, caseNumber: record.caseNumber,
+      emailData: emailData(record),
       createdAt: record.submittedAt, status: 'pending', attempts: 0,
       idempotencyKey: `covermate-new-case-${record.id}`, payload: null,
-      leaseUntil: 0, nextAttemptAt: 0, firstAttemptAt: null
+      leaseUntil: 0, nextAttemptAt: 0, queueAt: 0, firstAttemptAt: null
     });
   }
-  async function deliver(db, id, environment) {
+  function stageFollowUp(tx, db, record, environment) {
+    if (!production(environment) || !activeFollowUp(record)) return null;
+    const id = followUpId(record), due = Date.parse(record.followUp.dueAt);
+    tx.create(db.collection(COLLECTION).doc(id), {
+      kind: 'follow_up_due', caseId: record.id, caseNumber: record.caseNumber,
+      caseCollection: environment.leadCollection || 'contactLeads', followUpRevision: record.followUpRevision,
+      followUpAt: record.followUp.dueAt, createdAt: new Date(now()).toISOString(), status: 'pending', attempts: 0,
+      idempotencyKey: `covermate-${id}`, payload: null, leaseUntil: 0, nextAttemptAt: due, queueAt: due, firstAttemptAt: null
+    });
+    return id;
+  }
+  async function deliver(db, id, environment, { rounds = 3 } = {}) {
     const config = configuration(environment);
     if (!config) return { accepted: false, reason: 'email_not_configured' };
     const ref = db.collection(COLLECTION).doc(id);
-    for (let round = 0; round < 3; round++) {
+    for (let round = 0; round < Math.min(3, Math.max(1, rounds)); round++) {
       const token = randomUUID();
       const claimed = await db.runTransaction(async tx => {
         const snap = await tx.get(ref), job = snap.data(), time = now();
         if (!job) return { skip: 'no_intent' };
         if (job.status === 'accepted') return { accepted: true, providerId: job.providerId };
-        if (job.status === 'failed' || job.status === 'needs_review') return { skip: job.status };
+        if (['failed', 'needs_review', 'cancelled'].includes(job.status)) return { skip: job.status };
+        if (job.leaseUntil > time || job.nextAttemptAt > time) return { skip: 'pending' };
+        let currentRecord;
+        let digestRecords;
+        if (job.kind === 'follow_up_due') {
+          currentRecord = (await tx.get(db.collection(job.caseCollection || 'contactLeads').doc(job.caseId))).data()?.caseRecord;
+          if (!activeFollowUp(currentRecord) || currentRecord.followUpRevision !== job.followUpRevision || currentRecord.followUp.dueAt !== job.followUpAt) {
+            tx.update(ref, { status: 'cancelled', lastError: 'follow_up_changed', leaseUntil: 0, queueAt: NEVER });
+            return { skip: 'cancelled' };
+          }
+        }
+        if (job.kind === 'overdue_digest' && job.summaryDate !== new Date(time + 7 * 3600000).toISOString().slice(0, 10)) {
+          tx.update(ref, { status: 'cancelled', lastError: 'digest_day_expired', leaseUntil: 0, queueAt: NEVER });
+          return { skip: 'cancelled' };
+        }
+        if (job.kind === 'overdue_digest' && !job.payload) {
+          const cutoff = new Date(`${job.summaryDate}T00:00:00+07:00`).toISOString();
+          const cases = await tx.get(db.collection(environment.leadCollection || 'contactLeads').where('caseRecord.followUp.dueAt', '<', cutoff));
+          digestRecords = cases.docs.map(doc => doc.data().caseRecord).filter(activeFollowUp)
+            .sort((a, b) => a.followUp.dueAt.localeCompare(b.followUp.dueAt) || a.id.localeCompare(b.id));
+          if (!digestRecords.length) {
+            tx.update(ref, { status: 'cancelled', lastError: 'no_overdue_cases', queueAt: NEVER, leaseUntil: 0 });
+            return { skip: 'cancelled' };
+          }
+        }
         if (job.firstAttemptAt !== null && time - job.firstAttemptAt >= RETRY_WINDOW) {
-          tx.update(ref, { status: 'needs_review', lastError: 'retry_window_expired', leaseUntil: 0 });
+          tx.update(ref, { status: 'needs_review', lastError: 'retry_window_expired', leaseUntil: 0, queueAt: NEVER });
           return { skip: 'needs_review' };
         }
         if (job.attempts >= 6) {
-          tx.update(ref, { status: 'needs_review', lastError: 'retry_limit', leaseUntil: 0 });
+          tx.update(ref, { status: 'needs_review', lastError: 'retry_limit', leaseUntil: 0, queueAt: NEVER });
           return { skip: 'needs_review' };
         }
-        if (job.leaseUntil > time || job.nextAttemptAt > time) return { skip: 'pending' };
         const published = job.payload ? null : (await tx.get(db.doc('sites/covermate/states/live'))).data();
+        const digest = digestRecords ? { totalOverdue: digestRecords.length, overdueCases: digestRecords.slice(0, 10).map(r => ({ caseId: r.id, caseNumber: r.caseNumber, name: r.contact.name, interestType: r.interestType, dueAt: r.followUp.dueAt })) } : {};
+        const prepared = { ...job, ...digest, ...(currentRecord ? { emailData: emailData(currentRecord) } : {}) };
         const update = { status: 'sending', attempts: job.attempts + 1, firstAttemptAt: job.firstAttemptAt ?? time,
-          leaseToken: token, leaseUntil: time + 30000, payload: job.payload || payload(job, config, published) };
+          leaseToken: token, leaseUntil: time + 30000, queueAt: time + 30000, payload: job.payload || payload(prepared, config, published) };
         tx.update(ref, update);
         return { job: { ...job, ...update } };
       });
@@ -87,28 +137,37 @@ function createNotifier({ values = process.env, request = fetch, now = Date.now,
           result = { accepted: true, providerId: body.id };
         }
       } catch { result = { accepted: false, retry: true, code: 'email_delivery_unknown' }; }
-      const delay = round === 0 ? 1000 : 3000;
+      // Three fast attempts for intake, then persist increasingly spaced retries
+      // for the independent worker; never spin indefinitely during an outage.
+      const delay = job.attempts <= 2 ? (job.attempts === 1 ? 1000 : 3000) : Math.min(60 * 60 * 1000, 5 * 60 * 1000 * 2 ** (job.attempts - 3));
+      const exhausted = !result.accepted && result.retry && job.attempts >= 6;
       await db.runTransaction(async tx => {
         const current = (await tx.get(ref)).data();
         if (current?.leaseToken !== token) return;
         tx.update(ref, result.accepted
-          ? { status: 'accepted', providerId: result.providerId, acceptedAt: new Date(now()).toISOString(), leaseUntil: 0, lastError: null }
-          : { status: result.retry ? 'pending' : 'failed', lastError: result.code, leaseUntil: 0, nextAttemptAt: now() + delay });
+          ? { status: 'accepted', providerId: result.providerId, acceptedAt: new Date(now()).toISOString(), leaseUntil: 0, queueAt: NEVER, lastError: null }
+          : { status: exhausted ? 'needs_review' : result.retry ? 'pending' : 'failed', lastError: exhausted ? 'retry_limit' : result.code, leaseUntil: 0, nextAttemptAt: now() + delay, queueAt: result.retry && !exhausted ? now() + delay : NEVER });
       });
       if (result.accepted) return result;
       reportFailure('admin-email', error(503, result.code, 'Admin email failed.'));
       if (!result.retry) return result;
-      if (round < 2) await sleep(delay);
+      if (exhausted) return { accepted: false, reason: 'needs_review' };
+      if (round < Math.min(3, Math.max(1, rounds)) - 1 && job.attempts < 3) await sleep(delay);
+      else return { accepted: false, reason: 'pending' };
     }
     return { accepted: false, reason: 'pending' };
   }
-  async function drain(db, environment) {
+  async function drain(db, environment, { limit = 5, deadline = Infinity } = {}) {
     if (!configuration(environment)) return;
-    // Only new explicit outbox intents, never historical cases or manual entries.
-    for (const status of ['pending', 'sending']) {
-      const jobs = await db.collection(COLLECTION).where('status', '==', status).limit(3).get();
-      for (const doc of jobs.docs) await deliver(db, doc.id, environment);
+    // A single-field due-time index avoids full scans and future-job starvation.
+    const jobs = await db.collection(COLLECTION).where('queueAt', '<=', now()).orderBy('queueAt').limit(Math.min(5, limit)).get();
+    const results = [];
+    for (const doc of jobs.docs) {
+      if (Date.now() + 7000 > deadline) break;
+      results.push(await deliver(db, doc.id, environment, { rounds: 1 }));
+      if (doc !== jobs.docs.at(-1)) await sleep(600);
     }
+    return { attempted: results.length, accepted: results.filter(result => result.accepted).length };
   }
   function background(work) {
     const task = work().catch(err => { reportFailure('admin-email', error(503, 'email_worker_failed', 'Email worker failed.')); });
@@ -129,13 +188,13 @@ function createNotifier({ values = process.env, request = fetch, now = Date.now,
       if (now() - last < 60000) throw error(429, 'rate_limited', 'Please wait one minute before sending another test.');
       tx.set(limitRef, { lastAttemptAt: now() });
       tx.create(ref, { kind: 'test', createdAt: new Date(now()).toISOString(), status: 'pending', attempts: 0,
-        idempotencyKey: `covermate-${id}`, payload: null, leaseUntil: 0, nextAttemptAt: 0, firstAttemptAt: null });
+        idempotencyKey: `covermate-${id}`, payload: null, leaseUntil: 0, nextAttemptAt: 0, queueAt: 0, firstAttemptAt: null });
     });
     const result = await deliver(db, id, actor.environment);
     if (!result.accepted) throw error(503, 'email_not_accepted', 'Email has not been accepted. Check delivery status before retrying.');
     return { accepted: true, providerId: result.providerId };
   }
-  return { configuration, stage, deliver, drain, background, dispatch, testEmail };
+  return { configuration, stage, stageFollowUp, deliver, drain, background, dispatch, testEmail };
 }
 
-module.exports = { createNotifier, ...createNotifier() };
+module.exports = { createNotifier, emailData, followUpId, activeFollowUp, ...createNotifier() };

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import vm from "node:vm";
 
 import { appendEnvironmentSearch, resolveCoverMateEnvironment } from "../covermate-environment.mjs";
 import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
@@ -66,7 +67,14 @@ const sessionSource = repoFile("admin/session.js");
 assert.match(sessionSource, /adminRedirect/, "Admin session redirects must preserve UAT query context.");
 
 const adminShellSource = repoFile("admin/index.html");
-assert.match(adminShellSource, /admin\/login\?cm_env=uat/, "Admin shell guard must preserve local UAT login redirects.");
+const shellGuard = adminShellSource.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
+function shellLogin(search) {
+  let destination;
+  vm.runInNewContext(shellGuard, { URLSearchParams, window: { location: { search, replace: value => { destination = value; } }, localStorage: { getItem: () => null } } });
+  return new URL(destination, 'https://covermate.test');
+}
+assert.equal(shellLogin('?cm_env=uat').searchParams.get('cm_env'), 'uat', 'Admin shell guard must preserve local UAT login redirects.');
+assert.equal(shellLogin('?cm_env=uat&case=case-123').searchParams.get('case'), 'case-123', 'UAT redirects must preserve the case destination.');
 
 const loginTemplate = extractBundlerTemplate(repoFile("admin/login/index.html"), {
   fileLabel: "admin/login/index.html",

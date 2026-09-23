@@ -2,6 +2,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
+    "api/notification-worker.js": { "maxDuration": 60 },
     "api/page.js": { "includeFiles": "{index.html,src/visitor/defaults.js,server/asset-versions.json,src/error-page/**}" }
   },
   "redirects": [

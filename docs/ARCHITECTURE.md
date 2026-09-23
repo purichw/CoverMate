@@ -479,8 +479,10 @@ the production/UAT namespace and owner-only Cases gate.
 
 `server/admin-notification.cjs` owns Resend system-inbox alerts: production-only
 outbox intents created within intake transactions, post-commit dispatch,
-idempotent bounded retries and an owner-only test. It does not enable personal
-email preferences or scheduled follow-ups. See
+idempotent bounded retries and an owner-only test. A protected
+`api/notification-worker.js` and `server/admin-email-scheduler.cjs` add independent
+retry, follow-up revision checks and daily overdue digests. Personal email
+preferences remain unsupported. See
 [ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md).
 
 CSP is enforced with the renderer's documented inline/eval/blob allowances.

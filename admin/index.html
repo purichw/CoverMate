@@ -17,7 +17,11 @@
       function loginPath() {
         try {
           var params = new URLSearchParams(window.location.search);
-          if (params.get("cm_env") === "uat") return "/admin/login?cm_env=uat";
+          var loginParams = new URLSearchParams();
+          if (params.get("cm_env") === "uat") loginParams.set("cm_env", "uat");
+          if (params.has("case")) loginParams.set("case", /^[\w-]{1,128}$/.test(params.get("case")) ? params.get("case") : "");
+          if (params.get("followUp") === "overdue") loginParams.set("followUp", "overdue");
+          return "/admin/login" + (loginParams.toString() ? "?" + loginParams : "");
         } catch (error) {
           // Fall through to the production-shaped login URL.
         }

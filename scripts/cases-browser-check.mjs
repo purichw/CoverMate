@@ -10,6 +10,7 @@ const fixtures = createCasesFixture();
 const now = fixtures.asOf;
 let records = structuredClone(fixtures.cases), notices = structuredClone(fixtures.notifications), failSave = false, conflict = false, failList = false;
 let intakeEmailAvailable = false, failTestEmail = false, testEmailGate;
+let followUpEmailAvailable = false, overdueDigestAvailable = false, schedulerAvailable = false;
 const testEmailRequests = [], notificationOnly = process.argv.includes('--notifications');
 const output = process.env.CASES_SCREENSHOT_DIR || 'uat-results/cases-v2'; fs.mkdirSync(output, { recursive: true });
 const { server, baseUrl } = await startStaticServer();
@@ -59,7 +60,7 @@ try {
         if (req.method() === 'POST') { notices.filter(n => path[1] === 'read-all' || n.id === path[1]).forEach(n => n.readAt = now); result = { ok: true }; }
         else result = { items: notices.filter(n => url.searchParams.get('unread') !== 'true' || !n.readAt && !n.resolvedAt), unreadCount: notices.filter(n => !n.readAt && !n.resolvedAt).length, nextCursor: null };
       } else if (path[0] === 'notification-preferences') result = fixtures.preferences[0] || fixtures.preferences;
-      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, intakeEmailAvailable, intakeEmailRecipient: intakeEmailAvailable ? 'covermate@proton.me' : null, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false };
+      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, intakeEmailAvailable, intakeEmailRecipient: intakeEmailAvailable ? 'covermate@proton.me' : null, followUpEmailAvailable, overdueDigestAvailable, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable, schedulerCadenceMinutes: schedulerAvailable ? 5 : null, lineAvailable: false };
       else if (path[0] === 'notification-test-email') {
         testEmailRequests.push({ method: req.method(), key: req.headers()['idempotency-key'], body: req.postDataJSON() });
         if (testEmailGate) await testEmailGate;
@@ -78,15 +79,31 @@ try {
     assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isDisabled(), true);
     assert.equal(testEmailRequests.length, 0, 'Unconfigured email does not dispatch a test.');
     assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2);
-    await page.getByText('ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้และอีเมลนัดติดตาม', { exact: true }).waitFor();
+    await page.getByText('ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้', { exact: true }).waitFor();
+    await page.getByText('อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
+    await page.getByText('อีเมลสรุปเคสเลยกำหนดรายวันยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
 
     intakeEmailAvailable = true;
     await page.getByRole('button', { name: 'กลับไปที่การแจ้งเตือน', exact: true }).click();
     await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
     await page.getByText('covermate@proton.me', { exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isEnabled(), true);
-    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'System inbox configuration does not enable personal or follow-up preferences.');
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'System inbox configuration does not enable personal preferences.');
     assert.equal(await page.getByText('ยังไม่ได้ตั้งค่าการส่งอีเมล', { exact: true }).count(), 0);
+    await page.getByText('อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
+
+    followUpEmailAvailable = overdueDigestAvailable = true;
+    await page.getByRole('button', { name: 'กลับไปที่การแจ้งเตือน', exact: true }).click();
+    await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
+    await page.getByText('อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
+    assert.equal(await page.getByText(/เป้าหมายเวลา 09:00/).count(), 0, 'Unavailable scheduler cannot claim timed delivery.');
+    schedulerAvailable = true;
+    await page.getByRole('button', { name: 'กลับไปที่การแจ้งเตือน', exact: true }).click();
+    await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
+    await page.getByText('นัดติดตามถึงกำหนด: ส่งอีเมลเมื่อเคสนั้นเปิดแจ้งเตือนนัดติดตามไว้', { exact: true }).waitFor();
+    await page.getByText(/เป้าหมายเวลา 09:00 น. ตามเวลาไทย/).waitFor();
+    await page.getByText(/ระบบตรวจสอบทุก 5 นาที และลองส่งใหม่อัตโนมัติ/).waitFor();
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'Ready scheduled delivery still leaves personal preferences unavailable.');
 
     let releaseTestEmail;
     testEmailGate = new Promise(resolve => { releaseTestEmail = resolve; });

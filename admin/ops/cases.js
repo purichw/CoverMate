@@ -24,6 +24,42 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   const s = { active: false, rows: [], summary: null, list: null, loading: true, error: '', summaryError: '', scope: 'open', status: '', followUp: 'any', closedMonth: false, search: '', sort: '', cursor: '', pages: [], panel: null, record: null, draft: null, activities: [], activityOffset: null, legacy: null, saving: false, errorSave: '', conflict: null, notifications: [], unreadCount: 0, notificationError: '', unreadOnly: false, notificationCursor: null, preferences: null, capabilities: null, expandedFilters: false, generation: 0 };
   const overlay = document.createElement('div'); overlay.className = 'case-overlay'; document.body.append(overlay);
   let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, testEmailKey, testEmailSending = false, testEmailMessage = '', testEmailFailed = false, panelGeneration = 0, summaryGeneration = 0;
+  let locationKey = null, linkedCaseId = null, configuredView = false;
+  const caseLocationKey = () => {
+    const params = new URLSearchParams(location.search);
+    return JSON.stringify([params.get('case'), params.get('followUp') || 'any']);
+  };
+  function writeCaseLocation({ replace = false } = {}) {
+    if (!s.active) return;
+    const url = new URL(location.href);
+    if (linkedCaseId === null) url.searchParams.delete('case'); else url.searchParams.set('case', linkedCaseId);
+    if (s.followUp === 'any') url.searchParams.delete('followUp'); else url.searchParams.set('followUp', s.followUp);
+    if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search + url.hash);
+    locationKey = caseLocationKey();
+  }
+  async function syncLocation({ initial = false } = {}) {
+    if (!s.active || locationKey === caseLocationKey()) return;
+    const requestedKey = caseLocationKey();
+    if (!(await guard())) { writeCaseLocation({ replace: true }); return; }
+    if (!s.active || requestedKey !== caseLocationKey()) return;
+    const params = new URLSearchParams(location.search);
+    const followUp = ['due', 'today', 'overdue'].includes(params.get('followUp')) ? params.get('followUp') : 'any';
+    const changedFilter = followUp !== s.followUp;
+    linkedCaseId = params.get('case'); locationKey = requestedKey;
+    if (changedFilter || initial) {
+      Object.assign(s, { followUp, ...(followUp !== 'any' ? { scope: 'open', status: '', closedMonth: false } : {}), sort: '', cursor: '', pages: [], expandedFilters: followUp !== 'any' });
+      if (!initial) load({ listOnly: true });
+    }
+    if (linkedCaseId !== null) await openCase(linkedCaseId, { skipGuard: true, fromLocation: true });
+    else if (s.panel) await closePanel({ preserveLocation: true });
+  }
+  async function loadCapabilities() {
+    try { s.capabilities = await api('notification-capabilities'); }
+    catch { s.capabilities = null; }
+    // Update only the helper, preserving focus and edits in an open form.
+    const helper = overlay.querySelector('#caseReminderHelp');
+    if (helper) helper.textContent = reminderHelp();
+  }
   const dockQuery = matchMedia('(min-width:1600px)');
   function syncModalMode() {
     const docked = dockQuery.matches && ['detail', 'new'].includes(s.panel);
@@ -74,7 +110,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     try { const data = await api('notifications'); s.unreadCount = data.unreadCount; s.notificationError = ''; syncButtons(); }
     catch (e) { s.notificationError = e.message; }
   }
-  function filter(changes) { Object.assign(s, changes, { cursor: '', pages: [] }); load({ listOnly: true }); }
+  function filter(changes) { Object.assign(s, changes, { cursor: '', pages: [] }); writeCaseLocation(); load({ listOnly: true }); }
   function summaryCards() {
     const cards = [['new', 'เคสใหม่', 'รอติดต่อครั้งแรก', 'file'], ['followUpsDue', 'ถึงกำหนดติดตาม', `เลยกำหนด ${s.summary?.overdue ?? '—'} เคส`, 'calendar'], ['noAnswer', 'ยังติดต่อไม่ได้', 'รอติดต่ออีกครั้ง', 'phone'], ['closedThisMonth', 'ปิดเคสเดือนนี้', 'ดำเนินการแล้วหรือไม่ไปต่อ', 'check']];
     return `<div class="case-metrics">${cards.map(([key, label, sub, glyph]) => `<button class="case-metric" data-case-action="metric" data-metric="${key}" ${!s.summary ? 'disabled' : ''}><span class="case-metric-icon">${icon(glyph)}</span><span><strong>${s.summary?.[key] ?? '—'}</strong><span>${label}</span><small>${sub}</small></span></button>`).join('')}</div>${s.summaryError ? `<div class="case-inline-error" role="alert">โหลดข้อมูลสรุปไม่ได้ ${btn('retry', 'ลองอีกครั้ง')}</div>` : ''}`;
@@ -99,20 +135,28 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   function card(r) { return `<button class="case-card" data-case-action="open" data-id="${esc(r.id)}" data-case-id="${esc(r.id)}"><span class="case-card-top"><strong>${esc(r.contact.name)}</strong>${badge(r.status)}</span><span class="case-card-contact">${esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact)}${icon('chevron')}</span><span class="case-card-meta">${esc(r.caseNumber)} · ${title(r.interestType)}</span><span class="case-card-due">${followLabel(r)}</span></button>`; }
   function followLabel(r) { return r.followUp ? `<span class="${r.followUp.dueAt <= (s.summary?.asOf || new Date().toISOString()) ? 'case-due' : ''}">${icon('calendar')}${date(r.followUp.dueAt)}</span>` : '<span class="case-muted">ยังไม่ได้นัดติดตาม</span>'; }
   function updateSelected() { root.querySelectorAll('[data-case-id]').forEach(n => n.classList.toggle('case-selected', n.dataset.caseId === s.record?.id)); document.body.classList.toggle('case-detail-open', ['detail', 'new'].includes(s.panel)); }
-  async function openCase(id, { skipGuard = false } = {}) {
+  async function openCase(id, { skipGuard = false, fromLocation = false } = {}) {
     if (!skipGuard && !(await guard())) return;
     returnFocus = document.activeElement;
     const generation = ++panelGeneration;
     s.panel = 'loading'; s.draft = null; s.record = null; s.errorSave = ''; s.conflict = null; renderPanel();
+    if (!['admin', 'administrator', 'owner'].includes(session.role)) {
+      s.panel = 'error'; s.errorSave = 'บัญชีนี้ไม่มีสิทธิ์เปิดเคส กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์'; renderPanel(); return;
+    }
+    if (!/^[\w-]{1,128}$/.test(id || '')) {
+      s.panel = 'error'; s.errorSave = 'ลิงก์เคสไม่ถูกต้อง กรุณาเปิดลิงก์จากอีเมลอีกครั้ง หรือค้นหาเคสจากรายการ'; renderPanel(); return;
+    }
+    if (!fromLocation) { linkedCaseId = id; writeCaseLocation(); }
     try {
       const data = await api(`cases/${encodeURIComponent(id)}`);
       if (generation !== panelGeneration) return;
       s.record = data.record; s.draft = editable(data.record); s.activities = data.activities; s.activityOffset = data.nextActivityOffset; s.legacy = data.legacyHistory;
       s.panel = 'detail'; requestKey = null; renderPanel(); updateSelected();
-    } catch (e) { if (generation === panelGeneration) { s.panel = 'error'; s.errorSave = e.message; renderPanel(); } }
+    } catch (e) { if (generation === panelGeneration) { s.panel = 'error'; s.errorSave = e.status === 404 ? 'ไม่พบเคสจากลิงก์นี้ เคสอาจถูกลบหรือย้ายแล้ว กรุณาค้นหาจากรายการเคส' : e.status === 403 ? 'บัญชีนี้ไม่มีสิทธิ์เปิดเคสจากลิงก์ กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์' : e.message; renderPanel(); } }
   }
   async function newCase() {
     if (!(await guard())) return;
+    linkedCaseId = null; writeCaseLocation();
     returnFocus = document.activeElement; s.record = null; s.panel = 'new'; s.conflict = null; s.errorSave = ''; requestKey = null;
     s.activities = []; s.activityOffset = null; s.legacy = null; s.reopening = false;
     s.draft = { contact: { name: '', phone: null, lineId: null, email: null, rawContact: null }, interestType: 'unsure', enquiryTopic: '', workingNote: '', status: 'new', followUp: null };
@@ -150,7 +194,12 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   }
   function contactFields(c) { return `<div class="case-contact-fields">${[['name', 'ชื่อ', 'text', 150], ['phone', 'โทรศัพท์', 'tel', 64], ['lineId', 'LINE ID', 'text', 100], ['email', 'อีเมล', 'email', 254], ['rawContact', 'ช่องทางอื่น / ข้อมูลที่ลูกค้าแจ้ง', 'text', 300]].map(([key, label, type, max]) => `<label>${label}${key === 'name' ? ' *' : ''}<input name="contact.${key}" type="${type}" maxlength="${max}" value="${esc(c[key] || '')}" ${key === 'name' ? 'required' : ''}></label>`).join('')}<small>ระบุช่องทางติดต่ออย่างน้อย 1 ช่องทาง</small></div>`; }
   function enquiryFields(d) { return `<label>ประเภทที่สนใจ<select name="interestType">${INTERESTS.map(v => `<option value="${v}" ${d.interestType === v ? 'selected' : ''}>${title(v)}</option>`).join('')}</select></label><label>หัวข้อที่สอบถาม<input name="enquiryTopic" maxlength="300" value="${esc(d.enquiryTopic)}" required></label>`; }
-  function followFields(d) { return closed(d.status) ? '<p class="case-muted">เมื่อบันทึกการปิดเคส ระบบจะล้างนัดติดตามและยกเลิกการแจ้งเตือนที่ยังค้างอยู่</p>' : `<label>วันที่และเวลา · เวลาไทย (UTC+7)<input name="dueAt" type="datetime-local" value="${localInput(d.followUp?.dueAt)}"></label><label class="case-checkbox"><input type="checkbox" name="reminderEnabled" ${d.followUp?.reminderEnabled ? 'checked' : ''}>แจ้งเตือนฉันใน Admin</label><small>การแจ้งเตือนจะแสดงเมื่อเปิด Admin ยังไม่ได้เปิดใช้การส่งอีเมลแจ้งเตือนตามเวลา</small>${d.followUp ? btn('clear-followup', 'ล้างนัดติดตาม', '', 'case-text-button') : ''}`; }
+  function reminderHelp() {
+    if (!s.capabilities) return 'แจ้งเตือนใน Admin เมื่อถึงกำหนด สถานะการส่งอีเมลดูได้ในตั้งค่าการแจ้งเตือน';
+    if (s.capabilities.followUpEmailAvailable && s.capabilities.schedulerAvailable) return `เมื่อเปิดแจ้งเตือน ระบบจะแจ้งใน Admin และส่งอีเมลไปยัง ${s.capabilities.intakeEmailRecipient || 'กล่องจดหมายของระบบ'} หลังถึงกำหนด${Number.isFinite(s.capabilities.schedulerCadenceMinutes) ? ` โดยตรวจทุก ${s.capabilities.schedulerCadenceMinutes} นาที` : ''} การส่งอาจล่าช้าได้`;
+    return 'เมื่อเปิดแจ้งเตือน ระบบจะแจ้งใน Admin เมื่อเปิดหน้านี้ อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน';
+  }
+  function followFields(d) { return closed(d.status) ? '<p class="case-muted">เมื่อบันทึกการปิดเคส ระบบจะล้างนัดติดตามและยกเลิกการแจ้งเตือนที่ยังค้างอยู่</p>' : `<label>วันที่และเวลา · เวลาไทย (UTC+7)<input name="dueAt" type="datetime-local" value="${localInput(d.followUp?.dueAt)}"></label><label class="case-checkbox"><input type="checkbox" name="reminderEnabled" aria-describedby="caseReminderHelp" ${d.followUp?.reminderEnabled ? 'checked' : ''}>เปิดแจ้งเตือนนัดติดตาม</label><small id="caseReminderHelp">${esc(reminderHelp())}</small>${d.followUp ? btn('clear-followup', 'ล้างนัดติดตาม', '', 'case-text-button') : ''}`; }
   function historyMarkup() { return `<details class="case-history"><summary>ประวัติการทำงาน</summary><ul>${s.activities.map(a => `<li><strong>${a.type === 'created' ? 'สร้างเคส' : a.type === 'reopened' ? 'เปิดเคสอีกครั้ง' : 'อัปเดตเคส'}</strong><p>${a.fieldsChanged.map(f => ({ workingNote: 'โน้ตติดตามงาน', interestType: 'ประเภทที่สนใจ', enquiryTopic: 'หัวข้อที่สอบถาม', followUp: 'นัดติดตาม', status: 'สถานะ', contact: 'ข้อมูลติดต่อ' }[f] || f)).join(', ')}</p>${a.noteSnapshot !== null ? `<p class="case-preserve">${esc(a.noteSnapshot || 'ล้างโน้ตแล้ว')}</p>` : ''}${a.statusBefore && a.statusBefore !== a.statusAfter ? `<small>${STATUS[a.statusBefore] || esc(a.statusBefore)} → ${STATUS[a.statusAfter]}</small>` : ''}<small>${date(a.createdAt)}</small></li>`).join('')}</ul>${s.activityOffset !== null ? btn('more-history', 'ดูประวัติก่อนหน้า') : ''}${s.legacy && (s.legacy.timeline.length || s.legacy.audit.length || Object.keys(s.legacy.tasks).length) ? `<details><summary>ประวัติจากระบบเดิม</summary><pre>${legacyHistoryText()}</pre></details>` : ''}</details>`; }
   function legacyHistoryText() {
     const entries = [...(s.legacy?.timeline || []), ...(s.legacy?.audit || [])].map(item => [item.text || item.title || item.action || 'บันทึกการอัปเดต', item.note || '', [item.from, item.to].filter(Boolean).join(' → '), item.at ? date(item.at) : '', item.by || item.actorName || ''].filter(Boolean).join(' · '));
@@ -174,6 +223,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     try {
       const record = await api(s.record ? `cases/${s.record.id}` : 'cases', { method: s.record ? 'PATCH' : 'POST', headers: { 'Idempotency-Key': requestKey }, body: payload });
       s.record = record; s.draft = editable(record); s.reopening = false; s.panel = 'detail'; requestKey = null; s.saving = false;
+      linkedCaseId = record.id; writeCaseLocation();
       renderPanel(); announce('บันทึกเคสแล้ว'); load(); refreshNotifications();
       api(`cases/${record.id}`).then(data => {
         if (s.record?.id !== record.id || s.panel !== 'detail') return;
@@ -220,7 +270,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     return new Promise(resolve => { guardResolve = resolve; });
   }
   function resolveGuard(discard) { const resolve = guardResolve; guardResolve = null; overlay.querySelector('.case-discard')?.remove(); overlay.querySelectorAll('.case-panel > *').forEach(n => { n.inert = false; }); if (discard) { s.draft = null; s.reopening = false; } resolve?.(discard); if (!discard) overlay.querySelector('.case-panel')?.focus(); }
-  async function closePanel() { if (!(await guard())) return; panelGeneration++; s.panel = null; s.draft = null; s.record = null; s.reopening = false; overlay.innerHTML = ''; overlay.classList.remove('is-open'); document.body.classList.remove('case-modal-open', 'case-detail-open'); document.querySelector('.app').inert = false; updateSelected(); if (returnFocus?.isConnected) returnFocus.focus(); else root.querySelector('button')?.focus(); }
+  async function closePanel({ preserveLocation = false } = {}) { if (!(await guard())) return; panelGeneration++; s.panel = null; s.draft = null; s.record = null; s.reopening = false; if (!preserveLocation) { linkedCaseId = null; writeCaseLocation(); } overlay.innerHTML = ''; overlay.classList.remove('is-open'); document.body.classList.remove('case-modal-open', 'case-detail-open'); document.querySelector('.app').inert = false; updateSelected(); if (returnFocus?.isConnected) returnFocus.focus(); else root.querySelector('button')?.focus(); }
   async function openNotifications() {
     if (!(await guard())) return;
     s.draft = null; s.record = null; s.panel = 'notifications'; s.notificationCursor = null; s.notifications = []; s.notificationLoading = true; s.notificationError = ''; returnFocus = document.activeElement; renderPanel(); updateSelected();
@@ -237,7 +287,20 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       ${s.notificationError ? `<p role="alert">${esc(s.notificationError)}</p>${btn('notification-retry', 'ลองอีกครั้ง')}` : s.notificationLoading ? '<p>กำลังโหลดการแจ้งเตือน…</p>' : !s.notifications.length ? '<div class="case-empty"><h3>ไม่มีการแจ้งเตือนค้างอยู่</h3><p>เคสใหม่จากเว็บไซต์และนัดติดตามที่เปิดแจ้งเตือนไว้จะแสดงที่นี่</p></div>' : `<div class="case-notifications">${s.notifications.map(n => `<button class="case-notification ${!n.readAt && !n.resolvedAt ? 'unread' : ''}" data-case-action="notification-open" data-id="${esc(n.id)}"><strong>${esc(notificationTitle(n))}</strong><p>${esc(notificationBody(n))}</p><small>${date(n.createdAt)}${n.resolvedAt ? ' · จัดการแล้ว' : !n.readAt ? ' · ยังไม่อ่าน' : ''}</small></button>`).join('')}</div>${s.notificationCursor ? btn('more-notifications', 'ดูการแจ้งเตือนก่อนหน้า') : ''}`}`);
   }
   async function preferences() { s.panel = 'preferences'; s.capabilities = null; s.preferenceError = ''; renderPanel(); try { [s.preferences, s.capabilities] = await Promise.all([api('notification-preferences'), api('notification-capabilities')]); } catch (e) { s.preferenceError = e.message; } if (s.panel === 'preferences') renderPanel(); }
-  function renderPreferences() { panelShell('ตั้งค่าการแจ้งเตือน', !s.capabilities ? `<p>${esc(s.preferenceError || 'กำลังโหลดการตั้งค่า…')}</p>${s.preferenceError ? btn('preferences', 'ลองอีกครั้ง') : ''}` : `<section class="case-section"><h3>ภายใน Admin</h3><p>ระบบแสดงเคสใหม่จากเว็บไซต์เสมอ ส่วนการแจ้งเตือนนัดติดตามจะใช้การตั้งค่าของแต่ละเคส</p><small>การแก้ไขที่คุณทำเองจะไม่สร้างการแจ้งเตือน</small></section><section class="case-section"><h3>อีเมลแจ้งเคสใหม่ของระบบ</h3><p>${s.capabilities.intakeEmailAvailable ? `เคสใหม่จากฟอร์มบนเว็บไซต์จะส่งอีเมลแจ้งเตือนอัตโนมัติไปที่ <strong>${esc(s.capabilities.intakeEmailRecipient || 'กล่องจดหมายของระบบ')}</strong>` : 'ยังไม่พร้อมส่งอีเมลแจ้งเคสใหม่ของระบบ'}</p>${btn('test-email', testEmailSending ? 'กำลังส่งอีเมลทดสอบ…' : 'ส่งอีเมลทดสอบ', !s.capabilities.intakeEmailAvailable || testEmailSending ? 'disabled' : '')}<p id="caseTestEmailStatus" role="${testEmailFailed ? 'alert' : 'status'}">${esc(testEmailMessage)}</p></section><section class="case-section"><h3>อีเมลส่วนตัวและนัดติดตาม</h3><p>${s.capabilities.verifiedEmailLabel ? esc(s.capabilities.verifiedEmailLabel) : 'ยังไม่มีอีเมลส่วนตัวที่ยืนยันแล้ว'}</p><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเคสใหม่ไปยังอีเมลส่วนตัว</label><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเตือนนัดติดตามทางอีเมล</label><p class="case-muted">ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้และอีเมลนัดติดตาม</p><small>ระบบจะตรวจสอบการแจ้งเตือนนัดติดตามภายในเมื่อคุณเปิด Admin</small></section>`, btn('notifications', 'กลับไปที่การแจ้งเตือน')); }
+  function renderPreferences() {
+    const c = s.capabilities;
+    const scheduled = c?.schedulerAvailable === true;
+    const cadence = Number.isFinite(c?.schedulerCadenceMinutes) && c.schedulerCadenceMinutes > 0 ? `ทุก ${c.schedulerCadenceMinutes} นาที` : 'ตามรอบที่ตั้งไว้';
+    panelShell('ตั้งค่าการแจ้งเตือน', !c ? `<p>${esc(s.preferenceError || 'กำลังโหลดการตั้งค่า…')}</p>${s.preferenceError ? btn('preferences', 'ลองอีกครั้ง') : ''}` : `
+      <section class="case-section"><h3>ภายใน Admin</h3><p>ระบบแสดงเคสใหม่จากเว็บไซต์เสมอ ส่วนการแจ้งเตือนนัดติดตามจะใช้การตั้งค่าของแต่ละเคส</p><small>การแก้ไขที่คุณทำเองจะไม่สร้างการแจ้งเตือน</small></section>
+      <section class="case-section"><h3>อีเมลไปยังกล่องจดหมายของระบบ</h3><p>${c.intakeEmailRecipient ? `<strong>${esc(c.intakeEmailRecipient)}</strong>` : 'ยังไม่มีกล่องจดหมายของระบบที่พร้อมใช้งาน'}</p>
+        <p>${c.intakeEmailAvailable ? 'เคสใหม่จากฟอร์มบนเว็บไซต์: ส่งอีเมลแจ้งเตือนอัตโนมัติ' : 'ยังไม่พร้อมส่งอีเมลแจ้งเคสใหม่ของระบบ'}</p>
+        <p>${c.followUpEmailAvailable && scheduled ? 'นัดติดตามถึงกำหนด: ส่งอีเมลเมื่อเคสนั้นเปิดแจ้งเตือนนัดติดตามไว้' : 'อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน'}</p>
+        <p>${c.overdueDigestAvailable && scheduled ? 'สรุปเคสเลยกำหนด: ส่งวันละ 1 ครั้ง เป้าหมายเวลา 09:00 น. ตามเวลาไทย เฉพาะเคสที่ยังไม่ปิด เปิดแจ้งเตือน และเลยวันนัดติดตามแล้ว' : 'อีเมลสรุปเคสเลยกำหนดรายวันยังไม่พร้อมใช้งาน'}</p>
+        <small>${scheduled ? `ระบบตรวจสอบ${cadence} และลองส่งใหม่อัตโนมัติเมื่อส่งไม่สำเร็จ การส่งอาจล่าช้าจากเวลานัดหมายหรือเวลา 09:00 น.` : 'ระบบส่งตามเวลาอัตโนมัติยังไม่พร้อม การแจ้งเตือนภายในจะตรวจสอบเมื่อเปิด Admin'}</small>
+        ${btn('test-email', testEmailSending ? 'กำลังส่งอีเมลทดสอบ…' : 'ส่งอีเมลทดสอบ', !c.intakeEmailAvailable || testEmailSending ? 'disabled' : '')}<p id="caseTestEmailStatus" role="${testEmailFailed ? 'alert' : 'status'}">${esc(testEmailMessage)}</p></section>
+      <section class="case-section"><h3>อีเมลส่วนตัวของผู้ใช้</h3><p>${c.verifiedEmailLabel ? esc(c.verifiedEmailLabel) : 'ยังไม่มีอีเมลส่วนตัวที่ยืนยันแล้ว'}</p><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเคสใหม่ไปยังอีเมลส่วนตัว</label><label class="case-checkbox"><input type="checkbox" disabled>แจ้งนัดติดตามไปยังอีเมลส่วนตัว</label><p class="case-muted">ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้</p></section>`, btn('notifications', 'กลับไปที่การแจ้งเตือน'));
+  }
   function updateTestEmailStatus() {
     if (s.panel !== 'preferences') return;
     const button = overlay.querySelector('[data-case-action="test-email"]'), status = overlay.querySelector('#caseTestEmailStatus');
@@ -322,14 +385,17 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     const nextScope = nextFollowUp !== 'any' ? 'open' : ['open', 'all', 'closed'].includes(scope) ? scope : 'open';
     Object.assign(s, { scope: nextScope, status: '', search: String(search ?? '').trim(), followUp: nextFollowUp, closedMonth: false, sort: '', cursor: '', pages: [], expandedFilters: nextFollowUp !== 'any' });
     searchInput.value = s.search;
+    linkedCaseId = null; configuredView = !s.active;
+    writeCaseLocation();
     if (s.active) await load();
     return true;
   }
   return {
-    mount() { if (s.active) { render(); return; } s.active = true; s.reopening = false; render(); load(); refreshNotifications(); pollTimer = setInterval(checkVisible, 300000); },
-    async leave() { if (!(await guard())) return false; await closePanel(); s.active = false; s.generation++; summaryGeneration++; clearTimeout(searchTimer); clearInterval(pollTimer); root.classList.remove('cases-screen'); return true; },
+    mount() { if (s.active) { render(); return; } s.active = true; s.reopening = false; locationKey = null; if (configuredView) { configuredView = false; writeCaseLocation(); } render(); if (!['admin', 'administrator', 'owner'].includes(session.role)) return; syncLocation({ initial: true }).then(() => { if (s.active) load(); }); loadCapabilities(); refreshNotifications(); pollTimer = setInterval(checkVisible, 300000); },
+    async leave() { if (!(await guard())) return false; await closePanel({ preserveLocation: true }); s.active = false; s.generation++; summaryGeneration++; clearTimeout(searchTimer); clearInterval(pollTimer); root.classList.remove('cases-screen'); return true; },
     setSearch(value) { s.search = value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(() => filter({ search: s.search }), 250); },
-    newCase, openCase, openNotifications, refreshNotifications, configureView,
+    newCase, openCase, openNotifications, refreshNotifications, configureView, syncLocation,
+    restoreLocation() { writeCaseLocation({ replace: true }); },
     async openNavigation() { if (!(await guard())) return; s.draft = null; s.record = null; s.panel = 'navigation'; returnFocus = document.activeElement; renderPanel(); updateSelected(); },
     get active() { return s.active; }
   };

@@ -4,8 +4,16 @@ const { createCasesHandler } = require('./cases-handler.cjs');
 const { error, readBody } = require('./http.cjs');
 const C = require('./cases-contract.cjs');
 const adminEmail = require('./admin-notification.cjs');
+const { schedulerStatus } = require('./admin-email-scheduler.cjs');
 
-const capabilities = actor => ({ inAppAvailable: true, emailAvailable: false, intakeEmailAvailable: !!adminEmail.configuration(actor.environment), intakeEmailRecipient: adminEmail.configuration(actor.environment)?.to || null, verifiedEmailLabel: actor.emailVerified && actor.email ? actor.email.replace(/^(.{1,2})[^@]*(@.*)$/, '$1•••$2') : null, schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false });
+const capabilities = async actor => {
+  const config = adminEmail.configuration(actor.environment);
+  // UAT/preview capabilities must not initialize production persistence.
+  const scheduler = config ? await schedulerStatus(stores(actor).db, actor.environment) : { schedulerAvailable: false, schedulerCadenceMinutes: null, schedulerLastRunAt: null };
+  return { inAppAvailable: true, emailAvailable: false, intakeEmailAvailable: !!config, intakeEmailRecipient: config?.to || null,
+    followUpEmailAvailable: !!config && scheduler.schedulerAvailable, overdueDigestAvailable: !!config && scheduler.schedulerAvailable,
+    verifiedEmailLabel: actor.emailVerified && actor.email ? actor.email.replace(/^(.{1,2})[^@]*(@.*)$/, '$1•••$2') : null, ...scheduler, lineAvailable: false };
+};
 const safeId = value => { if (typeof value !== 'string' || !/^[\w-]{1,128}$/.test(value)) throw error(404, 'not_found', 'Case not found.'); return value; };
 const keyFor = req => {
   const key = String(req.headers['idempotency-key'] || '');
@@ -59,6 +67,7 @@ async function createManual(req, actor) {
     if (old.exists) { if (old.data().manualRequestFingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request ID was used for different changes.'); return old.data().caseRecord; }
     tx.create(ref, { caseRecord: record, manualRequestFingerprint: fingerprint, createdAt: new Date(now), updatedAt: new Date(now), status: record.status, sourcePath: '/admin/ops', name: record.contact.name });
     tx.create(ref.collection('caseActivities').doc('created'), activity(record, actor.uid, now, 'created', [], null, 'created'));
+    adminEmail.stageFollowUp(tx, db, record, actor.environment);
     return record;
   });
 }
@@ -78,6 +87,7 @@ async function patch(req, actor, id) {
       if (C.closed(record.status)) update.caseIntakeNotification = false;
       if (!snap.data().caseRecord) update.legacyCaseProjection = { status: snap.data().status || 'new', adaptedAt: now, note: 'Original fields and embedded tasks/audit retained.' };
       tx.update(ref, update);
+      if (scheduleChanged) adminEmail.stageFollowUp(tx, db, record, actor.environment);
       tx.create(ref.collection('caseActivities').doc(C.hash(`${actor.uid}:${key}`)), activity(record, actor.uid, now, body.reopen ? 'reopened' : 'updated', changed, current.status, C.hash(`${actor.uid}:${key}`)));
       for (const n of notices?.docs || []) if (!n.data().resolvedAt && (C.closed(record.status) || n.data().type === 'follow_up_due')) tx.update(n.ref, { resolvedAt: now });
     }
@@ -104,7 +114,6 @@ async function getPreferences(actor) {
   });
 }
 async function notificationList(actor, params) {
-  if (adminEmail.configuration(actor.environment)) adminEmail.background(() => adminEmail.drain(stores(actor).db, actor.environment));
   await catchUp(actor);
   let all = (await stores(actor).notifications.where('recipientId', '==', actor.uid).get()).docs.map(d => d.data());
   const unreadCount = all.filter(n => !n.readAt && !n.resolvedAt).length;

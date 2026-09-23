@@ -27,6 +27,10 @@ const values = {
   ADMIN_NOTIFICATION_EMAIL: 'owner@example.test'
 };
 const privateText = 'PRIVATE-CUSTOMER-CONTENT-DO-NOT-EMAIL';
+const customerName = 'Authorized customer name';
+const customerContact = 'authorized-customer@example.test';
+const customerMessage = 'Please call about the requested motor quotation.';
+const prohibitedText = ['PRIVATE-WORKING-NOTE', 'PRIVATE-CALCULATOR-DETAILS', 'PRIVATE-PRIVACY-RECEIPT'];
 let time = Date.parse('2026-09-24T00:00:00.000Z');
 const calls = [], failureLogs = [], fixtures = [];
 const originalError = console.error;
@@ -51,9 +55,12 @@ function notifier(respond = () => ok(`fake-${calls.length}`), config = values) {
 }
 const normal = notifier();
 const read = async id => (await outbox.doc(id).get()).data();
-const recordFor = label => websiteRecord(`${runId}-${label}`, {
-  name: privateText, contact: 'private-contact@example.test', coverage: 'motor', qtype: 'quote', topic: privateText
-}, null, new Date(time).toISOString());
+const recordFor = label => ({
+  ...websiteRecord(`${runId}-${label}`, {
+    name: customerName, contact: customerContact, coverage: 'motor', qtype: 'quote', topic: customerMessage
+  }, { fixture: prohibitedText[2] }, new Date(time).toISOString()),
+  workingNote: prohibitedText[0], calculator: { fixture: prohibitedText[1] }
+});
 async function stage(label, worker = normal, environment = production) {
   const record = recordFor(label);
   await db.runTransaction(async tx => worker.stage(tx, db, record, environment));
@@ -110,8 +117,13 @@ try {
   await assertUnchanged(record.id, accepted);
   assert.ok(accepted.payload.text.includes(record.caseNumber));
   assert.ok(accepted.payload.text.includes('https://covermateinsurance.com/admin/ops'));
-  assert.ok(!JSON.stringify(accepted.payload).includes(privateText));
-  assert.ok(!JSON.stringify(accepted.payload).includes('private-contact@example.test'));
+  for (const value of [customerName, customerContact, customerMessage]) {
+    assert.ok(accepted.payload.text.includes(value), 'The intake email includes the authorized customer summary.');
+    assert.ok(accepted.payload.html.includes(value), 'Both email alternatives contain the authorized summary.');
+  }
+  for (const value of [privateText, ...prohibitedText]) {
+    assert.ok(!JSON.stringify(accepted).includes(value), 'Neither the outbox snapshot nor payload stores unrelated private fields.');
+  }
 
   // Branding comes from published Thai media at first claim. Keep this shared
   // emulator document intact after the focused fixture block, including on error.
@@ -323,7 +335,7 @@ try {
     if (job) assert.ok(['accepted', 'failed', 'needs_review'].includes(job.status), `Fixture ${id} must not leave a pending send.`);
   }
   assert.ok(failureLogs.length > 0);
-  assert.ok(failureLogs.every(line => !line.includes(privateText) && !line.includes(values.RESEND_API_KEY)));
+  assert.ok(failureLogs.every(line => ![privateText, ...prohibitedText, customerName, customerContact, customerMessage, values.RESEND_API_KEY].some(value => line.includes(value))));
   console.log('PASS real notification outbox: atomic commit/abort, concurrent lease, accepted replay, published Thai logo/fallback/blank, frozen HTML across CMS changes and ambiguity retries, provider failures, persisted recovery, retry bounds, environment/config suppression, owner test dedupe and atomic rate limit. All provider calls used the injected fake.');
 } finally {
   console.error = originalError;

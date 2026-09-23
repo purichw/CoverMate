@@ -1298,13 +1298,18 @@ function isOperationsTab(value) {
 }
 
 function routeStateFromLocation() {
-  return adminPortalRouteStateFromLocation(location.pathname, location.hash);
+  const params = new URLSearchParams(location.search);
+  const hash = !location.hash && (params.has('case') || params.get('followUp') === 'overdue') ? '#operations' : location.hash;
+  return adminPortalRouteStateFromLocation(location.pathname, hash);
 }
 
 async function syncRouteFromLocation() {
   const next = routeStateFromLocation();
-  if (next.module === state.module && next.operationsTab === state.operationsTab) return;
-  if (next.module !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) { writeRoute({ replace: true }); return; }
+  if (next.module === state.module && next.operationsTab === state.operationsTab) {
+    if (next.module === 'operations') await casesWorkspace?.syncLocation();
+    return;
+  }
+  if (next.module !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) { writeRoute({ replace: true }); casesWorkspace.restoreLocation(); return; }
   state.module = next.module;
   state.operationsTab = next.operationsTab;
   state.recordId = null;
@@ -1313,7 +1318,12 @@ async function syncRouteFromLocation() {
 }
 
 function routeUrl() {
-  return adminPortalUrl(state.module, state.operationsTab);
+  const next = new URL(adminPortalUrl(state.module, state.operationsTab), location.origin);
+  const current = new URLSearchParams(location.search);
+  for (const key of state.module === 'operations' ? ['cm_env', 'case', 'followUp'] : ['cm_env']) {
+    if (current.has(key)) next.searchParams.set(key, current.get(key));
+  }
+  return next.pathname + next.search + next.hash;
 }
 
 function writeRoute(options = {}) {

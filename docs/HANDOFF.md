@@ -9,7 +9,11 @@ three Resend variables but no code reading them, so it sent no new-case email.
 The integration adds atomic email intents, bounded post-commit sending, dedupe,
 and an owner-only test without creating a customer case. See
 [ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md) for configuration,
-retry limits and evidence distinctions. Personal/follow-up email stays disabled.
+retry limits and evidence distinctions. The next extension adds owner-approved
+customer summaries, authenticated case deep links, a five-minute external worker,
+revision-bound follow-up reminders and a 09:00 Bangkok overdue digest. Personal
+email remains disabled. Deployment/cron activation must be verified separately
+from emulator tests; scheduler readiness uses the real heartbeat.
 
 ## Current source and documentation checkpoint
 

@@ -430,8 +430,11 @@ legacy imports do not generate new-intake alerts. Read state belongs to the
 recipient and resolved notices do not count as unread. Separately,
 `caseEmailOutbox/{caseId}` stores a production system-inbox alert atomically with
 each new website case. Resend delivery state, immutable payload and lease live
-there under existing default-deny Rules. No server scheduler or LINE sender is
-connected. See [ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md) and
+there under existing default-deny Rules. Follow-up intents use a hash of case ID
+and schedule revision; daily digests use a Bangkok date ID in the same outbox.
+The protected independent worker stores its lease, bootstrap cursors and
+heartbeat at `systemJobs/adminEmailScheduler`. No LINE sender is connected.
+See [ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md) and
 [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md) for the complete model and response contract.
 
 ## Migration Rules

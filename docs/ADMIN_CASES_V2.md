@@ -87,9 +87,9 @@ Owner-scoped `caseNotifications` / `caseNotificationsUat` documents use determin
 
 In-app catch-up runs when opening/refreshing Cases, returning to a visible tab, and every five minutes while visible. This is **not** offline delivery. Opening the notification panel does not mark all read; clicking one item does. Resolved notices remain in All but are excluded from the unread badge.
 
-Production system-inbox alerts now use Resend with `ADMIN_NOTIFICATION_FROM`, `ADMIN_NOTIFICATION_EMAIL` and `RESEND_API_KEY`. The new `intakeEmailAvailable` capability controls a separate status section and owner-only test button. This does not enable per-owner preferences or scheduled reminders: `emailAvailable=false` and `schedulerAvailable=false` remain accurate for those features. UAT never sends these alerts. LINE controls remain absent.
+Production system-inbox alerts use Resend for new website cases, enabled due follow-ups and a 09:00 Bangkok overdue digest. The `intakeEmailAvailable` capability controls the intake status and owner-only test button; scheduled capabilities require a recent worker heartbeat. Per-owner preferences remain unsupported (`emailAvailable=false`). UAT never sends these alerts. LINE controls remain absent.
 
-See [Admin email notifications](ADMIN_EMAIL_NOTIFICATIONS.md) for durable intents, leases, bounded retries, no backfill, safe tests and acceptance-versus-delivery evidence. There is no independent scheduler: failed alerts resume on form replay or owner notification refresh. Scheduled follow-up email remains future work requiring authenticated scheduling, revision/preference checks and dedicated delivery tests.
+See [Admin email notifications](ADMIN_EMAIL_NOTIFICATIONS.md) for the authenticated five-minute worker, durable intents, leases, bounded retries, schedule-revision cancellation, daily digest eligibility and acceptance-versus-delivery evidence. Email deep links preserve only case/filter context across sign-in and open through the existing authorized Cases API.
 
 ## Legacy reconciliation and recovery
 
