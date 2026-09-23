@@ -2,6 +2,27 @@
 
 Last updated: 2026-09-23
 
+## September 23 Production Verification
+
+- Runtime release `e362746d9b60f9e3acf69045b5b997bd88b4f5a1` passed
+  GitHub run `35815093776` (full verify and Auth/Rules/API/Publish emulators).
+  Vercel `dpl_FRDWGpfAoegb2usQ5WH2NBxK4WHt` passed the required alias gate
+  and serves the canonical domain. No bypass, data migration or CMS publish.
+- Both alias roots now return 308 before Home rewriting. Hosted domain smoke
+  passed root/deep GET+HEAD, desktop/mobile rendering and reload, language,
+  campaign query and anchor preservation. Captures were personally inspected.
+- Canonical Home/Motor TH/EN production smoke also passed schema v8, exact
+  served files, responsive media, private noindex, upload authorization and SEO.
+- Normal boot consumes server-published config/text without a second immediate
+  browser CMS read. A brief template guard remains intentional; it releases
+  after initial content/fonts, with the existing bounded failure fallback.
+- Evidence: ignored `uat-results/domain-redirect/` and `uat-results/release/`.
+  The domain harness records old-document/analytics `ERR_ABORTED` separately;
+  current-document asset failures and CSP errors still fail. Physical LINE/iOS
+  testing and real lead/upload operations were intentionally not performed.
+- Following commits that only update this harness/documentation do not change
+  the runtime above; still verify their exact-SHA CI and production alias.
+
 ## September 23 Inline Image Editing Release
 
 - Owner authorized push and production deployment of the completed inline
