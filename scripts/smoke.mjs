@@ -448,12 +448,52 @@ const failures = [];
 async function newSmokePage(options) {
   const context = await browser.newContext(options);
   const page = await context.newPage();
-  const navigate = page.goto.bind(page);
-  page.goto = async (...args) => {
-    // Do not cancel a late font fetch when the harness leaves a rendered page.
-    await page.evaluate(() => document.fonts.ready);
-    return navigate(...args);
+  const pendingResources = new Set();
+  let resourceActivity = 0;
+  page.on("request", (request) => {
+    if (new URL(request.url()).origin !== baseOrigin ||
+        !["script", "stylesheet", "font", "image"].includes(request.resourceType())) return;
+    pendingResources.add(request);
+    resourceActivity = Date.now();
+  });
+  const resourceFinished = (request) => {
+    if (pendingResources.delete(request)) resourceActivity = Date.now();
   };
+  page.on("requestfinished", resourceFinished);
+  page.on("requestfailed", resourceFinished);
+  async function settleCurrentDocument() {
+    if (!page.url().startsWith(baseOrigin)) return;
+    const deadline = Date.now() + 30000;
+    const remaining = () => Math.max(1, deadline - Date.now());
+    // The outer bundle's load event can precede hydration, template mounting,
+    // and the inner document's module/font requests.
+    await page.waitForFunction(() => {
+      if (!document.body || document.readyState === "loading") return false;
+      const path = location.pathname.replace(/\/+$/, "") || "/";
+      if (["/", "/motor", "/admin/content", "/admin/edit", "/admin/preview"].includes(path)) {
+        return document.documentElement.hasAttribute("data-covermate-route") &&
+          Boolean(document.querySelector("main h1")) &&
+          !document.documentElement.hasAttribute("data-covermate-booting") &&
+          !document.getElementById("covermate-hydration-guard");
+      }
+      return document.body.dataset.boot !== "pending";
+    }, null, { timeout: remaining() });
+    await page.waitForFunction(() => document.fonts.status === "loaded", null, { timeout: remaining() });
+    resourceActivity = Date.now();
+    while (pendingResources.size || Date.now() - resourceActivity < 100) {
+      if (Date.now() >= deadline) {
+        throw new Error(`Timed out settling ${page.url()}: ${[...pendingResources].map(request => request.url()).join(", ")}`);
+      }
+      await new Promise(resolve => setTimeout(resolve, Math.min(50, remaining())));
+    }
+  }
+  for (const method of ["goto", "reload"]) {
+    const navigate = page[method].bind(page);
+    page[method] = async (...args) => {
+      await settleCurrentDocument();
+      return navigate(...args);
+    };
+  }
   const closePage = page.close.bind(page);
   page.close = async (...args) => {
     await closePage(...args).catch(() => {});
@@ -1372,6 +1412,31 @@ for (const [name, width, height] of viewports) {
   let navigationId = 0;
   const requestNavigation = new WeakMap();
   const navigationAssetAborts = [];
+  let expectedAuthRedirect = null;
+  const authRedirectAborts = [];
+  page.on("framenavigated", (frame) => {
+    if (frame !== page.mainFrame() || !expectedAuthRedirect) return;
+    const path = new URL(frame.url()).pathname.replace(/\/+$/, "") || "/";
+    if (path === expectedAuthRedirect.sourcePath) expectedAuthRedirect.sourceCommits.add(navigationId);
+    if (path === "/admin/login") expectedAuthRedirect.loginCommit = navigationId;
+  });
+  async function visitSignedOutAdmin(url) {
+    const redirect = {
+      sourcePath: new URL(url).pathname.replace(/\/+$/, ""),
+      sourceCommits: new Set(), loginCommit: null, verified: false
+    };
+    expectedAuthRedirect = redirect;
+    try {
+      await page.goto(url, { waitUntil: "load", timeout: 30000 });
+      await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
+      if (/\/admin\/login\/?$/.test(page.url())) {
+        await page.getByRole("button", { name: "เข้าสู่ระบบด้วย Google" }).waitFor({ state: "visible", timeout: 10000 });
+        redirect.verified = true;
+      }
+    } finally {
+      expectedAuthRedirect = null;
+    }
+  }
   page.on('request', request => {
     if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       navigationStarted = Date.now();
@@ -1386,6 +1451,15 @@ for (const [name, width, height] of viewports) {
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
     if (Date.now() - navigationStarted < 2500 && isBenignNavigationAbort(url, failureText)) return;
+    if (failureText === "net::ERR_ABORTED" && expectedAuthRedirect) {
+      const parsed = new URL(url);
+      if (parsed.origin === baseOrigin &&
+          (["/admin/ops/app.js", "/admin/home.css"].includes(parsed.pathname) ||
+           (request.resourceType() === "font" && /^\/assets\/fonts\/[^/]+\.woff2$/.test(parsed.pathname)))) {
+        authRedirectAborts.push({ request, redirect: expectedAuthRedirect, navigation: requestNavigation.get(request) });
+        return;
+      }
+    }
     if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && requestNavigation.get(request) < navigationId) {
       const parsed = new URL(url);
       if (parsed.origin === baseOrigin && ['font', 'stylesheet', 'image'].includes(request.resourceType()) && /^\/assets\/(fonts|brand)\/[^/]+\.(woff2|css|png|webp|svg|jpe?g)$/.test(parsed.pathname)) {
@@ -1953,13 +2027,11 @@ for (const [name, width, height] of viewports) {
     window.localStorage.removeItem("covermate-admin-session");
     window.localStorage.removeItem("purich-admin-ever-v7");
   });
-  await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
-  await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
+  await visitSignedOutAdmin(adminUrl);
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
   }
-  await page.goto(analyticsUrl, { waitUntil: "load", timeout: 30000 });
-  await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
+  await visitSignedOutAdmin(analyticsUrl);
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin/analytics: expected unauthenticated redirect to /admin/login, got ${page.url()}`);
   }
@@ -1972,8 +2044,7 @@ for (const [name, width, height] of viewports) {
     "/admin/edit?page=motor",
     "/admin/preview?page=motor"
   ]) {
-    await page.goto(new URL(ownerRoute, baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-    await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
+    await visitSignedOutAdmin(new URL(ownerRoute, baseUrl).toString());
     if (!page.url().includes("/admin/login")) {
       failures.push(
         `${name} ${ownerRoute}: expected unauthenticated redirect to /admin/login, got ${page.url()}`
@@ -2704,6 +2775,13 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);
   }
 
+  for (const { request, redirect, navigation } of authRedirectAborts) {
+    if (redirect.verified && redirect.sourceCommits.has(navigation) && redirect.loginCommit > navigation) {
+      navigationAssetAborts.push({ path: new URL(request.url()).pathname, fromNavigation: navigation, toNavigation: redirect.loginCommit, reason: "verified signed-out Admin redirect" });
+    } else {
+      failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified auth redirect, request navigation ${navigation})`);
+    }
+  }
   if (navigationAssetAborts.length) console.log(`${name}: confirmed prior-document asset cancellations ${JSON.stringify(navigationAssetAborts)}`);
   if (failedRequests.length) failures.push(`${name}: ${failedRequests.join(" | ")}`);
   if (pageErrors.length) failures.push(`${name}: ${pageErrors.join(" | ")}`);

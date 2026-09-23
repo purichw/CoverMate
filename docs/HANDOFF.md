@@ -24,6 +24,12 @@ Last updated: 2026-09-24
   emulators passed. See the September 24 verification section in the refactor
   report for the fixture fixes, split-run evidence and limits. GitHub CI still
   evaluates the exact pushed SHA independently.
+- First push `74206a6` passed GitHub's checks through performance and Admin
+  builder, then exposed early navigation in the final smoke harness. The
+  follow-up makes explicit navigation wait for the rendered page and finite
+  dependencies; canceled Admin assets are recognized only after a verified
+  signed-out redirect to Login. All existing assertions remain. See the
+  refactor report for evidence; no failed deployment gate is bypassed.
 - Admin Home/Cases, natural Thai controls, Draft Undo/Redo/Reset and the separate
   post-Publish undo are current contracts. Read `ADMIN_CASES_V2.md`,
   `ADMIN_LANGUAGE.md` and `CMS_EDITOR_HISTORY.md`; older English-only and
