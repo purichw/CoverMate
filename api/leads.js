@@ -3,6 +3,7 @@ const { getAppCheck } = require('firebase-admin/app-check');
 const { FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { serverApp, serverDb, isEmulator } = require('../server/firebase.cjs');
 const { json, readBody, error, reportFailure } = require('../server/http.cjs');
+const adminEmail = require('../server/admin-notification.cjs');
 
 module.exports = async function leadsApi(req, res) {
   try {
@@ -40,6 +41,7 @@ module.exports = async function leadsApi(req, res) {
     const previous = await ref.get();
     if (previous.exists) {
       if (previous.data().requestFingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request ID was already used.');
+      adminEmail.dispatch(db, ref.id, env);
       return json(res, 200, { accepted: true, reference: previous.data().caseRecord?.caseNumber || `CM-${ref.id.slice(0, 10).toUpperCase()}` });
     }
     const now = Date.now();
@@ -62,7 +64,9 @@ module.exports = async function leadsApi(req, res) {
       tx.set(limitRef, { minute, day, minuteCount: minuteCount + 1, dayCount: dayCount + 1, expiresAt: Timestamp.fromMillis(now + 2 * 86400000) });
       tx.create(ref, { ...lead, status: 'new', read: false, caseRecord: record, caseIntakeNotification: true, requestFingerprint: fingerprint, consentVersion: receipt.noticeVersion, retentionReviewAt: Timestamp.fromMillis(now + 365 * 86400000), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       stageWebsiteCreate(tx, ref, record);
+      adminEmail.stage(tx, db, record, env);
     });
+    adminEmail.dispatch(db, ref.id, env);
     return json(res, 200, { accepted: true, reference: record.caseNumber });
   } catch (err) {
     const status = Number(err.status || 500);

@@ -9,6 +9,8 @@ import AxeBuilder from '@axe-core/playwright';
 const fixtures = createCasesFixture();
 const now = fixtures.asOf;
 let records = structuredClone(fixtures.cases), notices = structuredClone(fixtures.notifications), failSave = false, conflict = false, failList = false;
+let intakeEmailAvailable = false, failTestEmail = false, testEmailGate;
+const testEmailRequests = [], notificationOnly = process.argv.includes('--notifications');
 const output = process.env.CASES_SCREENSHOT_DIR || 'uat-results/cases-v2'; fs.mkdirSync(output, { recursive: true });
 const { server, baseUrl } = await startStaticServer();
 const browser = await launchChromium((await loadPlaywright()).chromium);
@@ -57,13 +59,69 @@ try {
         if (req.method() === 'POST') { notices.filter(n => path[1] === 'read-all' || n.id === path[1]).forEach(n => n.readAt = now); result = { ok: true }; }
         else result = { items: notices.filter(n => url.searchParams.get('unread') !== 'true' || !n.readAt && !n.resolvedAt), unreadCount: notices.filter(n => !n.readAt && !n.resolvedAt).length, nextCursor: null };
       } else if (path[0] === 'notification-preferences') result = fixtures.preferences[0] || fixtures.preferences;
-      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false };
+      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, intakeEmailAvailable, intakeEmailRecipient: intakeEmailAvailable ? 'covermate@proton.me' : null, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false };
+      else if (path[0] === 'notification-test-email') {
+        testEmailRequests.push({ method: req.method(), key: req.headers()['idempotency-key'], body: req.postDataJSON() });
+        if (testEmailGate) await testEmailGate;
+        if (failTestEmail) throw Object.assign(new Error('ระบบอีเมลยังไม่พร้อม กรุณาลองอีกครั้ง'), { status: 503 });
+        result = { accepted: true, providerId: 'local-fixture-only' };
+      }
       else result = { rows: [], total: 0, source: 'test' };
     } catch (e) { status = e.status || 500; result = { code: e.code || 'test_error', message: e.message }; }
     await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(result),
       ...(summaryGate ? { headers: { 'x-fixture-summary': summaryGate.id } } : {}) });
   });
   const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+  async function checkEmailPreferences() {
+    await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
+    await page.getByText('ยังไม่พร้อมส่งอีเมลแจ้งเคสใหม่ของระบบ', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isDisabled(), true);
+    assert.equal(testEmailRequests.length, 0, 'Unconfigured email does not dispatch a test.');
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2);
+    await page.getByText('ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้และอีเมลนัดติดตาม', { exact: true }).waitFor();
+
+    intakeEmailAvailable = true;
+    await page.getByRole('button', { name: 'กลับไปที่การแจ้งเตือน', exact: true }).click();
+    await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
+    await page.getByText('covermate@proton.me', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isEnabled(), true);
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'System inbox configuration does not enable personal or follow-up preferences.');
+    assert.equal(await page.getByText('ยังไม่ได้ตั้งค่าการส่งอีเมล', { exact: true }).count(), 0);
+
+    let releaseTestEmail;
+    testEmailGate = new Promise(resolve => { releaseTestEmail = resolve; });
+    failTestEmail = true;
+    const firstRequest = page.waitForRequest(request => request.url().includes('/notification-test-email'));
+    await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).click(); await firstRequest;
+    assert.equal(await page.getByRole('button', { name: 'กำลังส่งอีเมลทดสอบ…', exact: true }).isDisabled(), true);
+    releaseTestEmail(); testEmailGate = null;
+    await page.getByRole('alert').filter({ hasText: 'ทำรายการไม่สำเร็จ กรุณาลองอีกครั้ง' }).waitFor();
+    assert.equal(testEmailRequests.length, 1);
+    assert.deepEqual(testEmailRequests[0].body, {}); assert.equal(testEmailRequests[0].method, 'POST');
+    assert.match(testEmailRequests[0].key, /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i);
+
+    failTestEmail = false;
+    await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).click();
+    await page.getByRole('status').filter({ hasText: 'Resend รับอีเมลทดสอบแล้ว กรุณาตรวจกล่องจดหมาย' }).waitFor();
+    assert.equal(testEmailRequests.length, 2);
+    assert.equal(testEmailRequests[1].key, testEmailRequests[0].key, 'Retry reuses the same logical email request.');
+    await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).click();
+    await page.getByRole('status').filter({ hasText: 'Resend รับอีเมลทดสอบแล้ว กรุณาตรวจกล่องจดหมาย' }).waitFor();
+    assert.equal(testEmailRequests.length, 3);
+    assert.notEqual(testEmailRequests[2].key, testEmailRequests[1].key, 'A fresh explicit test after success gets a new request key.');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    const panelAxe = await new AxeBuilder({ page }).include('.case-panel').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    assert.deepEqual(panelAxe.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
+    await page.screenshot({ path: `${output}/notification-email-configured-${page.viewportSize().width}.png`, fullPage: false, animations: 'disabled' });
+  }
+  if (notificationOnly) {
+    await page.goto(baseUrl + '/admin#operations');
+    await page.locator('.case-name').first().waitFor();
+    await page.locator('[data-case-action="notifications"]:visible').first().click();
+    await checkEmailPreferences();
+    assert.deepEqual(errors, []);
+    console.log('Notification browser checks passed: configured/unconfigured system inbox, disabled personal preferences, pending/error/success feedback, stable retry key, fresh explicit test key, accessibility and no real email.');
+  } else {
   const metricValues = () => {
     const summary = C.summary(records, now);
     return ['new', 'followUpsDue', 'noAnswer', 'closedThisMonth'].map(key => String(summary[key]));
@@ -150,8 +208,7 @@ try {
   await page.locator('.case-notification').first().waitFor();
   assert.equal(await page.locator('.case-notification strong').first().textContent(), 'มีเคสใหม่จากเว็บไซต์');
   assert.match(await page.locator('.case-notification p').first().textContent(), /CM-2026-001 · พร้อมให้ตรวจสอบ/);
-  await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click(); await page.getByText('ยังไม่ได้ตั้งค่าการส่งอีเมล', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isDisabled(), true);
+  await checkEmailPreferences();
   await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();
   await page.getByRole('button', { name: '+ เพิ่มเคส', exact: true }).click();
   await page.locator('[name="contact.name"]').fill('Manual test'); await page.locator('[name="contact.phone"]').fill('0800000099'); await page.locator('[name="enquiryTopic"]').fill('Manual motor enquiry');
@@ -170,5 +227,6 @@ try {
   assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), ['—', '—', '—', '—']);
   failList = false; await page.locator('.case-list').getByRole('button', { name: 'ลองอีกครั้ง', exact: true }).click(); await page.locator('.case-name').first().waitFor();
   assert.deepEqual(errors, []);
-  console.log('Cases browser checks passed: immediate search with delayed summary, out-of-order refresh, leave/return, responsive list/detail, draft discard/keep, save failure, conflict reload, persisted save, manual create, unavailable email and no horizontal overflow.');
+  console.log('Cases browser checks passed: immediate search with delayed summary, out-of-order refresh, leave/return, responsive list/detail, draft discard/keep, save failure, conflict reload, persisted save, manual create, system inbox email states and no horizontal overflow.');
+  }
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

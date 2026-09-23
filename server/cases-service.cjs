@@ -3,8 +3,9 @@ const { stores, recordsFor } = require('./cases-repository.cjs');
 const { createCasesHandler } = require('./cases-handler.cjs');
 const { error, readBody } = require('./http.cjs');
 const C = require('./cases-contract.cjs');
+const adminEmail = require('./admin-notification.cjs');
 
-const capabilities = actor => ({ inAppAvailable: true, emailAvailable: false, verifiedEmailLabel: actor.emailVerified && actor.email ? actor.email.replace(/^(.{1,2})[^@]*(@.*)$/, '$1•••$2') : null, schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false });
+const capabilities = actor => ({ inAppAvailable: true, emailAvailable: false, intakeEmailAvailable: !!adminEmail.configuration(actor.environment), intakeEmailRecipient: adminEmail.configuration(actor.environment)?.to || null, verifiedEmailLabel: actor.emailVerified && actor.email ? actor.email.replace(/^(.{1,2})[^@]*(@.*)$/, '$1•••$2') : null, schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false });
 const safeId = value => { if (typeof value !== 'string' || !/^[\w-]{1,128}$/.test(value)) throw error(404, 'not_found', 'Case not found.'); return value; };
 const keyFor = req => {
   const key = String(req.headers['idempotency-key'] || '');
@@ -103,6 +104,7 @@ async function getPreferences(actor) {
   });
 }
 async function notificationList(actor, params) {
+  if (adminEmail.configuration(actor.environment)) adminEmail.background(() => adminEmail.drain(stores(actor).db, actor.environment));
   await catchUp(actor);
   let all = (await stores(actor).notifications.where('recipientId', '==', actor.uid).get()).docs.map(d => d.data());
   const unreadCount = all.filter(n => !n.readAt && !n.resolvedAt).length;
@@ -142,5 +144,9 @@ async function patchPreferences(req, actor) {
   return prefs; // All supported preferences are already enabled; email unavailable.
 }
 
-const handle = createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences });
+async function testEmail(req, actor) {
+  C.object(await readBody(req), []);
+  return adminEmail.testEmail(stores(actor).db, actor, keyFor(req));
+}
+const handle = createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences, testEmail });
 module.exports = { handle, websiteRecord, stageWebsiteCreate, activity, catchUp, recordsFor, capabilities };

@@ -67,7 +67,9 @@ uses natural height, supports 320px reflow and respects reduced motion.
 LINE uses the existing published HTTPS URL/asset, opens only by explicit click
 with noopener/noreferrer, and receives no form data or reference in its URL.
 Inline help uses the existing LINE ID/channels. No new PII storage, clipboard
-write, notification sender, paid service, tracking provider or billing change.
+write, tracking provider or billing change. The separate production
+[system-inbox notification](ADMIN_EMAIL_NOTIFICATIONS.md) runs after the case
+commits and cannot invalidate the accepted form receipt.
 
 ## Evidence And Release Boundary
 

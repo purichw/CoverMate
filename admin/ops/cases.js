@@ -23,7 +23,7 @@ const notificationBody = n => {
 export function createCasesWorkspace({ root, api, session, searchInput, navigate, getCurrentModule = () => 'operations' }) {
   const s = { active: false, rows: [], summary: null, list: null, loading: true, error: '', summaryError: '', scope: 'open', status: '', followUp: 'any', closedMonth: false, search: '', sort: '', cursor: '', pages: [], panel: null, record: null, draft: null, activities: [], activityOffset: null, legacy: null, saving: false, errorSave: '', conflict: null, notifications: [], unreadCount: 0, notificationError: '', unreadOnly: false, notificationCursor: null, preferences: null, capabilities: null, expandedFilters: false, generation: 0 };
   const overlay = document.createElement('div'); overlay.className = 'case-overlay'; document.body.append(overlay);
-  let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, panelGeneration = 0, summaryGeneration = 0;
+  let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, testEmailKey, testEmailSending = false, testEmailMessage = '', testEmailFailed = false, panelGeneration = 0, summaryGeneration = 0;
   const dockQuery = matchMedia('(min-width:1600px)');
   function syncModalMode() {
     const docked = dockQuery.matches && ['detail', 'new'].includes(s.panel);
@@ -237,7 +237,24 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       ${s.notificationError ? `<p role="alert">${esc(s.notificationError)}</p>${btn('notification-retry', 'ลองอีกครั้ง')}` : s.notificationLoading ? '<p>กำลังโหลดการแจ้งเตือน…</p>' : !s.notifications.length ? '<div class="case-empty"><h3>ไม่มีการแจ้งเตือนค้างอยู่</h3><p>เคสใหม่จากเว็บไซต์และนัดติดตามที่เปิดแจ้งเตือนไว้จะแสดงที่นี่</p></div>' : `<div class="case-notifications">${s.notifications.map(n => `<button class="case-notification ${!n.readAt && !n.resolvedAt ? 'unread' : ''}" data-case-action="notification-open" data-id="${esc(n.id)}"><strong>${esc(notificationTitle(n))}</strong><p>${esc(notificationBody(n))}</p><small>${date(n.createdAt)}${n.resolvedAt ? ' · จัดการแล้ว' : !n.readAt ? ' · ยังไม่อ่าน' : ''}</small></button>`).join('')}</div>${s.notificationCursor ? btn('more-notifications', 'ดูการแจ้งเตือนก่อนหน้า') : ''}`}`);
   }
   async function preferences() { s.panel = 'preferences'; s.capabilities = null; s.preferenceError = ''; renderPanel(); try { [s.preferences, s.capabilities] = await Promise.all([api('notification-preferences'), api('notification-capabilities')]); } catch (e) { s.preferenceError = e.message; } if (s.panel === 'preferences') renderPanel(); }
-  function renderPreferences() { panelShell('ตั้งค่าการแจ้งเตือน', !s.capabilities ? `<p>${esc(s.preferenceError || 'กำลังโหลดการตั้งค่า…')}</p>${s.preferenceError ? btn('preferences', 'ลองอีกครั้ง') : ''}` : `<section class="case-section"><h3>ภายใน Admin</h3><p>ระบบแสดงเคสใหม่จากเว็บไซต์เสมอ ส่วนการแจ้งเตือนนัดติดตามจะใช้การตั้งค่าของแต่ละเคส</p><small>การแก้ไขที่คุณทำเองจะไม่สร้างการแจ้งเตือน</small></section><section class="case-section"><h3>อีเมล</h3><p>${s.capabilities.verifiedEmailLabel ? esc(s.capabilities.verifiedEmailLabel) : 'ยังไม่มีอีเมลที่ยืนยันแล้ว'}</p><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเคสใหม่จากเว็บไซต์ทางอีเมล</label><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเตือนนัดติดตามทางอีเมล</label><p class="case-muted">ยังไม่ได้ตั้งค่าการส่งอีเมล</p>${btn('test-email', 'ส่งอีเมลทดสอบ', 'disabled')}<small>ยังไม่ได้เปิดใช้การส่งอีเมลตามเวลา ระบบจะตรวจสอบการแจ้งเตือนภายในเมื่อคุณเปิด Admin</small></section>`, btn('notifications', 'กลับไปที่การแจ้งเตือน')); }
+  function renderPreferences() { panelShell('ตั้งค่าการแจ้งเตือน', !s.capabilities ? `<p>${esc(s.preferenceError || 'กำลังโหลดการตั้งค่า…')}</p>${s.preferenceError ? btn('preferences', 'ลองอีกครั้ง') : ''}` : `<section class="case-section"><h3>ภายใน Admin</h3><p>ระบบแสดงเคสใหม่จากเว็บไซต์เสมอ ส่วนการแจ้งเตือนนัดติดตามจะใช้การตั้งค่าของแต่ละเคส</p><small>การแก้ไขที่คุณทำเองจะไม่สร้างการแจ้งเตือน</small></section><section class="case-section"><h3>อีเมลแจ้งเคสใหม่ของระบบ</h3><p>${s.capabilities.intakeEmailAvailable ? `เคสใหม่จากฟอร์มบนเว็บไซต์จะส่งอีเมลแจ้งเตือนอัตโนมัติไปที่ <strong>${esc(s.capabilities.intakeEmailRecipient || 'กล่องจดหมายของระบบ')}</strong>` : 'ยังไม่พร้อมส่งอีเมลแจ้งเคสใหม่ของระบบ'}</p>${btn('test-email', testEmailSending ? 'กำลังส่งอีเมลทดสอบ…' : 'ส่งอีเมลทดสอบ', !s.capabilities.intakeEmailAvailable || testEmailSending ? 'disabled' : '')}<p id="caseTestEmailStatus" role="${testEmailFailed ? 'alert' : 'status'}">${esc(testEmailMessage)}</p></section><section class="case-section"><h3>อีเมลส่วนตัวและนัดติดตาม</h3><p>${s.capabilities.verifiedEmailLabel ? esc(s.capabilities.verifiedEmailLabel) : 'ยังไม่มีอีเมลส่วนตัวที่ยืนยันแล้ว'}</p><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเคสใหม่ไปยังอีเมลส่วนตัว</label><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเตือนนัดติดตามทางอีเมล</label><p class="case-muted">ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้และอีเมลนัดติดตาม</p><small>ระบบจะตรวจสอบการแจ้งเตือนนัดติดตามภายในเมื่อคุณเปิด Admin</small></section>`, btn('notifications', 'กลับไปที่การแจ้งเตือน')); }
+  function updateTestEmailStatus() {
+    if (s.panel !== 'preferences') return;
+    const button = overlay.querySelector('[data-case-action="test-email"]'), status = overlay.querySelector('#caseTestEmailStatus');
+    if (button) { button.disabled = testEmailSending || !s.capabilities?.intakeEmailAvailable; button.textContent = testEmailSending ? 'กำลังส่งอีเมลทดสอบ…' : 'ส่งอีเมลทดสอบ'; }
+    if (status) { status.setAttribute('role', testEmailFailed ? 'alert' : 'status'); status.textContent = testEmailMessage; }
+  }
+  async function sendTestEmail() {
+    if (testEmailSending || !s.capabilities?.intakeEmailAvailable) return;
+    testEmailKey ||= crypto.randomUUID();
+    testEmailSending = true; testEmailMessage = ''; testEmailFailed = false; updateTestEmailStatus();
+    try {
+      const result = await api('notification-test-email', { method: 'POST', headers: { 'Idempotency-Key': testEmailKey }, body: {} });
+      if (result.accepted !== true) throw new Error('ยังยืนยันการส่งอีเมลทดสอบไม่ได้ กรุณาลองอีกครั้ง');
+      testEmailKey = null; testEmailMessage = 'Resend รับอีเมลทดสอบแล้ว กรุณาตรวจกล่องจดหมาย';
+    } catch (e) { testEmailFailed = true; testEmailMessage = e.message || 'ยังยืนยันการส่งอีเมลทดสอบไม่ได้ กรุณาลองอีกครั้ง'; }
+    finally { testEmailSending = false; updateTestEmailStatus(); }
+  }
   async function click(event) {
     const el = event.target.closest('[data-case-action]'); if (!el || el.disabled) return;
     const action = el.dataset.caseAction;
@@ -277,6 +294,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
         refreshNotifications();
       }
       if (action === 'preferences') return preferences();
+      if (action === 'test-email') return sendTestEmail();
     } catch (e) { announce(e.message || 'ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง'); }
   }
   root.addEventListener('click', click); overlay.addEventListener('click', click); overlay.addEventListener('input', input);

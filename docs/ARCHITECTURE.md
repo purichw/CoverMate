@@ -477,6 +477,12 @@ Canonical Cases, activities, mutation receipts, and notifications are written
 through their authorized server boundary, not browser Rules bypasses. Preserve
 the production/UAT namespace and owner-only Cases gate.
 
+`server/admin-notification.cjs` owns Resend system-inbox alerts: production-only
+outbox intents created within intake transactions, post-commit dispatch,
+idempotent bounded retries and an owner-only test. It does not enable personal
+email preferences or scheduled follow-ups. See
+[ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md).
+
 CSP is enforced with the renderer's documented inline/eval/blob allowances.
 Do not confuse this with a strict nonce/hash policy, or revert it to Report-Only
 because of older notes. Consult `vercel.json` and `NFR_HARDENING.md`.

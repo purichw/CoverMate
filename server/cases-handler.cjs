@@ -5,7 +5,7 @@ const CASES_RESOURCES = new Set(['cases', 'notifications', 'notification-prefere
 const isCasesResource = path => CASES_RESOURCES.has(path[0]);
 
 // Routing depends on service operations, never the legacy REST adapter.
-function createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences }) {
+function createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences, testEmail }) {
   return async function handle(req, actor, path) {
     if (actor.role !== 'owner') throw error(403, 'forbidden', 'Cases are available to the verified owner.');
     const method = req.method || 'GET', params = new URL(req.url, 'https://covermate.local').searchParams, now = new Date().toISOString();
@@ -25,7 +25,7 @@ function createCasesHandler({ recordsFor, createManual, getCase, patch, notifica
       if (method === 'GET') return getPreferences(actor);
       if (method === 'PATCH') return patchPreferences(req, actor);
     }
-    if (path[0] === 'notification-test-email') throw error(503, 'email_not_configured', 'Email is not configured.');
+    if (path[0] === 'notification-test-email' && method === 'POST') return testEmail(req, actor);
     throw error(404, 'not_found', 'Unknown case operation.');
   };
 }

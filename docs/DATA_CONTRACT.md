@@ -427,8 +427,11 @@ means the enquiry was completed, not that a policy was sold.
 Owner notifications use deterministic keys for each case or follow-up revision.
 Visit/visible polling catches up eligible new website cases and due follow-ups;
 legacy imports do not generate new-intake alerts. Read state belongs to the
-recipient, resolved notices do not count as unread, and no server scheduler,
-email provider, or LINE sender is connected. See
+recipient and resolved notices do not count as unread. Separately,
+`caseEmailOutbox/{caseId}` stores a production system-inbox alert atomically with
+each new website case. Resend delivery state, immutable payload and lease live
+there under existing default-deny Rules. No server scheduler or LINE sender is
+connected. See [ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md) and
 [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md) for the complete model and response contract.
 
 ## Migration Rules

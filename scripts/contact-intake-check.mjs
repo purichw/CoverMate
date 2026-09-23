@@ -23,6 +23,7 @@ try {
   const doc=await db.doc('contactLeadsUat/'+id).get();assert.equal(doc.exists,true);
   assert.equal(doc.data().caseRecord.caseNumber,first.body.reference);
   assert.equal(doc.data().caseIntakeNotification,true,'Durable notification intent exists before receipt');
+  assert.equal((await db.doc('caseEmailOutbox/'+id).get()).exists,false,'UAT/emulator intake remains accepted without creating an email send');
   assert.equal((await doc.ref.collection('caseActivities').get()).size,1,'One creation activity after repeated attempts');
   assert.equal((await db.collection('contactLeadsUat').where('contact','==','@fixture').get()).size,1);
   assert.equal((await post({...payload,topic:'Different payload'})).status,409);

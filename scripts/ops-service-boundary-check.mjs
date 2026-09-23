@@ -29,7 +29,7 @@ const makeCase = (id, status = 'new') => C.createCase({
 
 const calls = [];
 const record = makeCase('canonical-case');
-const operations = Object.fromEntries(['createManual', 'getCase', 'patch', 'notificationList', 'markRead', 'capabilities', 'getPreferences', 'patchPreferences']
+const operations = Object.fromEntries(['createManual', 'getCase', 'patch', 'notificationList', 'markRead', 'capabilities', 'getPreferences', 'patchPreferences', 'testEmail']
   .map(name => [name, async (...args) => { calls.push({ name, args }); return { operation: name }; }]));
 operations.recordsFor = async value => { calls.push({ name: 'recordsFor', args: [value] }); return [record, makeCase('closed-case', 'closed_completed')]; };
 const handle = createCasesHandler(operations);
@@ -48,7 +48,7 @@ for (const [path, method, expected, body] of [
   ['cases/canonical-case', 'PATCH', 'patch', {}], ['notifications', 'GET', 'notificationList'],
   ['notifications/a/read', 'POST', 'markRead', {}], ['notifications/read-all', 'POST', 'markRead', {}],
   ['notification-capabilities', 'GET', 'capabilities'], ['notification-preferences', 'GET', 'getPreferences'],
-  ['notification-preferences', 'PATCH', 'patchPreferences', {}]
+  ['notification-preferences', 'PATCH', 'patchPreferences', {}], ['notification-test-email', 'POST', 'testEmail', {}]
 ]) {
   assert.equal((await handle(request(path, method, body), actor, path.split('/'))).operation, expected);
   const call = calls.at(-1);
@@ -59,7 +59,8 @@ assert.equal(calls.filter(call => call.name === 'markRead').at(-1).args[1], 'rea
 const countBeforeInvalidRead = calls.length;
 await assert.rejects(handle(request('notifications/a/read', 'POST', { recipientId: 'other' }), actor, ['notifications', 'a', 'read']), code('validation'));
 assert.equal(calls.length, countBeforeInvalidRead, 'Invalid notification read bodies cannot reach persistence.');
-await assert.rejects(handle(request('notification-test-email', 'POST', {}), actor, ['notification-test-email']), code('email_not_configured'));
+await assert.rejects(handle(request('notification-test-email'), actor, ['notification-test-email']), code('not_found'));
+await assert.rejects(handle(request('notification-test-email', 'POST', {}), { ...actor, role: 'advisor' }, ['notification-test-email']), code('forbidden'));
 await assert.rejects(handle(request('cases/a/b'), actor, ['cases', 'a', 'b']), code('not_found'));
 
 const collectionCalls = [];

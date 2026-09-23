@@ -68,8 +68,8 @@ Authenticated routes under `/api/ops`:
 | `POST /notifications/:id/read` | Read only that owner's notification |
 | `POST /notifications/read-all` | Mark only that owner's records read |
 | `GET/PATCH /notification-preferences` | Persisted owner defaults; unsupported email settings cannot be enabled |
-| `GET /notification-capabilities` | Honest provider/scheduler availability |
-| `POST /notification-test-email` | Unavailable while email is unconfigured; no false success |
+| `GET /notification-capabilities` | Personal/scheduler availability plus production system-inbox configuration |
+| `POST /notification-test-email` | Owner-only, idempotent, rate-limited Resend test to system inbox; unavailable in UAT |
 
 Every endpoint reuses the existing Firebase ID-token verification, active admin allowlist and UAT-only protection. New Cases operations require the normalized owner role. Browser role/localStorage state is not authorization. Firestore Rules deny direct modification of canonical documents and deny all direct access to new activities, mutation records, notifications and preferences; the service performs authorized transactions through the existing Admin SDK credentials.
 
@@ -77,19 +77,19 @@ Each meaningful save creates one `caseActivities` entry and increments version. 
 
 Closing records a server closedAt, clears the schedule, increments its revision only if it changed, and resolves outstanding notifications. Closed outcome changes retain closedAt. Reopening requires explicit `reopen:true`, clears closedAt and does not restore old reminders. Schedule revisions change only when due time/reminder setting/clearing changes. Past unchanged schedules permit other edits; turning a past reminder on requires a future date.
 
-Public intake keeps the existing combined contact field, coverage selection, App Check, UUID idempotency and rate limits. It now requires a preferred name for consultation, limits new messages to 500 characters and returns only `{accepted:true, reference}`. Renewal's existing nameless form uses the visible label “Unnamed renewal enquiry”; it does not invent a person's name. Ambiguous contact input remains raw; only clearly shaped phone/email/explicit @LINE values are parsed. No provider messages or insurer forwarding are triggered.
+Public intake keeps the existing combined contact field, coverage selection, App Check, UUID idempotency and rate limits. It now requires a preferred name for consultation, limits new messages to 500 characters and returns only `{accepted:true, reference}`. Renewal's existing nameless form uses the visible label “Unnamed renewal enquiry”; it does not invent a person's name. Ambiguous contact input remains raw; only clearly shaped phone/email/explicit @LINE values are parsed. Production also queues a minimal case alert to the configured system inbox via Resend; no enquiry is forwarded to an insurer.
 
 The client hashes the exact consent text rendered from CMS. The server independently resolves the published localized notice (or the same seeded default) and verifies that version before storing its own text/time. A changed notice returns 409, preserves input, unchecks consent and refreshes live content for review. Website case, creation activity and durable intake-notification marker commit in one transaction; acceptance follows commit. Manual and legacy cases receive no fabricated website receipt.
 
-## Notifications and unavailable external channels
+## In-app notifications and system inbox alerts
 
 Owner-scoped `caseNotifications` / `caseNotificationsUat` documents use deterministic recipient+dedupe-key IDs and transactional create. Keys are `new_case:{id}` and `follow_up_due:{id}:{revision}`. Catch-up rechecks current status/schedule/revision inside the transaction. It never generates alerts for self-edits or legacy imports. Closing before intake catch-up cancels the pending intake marker too.
 
 In-app catch-up runs when opening/refreshing Cases, returning to a visible tab, and every five minutes while visible. This is **not** offline delivery. Opening the notification panel does not mark all read; clicking one item does. Resolved notices remain in All but are excluded from the unread badge.
 
-There is no configured email provider, verified delivery integration or server scheduler in this repository. Email controls and test button stay disabled with explanatory text. LINE controls are absent. `casePreferences{Uat}` persists owner defaults; server capabilities return emailAvailable=false and schedulerAvailable=false. No external credentials are invented, no provider is installed, and no email/LINE message is sent by this implementation.
+Production system-inbox alerts now use Resend with `ADMIN_NOTIFICATION_FROM`, `ADMIN_NOTIFICATION_EMAIL` and `RESEND_API_KEY`. The new `intakeEmailAvailable` capability controls a separate status section and owner-only test button. This does not enable per-owner preferences or scheduled reminders: `emailAvailable=false` and `schedulerAvailable=false` remain accurate for those features. UAT never sends these alerts. LINE controls remain absent.
 
-To release external email later: choose and configure a provider, verify the owner recipient, add durable outbox/leases/idempotent provider calls and bounded retries, schedule authenticated server processing, recheck case revision/preferences before each attempt, then run the handoff's external-delivery tests. Only after those pass should capabilities enable the controls. In-app core can be released separately.
+See [Admin email notifications](ADMIN_EMAIL_NOTIFICATIONS.md) for durable intents, leases, bounded retries, no backfill, safe tests and acceptance-versus-delivery evidence. There is no independent scheduler: failed alerts resume on form replay or owner notification refresh. Scheduled follow-up email remains future work requiring authenticated scheduling, revision/preference checks and dedicated delivery tests.
 
 ## Legacy reconciliation and recovery
 
@@ -125,6 +125,6 @@ fallback data.
 - `node scripts/nfr-journeys.mjs --cases-only` inside emulators: actual website form, failed-network retry, persisted case and authenticated Admin readback; existing Home/Settings/Content navigation.
 - Calculator endpoint adapter, public request deadline checks, generated visitor parity and whitespace checks are scoped regression checks.
 
-Screenshots: `uat-results/cases-v2/` at 320, 390, 768, 1024, 1440 and 1680 px. Browser automation simulates viewport changes; a physical iOS/Android keyboard has not been tested. No production mutation, push or deployment was performed for this work. External email/provider/scheduler acceptance tests are deliberately unavailable until that infrastructure exists.
+Screenshots: `uat-results/cases-v2/` at 320, 390, 768, 1024, 1440 and 1680 px. Browser automation simulates viewport changes; a physical iOS/Android keyboard has not been tested. No production mutation, push or deployment was performed for this work. The original Cases acceptance excluded external email. The later system-inbox integration has separate tests and delivery limits in `ADMIN_EMAIL_NOTIFICATIONS.md`; scheduled reminder delivery remains unavailable.
 
 The compatibility adapter currently reads the full small owner dataset before filtering/aggregating, so metrics are complete rather than silently capped at the former 200 records. At larger scale, add maintained aggregates and indexed search/pagination before increasing polling frequency; this release does not claim constant-cost Firestore reads.

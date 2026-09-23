@@ -2,6 +2,11 @@
 
 Last updated: 2026-09-24
 
+New website cases can now notify the configured owner inbox through Resend.
+The three server-only Production variables and outbox contract are documented in
+[ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md). Firebase remains
+the case/outbox store; no Firebase email extension or billing change is required.
+
 ## Storage And Billing Checkpoint
 
 Firebase Auth and Firestore remain in use. The owner rejected **Firebase

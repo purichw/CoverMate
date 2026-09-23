@@ -2,6 +2,15 @@
 
 Last updated: 2026-09-24
 
+## System inbox email integration
+
+The current notification change builds on `edd8423`. Existing Production had all
+three Resend variables but no code reading them, so it sent no new-case email.
+The integration adds atomic email intents, bounded post-commit sending, dedupe,
+and an owner-only test without creating a customer case. See
+[ADMIN_EMAIL_NOTIFICATIONS.md](ADMIN_EMAIL_NOTIFICATIONS.md) for configuration,
+retry limits and evidence distinctions. Personal/follow-up email stays disabled.
+
 ## Current source and documentation checkpoint
 
 - Integration checkout: `.tools/refactor-docs-20260924`, branch
