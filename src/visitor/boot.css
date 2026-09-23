@@ -1,0 +1,21 @@
+/* Initial HTML and swapped document share this surface; no font or image gates. */
+html body #covermate-boot{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;padding:24px max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));background:#f5ead8;color:#675d4f;visibility:visible!important;text-shadow:none;font:400 14px/1.65 "Google Sans","Google Sans Thai",system-ui,sans-serif;opacity:1;transition:opacity 180ms linear}
+#covermate-boot [hidden]{display:none!important}
+#covermate-boot .cm-boot-content{width:100%;max-width:440px;text-align:center;transform:translateY(-24px);visibility:hidden}
+#covermate-boot[data-visible] .cm-boot-content{visibility:visible}
+#covermate-boot .cm-boot-brand{display:grid;place-items:center;width:min(384px,100%);aspect-ratio:16/5;margin:0 auto}
+#covermate-boot img{display:block;width:100%;height:100%;object-fit:contain}
+#covermate-boot .cm-boot-brand>*{grid-area:1/1}
+#covermate-boot .cm-boot-name{font-size:32px;font-weight:600;color:#15344d}
+#covermate-boot .cm-boot-track{width:240px;max-width:75%;height:3px;margin:34px auto 17px;overflow:hidden;border-radius:3px;background:#d9cbb0}
+#covermate-boot .cm-boot-track::before{content:"";display:block;width:60%;height:100%;background:linear-gradient(90deg,transparent,#956921 35%,#bb8c38 75%,transparent);transform:translateX(-110%);animation:cm-boot-sweep 1.5s cubic-bezier(.45,0,.25,1) infinite}
+@keyframes cm-boot-sweep{to{transform:translateX(280%)}}
+#covermate-boot p{margin:0;min-height:24px;color:#675d4f;font-size:14px;line-height:1.65;font-weight:400}
+#covermate-boot button{min-height:48px;margin-top:20px;padding:10px 22px;border:1px solid #17374b;border-radius:12px;background:#17374b;color:#fffaf0;font:500 14px/1.5 "Google Sans","Google Sans Thai",system-ui,sans-serif;cursor:pointer}
+#covermate-boot button:hover{background:#234a60}
+#covermate-boot button:focus-visible{outline:3px solid #a47427;outline-offset:4px}
+#covermate-boot[data-slow] .cm-boot-track::before,#covermate-boot[data-error] .cm-boot-track::before{animation:none;transform:none;width:100%;background:#a97b2e}
+html body #covermate-boot[data-leaving]{opacity:0;pointer-events:none}
+@media(max-width:600px){#covermate-boot .cm-boot-content{max-width:340px;transform:translateY(-28px)}#covermate-boot .cm-boot-brand{width:clamp(200px,55.4vw,248px)}#covermate-boot .cm-boot-track{width:156px;margin-top:28px}}
+@media(max-height:480px){#covermate-boot .cm-boot-content{transform:none}#covermate-boot .cm-boot-brand{width:216px}#covermate-boot .cm-boot-track{margin-top:16px;margin-bottom:12px}#covermate-boot button{margin-top:12px}}
+@media(prefers-reduced-motion:reduce){html body #covermate-boot{transition:none}#covermate-boot .cm-boot-track::before{animation:none;transform:none;width:100%;background:#a97b2e}}

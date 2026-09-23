@@ -12,6 +12,16 @@ config.seo.title = { th: 'Home TH', en: 'Home EN' };
 config.seo.description = { th: 'Published Thai description', en: 'Published English description' };
 config.motorPage.seo = { title: { th: 'Motor TH', en: 'Motor EN' }, description: { th: 'Motor description TH', en: 'Motor description EN' } };
 const html = fs.readFileSync('index.html', 'utf8');
+// The first loading frame follows published branding, including deliberate blanks.
+const bootImage = (media, lang = 'th') => renderPublicPage(html,
+  { ...config, brand: { ...config.brand, media } }, { path: '/', lang }).match(/<img data-covermate-boot-logo[^>]*>/)?.[0];
+assert.match(bootImage({}, 'en'), /covermate-advisory-logo-en\.png/);
+assert.match(bootImage({ headerLogo: { th: 'https://example.com/th.png', en: 'https://example.com/en.png' } }, 'en'), /src="https:\/\/example.com\/en\.png"/);
+assert.match(bootImage({ headerLogo: 'https://example.com/legacy.png' }), /legacy\.png/);
+for (const logo of ['', null, 'javascript:alert(1)']) {
+  assert.doesNotMatch(bootImage({ headerLogo: { th: logo } }), /\ssrc=/);
+}
+assert.match(bootImage({ headerLogo: 'https://example.com/logo.png?x=" onerror="alert(1)' }), /x=&quot; onerror=&quot;alert\(1\)/);
 for (const path of ['/', '/motor']) for (const lang of ['th', 'en']) {
   const model = createSeoModel(config, { path, lang });
   const canonical = 'https://covermateinsurance.com' + path + (lang === 'en' ? '?lang=en' : '');
@@ -95,7 +105,8 @@ const missingRoute = response(); await handler({ method: 'GET', url: '/not-a-rou
 assert.equal(missingRoute.statusCode, 404);
 const offline = response(); await createPageHandler({ readPublished: async () => { throw new Error('offline'); } })({ method: 'GET', url: '/', headers: {} }, offline);
 assert.equal(offline.statusCode, 503); assert.equal(offline.headers['Retry-After'], '60');
-assert.ok(offline.body.includes('__bundler/template'), 'Visitors can still recover via client cached/live content during an origin fetch outage');
+assert.ok(offline.body.includes('data-error-status="503"'), 'CMS outages use the independent recovery page');
+assert.ok(offline.body.includes('data-secondary'), 'The recovery page offers a retry action');
 assert.ok(!offline.body.includes('id="covermate-published-state"'), 'Outages must not advertise defaults as published state');
 
 const vercel = JSON.parse(fs.readFileSync('vercel.json'));

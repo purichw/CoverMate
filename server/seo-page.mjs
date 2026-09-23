@@ -3,6 +3,7 @@ import { createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
 import { resolveCoverMateEnvironment, isVercelPreviewHost } from '../covermate-environment.mjs';
 import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy } from '../covermate-contract.js';
 import { extractBundlerTemplate, replaceBundlerTemplate } from './bundler-template.mjs';
+import { renderErrorPage } from './error-page.mjs';
 
 const START = '<!-- COVERMATE_SEO_START -->', END = '<!-- COVERMATE_SEO_END -->';
 const assetVersions = JSON.parse(fs.readFileSync(new URL('./asset-versions.json', import.meta.url), 'utf8'));
@@ -22,6 +23,17 @@ export function renderPublicPage(html, config, options) {
       .replace('<html ', '<html data-covermate-environment="' + (options?.noindex && !options?.privatePage ? 'uat' : 'production') + '" ');
   }
   let rendered = replaceHead(replaceBundlerTemplate(html, replaceHead(extractBundlerTemplate(html))));
+  const language = options?.lang === 'en' ? 'en' : 'th';
+  const header = config?.brand?.media?.headerLogo;
+  const selectedLogo = typeof header === 'string' ? header : header?.[language];
+  const logo = selectedLogo === undefined ? '/assets/brand/covermate-advisory-logo-' + language + '.png' : selectedLogo;
+  const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let logoUrl = '';
+  try {
+    if (typeof logo === 'string' && logo.trim() && ['http:', 'https:'].includes(new URL(logo, 'https://covermateinsurance.com/').protocol)) logoUrl = versionedAsset(logo.trim());
+  } catch { /* A missing or invalid logo keeps a text identity. */ }
+  rendered = rendered.replace(/<img data-covermate-boot-logo[^>]*>/,
+    '<img data-covermate-boot-logo data-published' + (logoUrl ? ' src="' + escape(logoUrl) + '"' : ' hidden') + ' width="1200" height="375" alt="CoverMate">');
   if (options?.publishedState && !options.privatePage) {
     const { config, text } = sanitizeStateDoc(options.publishedState);
     const snapshot = JSON.stringify({ siteId: options.siteId, state: { config, text } })
@@ -73,30 +85,39 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
   return async (req, res) => {
     res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    const sendError = (status, config = {}) => {
+      res.statusCode = status;
+      if (status < 500) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+      res.setHeader('Cache-Control', 'private, no-store');
+      const language = new URL(req.url, 'https://covermateinsurance.com').searchParams.get('lang');
+      res.end(req.method === 'HEAD' ? '' : renderErrorPage(status, { config, lang: language, published:!!config?.sections, retrySafe:['GET','HEAD'].includes(req.method) }));
+    };
     if (!['GET', 'HEAD'].includes(req.method)) {
-      res.setHeader('Allow', 'GET, HEAD'); res.statusCode = 405; res.end(); return;
+      res.setHeader('Allow', 'GET, HEAD'); sendError(405); return;
     }
     const url = new URL(req.url, 'https://covermateinsurance.com');
     const route = url.pathname === '/api/page' ? url.searchParams.get('route') : url.pathname;
     const owner = ['/admin/content', '/admin/edit', '/admin/preview'].includes(route);
     if (!['/', '/motor'].includes(route) && !owner) {
-      res.setHeader('X-Robots-Tag', 'noindex'); res.statusCode = 404; res.end('Not found'); return;
+      sendError(404); return;
     }
     const environment = resolveCoverMateEnvironment({ headers: req.headers, url: req.url });
     const noindex = owner || environment.isUat || isVercelPreviewHost(environment.host);
     if (noindex) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    let loadedConfig, rendering = false;
     try {
       const published = owner ? null : await readPublished(environment.siteId);
       const state = published && (validStateDoc(published) ? published : { config: published, text: {} });
+      loadedConfig = state?.config;
+      rendering = true;
       const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, publishedState: state, siteId: environment.siteId });
       if (!noindex) res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30');
       res.statusCode = 200;
       res.end(req.method === 'HEAD' ? '' : html);
     } catch {
-      // A temporary CMS outage must not publish invented metadata or a soft 404.
-      res.statusCode = 503;
-      res.setHeader('Retry-After', '60');
-      res.end(req.method === 'HEAD' ? '' : renderPublicPage(readHtml(), {}, { path: route, lang: url.searchParams.get('lang'), noindex }));
+      // Recovery UI is independent of the failing visitor bundle/CMS request.
+      if (!rendering) res.setHeader('Retry-After', '60');
+      sendError(rendering ? 500 : 503, loadedConfig);
     }
   };
 }

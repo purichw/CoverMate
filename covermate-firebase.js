@@ -138,11 +138,11 @@ async function loadSiteState(name) {
   return snap.exists() ? (snap.data() || null) : null;
 }
 
-async function saveSiteState(name, config, text) {
-  return serializeWrite(() => saveSiteStateNow(name, config, text));
+async function saveSiteState(name, config, text, options = {}) {
+  return serializeWrite(() => saveSiteStateNow(name, config, text, options));
 }
 
-async function saveSiteStateNow(name, config, text) {
+async function saveSiteStateNow(name, config, text, options = {}) {
   const user = auth.currentUser || await waitForAuth();
   const admin = await readAdmin(user);
   if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to save CoverMate content.");
@@ -163,11 +163,41 @@ async function saveSiteStateNow(name, config, text) {
     transaction.set(stateRef(name), payload);
   });
   loadedRevisions.set(name, payload.revision);
-  cacheState(name, payload);
+  // Background editing owns its local Draft. A delayed acknowledgment must
+  // never replace a newer local edit/Undo while the next write is queued.
+  if (!(name === 'draft' && options.cache === false)) cacheState(name, payload);
 }
 
 function versionRef() {
   return firestoreMod.doc(firestoreMod.collection(db, "sites", SITE_ID, "versions"));
+}
+
+// Reset is a Draft operation, not a publish or a restoration of a cached version.
+// Transactions require the server and retry if Live changes during the copy.
+async function resetDraftToPublished() {
+  return serializeWrite(async () => {
+    const user = auth.currentUser || await waitForAuth();
+    const admin = await readAdmin(user);
+    if (!admin || !canEditContent(admin.role)) throw new Error('Not authorized to save CoverMate content.');
+    let live, payload;
+    await firestoreMod.runTransaction(db, async (transaction) => {
+      const liveSnapshot = await transaction.get(stateRef('live'));
+      const draftSnapshot = await transaction.get(stateRef('draft'));
+      live = liveSnapshot.exists() ? liveSnapshot.data() : null;
+      if (!validStateDoc(live)) throw new Error('ยังไม่มีเวอร์ชันที่ Publish ให้ Reset กรุณาเก็บ Draft นี้ไว้ก่อน');
+      const revision = nextRevision('draft', draftSnapshot);
+      const clean = sanitizeStateDoc(live, { repeatableIds: true });
+      payload = { config: clean.config, text: clean.text, revision,
+        updatedAt: firestoreMod.serverTimestamp(),
+        updatedBy: { uid: user.uid, email: user.email || '', role: admin.role || 'admin' } };
+      transaction.set(stateRef('draft'), payload);
+    });
+    loadedRevisions.set('draft', payload.revision);
+    loadedRevisions.set('live', Number(live.revision || 0));
+    cacheState('live', live);
+    cacheState('draft', payload);
+    return { config: payload.config, text: payload.text };
+  });
 }
 
 async function appendVersion(config, text, metadata = {}) {
@@ -380,6 +410,7 @@ window.CoverMateFirebase = {
   userIsAdmin,
   loadSiteState,
   saveSiteState,
+  resetDraftToPublished,
   appendVersion,
   publishSiteState,
   loadVersions,

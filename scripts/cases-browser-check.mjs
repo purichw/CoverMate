@@ -1,0 +1,112 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
+import { startStaticServer } from './lib/static-server.mjs';
+import C from '../server/cases-contract.cjs';
+import AxeBuilder from '@axe-core/playwright';
+const source = fs.readFileSync('scripts/ops-portal-regression-check.mjs', 'utf8');
+const { firebaseMock } = vm.runInNewContext(source.slice(source.indexOf('const firebaseMock ='), source.indexOf('function json(')) + ';({firebaseMock})');
+const fixtures = JSON.parse(fs.readFileSync('scripts/fixtures/cases/fixtures.json'));
+const now = fixtures.asOf;
+let records = structuredClone(fixtures.cases), notices = structuredClone(fixtures.notifications), failSave = false, conflict = false, failList = false;
+const output = process.env.CASES_SCREENSHOT_DIR || 'uat-results/cases-v2'; fs.mkdirSync(output, { recursive: true });
+const { server, baseUrl } = await startStaticServer();
+const browser = await launchChromium((await loadPlaywright()).chromium);
+const errors = [];
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  await context.addInitScript(() => localStorage.setItem('covermate-admin-session', JSON.stringify({ firebase: true, uid: 'smoke-admin', email: 'purich@example.test', name: 'CoverMate Owner', role: 'admin', ts: Date.now(), exp: Date.now() + 3600000 })));
+  await context.route('**/covermate-firebase.js', route => route.fulfill({ contentType: 'text/javascript', body: firebaseMock }));
+  await context.route('**/api/ops/**', async route => {
+    const req = route.request(), url = new URL(req.url()), path = url.pathname.replace('/api/ops/', '').split('/');
+    let result, status = 200;
+    try {
+      if (path[0] === 'cases') {
+        if (failList && (!path[1] || path[1] === 'summary')) throw Object.assign(new Error('Cases service temporarily unavailable.'), { status: 503 });
+        if (path[1] === 'summary') result = C.summary(records, now);
+        else if (req.method() === 'POST') { const r = C.createCase(req.postDataJSON(), { id: crypto.randomUUID(), now }); records.push(r); result = r; }
+        else if (!path[1]) result = C.listCases(records, url.searchParams, now);
+        else {
+          const index = records.findIndex(r => r.id === path[1]); if (index < 0) throw Object.assign(new Error('Case not found.'), { status: 404 });
+          if (req.method() === 'PATCH') {
+            if (failSave) throw Object.assign(new Error('Please try again. Your draft is still here.'), { status: 503 });
+            if (conflict) { conflict = false; records[index].version++; records[index].workingNote = 'Saved elsewhere'; }
+            records[index] = C.patchCase(records[index], req.postDataJSON(), now).record; result = records[index];
+          } else result = { record: records[index], activities: fixtures.activities.filter(a => a.caseId === path[1]), nextActivityOffset: null, legacyHistory: { timeline: [], audit: [], tasks: {} } };
+        }
+      } else if (path[0] === 'notifications') {
+        if (req.method() === 'POST') { notices.filter(n => path[1] === 'read-all' || n.id === path[1]).forEach(n => n.readAt = now); result = { ok: true }; }
+        else result = { items: notices.filter(n => url.searchParams.get('unread') !== 'true' || !n.readAt && !n.resolvedAt), unreadCount: notices.filter(n => !n.readAt && !n.resolvedAt).length, nextCursor: null };
+      } else if (path[0] === 'notification-preferences') result = fixtures.preferences[0] || fixtures.preferences;
+      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false };
+      else result = { rows: [], total: 0, source: 'test' };
+    } catch (e) { status = e.status || 500; result = { code: e.code || 'test_error', message: e.message }; }
+    await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(result) });
+  });
+  const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+  await page.goto(baseUrl + '/admin#operations');
+  await page.locator('.cases-table tbody tr').first().waitFor();
+  assert.equal(await page.locator('.cases-table tbody tr').count(), 8);
+  const desktopAxe = await new AxeBuilder({ page }).include('.cases-screen').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+  assert.deepEqual(desktopAxe.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
+  await page.screenshot({ path: `${output}/desktop-1440.png`, fullPage: true, animations: 'disabled' });
+  await page.locator('.case-name').first().click(); await page.locator('[name="workingNote"]').fill('Draft retained on failure');
+  await page.keyboard.press('Tab');
+  assert.ok(await page.locator('.case-panel').evaluate(el => el.contains(document.activeElement)));
+  await page.locator('.case-panel [type="submit"]').focus(); await page.keyboard.press('Tab');
+  assert.equal(await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).evaluate(el => el === document.activeElement), true);
+  await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();
+  await page.getByRole('button', { name: 'แก้ไขต่อ' }).click();
+  assert.equal(await page.locator('[name="workingNote"]').inputValue(), 'Draft retained on failure');
+  failSave = true; await page.getByRole('button', { name: 'Save' }).click(); await page.getByText('บันทึกไม่ได้', { exact: true }).waitFor();
+  assert.equal(await page.locator('[name="workingNote"]').inputValue(), 'Draft retained on failure');
+  failSave = false; conflict = true; await page.getByRole('button', { name: 'Save' }).click(); await page.getByRole('button', { name: 'โหลดข้อมูลที่บันทึกไว้อีกครั้ง' }).waitFor();
+  await page.getByRole('button', { name: 'โหลดข้อมูลที่บันทึกไว้อีกครั้ง' }).click(); await page.getByRole('button', { name: 'ทิ้งการแก้ไข', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[name="workingNote"]')?.value === 'Saved elsewhere');
+  await page.locator('[name="workingNote"]').fill('Contacted and followed up');
+  await page.locator('[name="status"]').selectOption('contacted_reachable'); await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForFunction(() => document.querySelector('.case-detail-meta [data-status]')?.dataset.status === 'contacted_reachable');
+  await page.waitForFunction(() => !document.querySelector('.case-toast'), { timeout: 7000 });
+  await page.screenshot({ path: `${output}/desktop-detail-1440.png`, fullPage: false, animations: 'disabled' });
+  await page.setViewportSize({ width: 1680, height: 1050 });
+  await page.waitForFunction(() => document.querySelector('.case-panel')?.getAttribute('aria-modal') === 'false');
+  assert.equal(await page.locator('.case-panel').getAttribute('aria-modal'), 'false');
+  await page.screenshot({ path: `${output}/desktop-docked-1680.png`, fullPage: true, animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.querySelector('.case-panel')?.getAttribute('aria-modal') === 'true');
+  assert.equal(await page.locator('.case-panel').getAttribute('aria-modal'), 'true');
+  await page.screenshot({ path: `${output}/mobile-detail-390.png`, fullPage: false, animations: 'disabled' });
+  const mobileAxe = await new AxeBuilder({ page }).include('.case-panel').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+  assert.deepEqual(mobileAxe.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();
+  await page.getByRole('button', { name: 'เปิดเมนู Admin' }).click(); await page.locator('[data-case-action="navigate"][data-module="operations"]').click();
+  await page.screenshot({ path: `${output}/mobile-list-390.png`, fullPage: true, animations: 'disabled' });
+  assert.ok((await page.locator('.case-card').first().boundingBox()).y < 844, 'First case remains visible on first screen.');
+  await page.locator('.case-mobile-bell').click();
+  await page.locator('.case-notification').first().waitFor();
+  assert.equal(await page.locator('.case-notification strong').first().textContent(), 'มีเคสใหม่จากเว็บไซต์');
+  assert.match(await page.locator('.case-notification p').first().textContent(), /CM-2026-001 · พร้อมให้ตรวจสอบ/);
+  await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click(); await page.getByText('ยังไม่ได้ตั้งค่าการส่งอีเมล', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isDisabled(), true);
+  await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();
+  await page.getByRole('button', { name: '+ เพิ่มเคส', exact: true }).click();
+  await page.locator('[name="contact.name"]').fill('Manual test'); await page.locator('[name="contact.phone"]').fill('0800000099'); await page.locator('[name="enquiryTopic"]').fill('Manual motor enquiry');
+  await page.getByRole('button', { name: 'Save' }).click(); await page.getByText('เพิ่มเคสเอง', { exact: false }).first().waitFor();
+  await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();
+  for (const width of [320, 768, 1024]) {
+    await page.setViewportSize({ width, height: 950 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `No overflow at ${width}`);
+    await page.screenshot({ path: `${output}/list-${width}.png`, fullPage: true, animations: 'disabled' });
+  }
+  await page.locator('#globalSearch').fill('no-matching-fixture');
+  await page.getByText('ไม่พบเคสที่ตรงกัน', { exact: true }).waitFor();
+  assert.equal(await page.locator('.case-metric strong').first().textContent(), '3', 'Global metrics remain independent of search.');
+  await page.getByRole('button', { name: 'ล้างตัวกรอง', exact: true }).click(); await page.locator('.case-name').first().waitFor();
+  failList = true; await page.getByRole('button', { name: 'รีเฟรชเคส', exact: true }).click(); await page.getByRole('heading', { name: 'โหลดเคสไม่ได้', exact: true }).waitFor();
+  assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), ['—', '—', '—', '—']);
+  failList = false; await page.locator('.case-list').getByRole('button', { name: 'ลองอีกครั้ง', exact: true }).click(); await page.locator('.case-name').first().waitFor();
+  assert.deepEqual(errors, []);
+  console.log('Cases browser checks passed: responsive list/detail, draft discard/keep, save failure, conflict reload, persisted save, manual create, unavailable email and no horizontal overflow.');
+} finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

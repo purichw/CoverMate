@@ -41,11 +41,17 @@
     "check:media": "node scripts/media-editor-check.mjs",
     "check:media:inline": "node scripts/inline-media-browser-check.mjs",
     "check:faq": "node scripts/faq-consolidation-check.mjs",
-    "check:ops": "node scripts/ops-portal-regression-check.mjs",
+    "check:ops": "node scripts/cases-contract-check.mjs && node scripts/cases-browser-check.mjs",
     "uat:seed": "node scripts/uat-seed.mjs",
     "smoke:uat": "node scripts/uat-e2e-smoke.mjs",
     "smoke:admin-builder": "COVERMATE_SMOKE_SUITE=admin-builder node scripts/smoke.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "build:errors": "node scripts/generate-error-pages.mjs",
+    "check:errors": "node scripts/error-page-check.mjs",
+    "check:loading": "node scripts/loading-screen-check.mjs",
+    "check:cases:api": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/cases-api-check.mjs\"",
+    "check:editor-history": "node scripts/editor-history-model-check.mjs && node scripts/editor-reset-contract-check.mjs && node scripts/editor-history-browser-check.mjs",
+    "check:admin-home": "node scripts/admin-home-browser-check.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

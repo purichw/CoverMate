@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import notFound from '../../api/not-found.js';
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OWNER_ROOT_ROUTES = new Set(["admin/content", "admin/edit", "admin/preview"]);
@@ -78,6 +79,16 @@ export function startStaticServer(options = {}) {
         } catch {
           // Try the next clean-URL candidate.
         }
+      }
+      if (options.errorPageFallback && /^\/(api|assets|admin)(\/|$)/.test(url.pathname)) {
+        notFound(req, res);
+        return;
+      }
+      if (options.errorPageFallback && /text\/html/.test(req.headers.accept || '') && !/^\/(api|assets|admin)(\/|$)/.test(url.pathname)) {
+        const fallback = await fs.readFile(path.join(rootDir, '404.html'));
+        res.writeHead(404, { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store' });
+        res.end(req.method === 'HEAD' ? '' : fallback);
+        return;
       }
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
       res.end("Not found");

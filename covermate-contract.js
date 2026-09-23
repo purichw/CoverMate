@@ -385,8 +385,36 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 8;
+const CMS_CONTENT_VERSION = 12;
 const CMS_CONTENT_FIELDS = [
+  {path:'errorPage.illustration',label:'Error illustration (leave centre blank for status number)',group:'Error page',media:true,seed:'assets/brand/error-illustration-v1.webp'},
+  ...[
+    ['eyebrow','ขออภัย','Sorry about that'],
+    ['missingTitle','ไม่พบหน้าที่คุณต้องการ','We couldn’t find that page'],
+    ['missingBody','หน้านี้อาจถูกย้าย ถูกลบ หรือที่อยู่ไม่ถูกต้อง คุณสามารถกลับสู่หน้าหลัก หรือเลือกข้อมูลที่ต้องการด้านล่าง','This page may have moved, been removed, or the address may be incorrect. Return to the homepage or choose a link below.'],
+    ['missingBodyMinimal','หน้านี้อาจถูกย้าย ถูกลบ หรือที่อยู่ไม่ถูกต้อง คุณสามารถกลับสู่หน้าหลักเพื่อเริ่มต้นใหม่','This page may have moved, been removed, or the address may be incorrect. Return to the homepage to start again.'],
+    ['deniedTitle','ไม่สามารถเข้าถึงหน้านี้ได้','You can’t access this page'],
+    ['deniedBody','คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณากลับสู่หน้าหลัก','You don’t have permission to access this page. Please return to the homepage.'],
+    ['busyTitle','กรุณารอสักครู่ แล้วลองใหม่','Please wait a moment and try again'],
+    ['busyBody','ขณะนี้มีคำขอเข้ามาหลายรายการ กรุณาลองอีกครั้งภายหลัง หรือกลับสู่หน้าหลัก','There are too many requests right now. Please try again later or return to the homepage.'],
+    ['unavailableTitle','หน้านี้ยังไม่พร้อมให้บริการชั่วคราว','This page is temporarily unavailable'],
+    ['unavailableBody','กรุณาลองอีกครั้งภายหลัง หรือกลับสู่หน้าหลัก','Please try again later or return to the homepage.'],
+    ['serverTitle','เกิดข้อขัดข้องในการแสดงหน้านี้','Something went wrong'],
+    ['serverBody','กรุณาลองอีกครั้ง หรือกลับสู่หน้าหลัก','Please try again or return to the homepage.'],
+    ['timeoutTitle','การเชื่อมต่อใช้เวลานานกว่าปกติ','The connection took too long'],
+    ['timeoutBody','กรุณาลองอีกครั้ง หรือกลับสู่หน้าหลัก','Please try again or return to the homepage.'],
+    ['genericTitle','ไม่สามารถเปิดหน้านี้ได้','We couldn’t open this page'],
+    ['genericBody','กรุณากลับสู่หน้าหลักเพื่อเริ่มต้นใหม่','Please return to the homepage to start again.'],
+    ['home','กลับสู่หน้าหลัก','Back to home'],['back','ย้อนกลับหน้าก่อน','Back to previous page'],['retry','ลองอีกครั้ง','Try again'],
+    ['retryPending','กำลังลองอีกครั้ง…','Trying again…'],['codeLabel','รหัสข้อผิดพลาด','Error code'],
+    ['popular','หรือเลือกดูข้อมูลที่คุณต้องการ','Or explore these links'],
+    ['motor','ประกันรถยนต์','Motor insurance'],['review','ตรวจกรมธรรม์','Policy review'],
+    ['health','ประกันสุขภาพ','Health insurance'],['contact','ติดต่อเรา','Contact us'],
+    ['helpTitle','ต้องการความช่วยเหลือเพิ่มเติม?','Need more help?'],
+    ['helpBody','ติดต่อ CoverMate ผ่าน LINE เพื่อสอบถามข้อมูลเพิ่มเติม','Contact CoverMate on LINE for more information.'],
+    ['statement','ให้เรื่องประกัน\nเป็นเรื่องที่เข้าใจได้','Making insurance\neasier to understand'],
+    ['skip','ข้ามไปยังเนื้อหา','Skip to content']
+  ].map(([key,th,en])=>({path:'errorPage.'+key,label:key.replace(/([A-Z])/g,' $1'),group:'Error page',localized:true,seed:{th,en}})),
   {path:'publicCopy.motorLogoNotice',label:'Motor insurer logo note',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้',en:'Logos are trademarks of their owners · shown as the insurers I can quote and compare'}},
   {path:'publicCopy.tierClassLabel',label:'Comparison: class heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'ชั้นประกัน',en:'Class'}},
   {path:'publicCopy.tierBestLabel',label:'Comparison: suitability heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เหมาะกับใคร',en:'Best for'}},
@@ -652,7 +680,7 @@ function migrateCmsContent(config) {
   const previousVersion = Number(next.cmsContentVersion || 0);
   // Seed only newly introduced presentation fields; intentional blanks stay blank.
   if (previousVersion >= 5) {
-    CMS_CONTENT_FIELDS.filter(field => field.group === 'Footer design' || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+    CMS_CONTENT_FIELDS.filter(field => field.group === 'Error page' || field.group === 'Footer design' || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
       if (field.localized) ['th','en'].forEach(lang => {
         const path = field.path + '.' + lang;
         if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);

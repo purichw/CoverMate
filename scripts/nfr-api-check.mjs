@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { startNfrServer } from './nfr-server.mjs';
+import privacy from '../server/enquiry-privacy.cjs';
+import C from '../server/cases-contract.cjs';
+import { CMS_CONTENT_FIELDS } from '../covermate-contract.js';
 if (process.env.FIRESTORE_EMULATOR_HOST !== '127.0.0.1:8088' || process.env.COVERMATE_TEST_MODE !== 'emulator') throw new Error('Use isolated emulators.');
 const require = createRequire(import.meta.url);
 const { serverDb } = require('../server/firebase.cjs');
 const db = serverDb();
 const { server, baseUrl } = await startNfrServer();
-const payload = { name: 'Integration test', contact: 'nfr@example.test', topic: 'Test', summary: '', sourcePath: '/', language: 'en', coverage: 'motor', qtype: 'quote', consent: true };
+const payload = { name: 'Integration test', contact: 'nfr@example.test', topic: 'Test', summary: '', sourcePath: '/', language: 'en', coverage: 'motor', qtype: 'quote', consent: true, consentKind: 'consultation', noticeVersion: privacy.versionFor(CMS_CONTENT_FIELDS.find(f => f.path === 'ui.consultationConsent').seed.en) };
 const tokens = {};
 try {
   for (const role of ['owner', 'readonly', 'unknown', 'inactive', 'o-wner', 'constructor']) {
@@ -35,8 +38,8 @@ try {
   assert.equal((await call('leads', 'POST', payload, null, { ...headers, 'Idempotency-Key': crypto.randomUUID() })).status, 429);
   assert.equal((await call('ops/leads')).status, 401);
   for (const role of ['unknown', 'inactive', 'o-wner', 'constructor']) assert.equal((await call('ops/leads', 'GET', undefined, tokens[role])).status, 403);
-  assert.equal((await call('ops/leads', 'GET', undefined, tokens.readonly)).status, 200);
-  assert.equal((await call(`ops/leads/${first.body.id}/status`, 'PUT', { status: 'contacted' }, tokens.readonly)).status, 403);
+  assert.equal((await call('ops/cases', 'GET', undefined, tokens.readonly)).status, 403);
+  assert.equal((await call(`ops/leads/${C.hash(`uat:${headers['Idempotency-Key']}`)}/status`, 'PUT', { status: 'contacted' }, tokens.readonly)).status, 403);
   const created = await call('ops/leads', 'POST', { name: 'Operator fixture', phone: 'TEST-ONLY', consent: true }, tokens.owner);
   assert.equal(created.status, 201);
   assert.ok(created.body.lead.timeline.length);
@@ -46,11 +49,11 @@ try {
   const firstEdit = await call(`ops/leads/${created.body.lead.id}/notes`, 'POST', { note: 'First edit' }, tokens.owner, { 'If-Match': revision });
   assert.equal(firstEdit.status, 201);
   assert.equal((await call(`ops/leads/${created.body.lead.id}/notes`, 'POST', { note: 'Stale edit' }, tokens.owner, { 'If-Match': revision })).status, 409);
-  const lead = first.body.id;
+  const lead = created.body.lead.id;
   const outcomes = await Promise.all(Array.from({ length: 8 }, (_, i) => call(`ops/leads/${lead}/notes`, 'POST', { note: `Concurrent note ${i}` }, tokens.owner)));
   assert.ok(outcomes.every(r => [201, 409].includes(r.status)), JSON.stringify(outcomes.map(r => r.status)));
   const stored = (await db.doc(`contactLeadsUat/${lead}`).get()).data();
-  assert.equal(stored.timeline.length, outcomes.filter(r => r.status === 201).length, 'No successful note is silently lost.');
+  assert.equal(stored.timeline.length, 2 + outcomes.filter(r => r.status === 201).length, 'Creation and first edit remain; no successful concurrent note is silently lost.');
   assert.ok(outcomes.some(r => r.status === 409), 'Concurrent write must report conflict.');
   const outside = await fetch(`${baseUrl}/api/ops/leads`, { headers: { Authorization: `Bearer ${tokens.owner}` } });
   assert.equal(outside.status, 403, 'UAT-only identity cannot access production-shaped paths.');

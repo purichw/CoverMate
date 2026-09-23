@@ -62,12 +62,16 @@ export function readVisitorSources() {
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_BEGIN', 'covermate-contract.js');
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_END', 'covermate-contract.js');
   return {
-    shell: readText(VISITOR_SOURCE_PATHS.shell),
+    shell: readText(VISITOR_SOURCE_PATHS.shell)
+      .replace('/* COVERMATE_BOOT_STYLES */', () => transformSync(readText(new URL('src/visitor/boot.css', ROOT)), { loader: 'css', minify: true }).code)
+      .replace('// COVERMATE_BOOT_SCRIPT', () => transformSync(readText(new URL('src/visitor/boot.js', ROOT)), { minify: true }).code),
     template: readText(VISITOR_SOURCE_PATHS.template)
       .replace('<!-- COVERMATE_HOME_TEMPLATE -->', () => readText(new URL('src/visitor/home.html', ROOT)))
       .replace('/* COVERMATE_HOME_STYLES */', () => readText(new URL('src/visitor/home.css', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
     runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
+    adminLabels: readText(new URL('src/visitor/admin-labels.js', ROOT)),
+    editorHistory: readText(new URL('src/visitor/editor-history.js', ROOT)).replace(/^export /gm, ''),
     cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],
     seoSource: readText(new URL('covermate-seo.mjs', ROOT)).split('\nexport function renderSeoHead')[0].replace(/^export /gm, ''),
     imageVersions: readImageVersions()
@@ -80,6 +84,8 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
   assertSingleSlot(sources.runtime, '// COVERMATE_CMS_SCHEMA_SOURCE', 'src/visitor/runtime.js');
   return sources.runtime.replace(VISITOR_DEFAULTS_SLOT, () => sources.defaults.trimEnd())
     .replace('// COVERMATE_CMS_SCHEMA_SOURCE', () => sources.cmsSchema)
+    .replace('// COVERMATE_ADMIN_LABELS_SOURCE', () => sources.adminLabels)
+    .replace('// COVERMATE_EDITOR_HISTORY_SOURCE', () => sources.editorHistory)
     .replace('// COVERMATE_SEO_SOURCE', () => sources.seoSource)
     .replace(VISITOR_ASSET_VERSIONS_SLOT, () => JSON.stringify(sources.imageVersions || readImageVersions()));
 }
@@ -87,10 +93,20 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
 export function buildVisitorTemplate(sources = readVisitorSources()) {
   assertSingleSlot(sources.template, VISITOR_RUNTIME_SLOT, "src/visitor/template.html");
   const defaults = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
-  const runtime = buildVisitorRuntime({ ...sources, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' });
-  // Compact only the static CSS blocks, before inserting the runtime script.
+  // Keep source and diagnostic builds readable; compact only shipped output.
+  // Identifier names are preserved because the embedded host resolves Component.
+  const runtime = transformSync(buildVisitorRuntime({ ...sources, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' }), {
+    minifyWhitespace: true, charset: 'utf8'
+  }).code
+    // Existing seed/export tools use these two boundaries in the generated HTML.
+    .replace(/\bconst (DEFAULTS|SCHEMA)=/g, 'const $1 =');
+  // Compact the static CSS blocks before inserting the runtime script.
   const template = sources.template.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
-    (_, open, css, close) => open + transformSync(css, { loader: 'css', minifyWhitespace: true }).code + close);
+    (_, open, css, close) => open + transformSync(css, { loader: 'css', minifyWhitespace: true }).code + close)
+    // Remove tag indentation only. Keep newlines/word separators and preserve
+    // raw-text blocks verbatim so textareas, code and preformatted copy are safe.
+    .replace(/(<(pre|textarea|script|style)\b[^>]*>[\s\S]*?<\/\2>)|^[\t ]+(?=<)/gim,
+      (match, rawText) => rawText || '');
   return withDefaultSeo(template.replace(VISITOR_RUNTIME_SLOT, () => runtime.trimEnd()), sources);
 }
 
@@ -104,5 +120,8 @@ export function buildVisitorIndex(sources = readVisitorSources()) {
   assertSingleSlot(sources.shell, VISITOR_TEMPLATE_SLOT, "src/visitor/shell.html");
   const template = buildVisitorTemplate(sources);
   const serializedTemplate = `${BUNDLER_TEMPLATE_OPEN}${serializeBundlerTemplate(template)}</script>`;
-  return withDefaultSeo(sources.shell, sources).replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
+  // Keep the readable bootstrap source, without shipping its comments/whitespace.
+  const shell = sources.shell.replace(/(<script id="covermate-bootstrap">)([\s\S]*?)(<\/script>)/,
+    (_, open, script, close) => open + transformSync(script, { minifyWhitespace: true }).code + close);
+  return withDefaultSeo(shell, sources).replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
 }

@@ -351,7 +351,7 @@ async function verifyAnalyticsRouteAuth(browser) {
   assert.equal(state.authState, "ready");
   assert.equal(state.leadKpi, "2");
   assert.equal(state.sessionsKpi, "123");
-  assert.equal(state.dataApiStatus, "Connected");
+  assert.equal(state.dataApiStatus, "เชื่อมต่อแล้ว");
   assert.match(state.robots, /^noindex/);
   assert.equal(state.hasVisitorGa, false, "admin analytics does not load visitor GA script");
   assert.equal(/Operations|\/admin\/ops/.test(state.text), false, "admin analytics does not introduce Operations");

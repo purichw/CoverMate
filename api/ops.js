@@ -43,6 +43,10 @@ module.exports = async function opsApi(req, res) {
     const actor = await authorize(req, "view_records", environment);
     actor.environment = environment;
 
+    if (["cases", "notifications", "notification-preferences", "notification-capabilities", "notification-test-email"].includes(path[0])) {
+      return send(res, method === "POST" && path[0] === "cases" ? 201 : 200, await require('../server/cases-service.cjs').handle(req, actor, path));
+    }
+
     if (method === "GET" && path[0] === "leads" && path.length === 1) {
       return send(res, 200, await listLeads(req, actor));
     }
@@ -87,8 +91,10 @@ module.exports = async function opsApi(req, res) {
     if (status >= 500) reportFailure('ops', error);
     return send(res, status, {
       error: error.code || (status === 500 ? "server_error" : "request_error"),
+      code: error.code || "server_error",
       message: status === 500 ? "Operations API failed." : error.message,
       field: error.field,
+      fieldErrors: error.fieldErrors,
       requiredPermission: error.requiredPermission
     });
   }
@@ -150,6 +156,7 @@ async function authorize(req, permission, environment) {
   const actor = {
     uid,
     email: account.email || "",
+    emailVerified: account.emailVerified === true,
     name: stringValue(admin.name) || account.displayName || account.email || "CoverMate admin",
     role: normalizeRole(admin.role),
     token,
@@ -536,11 +543,31 @@ function normalizeLead(doc) {
     read: data.read === true,
     createdAt: timestampIso(data.createdAt),
     updatedAt: timestampIso(data.updatedAt),
-    nextAction: status === "new" ? "First contact" : ops.followUpAt ? `Follow up ${ops.followUpAt}` : ""
+    nextAction: status === "new" ? "First contact" : ops.followUpAt ? `Follow up ${ops.followUpAt}` : "",
+    ...(data.caseRecord ? {
+      canonicalCase: true,
+      displayId: data.caseRecord.caseNumber,
+      name: data.caseRecord.contact.name,
+      phone: data.caseRecord.contact.phone || "",
+      lineId: data.caseRecord.contact.lineId || "",
+      email: data.caseRecord.contact.email || "",
+      contact: data.caseRecord.contact.rawContact || data.caseRecord.contact.phone || data.caseRecord.contact.lineId || data.caseRecord.contact.email || "",
+      source: data.caseRecord.source === "manual" ? "Manual" : "Website",
+      status: data.caseRecord.status,
+      interestKey: data.caseRecord.interestType,
+      interestLabel: interestLabel(data.caseRecord.interestType),
+      followUpAt: data.caseRecord.followUp?.dueAt || "",
+      createdAt: data.caseRecord.submittedAt,
+      updatedAt: data.caseRecord.updatedAt,
+      message: data.caseRecord.originalSubmission?.message || "",
+      consent: { given: Boolean(data.caseRecord.privacyReceipt), at: data.caseRecord.privacyReceipt?.acceptedAt || "", method: data.caseRecord.privacyReceipt ? "Verified website notice" : "Unavailable", purpose: data.caseRecord.privacyReceipt?.noticeText || "" },
+      nextAction: ""
+    } : {})
   };
 }
 
 function tasksForLead(lead) {
+  if (lead.canonicalCase) return [];
   const tasks = [];
   const opsTasks = objectValue(lead.ops && lead.ops.tasks);
   const first = objectValue(opsTasks.firstContact);

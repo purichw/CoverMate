@@ -99,9 +99,10 @@ The Home view is a private starting point inside the same admin shell, not a
 separate launcher that bounces to another admin app. Unbuilt modules remain
 hidden until real production contracts exist.
 
-Visible Admin chrome/action labels are English-only. Keep `Panel`, `Edit text`,
-`Main`, `Public site`, `Save draft`, `Preview`, `Publish`, `Success`, and
-`Log out` stable unless wording is explicitly changed by the owner.
+Visible Admin controls use natural Thai with conventional English terms.
+Use `แผงเครื่องมือ`, `แก้ไขข้อความ`, `หน้า Admin`, `ดูเว็บจริง`, `ออกจากระบบ`,
+and retain `Save draft`, `Preview`, `Publish`. TH/EN selects website content,
+not Admin UI language. See `docs/ADMIN_LANGUAGE.md`.
 
 This page is an intentional admin step and should not disappear after login.
 

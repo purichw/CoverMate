@@ -33,6 +33,7 @@ const L = (th, en) => ({ th: th, en: en });
 
 // COVERMATE_DEFAULTS_SOURCE
 // COVERMATE_CMS_SCHEMA_SOURCE
+// COVERMATE_ADMIN_LABELS_SOURCE
 // COVERMATE_SEO_SOURCE
 const SCHEMA = {
   hero: { fields: ['kicker', 'title', 'body', 'cta1', 'cta2', 'note', 'claimText', 'claimLinkText'], item: null, cols: false },
@@ -76,25 +77,25 @@ const TYPE_LABEL = {
 };
 
 const SECTION_ADMIN_META = {
-  hero: { group: 'First impression', title: 'Hero', role: 'Headline, intro copy, primary LINE CTA, and advisor proof card.' },
-  motor: { group: 'Motor landing', title: 'Motor hero', role: 'Dedicated /motor campaign hero, CTA, and claim guide prompt.' },
-  'motor-trust': { group: 'Motor landing', title: 'Motor trust bar', role: 'Short confidence chips for the dedicated motor page.' },
-  'motor-cover': { group: 'Motor landing', title: 'Motor cover classes', role: 'Editable accordion cards for Class 1, 2+/3+, 3, and compulsory cover.' },
-  trust: { group: 'First impression', title: 'Trust bar', role: 'Short proof chips under the hero.' },
-  cover: { group: 'Products', title: 'Coverage cards', role: 'Main insurance categories and what each one covers.' },
-  review: { group: 'Products', title: 'Policy review', role: 'Checklist for reviewing an existing policy before buying more.' },
-  fit: { group: 'Tools', title: 'Coverage calculator', role: 'Interactive estimate for life cover, room budget, and next recommendations.' },
-  how: { group: 'Process', title: 'How it works', role: 'Step-by-step process from first message to ongoing support.' },
-  insurers: { group: 'Motor', title: 'Motor insurers', role: 'Logo grid, logo-count copy, and AIA/Srikrung relationship cards.' },
-  tiers: { group: 'Motor', title: 'Motor tier table', role: 'Editable comparison matrix for Class 1, 2+, 3+, and related cover.' },
-  claim: { group: 'Support', title: 'Claim help', role: 'Accident steps, hotlines, and claim documents support.' },
-  renew: { group: 'Support', title: 'Renewal reminder', role: 'Opt-in reminder form for policy renewals.' },
-  voices: { group: 'Proof', title: 'Claim stories', role: 'Realistic claim-handling examples without fake testimonial claims.' },
-  about: { group: 'Trust', title: 'About advisor', role: 'Licence, role, language, and operating context.' },
-  faq: { group: 'Trust', title: 'FAQ', role: 'Questions, service expectations and insurance reading. Edit answers, optional topics and reading times here.' },
-  fees: { group: 'Trust', title: 'How CoverMate is compensated', role: 'Transparent compensation and fee-flow explanation.' },
-  privacy: { group: 'Compliance', title: 'Privacy / PDPA', role: 'What data is collected, why, and how to request deletion.' },
-  talk: { group: 'Conversion', title: 'Contact form', role: 'Final LINE/contact block and lead form.' }
+  hero: { group: 'ส่วนแรกของหน้า', title: 'Hero', role: 'หัวข้อหลัก ข้อความแนะนำ ปุ่ม LINE และการ์ดผู้ให้คำปรึกษา' },
+  motor: { group: 'หน้าประกันรถ', title: 'Hero ประกันรถ', role: 'ส่วนแรกของหน้า /motor ปุ่มติดต่อ และคู่มือเมื่อเกิดเหตุ' },
+  'motor-trust': { group: 'หน้าประกันรถ', title: 'แถบสร้างความมั่นใจ', role: 'ข้อความสั้นสร้างความมั่นใจบนหน้าประกันรถ' },
+  'motor-cover': { group: 'หน้าประกันรถ', title: 'การ์ดความคุ้มครองรถ', role: 'การ์ดความคุ้มครองชั้น 1, 2+/3+, ชั้น 3 และ พ.ร.บ.' },
+  trust: { group: 'ส่วนแรกของหน้า', title: 'แถบสร้างความมั่นใจ', role: 'ข้อความสั้นประกอบข้อมูลใต้ Hero' },
+  cover: { group: 'ผลิตภัณฑ์', title: 'การ์ดความคุ้มครอง', role: 'ประเภทประกันหลักและสิ่งที่แต่ละประเภทคุ้มครอง' },
+  review: { group: 'ผลิตภัณฑ์', title: 'ตรวจกรมธรรม์', role: 'รายการตรวจสอบกรมธรรม์เดิมก่อนซื้อเพิ่ม' },
+  fit: { group: 'เครื่องมือ', title: 'เครื่องคำนวณความต้องการ', role: 'ประเมินทุนชีวิต ค่าห้อง และความต้องการคุ้มครองเบื้องต้น' },
+  how: { group: 'ขั้นตอนบริการ', title: 'ขั้นตอนการดูแล', role: 'ตั้งแต่เริ่มติดต่อจนถึงการดูแลต่อเนื่อง' },
+  insurers: { group: 'ประกันรถ', title: 'โลโก้บริษัทประกันรถ', role: 'โลโก้บริษัทประกัน ข้อความจำนวนบริษัท และการ์ดความสัมพันธ์ AIA / ศรีกรุง' },
+  tiers: { group: 'ประกันรถ', title: 'เปรียบเทียบความคุ้มครองรถ', role: 'การ์ดชั้นประกันแนะนำและตารางเปรียบเทียบเต็ม ใช้ข้อมูลความคุ้มครองชุดเดียวกัน' },
+  claim: { group: 'ความช่วยเหลือ', title: 'ช่วยเหลือเคลม', role: 'ขั้นตอนเมื่อเกิดเหตุ สายด่วน และเอกสารสำหรับเคลม' },
+  renew: { group: 'ความช่วยเหลือ', title: 'เตือนต่ออายุ', role: 'ฟอร์มขอรับการแจ้งเตือนต่ออายุกรมธรรม์' },
+  voices: { group: 'ตัวอย่างบริการ', title: 'เคสเคลม', role: 'ตัวอย่างการดูแลเคลม โดยใช้ข้อมูลจริงและไม่สร้างรีวิวขึ้นเอง' },
+  about: { group: 'ข้อมูลบริการ', title: 'เกี่ยวกับ CoverMate', role: 'ใบอนุญาต บทบาท ภาษา และข้อมูลผู้ให้คำปรึกษา' },
+  faq: { group: 'ข้อมูลบริการ', title: 'คำถามที่พบบ่อย', role: 'แก้ไขคำตอบ หมวดคำถาม และเวลาอ่านได้ที่นี่' },
+  fees: { group: 'ข้อมูลบริการ', title: 'ค่าตอบแทนของ CoverMate', role: 'อธิบายค่าตอบแทนและขั้นตอนการชำระอย่างโปร่งใส' },
+  privacy: { group: 'ความเป็นส่วนตัว', title: 'ความเป็นส่วนตัว / PDPA', role: 'ข้อมูลที่เก็บ วัตถุประสงค์ และช่องทางขอลบข้อมูล' },
+  talk: { group: 'ติดต่อ', title: 'ติดต่อและขอให้โทรกลับ', role: 'ช่องทางติดต่อ เวลาทำการ ฟอร์มสอบถาม และความยินยอม' },
 };
 
 function isEmbeddedCoverageSection(section) {
@@ -110,179 +111,8 @@ const MONTHS = [
   { th: 'ตุลาคม', en: 'October' }, { th: 'พฤศจิกายน', en: 'November' }, { th: 'ธันวาคม', en: 'December' }
 ];
 
-const DEFAULT_NEEDS_CALCULATOR = {
-  "datasetVersion": "2026-08-15-v0.1",
-  "sourcePackage": "covermate-reference-data-v0.1",
-  "situations": {
-    "start": {
-      "th": "เพิ่งเริ่มทำงาน",
-      "en": "Just started working",
-      "icon": "sprout",
-      "recs": [
-        {
-          "th": "เริ่มจากค่ารักษาและอุบัติเหตุ",
-          "en": "Start with health and accident cover",
-          "wth": "ช่วงเริ่มทำงานควรรักษาสภาพคล่องไว้ก่อน เครื่องมือนี้จึงแยกเงินก้อนชีวิตออกจากค่ารักษาและเงินพักฟื้น",
-          "wen": "Early-career planning should protect cash flow first, so this tool separates life need, medical room gap and recovery buffer."
-        },
-        {
-          "th": "เพิ่มทุนชีวิตเมื่อมีคนพึ่งพารายได้",
-          "en": "Increase life cover when others depend on you",
-          "wth": "ทุนชีวิตควรอิงค่าใช้จ่ายจำเป็นและจำนวนปีที่ต้องดูแล ไม่ใช่ตัวคูณรายได้แบบตายตัว",
-          "wen": "Life cover should follow essential spending and support years, not a fixed salary multiplier."
-        },
-        {
-          "th": "เช็กค่าห้องกับโรงพยาบาลที่ใช้จริง",
-          "en": "Check room benefits against likely hospitals",
-          "wth": "ส่วนต่างค่าห้องเป็นข้อมูลอ้างอิง ไม่ใช่จำนวนเงินที่ต้องจ่ายแน่นอน เพราะขึ้นกับเงื่อนไขกรมธรรม์",
-          "wen": "The room gap is a reference, not a guaranteed bill, because policy terms decide the actual outcome."
-        }
-      ]
-    },
-    "family": {
-      "th": "มีครอบครัว มีลูก",
-      "en": "Family with kids",
-      "icon": "users",
-      "recs": [
-        {
-          "th": "คุ้มครองรายจ่ายบ้านหลายปี",
-          "en": "Protect household spending for several years",
-          "wth": "ใส่ค่าใช้จ่ายจำเป็นต่อเดือนและจำนวนปีที่อยากให้ครอบครัวยืนต่อได้ แล้วค่อยหักเงินสำรองหรือทุนเดิมที่กันไว้แล้ว",
-          "wen": "Enter essential monthly spending and the years your family needs support, then subtract liquid assets and existing cover."
-        },
-        {
-          "th": "หนี้และค่าเรียนควรถูกนับแยก",
-          "en": "Debts and education should be explicit",
-          "wth": "หนี้บ้าน รถ หรือภาระอนาคตควรเป็นตัวเลขแยกจากค่าใช้จ่ายรายเดือน เพื่อไม่ให้ทุนชีวิตต่ำกว่าภาระจริง",
-          "wen": "Mortgage, car debt and future obligations should be entered separately from monthly spending so life need is not understated."
-        },
-        {
-          "th": "โรคร้ายแรงคือเงินพักฟื้น",
-          "en": "Critical illness is a recovery buffer",
-          "wth": "เงินก้อนโรคร้ายแรงในเครื่องมือนี้อิงเดือนพักฟื้น ไม่ได้ผูกโรคใดโรคหนึ่งกับทุนตายตัว",
-          "wen": "The CI figure is based on recovery months, not a disease-to-sum-insured shortcut."
-        }
-      ]
-    },
-    "business": {
-      "th": "เจ้าของธุรกิจ",
-      "en": "Business owner",
-      "icon": "briefcase",
-      "recs": [
-        {
-          "th": "แยกภาระบ้านกับภาระธุรกิจ",
-          "en": "Separate household and business obligations",
-          "wth": "ภาระธุรกิจที่ครอบครัวต้องรับต่อควรถูกใส่เป็นภาระอนาคต ไม่รวมปนกับค่าใช้จ่ายประจำบ้าน",
-          "wen": "Business obligations that would fall to the family should be added as future obligations, not blended into household spending."
-        },
-        {
-          "th": "เงินสดสำรองช่วยลดช่องว่างได้",
-          "en": "Earmarked liquidity reduces the gap",
-          "wth": "เงินสำรองที่ตั้งใจใช้เพื่อครอบครัวหรือธุรกิจในกรณีฉุกเฉินสามารถนำมาหักได้ แต่เงินทุนหมุนเวียนที่ต้องใช้ทำงานไม่ควรนับซ้ำ",
-          "wen": "Earmarked emergency liquidity can reduce the gap, but working capital needed by the business should not be double-counted."
-        },
-        {
-          "th": "ตรวจ health limit แยกจากทุนชีวิต",
-          "en": "Review health limits separately from life cover",
-          "wth": "ค่ารักษาไม่ควรถูกนำไปคูณเป็นทุนชีวิต แต่ควรตรวจเป็น room gap และเงื่อนไขกรมธรรม์แยกต่างหาก",
-          "wen": "Medical costs should not drive life cover. Review room gap and policy wording separately."
-        }
-      ]
-    },
-    "retire": {
-      "th": "ใกล้เกษียณ",
-      "en": "Near retirement",
-      "icon": "clock",
-      "recs": [
-        {
-          "th": "ลดทุนชีวิตเมื่อภาระลดลง",
-          "en": "Reduce life cover as obligations fall",
-          "wth": "ถ้าหนี้และคนพึ่งพิงลดลง ทุนชีวิตอาจไม่ต้องสูงเท่าช่วงสร้างครอบครัว แต่สุขภาพและเงินพักฟื้นยังควรตรวจละเอียด",
-          "wen": "As debts and dependants fall, life cover may not need to be as high as before, while health and recovery buffers deserve closer review."
-        },
-        {
-          "th": "ค่าห้องควรตรงกับโรงพยาบาลที่ใช้จริง",
-          "en": "Room benefits should match likely hospitals",
-          "wth": "เลือกค่าห้องจากโรงพยาบาลที่มีแนวโน้มใช้จริง แล้วดูว่าส่วนต่างที่ต้องเตรียมรับได้หรือไม่",
-          "wen": "Choose a likely hospital reference and check whether the resulting room gap is acceptable."
-        },
-        {
-          "th": "กันเงินพักฟื้นที่ไม่ใช่ค่ารักษา",
-          "en": "Set aside non-medical recovery cash",
-          "wth": "ช่วงพักฟื้นยังมีค่าเดินทาง คนดูแล และรายได้ที่อาจลดลง ซึ่งไม่ใช่ค่ารักษาโดยตรง",
-          "wen": "Recovery may require transport, caregiving and income replacement beyond hospital bills."
-        }
-      ]
-    }
-  },
-  "life": {
-    "engineVersion": "1.0.0",
-    "formula": "essential_monthly_household_spending * 12 * support_years + outstanding_debts + future_obligations + transition_final_costs - earmarked_liquid_assets - existing_death_benefits",
-    "supportYears": [
-      1,
-      3,
-      5,
-      10,
-      15
-    ],
-    "transitionFinalCosts": 200000,
-    "guardrails": [
-      "Do not use hospital treatment costs in the core life-sum calculation.",
-      "Do not use arbitrary salary multipliers as the authoritative model.",
-      "Willingness to pay must not reduce calculated need."
-    ]
-  },
-  "health": {
-    "engineVersion": "1.0.0",
-    "model": "coverage_fit_and_out_of_pocket_reference",
-    "selectedRoomReference": {
-      "hospitalId": "bnh",
-      "hospitalName": {
-        "th": "โรงพยาบาล BNH",
-        "en": "BNH Hospital"
-      },
-      "roomType": {
-        "th": "Regent Adult",
-        "en": "Regent Adult"
-      },
-      "totalFixedDaily": 10550,
-      "currency": "THB",
-      "priceUnit": "day",
-      "sourceUrl": "https://www.bnhhospital.com/th/the-bnh-wards/",
-      "lastChecked": "2026-08-15",
-      "confidenceLevel": "A",
-      "note": {
-        "th": "ข้อมูลค่าห้องอ้างอิงจากหน้าโรงพยาบาล ไม่ใช่จำนวนเงินที่ผู้เอาประกันต้องจ่ายแน่นอน",
-        "en": "Published room reference from the hospital page, not a guaranteed out-of-pocket amount."
-      }
-    },
-    "guardrails": [
-      "Do not output one authoritative required sum insured.",
-      "Do not call the reference difference the amount the user will definitely pay.",
-      "Every medical reference must expose source, last_checked and confidence.",
-      "Do not derive P50/P75/P90 from promotional/package pages."
-    ]
-  },
-  "criticalIllness": {
-    "engineVersion": "1.0.0",
-    "formula": "essential_monthly_spending * recovery_months + one_off_recovery_non_medical_budget + chosen_medical_oop_buffer - earmarked_emergency_assets - existing_ci_lump_sum_cover",
-    "recoveryMonths": [
-      3,
-      6,
-      12,
-      18,
-      24
-    ],
-    "defaultRecoveryMonths": 6,
-    "oneOffRecoveryNonMedicalBudget": 100000,
-    "chosenMedicalOopBuffer": 250000,
-    "guardrails": [
-      "Recovery period must be explicitly user-selected.",
-      "Do not map a disease name to a fixed CI sum.",
-      "Health treatment scenarios may contextualize the user's chosen medical OOP buffer but must not dictate it."
-    ]
-  }
-};
+// Keep an independent fallback from the canonical embedded calculator defaults.
+const DEFAULT_NEEDS_CALCULATOR = JSON.parse(JSON.stringify(DEFAULTS.sections.find(section => section.id === 'fit').calculator));
 
 const ACCENTS = {
   terracotta: { base: 'var(--color-accent)', deep: 'var(--color-accent-900)', mid: 'var(--color-accent-800)', soft: 'var(--color-accent-200)', text: 'var(--color-accent-700)', light: 'var(--color-accent-300)', on: 'var(--color-neutral-100)' },
@@ -300,7 +130,6 @@ function insTile(it, lk) {
 }
 
 const STORE_KEY = 'purich-site-config-v7';   // legacy config (migration source)
-const TEXT_KEY = 'covermate-text-v7';        // legacy inline-text overrides (migration source)
 const K_LIVE = 'purich-live-config-v3';      // published config — what visitors see
 const K_LIVE_TEXT = 'purich-live-text-v3';   // published inline-text overrides
 const K_ADMIN_EVER = 'purich-admin-ever-v7'; // legacy owner marker cleared/ignored on public routes
@@ -458,6 +287,8 @@ function repeatableIndex(list, id, fallbackIndex) {
   return fallbackIndex >= 0 && fallbackIndex < list.length ? fallbackIndex : -1;
 }
 
+// COVERMATE_EDITOR_HISTORY_SOURCE
+
 // /motor is the dedicated public motor landing page. Home #motor still aliases
 // into the home-page insurer section so older links do not break.
 class Component extends DCLogic {
@@ -506,6 +337,18 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
+    this._editorKeydown = event => this.editorKeydown(event);
+    document.addEventListener('keydown', this._editorKeydown, true);
+    this._editorInput = event => {
+      if (!(this.state.admin || this.state.editMode)) return;
+      const el = event.target;
+      this._editorFieldIds ||= new WeakMap();
+      if (!this._editorFieldIds.has(el)) this._editorFieldIds.set(el, 'field-' + (this._editorFieldCounter = (this._editorFieldCounter || 0) + 1));
+      this._editorGesture = { groupKey: this._editorFieldIds.get(el), label: 'แก้ไขข้อความหรือค่า', at: Date.now() };
+    };
+    document.addEventListener('input', this._editorInput, true);
+    this._editorPointer = () => { this._editorGesture = null; this._editorHistory?.breakGroup(); };
+    document.addEventListener('pointerdown', this._editorPointer, true);
     this.migrate();
 
     this._onScroll = () => {
@@ -579,6 +422,9 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    document.removeEventListener('keydown', this._editorKeydown, true);
+    document.removeEventListener('input', this._editorInput, true);
+    document.removeEventListener('pointerdown', this._editorPointer, true);
     this.clearInlineMedia();
     document.removeEventListener('keydown', this._homeKeydown);
     document.removeEventListener('click', this._homeAnchorClick);
@@ -702,35 +548,180 @@ class Component extends DCLogic {
     return window.CoverMateFirebase || null;
   }
 
+  canonicalEditorSnapshot(snapshot) {
+    const clean = window.CoverMateContract.sanitizeStateDoc(snapshot, { repeatableIds: true });
+    return { config: clone(clean.config), text: clone(clean.text || {}) };
+  }
+
+  initEditorHistory(snapshot) {
+    const current = this.canonicalEditorSnapshot(snapshot);
+    const session = this.readJSON('covermate-admin-session') || {};
+    const key = 'covermate-editor-history-v1:' + (window.CoverMateEnvironment?.siteId || location.host) + ':' + (session.uid || session.email || 'owner');
+    if (this._editorHistory && this._editorHistoryKey === key) {
+      // A hydration/reload from another session must not attach stale history.
+      if (this._editorHistory.restore(this._editorHistory.serialize(), current)) return;
+    }
+    this._editorHistory = createEditorHistory(current);
+    this._editorHistoryKey = key;
+    try { this._editorHistory.restore(sessionStorage.getItem(key), current); } catch (_) {}
+    this.persistEditorHistory();
+  }
+
+  persistEditorHistory() {
+    if (!this._editorHistory) return;
+    try {
+      const payload = this._editorHistory.serialize();
+      if (payload) sessionStorage.setItem(this._editorHistoryKey, payload);
+      else sessionStorage.removeItem(this._editorHistoryKey);
+      this._editorHistoryStored = !!payload;
+    } catch (_) { this._editorHistoryStored = false; }
+  }
+
+  recordEditorHistory(snapshot, options) {
+    if (!this._editorHistory || this._applyingHistory) return;
+    const gesture = this._editorGesture;
+    const opts = options || (gesture && Date.now() - gesture.at < 1100 ? gesture : { label: 'แก้ไขเนื้อหาหรือการจัดวาง' });
+    this._editorHistory.record(this.canonicalEditorSnapshot(snapshot), opts);
+    this.persistEditorHistory();
+    // Inline editing otherwise does not render the toolbar state.
+    this.setState({ editorHistoryRevision: (this.state.editorHistoryRevision || 0) + 1 });
+  }
+
+  invalidateDraftQueue() {
+    clearTimeout(this._remoteDraftT);
+    this._draftGeneration = (this._draftGeneration || 0) + 1;
+    return this._draftGeneration;
+  }
+
+  applyEditorSnapshot(snapshot, autosave = true) {
+    const clean = this.canonicalEditorSnapshot(snapshot);
+    this._applyingHistory = true;
+    this.restoreAppliedText();
+    this.textOv = clone(clean.text);
+    this.writeJSON(K_DRAFT, clean.config);
+    this.writeJSON(K_DRAFT_TEXT, clean.text);
+    this._lastSaved = Date.now();
+    // Advanced JSON/import buffers are not committed Draft content. Preserve
+    // them across history operations instead of silently discarding typing.
+    this.setState({ site: clean.config, cmsEdits: {},
+      editorHistoryRevision: (this.state.editorHistoryRevision || 0) + 1 }, () => {
+      this.syncSeo();
+      requestAnimationFrame(() => {
+        this.applyText();
+        if (this.state.editMode) this.enableEdit();
+        this._applyingHistory = false;
+      });
+    });
+    if (autosave) this.queueRemoteDraft(clean.config, clean.text);
+    this.persistEditorHistory();
+  }
+
+  stepEditorHistory(direction) {
+    if (this.state.remoteBusy || this.state.confirmAction || !this._editorHistory || this._applyingHistory) return;
+    const result = this._editorHistory[direction]();
+    if (!result) return;
+    this._editorGesture = null;
+    this.invalidateDraftQueue();
+    this.dismissToast();
+    this.applyEditorSnapshot(result.snapshot);
+    this.setState({ editorAnnouncement: (direction === 'undo' ? 'Undo: ' : 'Redo: ') + result.label });
+  }
+
+  editorKeydown(event) {
+    if (!(this.state.admin || this.state.editMode)) return;
+    if (this.state.confirmAction) {
+      if (event.key === 'Escape') { event.preventDefault(); this.cancelConfirm(); }
+      if (event.key === 'Tab') {
+        const buttons = [...document.querySelectorAll('[data-admin-confirm] button')];
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !document.activeElement?.closest('[data-admin-confirm]'))) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !document.activeElement?.closest('[data-admin-confirm]'))) { event.preventDefault(); first?.focus(); }
+      }
+      return;
+    }
+    if (this.state.remoteBusy || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return;
+    const key = event.key.toLowerCase();
+    if (key === 's') { event.preventDefault(); document.activeElement?.blur(); this.requestSaveDraft(); return; }
+    if (!['z', 'y'].includes(key)) return;
+    // Uncommitted form fields and the media dialog keep their native text Undo.
+    const nativeField = event.target.closest?.('input,textarea,select,[contenteditable="true"]');
+    if (nativeField && !nativeField.hasAttribute('data-ek')) return;
+    if (document.querySelector('[role="dialog"][data-media-editor]')) return;
+    event.preventDefault();
+    this.stepEditorHistory(key === 'y' || event.shiftKey ? 'redo' : 'undo');
+  }
+
+  focusAdminConfirm() {
+    this._confirmReturnFocus = document.activeElement;
+    requestAnimationFrame(() => document.querySelector('[data-confirm-cancel]')?.focus());
+  }
+
+  finishAdminConfirm() {
+    this.setState({ confirmAction: null });
+    requestAnimationFrame(() => this._confirmReturnFocus?.isConnected && this._confirmReturnFocus.focus({ preventScroll: true }));
+  }
+
+  requestResetDraft() {
+    if (this.state.remoteBusy) return;
+    this._editorHistory?.breakGroup();
+    this.setState({ confirmAction: {
+      kind: 'reset', kicker: 'Reset Draft', title: 'กลับไปยัง Publish ล่าสุด?',
+      body: 'แทนที่ Draft ทั้งเว็บด้วยเวอร์ชันที่ Publish ล่าสุด รวมข้อความ TH / EN รูปภาพ และการจัดวาง เว็บจริงจะไม่เปลี่ยน หลัง Reset ยังใช้ Undo เพื่อคืนงานก่อนหน้านี้ได้',
+      actionLabel: 'Reset Draft'
+    } }, () => this.focusAdminConfirm());
+  }
+
+  async resetDraftConfirmed() {
+    this.invalidateDraftQueue();
+    this.setState({ remoteBusy: true, remoteAction: 'reset', remoteError: '', toast: null });
+    try {
+      const cm = await this.firebase();
+      if (!cm?.resetDraftToPublished) throw new Error('เชื่อมต่อระบบจัดการเนื้อหาไม่ได้ กรุณาลองใหม่');
+      const snapshot = await cm.resetDraftToPublished();
+      this.recordEditorHistory(snapshot, { label: 'Reset ไปยัง Publish ล่าสุด' });
+      this.applyEditorSnapshot(snapshot, false);
+      this.setState({ remoteBusy: false, remoteAction: '', remoteError: '' });
+      this.finishAdminConfirm();
+      this.showActionToast({ title: 'Reset Draft แล้ว', body: 'Draft ตรงกับ Publish ล่าสุดแล้ว เว็บจริงไม่เปลี่ยน กด Undo เพื่อคืนงานก่อน Reset ได้' });
+    } catch (error) {
+      this.noteRemoteError('Reset Draft ไม่สำเร็จ', error);
+      this.finishAdminConfirm();
+      this.showActionToast({ kind: 'error', title: 'Reset ไม่สำเร็จ · งานเดิมยังอยู่', body: this.errorMessage(error) });
+    }
+  }
+
   queueRemoteDraft(config, text) {
     if (!this.hasSession()) return;
     const cfg = this.normalizeConfig(config || this.state.site, { repeatableIds: true });
     const txt = this.sanitizeTextOverrides(text || this.textOv || {});
-    clearTimeout(this._remoteDraftT);
-    this._remoteDraftT = setTimeout(() => this.saveDraftRemoteNow(cfg, txt), 700);
+    const generation = this.invalidateDraftQueue();
+    this._remoteDraftT = setTimeout(() => this.saveDraftRemoteNow(cfg, txt, generation), 700);
   }
 
-  async saveDraftRemoteNow(config, text) {
+  async saveDraftRemoteNow(config, text, generation) {
     try {
       const cm = await this.firebase();
-      if (!cm || !cm.saveSiteState) return false;
-      await cm.saveSiteState('draft', this.normalizeConfig(config, { repeatableIds: true }), this.sanitizeTextOverrides(text || {}));
-      if (this.state.remoteError && /^Draft save failed/.test(this.state.remoteError)) this.setState({ remoteError: '' });
+      if (!cm || !cm.saveSiteState || generation !== this._draftGeneration) return false;
+      await cm.saveSiteState('draft', this.normalizeConfig(config, { repeatableIds: true }), this.sanitizeTextOverrides(text || {}), { cache: false });
+      if (generation === this._draftGeneration && this.state.remoteError && /^(Draft save failed|บันทึก Draft ไม่สำเร็จ)/.test(this.state.remoteError)) this.setState({ remoteError: '' });
       return true;
     } catch (e) {
-      this.noteRemoteError('Draft save failed', e);
+      if (generation === this._draftGeneration) this.noteRemoteError('บันทึก Draft ไม่สำเร็จ', e);
       return false;
     }
   }
 
   noteRemoteError(prefix, error) {
-    const msg = error && error.message ? error.message : String(error || 'Unknown error');
+    const msg = this.errorMessage(error);
     console.warn('[covermate] ' + prefix + ':', error);
     this.setState({ remoteBusy: false, remoteAction: '', remoteError: prefix + ': ' + msg });
   }
 
   errorMessage(error) {
-    return error && error.message ? error.message : String(error || 'Unknown error');
+    if (error?.code === 'content-conflict') return 'มีการแก้ไขจากอีกหน้าต่าง งานของคุณยังอยู่ กรุณาสำรอง Draft แล้วโหลดข้อมูลล่าสุดก่อนลองใหม่';
+    if (/permission-denied|unauthenticated|auth\//.test(error?.code || '')) return 'ยืนยันสิทธิ์ไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่แล้วลองอีกครั้ง';
+    if (['TimeoutError', 'AbortError', 'TypeError'].includes(error?.name)) return 'เชื่อมต่อไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';
+    return /[ก-๙]/.test(error?.message || '') ? error.message : 'ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง';
   }
 
   currentSnapshot() {
@@ -746,7 +737,7 @@ class Component extends DCLogic {
     const toast = {
       id,
       kind: (opts && opts.kind) || 'success',
-      title: (opts && opts.title) || 'Success',
+      title: (opts && opts.title) || 'เรียบร้อย',
       body: (opts && opts.body) || '',
       undoSnapshot: canUndo ? clone(opts.undoSnapshot) : null,
       undoKind: (opts && opts.undoKind) || '',
@@ -758,7 +749,7 @@ class Component extends DCLogic {
       this._toastT = setTimeout(() => {
         const cur = this.state.toast;
         if (cur && cur.id === id) {
-          this.setState({ toast: Object.assign({}, cur, { undoSnapshot: null, expiresAt: 0, body: cur.body + ' Undo window ended.' }) });
+          this.setState({ toast: Object.assign({}, cur, { undoSnapshot: null, expiresAt: 0, body: cur.body + ' หมดเวลาย้อนกลับแล้ว' }) });
         }
       }, 30000);
     }
@@ -774,13 +765,13 @@ class Component extends DCLogic {
     this.setState({
       confirmAction: {
         kind: 'save',
-        title: 'Save draft?',
-        body: 'Save the current draft to Firestore. Visitors will keep seeing the published site until you publish.',
+        title: 'Save draft นี้ไหม?',
+        body: 'บันทึก Draft นี้ลง Firestore ผู้เข้าชมจะยังเห็นเว็บเวอร์ชันที่ Publish ไว้',
         actionLabel: 'Save draft',
-        kicker: 'Draft action',
-        undoSnapshot: this.loadDraft()
+        kicker: 'บันทึก Draft',
+        undoSnapshot: null
       }
-    });
+    }, () => this.focusAdminConfirm());
   }
 
   requestPublish() {
@@ -788,18 +779,18 @@ class Component extends DCLogic {
     this.setState({
       confirmAction: {
         kind: 'publish',
-        title: 'Publish changes?',
-        body: 'This updates the live visitor site with the current draft. You can undo for 30 seconds after it succeeds.',
+        title: 'Publish การแก้ไขนี้ไหม?',
+        body: 'การแก้ไขใน Draft จะแสดงบนเว็บจริง หลัง Publish สำเร็จสามารถ Undo ได้ภายใน 30 วินาที',
         actionLabel: 'Publish',
-        kicker: 'Live action',
+        kicker: 'อัปเดตเว็บจริง',
         undoSnapshot: this.loadLive()
       }
-    });
+    }, () => this.focusAdminConfirm());
   }
 
   cancelConfirm() {
     if (this.state.remoteBusy) return;
-    this.setState({ confirmAction: null });
+    this.finishAdminConfirm();
   }
 
   confirmAdminAction() {
@@ -807,14 +798,15 @@ class Component extends DCLogic {
     if (!action || this.state.remoteBusy) return;
     if (action.kind === 'save') this.saveDraftConfirmed(action.undoSnapshot);
     else if (action.kind === 'publish') this.publishConfirmed(action.undoSnapshot);
+    else if (action.kind === 'reset') this.resetDraftConfirmed();
   }
 
   async writeDraftSnapshot(snapshot) {
     const cfg = this.normalizeConfig(snapshot.config || DEFAULTS, { repeatableIds: true });
     const txt = this.sanitizeTextOverrides(snapshot.text || {});
-    clearTimeout(this._remoteDraftT);
+    this.invalidateDraftQueue();
     const cm = await this.firebase();
-    if (!cm || !cm.saveSiteState) throw new Error('Remote content service unavailable.');
+    if (!cm || !cm.saveSiteState) throw new Error('เชื่อมต่อระบบจัดการเนื้อหาไม่ได้ กรุณาลองใหม่');
     await cm.saveSiteState('draft', cfg, txt);
     this.textOv = clone(txt);
     this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
@@ -825,9 +817,9 @@ class Component extends DCLogic {
   async writePublishedSnapshot(snapshot, metadata) {
     const cfg = this.normalizeConfig(snapshot.config || DEFAULTS, { repeatableIds: true });
     const txt = this.sanitizeTextOverrides(snapshot.text || {});
-    clearTimeout(this._remoteDraftT);
+    this.invalidateDraftQueue();
     const cm = await this.firebase();
-    if (!cm || !cm.publishSiteState) throw new Error('Remote content service unavailable.');
+    if (!cm || !cm.publishSiteState) throw new Error('เชื่อมต่อระบบจัดการเนื้อหาไม่ได้ กรุณาลองใหม่');
     const version = await cm.publishSiteState(cfg, txt, metadata || {});
     this.textOv = clone(txt);
     this.writeJSON(K_LIVE, cfg); this.writeJSON(K_LIVE_TEXT, txt);
@@ -844,32 +836,31 @@ class Component extends DCLogic {
     const snapshot = this.currentSnapshot();
     this.textOv = clone(snapshot.text);
     this.writeJSON(K_DRAFT, snapshot.config); this.writeJSON(K_DRAFT_TEXT, snapshot.text);
-    this.setState({ confirmAction: null, site: snapshot.config, remoteBusy: true, remoteAction: 'save', remoteError: '', toast: null });
+    this.setState({ site: snapshot.config, remoteBusy: true, remoteAction: 'save', remoteError: '', toast: null });
     try {
       await this.writeDraftSnapshot(snapshot);
       this.setState({ site: snapshot.config, savedFlash: true, remoteBusy: false, remoteAction: '', remoteError: '' }, () => requestAnimationFrame(() => this.applyText()));
+      this.finishAdminConfirm();
       clearTimeout(this._flashT); this._flashT = setTimeout(() => this.setState({ savedFlash: false }), 1600);
       this.showActionToast({
         kind: 'success',
-        title: 'Draft saved',
-        body: 'The draft is saved to Firestore. Visitors still see the published site.',
-        undoKind: 'save',
-        undoSnapshot
+        title: 'บันทึก Draft แล้ว',
+        body: 'บันทึก Draft ลง Firestore แล้ว ผู้เข้าชมยังเห็นเวอร์ชันที่ Publish ไว้'
       });
     } catch (e) {
-      this.noteRemoteError('Draft save failed', e);
-      this.showActionToast({ kind: 'error', title: 'Save failed', body: this.errorMessage(e) });
+      this.noteRemoteError('บันทึก Draft ไม่สำเร็จ', e);
+      this.finishAdminConfirm();
+      this.showActionToast({ kind: 'error', title: 'บันทึกไม่สำเร็จ', body: this.errorMessage(e) });
     }
   }
 
   async publishConfirmed(undoSnapshot) {
-    this.setState({ confirmAction: null });
     await this.doPublish({ undoSnapshot });
   }
 
   async undoActionToast() {
     const toast = this.state.toast;
-    if (!toast || !toast.undoSnapshot || (toast.expiresAt && Date.now() > toast.expiresAt)) return;
+    if (this.state.remoteBusy || !toast || !toast.undoSnapshot || (toast.expiresAt && Date.now() > toast.expiresAt)) return;
     const snapshot = clone(toast.undoSnapshot);
     clearTimeout(this._toastT);
     if (toast.undoKind === 'save') {
@@ -877,10 +868,10 @@ class Component extends DCLogic {
       try {
         const restored = await this.writeDraftSnapshot(snapshot);
         this.setState({ site: restored.config, remoteBusy: false, remoteAction: '', remoteError: '' }, () => requestAnimationFrame(() => this.applyText()));
-        this.showActionToast({ kind: 'success', title: 'Draft restored', body: 'The previous draft is back in Firestore.' });
+        this.showActionToast({ kind: 'success', title: 'กู้คืน Draft แล้ว', body: 'กู้คืน Draft ก่อนหน้าใน Firestore แล้ว' });
       } catch (e) {
-        this.noteRemoteError('Undo draft failed', e);
-        this.showActionToast({ kind: 'error', title: 'Undo failed', body: this.errorMessage(e) });
+        this.noteRemoteError('ย้อนกลับ Draft ไม่สำเร็จ', e);
+        this.showActionToast({ kind: 'error', title: 'Undo ไม่สำเร็จ', body: this.errorMessage(e) });
       }
       return;
     }
@@ -888,11 +879,13 @@ class Component extends DCLogic {
       this.setState({ remoteBusy: true, remoteAction: 'publish', remoteError: '', toast: null });
       try {
         const restored = await this.writePublishedSnapshot(snapshot, { undoOf: toast.versionId || 'latest-publish' });
+        this.recordEditorHistory(restored, { label: 'ย้อน Publish' });
+        this.applyEditorSnapshot(restored, false);
         this.setState({ site: restored.config, lastPublished: Date.now(), remoteBusy: false, remoteAction: '', remoteError: '' }, () => requestAnimationFrame(() => this.applyText()));
-        this.showActionToast({ kind: 'success', title: 'Publish undone', body: 'The live visitor site was restored to the previous published version.' });
+        this.showActionToast({ kind: 'success', title: 'Undo การ Publish แล้ว', body: 'เว็บจริงกลับไปใช้เวอร์ชันที่ Publish ก่อนหน้าแล้ว' });
       } catch (e) {
-        this.noteRemoteError('Undo publish failed', e);
-        this.showActionToast({ kind: 'error', title: 'Undo failed', body: this.errorMessage(e) });
+        this.noteRemoteError('Undo การ Publish ไม่สำเร็จ', e);
+        this.showActionToast({ kind: 'error', title: 'Undo ไม่สำเร็จ', body: this.errorMessage(e) });
       }
     }
   }
@@ -1394,6 +1387,7 @@ class Component extends DCLogic {
     }
     const loaded = owner ? this.loadDraft() : this.loadLive();
     const src = adaptLegacyHomeCopy(loaded.config, loaded.text);
+    if (owner) this.initEditorHistory(src);
     this._modeApplied = true;
     this.textOv = clone(src.text || {});
     try {
@@ -1445,31 +1439,34 @@ class Component extends DCLogic {
     this.setState({ site: snapshot.config, remoteBusy: true, remoteAction: 'publish', remoteError: '', toast: null });
     try {
       const result = await this.writePublishedSnapshot(snapshot);
+      this.finishAdminConfirm();
       this.setState({ site: result.config, lastPublished: Date.now(), pubFlash: true, remoteBusy: false, remoteAction: '', remoteError: '' }, () => requestAnimationFrame(() => this.applyText()));
       clearTimeout(this._pubT); this._pubT = setTimeout(() => this.setState({ pubFlash: false }), 1900);
       this.showActionToast({
         kind: 'success',
-        title: 'Published',
-        body: 'The live visitor site now uses this draft. Undo is available for 30 seconds.',
+        title: 'Publish แล้ว',
+        body: 'เว็บจริงแสดง Draft นี้แล้ว สามารถ Undo ได้ภายใน 30 วินาที',
         undoKind: 'publish',
         undoSnapshot: options && options.undoSnapshot,
         versionId: result.version && result.version.id
       });
     } catch (e) {
       this.writeJSON(K_DRAFT, snapshot.config); this.writeJSON(K_DRAFT_TEXT, snapshot.text);
-      this.noteRemoteError('Publish failed', e);
-      this.showActionToast({ kind: 'error', title: 'Publish failed', body: this.errorMessage(e) });
+      this.noteRemoteError('Publish ไม่สำเร็จ', e);
+      this.finishAdminConfirm();
+      this.showActionToast({ kind: 'error', title: 'Publish ไม่สำเร็จ', body: this.errorMessage(e) });
     }
   }
 
   async restoreVersion(id) {
+    if (this.state.remoteBusy) return;
     const e = this.loadHist().find(h => h.id === id); if (!e) return;
     const cfg = this.normalizeConfig(e.config, { repeatableIds: true }), txt = clone(e.text || {});
     this.setState({ remoteBusy: true, remoteError: '' });
     try {
-      clearTimeout(this._remoteDraftT);
+      this.invalidateDraftQueue();
       const cm = await this.firebase();
-      if (!cm || !cm.publishSiteState) throw new Error('Remote content service unavailable.');
+      if (!cm || !cm.publishSiteState) throw new Error('เชื่อมต่อระบบจัดการเนื้อหาไม่ได้ กรุณาลองใหม่');
       const version = await cm.publishSiteState(cfg, txt, { restoredFrom: e.ts || e.id });
       this.textOv = clone(txt);
       this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
@@ -1479,11 +1476,13 @@ class Component extends DCLogic {
       while (hist.length > HIST_CAP) hist.pop();
       this.writeJSON(K_HIST, hist);
       this._lastSaved = Date.now();
+      this.recordEditorHistory({ config: cfg, text: txt }, { label: 'กู้คืนเวอร์ชันที่ Publish' });
       this.setState({ site: cfg, lastPublished: Date.now(), remoteBusy: false, remoteAction: '', remoteError: '' }, () => requestAnimationFrame(() => this.applyText()));
     } catch (err) {
       this.textOv = clone(txt);
       this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
-      this.noteRemoteError('Restore failed', err);
+      this.noteRemoteError('กู้คืนไม่สำเร็จ', err);
+      this.recordEditorHistory({ config: cfg, text: txt }, { label: 'โหลดเวอร์ชันลง Draft' });
       this.setState({ site: cfg }, () => requestAnimationFrame(() => this.applyText()));
     }
   }
@@ -1496,7 +1495,7 @@ class Component extends DCLogic {
     if (d < 7) return th ? (d + ' วันที่แล้ว') : (d + 'd ago');
     return this.absTime(ts);
   }
-  absTime(ts) { const d = new Date(ts); return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  absTime(ts) { const d = new Date(ts); return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
   loadText() { return this.readJSON(K_DRAFT_TEXT) || {}; }
   saveText() {
@@ -1506,6 +1505,7 @@ class Component extends DCLogic {
     this._lastSaved = Date.now();
     const config = this.pendingInlineConfig();
     this.writeJSON(K_DRAFT, config);
+    this.recordEditorHistory({ config, text: txt });
     this.queueRemoteDraft(config, txt);
   }
 
@@ -1602,6 +1602,7 @@ class Component extends DCLogic {
   }
 
   saveInlineText(el, commit) {
+    if (this._applyingHistory || this.state.remoteBusy) return;
     const path = this.cmsCopyPath(el);
     if (!this.textOv) this.textOv = this.loadText();
     if (path) {
@@ -1677,7 +1678,9 @@ class Component extends DCLogic {
   }
 
   save(site) {
+    if (this.state.remoteBusy || this._applyingHistory) return;
     const cfg = this.normalizeConfig(site, { repeatableIds: true }), txt = clone(this.textOv || {});
+    this.recordEditorHistory({ config: cfg, text: txt });
     this.setState({ site: cfg });
     this.writeJSON(K_DRAFT, cfg);
     this.writeJSON(K_DRAFT_TEXT, txt);
@@ -1694,6 +1697,7 @@ class Component extends DCLogic {
   }
 
   upd(fn) {
+    if (this.state.remoteBusy || this._applyingHistory) return;
     const s = this.pendingInlineConfig(), before = clone(s);
     fn(s);
     Object.keys(this.textOv || {}).filter(key => key.startsWith('cms:')).forEach(key => {
@@ -1818,9 +1822,9 @@ class Component extends DCLogic {
       }
       button.className = 'om-inline-media-button' + (background ? ' om-inline-media-background' : right - left < 48 || bottom - top < 40 ? ' om-inline-media-small' : '');
       button.setAttribute('data-inline-media', path);
-      button.setAttribute('aria-label', 'Edit image: ' + slot.label);
+      button.setAttribute('aria-label', 'แก้ไขรูป: ' + cmsAdminMediaLabel(slot));
       button.setAttribute('aria-haspopup', 'dialog');
-      button.title = 'Edit image: ' + slot.label;
+      button.title = 'แก้ไขรูป: ' + cmsAdminMediaLabel(slot);
       button.textContent = background ? (compactBackground ? '✎' : 'Edit background') : '';
       button.style.cssText = `left:${left}px;top:${top}px;width:${right-left}px;height:${bottom-top}px`;
     });
@@ -1835,15 +1839,15 @@ class Component extends DCLogic {
     if (!slot) return;
     try {
       const editor = await import(window.location.origin + '/admin/media-editor.js');
-      await editor.editImage({slot,lang:'en',source:this.state.site.mediaEdits?.[path]?.source || slot.value,
+      await editor.editImage({slot:{...slot,label:cmsAdminMediaLabel(slot)},lang:'th',source:this.state.site.mediaEdits?.[path]?.source || slot.value,
         getToken:async()=>{const firebase=await this.firebase();return firebase.getAdminIdToken(true);},
         onApply:result=>{
-          if (!cmsImageSlots(this.state.site,this.state.lang).some(item=>item.path===path) || String(cmsGet(this.state.site,path) || '') !== slot.value) throw Error('This image changed while you were editing. Close and reopen the image editor.');
-          if (result.url && !cmsMedia(result.url)) throw Error('Invalid image URL.');
+          if (!cmsImageSlots(this.state.site,this.state.lang).some(item=>item.path===path) || String(cmsGet(this.state.site,path) || '') !== slot.value) throw Error('รูปนี้ถูกเปลี่ยนระหว่างที่แก้ไข กรุณาปิดแล้วเปิดตัวแก้ไขรูปอีกครั้ง');
+          if (result.url && !cmsMedia(result.url)) throw Error('URL รูปภาพไม่ถูกต้อง');
           this.upd(config=>{cmsSet(config,path,result.url);config.mediaEdits=config.mediaEdits || {};config.mediaEdits[path]={output:result.url,source:result.sourceUrl};});
         }
       });
-    } catch (error) { this.showActionToast({kind:'error',title:'Image editor unavailable',body:error.message}); }
+    } catch (error) { this.showActionToast({kind:'error',title:'เปิดตัวแก้ไขรูปไม่ได้',body:this.errorMessage(error)}); }
   }
 
   focusFormError(section) {
@@ -1921,8 +1925,8 @@ class Component extends DCLogic {
           delete pending[path];
           this.setState({ cmsEdits: pending });
           if (value && ((field.media && !cmsMedia(value)) || (field.url && !acceptsHttpsUrl(value, true)) || (field.email && !acceptsEmail(value)) || (field.nav && !/^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(value)))) {
-            const title = field.email ? 'Invalid email' : field.media ? 'Invalid media path' : 'Invalid contact link';
-            const body = field.email ? 'Enter a valid email address or leave it blank.' : field.nav ? 'Use a section anchor, / or /motor.' : field.media ? 'Use an assets/... path or an HTTPS image URL.' : 'Use a valid HTTPS URL or leave it blank.';
+            const title = field.email ? 'อีเมลไม่ถูกต้อง' : field.media ? 'ที่อยู่รูปภาพไม่ถูกต้อง' : 'ลิงก์ติดต่อไม่ถูกต้อง';
+            const body = field.email ? 'กรอกอีเมลให้ถูกต้อง หรือเว้นว่าง' : field.nav ? 'ใช้ลิงก์ส่วนของหน้า เช่น #talk หรือเส้นทาง / และ /motor' : field.media ? 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' : 'กรอก URL ที่ขึ้นต้นด้วย HTTPS ให้ถูกต้อง หรือเว้นว่าง';
             this.showActionToast({ kind: 'error', title: title, body: body });
             return;
           }
@@ -1933,11 +1937,11 @@ class Component extends DCLogic {
       };
     };
     const cmsGroups = [...new Set(CMS_CONTENT_FIELDS.map(field => field.group))].map(group => ({
-      key: group, label: group,
+      key: group, label: cmsAdminLabel(group),
       fields: CMS_CONTENT_FIELDS.filter(field => field.group === group).map(field => {
         const path = field.path + (field.localized ? '.' + lk : '');
         const value = cmsGet(site, path) || '';
-        return { key: path, path: path, label: field.label, value: value,
+        return { key: path, path: path, label: cmsAdminLabel(field.label), value: value,
           hasImage: !!(field.media && value), image: field.media ? assetURL(value) : '',
           isMedia:!!field.media, editImage:()=>this.editMedia(path),
           ...cmsInput(path, field)
@@ -2085,7 +2089,7 @@ class Component extends DCLogic {
         isVoices: s.type === 'testimonials', isStories: s.type === 'stories', isAbout: s.type === 'about', isFaq: s.type === 'faq',
         isContact: s.type === 'contact',
         isClaim: s.type === 'claim', isRenew: s.type === 'renew', isReview: s.type === 'review',
-        isPdpa: s.type === 'pdpa', isGuides: s.type === 'guides', isFees: s.type === 'fees', isTiers: s.type === 'tiers',
+        isPdpa: s.type === 'pdpa', isFees: s.type === 'fees', isTiers: s.type === 'tiers',
         al: s.align === 'c' ? 'c' : 'l',
         hl: s.bg === 'dark' ? 'var(--color-accent-300)' : 'var(--color-accent-700)',
         kicker: c.kicker || '', title: c.title || '', body: c.body || '', note: c.note || '',
@@ -2189,7 +2193,7 @@ class Component extends DCLogic {
       pick: () => this.setState({ situation: k })
     }));
 
-    const bgLabels = { bg: 'Cream page', surface: 'Raised surface', sage: 'Sage band', dark: 'Dark band' };
+    const bgLabels = { bg: 'พื้นครีม', surface: 'พื้นยกระดับ', sage: 'แถบเขียว Sage', dark: 'แถบสีเข้ม' };
     const countVisible = (list) => (Array.isArray(list) ? list.filter(item => item && item.on !== false).length : 0);
     const sectionSummary = (s) => {
       const parts = [];
@@ -2197,13 +2201,13 @@ class Component extends DCLogic {
       const cardCount = countVisible(s.cards);
       const headCount = countVisible(s.heads);
       if (s.type === 'tiers') {
-        parts.push(headCount + ' columns');
-        parts.push(itemCount + ' rows');
+        parts.push(headCount + ' คอลัมน์');
+        parts.push(itemCount + ' แถว');
       } else {
-        if (itemCount) parts.push(itemCount + (s.type === 'trust' ? ' chips' : s.type === 'insurers' ? ' logos' : ' items'));
-        if (cardCount) parts.push(cardCount + ' cards');
+        if (itemCount) parts.push(itemCount + (s.type === 'trust' ? ' ข้อความสั้น' : s.type === 'insurers' ? ' โลโก้' : ' รายการ'));
+        if (cardCount) parts.push(cardCount + ' การ์ด');
       }
-      if (!parts.length) parts.push('Single block');
+      if (!parts.length) parts.push('ส่วนเดียว');
       return parts.join(' · ');
     };
     const homeAdminPairs = (site.sections || []).map((s, i) => ({ source: 'sections', s: s, i: i, id: s && s.id })).filter(pair => pair.s);
@@ -2269,18 +2273,18 @@ class Component extends DCLogic {
     const selectedSectionUpdater = (fn) => updatePair(selectedAdminPair, fn);
     const secList = adminSectionPairs.map((pair, adminOrder) => {
       const s = pair.s;
-      const meta = SECTION_ADMIN_META[s.id] || SECTION_ADMIN_META[s.type] || { group: 'Section', title: t(TYPE_LABEL[s.type]), role: 'Editable site section.' };
+      const meta = SECTION_ADMIN_META[s.id] || SECTION_ADMIN_META[s.type] || { group: 'ส่วนของหน้า', title: TYPE_LABEL[s.type]?.th || s.type, role: 'ส่วนของเว็บไซต์ที่แก้ไขได้' };
       const visible = s.on !== false;
       return {
         key: s.id, id: s.id, on: visible, sel: activeAdminSel === s.id,
-        name: meta.title || t(TYPE_LABEL[s.type]), group: meta.group || 'Section', role: meta.role || '',
+        name: meta.title || TYPE_LABEL[s.type]?.th || s.type, group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
         sub: s.id, summary: sectionSummary(s), canEditContent: !!SCHEMA[s.type],
-        statusLabel: visible ? 'Visible' : 'Hidden',
+        statusLabel: visible ? 'แสดงอยู่' : 'ซ่อนอยู่',
         statusBg: visible ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)',
         statusFg: visible ? 'var(--color-accent-2-900)' : 'var(--color-accent-800)',
         cols: String(s.cols), hasCols: !!(SCHEMA[s.type] || {}).cols && (!isHome || !['trust','insurers','review','steps','claim'].includes(s.type)),
-        bgName: s.bg, bgLabel: bgLabels[s.bg] || s.bg || 'Default',
-        layoutLabel: s.type === 'tiers' ? 'Desktop table width' : 'Cards per row',
+        bgName: s.bg, bgLabel: bgLabels[s.bg] || s.bg || 'ค่าเริ่มต้น',
+        layoutLabel: s.type === 'tiers' ? 'ความกว้างตารางบน Desktop' : 'การ์ดต่อแถว',
         rowBg: activeAdminSel === s.id ? A.soft : 'var(--color-bg)',
         dim: visible ? '1' : '.52',
         swBg: visible ? A.base : 'var(--color-neutral-400)',
@@ -2300,7 +2304,7 @@ class Component extends DCLogic {
     const curPath = selectedAdminPair?.source === 'motorPage' ? 'motorPage.' + selectedAdminPair.motorKey : 'sections.@' + cur?.id;
     const editLinks = cur ? (cur.type === 'hero' ? ['cta2href','claimHref'] : ['cta1href'].filter(key => Object.prototype.hasOwnProperty.call(cur,key))).map(key => {
       const localKey = key === 'claimHref' && cur[lk]?.claimHref !== undefined ? lk + '.' + key : key;
-      return {key, label:key === 'claimHref' ? 'Claim help destination' : key === 'cta2href' ? 'Secondary button destination' : 'Primary button destination', ...cmsInput(curPath + '.' + localKey,{nav:true})};
+      return {key, label:key === 'claimHref' ? 'ปลายทางลิงก์ช่วยเหลือเคลม' : key === 'cta2href' ? 'ปลายทางปุ่มรอง' : 'ปลายทางปุ่มหลัก', ...cmsInput(curPath + '.' + localKey,{nav:true})};
     }) : [];
     const calculatorFields = [];
     if (cur?.type === 'fit') {
@@ -2310,16 +2314,16 @@ class Component extends DCLogic {
           change:e=>{
             let value=e.target.value.trim();
             if(type==='number') {value=Number(value);if(!Number.isFinite(value)||value<0||value>1000000000)return;}
-            if(type==='list') {value=value.split(',').map(Number);if(!value.length||value.length>20||value.some(n=>!Number.isFinite(n)||n<=0||n>100)) {this.showActionToast({kind:'error',title:'Invalid options',body:'Use up to 20 positive numbers separated by commas.'});return;}}
-            if(type==='url'&&value&&!acceptsHttpsUrl(value,true)){this.showActionToast({kind:'error',title:'Invalid source URL',body:'Use an HTTPS source URL.'});return;}
+            if(type==='list') {value=value.split(',').map(Number);if(!value.length||value.length>20||value.some(n=>!Number.isFinite(n)||n<=0||n>100)) {this.showActionToast({kind:'error',title:'ตัวเลือกไม่ถูกต้อง',body:'ใส่ตัวเลขมากกว่า 0 ไม่เกิน 20 ค่า คั่นด้วยเครื่องหมายจุลภาค'});return;}}
+            if(type==='url'&&value&&!acceptsHttpsUrl(value,true)){this.showActionToast({kind:'error',title:'URL แหล่งอ้างอิงไม่ถูกต้อง',body:'ใช้ URL แหล่งอ้างอิงที่ขึ้นต้นด้วย HTTPS'});return;}
             this.upd(config=>cmsSet(config,fullPath,value));
           }
         });
       };
-      add('datasetVersion','Dataset version');
-      add('sourcePackage','Source package');
-      for(const [key,label] of [['hospitalName.'+lk,'Hospital name'],['roomType.'+lk,'Room type'],['note.'+lk,'Reference note'],['lastChecked','Last checked (YYYY-MM-DD)'],['confidenceLevel','Confidence grade']]) add('health.selectedRoomReference.'+key,label);
-      add('health.selectedRoomReference.sourceUrl','Reference source URL','url');
+      add('datasetVersion','เวอร์ชันชุดข้อมูล');
+      add('sourcePackage','ชุดแหล่งอ้างอิง');
+      for(const [key,label] of [['hospitalName.'+lk,'ชื่อโรงพยาบาล'],['roomType.'+lk,'ประเภทห้อง'],['note.'+lk,'หมายเหตุแหล่งอ้างอิง'],['lastChecked','ตรวจสอบล่าสุด (YYYY-MM-DD)'],['confidenceLevel','Confidence grade']]) add('health.selectedRoomReference.'+key,label);
+      add('health.selectedRoomReference.sourceUrl','URL แหล่งอ้างอิง','url');
       add('health.selectedRoomReference.totalFixedDaily','Daily reference amount','number');
       add('life.transitionFinalCosts','Transition / final costs','number');
       add('life.supportYears','Support years (comma separated)','list');
@@ -2327,16 +2331,16 @@ class Component extends DCLogic {
       add('criticalIllness.chosenMedicalOopBuffer','Medical OOP buffer','number');
       for(const [id,situation] of Object.entries(cur.calculator?.situations || {})) {
         if (!/^[\w-]+$/.test(id)) continue;
-        add('situations.'+id+'.'+lk,id+' / title');
-        add('situations.'+id+'.icon',id+' / icon');
+        add('situations.'+id+'.'+lk,id+' / หัวข้อ');
+        add('situations.'+id+'.icon',id+' / ไอคอน');
         (situation.recs || []).forEach((_rec,index)=>{
-          add('situations.'+id+'.recs.'+index+'.'+lk,id+' / advice '+(index+1));
-          add('situations.'+id+'.recs.'+index+'.w'+lk,id+' / explanation '+(index+1));
+          add('situations.'+id+'.recs.'+index+'.'+lk,id+' / คำแนะนำ '+(index+1));
+          add('situations.'+id+'.recs.'+index+'.w'+lk,id+' / คำอธิบาย '+(index+1));
         });
       }
     }
     const editFields = (cur && sch) ? sch.fields.map(f => ({
-      key: f, label: t(FIELD_LABEL[f]), value: (cur[lk] && cur[lk][f]) || '',
+      key: f, label: FIELD_LABEL[f].th, value: (cur[lk] && cur[lk][f]) || '',
       big: !!MULTILINE[f], small: !MULTILINE[f],
       onInput: (e) => { const v = e.target.value; selectedSectionUpdater(section => { section[lk] = section[lk] || {}; section[lk][f] = v; }); }
     })) : [];
@@ -2347,20 +2351,20 @@ class Component extends DCLogic {
         key: itemId || (cur.id + '-i' + ii), id: itemId, n: String(ii + 1),
         hidden: hidden,
         rowOpacity: hidden ? '.62' : '1',
-        stateLabel: hidden ? 'Hidden' : 'Visible',
+        stateLabel: hidden ? 'ซ่อนอยู่' : 'แสดงอยู่',
         stateBg: hidden ? 'var(--color-neutral-200)' : 'var(--color-accent-2-200)',
         stateFg: hidden ? 'var(--color-neutral-700)' : 'var(--color-accent-2-800)',
-        visibilityLabel: hidden ? 'Restore' : 'Hide',
+        visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
         upOpacity: ii === 0 ? '.42' : '1', downOpacity: ii === cur.items.length - 1 ? '.42' : '1',
         fields: sch.item.map(f => ({
-          key: f, label: t(cur.type === 'faq' && f === 'label' ? L('หมวด (ไม่บังคับ)', 'Topic (optional)') : cur.type === 'faq' && f === 'meta' ? L('เวลาอ่าน (ไม่บังคับ)', 'Reading time (optional)') : FIELD_LABEL[f]), value: (it[lk] && it[lk][f]) || '',
+          key: f, label: ((cur.type === 'faq' && f === 'label' ? L('หมวด (ไม่บังคับ)', 'Topic (optional)') : cur.type === 'faq' && f === 'meta' ? L('เวลาอ่าน (ไม่บังคับ)', 'Reading time (optional)') : FIELD_LABEL[f]).th), value: (it[lk] && it[lk][f]) || '',
           big: !!MULTILINE[f], small: !MULTILINE[f],
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][f] = v; }); }
         })),
         hasCells: !!(cur.type === 'tiers'),
         hasIcon: ['trust','products','review','steps','claim','renew'].includes(cur.type),
         icon: it.icon || 'check',
-        iconOptions: Object.keys(ICONS).map(key => ({key,label:key})),
+        iconOptions: Object.keys(ICONS).map(key => ({key,label:({coins:'เหรียญ',handCoins:'รับเงิน',ban:'ข้อยกเว้น',chart:'กราฟ',settings:'ตั้งค่า',user:'ผู้ใช้',heartOutline:'หัวใจ',shieldCheck:'โล่พร้อมเครื่องหมายถูก',shield:'โล่',pulse:'ชีพจร',heart:'สุขภาพ',umbrella:'ร่ม',annuity:'แนวโน้มเติบโต',car:'รถยนต์',check:'เครื่องหมายถูก',zap:'สายฟ้า',compare:'เปรียบเทียบ',chat:'แชต',users:'กลุ่มคน',sprout:'จรวด',briefcase:'กระเป๋างาน',clock:'นาฬิกา',phone:'โทรศัพท์',mail:'อีเมล',pin:'ตำแหน่ง',star:'ดาว',refresh:'รีเฟรช',arrow:'ลูกศร',down:'ลูกศรลง',seal:'ตรารับรอง',alert:'แจ้งเตือน',camera:'กล้อง',bell:'กระดิ่ง',file:'เอกสาร',lock:'ล็อก',quote:'คำพูด'})[key] || key})),
         onIcon: e => { const value=e.target.value; if (ICONS[value]) updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].icon=value;}); },
         hasTone: cur.type === 'products',
         toneOptions: ['accent','sage','ink'].map(key => ({key,selected:(it.tone || 'accent') === key,color:key === 'sage' ? 'var(--color-accent-2)' : key === 'ink' ? 'var(--color-neutral-800)' : A.base, choose:()=>updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].tone=key;})})),
@@ -2371,16 +2375,16 @@ class Component extends DCLogic {
         illustration: it.illustration || '',
         illustrationThumb: assetURL(it.illustration || ''),
         hasIllustration: !!it.illustration,
-        onIllustration: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind:'error', title:'Invalid media path', body:'Use an assets/... path or an HTTPS image URL.' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].illustration = v; }); },
+        onIllustration: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind:'error', title:'ที่อยู่รูปภาพไม่ถูกต้อง', body:'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].illustration = v; }); },
         showLogo: !!(sch && sch.itemLogo),
         logo: it.logo || '',
         logoThumb: 'display:block;height:24px;width:24px;flex:0 0 auto;border-radius:6px;background-color:var(--color-bg);background-image:url("' + assetURL(it.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center',
-        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
+        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
         cells: (cur.type === 'tiers') ? (cur.heads || []).map((hd, ci) => {
           const v = (it.st || [])[ci] || 'n';
           return {
             key: (hd && hd.id) || ('c' + ci), label: t(hd),
-            state: v === 'y' ? (th ? 'คุ้มครอง' : 'Covered') : v === 'p' ? (th ? 'มีเงื่อนไข' : 'Conditional') : (th ? 'ไม่คุ้มครอง' : 'Not covered'),
+            state: v === 'y' ? 'คุ้มครอง' : v === 'p' ? 'มีเงื่อนไข' : 'ไม่คุ้มครอง',
             glyph: v === 'n' ? '✕' : '✓',
             bg: v === 'y' ? 'var(--color-accent-2)' : v === 'p' ? 'var(--color-accent-2-200)' : 'var(--color-neutral-200)',
             fg: v === 'y' ? 'var(--color-bg)' : v === 'p' ? 'var(--color-accent-2-900)' : 'var(--color-neutral-700)',
@@ -2404,10 +2408,10 @@ class Component extends DCLogic {
       const hidden = !!(hd && hd.on === false);
       return {
         key: headId || (cur.id + '-eh' + hi), id: headId, value: t(hd), hidden: hidden,
-        stateLabel: hidden ? 'Hidden' : 'Visible',
+        stateLabel: hidden ? 'ซ่อนอยู่' : 'แสดงอยู่',
         stateBg: hidden ? 'var(--color-neutral-200)' : 'var(--color-accent-2-200)',
         stateFg: hidden ? 'var(--color-neutral-700)' : 'var(--color-accent-2-800)',
-        visibilityLabel: hidden ? 'Restore' : 'Hide',
+        visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
         up: () => this.moveRepeatable(cur.id, 'heads', headId, hi, -1),
         down: () => this.moveRepeatable(cur.id, 'heads', headId, hi, 1),
         onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'heads', headId, hi, (section, heads, idx) => { const h = heads[idx]; if (h) h[lk] = v; }); },
@@ -2427,22 +2431,22 @@ class Component extends DCLogic {
         key: cardId || (cur.id + '-card' + ci), id: cardId, n: String(ci + 1), showLogo: showLogo,
         hidden: hidden,
         rowOpacity: hidden ? '.62' : '1',
-        stateLabel: hidden ? 'Hidden' : 'Visible',
+        stateLabel: hidden ? 'ซ่อนอยู่' : 'แสดงอยู่',
         stateBg: hidden ? 'var(--color-neutral-200)' : 'var(--color-accent-2-200)',
         stateFg: hidden ? 'var(--color-neutral-700)' : 'var(--color-accent-2-800)',
-        visibilityLabel: hidden ? 'Restore' : 'Hide',
+        visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
         upOpacity: ci === 0 ? '.42' : '1', downOpacity: ci === cur.cards.length - 1 ? '.42' : '1',
         logo: showLogo ? (cd.logo || '') : '', logoAlt: cd.logoAlt || '',
         hasLogo: !!(showLogo && cd.logo),
         logoThumb: 'display:block;height:22px;width:88px;background-image:url("' + assetURL(cd.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center center',
-        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); return; } updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
+        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
         onLogoAlt: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logoAlt = v; }); },
         up: () => this.moveRepeatable(cur.id, 'cards', cardId, ci, -1),
         down: () => this.moveRepeatable(cur.id, 'cards', cardId, ci, 1),
         duplicate: () => this.duplicateRepeatable(cur.id, 'cards', cardId, ci),
         toggleVisible: () => hidden ? this.restoreRepeatable(cur.id, 'cards', cardId, ci) : this.removeRepeatable(cur.id, 'cards', cardId, ci),
         fields: cardKeys.map(k => ({
-          key: k, label: t(CARD_LBL[k] || FIELD_LABEL[k] || L(k, k)), value: (cd[lk] && cd[lk][k]) || '',
+          key: k, label: (CARD_LBL[k] || FIELD_LABEL[k] || L(k, k)).th, value: (cd[lk] && cd[lk][k]) || '',
           big: k === 'body', small: k !== 'body',
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][k] = v; }); }
         }))
@@ -2500,11 +2504,11 @@ class Component extends DCLogic {
     const _hist = this.loadHist();
     const histList = _hist.map((hh, i) => ({
       key: String(hh.id), num: String(_hist.length - i),
-      when: this.relTime(hh.ts, th), stamp: this.absTime(hh.ts),
+      when: this.relTime(hh.ts, true), stamp: this.absTime(hh.ts),
       isLive: this.sig(hh.config, hh.text) === _liveSig,
       notLive: this.sig(hh.config, hh.text) !== _liveSig,
       restored: !!hh.restoredFrom,
-      restoreNote: hh.restoredFrom ? ((th ? 'กู้คืนจาก ' : 'restored from ') + this.absTime(hh.restoredFrom)) : '',
+      restoreNote: hh.restoredFrom ? ('กู้คืนจาก ' + this.absTime(hh.restoredFrom)) : '',
       restore: () => this.restoreVersion(hh.id)
     }));
 
@@ -2548,13 +2552,13 @@ class Component extends DCLogic {
       toggleHomeRadius: () => this.upd(config => { config.theme.radius = config.theme.radius === 'sharp' ? 'round' : 'sharp'; }),
       headerCtaInput: cmsInput('header.cta.' + lk, {}),
       adminHeroLinks: routePage === 'home' ? (site.sections || []).flatMap((section, index) => section.id === 'hero' ? [
-        { label: 'Hero secondary button destination', path: 'cta2href' },
-        { label: 'Hero accident guide destination', path: section[lk] && section[lk].claimHref !== undefined ? lk + '.claimHref' : 'claimHref' }
+        { label: 'ปลายทางปุ่มรองใน Hero', path: 'cta2href' },
+        { label: 'ปลายทางคู่มือเมื่อเกิดเหตุใน Hero', path: section[lk] && section[lk].claimHref !== undefined ? lk + '.claimHref' : 'claimHref' }
       ].map(field => ({ label: field.label, key: field.path, input: cmsInput('sections.' + index + '.' + field.path, { nav: true }) })) : []) : [],
       credentialInput: cmsInput('brand.credential.' + lk, {}),
       legalInput: cmsInput('footer.legal.' + lk, {}),
       advisorLogoInput: cmsInput('brand.advisorLogo', { media: true }),
-      imageSlots:cmsImageSlots(site,lk).map(slot=>({...slot,image:assetURL(slot.value),hasImage:!!slot.value,edit:()=>this.editMedia(slot.path)})),
+      imageSlots:cmsImageSlots(site,lk).map(slot=>({...slot,label:cmsAdminMediaLabel(slot),image:assetURL(slot.value),hasImage:!!slot.value,edit:()=>this.editMedia(slot.path)})),
       editAdvisorImage:()=>this.editMedia('brand.advisorLogo'),
       lineUrlInput: cmsInput('contact.lineUrl', { url: true }),
       facebookUrlInput: cmsInput('contact.facebookUrl', { url: true }),
@@ -2738,7 +2742,7 @@ class Component extends DCLogic {
           if (!navigator.onLine) throw new DOMException('Offline.', 'OfflineError');
           const cm = await import(window.location.origin + '/covermate-public.mjs');
           if (!cm || !cm.submitContactLead) throw new Error('Lead service unavailable.');
-          await cm.submitContactLead(Object.assign({}, curForm, { language: langNow, summary: summary, sourcePath: window.location.pathname + window.location.search + window.location.hash }));
+          await cm.submitContactLead(Object.assign({}, curForm, { language: langNow, summary: summary, consentKind: 'consultation', noticeText: cmsText('ui.consultationConsent'), sourcePath: window.location.pathname + window.location.search + window.location.hash }));
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_success', { form_type: 'consultation', enquiry_type: curForm.qtype || 'unspecified', coverage: curForm.coverage || 'unspecified' });
           }
@@ -2747,8 +2751,9 @@ class Component extends DCLogic {
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_error', { form_type: 'consultation' });
           }
-          const path = !navigator.onLine ? 'homeDesign.offlineError' : ['TimeoutError','AbortError','UnconfirmedReceipt','TypeError'].includes(err.name) ? 'homeDesign.uncertainError' : 'ui.submitError';
-          this.setState({ sent: false, leadSubmitting: false, leadError: cmsText(path) });
+          const path = err.code === 'consent_changed' ? 'homeDesign.consentChanged' : !navigator.onLine ? 'homeDesign.offlineError' : ['TimeoutError','AbortError','UnconfirmedReceipt','TypeError'].includes(err.name) ? 'homeDesign.uncertainError' : 'ui.submitError';
+          this.setState(s => ({ sent: false, leadSubmitting: false, leadError: cmsText(path), ...(err.code === 'consent_changed' ? { form: Object.assign({}, s.form, { consent: false }) } : {}) }));
+          if (err.code === 'consent_changed') import(window.location.origin + '/covermate-public.mjs').then(cm => cm.hydrateLocalContent()).catch(() => {});
           this.focusFormError('talk');
         }
       },
@@ -2787,7 +2792,7 @@ class Component extends DCLogic {
           await cm.submitContactLead({
             name: '', contact: r.contact, topic: renewSummary,
             qtype: 'review', coverage: coverageMap[r.kind] || 'unsure', consent: true,
-            language: langNow, summary: renewSummary,
+            language: langNow, summary: renewSummary, consentKind: 'renewal', noticeText: cmsText('publicCopy.renewalConsent'),
             sourcePath: window.location.pathname + window.location.search + window.location.hash
           });
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
@@ -2799,7 +2804,8 @@ class Component extends DCLogic {
             window.CoverMateAnalytics.trackEvent('quote_submit_error', { form_type: 'renewal_reminder' });
           }
           const path = !navigator.onLine ? 'homeDesign.offlineError' : ['TimeoutError','AbortError','UnconfirmedReceipt','TypeError'].includes(err.name) ? 'homeDesign.uncertainError' : 'ui.submitError';
-          this.setState({ renewSent: false, renewSubmitting: false, renewError: cmsText(path) });
+          this.setState(s => ({ renewSent: false, renewSubmitting: false, renewError: cmsText(err.code === 'consent_changed' ? 'homeDesign.consentChanged' : path), ...(err.code === 'consent_changed' ? { renew: Object.assign({}, s.renew, { consent: false }) } : {}) }));
+          if (err.code === 'consent_changed') import(window.location.origin + '/covermate-public.mjs').then(cm => cm.hydrateLocalContent()).catch(() => {});
           this.focusFormError('renew');
         }
       },
@@ -2813,8 +2819,8 @@ class Component extends DCLogic {
       })(),
 
       adminOpen: S.admin, adminClosed: !S.admin,
-      ownerDockStatus: S.admin ? 'Editing on page · Panel open' : 'Editing on page',
-      ownerDockStatusCompact: S.admin ? 'Editing · Panel' : 'Editing',
+      ownerDockStatus: S.admin ? 'กำลังแก้ไขหน้าเว็บ · เปิดแผงเครื่องมือ' : 'กำลังแก้ไขหน้าเว็บ',
+      ownerDockStatusCompact: S.admin ? 'แก้ไข · แผงเครื่องมือ' : 'กำลังแก้ไข',
       openAdmin: () => {
         const ownerToolsToggle = document.getElementById('covermate-owner-tools-toggle');
         if (ownerToolsToggle) ownerToolsToggle.checked = false;
@@ -2837,14 +2843,25 @@ class Component extends DCLogic {
 
       preview: S.preview,
       dirty: dirty, clean: !dirty,
-      statusText: S.remoteError ? S.remoteError : (S.remoteBusy ? (S.remoteAction === 'publish' ? 'Publishing to live...' : 'Saving draft...') : (dirty ? 'Unpublished changes' : 'Success')),
+      statusText: S.remoteError ? S.remoteError : (S.remoteBusy ? (S.remoteAction === 'publish' ? 'กำลัง Publish เว็บจริง...' : 'กำลังบันทึก Draft...') : (dirty ? 'มีการแก้ไขที่ยังไม่ Publish' : 'เรียบร้อย')),
       statusDot: S.remoteError ? 'var(--color-accent-800)' : (dirty ? A.base : 'var(--color-accent-2)'),
       publishBg: (dirty && !S.remoteBusy) ? A.base : 'var(--color-neutral-300)',
       publishFg: (dirty && !S.remoteBusy) ? A.on : 'var(--color-neutral-600)',
       publishHover: (dirty && !S.remoteBusy) ? ('transform:translateY(-1px);background:' + A.deep) : '',
-      publishLabel: S.remoteAction === 'publish' ? 'Publishing...' : 'Publish',
+      publishLabel: S.remoteAction === 'publish' ? 'กำลัง Publish...' : 'Publish',
       previewLabel: 'Preview',
-      saveLabel: S.remoteAction === 'save' ? 'Saving...' : 'Save draft',
+      saveLabel: S.remoteAction === 'save' ? 'กำลังบันทึก...' : 'Save draft',
+      editorUndo: () => this.stepEditorHistory('undo'),
+      editorRedo: () => this.stepEditorHistory('redo'),
+      requestResetDraft: () => this.requestResetDraft(),
+      editorUndoDisabled: String(!!S.remoteBusy || !this._editorHistory?.describe().canUndo),
+      editorRedoDisabled: String(!!S.remoteBusy || !this._editorHistory?.describe().canRedo),
+      editorUndoTitle: this._editorHistory?.describe().canUndo ? 'Undo · ' + this._editorHistory.describe().undoLabel + ' (⌘/Ctrl+Z)' : 'ยังไม่มีการแก้ไขให้ Undo',
+      editorRedoTitle: this._editorHistory?.describe().canRedo ? 'Redo · ' + this._editorHistory.describe().redoLabel + ' (⌘/Ctrl+Shift+Z)' : 'ยังไม่มีการแก้ไขให้ Redo',
+      editorHistoryHint: 'ย้อนกลับได้ ' + (this._editorHistory?.describe().cursor || 0) + ' ขั้น · ' + (this._editorHistoryStored ? 'ประวัติในแท็บนี้' : 'ประวัติเฉพาะหน้านี้'),
+      editorAnnouncement: S.editorAnnouncement || '',
+      showEditorHistoryNotice: !!(S.admin || S.editMode),
+      adminBusy: String(!!S.remoteBusy),
       savedFlash: S.savedFlash, pubFlash: S.pubFlash,
       requestSaveDraft: () => this.requestSaveDraft(),
       openPreview: () => { this.persistDraft(); const previewPath = this.ownerPathForMode('preview', routePage); try { const popup = window.open(previewPath, '_blank', 'noopener,noreferrer'); if (popup) { try { popup.opener = null; } catch (e) {} return; } } catch (e) {} this.goOwnerRoute('preview', { page: routePage }); },
@@ -2853,18 +2870,20 @@ class Component extends DCLogic {
       showAdminConfirm: !!S.confirmAction,
       confirmKicker: (S.confirmAction && S.confirmAction.kicker) || '',
       confirmTitle: (S.confirmAction && S.confirmAction.title) || '',
-      confirmBody: (S.confirmAction && S.confirmAction.body) || '',
-      confirmActionLabel: S.remoteBusy ? (S.remoteAction === 'publish' ? 'Publishing...' : 'Saving...') : ((S.confirmAction && S.confirmAction.actionLabel) || 'Continue'),
+      confirmBody: S.remoteAction === 'reset' ? 'กำลังอ่าน Publish ล่าสุดและ Reset Draft กรุณารอสักครู่' : (S.confirmAction && S.confirmAction.body) || '',
+      confirmActionLabel: S.remoteBusy ? (S.remoteAction === 'publish' ? 'กำลัง Publish...' : S.remoteAction === 'reset' ? 'กำลัง Reset...' : 'กำลังบันทึก...') : ((S.confirmAction && S.confirmAction.actionLabel) || 'ดำเนินการต่อ'),
       cancelConfirm: () => this.cancelConfirm(),
       confirmAdminAction: () => this.confirmAdminAction(),
-      showAdminProgress: !!S.remoteBusy,
-      progressTitle: S.remoteAction === 'publish' ? 'Publishing live site' : 'Saving draft',
-      progressBody: S.remoteAction === 'publish' ? 'Writing live, draft, and version history to Firestore.' : 'Writing the working draft to Firestore.',
-      progressStage: S.remoteAction === 'publish' ? 'Firestore live + draft + version' : 'Firestore draft state',
+      showAdminProgress: !!S.remoteBusy && S.remoteAction !== 'reset',
+      showAdminBusyShield: !!S.remoteBusy && !S.confirmAction,
+      progressTitle: S.remoteAction === 'publish' ? 'กำลัง Publish เว็บจริง' : 'กำลังบันทึก Draft',
+      progressBody: S.remoteAction === 'publish' ? 'กำลังบันทึกเว็บจริง Draft และประวัติเวอร์ชันลง Firestore' : 'กำลังบันทึก Draft ลง Firestore',
+      progressStage: S.remoteAction === 'publish' ? 'Firestore · เว็บจริง + Draft + ประวัติเวอร์ชัน' : 'Firestore · Draft',
       showAdminToast: !!S.toast,
       toastTitle: (S.toast && S.toast.title) || '',
       toastBody: (S.toast && S.toast.body) || '',
       toastCanUndo: !!(S.toast && S.toast.undoSnapshot),
+      toastUndoLabel: S.toast?.undoKind === 'publish' ? 'ย้อน Publish · เปลี่ยนเว็บจริง' : 'Undo',
       undoActionToast: () => this.undoActionToast(),
       dismissToast: () => this.dismissToast(),
       histList: histList, hasHist: histList.length > 0,
@@ -2900,7 +2919,7 @@ class Component extends DCLogic {
       tabBraBg: S.tab === 'brand' ? A.action : 'transparent', tabBraFg: S.tab === 'brand' ? A.on : 'var(--color-neutral-700)',
       tabThmBg: S.tab === 'theme' ? A.action : 'transparent', tabThmFg: S.tab === 'theme' ? A.on : 'var(--color-neutral-700)',
       secList: secList,
-      curName: cur ? t(TYPE_LABEL[cur.type]) : '', curId: cur ? cur.id : '',
+      curName: cur ? TYPE_LABEL[cur.type]?.th || cur.type : '', curId: cur ? cur.id : '',
       editFields: editFields, editItems: editItems, editLinks: editLinks,
       hasCalculatorFields:calculatorFields.length>0,calculatorFields,
       goMedia:()=>this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{const group=document.querySelector('[data-cms-group="Images & crop"]');if(group){group.open=true;group.scrollIntoView({block:'start'});}})),
@@ -2913,7 +2932,7 @@ class Component extends DCLogic {
         (c.items || []).forEach(o => { o.st = Array.isArray(o.st) ? o.st : []; o.st.push('n'); });
       }),
       editCards: editCards, hasCards: editCards.length > 0,
-      canAddCard: !!(cur && sch && sch.card), addCardLabel: (cur && sch && sch.addCardLabel) || 'card',
+      canAddCard: !!(cur && sch && sch.card), addCardLabel: cmsAdminItemLabel((cur && sch && sch.addCardLabel) || 'card'),
       addCard: () => selectedSectionUpdater(c => {
         const keys = (SCHEMA[c.type] && SCHEMA[c.type].card) || [];
         const blank = {}; keys.forEach(k => { blank[k] = ''; });
@@ -2922,7 +2941,7 @@ class Component extends DCLogic {
         item.id = createRepeatableId(c, 'cards', usedRepeatableIds(c, 'cards'));
         c.cards.push(item);
       }),
-      canAddItem: !!(cur && sch && sch.item), addLabel: (cur && sch && sch.addLabel) || 'item',
+      canAddItem: !!(cur && sch && sch.item), addLabel: cmsAdminItemLabel((cur && sch && sch.addLabel) || 'item'),
       addItem: () => selectedSectionUpdater(c => {
         const keys = (SCHEMA[c.type] && SCHEMA[c.type].item) || []; const blank = {}; keys.forEach(k => { blank[k] = ''; });
         c.items = c.items || [];
@@ -2933,30 +2952,30 @@ class Component extends DCLogic {
       }),
 
       bName: t(site.brand.name), bFull: t(site.brand.fullName), bRole: t(site.brand.role), bCred: t(site.brand.credential),
-      advisorLogoLabel: site.brand.advisorLogo || 'No image',
+      advisorLogoLabel: site.brand.advisorLogo || 'ยังไม่มีรูป',
       onBName: (e) => { const v = e.target.value; this.upd(x => { x.brand.name[lk] = v; }); },
       onBFull: (e) => { const v = e.target.value; this.upd(x => { x.brand.fullName[lk] = v; }); },
       onBRole: (e) => { const v = e.target.value; this.upd(x => { x.brand.role[lk] = v; }); },
       onBCred: (e) => { const v = e.target.value; this.upd(x => { x.brand.credential[lk] = v; }); },
       onBInit: (e) => { const v = e.target.value.slice(0, 2); this.upd(x => { x.brand.initial = v; }); },
-      onAdvisorLogoPath: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) this.showActionToast({ kind: 'error', title: 'Invalid media path', body: 'Use an assets/... path or an HTTPS image URL.' }); this.upd(x => { x.brand.advisorLogo = v; }); },
+      onAdvisorLogoPath: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); this.upd(x => { x.brand.advisorLogo = v; }); },
       onAdvisorLogoAlt: (e) => { const v = e.target.value; this.upd(x => { x.brand.advisorLogoAlt = v; }); },
       resetAdvisorLogo: () => this.upd(x => { x.brand.advisorLogo = ''; x.brand.advisorLogoAlt = ''; }),
       onLineId: (e) => { const v = e.target.value; this.upd(x => { x.contact.lineId = v; }); },
-      onLineUrl: (e) => { const v = e.target.value; if (v && !acceptsHttpsUrl(v, true)) { this.showActionToast({ kind: 'error', title: 'Invalid contact link', body: 'Use a valid HTTPS URL.' }); return; } this.upd(x => { x.contact.lineUrl = v; }); },
+      onLineUrl: (e) => { const v = e.target.value; if (v && !acceptsHttpsUrl(v, true)) { this.showActionToast({ kind: 'error', title: 'ลิงก์ติดต่อไม่ถูกต้อง', body: 'กรอก URL ที่ขึ้นต้นด้วย HTTPS ให้ถูกต้อง' }); return; } this.upd(x => { x.contact.lineUrl = v; }); },
       onFacebookName: (e) => { const v = e.target.value; this.upd(x => { x.contact.facebookName = v; }); },
-      onFacebookUrl: (e) => { const v = e.target.value; if (v && !acceptsHttpsUrl(v, true)) this.showActionToast({ kind: 'error', title: 'Invalid contact link', body: 'Use a valid HTTPS URL or leave it blank.' }); this.upd(x => { x.contact.facebookUrl = v; }); },
+      onFacebookUrl: (e) => { const v = e.target.value; if (v && !acceptsHttpsUrl(v, true)) this.showActionToast({ kind: 'error', title: 'ลิงก์ติดต่อไม่ถูกต้อง', body: 'กรอก URL ที่ขึ้นต้นด้วย HTTPS ให้ถูกต้อง หรือเว้นว่าง' }); this.upd(x => { x.contact.facebookUrl = v; }); },
       onWhatsapp: (e) => { const v = e.target.value; this.upd(x => { x.contact.whatsapp = v; }); },
       onPhone: (e) => { const v = e.target.value; this.upd(x => { x.contact.phone = v; }); },
-      onEmail: (e) => { const v = e.target.value; if (v && !acceptsEmail(v)) this.showActionToast({ kind: 'error', title: 'Invalid email', body: 'Use a valid email address.' }); this.upd(x => { x.contact.email = v; }); },
+      onEmail: (e) => { const v = e.target.value; if (v && !acceptsEmail(v)) this.showActionToast({ kind: 'error', title: 'อีเมลไม่ถูกต้อง', body: 'กรอกอีเมลให้ถูกต้อง' }); this.upd(x => { x.contact.email = v; }); },
       onHours: (e) => { const v = e.target.value; this.upd(x => { x.contact.hours[lk] = v; }); },
       onArea: (e) => { const v = e.target.value; this.upd(x => { x.contact.area[lk] = v; }); },
       seoTitle: (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).title || {})[lk] || '',
       seoDescription: (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).description || {})[lk] || '',
       seoCanonical: 'Canonical: https://covermateinsurance.com' + this.publicPathForRoutePage(routePage),
-      seoRobots: (routePage === 'motor' ? 'Public /motor is indexable; admin, edit, and preview stay noindex.' : 'Public / is indexable; admin, edit, and preview stay noindex.'),
-      onSeoTitle: (e) => { const v = e.target.value; if (v.length > 68) this.showActionToast({ kind: 'error', title: 'SEO title too long', body: 'Keep the public title to 68 characters or fewer.' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.title = target.title || {}; target.title[lk] = v; }); },
-      onSeoDescription: (e) => { const v = e.target.value; if (v.length > 155) this.showActionToast({ kind: 'error', title: 'Meta description too long', body: 'Keep the public description to 155 characters or fewer.' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.description = target.description || {}; target.description[lk] = v; }); },
+      seoRobots: (routePage === 'motor' ? 'หน้า /motor แสดงในผลค้นหาได้ ส่วน Admin, Edit และ Preview ยังคงเป็น noindex' : 'หน้าแรกแสดงในผลค้นหาได้ ส่วน Admin, Edit และ Preview ยังคงเป็น noindex'),
+      onSeoTitle: (e) => { const v = e.target.value; if (v.length > 68) this.showActionToast({ kind: 'error', title: 'ชื่อหน้า SEO ยาวเกินไป', body: 'ชื่อหน้าควรยาวไม่เกิน 68 ตัวอักษร' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.title = target.title || {}; target.title[lk] = v; }); },
+      onSeoDescription: (e) => { const v = e.target.value; if (v.length > 155) this.showActionToast({ kind: 'error', title: 'Meta description ยาวเกินไป', body: 'คำอธิบายควรยาวไม่เกิน 155 ตัวอักษร' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.description = target.description || {}; target.description[lk] = v; }); },
       onFootTag: (e) => { const v = e.target.value; this.upd(x => { x.footer.tagline[lk] = v; }); },
       onFootLegal: (e) => { const v = e.target.value; this.upd(x => { x.footer.legal[lk] = v; }); },
       footCols: String(F.columns),
@@ -2986,7 +3005,7 @@ class Component extends DCLogic {
       io: S.io,
       onIo: (e) => this.setState({ io: e.target.value }),
       doExport: () => this.setState({ io: JSON.stringify({ config: this.state.site, text: this.textOv || {} }, null, 2) }),
-      doImport: () => { try { const o = JSON.parse(this.state.io); const cfg = o && o.config && o.config.sections ? o.config : o; const txt = o && o.config ? (o.text || {}) : (this.textOv || {}); if (cfg && cfg.sections) { this.textOv = clone(txt); this.save(cfg); } } catch (e) { this.setState({ io: 'Invalid JSON — nothing changed.' }); } }
+      doImport: () => { try { const o = JSON.parse(this.state.io); const cfg = o && o.config && o.config.sections ? o.config : o; const txt = o && o.config ? (o.text || {}) : (this.textOv || {}); if (cfg && cfg.sections) { this.textOv = clone(txt); this.save(cfg); } } catch (e) { this.setState({ io: 'JSON ไม่ถูกต้อง ยังไม่มีข้อมูลเปลี่ยนแปลง' }); } }
     };
   }
 }

@@ -355,9 +355,10 @@ The owner CMS modes also own the admin continuation UI:
 - sign out clears both `covermate-admin-session` and the admin-ever marker, then
   returns to `/admin/login`.
 
-Visible Admin chrome/action labels are English-only. The stable owner labels are
-`Panel`, `Edit text`, `Main`, `Public site`, `Save draft`, `Preview`,
-`Publish`, `Success`, and `Log out`.
+Visible Admin controls use natural Thai with conventional English terms.
+Labels include `แผงเครื่องมือ`, `แก้ไขข้อความ`, `หน้า Admin`, `ดูเว็บจริง`,
+`Save draft`, `Preview`, `Publish`, and `ออกจากระบบ`. The content-language selector
+continues editing TH/EN data independently; see `docs/ADMIN_LANGUAGE.md`.
 
 The mobile interaction contract is enforced by a template-level
 `covermate-responsive-touch-policy` patch on all three HTML surfaces. It keeps

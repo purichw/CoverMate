@@ -2,6 +2,34 @@
 
 Last updated: 2026-09-23
 
+## September 23 Scoped Chat Release — Candidate
+
+- Prepared from baseline `702daaeef07297829773b8ed9c52cc53488603c6` in
+  `.tools/release-chat-20260923`. The original working checkout and unrelated
+  pending work are preserved. See `RELEASE_CHAT_20260923.md` for the scope and
+  evidence manifest; the older release records below remain historical.
+- Includes the localized loading screen, shared custom error pages, Admin Home
+  and Operations/Cases, natural Thai admin controls, CMS Undo/Redo and Reset
+  Draft to the latest published version, and this chat's final offline exports.
+  Reset changes Draft only; the existing explicit Publish flow controls Live.
+- Includes independent legacy cleanup. Baseline Fees/Privacy renderers remain:
+  removing them depends on a separate transparency redesign excluded here.
+- Excludes unrelated Calculator v2/recommendations, advisor/public redesign,
+  GA4 consent, contact-form presentation redesign and broader Admin structure
+  changes. Existing baseline public layout/defaults remain authoritative. Cases
+  intake validation, consent evidence and acceptance receipts are included as
+  dependencies of the authorized Cases workflow.
+- Emulator Auth/Rules/Cases/API/CMS Publish journeys, the 11-flow editor-history
+  check, 15-flow Admin Home check and Cases browser check passed locally.
+  Preview deployment `dpl_7uenKDevguJo27L2XFgp2iVaqQiJ` is READY at
+  <https://covermate-qu5ey4taz-purich-w.vercel.app>. A ready preview does not
+  establish hosted UAT or production success.
+- Final release SHA, full CI, hosted UAT, production deployment/alias and
+  read-only production verification are **pending**. No deployment claim is
+  made for this candidate; complete those fields in the release manifest when
+  their results are available. No batch data migration or CMS publish is part
+  of this rollout.
+
 ## September 23 Production Verification
 
 - Runtime release `e362746d9b60f9e3acf69045b5b997bd88b4f5a1` passed

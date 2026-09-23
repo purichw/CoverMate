@@ -48,8 +48,10 @@ assert.match(rules, /function isUatOnlyAdmin\(\)/, "Rules must keep UAT-only adm
 assert.match(rules, /allow write: if false;/, "Admin allowlist writes must stay server/manual only.");
 assert.match(rules, /match \/contactLeads\/\{leadId\}/, "Production lead collection rules must exist.");
 assert.match(rules, /match \/contactLeadsUat\/\{leadId\}/, "UAT lead collection rules must exist.");
-assert.match(rules, /allow create: if canWriteOpsRecords\(false\);/);
-assert.match(rules, /allow create: if canWriteOpsRecords\(true\);/);
+for (const uat of ['false', 'true']) {
+  assert.ok(rules.includes(`allow create: if canWriteOpsRecords(${uat}) && !request.resource.data.keys().hasAny(['caseRecord', 'caseIntakeNotification', 'legacyCaseProjection']);`), 'Canonical Cases must be created through the authenticated API, not client writes.');
+  assert.ok(rules.includes(`allow update: if canWriteOpsRecords(${uat}) && !resource.data.keys().hasAny(['caseRecord']) && !request.resource.data.keys().hasAny(['caseRecord', 'caseIntakeNotification', 'legacyCaseProjection']);`), 'Clients must not forge or mutate canonical Cases.');
+}
 assert.match(rules, /allow delete: if false;/, "Lead deletion must stay blocked in client rules.");
 
 const firebaseClient = read("covermate-firebase.js");

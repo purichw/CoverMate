@@ -1238,51 +1238,75 @@
         grid-template-columns: 1fr;
       }
     }
+    @media (max-width: 600px) {
+      body:not([data-module="operations"]) .mobilebar {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+
+      body:not([data-module="operations"]) .mobilebar .brand-logo-plate {
+        width: 100%;
+        max-width: 174px;
+      }
+
+      .rail-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+    }
   </style>
+  <link rel="stylesheet" href="/admin/ops/cases.css" />
+  <link rel="stylesheet" href="/admin/home.css" />
 </head>
 <body data-boot="pending">
   <div class="app">
-    <aside class="sidebar" aria-label="Admin navigation">
-      <a class="brand" href="/admin" aria-label="CoverMate admin home" data-action="module" data-module="home">
+    <aside class="sidebar" aria-label="เมนู Admin">
+      <a class="brand" href="/admin" aria-label="หน้าแรกของ CoverMate Admin" data-action="module" data-module="home">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png?v=20260913-mate-gold" alt="CoverMate Insurance Advisory"></span>
         <span class="brand-sub">ADMIN PORTAL</span>
       </a>
       <nav class="nav" id="sideNav"></nav>
+      <div class="home-sidebar-note" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 22v-8m0 3C5 17 3 13 3 8c6 0 9 3 9 9Zm0-3c0-7 4-11 10-11 0 7-3 11-10 11Z"/></svg>
+        <p>ช่วยให้เรื่องประกัน<br>เป็นเรื่องที่เข้าใจได้</p>
+        <span></span><small>ดูแลด้วยความเข้าใจ<br>ให้คำแนะนำอย่างมั่นใจ</small>
+      </div>
       <div class="sidebar-footer">
-        <p class="eyebrow">Signed in as · role</p>
-        <select class="role-select" id="roleSelect" aria-label="Preview role">
-          <option value="owner">Owner / Administrator</option>
-          <option value="advisor">Adviser</option>
-          <option value="ops">Operations</option>
-          <option value="readonly">Read-only</option>
+        <p class="eyebrow">เข้าสู่ระบบด้วยสิทธิ์</p>
+        <select class="role-select" id="roleSelect" aria-label="Preview สิทธิ์การใช้งาน">
+          <option value="owner">เจ้าของ / Admin</option>
+          <option value="advisor">ที่ปรึกษา</option>
+          <option value="ops">ทีมงาน</option>
+          <option value="readonly">ดูอย่างเดียว</option>
         </select>
         <div class="user">
           <span class="avatar" id="userAvatar">CM</span>
           <span>
-            <strong id="userName">CoverMate admin</strong>
-            <span id="userMeta">Verifying session</span>
+            <strong id="userName">ผู้ดูแล CoverMate</strong>
+            <span id="userMeta">กำลังตรวจสอบสิทธิ์</span>
           </span>
         </div>
-        <button class="logout" type="button" data-action="logout">Log out</button>
+        <button class="logout" type="button" data-action="logout">ออกจากระบบ</button>
       </div>
     </aside>
 
     <div class="mobilebar">
-      <a class="brand" href="/admin" aria-label="CoverMate admin home" data-action="module" data-module="home">
+      <a class="brand" href="/admin" aria-label="หน้าแรกของ CoverMate Admin" data-action="module" data-module="home">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png?v=20260913-mate-gold" alt="CoverMate Insurance Advisory"></span>
         <span class="brand-sub">ADMIN</span>
       </a>
-      <select class="module-select" id="mobileModuleSelect" aria-label="Choose operations module"></select>
+      <select class="module-select" id="mobileModuleSelect" aria-label="เลือกเมนู Admin"></select>
+      <a class="home-public-link home-mobile-public" href="/" target="_blank" rel="noopener noreferrer" aria-label="ดูเว็บไซต์ (เปิดแท็บใหม่)" data-public-site><span>ดูเว็บไซต์</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6m0-6L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/></svg></a>
     </div>
 
     <main class="workspace">
       <header class="topbar">
         <label class="search" for="globalSearch">
           <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></span>
-          <input id="globalSearch" type="search" autocomplete="off" placeholder="Search records, phone, LINE, policy" />
+          <input id="globalSearch" type="search" autocomplete="off" aria-label="ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส" placeholder="ค้นหาชื่อ เบอร์โทร LINE หรือเลขเคส" />
         </label>
-        <span class="pill warn" id="dataMode"><span class="dot"></span>Connecting</span>
-        <button class="primary-button" type="button" id="newLeadButton" data-action="open-new-lead">+ New lead</button>
+        <span class="pill warn" id="dataMode"><span class="dot"></span>กำลังเชื่อมต่อ</span>
+        <button class="primary-button" type="button" id="newLeadButton" data-action="open-new-lead">+ เพิ่มเคส</button>
+        <a class="home-public-link home-desktop-public" href="/" target="_blank" rel="noopener noreferrer" data-public-site>ดูเว็บไซต์<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6m0-6L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/></svg></a>
       </header>
       <section class="screen" id="screen" aria-live="polite"></section>
     </main>

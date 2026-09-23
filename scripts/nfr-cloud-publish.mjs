@@ -6,6 +6,8 @@ import { startNfrServer } from './nfr-server.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 import { encryptBackup } from './lib/encrypted-backup.mjs';
 import { loadUatLocalEnv, resolveUatUrl, vercelBypassHeaders } from './lib/uat-env.mjs';
+import { CMS_CONTENT_VERSION } from '../covermate-contract.js';
+import { createSeoModel } from '../covermate-seo.mjs';
 loadUatLocalEnv();
 const cmsOnly = process.argv.includes('--cms-only');
 const hosted = process.env.COVERMATE_UAT_URL ? resolveUatUrl().url : null;
@@ -53,11 +55,27 @@ try {
   const slot = admin.locator('#hero h1[contenteditable=true], #hero h1 [contenteditable=true]').first();
   await slot.fill(marker, { timeout: 60000 });
   await slot.press('Tab');
-  await poll(async () => Object.values((await refs[1].get()).data().text || {}).includes(marker));
-  assert.ok(!Object.values((await refs[0].get()).data().text || {}).includes(marker), 'Draft must not become live before Publish.');
+  const heroTitle = state => state?.config?.sections?.find(section => section.id === 'hero')?.th?.title;
+  await poll(async () => heroTitle((await refs[1].get()).data()) === marker);
+  const baseline = (await refs[0].get()).data();
+  assert.notEqual(heroTitle(baseline), marker, 'Draft must not become live before Publish.');
   await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
-  await admin.getByRole('button', { name: 'Panel', exact: true }).click();
-  await admin.getByRole('button', { name: 'Brand & contact', exact: true }).click();
+  await admin.locator('[data-editor-reset]:visible').first().click();
+  await admin.locator('[data-admin-confirm] [data-confirm-accept]').waitFor();
+  await admin.screenshot({ path: 'uat-results/nfr/cloud-reset-confirm.png' });
+  await admin.locator('[data-admin-confirm] [data-confirm-accept]').click();
+  await poll(async () => heroTitle((await refs[1].get()).data()) === heroTitle(baseline));
+  assert.equal(heroTitle((await refs[0].get()).data()), heroTitle(baseline), 'Reset must not change published content.');
+  await admin.locator('[data-admin-confirm]').waitFor({ state: 'detached' });
+  await admin.locator('[data-editor-undo]:visible').first().click();
+  await poll(async () => heroTitle((await refs[1].get()).data()) === marker);
+  assert.equal(heroTitle((await refs[0].get()).data()), heroTitle(baseline), 'Undo Reset must update Draft only.');
+  await admin.screenshot({ path: 'uat-results/nfr/cloud-reset-undo.png' });
+  console.log('Hosted Reset and Undo readback passed; published content stayed unchanged.');
+  if (await admin.locator('#covermate-owner-tools-toggle').isChecked()) await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
+  await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
+  await admin.getByRole('button', { name: 'แผงเครื่องมือ', exact: true }).click();
+  await admin.getByRole('button', { name: 'แบรนด์และติดต่อ', exact: true }).click();
   await admin.locator('[data-cms-group="Licences"] summary').click();
   const licence = admin.locator('[data-cms-field="licences.life.number"]');
   await licence.fill('9000000001');
@@ -75,25 +93,51 @@ try {
   await inline.press('Tab');
   await poll(async () => (await refs[1].get()).data().config.publicCopy?.calcSpending?.th === marker + ' inline');
   assert.equal(await spending.inputValue(), marker + ' inline');
-  await admin.getByRole('button', { name: 'Edit English content' }).click();
+  await admin.getByRole('button', { name: 'แก้ไขเนื้อหาภาษาอังกฤษ' }).click();
   await admin.locator('[data-cms-field="publicCopy.calcSpending.en"]').fill('');
   await admin.locator('[data-cms-field="publicCopy.calcSpending.en"]').press('Tab');
   await poll(async () => (await refs[1].get()).data().config.publicCopy?.calcSpending?.en === '');
-  await admin.getByRole('button', { name: 'Edit Thai content' }).click();
-  await admin.getByRole('button', { name: 'Close admin panel', exact: true }).click();
+  await admin.getByRole('button', { name: 'แก้ไขเนื้อหาภาษาไทย' }).click();
+  await admin.getByRole('button', { name: 'ปิดแผง Admin', exact: true }).click();
   await admin.locator('label[for="covermate-owner-tools-toggle"]').click();
   await admin.getByRole('button', { name: /^Publish/ }).first().click();
   await admin.getByRole('button', { name: 'Publish', exact: true }).last().click();
-  await poll(async () => Object.values((await refs[0].get()).data().text || {}).includes(marker));
+  await poll(async () => heroTitle((await refs[0].get()).data()) === marker);
   assert.equal((await refs[0].get()).data().config.licences.life.number, '9000000001');
   assert.deepEqual((await refs[0].get()).data().config.publicCopy.calcSpending, { th: marker + ' inline', en: '' });
-  assert.equal((await refs[0].get()).data().config.cmsContentVersion, 2);
+  assert.equal((await refs[0].get()).data().config.cmsContentVersion, CMS_CONTENT_VERSION);
+  console.log('Published canonical hero, licence, TH/EN labels and current CMS schema verified in UAT Firestore.');
   const visitor = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await protectPreview(visitor, baseUrl);
   const page = await visitor.newPage();
-  await page.goto(`${baseUrl}/?cm_env=uat`);
-  await page.waitForFunction(marker => document.querySelector('#hero h1')?.textContent.includes(marker), marker, { timeout: 60000 });
-  await page.waitForFunction(() => document.querySelector('#hero')?.textContent.includes('9000000001') && document.querySelector('#covermate-jsonld')?.textContent.includes('9000000001'));
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  const navigation = await page.goto(`${baseUrl}/?cm_env=uat`);
+  const html = await navigation.text();
+  const seed = JSON.parse(html.match(/<script[^>]*id="covermate-published-state"[^>]*>([\s\S]*?)<\/script>/)?.[1] || 'null');
+  const visitorStart = Date.now();
+  const visitorReadback = { status: navigation.status(), siteId: seed?.siteId, initialSeedCurrent: heroTitle(seed?.state) === marker,
+    cacheControl: navigation.headers()['cache-control'], age: navigation.headers().age || null, vercelCache: navigation.headers()['x-vercel-cache'] || null };
+  console.log('Fresh Visitor response:', JSON.stringify(visitorReadback));
+  try {
+    // Existing server cache is 30s; a seeded Visitor refreshes Live every 60s.
+    // Allow that first refresh plus its bounded request to finish.
+    await page.waitForFunction(marker => document.querySelector('#hero h1')?.textContent.includes(marker), marker, { timeout: 90000 });
+  } catch (error) {
+    visitorReadback.browser = await page.evaluate(marker => ({ environment: window.__covermateRemoteContent, title: document.title,
+      visibleMarker: document.querySelector('#hero h1')?.textContent.includes(marker) || false,
+      loadedMarker: window.__covermateLiveState?.config?.sections?.find(section => section.id === 'hero')?.th?.title === marker }), marker);
+    fs.writeFileSync('uat-results/nfr/cloud-publish-failure.json', JSON.stringify({ ...visitorReadback, pageErrors }, null, 2));
+    await page.screenshot({ path: 'uat-results/nfr/cloud-publish-failure.png' });
+    throw error;
+  }
+  visitorReadback.readbackMs = Date.now() - visitorStart;
+  assert.deepEqual(pageErrors, [], 'Hosted fresh Visitor has no browser runtime errors.');
+  await page.waitForFunction(() => document.querySelector('#hero')?.textContent.includes('9000000001'));
+  assert.match(await page.locator('meta[name="robots"]').getAttribute('content'), /noindex/);
+  assert.equal(await page.locator('#covermate-jsonld').count(), 0, 'UAT must omit public structured data.');
+  const publishedSeo = createSeoModel((await refs[0].get()).data().config);
+  assert.ok(JSON.stringify(publishedSeo.graph).includes('9000000001'), 'Published config must feed the public licence metadata.');
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
   assert.equal(await page.locator('[data-cms-copy="publicCopy.calcSpending"]').innerText(), marker + ' inline');
   await page.getByRole('link', { name: 'Switch to English' }).click();
@@ -111,18 +155,19 @@ try {
     await form.locator('button[type=submit]').click();
     const response = await responsePromise;
     assert.equal(response.status(), 200, 'Hosted form must pass real App Check.');
-    const { id } = await response.json();
+    const receipt = await response.json();
+    assert.equal(receipt.accepted, true);
+    const id = (await db.collection('contactLeadsUat').where('caseRecord.caseNumber', '==', receipt.reference).get()).docs[0].id;
     assert.equal((await db.doc(`contactLeadsUat/${id}`).get()).data().name, marker);
     await form.getByText('ได้รับข้อมูลแล้ว เราจะติดต่อกลับโดยเร็วที่สุด').waitFor();
     await admin.goto(`${baseUrl}/admin#operations`);
-    await admin.locator('[data-action=op-tab][data-tab=leads]').first().click();
     await admin.getByText(marker, { exact: true }).first().waitFor();
     hostedLeadReadback = true;
     console.log('Hosted form App Check, Firestore and Admin lead readback passed.');
   }
   await page.screenshot({ path: 'uat-results/nfr/cloud-publish-visitor.png' });
   await admin.screenshot({ path: 'uat-results/nfr/cloud-publish-admin.png' });
-  fs.writeFileSync('uat-results/nfr/cloud-publish.json', JSON.stringify({ backend: 'real Firebase Auth + Firestore', frontend: hosted ? hosted.origin : 'local candidate build', site: 'covermate-uat', auth: 'signed UAT-only custom token', draftIsolation: true, publishViaButton: true, freshVisitorReadback: true, cmsLicenceAndMetadata: true, cmsV2InlineAdminSync: true, explicitEnglishBlank: true, hostedLeadReadback, hostedLeadSkipped: cmsOnly ? 'CMS-only release scope; lead API and App Check unchanged' : null, productionContentWrites: 0 }, null, 2));
+  fs.writeFileSync('uat-results/nfr/cloud-publish.json', JSON.stringify({ backend: 'real Firebase Auth + Firestore', frontend: hosted ? hosted.origin : 'local candidate build', site: 'covermate-uat', auth: 'signed UAT-only custom token', draftIsolation: true, resetDraftReadback: true, undoResetReadback: true, publishViaButton: true, freshVisitorReadback: true, visitorReadback, cmsLicenceReadback: true, uatNoindexWithoutStructuredData: true, publishedConfigPublicSeoModel: true, cmsInlineAdminSync: true, explicitEnglishBlank: true, hostedLeadReadback, hostedLeadSkipped: cmsOnly ? 'CMS-only scope; no hosted lead was submitted by this test' : null, productionContentWrites: 0 }, null, 2));
   console.log('Cloud UAT: real Admin edit/publish -> Firestore -> fresh Visitor passed.');
 } finally {
   if (browser) {
@@ -140,7 +185,7 @@ try {
       }
     });
     console.log('UAT fixture restored without overwriting changes from other accounts.');
-  } finally { await adminRef.update({ active: false }); }
+  } finally { await adminRef.update({ active: false }); console.log('Temporary UAT owner deactivated.'); }
 }
 async function protectPreview(context, baseUrl) {
   if (!hosted) return;

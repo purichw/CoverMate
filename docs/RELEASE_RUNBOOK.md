@@ -1,14 +1,27 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-09-21
+Last updated: 2026-09-23
 
 ## Current Authorization
 
-The owner explicitly resumed the September 21 release, selected Cloudinary Free,
-and requested all pending work on production. The earlier hold is superseded;
-Firebase Storage remains rejected. [HANDOFF.md](HANDOFF.md) records deployment,
-CMS migration and check status. [CMS_MEDIA.md](CMS_MEDIA.md) owns credentials,
-cost boundaries and hosted upload checks. Do not bypass the exact-SHA CI gate.
+The owner authorized push/deploy of the work in this chat on September 23.
+The active scope is the isolated candidate listed in
+[RELEASE_CHAT_20260923.md](RELEASE_CHAT_20260923.md): loading, custom errors,
+Admin Home/Cases/Thai, CMS history/reset, independent cleanup and final offline
+deliverables. It does not include all pending work in the original checkout.
+Preserve unrelated calculator/public redesign/consent/Admin structure changes.
+
+This is a code/assets and compatible Cases Rules release: **do not run a content
+migration, Publish a Draft, reseed customer records or apply a bulk data
+migration.** Reset Draft is a user-operated editor feature, not a rollout step.
+Final SHA, full CI, hosted UAT and production readback remain separately recorded
+gates; do not bypass the exact-SHA CI requirement.
+
+Historical September 21 authorization selected Cloudinary Free; Firebase Storage
+remains rejected. [HANDOFF.md](HANDOFF.md) preserves earlier deployment records.
+[CMS_MEDIA.md](CMS_MEDIA.md) owns credentials, cost boundaries and hosted upload
+checks. Older migration instructions below are reference procedures only and do
+not authorize or require those operations for the September 23 release.
 
 ## Production
 
@@ -194,13 +207,15 @@ When a dedicated UAT test admin is used, its `admins/{uid}` document should have
 After production deployment:
 
 ```bash
-COVERMATE_HANDOFF_DIR=/path/to/covermate-home-codex-handoff-v1.0 node scripts/release-home-content.mjs --site=covermate
-# Apply only after reviewing the dry-run; see HOME_REDESIGN.md.
 node scripts/production-release-smoke.mjs
 COVERMATE_URL=https://covermateinsurance.com npm run smoke
 ```
 
-The focused production-release smoke is read-only: TH/EN Home/Motor, CMS v5,
+Do not run `scripts/release-home-content.mjs` for this release. That historical
+Home migration has its own dry-run/apply procedure in `HOME_REDESIGN.md`; it
+needs a separately authorized content change and is not a deployment prerequisite.
+
+The focused production-release smoke is read-only: TH/EN Home/Motor, current CMS schema,
 responsive snapshots, exact served assets, private noindex, upload rejection,
 canonical redirects and sitemap. Personally inspect its captured images.
 It does not log in, submit enquiries or publish CMS data.
@@ -299,9 +314,9 @@ Minimum checks:
   without owner chrome
 - unauthenticated owner routes redirect to `/admin/login`
 - body/UI/form text uses the Google Sans family in both Thai and English
-- visible Admin chrome/action labels are English-only: `Panel`, `Edit text`,
-  `Main`, `Public site`, `Save draft`, `Preview`, `Publish`,
-  `Success`, and `Log out`
+- Admin controls use natural Thai with conventional `Save draft`, `Preview`,
+  `Publish` and service names. Verify TH/EN content editing keeps Thai controls
+  and does not overwrite the other content language (`docs/ADMIN_LANGUAGE.md`).
 - Firestore live content hydrates before public/Admin Portal rendering; stale
   local cache must not override a successful `states/live` read
 - the `#fit` Needs Calculator uses the current `fit.calculator` methodology
@@ -401,7 +416,11 @@ The expression should return `null`.
 Only run this section after the user explicitly approves commit, push, and
 deploy in the current task.
 
-For the server-side lead migration, configure Vercel server secrets and verify
+The September 23 candidate retains the existing server-side intake and adds
+Cases contracts/rules. Verify compatible API/site behavior before applying its
+Rules; no legacy lead or CMS content migration is part of rollout.
+
+Historical server-side lead migration guidance: configure Vercel server secrets and verify
 real App Check submission on a registered preview hostname first. See
 [NFR_HARDENING.md](NFR_HARDENING.md) for backup and hosted verification.
 
@@ -414,11 +433,13 @@ node scripts/check-deployment-gate.mjs
 firebase deploy --only firestore:rules --project covermate-purich
 ```
 
-The candidate form uses the server API; the old form writes directly to
-Firestore. Deploy and verify the candidate API/site before denying anonymous
-direct writes with the new rules. Re-run the hosted UAT publish/form test after
-the rules deploy. Existing tabs may need a refresh. A rollback must restore
-compatible app and rules together, never CMS content automatically.
+For the historical direct-write-to-server migration, the old form wrote directly
+to Firestore; compatible API/site code had to precede denying anonymous writes.
+The active Cases release must likewise keep app/API and Rules compatible and
+rerun its hosted UAT checks after Rules deployment. Existing tabs may need a
+refresh. A rollback must preserve canonical Cases data and compatible protection;
+never restore CMS content automatically or reopen direct writes to canonical
+records. See `ADMIN_CASES_V2.md`.
 
 Inspect production deployment:
 

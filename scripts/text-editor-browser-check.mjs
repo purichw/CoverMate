@@ -85,17 +85,17 @@ async function newPage(browser, baseUrl) {
 }
 
 async function selectSection(page, sectionId) {
-  await page.getByRole("button", { name: "Sections", exact: true }).click();
+  await page.getByRole("button", { name: "ส่วนต่าง ๆ", exact: true }).click();
   const row = page.locator(`[data-admin-section-row="${sectionId}"]`).first();
   await row.scrollIntoViewIfNeeded();
   await row.locator(`[data-admin-section-edit="${sectionId}"]`).click();
   await page.waitForFunction(
     (id) => Array.from(document.querySelectorAll("aside"))
-      .some((aside) => /Admin portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${id}`)),
+      .some((aside) => /Admin Portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${id}`)),
     sectionId,
     { timeout: 10000 }
   );
-  await page.getByRole("button", { name: "Content", exact: true }).click();
+  await page.getByRole("button", { name: "เนื้อหา", exact: true }).click();
 }
 
 async function clickVisibility(locator, label) {
@@ -115,7 +115,7 @@ async function sectionState(page, sectionId) {
 async function verifyInlineEmptyPersistence(page, baseUrl) {
   await page.goto(`${baseUrl}/admin/edit`, { waitUntil: "load", timeout: 30000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
-  await page.locator('[contenteditable="true"][data-ek]').first().waitFor({ state: "visible", timeout: 15000 });
+  await page.locator('#hero h1[contenteditable="true"][data-ek], #hero h1 [contenteditable="true"][data-ek]').first().waitFor({ state: "visible", timeout: 15000 });
 
   const target = await page.evaluate(() => {
     const visible = (el) => {
@@ -123,9 +123,11 @@ async function verifyInlineEmptyPersistence(page, baseUrl) {
       const rect = el.getBoundingClientRect();
       return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
     };
-    const el = Array.from(document.querySelectorAll('[contenteditable="true"][data-ek]'))
-      .find((node) => !node.closest("[data-admin-owner-bar]") && visible(node) && (node.textContent || "").trim().length > 2);
-    if (!el) return null;
+    // Use a persistent copy slot. Blank navigation labels are intentionally
+    // omitted from the rendered menu, so an arbitrary first editable is not
+    // evidence that a cleared content slot can be edited again after reload.
+    const el = document.querySelector('#hero h1[contenteditable="true"][data-ek], #hero h1 [contenteditable="true"][data-ek]');
+    if (!el || !visible(el) || !(el.textContent || "").trim()) return null;
     el.setAttribute("data-browser-empty-target", "true");
     return { key: el.getAttribute("data-ek"), text: el.textContent };
   });
@@ -139,7 +141,10 @@ async function verifyInlineEmptyPersistence(page, baseUrl) {
   await page.waitForFunction(
     (key) => {
       const text = JSON.parse(window.localStorage.getItem("purich-draft-text-v3") || "{}");
-      return Object.prototype.hasOwnProperty.call(text, key) && text[key] === "";
+      const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+      // Semantic inline copy commits into config on blur; positional legacy
+      // overrides still live in the text map. Both must preserve an empty slot.
+      return key.startsWith('cms:') ? window.CoverMateContract.cmsGet(config, key.slice(4)) === '' : Object.prototype.hasOwnProperty.call(text, key) && text[key] === "";
     },
     target.key,
     { timeout: 10000 }
@@ -148,9 +153,12 @@ async function verifyInlineEmptyPersistence(page, baseUrl) {
   const blankState = await page.evaluate((key) => {
     const el = Array.from(document.querySelectorAll(`[data-ek]`)).find((node) => node.getAttribute("data-ek") === key);
     const text = JSON.parse(window.localStorage.getItem("purich-draft-text-v3") || "{}");
+    const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+    const value = key.startsWith('cms:') ? window.CoverMateContract.cmsGet(config, key.slice(4)) : text[key];
     return {
-      persisted: Object.prototype.hasOwnProperty.call(text, key),
-      value: text[key],
+      persisted: value !== undefined,
+      value,
+      renderedText: el?.textContent,
       emptyAttr: el?.getAttribute("data-om-empty") || "",
       label: el?.getAttribute("data-empty-label") || "",
       contentEditable: el?.getAttribute("contenteditable") || ""
@@ -158,18 +166,28 @@ async function verifyInlineEmptyPersistence(page, baseUrl) {
   }, target.key);
   assert.equal(blankState.persisted, true, "Empty inline override was not saved");
   assert.equal(blankState.value, "", "Empty inline override changed value");
+  assert.equal(blankState.renderedText, "", "Cleared inline content was not rendered as blank");
   assert.equal(blankState.emptyAttr, "true", "Empty inline element did not keep placeholder state");
   assert.equal(blankState.contentEditable, "true", "Empty inline element stopped being editable");
 
   await page.reload({ waitUntil: "load", timeout: 30000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
+  await page.waitForFunction(
+    (key) => Array.from(document.querySelectorAll('[contenteditable="true"][data-ek]'))
+      .some((node) => node.getAttribute('data-ek') === key),
+    target.key,
+    { timeout: 15000 }
+  );
   const reloadState = await page.evaluate((key) => {
     const el = Array.from(document.querySelectorAll(`[data-ek]`)).find((node) => node.getAttribute("data-ek") === key);
     const text = JSON.parse(window.localStorage.getItem("purich-draft-text-v3") || "{}");
+    const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+    const value = key.startsWith('cms:') ? window.CoverMateContract.cmsGet(config, key.slice(4)) : text[key];
     return {
       hasElement: !!el,
-      persisted: Object.prototype.hasOwnProperty.call(text, key),
-      value: text[key],
+      persisted: value !== undefined,
+      value,
+      renderedText: el?.textContent,
       emptyAttr: el?.getAttribute("data-om-empty") || "",
       label: el?.getAttribute("data-empty-label") || "",
       contentEditable: el?.getAttribute("contenteditable") || ""
@@ -178,34 +196,48 @@ async function verifyInlineEmptyPersistence(page, baseUrl) {
   assert.equal(reloadState.hasElement, true, "Empty inline slot disappeared after reload");
   assert.equal(reloadState.persisted, true, "Empty inline override disappeared after reload");
   assert.equal(reloadState.value, "", "Empty inline override did not reload as an empty string");
+  assert.equal(reloadState.renderedText, "", "Reloaded inline slot rendered fallback text instead of the saved blank");
   assert.equal(reloadState.emptyAttr, "true", "Empty inline placeholder did not reload");
   assert.equal(reloadState.contentEditable, "true", "Empty inline slot was not editable after reload");
+  const reloadedTarget = page.locator(`[data-ek="${target.key}"]`).first();
+  const refillText = 'หัวข้อที่แก้ไขหลัง Reload';
+  await reloadedTarget.fill(refillText);
+  await reloadedTarget.press('Tab');
+  await page.waitForFunction(
+    ({ key, expected }) => {
+      const config = JSON.parse(window.localStorage.getItem('purich-draft-config-v3') || '{}');
+      const text = JSON.parse(window.localStorage.getItem('purich-draft-text-v3') || '{}');
+      return (key.startsWith('cms:') ? window.CoverMateContract.cmsGet(config, key.slice(4)) : text[key]) === expected;
+    },
+    { key: target.key, expected: refillText },
+    { timeout: 10000 }
+  );
   return target.key;
 }
 
 async function verifyItemControls(page, baseUrl) {
   await page.goto(`${baseUrl}/admin/content`, { waitUntil: "load", timeout: 30000 });
-  await waitForText(page, /Admin portal/);
+  await waitForText(page, /Admin Portal/);
   await selectSection(page, "faq");
 
   const before = await sectionState(page, "faq");
   assert.ok(before?.items?.length, "FAQ repeatable items missing");
   const firstId = before.items[0].id;
   const row = page.locator(`[data-admin-repeatable-id="${firstId}"]`).first();
-  await clickVisibility(row, "Hide");
-  await row.getByText("Hidden", { exact: true }).waitFor({ timeout: 10000 });
+  await clickVisibility(row, "ซ่อน");
+  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
   let current = await sectionState(page, "faq");
   assert.equal(current.items.length, before.items.length, "Hiding an item deleted it");
   assert.equal(current.items[0].id, firstId, "Hiding an item changed its id");
   assert.equal(current.items[0].on, false, "Item hide did not set on=false");
 
-  await clickVisibility(row, "Restore");
-  await row.getByText("Visible", { exact: true }).waitFor({ timeout: 10000 });
+  await clickVisibility(row, "แสดงอีกครั้ง");
+  await row.getByText("แสดงอยู่", { exact: true }).waitFor({ timeout: 10000 });
   current = await sectionState(page, "faq");
   assert.equal(current.items.length, before.items.length, "Restoring an item duplicated it");
   assert.equal(current.items[0].on, true, "Item restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ Add question", exact: true }).click();
+  await page.getByRole("button", { name: "+ เพิ่มคำถาม", exact: true }).click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -230,20 +262,20 @@ async function verifyCardControls(page) {
   assert.ok(before?.cards?.length, "Insurer repeatable cards missing");
   const firstId = before.cards[0].id;
   const row = page.locator(`[data-admin-repeatable-card-id="${firstId}"]`).first();
-  await clickVisibility(row, "Hide");
-  await row.getByText("Hidden", { exact: true }).waitFor({ timeout: 10000 });
+  await clickVisibility(row, "ซ่อน");
+  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
   let current = await sectionState(page, "insurers");
   assert.equal(current.cards.length, before.cards.length, "Hiding a card deleted it");
   assert.equal(current.cards[0].id, firstId, "Hiding a card changed its id");
   assert.equal(current.cards[0].on, false, "Card hide did not set on=false");
 
-  await clickVisibility(row, "Restore");
-  await row.getByText("Visible", { exact: true }).waitFor({ timeout: 10000 });
+  await clickVisibility(row, "แสดงอีกครั้ง");
+  await row.getByText("แสดงอยู่", { exact: true }).waitFor({ timeout: 10000 });
   current = await sectionState(page, "insurers");
   assert.equal(current.cards.length, before.cards.length, "Restoring a card duplicated it");
   assert.equal(current.cards[0].on, true, "Card restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ Add insurer card", exact: true }).click();
+  await page.getByRole("button", { name: "+ เพิ่มการ์ดบริษัทประกัน", exact: true }).click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -269,21 +301,21 @@ async function verifyHeadControls(page) {
   const firstId = before.heads[0].id;
   const row = page.locator(`[data-admin-repeatable-head-id="${firstId}"]`).first();
   const firstTierCellCount = before.items?.[0]?.st?.length || 0;
-  await clickVisibility(row, "Hide");
-  await row.getByText("Hidden", { exact: true }).waitFor({ timeout: 10000 });
+  await clickVisibility(row, "ซ่อน");
+  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
   let current = await sectionState(page, "tiers");
   assert.equal(current.heads.length, before.heads.length, "Hiding a column deleted it");
   assert.equal(current.heads[0].id, firstId, "Hiding a column changed its id");
   assert.equal(current.heads[0].on, false, "Column hide did not set on=false");
   assert.equal(current.items?.[0]?.st?.length || 0, firstTierCellCount, "Column hide changed tier row cell count");
 
-  await clickVisibility(row, "Restore");
-  await row.getByText("Visible", { exact: true }).waitFor({ timeout: 10000 });
+  await clickVisibility(row, "แสดงอีกครั้ง");
+  await row.getByText("แสดงอยู่", { exact: true }).waitFor({ timeout: 10000 });
   current = await sectionState(page, "tiers");
   assert.equal(current.heads.length, before.heads.length, "Restoring a column duplicated it");
   assert.equal(current.heads[0].on, true, "Column restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ Add column", exact: true }).click();
+  await page.getByRole("button", { name: "+ เพิ่มคอลัมน์", exact: true }).click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -302,19 +334,19 @@ async function verifyHeadControls(page) {
 }
 
 async function hideSectionFromBuilder(page, sectionId) {
-  await page.getByRole("button", { name: "Sections", exact: true }).click();
+  await page.getByRole("button", { name: "ส่วนต่าง ๆ", exact: true }).click();
   const row = page.locator(`[data-admin-section-row="${sectionId}"]`).first();
   await row.scrollIntoViewIfNeeded();
-  const status = row.getByText("Hidden", { exact: true });
+  const status = row.getByText("ซ่อนอยู่", { exact: true });
   if (!(await status.count())) {
-    await row.locator('button[aria-label="Toggle section"]').first().click();
+    await row.locator('button[aria-label="แสดงหรือซ่อนส่วนนี้"]').first().click();
   }
-  await row.getByText("Hidden", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
 }
 
 async function verifyHiddenSectionTargetLinks(page, baseUrl) {
   await page.goto(`${baseUrl}/admin/content`, { waitUntil: "load", timeout: 30000 });
-  await waitForText(page, /Admin portal/);
+  await waitForText(page, /Admin Portal/);
   for (const sectionId of ["fit", "claim", "privacy", "talk"]) {
     await hideSectionFromBuilder(page, sectionId);
   }
@@ -355,11 +387,11 @@ async function verifyClosePanelStaysInEditor(page, baseUrl) {
   await page.locator('[contenteditable="true"][data-ek]').first().waitFor({ state: "visible", timeout: 15000 });
 
   await page.locator('label[for="covermate-owner-tools-toggle"]').click();
-  await page.getByRole("button", { name: "Panel", exact: true }).click();
-  const panel = page.locator("aside").filter({ hasText: "Admin portal" }).first();
+  await page.getByRole("button", { name: "แผงเครื่องมือ", exact: true }).click();
+  const panel = page.locator("aside").filter({ hasText: "Admin Portal" }).first();
   await panel.waitFor({ state: "visible", timeout: 15000 });
 
-  await page.getByTitle("Close panel").click();
+  await page.getByTitle("ปิดแผงเครื่องมือ").click();
   await panel.waitFor({ state: "hidden", timeout: 10000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   await page.locator('[contenteditable="true"][data-ek]').first().waitFor({ state: "visible", timeout: 15000 });
@@ -371,7 +403,7 @@ async function verifyClosePanelStaysInEditor(page, baseUrl) {
     editableCount: document.querySelectorAll('[contenteditable="true"][data-ek]').length,
     adminPanelVisible: Array.from(document.querySelectorAll("aside")).some((aside) => {
       const style = window.getComputedStyle(aside);
-      return /Admin portal/.test(aside.innerText || "") && style.display !== "none" && style.visibility !== "hidden" && aside.getBoundingClientRect().width > 0;
+      return /Admin Portal/.test(aside.innerText || "") && style.display !== "none" && style.visibility !== "hidden" && aside.getBoundingClientRect().width > 0;
     })
   }));
   assert.equal(state.path, "/admin/edit", "Closing the panel from editor did not stay on /admin/edit");

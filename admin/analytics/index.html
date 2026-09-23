@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -546,70 +546,70 @@
   </style>
 </head>
 <body data-auth-state="checking">
-  <div class="auth-check" role="status" aria-live="polite">Checking admin access...</div>
+  <div class="auth-check" role="status" aria-live="polite">กำลังตรวจสอบสิทธิ์ผู้ดูแล…</div>
   <main class="shell">
     <header class="topbar">
-      <a class="brand" href="/admin" aria-label="Back to CoverMate admin main">
+      <a class="brand" href="/admin" aria-label="กลับหน้าแรกของ Admin">
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png?v=20260913-mate-gold" alt="CoverMate Insurance Advisory"></span>
         <span class="brand-name">
-          <span>Admin · analytics</span>
+          <span>Admin · Analytics</span>
         </span>
       </a>
-      <nav class="actions" aria-label="Admin actions">
-        <a class="btn" href="/admin">Main</a>
-        <a class="btn" href="/" target="_blank" rel="noopener noreferrer" id="public-site-link">Public site</a>
-        <button class="btn btn-dark" id="logout" type="button">Log out</button>
+      <nav class="actions" aria-label="เมนู Admin">
+        <a class="btn" href="/admin">หน้าแรก</a>
+        <a class="btn" href="/" target="_blank" rel="noopener noreferrer" id="public-site-link">ดูเว็บไซต์</a>
+        <button class="btn btn-dark" id="logout" type="button">ออกจากระบบ</button>
       </nav>
     </header>
 
     <section class="hero" aria-labelledby="analytics-title">
       <div>
-        <div class="eyebrow">Owner analytics</div>
+        <div class="eyebrow">สถิติสำหรับเจ้าของเว็บไซต์</div>
         <h1 id="analytics-title">Analytics</h1>
         <p>
-          A private operating view for traffic quality, consultation intent, and lead capture.
-          Firestore leads render live when available. GA4 traffic charts connect through the
-          private server-side Data API when the production secrets are configured.
+          ดูสถิติผู้เข้าชม ความสนใจติดต่อ และเคสจากเว็บไซต์ในที่เดียว
+          ข้อมูลเคสเชื่อมจาก Firestore ส่วนสถิติผู้เข้าชมเชื่อมจาก GA4 Data API
+          เมื่อตั้งค่าการเชื่อมต่อบนเซิร์ฟเวอร์แล้ว
         </p>
       </div>
-      <aside class="status-card" aria-label="Analytics connection status">
+      <aside class="status-card" aria-label="สถานะการเชื่อมต่อ Analytics">
         <div class="status-row">
           <div>
             <div class="eyebrow">GA4 measurement</div>
             <strong id="measurement-id">G-5TF3C235EF</strong>
           </div>
-          <span class="pill">Installed</span>
+          <span class="pill">ติดตั้งแล้ว</span>
         </div>
         <div class="status-row">
           <div>
             <div class="eyebrow">Data API</div>
-            <strong id="data-api-status">Checking</strong>
+            <strong id="data-api-status">กำลังตรวจสอบ</strong>
           </div>
-          <span class="pill pill-warn" id="data-api-pill">Checking</span>
+          <span class="pill pill-warn" id="data-api-pill">กำลังตรวจสอบ</span>
         </div>
       </aside>
     </section>
 
-    <section class="grid kpis" aria-label="Analytics KPIs">
+    <section class="grid kpis" aria-label="สถิติสำคัญ">
       <article class="metric">
         <span>Sessions</span>
         <strong class="mono" data-kpi="sessions">N/A</strong>
-        <small id="sessions-kpi-note">Checking GA4 Data API...</small>
+        <small id="sessions-kpi-note">กำลังตรวจสอบ GA4 Data API…</small>
       </article>
       <article class="metric">
-        <span>Active users</span>
+        <span>ผู้ใช้งาน</span>
         <strong class="mono" data-kpi="users">N/A</strong>
-        <small id="users-kpi-note">Checking GA4 Data API...</small>
+        <small id="users-kpi-note">กำลังตรวจสอบ GA4 Data API…</small>
       </article>
       <article class="metric">
-        <span>Leads saved</span>
+        <span>เคสที่บันทึก</span>
         <strong class="mono" data-kpi="leads">0</strong>
-        <small id="lead-kpi-note">Loading Firestore leads...</small>
+        <small id="lead-kpi-note">กำลังโหลดเคสจาก Firestore…</small>
       </article>
       <article class="metric">
-        <span>Lead conversion</span>
+        <span>อัตราเปลี่ยนเป็นเคส</span>
         <strong class="mono" data-kpi="conversion">N/A</strong>
-        <small id="conversion-kpi-note">Needs both Firestore leads and GA4 sessions.</small>
+        <small id="conversion-kpi-note">ใช้จำนวนเคสจาก Firestore เทียบกับ Sessions จาก GA4</small>
       </article>
     </section>
 
@@ -617,24 +617,24 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Traffic to consultation</div>
-            <h2>Visitor funnel</h2>
-            <p>Best read as counts by stage: page views, contact intent, form start, lead saved.</p>
+            <div class="eyebrow">จากผู้เข้าชมสู่การติดต่อ</div>
+            <h2>Funnel ผู้เข้าชม</h2>
+            <p>จำนวนในแต่ละขั้น: ดูหน้าเว็บ สนใจติดต่อ เริ่มกรอกฟอร์ม และบันทึกเคส</p>
           </div>
-          <span class="pill pill-warn" id="traffic-status">Checking</span>
+          <span class="pill pill-warn" id="traffic-status">กำลังตรวจสอบ</span>
         </div>
-        <div class="svg-frame" id="funnel-chart" aria-label="Visitor funnel chart"></div>
+        <div class="svg-frame" id="funnel-chart" aria-label="กราฟ Funnel ของผู้เข้าชม"></div>
       </article>
 
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Last 30 days</div>
-            <h2>Lead trend</h2>
-            <p>Firestore submissions by day. This updates once the public form captures leads.</p>
+            <div class="eyebrow">30 วันที่ผ่านมา</div>
+            <h2>แนวโน้มเคส</h2>
+            <p>จำนวนเคสรายวันจาก Firestore อัปเดตเมื่อมีผู้ส่งฟอร์มบนเว็บไซต์</p>
           </div>
         </div>
-        <div class="svg-frame" id="lead-trend" aria-label="Daily lead trend chart"></div>
+        <div class="svg-frame" id="lead-trend" aria-label="กราฟจำนวนเคสรายวัน"></div>
       </article>
     </section>
 
@@ -642,9 +642,9 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Intent mix</div>
-            <h2>Enquiry type</h2>
-            <p>Quote, comparison, policy review, claims, and general questions.</p>
+            <div class="eyebrow">เรื่องที่ต้องการปรึกษา</div>
+            <h2>ประเภทคำถาม</h2>
+            <p>ขอใบเสนอราคา เปรียบเทียบแผน ตรวจกรมธรรม์ เคลม และสอบถามทั่วไป</p>
           </div>
         </div>
         <div class="bar-list" id="enquiry-bars"></div>
@@ -653,9 +653,9 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Coverage mix</div>
-            <h2>Product interest</h2>
-            <p>Life, health, motor, accident, savings, or still unsure.</p>
+            <div class="eyebrow">ความสนใจด้านประกัน</div>
+            <h2>ประเภทประกันที่สนใจ</h2>
+            <p>ชีวิต สุขภาพ รถยนต์ อุบัติเหตุ สะสมทรัพย์ หรือยังไม่แน่ใจ</p>
           </div>
         </div>
         <div class="bar-list" id="coverage-bars"></div>
@@ -666,25 +666,25 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Lead operations</div>
-            <h2>Recent leads</h2>
-            <p>Private admin-only view. Contact details stay out of Google Analytics.</p>
+            <div class="eyebrow">ติดตามเคส</div>
+            <h2>เคสล่าสุด</h2>
+            <p>เฉพาะผู้ดูแลระบบ ข้อมูลติดต่อจะไม่ถูกส่งไป Google Analytics</p>
           </div>
-          <span class="pill" id="lead-status">Loading</span>
+          <span class="pill" id="lead-status">กำลังโหลด</span>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Created</th>
-                <th>Name</th>
-                <th>Contact</th>
-                <th>Intent</th>
-                <th>Coverage</th>
+                <th>วันที่สร้าง</th>
+                <th>ชื่อ</th>
+                <th>ข้อมูลติดต่อ</th>
+                <th>เรื่องที่ปรึกษา</th>
+                <th>ประกันที่สนใจ</th>
               </tr>
             </thead>
             <tbody id="recent-leads">
-              <tr><td colspan="5" class="muted">Loading Firestore leads...</td></tr>
+              <tr><td colspan="5" class="muted">กำลังโหลดเคสจาก Firestore…</td></tr>
             </tbody>
           </table>
         </div>
@@ -693,23 +693,23 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Acquisition</div>
-            <h2>Channel quality</h2>
-            <p>Designed for GA4 session source/channel data once the backend export is connected.</p>
+            <div class="eyebrow">ที่มาของผู้เข้าชม</div>
+            <h2>สถิติแต่ละช่องทาง</h2>
+            <p>ดูที่มาและช่องทางของ Sessions จาก GA4 เมื่อเชื่อมต่อข้อมูลแล้ว</p>
           </div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Channel</th>
+                <th>ช่องทาง</th>
                 <th>Sessions</th>
-                <th>Leads</th>
-                <th>CVR</th>
+                <th>Events</th>
+                <th>สัดส่วน Sessions</th>
               </tr>
             </thead>
             <tbody id="acquisition-rows">
-              <tr><td class="muted" colspan="4">Checking GA4 Data API...</td></tr>
+              <tr><td class="muted" colspan="4">กำลังตรวจสอบ GA4 Data API…</td></tr>
             </tbody>
           </table>
         </div>
@@ -720,9 +720,9 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Audience</div>
-            <h2>Device mix</h2>
-            <p>Session split by device category from GA4.</p>
+            <div class="eyebrow">ผู้เข้าชม</div>
+            <h2>ประเภทอุปกรณ์</h2>
+            <p>สัดส่วน Sessions แยกตามอุปกรณ์จาก GA4</p>
           </div>
         </div>
         <div class="bar-list" id="device-bars"></div>
@@ -731,22 +731,22 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <div class="eyebrow">Content</div>
-            <h2>Top pages</h2>
-            <p>GA4 page views by path. Public content only; admin routes are not tracked.</p>
+            <div class="eyebrow">เนื้อหา</div>
+            <h2>หน้าเว็บยอดนิยม</h2>
+            <p>ยอดดูแต่ละหน้าจาก GA4 เฉพาะเว็บไซต์สาธารณะ ไม่เก็บสถิติหน้า Admin</p>
           </div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Page</th>
-                <th>Views</th>
-                <th>Users</th>
+                <th>หน้าเว็บ</th>
+                <th>ยอดดู</th>
+                <th>ผู้ใช้งาน</th>
               </tr>
             </thead>
             <tbody id="page-rows">
-              <tr><td class="muted" colspan="3">Checking GA4 Data API...</td></tr>
+              <tr><td class="muted" colspan="3">กำลังตรวจสอบ GA4 Data API…</td></tr>
             </tbody>
           </table>
         </div>
@@ -756,23 +756,23 @@
     <section class="panel" style="margin-top:clamp(14px,2vw,20px)">
       <div class="panel-head">
         <div>
-          <div class="eyebrow">Data contract</div>
-          <h2>What this page expects</h2>
-          <p>Charts are separated by data type so future reporting stays accurate and privacy-safe.</p>
+          <div class="eyebrow">เกี่ยวกับข้อมูล</div>
+          <h2>ข้อมูลที่ใช้ในหน้านี้</h2>
+          <p>แยกข้อมูลแต่ละประเภทเพื่อให้รายงานถูกต้องและรักษาความเป็นส่วนตัว</p>
         </div>
       </div>
       <div class="contract">
         <div>
           <strong>GA4 events</strong>
-          Sessions, users, page views, CTA clicks, form starts, form submit success, channel, device, language.
+          Sessions ผู้ใช้งาน ยอดดูหน้าเว็บ การกด CTA การเริ่มและส่งฟอร์มสำเร็จ ช่องทาง อุปกรณ์ และภาษา
         </div>
         <div>
-          <strong>Firestore leads</strong>
-          Name, contact, enquiry type, coverage, details, status, read flag, created and updated timestamps.
+          <strong>เคสจาก Firestore</strong>
+          ชื่อ ข้อมูลติดต่อ เรื่องที่ปรึกษา ประกันที่สนใจ รายละเอียด สถานะ การอ่าน และเวลาสร้างหรืออัปเดต
         </div>
         <div>
-          <strong>Privacy boundary</strong>
-          Google Analytics receives only event outcomes and categories. Names, phones, LINE IDs, and messages stay in Firestore.
+          <strong>ความเป็นส่วนตัว</strong>
+          Google Analytics รับเฉพาะผลลัพธ์และหมวดหมู่ของ Events ส่วนชื่อ เบอร์โทร LINE ID และข้อความเก็บใน Firestore
         </div>
       </div>
     </section>
@@ -798,7 +798,7 @@
 
     const fmt = new Intl.NumberFormat("en-US");
     const pctFmt = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
-    const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    const dateFmt = new Intl.DateTimeFormat("th-TH", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
     const ga = gaConnectionModel();
     document.getElementById("measurement-id").textContent = ga.measurementId;
 
@@ -812,6 +812,20 @@
 
     function chartEmpty(title, body) {
       return `<div class="chart-empty"><div><strong>${escapeText(title)}</strong><span>${escapeText(body)}</span></div></div>`;
+    }
+
+    function analyticsMessage(payload = {}) {
+      const message = String(payload.message || "");
+      if (/[\u0E00-\u0E7F]/.test(message)) return message;
+      if (payload.status === "not_configured") {
+        if (message.includes("numeric GA4 property ID")) return "กรุณาใช้ GA4 property ID แบบตัวเลข ไม่ใช่ Measurement ID ที่ขึ้นต้นด้วย G-";
+        return payload.environment === "uat"
+          ? "กรุณาตั้งค่า GA4 property และ service account สำหรับ UAT ใน Vercel Preview โดยแยกจาก Production"
+          : "กรุณาตั้งค่า GA4 property และ service account ใน Vercel เพื่อเชื่อมต่อสถิติ";
+      }
+      if (payload.error === "unauthorized") return "ยืนยันตัวตนไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่";
+      if (payload.error === "forbidden") return "บัญชีนี้ไม่มีสิทธิ์ดู Analytics ในสภาพแวดล้อมนี้";
+      return "โหลดสถิติจาก GA4 ไม่สำเร็จ กรุณาลองใหม่";
     }
 
     function safeNumber(value) {
@@ -849,10 +863,10 @@
     function renderFunnel(leads, traffic = null) {
       const metrics = traffic && traffic.metrics ? traffic.metrics : {};
       const stages = [
-        { label: "Page views", value: metrics.screenPageViews },
-        { label: "Contact intent", value: metrics.contactIntent },
-        { label: "Form start", value: metrics.formStarts },
-        { label: "Lead saved", value: leads }
+        { label: "ดูหน้าเว็บ", value: metrics.screenPageViews },
+        { label: "สนใจติดต่อ", value: metrics.contactIntent },
+        { label: "เริ่มกรอกฟอร์ม", value: metrics.formStarts },
+        { label: "บันทึกเคส", value: leads }
       ];
       const width = 820;
       const height = 290;
@@ -863,18 +877,18 @@
       const rows = stages.map((stage, index) => {
         const known = stage.value != null;
         const numeric = safeNumber(stage.value);
-        const w = known ? Math.max(150, Math.round((numeric / maxValue) * maxWidth)) : maxWidth - index * 76;
+        const w = known ? Math.max(190, Math.round((numeric / maxValue) * maxWidth)) : maxWidth - index * 76;
         const x = (width - w) / 2;
         const y = top + index * row;
         const fill = known ? "var(--sage)" : "color-mix(in srgb, var(--line) 66%, transparent)";
-        const text = known ? fmt.format(Math.round(numeric)) : "Connect GA4";
+        const text = known ? fmt.format(Math.round(numeric)) : "เชื่อมต่อ GA4";
         return `
           <rect x="${x}" y="${y}" width="${w}" height="38" rx="19" fill="${fill}"></rect>
           <text x="${x + 18}" y="${y + 24}" fill="${known ? "#f9f4ed" : "var(--muted)"}">${escapeText(stage.label)}</text>
           <text x="${x + w - 18}" y="${y + 24}" text-anchor="end" fill="${known ? "#f9f4ed" : "var(--muted)"}">${escapeText(text)}</text>
         `;
       }).join("");
-      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Visitor funnel">${rows}</svg>`;
+      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Funnel ผู้เข้าชม">${rows}</svg>`;
     }
 
     function renderLeadTrend(timeline) {
@@ -904,7 +918,7 @@
         return `<line x1="${pad.l}" y1="${y}" x2="${pad.l + usableW}" y2="${y}" stroke="color-mix(in srgb, var(--line) 66%, transparent)" stroke-width="1"></line>`;
       }).join("");
       return `
-        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Daily lead submissions over 30 days">
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="จำนวนเคสรายวันใน 30 วันที่ผ่านมา">
           ${grid}
           <path d="${area}" fill="color-mix(in srgb, var(--accent) 16%, transparent)"></path>
           <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -917,8 +931,8 @@
     function renderBars(el, rows, emptyCopy = {}) {
       if (!rows.length) {
         el.innerHTML = chartEmpty(
-          emptyCopy.title || "No data yet",
-          emptyCopy.body || "Bars will appear once the connected source has rows."
+          emptyCopy.title || "ยังไม่มีข้อมูล",
+          emptyCopy.body || "กราฟจะแสดงเมื่อแหล่งข้อมูลที่เชื่อมต่อมีรายการแล้ว"
         );
         return;
       }
@@ -936,15 +950,15 @@
       const body = document.getElementById("acquisition-rows");
       if (!body) return;
       if (!rows || !rows.length) {
-        body.innerHTML = `<tr><td class="muted" colspan="4">Connect GA4 Data API to see source and channel quality.</td></tr>`;
+        body.innerHTML = `<tr><td class="muted" colspan="4">เชื่อมต่อ GA4 Data API เพื่อดูสถิติแต่ละช่องทาง</td></tr>`;
         return;
       }
       body.innerHTML = rows.map((row) => `
         <tr>
-          <td data-label="Channel">${escapeText(row.channel || "Unassigned")}</td>
+          <td data-label="ช่องทาง">${escapeText(row.channel || "ไม่ระบุช่องทาง")}</td>
           <td class="mono" data-label="Sessions">${fmt.format(Math.round(safeNumber(row.sessions)))}</td>
           <td class="mono" data-label="Events">${fmt.format(Math.round(safeNumber(row.eventCount)))}</td>
-          <td class="mono" data-label="Share">${sessions ? pctFmt.format(safeNumber(row.sessions) / sessions) : "N/A"}</td>
+          <td class="mono" data-label="สัดส่วน Sessions">${sessions ? pctFmt.format(safeNumber(row.sessions) / sessions) : "N/A"}</td>
         </tr>
       `).join("");
     }
@@ -953,14 +967,14 @@
       const body = document.getElementById("page-rows");
       if (!body) return;
       if (!rows || !rows.length) {
-        body.innerHTML = `<tr><td class="muted" colspan="3">Connect GA4 Data API to see public page views.</td></tr>`;
+        body.innerHTML = `<tr><td class="muted" colspan="3">เชื่อมต่อ GA4 Data API เพื่อดูยอดเข้าชมหน้าเว็บไซต์</td></tr>`;
         return;
       }
       body.innerHTML = rows.map((row) => `
         <tr>
-          <td data-label="Page">${escapeText(row.path || "/")}</td>
-          <td class="mono" data-label="Views">${fmt.format(Math.round(safeNumber(row.pageViews)))}</td>
-          <td class="mono" data-label="Users">${fmt.format(Math.round(safeNumber(row.activeUsers)))}</td>
+          <td data-label="หน้าเว็บ">${escapeText(row.path || "/")}</td>
+          <td class="mono" data-label="ยอดดู">${fmt.format(Math.round(safeNumber(row.pageViews)))}</td>
+          <td class="mono" data-label="ผู้ใช้งาน">${fmt.format(Math.round(safeNumber(row.activeUsers)))}</td>
         </tr>
       `).join("");
     }
@@ -968,16 +982,16 @@
     function renderRecent(rows) {
       const body = document.getElementById("recent-leads");
       if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="5" class="muted">No leads have been saved yet.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="5" class="muted">ยังไม่มีเคสที่บันทึกไว้</td></tr>`;
         return;
       }
       body.innerHTML = rows.map((lead) => `
         <tr>
-          <td class="mono" data-label="Created">${lead.createdAt ? escapeText(dateFmt.format(lead.createdAt)) : "Unknown"}</td>
-          <td data-label="Name">${escapeText(lead.name)}</td>
-          <td data-label="Contact">${escapeText(lead.contact || "Not provided")}</td>
-          <td data-label="Intent">${escapeText(lead.qtype)}</td>
-          <td data-label="Coverage">${escapeText(lead.coverage)}</td>
+          <td class="mono" data-label="วันที่สร้าง">${lead.createdAt ? escapeText(dateFmt.format(lead.createdAt)) : "ไม่ทราบ"}</td>
+          <td data-label="ชื่อ">${escapeText(lead.name)}</td>
+          <td data-label="ข้อมูลติดต่อ">${escapeText(lead.contact || "ไม่ระบุ")}</td>
+          <td data-label="เรื่องที่ปรึกษา">${escapeText(lead.qtype)}</td>
+          <td data-label="ประกันที่สนใจ">${escapeText(lead.coverage)}</td>
         </tr>
       `).join("");
     }
@@ -986,18 +1000,18 @@
       currentLeadSummary = summary;
       document.querySelector('[data-kpi="leads"]').textContent = fmt.format(summary.total);
       document.getElementById("lead-kpi-note").textContent = summary.unread
-        ? `${fmt.format(summary.unread)} unread · ${fmt.format(leadTotalInRange(summary))} in 30 days`
-        : `${fmt.format(leadTotalInRange(summary))} in 30 days`;
+        ? `ยังไม่อ่าน ${fmt.format(summary.unread)} เคส · ${fmt.format(leadTotalInRange(summary))} เคสใน 30 วัน`
+        : `${fmt.format(leadTotalInRange(summary))} เคสใน 30 วัน`;
       document.getElementById("lead-status").textContent = sourceText;
       document.getElementById("funnel-chart").innerHTML = renderFunnel(leadTotalInRange(summary), currentTraffic);
       document.getElementById("lead-trend").innerHTML = renderLeadTrend(summary.timeline);
       renderBars(document.getElementById("enquiry-bars"), summary.enquiryTypes, {
-        title: "No lead data yet",
-        body: "Bars will appear after Firestore receives form submissions."
+        title: "ยังไม่มีข้อมูลเคส",
+        body: "กราฟจะแสดงเมื่อมีข้อมูลจากฟอร์มใน Firestore"
       });
       renderBars(document.getElementById("coverage-bars"), summary.coverageTypes, {
-        title: "No lead data yet",
-        body: "Coverage mix will appear after Firestore receives form submissions."
+        title: "ยังไม่มีข้อมูลเคส",
+        body: "ประเภทประกันที่สนใจจะแสดงเมื่อมีข้อมูลจากฟอร์มใน Firestore"
       });
       renderRecent(summary.recent);
       renderConversion();
@@ -1008,37 +1022,37 @@
       const metrics = payload && payload.metrics ? payload.metrics : {};
       const live = payload && payload.status === "live";
       if (live) {
-        setText("data-api-status", "Connected");
+        setText("data-api-status", "เชื่อมต่อแล้ว");
         setPill("data-api-pill", "Live", "live");
         setPill("traffic-status", "Live", "live");
         setKpi("sessions", formatMetric(metrics.sessions));
         setKpi("users", formatMetric(metrics.activeUsers));
-        setText("sessions-kpi-note", `${formatMetric(metrics.screenPageViews)} page views · ${pctFmt.format(safeNumber(metrics.engagementRate))} engagement`);
-        setText("users-kpi-note", `${formatMetric(metrics.contactIntent)} contact intent event${safeNumber(metrics.contactIntent) === 1 ? "" : "s"}`);
+        setText("sessions-kpi-note", `ดูหน้าเว็บ ${formatMetric(metrics.screenPageViews)} ครั้ง · Engagement ${pctFmt.format(safeNumber(metrics.engagementRate))}`);
+        setText("users-kpi-note", `สนใจติดต่อ ${formatMetric(metrics.contactIntent)} ครั้ง`);
         document.getElementById("funnel-chart").innerHTML = renderFunnel(leadTotalInRange(currentLeadSummary), currentTraffic);
         renderAcquisition(payload.acquisition || [], safeNumber(metrics.sessions));
         renderBars(document.getElementById("device-bars"), (payload.devices || []).map((row) => ({
-          label: row.device || "unknown",
+          label: ({ mobile: "มือถือ", desktop: "คอมพิวเตอร์", tablet: "แท็บเล็ต", unknown: "ไม่ทราบ" })[row.device] || row.device || "ไม่ทราบ",
           value: safeNumber(row.sessions)
         })), {
-          title: "No device data yet",
-          body: "GA4 has not returned device sessions for this date range."
+          title: "ยังไม่มีข้อมูลอุปกรณ์",
+          body: "GA4 ยังไม่มีข้อมูล Sessions แยกตามอุปกรณ์ในช่วงนี้"
         });
         renderPages(payload.topPages || []);
       } else {
-        const message = payload && payload.message ? payload.message : "GA4 Data API did not return traffic data.";
-        const status = payload && payload.status === "not_configured" ? "Setup needed" : "Unavailable";
+        const message = analyticsMessage(payload || {});
+        const status = payload && payload.status === "checking" ? "กำลังตรวจสอบ" : payload && payload.status === "not_configured" ? "รอตั้งค่า" : "ไม่พร้อมใช้งาน";
         setText("data-api-status", status);
         setPill("data-api-pill", status, payload && payload.status === "not_configured" ? "warn" : "muted");
         setPill("traffic-status", status, payload && payload.status === "not_configured" ? "warn" : "muted");
         setKpi("sessions", "N/A");
         setKpi("users", "N/A");
         setText("sessions-kpi-note", message);
-        setText("users-kpi-note", "No GA4 traffic rows loaded.");
+        setText("users-kpi-note", "ยังโหลดข้อมูลผู้เข้าชมจาก GA4 ไม่ได้");
         document.getElementById("funnel-chart").innerHTML = renderFunnel(leadTotalInRange(currentLeadSummary), null);
         renderAcquisition([], 0);
         renderBars(document.getElementById("device-bars"), [], {
-          title: "GA4 not connected",
+          title: "ยังไม่ได้เชื่อมต่อ GA4",
           body: message
         });
         renderPages([]);
@@ -1051,23 +1065,23 @@
       const sessions = currentTraffic && currentTraffic.metrics ? safeNumber(currentTraffic.metrics.sessions) : 0;
       if (currentTraffic && sessions > 0) {
         setKpi("conversion", pctFmt.format(leadsInRange / sessions));
-        setText("conversion-kpi-note", `${fmt.format(leadsInRange)} Firestore lead${leadsInRange === 1 ? "" : "s"} / ${fmt.format(sessions)} GA4 session${sessions === 1 ? "" : "s"} in 30 days`);
+        setText("conversion-kpi-note", `${fmt.format(leadsInRange)} เคสจาก Firestore / ${fmt.format(sessions)} Sessions จาก GA4 ใน 30 วัน`);
       } else {
         setKpi("conversion", "N/A");
-        setText("conversion-kpi-note", "Needs connected GA4 sessions and Firestore leads in the same date range.");
+        setText("conversion-kpi-note", "ต้องเชื่อมต่อข้อมูล Sessions จาก GA4 และเคสจาก Firestore ในช่วงเวลาเดียวกัน");
       }
     }
 
     async function fetchTrafficSummary() {
       await import(window.location.origin + "/covermate-firebase.js");
       const cm = window.CoverMateFirebase;
-      if (!cm) throw new Error("Firebase admin helper is unavailable.");
+      if (!cm) throw new Error("ยังโหลดระบบ Admin ของ Firebase ไม่ได้");
       let token = "";
       if (typeof cm.getAdminIdToken === "function") {
         token = await cm.getAdminIdToken();
       } else {
         const user = cm.auth && cm.auth.currentUser ? cm.auth.currentUser : await cm.waitForAuth();
-        if (!user || typeof user.getIdToken !== "function") throw new Error("Firebase ID token is unavailable.");
+        if (!user || typeof user.getIdToken !== "function") throw new Error("ยืนยันตัวตนกับ Firebase ไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่");
         token = await user.getIdToken();
       }
       const response = await fetch(withEnvironmentQuery("/api/analytics?days=30", cm.environment), {
@@ -1078,7 +1092,7 @@
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload.message || payload.error || `Analytics API failed with ${response.status}.`);
+        throw new Error(`${analyticsMessage(payload)} (HTTP ${response.status})`);
       }
       return payload;
     }
@@ -1091,19 +1105,19 @@
     async function loadLeads() {
       if (!session) return;
       document.getElementById("funnel-chart").innerHTML = renderFunnel(0, currentTraffic);
-      document.getElementById("lead-trend").innerHTML = chartEmpty("Loading leads", "Checking Firestore for recent submissions.");
+      document.getElementById("lead-trend").innerHTML = chartEmpty("กำลังโหลดเคส", "กำลังตรวจสอบรายการล่าสุดใน Firestore");
       try {
         await import(window.location.origin + "/covermate-firebase.js");
         const cm = window.CoverMateFirebase;
-        if (!cm || !cm.loadContactLeads) throw new Error("Lead analytics helper is unavailable.");
+        if (!cm || !cm.loadContactLeads) throw new Error("ยังโหลดระบบสถิติเคสไม่ได้");
         const leads = await cm.loadContactLeads(250);
         renderLeadSummary(summarizeLeads(leads), "Live");
       } catch (error) {
         console.warn("[covermate] analytics data unavailable:", error);
         renderLeadSummary(summarizeLeads([]), "Offline");
-        document.getElementById("lead-kpi-note").textContent = "Firestore unavailable in this browser session.";
+        document.getElementById("lead-kpi-note").textContent = "เชื่อมต่อ Firestore ไม่ได้ในขณะนี้";
         document.getElementById("recent-leads").innerHTML =
-          `<tr><td colspan="5" class="muted">Could not load leads. Refresh the Firebase sign-in session from /admin/login and try again.</td></tr>`;
+          `<tr><td colspan="5" class="muted">โหลดเคสไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่ที่ /admin/login แล้วลองอีกครั้ง</td></tr>`;
       }
     }
 
@@ -1113,13 +1127,13 @@
         renderTrafficSummary(await fetchTrafficSummary());
       } catch (error) {
         console.warn("[covermate] GA4 analytics unavailable:", error);
-        renderTrafficSummary({ status: "unavailable", message: error.message || "GA4 analytics could not load." });
+        renderTrafficSummary({ status: "unavailable", message: error.message || "โหลดสถิติจาก GA4 ไม่สำเร็จ" });
       }
     }
 
     async function load() {
       if (!session) return;
-      renderTrafficSummary({ status: "checking", message: "Checking GA4 Data API..." });
+      renderTrafficSummary({ status: "checking", message: "กำลังตรวจสอบ GA4 Data API…" });
       await Promise.allSettled([loadTraffic(), loadLeads()]);
     }
 

@@ -32,7 +32,17 @@ module.exports = async function leadsApi(req, res) {
     const ref = db.collection(env.leadCollection).doc(createHash('sha256').update(`${env.name}:${key}`).digest('hex'));
     const limitRef = db.collection('abuseLimits').doc(digest);
     const fingerprint = createHash('sha256').update(JSON.stringify(lead)).digest('hex');
+    const previous = await ref.get();
+    if (previous.exists) {
+      if (previous.data().requestFingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request ID was already used.');
+      return json(res, 200, { accepted: true, reference: previous.data().caseRecord?.caseNumber || `CM-${ref.id.slice(0, 10).toUpperCase()}` });
+    }
     const now = Date.now();
+    const acceptedAt = new Date(now).toISOString();
+    const { verifyReceipt } = require('../server/enquiry-privacy.cjs');
+    const receipt = await verifyReceipt(db, env, body, ref.id, acceptedAt);
+    const { websiteRecord, stageWebsiteCreate } = require('../server/cases-service.cjs');
+    const record = websiteRecord(ref.id, lead, receipt, acceptedAt);
     await db.runTransaction(async tx => {
       const existing = await tx.get(ref);
       if (existing.exists) {
@@ -45,9 +55,10 @@ module.exports = async function leadsApi(req, res) {
       const dayCount = limits.day === day ? limits.dayCount : 0;
       if (minuteCount >= 5 || dayCount >= 30) throw error(429, 'rate_limited', 'Please wait before sending another enquiry.');
       tx.set(limitRef, { minute, day, minuteCount: minuteCount + 1, dayCount: dayCount + 1, expiresAt: Timestamp.fromMillis(now + 2 * 86400000) });
-      tx.create(ref, { ...lead, status: 'new', read: false, requestFingerprint: fingerprint, consentVersion: '2026-09-05', retentionReviewAt: Timestamp.fromMillis(now + 365 * 86400000), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      tx.create(ref, { ...lead, status: 'new', read: false, caseRecord: record, caseIntakeNotification: true, requestFingerprint: fingerprint, consentVersion: receipt.noticeVersion, retentionReviewAt: Timestamp.fromMillis(now + 365 * 86400000), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      stageWebsiteCreate(tx, ref, record);
     });
-    return json(res, 200, { id: ref.id });
+    return json(res, 200, { accepted: true, reference: record.caseNumber });
   } catch (err) {
     const status = Number(err.status || 500);
     if (status === 429) res.setHeader('Retry-After', '60');
@@ -59,12 +70,19 @@ module.exports = async function leadsApi(req, res) {
 function validateLead(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw error(422, 'invalid_body', 'Invalid enquiry.');
   if (body.consent !== true) throw error(422, 'consent_required', 'Consent is required.');
+  const allowed = ['name', 'contact', 'topic', 'summary', 'sourcePath', 'qtype', 'coverage', 'language', 'consent', 'noticeVersion', 'consentKind'];
+  if (Object.keys(body).some(key => !allowed.includes(key))) throw error(422, 'unknown_field', 'Unknown enquiry field.');
+  if (!['consultation', 'renewal'].includes(body.consentKind)) throw error(422, 'invalid_consent_kind', 'Invalid consent notice.');
   const result = { consent: true };
-  for (const [key, max] of Object.entries({ name: 120, contact: 160, topic: 2000, summary: 1200, sourcePath: 220 })) {
+  for (const [key, max] of Object.entries({ name: 120, contact: 160, topic: 500, summary: 1200, sourcePath: 220 })) {
     if (typeof body[key] !== 'string' || body[key].length > max) throw error(422, 'invalid_field', `Invalid ${key}.`);
     result[key] = body[key].trim();
   }
   if (!result.contact) throw error(422, 'contact_required', 'A contact channel is required.');
+  if (!result.name && body.consentKind !== 'renewal') throw error(422, 'name_required', 'Your name is required.');
+  if (!result.name) result.name = 'Unnamed renewal enquiry';
+  result.noticeVersion = body.noticeVersion;
+  result.consentKind = body.consentKind;
   for (const [key, values] of Object.entries({ qtype: ['', 'quote', 'compare', 'general', 'review', 'claim'], coverage: ['', 'life', 'health', 'motor', 'accident', 'savings', 'unsure'], language: ['th', 'en'] })) {
     if (!values.includes(body[key])) throw error(422, 'invalid_choice', `Invalid ${key}.`);
     result[key] = body[key];

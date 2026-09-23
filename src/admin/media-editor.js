@@ -16,7 +16,7 @@ function element(tag, props = {}, children = []) {
   return node;
 }
 
-export async function editImage({slot,source,lang = 'en',getToken,onApply}) {
+export async function editImage({slot,source,lang = 'th',getToken,onApply}) {
   if (document.querySelector('.cm-media-dialog')) return;
   const t = text[lang] || text.en;
   for (const href of ['/admin/cropper.css','/admin/media-editor.css']) if (!document.querySelector(`link[href="${href}"]`)) document.head.append(element('link',{rel:'stylesheet',href}));
@@ -41,7 +41,7 @@ export async function editImage({slot,source,lang = 'en',getToken,onApply}) {
     action(t.up,'↑',()=>cropper?.move(0,-10)),action(t.down,'↓',()=>cropper?.move(0,10)),
     action(t.reset,'↺',()=>cropper?.reset())
   ]);
-  function showError(message) { error.textContent = message; }
+  function showError(message) { error.textContent = lang === 'th' && message && !/[ก-๙]/.test(message) ? t.error : message; }
   function setBusy(value) {
     busy = value;
     dialog.querySelectorAll('button,input').forEach(node=>{node.disabled = value;});

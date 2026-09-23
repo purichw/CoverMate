@@ -2,7 +2,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
-    "api/page.js": { "includeFiles": "{index.html,src/visitor/defaults.js,server/asset-versions.json}" }
+    "api/page.js": { "includeFiles": "{index.html,src/visitor/defaults.js,server/asset-versions.json,src/error-page/**}" }
   },
   "redirects": [
     { "source": "/:path*", "has": [{ "type": "host", "value": "covermate.vercel.app" }], "destination": "https://covermateinsurance.com/:path*", "permanent": true },
@@ -38,6 +38,18 @@
     {
       "source": "/admin/preview",
       "destination": "/api/page?route=/admin/preview"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/not-found"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/api/not-found"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/api/not-found"
     }
   ],
   "headers": [

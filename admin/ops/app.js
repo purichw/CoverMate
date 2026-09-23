@@ -1,4 +1,6 @@
 import { ADMIN_LOGIN_PATH, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
+import { createCasesWorkspace } from "/admin/ops/cases.js";
+import { homeView } from "/admin/home-view.js";
 import {
   adminPortalRouteStateFromLocation,
   adminPortalUrl,
@@ -11,50 +13,50 @@ const OWNER_EDIT_PATH = ownerPathForMode("edit");
 const OWNER_PREVIEW_PATH = ownerPathForMode("preview");
 
 const STATUS_OPTIONS = [
-  ["all", "All"],
-  ["new", "New"],
-  ["contacting", "Contacting"],
-  ["contacted", "Contacted"],
-  ["consultation", "Consultation"],
-  ["quotation", "Quotation"],
-  ["considering", "Considering"],
-  ["converted", "Converted"],
-  ["later", "Follow-up later"],
-  ["notinterested", "Not interested"],
-  ["lost", "Lost"]
+  ["all", "ทั้งหมด"],
+  ["new", "เคสใหม่"],
+  ["contacting", "กำลังติดต่อ"],
+  ["contacted", "ติดต่อแล้ว"],
+  ["consultation", "ให้คำปรึกษา"],
+  ["quotation", "เสนอราคา"],
+  ["considering", "กำลังตัดสินใจ"],
+  ["converted", "ออกกรมธรรม์แล้ว"],
+  ["later", "ติดตามภายหลัง"],
+  ["notinterested", "ไม่สนใจ"],
+  ["lost", "ปิดเคสโดยไม่ได้ทำประกัน"]
 ];
 
 const INTEREST_OPTIONS = [
-  ["all", "All"],
-  ["motor", "Motor"],
-  ["life", "Life"],
-  ["health", "Health"],
-  ["accident", "Accident"],
-  ["savings", "Savings"],
-  ["unsure", "Unsure"]
+  ["all", "ทั้งหมด"],
+  ["motor", "รถยนต์"],
+  ["life", "ชีวิต"],
+  ["health", "สุขภาพ"],
+  ["accident", "อุบัติเหตุ"],
+  ["savings", "ออมทรัพย์"],
+  ["unsure", "ยังไม่แน่ใจ"]
 ];
 
 const TASK_FILTERS = [
-  ["all", "All"],
-  ["today", "Today"],
-  ["upcoming", "Upcoming"],
-  ["overdue", "Overdue"],
-  ["completed", "Completed"]
+  ["all", "ทั้งหมด"],
+  ["today", "วันนี้"],
+  ["upcoming", "กำลังจะถึง"],
+  ["overdue", "เลยกำหนด"],
+  ["completed", "เสร็จแล้ว"]
 ];
 
 const MODULES = [
-  { id: "home", label: "Home", icon: "home" },
-  { id: "operations", label: "Operations", icon: "users", count: () => leadCounts().needsContact },
-  { id: "content", label: "Website content", icon: "edit" },
+  { id: "home", label: "หน้าแรก", icon: "home" },
+  { id: "operations", label: "งานลูกค้า", icon: "users", count: () => leadCounts().needsContact },
+  { id: "content", label: "จัดการเว็บไซต์", icon: "edit" },
   { id: "analytics", label: "Analytics", icon: "chart" },
-  { id: "settings", label: "Settings", icon: "settings" }
+  { id: "settings", label: "ตั้งค่า", icon: "settings" }
 ];
 
 const OPERATIONS_TABS = [
-  ["dashboard", "Dashboard"],
-  ["leads", "Leads"],
-  ["tasks", "Tasks"],
-  ["audit", "Audit"]
+  ["dashboard", "ภาพรวม"],
+  ["leads", "เคสลูกค้า"],
+  ["tasks", "งานติดตาม"],
+  ["audit", "ประวัติการทำงาน"]
 ];
 
 const DATA_RESOURCES = [
@@ -82,6 +84,7 @@ const state = {
   pending: "",
   role: "none",
   sessionRole: "none",
+  home: { loading: true, error: '', summary: null, items: [], checkedAt: null },
   filters: {
     leadStatus: "all",
     leadInterest: "all",
@@ -95,6 +98,7 @@ const state = {
     settingsTab: "roles"
   }
 };
+let casesWorkspace;
 
 const screen = document.getElementById("screen");
 const sideNav = document.getElementById("sideNav");
@@ -119,6 +123,14 @@ async function init() {
 
   state.sessionRole = normalizeRole(state.session.role);
   state.role = state.sessionRole;
+  casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule, getCurrentModule: () => state.module });
+  const bell = document.createElement('button');
+  bell.type = 'button'; bell.className = 'case-button case-icon-button case-top-bell'; bell.dataset.caseAction = 'notifications'; bell.setAttribute('aria-label', 'การแจ้งเตือน');
+  bell.addEventListener('click', () => casesWorkspace.openNotifications());
+  document.querySelector('.topbar').append(bell);
+  const menu = document.createElement('button'); menu.type = 'button'; menu.className = 'case-button case-icon-button case-menu-trigger'; menu.setAttribute('aria-label', 'เปิดเมนู Admin');
+  menu.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>';
+  menu.addEventListener('click', () => casesWorkspace.openNavigation()); document.querySelector('.mobilebar').append(menu);
   applySessionChrome();
   bindEvents();
   render();
@@ -126,11 +138,11 @@ async function init() {
 }
 
 function applySessionChrome() {
-  const name = (state.session && (state.session.name || state.session.email)) || "CoverMate admin";
+  const name = (state.session && (state.session.name || state.session.email)) || "ผู้ดูแล CoverMate";
   const initials = name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "CM";
   document.getElementById("userName").textContent = name;
   document.getElementById("userAvatar").textContent = initials;
-  document.getElementById("userMeta").textContent = `${state.session.role || "admin"} · verified`;
+  document.getElementById("userMeta").textContent = `${displayRole(normalizeRole(state.session.role))} · ยืนยันสิทธิ์แล้ว`;
 }
 
 function bindEvents() {
@@ -143,22 +155,54 @@ function bindEvents() {
   });
   mobileModuleSelect.addEventListener("change", () => setModule(mobileModuleSelect.value));
   globalSearch.addEventListener("input", () => {
+    if (state.module === 'operations') { casesWorkspace.setSearch(globalSearch.value); return; }
     state.query = globalSearch.value.trim().toLowerCase();
     state.recordId = null;
-    renderScreen();
+    if (state.module !== 'home') renderScreen();
   });
   globalSearch.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    setOperationsTab("leads");
+    if (state.module === 'operations') return;
+    openHomeCases({ search: globalSearch.value });
   });
   window.addEventListener("hashchange", syncRouteFromLocation);
   window.addEventListener("popstate", syncRouteFromLocation);
 }
 
 async function loadAllData() {
+  if (state.module === 'operations') { state.loading.clear(); return; }
+  if (state.module === 'home') { state.loading.clear(); return loadHomeData(); }
   await Promise.all(DATA_RESOURCES.map((resource) => loadResource(resource)));
   render();
+}
+
+let homeLoadGeneration = 0;
+async function loadHomeData() {
+  const generation = ++homeLoadGeneration;
+  state.home = { loading: true, error: '', summary: null, items: [], checkedAt: null };
+  if (state.module === 'home') renderHome();
+  casesWorkspace.refreshNotifications();
+  const results = await Promise.allSettled([
+    apiFetch('cases/summary'),
+    apiFetch('cases?scope=all&sort=newest&limit=3')
+  ]);
+  if (generation !== homeLoadGeneration) return;
+  const error = results.find(result => result.status === 'rejected');
+  state.home = {
+    loading: false,
+    error: error ? error.reason.message : '',
+    summary: results[0].status === 'fulfilled' ? results[0].value : null,
+    items: results[1].status === 'fulfilled' ? results[1].value.items || [] : [],
+    checkedAt: error ? null : Date.now()
+  };
+  if (state.module === 'home') renderHome();
+}
+
+async function openHomeCases({ search = '', followUp = 'any', id } = {}) {
+  if (!(await casesWorkspace.configureView({ search, followUp, scope: 'all' }))) return;
+  await setModule('operations');
+  if (id) casesWorkspace.openCase(id);
 }
 
 async function loadResource(resource) {
@@ -178,7 +222,7 @@ async function loadResource(resource) {
   } catch (error) {
     state.data[resource] = [];
     state.meta[resource] = {};
-    state.errors[resource] = error.message || "Could not load this resource.";
+    state.errors[resource] = error.message || "โหลดข้อมูลไม่ได้ กรุณาลองอีกครั้ง";
   } finally {
     state.loading.delete(resource);
     renderTopStatus();
@@ -194,7 +238,7 @@ async function apiFetch(path, options = {}) {
   const cm = await ensureFirebase();
   const user = cm.auth && cm.auth.currentUser ? cm.auth.currentUser : await cm.waitForAuth();
   if (!user || typeof user.getIdToken !== "function") {
-    throw new Error("The Firebase admin session is not available.");
+    throw new Error("เซสชัน Admin หมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง");
   }
   const token = await user.getIdToken();
   const headers = new Headers(options.headers || {});
@@ -212,15 +256,48 @@ async function apiFetch(path, options = {}) {
     signal: options.signal || AbortSignal.timeout(15000),
     headers,
     body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
+  }).catch((cause) => {
+    if (cause.name === "AbortError") throw cause;
+    throw new Error(cause.name === "TimeoutError" ? "การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองอีกครั้ง" : "เชื่อมต่อไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง", { cause });
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(payload.message || payload.error || `Request failed with ${response.status}.`);
+    const error = new Error(apiErrorMessage(payload, response.status));
     error.status = response.status;
     error.payload = payload;
     throw error;
   }
   return payload;
+}
+
+function apiErrorMessage(payload, statusCode) {
+  const messages = {
+    unauthorized: "เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง",
+    forbidden: "บัญชีนี้ไม่มีสิทธิ์ทำรายการนี้",
+    not_found: "ไม่พบข้อมูลนี้ อาจถูกเปลี่ยนแปลงหรือลบไปแล้ว",
+    edit_conflict: "ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดก่อนลองอีกครั้ง",
+    version_conflict: "ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดก่อน Save",
+    request_conflict: "คำขอนี้ซ้ำกับรายการอื่น กรุณาโหลดข้อมูลล่าสุดก่อนลองอีกครั้ง",
+    validation: "กรุณาตรวจสอบข้อมูลในช่องที่ระบุ",
+    validation_failed: "กรุณาตรวจสอบข้อมูลให้ครบถ้วนและถูกต้อง",
+    invalid_cursor: "รายการมีการเปลี่ยนแปลง กรุณาโหลดใหม่",
+    idempotency_required: "คำขอไม่ครบถ้วน กรุณาโหลดหน้าใหม่แล้วลองอีกครั้ง",
+    reopen_required: "กรุณาเปิดเคสอีกครั้งก่อนเปลี่ยนสถานะ",
+    legacy_status_review: "ต้องตรวจสอบสถานะของเคสเดิมก่อนใช้งาน",
+    legacy_date_review: "ต้องตรวจสอบวันที่รับเรื่องของเคสเดิมก่อนใช้งาน",
+    email_not_configured: "ยังไม่ได้ตั้งค่าการแจ้งเตือนทางอีเมล",
+    firestore_error: "เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง",
+    server_error: "ระบบขัดข้องชั่วคราว กรุณาลองอีกครั้ง"
+  };
+  const code = payload.code || payload.error;
+  if (messages[code]) return messages[code];
+  if (statusCode === 401) return messages.unauthorized;
+  if (statusCode === 403) return messages.forbidden;
+  if (statusCode === 404) return messages.not_found;
+  if (statusCode === 409) return messages.edit_conflict;
+  if (statusCode === 400 || statusCode === 422) return messages.validation_failed;
+  if (statusCode === 429) return "ทำรายการถี่เกินไป กรุณารอสักครู่แล้วลองอีกครั้ง";
+  return "ทำรายการไม่สำเร็จ กรุณาลองอีกครั้ง";
 }
 
 function withEnvironmentQuery(url, environment) {
@@ -233,7 +310,7 @@ async function ensureFirebase() {
     await import(window.location.origin + "/covermate-firebase.js");
   }
   if (!window.CoverMateFirebase) {
-    throw new Error("Firebase helper is not loaded.");
+    throw new Error("เชื่อมต่อ Firebase ไม่สำเร็จ กรุณาลองโหลดหน้าใหม่");
   }
   return window.CoverMateFirebase;
 }
@@ -249,6 +326,10 @@ function handleClick(event) {
     if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
     if (action === "logout") signOutAdmin();
+    if (action === 'home-refresh' && !state.home.loading) loadHomeData();
+    if (action === 'home-cases') openHomeCases();
+    if (action === 'home-follow-ups') openHomeCases({ followUp: 'due' });
+    if (action === 'home-case') openHomeCases({ id: actionEl.dataset.id });
     if (action === "open-new-lead") openNewLeadModal();
     if (action === "close-modal") closeModal();
     if (action === "module") setModule(actionEl.dataset.module);
@@ -339,8 +420,12 @@ function render() {
 }
 
 function renderChrome() {
+  document.body.dataset.module = state.module;
+  globalSearch.placeholder = ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาข้อมูล';
+  const sidebarLogo = document.querySelector('.sidebar .brand-logo');
+  sidebarLogo.src = state.module === 'home' ? '/assets/brand/covermate-footer-logo-en.png?v=20260913-mate-gold' : '/assets/brand/covermate-advisory-logo-en.png?v=20260913-mate-gold';
   sideNav.innerHTML = MODULES.map((item) => {
-    const count = item.count ? Number(item.count() || 0) : 0;
+    const count = 0;
     const navBadge = count
       ? `<span class="badge">${count}</span>`
       : "";
@@ -356,7 +441,7 @@ function renderChrome() {
   roleSelect.value = state.role;
   newLeadButton.hidden = state.module !== "operations";
   newLeadButton.disabled = !canWrite() || Boolean(state.pending);
-  newLeadButton.title = canWrite() ? "Create a lead through the operations API" : "This role cannot create leads";
+  newLeadButton.title = canWrite() ? "สร้างเคสลูกค้าใหม่" : "สิทธิ์นี้ไม่สามารถสร้างเคสได้";
 }
 
 function renderTopStatus() {
@@ -364,10 +449,10 @@ function renderTopStatus() {
   const errorCount = Object.keys(state.errors).length;
   const leadCount = rowsFor("leads").length;
   const text = loading
-    ? "Loading records"
+    ? "กำลังโหลดข้อมูล"
     : errorCount
-      ? `${errorCount} API issue${errorCount === 1 ? "" : "s"}`
-      : `Live: leads/tasks/audit · ${leadCount} leads`;
+      ? `การเชื่อมต่อมีปัญหา ${errorCount} รายการ`
+      : `เชื่อมต่อข้อมูลแล้ว · ${leadCount} เคส`;
   dataMode.className = `pill${errorCount ? " error" : loading ? " warn" : ""}`;
   dataMode.innerHTML = `<span class="dot"></span>${escapeHTML(text)}`;
 }
@@ -376,10 +461,7 @@ function renderScreen() {
   if (!screen) return;
   if (state.module === "home") return renderHome();
   if (state.module === "operations") {
-    if (state.operationsTab === "leads") return state.recordId ? renderLeadDetail(state.recordId) : renderLeads();
-    if (state.operationsTab === "tasks") return renderTasks();
-    if (state.operationsTab === "audit") return renderAudit();
-    return renderDashboard();
+    return casesWorkspace?.mount();
   }
   if (state.module === "content") return renderContent();
   if (state.module === "analytics") return renderAnalytics();
@@ -388,73 +470,23 @@ function renderScreen() {
 }
 
 function renderHome() {
-  screen.innerHTML = `
-    ${pageHead("Admin Portal", "A single private entry point for operations, website content, analytics, and admin settings.", `<a class="ghost-button" href="/" target="_blank" rel="noopener noreferrer" data-public-site>Public site</a>`)}
-    <div class="grid four">
-      <button class="card module-card" type="button" data-action="module" data-module="operations" data-admin-home-card="operations">
-        <span class="round-icon" aria-hidden="true">${iconSvg("users")}</span>
-        <h2>Operations</h2>
-        <span class="module-status">Live: leads/tasks/audit</span>
-        <p>Lead intake, follow-ups, task completion, lead notes, status changes, and audit trail run through the Operations API.</p>
-        <span class="module-action">Open workspace -></span>
-      </button>
-
-      <button class="card module-card sage" type="button" data-action="module" data-module="content" data-admin-home-card="content">
-        <span class="round-icon" aria-hidden="true">${iconSvg("edit")}</span>
-        <h2>Website content</h2>
-        <span class="module-status">Live CMS</span>
-        <p>Edit visible copy first, then use the editor's Tools menu for section order, visibility, contact details, brand settings, media, preview, and publish.</p>
-        <span class="module-action">Open website tools -></span>
-      </button>
-
-      <button class="card module-card ink" type="button" data-action="module" data-module="analytics" data-admin-home-card="analytics">
-        <span class="round-icon" aria-hidden="true">${iconSvg("chart")}</span>
-        <h2>Analytics</h2>
-        <span class="module-status">First-party live</span>
-        <p>Private reporting from known CoverMate leads, consultation progress, quote stage, and confirmed policy outcomes.</p>
-        <span class="module-action">Open analytics -></span>
-      </button>
-
-      <button class="card module-card sage" type="button" data-action="module" data-module="settings" data-admin-home-card="settings">
-        <span class="round-icon" aria-hidden="true">${iconSvg("settings")}</span>
-        <h2>Settings</h2>
-        <span class="module-status">API enforced</span>
-        <p>Roles, lead statuses, PDPA consent rules, permissions reference, and audit visibility. The API enforces real permissions.</p>
-        <span class="module-action">Open settings -></span>
-      </button>
-    </div>
-
-    <div class="grid two" style="margin-top:18px;">
-      <section class="panel" aria-labelledby="quickActionsTitle">
-        <h2 id="quickActionsTitle">Quick actions</h2>
-        <ul class="rail-list">
-          <li><a href="${OWNER_EDIT_PATH}">Edit public-page words <span>Inline copy editor</span></a></li>
-          <li><a href="${OWNER_PREVIEW_PATH}">Preview website draft <span>Private draft view</span></a></li>
-          <li><button class="rail-action" type="button" data-action="op-tab" data-tab="leads">Review lead intake <span>Operations list</span></button></li>
-          <li><button class="rail-action" type="button" data-action="op-tab" data-tab="tasks">Open follow-ups <span>Task queue</span></button></li>
-        </ul>
-      </section>
-
-      <section class="panel" aria-labelledby="statusTitle">
-        <h2 id="statusTitle">System status</h2>
-        <div class="rail-list">
-          <div class="rail-row">Firebase admin session <span>${escapeHTML(displayRole(state.sessionRole))} · verified</span></div>
-          <div class="rail-row">Operations backend <span>Leads, tasks, and audit live through /api/ops</span></div>
-          <div class="rail-row">Website CMS <span>Firestore draft/live</span></div>
-          <div class="rail-row">Analytics <span>First-party CoverMate records</span></div>
-        </div>
-        <div class="actions">
-          <a class="ghost-button" href="https://smart.oic.or.th/eservice/Menu1" target="_blank" rel="noopener">Verify licence</a>
-          <button class="ghost-button" type="button" data-action="logout">Log out</button>
-        </div>
-      </section>
-    </div>
-  `;
+  // A data refresh must preserve the exact focused card/link, not just its action.
+  const focusKey = element => JSON.stringify([element.tagName, element.getAttribute('href'), element.dataset.action, element.dataset.module, element.dataset.id, element.getAttribute('aria-label')]);
+  const activeKey = screen.contains(document.activeElement) ? focusKey(document.activeElement) : null;
+  screen.innerHTML = homeView({
+    home: state.home,
+    name: state.session?.name || state.session?.email || 'ผู้ดูแล CoverMate',
+    role: displayRole(state.sessionRole),
+    editPath: OWNER_EDIT_PATH,
+    previewPath: OWNER_PREVIEW_PATH,
+    icon: iconSvg
+  });
+  if (activeKey) [...screen.querySelectorAll('button:not(:disabled), a[href]')].find(element => focusKey(element) === activeKey)?.focus({ preventScroll: true });
 }
 
 function operationsTabs() {
   return `
-    <div class="tabs" aria-label="Operations views">
+    <div class="tabs" aria-label="มุมมองงานลูกค้า">
       ${OPERATIONS_TABS.map(([value, label]) => `
         <button class="chip ${state.operationsTab === value ? "active" : ""}" type="button" data-action="op-tab" data-tab="${value}" ${state.operationsTab === value ? 'aria-current="page"' : ""}>${escapeHTML(label)}</button>
       `).join("")}
@@ -469,46 +501,46 @@ function renderDashboard() {
   const activeTasks = tasks.filter((task) => !task.completed).slice(0, 5);
   const audit = rowsFor("audit").slice(0, 6);
   screen.innerHTML = `
-    ${pageHead("Dashboard", "What needs a decision today, and where the live Operations data is reliable.", connectionPill())}
+    ${pageHead("ภาพรวม", "ดูงานที่ต้องจัดการวันนี้ พร้อมข้อมูลล่าสุดของงานลูกค้า", connectionPill())}
     ${operationsTabs()}
     ${errorNotice()}
     <div class="grid metrics">
-      ${metric("Needs first contact", counts.needsContact, "Enquiries that have not moved beyond first contact.", "Open leads", "leads")}
-      ${metric("Overdue follow-ups", overdue, "Dated actions that have passed without being completed.", "Open tasks", "tasks")}
-      ${metric("Known leads", rowsFor("leads").length, "Identified CoverMate records in the Operations API.", "Open leads", "leads")}
-      ${metric("Audit entries", rowsFor("audit").length, "Server-produced activity entries visible to admins.", "Open audit", "audit")}
+      ${metric("รอติดต่อครั้งแรก", counts.needsContact, "เคสที่ยังรอการติดต่อครั้งแรก", "ดูเคสลูกค้า", "leads")}
+      ${metric("งานติดตามที่เลยกำหนด", overdue, "งานที่เลยกำหนดและยังไม่เสร็จ", "ดูงานติดตาม", "tasks")}
+      ${metric("เคสทั้งหมด", rowsFor("leads").length, "ข้อมูลเคสลูกค้าในระบบ CoverMate", "ดูเคสลูกค้า", "leads")}
+      ${metric("รายการประวัติ", rowsFor("audit").length, "ประวัติการทำงานที่ระบบบันทึกไว้", "ดูประวัติ", "audit")}
     </div>
     <div class="grid two" style="margin-top:16px;">
       <section class="panel">
         <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
-          <h2>Open work</h2>
-          <button class="ghost-button" type="button" data-action="module" data-module="tasks">All tasks</button>
+          <h2>งานที่รอดำเนินการ</h2>
+          <button class="ghost-button" type="button" data-action="module" data-module="tasks">งานทั้งหมด</button>
         </div>
         ${activeTasks.length ? timeline(activeTasks.map((task) => ({
           title: task.title || task.task || task.name || task.id,
-          meta: `${formatDue(task.dueAt || task.dueDate)} · ${task.relatedLabel || task.related || "No linked record"}`
-        }))) : emptyBlock("No open tasks.")}
+          meta: `${formatDue(task.dueAt || task.dueDate)} · ${task.relatedLabel || task.related || "ไม่ได้เชื่อมกับเคส"}`
+        }))) : emptyBlock("ไม่มีงานที่รอดำเนินการ")}
       </section>
       <section class="panel">
         <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
-          <h2>Pipeline</h2>
-          <span class="cell-meta">First-party records</span>
+          <h2>ลำดับความคืบหน้า</h2>
+          <span class="cell-meta">ข้อมูลจากระบบ</span>
         </div>
         <div class="progress-list">
-          ${pipelineRow("Known leads", rowsFor("leads").length, 100)}
-          ${pipelineRow("Contacted", counts.contacted, percent(counts.contacted, rowsFor("leads").length))}
-          ${pipelineRow("Consultation", counts.consultation, percent(counts.consultation, rowsFor("leads").length))}
-          ${pipelineRow("Quoted", counts.quoted, percent(counts.quoted, rowsFor("leads").length))}
-          ${pipelineRow("Converted", counts.converted, percent(counts.converted, rowsFor("leads").length), true)}
+          ${pipelineRow("เคสทั้งหมด", rowsFor("leads").length, 100)}
+          ${pipelineRow("ติดต่อแล้ว", counts.contacted, percent(counts.contacted, rowsFor("leads").length))}
+          ${pipelineRow("ให้คำปรึกษา", counts.consultation, percent(counts.consultation, rowsFor("leads").length))}
+          ${pipelineRow("เสนอราคาแล้ว", counts.quoted, percent(counts.quoted, rowsFor("leads").length))}
+          ${pipelineRow("ออกกรมธรรม์แล้ว", counts.converted, percent(counts.converted, rowsFor("leads").length), true)}
         </div>
-        <p class="note" style="margin-top:14px;">The funnel starts only after a visitor becomes an identified CoverMate record.</p>
+        <p class="note" style="margin-top:14px;">รายงานนี้นับตั้งแต่ผู้เข้าชมส่งข้อมูลเป็นเคสใน CoverMate</p>
       </section>
       <section class="panel">
-        <h2>Recent activity</h2>
+        <h2>กิจกรรมล่าสุด</h2>
         ${audit.length ? timeline(audit.map((entry) => ({
-          title: `${entry.kind || "Audit"} — ${entry.subject || entry.recordId || "Record"}`,
-          meta: `${entry.to || entry.action || ""} · ${formatDateTime(entry.at)}`
-        }))) : emptyBlock("No audit entries yet.")}
+          title: `${systemLabel(entry.kind) || "ประวัติการทำงาน"} — ${auditSubject(entry.subject || entry.recordId) || "รายการ"}`,
+          meta: `${systemLabel(entry.to || entry.action)} · ${formatDateTime(entry.at)}`
+        }))) : emptyBlock("ยังไม่มีประวัติการทำงาน")}
       </section>
     </div>
   `;
@@ -517,26 +549,26 @@ function renderDashboard() {
 function renderLeads() {
   const rows = filteredLeads();
   screen.innerHTML = `
-    ${pageHead("Leads", "Website enquiries and manually created records are managed here.", resourcePill("leads"))}
+    ${pageHead("เคสลูกค้า", "จัดการคำถามจากเว็บไซต์และเคสที่เพิ่มเอง", resourcePill("leads"))}
     ${operationsTabs()}
     ${errorNotice("leads")}
     ${filterBar([
-      ["Status", "leadStatus", STATUS_OPTIONS],
-      ["Interest", "leadInterest", INTEREST_OPTIONS]
+      ["สถานะ", "leadStatus", STATUS_OPTIONS],
+      ["ความสนใจ", "leadInterest", INTEREST_OPTIONS]
     ], rows.length)}
     <div class="table-shell">
       <table>
         <thead>
           <tr>
-            <th style="width:28%;">Lead</th>
-            <th style="width:15%;">Status</th>
-            <th style="width:17%;">Interest</th>
-            <th style="width:18%;">Last interaction</th>
-            <th>Next action</th>
+            <th style="width:28%;">เคสลูกค้า</th>
+            <th style="width:15%;">สถานะ</th>
+            <th style="width:17%;">ความสนใจ</th>
+            <th style="width:18%;">ติดต่อล่าสุด</th>
+            <th>งานถัดไป</th>
           </tr>
         </thead>
         <tbody>
-          ${rows.length ? rows.map((lead) => leadRow(lead)).join("") : emptyRow("No leads match the current filters.")}
+          ${rows.length ? rows.map((lead) => leadRow(lead)).join("") : emptyRow("ไม่พบเคสตามตัวกรองที่เลือก")}
         </tbody>
       </table>
     </div>
@@ -553,11 +585,11 @@ function renderLeadDetail(id) {
     ? lead.timeline
     : derivedLeadTimeline(lead);
   screen.innerHTML = `
-    <button class="ghost-button" type="button" data-action="back-leads">All leads</button>
+    <button class="ghost-button" type="button" data-action="back-leads">เคสทั้งหมด</button>
     <div class="page-head" style="margin-top:18px;">
       <div>
-        <h1>${escapeHTML(lead.name || "Unnamed lead")}</h1>
-        <p class="lede">${escapeHTML(lead.displayId || lead.id)} · ${interestLabel(lead.interestKey)} · from ${escapeHTML(lead.source || "Unknown source")}</p>
+        <h1>${escapeHTML(lead.name || "ไม่ระบุชื่อ")}</h1>
+        <p class="lede">${escapeHTML(lead.displayId || lead.id)} · ${interestLabel(lead.interestKey)} · จาก ${escapeHTML(systemLabel(lead.source) || "ไม่ระบุที่มา")}</p>
       </div>
       ${resourcePill("leads")}
     </div>
@@ -566,77 +598,77 @@ function renderLeadDetail(id) {
     <div class="split">
       <div class="grid">
         <section class="panel">
-          <h2>Contact</h2>
+          <h2>ข้อมูลติดต่อ</h2>
           <div class="detail-grid">
-            ${field("Phone", lead.phone || lead.contact || "")}
+            ${field("เบอร์โทร", lead.phone || lead.contact || "")}
             ${field("LINE ID", lead.lineId || "")}
-            ${field("Email", lead.email || "")}
-            ${field("Preferred time", lead.preferredContact || "")}
-            ${field("Source", lead.source || "")}
-            ${field("Assigned", lead.assigneeName || lead.assigned || "")}
+            ${field("อีเมล", lead.email || "")}
+            ${field("เวลาที่สะดวก", lead.preferredContact || "")}
+            ${field("ที่มา", systemLabel(lead.source))}
+            ${field("ผู้รับผิดชอบ", lead.assigneeName || lead.assigned || "")}
           </div>
           <div class="actions">
-            ${lead.phone || lead.contact ? `<a class="primary-button" href="tel:${escapeHTML(lead.phone || lead.contact)}">Call ${escapeHTML(lead.phone || lead.contact)}</a>` : `<button class="primary-button" type="button" disabled>Call</button>`}
-            ${lead.lineId ? `<a class="ghost-button" href="https://line.me/R/ti/p/${encodeURIComponent(lead.lineId)}" target="_blank" rel="noreferrer">Open in LINE</a>` : `<button class="ghost-button" type="button" disabled>Open in LINE</button>`}
-            <button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="add-note" data-id="${escapeHTML(lead.id)}">Log interaction</button>
+            ${lead.phone || lead.contact ? `<a class="primary-button" href="tel:${escapeHTML(lead.phone || lead.contact)}">โทร ${escapeHTML(lead.phone || lead.contact)}</a>` : `<button class="primary-button" type="button" disabled>โทร</button>`}
+            ${lead.lineId ? `<a class="ghost-button" href="https://line.me/R/ti/p/${encodeURIComponent(lead.lineId)}" target="_blank" rel="noreferrer">เปิดใน LINE</a>` : `<button class="ghost-button" type="button" disabled>เปิดใน LINE</button>`}
+            <button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="add-note" data-id="${escapeHTML(lead.id)}">บันทึกการติดต่อ</button>
           </div>
         </section>
         <section class="panel">
-          <h2>Submitted message</h2>
-          <p style="line-height:1.7;">${escapeHTML(lead.message || "No submitted message stored on this lead.")}</p>
-          <p class="note">Captured ${formatDateTime(lead.createdAt)}.</p>
+          <h2>ข้อความที่ส่งมา</h2>
+          <p style="line-height:1.7;">${escapeHTML(lead.message || "ไม่มีข้อความที่ส่งมาในเคสนี้")}</p>
+          <p class="note">รับข้อมูลเมื่อ ${formatDateTime(lead.createdAt)}</p>
         </section>
         <section class="panel">
-          <h2>Communication history</h2>
+          <h2>ประวัติการติดต่อ</h2>
           ${timeline(history.map((item) => ({
-            title: item.text || item.title || item.kind || "Activity",
+            title: item.text || item.title || item.kind || "กิจกรรม",
             meta: [item.note, formatDateTime(item.at), item.by].filter(Boolean).join(" · ")
           })))}
           <label style="margin-top:24px;">
-            Add an internal note <span class="cell-meta">not visible to the customer</span>
-            <textarea data-note="${escapeHTML(lead.id)}" placeholder="What was discussed, what happens next"></textarea>
+            เพิ่มบันทึกภายใน <span class="cell-meta">ลูกค้าจะไม่เห็นบันทึกนี้</span>
+            <textarea data-note="${escapeHTML(lead.id)}" placeholder="คุยเรื่องอะไร และต้องทำอะไรต่อ"></textarea>
           </label>
           <div class="actions">
-            <button class="primary-button" type="button" ${canWrite() ? "" : "disabled"} data-action="add-note" data-id="${escapeHTML(lead.id)}">Add to history</button>
-            <span class="cell-meta">The server records the note length in the audit trail.</span>
+            <button class="primary-button" type="button" ${canWrite() ? "" : "disabled"} data-action="add-note" data-id="${escapeHTML(lead.id)}">เพิ่มบันทึก</button>
+            <span class="cell-meta">ระบบบันทึกความยาวของข้อความไว้ในประวัติการทำงาน</span>
           </div>
         </section>
       </div>
       <div class="grid">
         <section class="panel">
-          <h2>Status</h2>
+          <h2>สถานะ</h2>
           <div class="filter-row">
             ${STATUS_OPTIONS.filter(([value]) => value !== "all").map(([value, label]) => `
               <button class="chip ${lead.status === value ? "active" : ""}" type="button" ${canWrite() ? "" : "disabled"} data-action="status-change" data-id="${escapeHTML(lead.id)}" data-status="${value}">${escapeHTML(label)}</button>
             `).join("")}
           </div>
-          <p class="note" style="margin-top:14px;">Status changes are written by the API with previous value, new value, actor and timestamp.</p>
+          <p class="note" style="margin-top:14px;">ระบบเก็บสถานะเดิม สถานะใหม่ ผู้แก้ไข และเวลาที่เปลี่ยนสถานะ</p>
         </section>
         <section class="panel">
-          <h2>Next action</h2>
+          <h2>งานถัดไป</h2>
           <div class="form-grid">
             <label>
-              Follow-up date
+              วันที่ติดตาม
               <input type="date" data-followup="${escapeHTML(lead.id)}" value="${dateInput(lead.followUpAt)}" ${canWrite() ? "" : "disabled"} />
             </label>
             <label>
-              Assigned adviser
-              <input type="text" value="${escapeHTML(lead.assigneeName || lead.assigned || "Unassigned")}" disabled />
+              ที่ปรึกษาที่รับผิดชอบ
+              <input type="text" value="${escapeHTML(lead.assigneeName || lead.assigned || "ยังไม่มอบหมาย")}" disabled />
             </label>
           </div>
           <div class="actions">
-            <button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="save-followup" data-id="${escapeHTML(lead.id)}">Save follow-up</button>
+            <button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="save-followup" data-id="${escapeHTML(lead.id)}">Save การติดตาม</button>
           </div>
         </section>
         <section class="panel" style="background:#f0f8e5;">
-          <h2>Consent · PDPA</h2>
+          <h2>ความยินยอม · PDPA</h2>
           <div class="detail-grid" style="grid-template-columns:1fr 1fr;">
-            ${field("Given", lead.consent && lead.consent.given ? "Yes" : "No")}
-            ${field("Method", lead.consent && lead.consent.method || "")}
-            ${field("Source", lead.consent && lead.consent.source || lead.sourcePath || lead.source || "")}
-            ${field("Timestamp", lead.consent && lead.consent.at ? formatDateTime(lead.consent.at) : formatDateTime(lead.createdAt))}
+            ${field("ให้ความยินยอม", lead.consent && lead.consent.given ? "ใช่" : "ไม่ใช่")}
+            ${field("วิธีให้ความยินยอม", systemLabel(lead.consent && lead.consent.method))}
+            ${field("ที่มา", lead.consent && lead.consent.source || lead.sourcePath || lead.source || "")}
+            ${field("วันและเวลา", lead.consent && lead.consent.at ? formatDateTime(lead.consent.at) : formatDateTime(lead.createdAt))}
           </div>
-          <p class="note" style="margin-top:14px;">Consent changes must be added as new events, never edited in place.</p>
+          <p class="note" style="margin-top:14px;">การเปลี่ยนความยินยอมจะเพิ่มเป็นเหตุการณ์ใหม่ โดยเก็บประวัติเดิมไว้</p>
         </section>
       </div>
     </div>
@@ -646,45 +678,45 @@ function renderLeadDetail(id) {
 function renderTasks() {
   const rows = filteredTasks();
   screen.innerHTML = `
-    ${pageHead("Tasks and follow-ups", "Anything with a date attached, connected to the record it came from.", resourcePill("tasks"))}
+    ${pageHead("งานและการติดตาม", "งานที่มีกำหนดเวลา พร้อมลิงก์ไปยังเคสที่เกี่ยวข้อง", resourcePill("tasks"))}
     ${operationsTabs()}
     ${errorNotice("tasks")}
     <div class="filterbar">
       <div class="filter-row">
-        <span class="filter-label">View</span>
+        <span class="filter-label">มุมมอง</span>
         ${TASK_FILTERS.map(([value, label]) => `
           <button class="chip ${state.filters.taskView === value ? "active" : ""}" type="button" data-action="task-filter" data-value="${value}">${escapeHTML(label)}</button>
         `).join("")}
-        <span class="record-count">${rows.length} records</span>
+        <span class="record-count">${rows.length} รายการ</span>
       </div>
     </div>
     <div class="table-shell">
       <table>
         <thead>
           <tr>
-            <th>Task</th>
-            <th style="width:16%;">Due</th>
-            <th style="width:14%;">Priority</th>
-            <th style="width:18%;">Related record</th>
-            <th style="width:14%;">Assigned</th>
-            <th style="width:130px;">Action</th>
+            <th>งาน</th>
+            <th style="width:16%;">กำหนดเวลา</th>
+            <th style="width:14%;">ความสำคัญ</th>
+            <th style="width:18%;">เคสที่เกี่ยวข้อง</th>
+            <th style="width:14%;">ผู้รับผิดชอบ</th>
+            <th style="width:130px;">การทำงาน</th>
           </tr>
         </thead>
         <tbody>
           ${rows.length ? rows.map((task) => `
             <tr>
-              <td data-label="Task"><span class="cell-title">${escapeHTML(task.title || task.task || task.name || task.id)}</span></td>
-              <td data-label="Due"><span class="status ${task.completed ? "dim" : isOverdue(task.dueAt || task.dueDate) ? "overdue" : "completed"}">${escapeHTML(formatDue(task.dueAt || task.dueDate))}</span></td>
-              <td data-label="Priority"><strong>${escapeHTML(task.priority || "")}</strong></td>
-              <td data-label="Related">${escapeHTML(task.relatedLabel || task.related || "")}</td>
-              <td data-label="Assigned">${escapeHTML(task.assigneeName || task.owner || "")}</td>
-              <td data-label="Action">
+              <td data-label="งาน"><span class="cell-title">${escapeHTML(task.title || task.task || task.name || task.id)}</span></td>
+              <td data-label="กำหนดเวลา"><span class="status ${task.completed ? "dim" : isOverdue(task.dueAt || task.dueDate) ? "overdue" : "completed"}">${escapeHTML(formatDue(task.dueAt || task.dueDate))}</span></td>
+              <td data-label="ความสำคัญ"><strong>${escapeHTML(systemLabel(task.priority))}</strong></td>
+              <td data-label="เคสที่เกี่ยวข้อง">${escapeHTML(task.relatedLabel || task.related || "")}</td>
+              <td data-label="ผู้รับผิดชอบ">${escapeHTML(task.assigneeName || task.owner || "")}</td>
+              <td data-label="การทำงาน">
                 ${task.completed
-                  ? `<button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="reopen-task" data-id="${escapeHTML(task.id)}">Reopen</button>`
-                  : `<button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="complete-task" data-id="${escapeHTML(task.id)}">Complete</button>`}
+                  ? `<button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="reopen-task" data-id="${escapeHTML(task.id)}">เปิดอีกครั้ง</button>`
+                  : `<button class="ghost-button" type="button" ${canWrite() ? "" : "disabled"} data-action="complete-task" data-id="${escapeHTML(task.id)}">เสร็จแล้ว</button>`}
               </td>
             </tr>
-          `).join("") : emptyRow("No tasks match this view.")}
+          `).join("") : emptyRow("ไม่พบงานตามตัวกรองนี้")}
         </tbody>
       </table>
     </div>
@@ -694,45 +726,45 @@ function renderTasks() {
 function renderAudit() {
   const rows = rowsFor("audit").slice(0, 80);
   screen.innerHTML = `
-    ${pageHead("Audit", "Server-produced activity entries from live Operations actions.", resourcePill("audit"))}
+    ${pageHead("ประวัติการทำงาน", "ประวัติการทำงานที่ระบบบันทึกจากการจัดการงานลูกค้า", resourcePill("audit"))}
     ${operationsTabs()}
     ${errorNotice("audit")}
-    ${rows.length ? simpleTable(["Time", "Kind", "Record", "Change"], rows.map((entry) => [
+    ${rows.length ? simpleTable(["เวลา", "ประเภท", "รายการ", "การเปลี่ยนแปลง"], rows.map((entry) => [
       formatDateTime(entry.at),
-      entry.kind || entry.action || "",
-      entry.subject || entry.recordId || "",
-      [entry.from, entry.to].filter(Boolean).join(" -> ") || entry.note || entry.message || ""
-    ]), false) : emptyBlock("No audit entries yet.")}
+      systemLabel(entry.kind || entry.action),
+      auditSubject(entry.subject || entry.recordId),
+      [entry.from, entry.to].filter(Boolean).map(systemLabel).join(" → ") || entry.note || entry.message || ""
+    ]), false) : emptyBlock("ยังไม่มีประวัติการทำงาน")}
   `;
 }
 
 function renderContent() {
   const editDisabled = state.role === "readonly";
   screen.innerHTML = `
-    ${pageHead("Website content", "The existing CMS remains the source of truth for public-site copy, sections, preview and publish.", connectionPill("CMS connected"))}
+    ${pageHead("จัดการเว็บไซต์", "แก้ไขข้อความและส่วนต่าง ๆ ของเว็บไซต์ พร้อม Preview และ Publish ผ่าน CMS", connectionPill("เชื่อมต่อ CMS แล้ว"))}
     <div class="notice" style="margin-bottom:18px;">
-      <strong>Live CMS surface</strong>
-      <div>Start with the inline editor. Its Tools menu opens the panel for section order, visibility, brand settings, footer, preview and publish.</div>
+      <strong>เครื่องมือจัดการเว็บไซต์</strong>
+      <div>เริ่มจากคลิกแก้ไขข้อความบนหน้าเว็บ เมนูเครื่องมือจะเปิดแผงเครื่องมือลำดับและการแสดงผล ตั้งค่าแบรนด์ ท้ายเว็บ พร้อม Preview และ Publish</div>
     </div>
     <div class="grid three">
-      ${contentCard("Edit the words", "Open the current editor for headings, paragraphs and labels. Use Tools -> Panel there for section order, visibility, brand details, footer, backup and restore.", OWNER_EDIT_PATH, editDisabled)}
-      ${contentCard("Preview the draft", "Preview exactly what Publish would produce while visitors keep seeing the live version.", OWNER_PREVIEW_PATH, false)}
-      ${contentCard("Published versions", "Open version history and restore controls in the existing control panel.", OWNER_CONTENT_PATH, editDisabled)}
+      ${contentCard("แก้ไขเนื้อหา", "คลิกแก้ไขหัวข้อ ข้อความ และป้ายกำกับได้บนหน้าเว็บ เปิดเมนูเครื่องมือ → แผงเครื่องมือ เพื่อจัดลำดับและซ่อนส่วนต่าง ๆ ตั้งค่าแบรนด์ ท้ายเว็บ สำรองและกู้คืนข้อมูล", OWNER_EDIT_PATH, editDisabled)}
+      ${contentCard("Preview ฉบับร่าง", "ดูฉบับร่างก่อน Publish โดยผู้เข้าชมยังเห็นเว็บไซต์เวอร์ชันที่เผยแพร่อยู่", OWNER_PREVIEW_PATH, false)}
+      ${contentCard("เวอร์ชันที่เผยแพร่แล้ว", "ดูประวัติเวอร์ชันและกู้คืนข้อมูลได้ในแผงเครื่องมือ", OWNER_CONTENT_PATH, editDisabled)}
     </div>
     <section class="panel" style="margin-top:18px;">
-      <h2>Operator-editable surfaces</h2>
-      ${simpleTable(["Surface", "Access"], [
-        ["FAQ questions and answers", status("Editable")],
-        ["Adviser information and photograph", status("Editable")],
-        ["Service descriptions", status("Editable")],
-        ["Contact details and office hours", status("Editable")],
-        ["Homepage announcement", status("Editable")],
-        ["Insurer logos on the panel", status("Editable")],
-        ["Section order, visibility and colour", status("Editable")],
-        ["Layout, spacing, components", status("Code owned")],
-        ["Licence numbers and agent/broker wording", status("Locked legal surface")],
-        ["Commission disclosure and claim-story rules", status("Locked legal surface")],
-        ["Customer testimonials", status("Off")]
+      <h2>ส่วนที่ผู้ดูแลแก้ไขได้</h2>
+      ${simpleTable(["ส่วนที่จัดการ", "สิทธิ์การแก้ไข"], [
+        ["คำถามที่พบบ่อย (FAQ)", status("แก้ไขได้", "editable")],
+        ["ข้อมูลและรูปที่ปรึกษา", status("แก้ไขได้", "editable")],
+        ["รายละเอียดบริการ", status("แก้ไขได้", "editable")],
+        ["ข้อมูลติดต่อและเวลาทำการ", status("แก้ไขได้", "editable")],
+        ["ประกาศหน้าแรก", status("แก้ไขได้", "editable")],
+        ["โลโก้บริษัทประกัน", status("แก้ไขได้", "editable")],
+        ["ลำดับ การแสดงผล และสีของแต่ละส่วน", status("แก้ไขได้", "editable")],
+        ["Layout ระยะห่าง และองค์ประกอบ", status("แก้ไขผ่านโค้ด", "code-owned")],
+        ["เลขใบอนุญาตและข้อความตัวแทน/นายหน้า", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")],
+        ["การเปิดเผยค่าตอบแทนและข้อกำหนดเรื่องตัวอย่างการเคลม", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")],
+        ["รีวิวลูกค้า", status("ปิดอยู่", "off")]
       ], true)}
     </section>
   `;
@@ -743,30 +775,30 @@ function renderAnalytics() {
   const known = rowsFor("leads").length;
   const tab = state.filters.analyticsTab;
   screen.innerHTML = `
-    ${pageHead("Analytics", "Operational metrics from identified CoverMate records.", connectionPill("First-party live"))}
+    ${pageHead("Analytics", "สถิติการทำงานจากข้อมูลเคสลูกค้าใน CoverMate", connectionPill("ข้อมูลจากระบบ CoverMate"))}
     ${errorNotice()}
     <div class="filterbar">
       <div class="filter-row">
         ${["overview", "conversion-funnel", "services", "leads"].map((value) => `
-          <button class="chip ${tab === value ? "active" : ""}" type="button" data-action="analytics-tab" data-value="${value}">${titleCase(value.replace(/-/g, " "))}</button>
+          <button class="chip ${tab === value ? "active" : ""}" type="button" data-action="analytics-tab" data-value="${value}">${({ overview: "ภาพรวม", "conversion-funnel": "ลำดับความคืบหน้า", services: "ประเภทบริการ", leads: "เคสลูกค้า" })[value]}</button>
         `).join("")}
       </div>
     </div>
     <div class="grid four">
-      ${analyticMetric("Known leads", known, "Records stored in CoverMate.")}
-      ${analyticMetric("Contacted", counts.contacted, "Leads beyond the new stage.")}
-      ${analyticMetric("Consultations", counts.consultation, "Leads that reached consultation.")}
-      ${analyticMetric("Quotes", counts.quoted, "Leads that reached quotation.")}
-      ${analyticMetric("Policies issued", counts.converted, "Confirmed conversion stage.")}
+      ${analyticMetric("เคสทั้งหมด", known, "เคสที่บันทึกไว้ใน CoverMate")}
+      ${analyticMetric("ติดต่อแล้ว", counts.contacted, "เคสที่ผ่านขั้นตอนรับเรื่องใหม่แล้ว")}
+      ${analyticMetric("ให้คำปรึกษา", counts.consultation, "เคสที่เข้าสู่ขั้นตอนให้คำปรึกษา")}
+      ${analyticMetric("เสนอราคา", counts.quoted, "เคสที่เข้าสู่ขั้นตอนเสนอราคา")}
+      ${analyticMetric("ออกกรมธรรม์แล้ว", counts.converted, "เคสที่ยืนยันการออกกรมธรรม์แล้ว")}
     </div>
     <section class="panel" style="margin-top:18px;">
-      <h2>Lead to policy</h2>
+      <h2>จากเคสลูกค้าสู่กรมธรรม์</h2>
       <div class="progress-list">
-        ${pipelineRow("Known leads", known, 100)}
-        ${pipelineRow("Contacted", counts.contacted, percent(counts.contacted, known))}
-        ${pipelineRow("Consultations", counts.consultation, percent(counts.consultation, known))}
-        ${pipelineRow("Quotes", counts.quoted, percent(counts.quoted, known))}
-        ${pipelineRow("Policies issued", counts.converted, percent(counts.converted, known), true)}
+        ${pipelineRow("เคสทั้งหมด", known, 100)}
+        ${pipelineRow("ติดต่อแล้ว", counts.contacted, percent(counts.contacted, known))}
+        ${pipelineRow("ให้คำปรึกษา", counts.consultation, percent(counts.consultation, known))}
+        ${pipelineRow("เสนอราคา", counts.quoted, percent(counts.quoted, known))}
+        ${pipelineRow("ออกกรมธรรม์แล้ว", counts.converted, percent(counts.converted, known), true)}
       </div>
     </section>
   `;
@@ -775,13 +807,13 @@ function renderAnalytics() {
 function renderSettings() {
   const tab = state.filters.settingsTab;
   const tabs = [
-    ["roles", "Roles & permissions"],
-    ["statuses", "Lead statuses"],
-    ["consent", "PDPA & consent"],
-    ["audit", "Audit trail"]
+    ["roles", "บทบาทและสิทธิ์"],
+    ["statuses", "สถานะเคส"],
+    ["consent", "PDPA และความยินยอม"],
+    ["audit", "ประวัติการทำงาน"]
   ];
   screen.innerHTML = `
-    ${pageHead("Settings", "Roles, statuses, data protection and the audit trail.", connectionPill("Reference · API enforced"))}
+    ${pageHead("ตั้งค่า", "บทบาท สถานะ การคุ้มครองข้อมูล และประวัติการทำงาน", connectionPill("ข้อมูลอ้างอิง · ระบบตรวจสอบสิทธิ์จริง"))}
     <div class="tabs">
       ${tabs.map(([value, label]) => `<button class="chip ${tab === value ? "active" : ""}" type="button" data-action="settings-tab" data-value="${value}">${escapeHTML(label)}</button>`).join("")}
     </div>
@@ -795,24 +827,24 @@ function renderSettings() {
 function settingsRoles() {
   return `
     <section class="panel">
-      <h2>Roles and permissions</h2>
-      <p class="lede" style="font-size:16px;margin-bottom:20px;">The role selector previews interface availability. Every operation is re-checked by the API.</p>
+      <h2>บทบาทและสิทธิ์</h2>
+      <p class="lede" style="font-size:16px;margin-bottom:20px;">ตัวเลือกบทบาทใช้ Preview ว่าแต่ละสิทธิ์เข้าถึงอะไรได้บ้าง ระบบยังตรวจสอบสิทธิ์จริงทุกครั้งที่ทำรายการ</p>
       <div class="table-shell permission-table">
         <table>
-          <thead><tr><th>Operation</th><th>Owner</th><th>Adviser</th><th>Ops</th><th>Read-only</th></tr></thead>
+          <thead><tr><th>การทำงาน</th><th>เจ้าของ</th><th>ที่ปรึกษา</th><th>ทีมงาน</th><th>ดูอย่างเดียว</th></tr></thead>
           <tbody>
             ${[
-              ["View leads and customers", 1, 1, 1, 1],
-              ["Create and edit records", 1, 1, 1, 0],
-              ["Change lead or policy status", 1, 1, 1, 0],
-              ["View identification documents", 1, 1, 0, 0],
-              ["Edit or withdraw consent records", 1, 0, 0, 0],
-              ["Export customer data", 1, 0, 0, 0],
-              ["Delete records", 1, 0, 0, 0],
-              ["Manage users and roles", 1, 0, 0, 0],
-              ["Edit website content", 1, 0, 0, 0],
-              ["Edit compliance copy", 0, 0, 0, 0]
-            ].map((row) => `<tr>${row.map((cell, index) => index ? `<td data-label="${["Owner", "Adviser", "Ops", "Read-only"][index - 1]}">${cell ? "<span class=\"yes\">✓</span>" : "<span class=\"no\">-</span>"}</td>` : `<td data-label="Operation"><strong>${escapeHTML(cell)}</strong></td>`).join("")}</tr>`).join("")}
+              ["ดูเคสและข้อมูลลูกค้า", 1, 1, 1, 1],
+              ["สร้างและแก้ไขข้อมูล", 1, 1, 1, 0],
+              ["เปลี่ยนสถานะเคสหรือกรมธรรม์", 1, 1, 1, 0],
+              ["ดูเอกสารยืนยันตัวตน", 1, 1, 0, 0],
+              ["จัดการหรือถอนความยินยอม", 1, 0, 0, 0],
+              ["Export ข้อมูลลูกค้า", 1, 0, 0, 0],
+              ["ลบข้อมูล", 1, 0, 0, 0],
+              ["จัดการผู้ใช้และบทบาท", 1, 0, 0, 0],
+              ["แก้ไขเนื้อหาเว็บไซต์", 1, 0, 0, 0],
+              ["แก้ไขข้อความตามข้อกำหนด", 0, 0, 0, 0]
+            ].map((row) => `<tr>${row.map((cell, index) => index ? `<td data-label="${["เจ้าของ", "ที่ปรึกษา", "ทีมงาน", "ดูอย่างเดียว"][index - 1]}">${cell ? "<span class=\"yes\">✓</span>" : "<span class=\"no\">-</span>"}</td>` : `<td data-label="การทำงาน"><strong>${escapeHTML(cell)}</strong></td>`).join("")}</tr>`).join("")}
           </tbody>
         </table>
       </div>
@@ -823,8 +855,8 @@ function settingsRoles() {
 function settingsStatuses() {
   return `
     <section class="panel">
-      <h2>Lead statuses</h2>
-      ${simpleTable(["Status", "Meaning", "Allowed next statuses"], STATUS_OPTIONS.filter(([id]) => id !== "all").map(([id, label]) => [
+      <h2>สถานะเคส</h2>
+      ${simpleTable(["สถานะ", "ความหมาย", "สถานะถัดไปที่เลือกได้"], STATUS_OPTIONS.filter(([id]) => id !== "all").map(([id, label]) => [
         status(label, id),
         statusMeaning(id),
         nextStatuses(id).map(([value, name]) => name).join(", ")
@@ -836,12 +868,12 @@ function settingsStatuses() {
 function settingsConsent() {
   return `
     <section class="panel">
-      <h2>PDPA and consent</h2>
-      <div class="notice">Consent records are append-only. A withdrawal creates a new event carrying actor, source, purpose and timestamp.</div>
-      ${simpleTable(["Event", "Stored fields"], [
-        ["Given from public form", "leadId, purpose, sourcePath, timestamp, language"],
-        ["Manual consent", "customerId, purpose, actor, timestamp, evidence note"],
-        ["Withdrawal", "customerId, previous consent id, actor, timestamp, reason"]
+      <h2>PDPA และความยินยอม</h2>
+      <div class="notice">ระบบเพิ่มบันทึกความยินยอมโดยเก็บประวัติเดิมไว้ การถอนความยินยอมจะบันทึกเป็นเหตุการณ์ใหม่ พร้อมผู้ดำเนินการ ที่มา วัตถุประสงค์ และเวลา</div>
+      ${simpleTable(["เหตุการณ์", "ข้อมูลที่จัดเก็บ"], [
+        ["ยินยอมผ่านฟอร์มเว็บไซต์", "รหัสเคส วัตถุประสงค์ หน้าที่ส่งฟอร์ม วันเวลา และภาษา"],
+        ["บันทึกความยินยอมเอง", "รหัสลูกค้า วัตถุประสงค์ ผู้บันทึก วันเวลา และหลักฐาน"],
+        ["ถอนความยินยอม", "รหัสลูกค้า รหัสความยินยอมเดิม ผู้บันทึก วันเวลา และเหตุผล"]
       ], true)}
     </section>
   `;
@@ -851,15 +883,15 @@ function settingsAudit() {
   const rows = rowsFor("audit").slice(0, 50);
   return `
     <section class="panel">
-      <h2>Audit trail</h2>
+      <h2>ประวัติการทำงาน</h2>
       ${errorNotice("audit")}
-      ${rows.length ? simpleTable(["When", "Actor", "Kind", "Subject", "Change"], rows.map((row) => [
+      ${rows.length ? simpleTable(["วันเวลา", "ผู้ดำเนินการ", "ประเภท", "รายการที่เกี่ยวข้อง", "การเปลี่ยนแปลง"], rows.map((row) => [
         formatDateTime(row.at),
         row.actorName || row.actorId || "",
-        row.kind || "",
-        row.subject || row.recordId || "",
-        [row.from, row.to].filter(Boolean).join(" -> ") || row.action || ""
-      ]), false) : emptyBlock("No audit entries yet.")}
+        systemLabel(row.kind),
+        auditSubject(row.subject || row.recordId),
+        [row.from, row.to].filter(Boolean).map(systemLabel).join(" → ") || systemLabel(row.action)
+      ]), false) : emptyBlock("ยังไม่มีประวัติการทำงาน")}
     </section>
   `;
 }
@@ -871,40 +903,40 @@ function openNewLeadModal() {
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newLeadTitle">
       <div class="modal-head">
         <div>
-          <h2 id="newLeadTitle">New lead</h2>
-          <p class="note" style="margin-top:0;">Creates a lead record, captures consent, and opens a first-contact task.</p>
+          <h2 id="newLeadTitle">เพิ่มเคส</h2>
+          <p class="note" style="margin-top:0;">สร้างเคส บันทึกความยินยอม และเพิ่มงานติดต่อครั้งแรก</p>
         </div>
-        <button class="ghost-button" type="button" data-action="close-modal">Close</button>
+        <button class="ghost-button" type="button" data-action="close-modal">ปิด</button>
       </div>
       <form data-form="new-lead">
         <div class="modal-body">
           <div class="form-grid">
-            <label>Name<input name="name" required autocomplete="name" placeholder="Customer name" /></label>
-            <label>Phone<input name="phone" autocomplete="tel" placeholder="08X-XXX-XXXX" /></label>
+            <label>ชื่อ<input name="name" required autocomplete="name" placeholder="ชื่อลูกค้า" /></label>
+            <label>เบอร์โทร<input name="phone" autocomplete="tel" placeholder="08X-XXX-XXXX" /></label>
             <label>LINE ID<input name="lineId" autocomplete="off" placeholder="LINE ID" /></label>
-            <label>Email<input name="email" type="email" autocomplete="email" placeholder="name@example.com" /></label>
-            <label>Interest
+            <label>อีเมล<input name="email" type="email" autocomplete="email" placeholder="name@example.com" /></label>
+            <label>ความสนใจ
               <select name="interestKey">
                 ${INTEREST_OPTIONS.filter(([value]) => value !== "all").map(([value, label]) => `<option value="${value}">${escapeHTML(label)}</option>`).join("")}
               </select>
             </label>
-            <label>Source
+            <label>ที่มา
               <select name="source">
-                <option>Website form</option>
-                <option>LINE</option>
-                <option>Referral</option>
-                <option>Google search</option>
-                <option>Phone call</option>
+                <option value="Website form">ฟอร์มเว็บไซต์</option>
+                <option value="LINE">LINE</option>
+                <option value="Referral">ผู้แนะนำ</option>
+                <option value="Google search">ค้นหาผ่าน Google</option>
+                <option value="Phone call">โทรศัพท์</option>
               </select>
             </label>
           </div>
-          <label style="margin-top:14px;">Preferred contact time<input name="preferredContact" placeholder="Weekday afternoon" /></label>
-          <label style="margin-top:14px;">Submitted message<textarea name="message" placeholder="What the customer asked for"></textarea></label>
-          <label class="checkbox" style="margin-top:14px;"><input name="consent" type="checkbox" required /> PDPA consent was given for insurance advice and quotation</label>
+          <label style="margin-top:14px;">เวลาที่สะดวกให้ติดต่อ<input name="preferredContact" placeholder="ช่วงบ่ายวันธรรมดา" /></label>
+          <label style="margin-top:14px;">ข้อความที่ส่งมา<textarea name="message" placeholder="รายละเอียดที่ลูกค้าต้องการ"></textarea></label>
+          <label class="checkbox" style="margin-top:14px;"><input name="consent" type="checkbox" required /> ได้รับความยินยอมตาม PDPA เพื่อให้คำปรึกษาและเสนอราคาประกันแล้ว</label>
         </div>
         <div class="modal-actions">
-          <button class="ghost-button" type="button" data-action="close-modal">Cancel</button>
-          <button class="primary-button" type="submit">Create lead</button>
+          <button class="ghost-button" type="button" data-action="close-modal">ยกเลิก</button>
+          <button class="primary-button" type="submit">สร้างเคส</button>
         </div>
       </form>
     </div>
@@ -927,13 +959,13 @@ async function createLead(form) {
     email: clean(data.get("email"), 160),
     preferredContact: clean(data.get("preferredContact"), 120),
     interestKey: clean(data.get("interestKey"), 40),
-    interestLabel: interestLabel(clean(data.get("interestKey"), 40)),
+    interestLabel: ({ motor: "Motor", life: "Life", health: "Health", accident: "Accident", savings: "Savings", unsure: "Unsure" })[clean(data.get("interestKey"), 40)] || "Unsure",
     source: clean(data.get("source"), 60),
     message: clean(data.get("message"), 2000),
     consent: data.get("consent") === "on"
   };
   if (!body.phone && !body.lineId && !body.email) {
-    toast("Enter at least one contact channel.", "error");
+    toast("กรุณาระบุช่องทางติดต่ออย่างน้อยหนึ่งช่องทาง", "error");
     return;
   }
   await withPending("create-lead", async () => {
@@ -945,7 +977,7 @@ async function createLead(form) {
     state.recordId = nextId;
     writeRoute({ replace: true });
     await refresh(["leads", "tasks", "audit"]);
-    toast("Lead created.");
+    toast("สร้างเคสแล้ว");
   });
 }
 
@@ -954,7 +986,7 @@ async function changeLeadStatus(id, statusValue) {
   await withPending(`status-${id}`, async () => {
     await apiFetch(`leads/${encodeURIComponent(id)}/status`, { method: "PUT", body: { status: statusValue } });
     await refresh(["leads", "tasks", "audit"]);
-    toast("Status updated.");
+    toast("อัปเดตสถานะแล้ว");
   });
 }
 
@@ -963,14 +995,14 @@ async function addLeadNote(id) {
   const input = screen.querySelector(`[data-note="${cssEscape(id)}"]`);
   const note = clean(input && input.value, 2000);
   if (!note) {
-    toast("Write a note before adding it.", "error");
+    toast("กรุณาเขียนบันทึกก่อนเพิ่ม", "error");
     return;
   }
   await withPending(`note-${id}`, async () => {
     await apiFetch(`leads/${encodeURIComponent(id)}/notes`, { method: "POST", body: { note } });
     if (input) input.value = "";
     await refresh(["leads", "audit"]);
-    toast("Interaction logged.");
+    toast("บันทึกการติดต่อแล้ว");
   });
 }
 
@@ -981,7 +1013,7 @@ async function saveLeadFollowup(id) {
   await withPending(`followup-${id}`, async () => {
     await apiFetch(`leads/${encodeURIComponent(id)}`, { method: "PATCH", body: { followUpAt } });
     await refresh(["leads", "tasks", "audit"]);
-    toast("Follow-up saved.");
+    toast("บันทึกการติดตามแล้ว");
   });
 }
 
@@ -990,7 +1022,7 @@ async function patchTask(id, completed) {
   await withPending(`task-${id}`, async () => {
     await apiFetch(`tasks/${encodeURIComponent(id)}`, { method: "PATCH", body: { completed } });
     await refresh(["tasks", "audit"]);
-    toast(completed ? "Task completed." : "Task reopened.");
+    toast(completed ? "ทำเครื่องหมายว่าเสร็จแล้ว" : "เปิดงานอีกครั้งแล้ว");
   });
 }
 
@@ -1000,7 +1032,7 @@ async function withPending(key, task) {
   try {
     await task();
   } catch (error) {
-    toast(error.message || "The operation failed.", "error");
+    toast(error.message || "ทำรายการไม่สำเร็จ กรุณาลองอีกครั้ง", "error");
   } finally {
     state.pending = "";
     renderChrome();
@@ -1014,18 +1046,22 @@ function openLead(id) {
   state.recordId = id;
   writeRoute({ replace: true });
   render();
+  casesWorkspace?.openCase(id);
 }
 
-function setModule(moduleId, options = {}) {
+async function setModule(moduleId, options = {}) {
   if (isOperationsTab(moduleId)) {
     setOperationsTab(moduleId, options);
     return;
   }
   if (!MODULES.some((item) => item.id === moduleId)) return;
+  if (moduleId !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) return;
   state.module = moduleId;
   state.recordId = null;
   writeRoute(options);
   render();
+  if (moduleId === 'home') loadHomeData();
+  else if (moduleId !== 'operations' && !state.data.leads.length && !state.loading.size) loadAllData();
 }
 
 function setOperationsTab(tabId, options = {}) {
@@ -1088,14 +1124,14 @@ function pageHead(title, description, aside = "") {
 function connectionPill(text) {
   const errorCount = Object.keys(state.errors).length;
   const loading = state.loading.size > 0;
-  const label = text || (errorCount ? "API needs attention" : loading ? "Loading" : "Backend connected");
+  const label = text || (errorCount ? "การเชื่อมต่อมีปัญหา" : loading ? "กำลังโหลด" : "เชื่อมต่อระบบแล้ว");
   return `<span class="pill${errorCount ? " error" : loading ? " warn" : ""}"><span class="dot"></span>${escapeHTML(label)}</span>`;
 }
 
 function resourcePill(resource) {
-  if (state.errors[resource]) return `<span class="pill error"><span class="dot"></span>API issue</span>`;
-  if (state.loading.has(resource)) return `<span class="pill warn"><span class="dot"></span>Loading</span>`;
-  if (LIVE_RESOURCES.has(resource)) return `<span class="pill"><span class="dot"></span>Live data</span>`;
+  if (state.errors[resource]) return `<span class="pill error"><span class="dot"></span>การเชื่อมต่อมีปัญหา</span>`;
+  if (state.loading.has(resource)) return `<span class="pill warn"><span class="dot"></span>กำลังโหลด</span>`;
+  if (LIVE_RESOURCES.has(resource)) return `<span class="pill"><span class="dot"></span>ข้อมูลล่าสุด</span>`;
   return connectionPill();
 }
 
@@ -1106,9 +1142,9 @@ function errorNotice(resource) {
   if (!errors.length) return "";
   return `
     <div class="notice error" style="margin-bottom:18px;">
-      <strong>API issue</strong>
-      <div>${errors.map(([key, message]) => `${escapeHTML(titleCase(key))}: ${escapeHTML(message)}`).join("<br>")}</div>
-      <div style="margin-top:12px;"><button class="ghost-button" type="button" data-action="reload">Reload</button></div>
+      <strong>การเชื่อมต่อมีปัญหา</strong>
+      <div>${errors.map(([key, message]) => `${escapeHTML(systemLabel(key))}: ${escapeHTML(message)}`).join("<br>")}</div>
+      <div style="margin-top:12px;"><button class="ghost-button" type="button" data-action="reload">โหลดใหม่</button></div>
     </div>
   `;
 }
@@ -1156,7 +1192,7 @@ function filterBar(groups, count) {
             const action = key.startsWith("policy") ? "policy-filter" : key === "documentCategory" ? "document-filter" : key === "customerHold" ? "customer-filter" : "lead-filter";
             return `<button class="chip ${state.filters[key] === value ? "active" : ""}" type="button" data-action="${action}" data-filter="${key}" data-value="${value}">${escapeHTML(text)}</button>`;
           }).join("")}
-          ${label === groups[0][0] ? `<span class="record-count">${count} records</span>` : ""}
+          ${label === groups[0][0] ? `<span class="record-count">${count} รายการ</span>` : ""}
         </div>
       `).join("")}
     </div>
@@ -1165,12 +1201,12 @@ function filterBar(groups, count) {
 
 function leadRow(lead) {
   return `
-    <tr data-open-lead="${escapeHTML(lead.id)}" tabindex="0" role="button" aria-label="Open ${escapeHTML(lead.name || lead.id)}">
-      <td data-label="Lead">${titleMeta(lead.name || "Unnamed lead", `${lead.phone || lead.contact || lead.lineId || "No contact"} · ${lead.source || "Unknown"}`)}</td>
-      <td data-label="Status">${status(labelFor(STATUS_OPTIONS, lead.status), lead.status)}</td>
-      <td data-label="Interest"><strong>${interestLabel(lead.interestKey)}</strong></td>
-      <td data-label="Last interaction"><strong>${relativeTime(lead.updatedAt || lead.createdAt)}</strong></td>
-      <td data-label="Next action">${titleMeta(lead.nextAction || nextActionLabel(lead), lead.assigneeName || lead.assigned || "Unassigned")}</td>
+    <tr data-open-lead="${escapeHTML(lead.id)}" tabindex="0" role="button" aria-label="เปิดเคส ${escapeHTML(lead.name || lead.id)}">
+      <td data-label="เคสลูกค้า">${titleMeta(lead.name || "ไม่ระบุชื่อ", `${lead.phone || lead.contact || lead.lineId || "ไม่มีช่องทางติดต่อ"} · ${systemLabel(lead.source) || "ไม่ระบุ"}`)}</td>
+      <td data-label="สถานะ">${status(labelFor(STATUS_OPTIONS, lead.status), lead.status)}</td>
+      <td data-label="ความสนใจ"><strong>${interestLabel(lead.interestKey)}</strong></td>
+      <td data-label="ติดต่อล่าสุด"><strong>${relativeTime(lead.updatedAt || lead.createdAt)}</strong></td>
+      <td data-label="งานถัดไป">${titleMeta(lead.nextAction || nextActionLabel(lead), lead.assigneeName || lead.assigned || "ยังไม่มอบหมาย")}</td>
     </tr>
   `;
 }
@@ -1183,7 +1219,7 @@ function simpleTable(headers, rows, raw = false) {
         <tbody>
           ${rows.length ? rows.map((cells) => `
             <tr>${cells.map((cell, index) => `<td data-label="${escapeHTML(headers[index])}">${raw ? cell : String(cell).includes("<") ? cell : escapeHTML(String(cell))}</td>`).join("")}</tr>
-          `).join("") : emptyRow("No records yet.")}
+          `).join("") : emptyRow("ยังไม่มีข้อมูล")}
         </tbody>
       </table>
     </div>
@@ -1205,8 +1241,8 @@ function contentCard(title, copy, href, disabled) {
       <h2>${escapeHTML(title)}</h2>
       <p class="note" style="margin-bottom:18px;">${escapeHTML(copy)}</p>
       ${disabled
-        ? `<button class="ghost-button" type="button" disabled title="This role cannot edit website content">Read-only</button>`
-        : `<a class="ghost-button" href="${escapeHTML(href)}" target="_blank" rel="noreferrer">Open</a>`}
+        ? `<button class="ghost-button" type="button" disabled title="สิทธิ์นี้ไม่สามารถแก้ไขเนื้อหาเว็บไซต์ได้">ดูอย่างเดียว</button>`
+        : `<a class="ghost-button" href="${escapeHTML(href)}" target="_blank" rel="noreferrer">เปิด</a>`}
     </section>
   `;
 }
@@ -1225,12 +1261,12 @@ function status(label, value) {
 }
 
 function timeline(items) {
-  if (!items.length) return emptyBlock("No activity yet.");
+  if (!items.length) return emptyBlock("ยังไม่มีกิจกรรม");
   return `
     <ul class="timeline">
       ${items.map((item) => `
         <li>
-          <strong>${escapeHTML(item.title || "Activity")}</strong>
+          <strong>${escapeHTML(item.title || "กิจกรรม")}</strong>
           <span>${escapeHTML(item.meta || "")}</span>
         </li>
       `).join("")}
@@ -1241,14 +1277,14 @@ function timeline(items) {
 function derivedLeadTimeline(lead) {
   return [
     {
-      text: "Lead captured",
+      text: "รับเรื่องแล้ว",
       at: lead.createdAt,
-      by: lead.source || "System"
+      by: systemLabel(lead.source) || "ระบบ"
     },
     {
-      text: lead.consent && lead.consent.given ? "Consent captured" : "Consent not captured",
+      text: lead.consent && lead.consent.given ? "บันทึกความยินยอมแล้ว" : "ยังไม่มีบันทึกความยินยอม",
       at: lead.consent && lead.consent.at || lead.createdAt,
-      by: lead.consent && lead.consent.method || ""
+      by: systemLabel(lead.consent && lead.consent.method)
     }
   ];
 }
@@ -1265,13 +1301,15 @@ function routeStateFromLocation() {
   return adminPortalRouteStateFromLocation(location.pathname, location.hash);
 }
 
-function syncRouteFromLocation() {
+async function syncRouteFromLocation() {
   const next = routeStateFromLocation();
   if (next.module === state.module && next.operationsTab === state.operationsTab) return;
+  if (next.module !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) { writeRoute({ replace: true }); return; }
   state.module = next.module;
   state.operationsTab = next.operationsTab;
   state.recordId = null;
   render();
+  if (next.module === 'home') loadHomeData();
 }
 
 function routeUrl() {
@@ -1333,16 +1371,45 @@ function slug(value) {
 
 function labelFor(list, value) {
   const found = list.find(([id]) => id === value);
-  return found ? found[1] : titleCase(String(value || "").replace(/-/g, " "));
+  return found ? found[1] : systemLabel(value);
 }
 
 function titleCase(value) {
   return String(value || "").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function systemLabel(value) {
+  const labels = {
+    leads: "เคสลูกค้า", tasks: "งานติดตาม", audit: "ประวัติการทำงาน",
+    "Website form": "ฟอร์มเว็บไซต์", website: "เว็บไซต์", manual: "เพิ่มเอง",
+    Referral: "ผู้แนะนำ", "Google search": "ค้นหาผ่าน Google", "Phone call": "โทรศัพท์",
+    low: "ต่ำ", normal: "ปกติ", medium: "ปานกลาง", high: "สูง", urgent: "เร่งด่วน",
+    Low: "ต่ำ", Normal: "ปกติ", Medium: "ปานกลาง", High: "สูง", Urgent: "เร่งด่วน",
+    checkbox: "ช่องยืนยันความยินยอม", public_form: "ฟอร์มเว็บไซต์",
+    "public form checkbox": "ยืนยันผ่านฟอร์มเว็บไซต์", "Verified website notice": "ยืนยันข้อความแจ้งบนเว็บไซต์แล้ว", Unavailable: "ไม่มีข้อมูล",
+    Lead: "เคส", "Follow-up": "การติดตาม", Assign: "มอบหมาย", Status: "สถานะ", Note: "บันทึก", Task: "งาน",
+    Created: "สร้างแล้ว", Cleared: "ล้างค่าแล้ว", Unassigned: "ยังไม่มอบหมาย", Open: "เปิดอยู่", Completed: "เสร็จแล้ว",
+    New: "เคสใหม่", Contacting: "กำลังติดต่อ", Contacted: "ติดต่อแล้ว", Consultation: "ให้คำปรึกษา",
+    Quotation: "เสนอราคา", Considering: "กำลังตัดสินใจ", Converted: "ออกกรมธรรม์แล้ว",
+    "Follow-up later": "ติดตามภายหลัง", "Not interested": "ไม่สนใจ", Lost: "ปิดเคสโดยไม่ได้ทำประกัน", Operations: "เพิ่มจาก Admin",
+    in_progress: "กำลังดำเนินการ", contacted_reachable: "ติดต่อได้แล้ว",
+    contacted_no_answer: "ยังติดต่อไม่ได้", closed_completed: "ปิดเคส · ดำเนินการแล้ว",
+    closed_declined: "ปิดเคส · ไม่ดำเนินการต่อ", other: "อื่น ๆ", unsure: "ยังไม่แน่ใจ",
+    created: "สร้างข้อมูล", updated: "แก้ไขข้อมูล", completed: "เสร็จแล้ว", reopened: "เปิดอีกครั้ง",
+    "lead.created": "สร้างเคส", "lead.updated": "แก้ไขเคส", "lead.status_changed": "เปลี่ยนสถานะเคส",
+    "lead.note_added": "เพิ่มบันทึก", "task.completed": "งานเสร็จแล้ว", "task.reopened": "เปิดงานอีกครั้ง"
+  };
+  if (/^\d+ chars$/.test(String(value))) return `${String(value).split(" ")[0]} ตัวอักษร`;
+  return labels[value] || STATUS_OPTIONS.find(([key]) => key === value)?.[1] || value || "";
+}
+
+function auditSubject(value) {
+  return String(value || "").replace(/^Lead /, "เคส ").replace(/^Task /, "งาน ");
+}
+
 function interestLabel(value) {
   const found = INTEREST_OPTIONS.find(([id]) => id === value);
-  return found ? found[1] : titleCase(value || "unsure");
+  return found ? found[1] : systemLabel(value || "unsure");
 }
 
 function normalizeRole(value) {
@@ -1356,11 +1423,11 @@ function normalizeRole(value) {
 
 function displayRole(role) {
   const map = {
-    owner: "Owner / Administrator",
-    admin: "Owner / Administrator",
-    advisor: "Adviser",
-    ops: "Operations",
-    readonly: "Read-only"
+    owner: "เจ้าของ / Admin",
+    admin: "เจ้าของ / Admin",
+    advisor: "ที่ปรึกษา",
+    ops: "ทีมงาน",
+    readonly: "ดูอย่างเดียว"
   };
   return map[role] || role || "Admin";
 }
@@ -1389,15 +1456,15 @@ function isOverdue(value) {
 
 function relativeTime(value) {
   const ms = timestampMs(value);
-  if (!ms) return "Unknown";
+  if (!ms) return "ไม่ระบุ";
   const delta = Math.max(0, Date.now() - ms);
   const hours = Math.floor(delta / 3600000);
-  if (hours < 1) return "Just now";
-  if (hours < 24) return `${hours} hours ago`;
+  if (hours < 1) return "เมื่อสักครู่";
+  if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
   const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  if (days < 7) return `${days} days ago`;
-  if (days < 35) return `${Math.floor(days / 7)} weeks ago`;
+  if (days === 1) return "เมื่อวาน";
+  if (days < 7) return `${days} วันที่แล้ว`;
+  if (days < 35) return `${Math.floor(days / 7)} สัปดาห์ที่แล้ว`;
   return formatDate(ms);
 }
 
@@ -1405,7 +1472,7 @@ function formatDue(value) {
   const ms = timestampMs(value);
   if (!ms) return "-";
   if (sameDay(ms, new Date())) {
-    return `Today ${new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(ms)}`;
+    return `วันนี้ ${new Intl.DateTimeFormat("th-TH-u-ca-gregory", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(ms)}`;
   }
   return formatDate(value);
 }
@@ -1413,13 +1480,13 @@ function formatDue(value) {
 function formatDate(value) {
   const ms = timestampMs(value);
   if (!ms) return "-";
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(ms);
+  return new Intl.DateTimeFormat("th-TH-u-ca-gregory", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(ms);
 }
 
 function formatDateTime(value) {
   const ms = timestampMs(value);
   if (!ms) return "";
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(ms);
+  return new Intl.DateTimeFormat("th-TH-u-ca-gregory", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(ms);
 }
 
 function dateInput(value) {
@@ -1434,16 +1501,16 @@ function percent(value, total) {
 
 function statusMeaning(value) {
   const meanings = {
-    new: "Arrived but no outbound contact has happened.",
-    contacting: "A first contact attempt is underway.",
-    contacted: "Customer has replied or spoken with CoverMate.",
-    consultation: "Advice session is booked or completed.",
-    quotation: "A comparison or proposal is being prepared or sent.",
-    considering: "Customer is deciding after receiving options.",
-    converted: "Policy record exists.",
-    later: "Customer asked to pause until a future date.",
-    notinterested: "Customer declined for now.",
-    lost: "Closed without a policy."
+    new: "รับเรื่องแล้ว แต่ยังไม่ได้ติดต่อกลับ",
+    contacting: "กำลังติดต่อกลับครั้งแรก",
+    contacted: "ลูกค้าตอบกลับหรือได้พูดคุยกับ CoverMate แล้ว",
+    consultation: "นัดหมายหรือให้คำปรึกษาแล้ว",
+    quotation: "กำลังเตรียมหรือส่งข้อเสนอเปรียบเทียบ",
+    considering: "ลูกค้ากำลังตัดสินใจหลังได้รับตัวเลือก",
+    converted: "มีข้อมูลกรมธรรม์แล้ว",
+    later: "ลูกค้าขอให้ติดตามอีกครั้งในภายหลัง",
+    notinterested: "ลูกค้ายังไม่สนใจในขณะนี้",
+    lost: "ปิดเคสโดยไม่ได้ออกกรมธรรม์"
   };
   return meanings[value] || "";
 }
@@ -1465,8 +1532,8 @@ function nextStatuses(value) {
 }
 
 function nextActionLabel(lead) {
-  if (lead.followUpAt) return `Follow up ${formatDate(lead.followUpAt)}`;
-  if (["new", "contacting"].includes(lead.status)) return "First contact";
+  if (lead.followUpAt) return `ติดตาม ${formatDate(lead.followUpAt)}`;
+  if (["new", "contacting"].includes(lead.status)) return "ติดต่อครั้งแรก";
   return "-";
 }
 

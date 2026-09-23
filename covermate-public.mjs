@@ -170,12 +170,16 @@ async function appCheckToken() {
 }
 
 export async function submitContactLead(input = {}) {
+  if (String(input.topic || '').length > 500) throw new Error('Please keep your message within 500 characters.');
+  const noticeDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(input.noticeText || '')));
+  const noticeVersion = 'contact-' + [...new Uint8Array(noticeDigest)].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 24);
   const payload = {
     name: cleanText(input.name, 120), contact: cleanText(input.contact, 160),
     topic: cleanText(input.topic, 2000), summary: cleanText(input.summary, 1200),
     qtype: cleanLeadChoice(input.qtype, new Set(['', 'quote', 'compare', 'general', 'review', 'claim'])),
     coverage: cleanLeadChoice(input.coverage, new Set(['', 'life', 'health', 'motor', 'accident', 'savings', 'unsure'])),
     language: input.language === 'en' ? 'en' : 'th', consent: input.consent === true,
+    noticeVersion, consentKind: input.consentKind === 'renewal' ? 'renewal' : 'consultation',
     sourcePath: new URL(input.sourcePath || location.pathname, location.origin).pathname
   };
   const signature = JSON.stringify(payload);
@@ -189,8 +193,8 @@ export async function submitContactLead(input = {}) {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': token, 'Idempotency-Key': pendingIds.get(signature) },
     body: signature
   }, 15000);
-  if (!response.ok) throw new Error(result.message || 'Could not send your enquiry.');
-  if (typeof result.id !== 'string' || !/^[a-f0-9]{64}$/.test(result.id)) throw new DOMException('Receipt was not confirmed.', 'UnconfirmedReceipt');
+  if (!response.ok) throw Object.assign(new Error(result.message || 'Could not send your enquiry.'), { code: result.error, status: response.status });
+  if (result?.accepted !== true || typeof result.reference !== 'string' || !result.reference.trim() || result.reference.length > 80) throw new DOMException('Receipt was not confirmed.', 'UnconfirmedReceipt');
   pendingIds.delete(signature);
   return result;
 }

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoverMate · แนวคิดหน้าโหลด</title>
+<style>
+@font-face{font-family:CM;src:url('__THAI_FONT__') format('woff2');font-weight:400 700;unicode-range:U+0E00-0E7F}
+@font-face{font-family:CM;src:url('__LATIN_FONT__') format('woff2');font-weight:400 700;unicode-range:U+0000-00FF,U+2000-206F}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f5ead8;color:#342d24;font:14px/1.6 CM,system-ui,sans-serif}button{font:inherit;cursor:pointer}
+.website{position:fixed;inset:0;overflow:hidden;background:#fffcf6}.website img{display:block;width:100%;height:auto}.website picture{display:block}
+.splash{position:fixed;inset:0;background:#f5ead8;display:grid;place-items:center;transition:opacity 180ms linear;z-index:2}
+.splash.finished{opacity:0;pointer-events:none}
+.identity{width:min(440px,calc(100vw - 48px));text-align:center;transform:translateY(-24px);transition:opacity 150ms linear}
+.identity.hidden{opacity:0}
+.logo{display:block;width:384px;max-width:100%;height:auto;margin:0 auto}
+.track{position:relative;width:240px;height:3px;margin:34px auto 17px;background:#ded0b5;border-radius:4px;overflow:hidden}
+.track::before{content:"";position:absolute;inset:0;width:58%;background:linear-gradient(90deg,transparent,#ac7d32 42%,#d2ac61 70%,transparent);transform:translateX(-110%);animation:loading 1.5s cubic-bezier(.45,0,.25,1) infinite}
+@keyframes loading{to{transform:translateX(285%)}}
+.splash.done .track::before{animation:none;width:100%;transform:none;background:#b68c42}
+.message{margin:0;color:#675d4f;font-size:14px;font-weight:400;min-height:24px}
+.note{position:fixed;z-index:3;top:24px;left:28px;font-size:12px;color:#7c7161;letter-spacing:.01em}
+.demo{position:fixed;z-index:3;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:8px;padding:7px;background:#fffaf0ed;border:1px solid #e0d3bc;border-radius:16px;box-shadow:0 3px 16px #42321708;max-width:calc(100% - 24px)}
+.demo button{border:1px solid transparent;background:transparent;color:#605442;border-radius:10px;min-height:42px;padding:8px 13px;white-space:nowrap;font-size:12px}
+.demo .primary{background:#18364a;color:#fffaf0}.demo button:hover{border-color:#af956b}.demo button:focus-visible{outline:2px solid #8c631f;outline-offset:3px}
+body.paused .track::before{animation-play-state:paused}
+@media(max-width:600px){.logo{width:216px}.track{width:156px;margin-top:28px}.identity{transform:translateY(-28px)}.note{top:18px;left:18px;font-size:11px}.demo{bottom:max(14px,env(safe-area-inset-bottom));gap:2px;padding:5px}.demo button{font-size:11px;padding:8px 9px}}
+@media(prefers-reduced-motion:reduce){.track::before{animation:none;transform:none;width:100%;background:#bba16d}.splash,.identity{transition:none}}
+body.capture .note,body.capture .demo{display:none}
+</style>
+<div class="website" aria-hidden="true"><picture><source media="(max-width:600px)" srcset="__MOBILE_PAGE__"><img src="__DESKTOP_PAGE__" alt=""></picture></div>
+<main class="splash" id="splash" aria-busy="true">
+  <div class="identity" id="identity">
+    <img class="logo" src="__LOGO__" width="256" height="70" alt="CoverMate ประกันครบเพื่อนคุณ">
+    <div class="track" aria-hidden="true"></div>
+    <p class="message" role="status" aria-live="polite" id="message">กำลังเตรียมข้อมูลให้คุณ</p>
+  </div>
+</main>
+<div class="note">แนวคิดหน้าโหลด · ภาพหน้าเว็บด้านหลังใช้จำลองการเปลี่ยนหน้า</div>
+<nav class="demo" aria-label="ทดลองแนวคิดหน้าโหลด">
+  <button class="primary" id="normal">ดูจังหวะเข้าเว็บ</button>
+  <button id="slow">จำลองโหลดช้า</button>
+  <button id="pause" aria-pressed="false">หยุดการเคลื่อนไหว</button>
+</nav>
+<script>
+const splash=document.getElementById('splash'),identity=document.getElementById('identity'),message=document.getElementById('message');
+let timers=[];
+function later(fn,ms){timers.push(setTimeout(fn,ms));}
+function play(slow){
+ timers.forEach(clearTimeout);timers=[];
+ document.body.classList.remove('paused');document.getElementById('pause').setAttribute('aria-pressed','false');document.getElementById('pause').textContent='หยุดการเคลื่อนไหว';
+ splash.className='splash';splash.setAttribute('aria-busy','true');identity.classList.add('hidden');message.textContent='กำลังเตรียมข้อมูลให้คุณ';
+ later(()=>identity.classList.remove('hidden'),300);
+ if(slow)later(()=>message.textContent='ใช้เวลานานกว่าปกติสักนิด…',4000);
+ // Demo timing only. Production must use the real content-ready signal.
+ later(()=>{splash.classList.add('done');splash.setAttribute('aria-busy','false');message.textContent='พร้อมแล้ว';later(()=>splash.classList.add('finished'),120);},slow?6500:2200);
+}
+document.getElementById('normal').onclick=()=>play(false);document.getElementById('slow').onclick=()=>play(true);
+document.getElementById('pause').onclick=function(){const paused=document.body.classList.toggle('paused');this.setAttribute('aria-pressed',String(paused));this.textContent=paused?'เล่นการเคลื่อนไหว':'หยุดการเคลื่อนไหว';};
+if(new URLSearchParams(location.search).has('capture'))document.body.classList.add('capture');
+else play(false);
+</script>
+</html>

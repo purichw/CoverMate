@@ -29,40 +29,37 @@
     html[data-covermate-booting="true"] body > * {
       visibility: hidden !important;
     }
-    #__bundler_thumbnail,
-    #__bundler_loading,
     #__bundler_placeholder {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
     }
-    #__bundler_thumbnail { position: fixed; inset: 0; width: 100%; height: 100%; background: #f5ead8; z-index: -1; }
-    #__bundler_thumbnail svg { width: 0; height: 0; }
   </style>
-  <style id="covermate-shell-splash-hide">
-    #__bundler_thumbnail,
-    #__bundler_loading {
-      display: none !important;
-    }
-  </style>
+  <style id="covermate-boot-style">/* COVERMATE_BOOT_STYLES */</style>
   <noscript>
-    <style>html[data-covermate-booting="true"] body, html[data-covermate-booting="true"] body > * { color: #201e1d !important; visibility: visible !important; } #__bundler_loading { display: none; }</style>
+    <style>#covermate-boot{display:none!important}</style>
+    <style>html[data-covermate-booting="true"] body, html[data-covermate-booting="true"] body > * { color: #201e1d !important; visibility: visible !important; }</style>
     <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 &quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
       This page requires JavaScript to display.
     </div>
   </noscript>
 </head>
 <body>
+  <div id="covermate-boot" aria-busy="true">
+    <div class="cm-boot-content">
+      <div class="cm-boot-brand"><img data-covermate-boot-logo src="/assets/brand/covermate-advisory-logo-th.png" width="1200" height="375" alt="CoverMate"><span class="cm-boot-name" hidden>CoverMate</span></div>
+      <div class="cm-boot-track" aria-hidden="true"></div>
+      <p role="status" aria-live="polite">กำลังเตรียมข้อมูลให้คุณ</p>
+      <button type="button" hidden>ลองอีกครั้ง</button>
+    </div>
+  </div>
+  <script>// COVERMATE_BOOT_SCRIPT</script>
   <script src="/assets/telemetry.js" defer></script>
-  <div id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" sc-camel-view-box="0 0 100 100"><rect width="100" height="100" fill="#f5ead8"></rect><circle cx="50" cy="50" r="26" fill="#c9d6ad"></circle><path d="M50 30c6 5 13 7 13 7v13c0 10-7 15-13 17-6-2-13-7-13-17V37s7-2 13-7z" fill="none" stroke="#c67139" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-  <div id="__bundler_loading">Unpacking...</div>
 
-  <script>
+  <script id="covermate-bootstrap">
 
 document.addEventListener('DOMContentLoaded', async function() {
-  const loading = document.getElementById('__bundler_loading');
-  function setStatus(msg) { if (loading) loading.textContent = msg; }
   const BOOT_ATTR = 'data-covermate-booting';
   const BOOT_GUARD_ID = 'covermate-hydration-guard';
   const FIRST_BOOT_REVEAL_MS = 4500;
@@ -72,7 +69,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   let revealTimer = 0;
   function scheduleReveal(ms) {
     try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
-    revealTimer = window.setTimeout(revealCoverMate, ms);
+    revealTimer = window.setTimeout(function() {
+      // A font deadline may reveal a mounted page, never an unpacked template.
+      if (document.documentElement.hasAttribute('data-covermate-route') && document.querySelector('main h1')) revealCoverMate();
+    }, ms);
   }
   function revealCoverMate() {
     try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.body.style.removeProperty('visibility');
         document.body.style.removeProperty('color');
       }
+      if (window.CoverMateBoot) window.CoverMateBoot.ready();
     } catch (err) {
       /* Keep fallback reveal non-fatal. */
     }
@@ -124,6 +125,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         e.target.tagName, String(e.target.src || e.target.href || ''));
       return;
     }
+    if (window.CoverMateBoot && window.CoverMateBoot.pending) {
+      window.CoverMateBoot.fail();
+      return;
+    }
     var p = document.body || document.documentElement;
     var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
     d.id = '__bundler_err';
@@ -137,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const manifestEl = document.querySelector('script[type="__bundler/manifest"]');
     const templateEl = document.querySelector('script[type="__bundler/template"]');
     if (!manifestEl || !templateEl) {
-      setStatus('Error: missing bundle data');
+      if (window.CoverMateBoot) window.CoverMateBoot.fail();
       console.error('[bundler] Missing script tags — manifestEl:', !!manifestEl, 'templateEl:', !!templateEl);
       return;
     }
@@ -197,7 +202,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         timeoutId = window.setTimeout(() => resolve({ timedOut: true }), timeoutMs);
       });
       const remote = (async () => {
-        setStatus('Loading latest content...');
         if (!owner) {
           const publicContent = await import(window.location.origin + '/covermate-public.mjs');
           publicContent.startLiveContentSync();
@@ -374,7 +378,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     const uuids = Object.keys(manifest);
-    setStatus('Unpacking ' + uuids.length + ' assets...');
 
     await Promise.all(uuids.map(async (uuid) => {
       const entry = manifest[uuid];
@@ -444,7 +447,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // consumers read these Blobs directly. Survives the swap like the error sink.
     window.__resourceBlobs = resourceBlobs;
 
-    setStatus('Rendering...');
     // Page uuids have no blob here — they ride inside about:blank#<uuid>
     // frame markers the pass below resolves after the swap.
     for (const uuid of uuids) {
@@ -479,6 +481,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const doc = new DOMParser().parseFromString(template, 'text/html');
     doc.documentElement.setAttribute(BOOT_ATTR, 'true');
     scheduleReveal(SWAPPED_BOOT_REVEAL_MS);
+    if (window.CoverMateBoot) window.CoverMateBoot.attach(doc);
     document.documentElement.replaceWith(doc.documentElement);
 
     // Resolve page-frame markers: mint this document's own blob for each
@@ -520,7 +523,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         s.textContent = pre ? await pre.text() : await (await fetch(s.src)).text();
         s.removeAttribute('src');
       }
-      const p = s.src ? new Promise(function(r) { s.onload = s.onerror = r; }) : null;
+      const p = s.src ? new Promise(function(resolve, reject) { s.onload = resolve; s.onerror = function() { reject(new Error('Page resource failed to load')); }; }) : null;
       old.replaceWith(s);
       if (p) await p;
     }
@@ -531,8 +534,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     // Keep the bounded fallback; React signals the first completed render.
   } catch (err) {
-    revealCoverMate();
-    setStatus('Error unpacking: ' + err.message);
+    if (window.CoverMateBoot) window.CoverMateBoot.fail();
     console.error('Bundle unpack error:', err);
   }
 });

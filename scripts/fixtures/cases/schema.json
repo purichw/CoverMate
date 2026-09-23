@@ -1,0 +1,1332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:covermate:admin:handoff:v2",
+  "title": "CoverMate Admin Contract v2",
+  "description": "Transport and fixture schema; not SQL, migration or authorization. Root validates FixtureBundle only. Select $defs for actual endpoints.",
+  "$ref": "#/$defs/FixtureBundle",
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S"
+    },
+    "UtcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "UTC RFC 3339 timestamp; canonical serialization ends in Z. Enable format validation."
+    },
+    "NullableTimestamp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "CaseStatus": {
+      "type": "string",
+      "enum": [
+        "new",
+        "in_progress",
+        "contacted_reachable",
+        "contacted_no_answer",
+        "closed_completed",
+        "closed_declined"
+      ]
+    },
+    "OpenStatus": {
+      "type": "string",
+      "enum": [
+        "new",
+        "in_progress",
+        "contacted_reachable",
+        "contacted_no_answer"
+      ]
+    },
+    "InterestType": {
+      "type": "string",
+      "enum": [
+        "motor",
+        "life",
+        "health",
+        "accident",
+        "savings",
+        "unsure",
+        "other"
+      ]
+    },
+    "Contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "pattern": "\\S"
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lineId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 254,
+              "format": "email"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rawContact": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "phone",
+        "lineId",
+        "email",
+        "rawContact"
+      ],
+      "anyOf": [
+        {
+          "properties": {
+            "phone": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "phone"
+          ]
+        },
+        {
+          "properties": {
+            "lineId": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "lineId"
+          ]
+        },
+        {
+          "properties": {
+            "email": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "email"
+          ]
+        },
+        {
+          "properties": {
+            "rawContact": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "rawContact"
+          ]
+        }
+      ],
+      "description": "All slots explicit in normalized records. At least one contact method or raw contact is required. Server validates/normalizes actual phone values; strings are not proof of reachability."
+    },
+    "FollowUp": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dueAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "reminderEnabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dueAt",
+        "reminderEnabled"
+      ]
+    },
+    "OriginalSubmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "contactInput": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "\\S"
+        },
+        "enquiryTopic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "\\S"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 20000
+        }
+      },
+      "required": [
+        "name",
+        "contactInput",
+        "enquiryTopic",
+        "message"
+      ],
+      "description": "Immutable server-preserved original form values. Read limits accommodate legacy text; never truncate older data silently."
+    },
+    "ConsentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "const": true
+        },
+        "noticeVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "accepted",
+        "noticeVersion"
+      ]
+    },
+    "PrivacyReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "noticeVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        },
+        "noticeText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+          "pattern": "\\S"
+        },
+        "accepted": {
+          "const": true
+        },
+        "acceptedAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        }
+      },
+      "required": [
+        "id",
+        "noticeVersion",
+        "noticeText",
+        "accepted",
+        "acceptedAt"
+      ],
+      "description": "Server evidence from an actual accepted website notice. Null on the CaseRecord when unavailable; never manufacture legacy/manual consent."
+    },
+    "CaseRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "caseNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "\\S"
+        },
+        "source": {
+          "enum": [
+            "website",
+            "manual"
+          ]
+        },
+        "submittedAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "contact": {
+          "$ref": "#/$defs/Contact"
+        },
+        "interestType": {
+          "$ref": "#/$defs/InterestType"
+        },
+        "enquiryTopic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "originalSubmission": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OriginalSubmission"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "privacyReceipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PrivacyReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workingNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "status": {
+          "$ref": "#/$defs/CaseStatus"
+        },
+        "followUp": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FollowUp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "followUpRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closedAt": {
+          "$ref": "#/$defs/NullableTimestamp"
+        }
+      },
+      "required": [
+        "id",
+        "caseNumber",
+        "source",
+        "submittedAt",
+        "updatedAt",
+        "version",
+        "contact",
+        "interestType",
+        "enquiryTopic",
+        "originalSubmission",
+        "privacyReceipt",
+        "workingNote",
+        "status",
+        "followUp",
+        "followUpRevision",
+        "closedAt"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "closed_completed",
+                  "closed_declined"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "followUp": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "closedAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "followUp": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "followUp"
+            ]
+          },
+          "then": {
+            "properties": {
+              "followUpRevision": {
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ],
+      "description": "Protected normalized API record, not a writable request. closedAt may be null for legacy closed cases with unavailable evidence; all new closures must set it server-side."
+    },
+    "WebsiteSubmissionInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "pattern": "\\S"
+        },
+        "contactInput": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "enquiryTopic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "consent": {
+          "$ref": "#/$defs/ConsentInput"
+        }
+      },
+      "required": [
+        "name",
+        "contactInput",
+        "enquiryTopic",
+        "message",
+        "consent"
+      ],
+      "description": "Public create-only body. Idempotency key is transport metadata. Server derives status/source/owner/interest mapping and looks up the accepted notice version."
+    },
+    "SubmissionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "const": true
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "accepted",
+        "reference"
+      ]
+    },
+    "ManualCaseInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contact": {
+          "$ref": "#/$defs/Contact"
+        },
+        "interestType": {
+          "$ref": "#/$defs/InterestType"
+        },
+        "enquiryTopic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "workingNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "status": {
+          "$ref": "#/$defs/CaseStatus"
+        },
+        "followUp": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FollowUp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "contact",
+        "interestType",
+        "enquiryTopic"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "closed_completed",
+                  "closed_declined"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "followUp": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Authenticated owner only. Defaults assigned by server: new, empty note, null followUp. Does not notify the creating owner."
+    },
+    "CaseChanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contact": {
+          "$ref": "#/$defs/Contact"
+        },
+        "interestType": {
+          "$ref": "#/$defs/InterestType"
+        },
+        "enquiryTopic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "workingNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "status": {
+          "$ref": "#/$defs/CaseStatus"
+        },
+        "followUp": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FollowUp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "minProperties": 1,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "closed_completed",
+                  "closed_declined"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "followUp": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CasePatchInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "changes": {
+          "$ref": "#/$defs/CaseChanges"
+        },
+        "reopen": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "expectedVersion",
+        "changes"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reopen": {
+                "const": true
+              }
+            },
+            "required": [
+              "reopen"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changes": {
+                "properties": {
+                  "status": {
+                    "$ref": "#/$defs/OpenStatus"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "description": "Omission = unchanged; null followUp = clear; empty workingNote = clear note. Transition guards and expectedVersion compare must run server-side against persisted state."
+    },
+    "CaseActivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "caseId": {
+          "$ref": "#/$defs/Id"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "actorId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "created",
+            "updated",
+            "reopened",
+            "migrated"
+          ]
+        },
+        "fieldsChanged": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "contact",
+              "interestType",
+              "enquiryTopic",
+              "workingNote",
+              "status",
+              "followUp"
+            ]
+          },
+          "maxItems": 6
+        },
+        "statusBefore": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaseStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "statusAfter": {
+          "$ref": "#/$defs/CaseStatus"
+        },
+        "noteSnapshot": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 2000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "createdAt",
+        "actorId",
+        "type",
+        "fieldsChanged",
+        "statusBefore",
+        "statusAfter",
+        "noteSnapshot"
+      ],
+      "description": "Server-generated, protected, append-only change record. Does not trigger owner notifications for their own edits."
+    },
+    "Notification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "recipientId": {
+          "$ref": "#/$defs/Id"
+        },
+        "type": {
+          "enum": [
+            "new_case",
+            "follow_up_due",
+            "system_issue"
+          ]
+        },
+        "caseId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "followUpRevision": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "\\S"
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "dedupeKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400,
+          "pattern": "\\S"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "readAt": {
+          "$ref": "#/$defs/NullableTimestamp"
+        },
+        "resolvedAt": {
+          "$ref": "#/$defs/NullableTimestamp"
+        }
+      },
+      "required": [
+        "id",
+        "recipientId",
+        "type",
+        "caseId",
+        "followUpRevision",
+        "title",
+        "body",
+        "dedupeKey",
+        "createdAt",
+        "readAt",
+        "resolvedAt"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "new_case",
+                  "follow_up_due"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caseId": {
+                "$ref": "#/$defs/Id"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "follow_up_due"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "followUpRevision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "followUpRevision": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "system_issue"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caseId": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Protected server-created inbox record. Unique persistence constraint on recipientId + dedupeKey. Construct safe admin links from caseId; no client-supplied external URLs."
+    },
+    "EmailPreferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "newCase": {
+          "type": "boolean"
+        },
+        "followUpDue": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "newCase",
+        "followUpDue"
+      ]
+    },
+    "NotificationPreferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ownerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "timezone": {
+          "const": "Asia/Bangkok"
+        },
+        "inAppEnabled": {
+          "const": true
+        },
+        "email": {
+          "$ref": "#/$defs/EmailPreferences"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "timezone",
+        "inAppEnabled",
+        "email",
+        "version",
+        "updatedAt"
+      ]
+    },
+    "PreferencesPatchInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "email": {
+          "$ref": "#/$defs/EmailPreferences"
+        }
+      },
+      "required": [
+        "expectedVersion",
+        "email"
+      ],
+      "description": "Cannot change ownerId/recipient or enable arbitrary channels. Verify live capability before accepting enabled flags; store enable transition times internally to avoid historical email backfill."
+    },
+    "NotificationCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inAppAvailable": {
+          "const": true
+        },
+        "emailAvailable": {
+          "type": "boolean"
+        },
+        "verifiedEmailLabel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 254,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schedulerAvailable": {
+          "type": "boolean"
+        },
+        "schedulerCadenceMinutes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "lineAvailable": {
+          "const": false
+        }
+      },
+      "required": [
+        "inAppAvailable",
+        "emailAvailable",
+        "verifiedEmailLabel",
+        "schedulerAvailable",
+        "schedulerCadenceMinutes",
+        "lineAvailable"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "emailAvailable": {
+                "const": true
+              }
+            },
+            "required": [
+              "emailAvailable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verifiedEmailLabel": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "schedulerAvailable": {
+                "const": true
+              }
+            },
+            "required": [
+              "schedulerAvailable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "schedulerCadenceMinutes": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "schedulerCadenceMinutes": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Server-reported actual readiness, not preferences. Email available requires configured usable provider, verified recipient, and functioning delivery execution. Scheduled emails require both emailAvailable and schedulerAvailable."
+    },
+    "SummaryResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "timezone": {
+          "const": "Asia/Bangkok"
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "open": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "new": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "followUpsDue": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "overdue": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "noAnswer": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closedThisMonth": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "asOf",
+        "timezone",
+        "total",
+        "open",
+        "closed",
+        "new",
+        "followUpsDue",
+        "overdue",
+        "noAnswer",
+        "closedThisMonth"
+      ]
+    },
+    "CaseListResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CaseRecord"
+          },
+          "maxItems": 100
+        },
+        "filteredTotal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "filteredTotal",
+        "nextCursor"
+      ]
+    },
+    "NotificationListResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Notification"
+          },
+          "maxItems": 100
+        },
+        "unreadCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "unreadCount",
+        "nextCursor"
+      ]
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "fieldErrors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300,
+            "pattern": "\\S"
+          }
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "fieldErrors"
+      ]
+    },
+    "FixtureBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "2.0"
+        },
+        "demoOnly": {
+          "const": true
+        },
+        "asOf": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "timezone": {
+          "const": "Asia/Bangkok"
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CaseRecord"
+          }
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CaseActivity"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Notification"
+          }
+        },
+        "preferences": {
+          "$ref": "#/$defs/NotificationPreferences"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/NotificationCapabilities"
+        },
+        "expectedSummary": {
+          "$ref": "#/$defs/SummaryResponse"
+        },
+        "expectedUnreadCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requestExamples": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "websiteSubmission": {
+              "$ref": "#/$defs/WebsiteSubmissionInput"
+            },
+            "manualCase": {
+              "$ref": "#/$defs/ManualCaseInput"
+            },
+            "patchCase": {
+              "$ref": "#/$defs/CasePatchInput"
+            },
+            "closeCase": {
+              "$ref": "#/$defs/CasePatchInput"
+            },
+            "reopenCase": {
+              "$ref": "#/$defs/CasePatchInput"
+            },
+            "preferencesPatch": {
+              "$ref": "#/$defs/PreferencesPatchInput"
+            }
+          },
+          "required": [
+            "websiteSubmission",
+            "manualCase",
+            "patchCase",
+            "closeCase",
+            "reopenCase",
+            "preferencesPatch"
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "demoOnly",
+        "asOf",
+        "timezone",
+        "cases",
+        "activities",
+        "notifications",
+        "preferences",
+        "capabilities",
+        "expectedSummary",
+        "expectedUnreadCount",
+        "requestExamples"
+      ]
+    }
+  }
+}

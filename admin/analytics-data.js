@@ -1,22 +1,22 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const QUERY_LABELS = {
-  quote: "Quote",
-  compare: "Compare",
-  general: "General",
-  review: "Review",
-  claim: "Claim",
-  "": "Unspecified"
+  quote: "ขอใบเสนอราคา",
+  compare: "เปรียบเทียบแผน",
+  general: "สอบถามทั่วไป",
+  review: "ตรวจกรมธรรม์",
+  claim: "เคลม",
+  "": "ไม่ระบุ"
 };
 
 const COVERAGE_LABELS = {
-  life: "Life",
-  health: "Health",
-  motor: "Motor",
-  accident: "Accident",
-  savings: "Savings",
-  unsure: "Unsure",
-  "": "Unspecified"
+  life: "ประกันชีวิต",
+  health: "ประกันสุขภาพ",
+  motor: "ประกันรถยนต์",
+  accident: "ประกันอุบัติเหตุ",
+  savings: "ประกันสะสมทรัพย์",
+  unsure: "ยังไม่แน่ใจ",
+  "": "ไม่ระบุ"
 };
 
 function toDate(value) {
@@ -37,7 +37,7 @@ function emptyDays(days) {
   today.setHours(0, 0, 0, 0);
   return Array.from({ length: days }, (_, index) => {
     const date = new Date(today.getTime() - (days - index - 1) * DAY_MS);
-    return { key: dayKey(date), label: date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }), leads: 0 };
+    return { key: dayKey(date), label: date.toLocaleDateString("th-TH", { day: "2-digit", month: "short" }), leads: 0 };
   });
 }
 
@@ -45,7 +45,7 @@ function tally(items, key, labels) {
   const counts = new Map();
   for (const item of items) {
     const raw = String(item[key] || "");
-    const label = labels[raw] || raw || "Unspecified";
+    const label = labels[raw] || raw || "ไม่ระบุ";
     counts.set(label, (counts.get(label) || 0) + 1);
   }
   return Array.from(counts.entries())
@@ -75,10 +75,10 @@ export function summarizeLeads(leads, options = {}) {
   const unread = safeLeads.filter((lead) => lead.read !== true && lead.status !== "archived").length;
   const recent = safeLeads.slice(0, 8).map((lead) => ({
     id: lead.id || "",
-    name: lead.name || "Unnamed",
+    name: lead.name || "ไม่ระบุชื่อ",
     contact: lead.contact || "",
-    qtype: QUERY_LABELS[lead.qtype || ""] || lead.qtype || "Unspecified",
-    coverage: COVERAGE_LABELS[lead.coverage || ""] || lead.coverage || "Unspecified",
+    qtype: QUERY_LABELS[lead.qtype || ""] || lead.qtype || "ไม่ระบุ",
+    coverage: COVERAGE_LABELS[lead.coverage || ""] || lead.coverage || "ไม่ระบุ",
     createdAt: toDate(lead.createdAt)
   }));
 
@@ -100,7 +100,7 @@ export function gaConnectionModel() {
     status: "tracking-installed",
     dataApiStatus: "server-endpoint-ready",
     apiEndpoint: "/api/analytics",
-    requiredBackend: "Set GA4 property and service-account environment variables in Vercel",
+    requiredBackend: "ตั้งค่า GA4 property และตัวแปร service account ใน Vercel",
     metrics: [
       "sessions",
       "activeUsers",

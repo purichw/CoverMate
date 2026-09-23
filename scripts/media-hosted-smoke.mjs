@@ -48,22 +48,22 @@ try {
   }, token);
   const panel = async () => {
     await page.goto(host + '/admin/content');
-    await page.getByRole('button', { name: 'Brand & contact', exact: true }).click({ timeout: 60000 });
+    await page.getByRole('button', { name: 'แบรนด์และติดต่อ', exact: true }).click({ timeout: 60000 });
     await page.locator('[data-cms-group="Images & crop"] > summary').click();
   };
   const crop = async () => {
-    await page.locator('[data-media-slot="brand.media.favicon"]').getByRole('button', { name: 'Edit image', exact: true }).click();
+    await page.locator('[data-media-slot="brand.media.favicon"]').getByRole('button', { name: 'แก้ไขรูป', exact: true }).click();
     await page.locator('.cm-media-dialog .cropper-container').waitFor();
   };
   await panel();
   await crop();
   await page.locator('.cm-media-dialog input[type=file]').setInputFiles('assets/brand/covermate-mark.png');
   await page.locator('.cm-media-dialog .cropper-container').waitFor();
-  await page.getByRole('radio', { name: 'Fit whole image', exact: true }).check();
-  await page.getByRole('button', { name: 'Use image in draft', exact: true }).waitFor();
+  await page.getByRole('radio', { name: 'แสดงรูปเต็ม', exact: true }).check();
+  await page.getByRole('button', { name: 'ใช้รูปนี้ใน draft', exact: true }).waitFor();
   await page.screenshot({ path: out + '/crop-desktop.png' });
   const responsePromise = page.waitForResponse(r => new URL(r.url()).pathname === '/api/media' && r.request().method() === 'POST', { timeout: 60000 });
-  await page.getByRole('button', { name: 'Use image in draft', exact: true }).click();
+  await page.getByRole('button', { name: 'ใช้รูปนี้ใน draft', exact: true }).click();
   const response = await responsePromise;
   const media = await response.json();
   assert.equal(response.status(), 201, media.message || media.error);
@@ -73,11 +73,11 @@ try {
   assert.notEqual((await refs[0].get()).data().config.brand.media.favicon, media.url, 'Upload stays draft-only');
   await panel();
   await crop();
-  assert.equal(await page.getByRole('textbox', { name: 'Image path or HTTPS URL' }).inputValue(), media.sourceUrl);
+  assert.equal(await page.getByRole('textbox', { name: 'Path รูปหรือ HTTPS URL' }).inputValue(), media.sourceUrl);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: out + '/recrop-mobile.png' });
   assert.ok(await page.locator('.cm-media-dialog').evaluate(el => el.scrollWidth <= el.clientWidth));
-  await page.getByRole('button', { name: 'Cancel', exact: true }).last().click();
+  await page.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click();
   assert.equal((await refs[1].get()).data().config.brand.media.favicon, media.url);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(host + '/admin/edit');

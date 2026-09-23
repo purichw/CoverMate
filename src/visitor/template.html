@@ -75,39 +75,6 @@
 }
 </style>
 <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css">
-<style id="covermate-guides-font-scale">
-  #guides summary > div:last-child,
-  #guides summary > div:last-child span,
-  #guides summary [style*="font-size: clamp(19px"],
-  #guides summary [style*="font-size:clamp(19px"] {
-    font-size: 16.5px !important;
-    font-weight: 700 !important;
-    line-height: 1.45 !important;
-    letter-spacing: 0 !important;
-  }
-  #guides details > div {
-    font-size: clamp(14px, 1.05vw, 15px) !important;
-    line-height: 1.65 !important;
-  }
-  #guides summary span[data-noedit] {
-    font-size: 12px !important;
-  }
-  #guides summary > div:first-child > span:not([data-noedit]) {
-    font-size: 11px !important;
-    letter-spacing: .08em !important;
-  }
-  @media (max-width: 560px) {
-    #guides summary > div:last-child,
-    #guides summary > div:last-child span,
-    #guides summary [style*="font-size: clamp(19px"],
-    #guides summary [style*="font-size:clamp(19px"] {
-      font-size: 16.5px !important;
-    }
-    #guides details > div {
-      font-size: 13.5px !important;
-    }
-  }
-</style>
 </head>
 <body>
 <x-dc>
@@ -511,6 +478,21 @@ textarea.input { min-height: 90px; resize: vertical; }
   .cm-owner-dock__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .cm-owner-dock__label--compact { display: none; }
   .cm-owner-dock__divider { width: 1px; height: 22px; background: var(--dock-hairline); }
+  .cm-editor-history { display:flex; align-items:center; gap:4px; }
+  .cm-editor-history button { min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid transparent; border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:13px; font-weight:650; cursor:pointer; padding:0 10px; }
+  .cm-editor-history button:hover { background:color-mix(in srgb,currentColor 9%,transparent); }
+  .cm-editor-history button:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+  .cm-editor-history button[aria-disabled="true"] { opacity:.42; cursor:default; }
+  .cm-editor-history svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+  .cm-editor-history-note { font-size:12px; line-height:1.6; margin:4px 10px 8px; opacity:.75; }
+  .cm-editor-reset-copy { display:flex; flex-direction:column; align-items:flex-start; gap:5px; padding-block:8px; text-align:left; white-space:normal; line-height:1.4; }
+  .cm-editor-reset-copy small { color:var(--dock-cream-dim); font-size:11px; font-weight:400; }
+  .cm-editor-history-panel { padding-block:10px; margin-bottom:12px; border-block:1px solid var(--color-neutral-300); }
+  .cm-editor-history-panel .cm-editor-history { justify-content:space-between; flex-wrap:wrap; }
+  .cm-editor-reset { font:inherit; font-size:12px; font-weight:650; color:var(--color-neutral-800); background:none; border:0; min-height:44px; cursor:pointer; border-radius:10px; padding:0 10px; }
+  .cm-editor-reset:hover { background:var(--color-neutral-200); }
+  .cm-editor-reset:focus-visible { outline:2px solid var(--color-accent); }
+  @media(max-width:700px) { .cm-owner-dock .cm-editor-history { gap:0; } .cm-owner-dock .cm-editor-history button { padding:0; } .cm-owner-dock .cm-editor-history button span { display:none; } .cm-owner-dock__row { gap:4px; } }
   .cm-owner-dock__details { position: static; flex: 0 0 auto; }
   .cm-owner-dock__toggle {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -1500,36 +1482,6 @@ textarea.input { min-height: 90px; resize: vertical; }
     </section>
   </sc-if>
 
-  <!-- ─── GUIDES ─── -->
-  <sc-if value="{{ s.isGuides }}" hint-placeholder-val="{{ false }}">
-    <section id="{{ s.id }}" data-screen-label="Guides" style="scroll-margin-top:clamp(86px,9vw,124px);background:{{ s.bg }};color:{{ s.fg }}">
-      <div style="max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:flex;flex-direction:column;gap:clamp(28px,3.5vw,48px)">
-        <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-2);max-width:56ch;min-width:0">
-          <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
-          <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
-          <p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:52ch;text-wrap:pretty" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
-        </div>
-        <div style="display:grid;grid-template-columns:{{ s.grid }};gap:var(--space-4);align-items:start">
-          <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="4">
-            <details data-reveal="{{ it.n }}" style="background:{{ s.card }};color:{{ s.cardFg }};border-radius:var(--radius-lg);overflow:hidden;min-width:0">
-              <summary style="display:flex;flex-direction:column;gap:var(--space-2);padding:clamp(20px,2.2vw,30px)">
-                <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap">
-                  <span style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:{{ it.soft }};color:{{ it.deep }}" data-content-path="{{ it.copy.label }}"><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></span>
-                  <span data-noedit="" style="font-size:12.5px;color:{{ s.cardMuted }}"><span data-content-path="{{ it.copy.meta }}">{{ it.meta }}</span></span>
-                  <span class="om-chev" style="margin-left:auto;width:30px;height:30px;flex:0 0 auto;border-radius:999px;background:{{ s.chip }};display:flex;align-items:center;justify-content:center">
-                    <svg sc-camel-view-box="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:{{ s.cardMuted }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
-                  </span>
-                </div>
-                <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(19px,1.9vw,23px);line-height:1.32;text-wrap:pretty" data-content-path="{{ it.copy.title }}"><span data-content-path="{{ it.copy.title }}">{{ it.title }}</span></div>
-              </summary>
-              <div style="padding:0 clamp(20px,2.2vw,30px) clamp(20px,2.2vw,30px);font-size:15px;line-height:1.75;color:{{ s.cardMuted }};white-space:pre-line;animation:omRise .3s ease both;text-wrap:pretty" data-content-path="{{ it.copy.body }}"><span data-content-path="{{ it.copy.body }}">{{ it.body }}</span></div>
-            </details>
-          </sc-for>
-        </div>
-      </div>
-    </section>
-  </sc-if>
-
   <!-- ─── HOW I GET PAID ─── -->
   <sc-if value="{{ s.isFees }}" hint-placeholder-val="{{ false }}">
     <section id="{{ s.id }}" data-screen-label="Fees" style="scroll-margin-top:clamp(86px,9vw,124px);position:relative;overflow:hidden;background:{{ s.bg }};color:{{ s.fg }}">
@@ -1875,7 +1827,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 <!-- ══════════ ADMIN PORTAL ══════════ -->
 <sc-if value="{{ editMode }}" hint-placeholder-val="{{ false }}">
-  <div data-admin-owner-bar="edit" data-noedit="true" class="cm-owner-dock" aria-label="Owner editing controls">
+  <div lang="th" data-admin-owner-bar="edit" data-noedit="true" class="cm-owner-dock" aria-label="เครื่องมือแก้ไขเว็บไซต์">
     <div class="cm-owner-dock__row">
       <span class="cm-owner-dock__mode" aria-label="{{ ownerDockStatus }}">
         <span class="cm-owner-dock__status-dot" aria-hidden="true"></span>
@@ -1883,17 +1835,22 @@ textarea.input { min-height: 90px; resize: vertical; }
         <span class="cm-owner-dock__label cm-owner-dock__label--compact">{{ ownerDockStatusCompact }}</span>
       </span>
       <span class="cm-owner-dock__divider" aria-hidden="true"></span>
+      <div class="cm-editor-history" role="group" aria-label="ย้อนการแก้ไข Draft">
+        <button type="button" data-editor-undo aria-label="Undo" aria-disabled="{{ editorUndoDisabled }}" title="{{ editorUndoTitle }}" sc-camel-on-click="{{ editorUndo }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5-5 5 5 5M4 10h10a6 6 0 0 1 0 12" transform="translate(0 -2)"></path></svg><span>Undo</span></button>
+        <button type="button" data-editor-redo aria-label="Redo" aria-disabled="{{ editorRedoDisabled }}" title="{{ editorRedoTitle }}" sc-camel-on-click="{{ editorRedo }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m15 5 5 5-5 5M20 10H10a6 6 0 0 0 0 12" transform="translate(0 -2)"></path></svg><span>Redo</span></button>
+      </div>
       <div class="cm-owner-dock__details">
-        <input type="checkbox" id="covermate-owner-tools-toggle" class="cm-owner-dock__toggle" aria-label="Toggle owner tools">
+        <input type="checkbox" id="covermate-owner-tools-toggle" class="cm-owner-dock__toggle" aria-label="เปิดหรือปิดเครื่องมือ">
         <label class="cm-owner-dock__summary" for="covermate-owner-tools-toggle" aria-controls="covermate-owner-tools-panel">
           <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M20 7h-9"></path><path d="M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg>
-          <span>Tools</span>
+          <span>เครื่องมือ</span>
           <svg class="cm-owner-dock__chev" sc-camel-view-box="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
         </label>
-        <div id="covermate-owner-tools-panel" class="cm-owner-dock__panel" role="dialog" aria-label="Owner tools">
+        <div id="covermate-owner-tools-panel" class="cm-owner-dock__panel" role="dialog" aria-label="เครื่องมือจัดการเว็บไซต์">
           <div class="cm-owner-dock__panel-col">
             <div class="cm-owner-dock__group">
               <span class="cm-owner-dock__group-label">Draft</span>
+              <p class="cm-editor-history-note">{{ editorHistoryHint }}</p>
               <div class="cm-owner-dock__actions">
                 <button type="button" sc-camel-on-click="{{ requestSaveDraft }}" class="cm-owner-dock__button cm-owner-dock__action">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path></svg>
@@ -1907,26 +1864,32 @@ textarea.input { min-height: 90px; resize: vertical; }
                 <button type="button" sc-camel-on-click="{{ requestPublish }}" class="cm-owner-dock__button cm-owner-dock__action cm-owner-dock__button--publish">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="m18 9-6-6-6 6"></path><path d="M12 3v13"></path><path d="M5 21h14"></path></svg>
                   <span class="cm-owner-dock__action-label">{{ publishLabel }}</span>
-                  <span class="cm-owner-dock__caption">live site</span>
+                  <span class="cm-owner-dock__caption">เว็บจริง</span>
                 </button>
               </div>
+            </div>
+            <div class="cm-owner-dock__group">
+              <button type="button" data-editor-reset sc-camel-on-click="{{ requestResetDraft }}" class="cm-owner-dock__button cm-owner-dock__action cm-owner-dock__button--quiet">
+                <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7"></path></svg>
+                <span class="cm-editor-reset-copy">Reset Draft<small>กลับไปยัง Publish ล่าสุด</small></span>
+              </button>
             </div>
           </div>
           <div class="cm-owner-dock__panel-col">
             <div class="cm-owner-dock__group">
-              <span class="cm-owner-dock__group-label">Go to</span>
+              <span class="cm-owner-dock__group-label">ไปที่</span>
               <div class="cm-owner-dock__actions">
                 <button type="button" sc-camel-on-click="{{ openAdmin }}" class="cm-owner-dock__button cm-owner-dock__action">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path></svg>
-                  <span class="cm-owner-dock__action-label">Panel</span>
+                  <span class="cm-owner-dock__action-label">แผงเครื่องมือ</span>
                 </button>
                 <a href="/admin" class="cm-owner-dock__link cm-owner-dock__action">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-                  <span class="cm-owner-dock__action-label">Main</span>
+                  <span class="cm-owner-dock__action-label">หน้า Admin</span>
                 </a>
                 <button type="button" sc-camel-on-click="{{ goPublicSite }}" class="cm-owner-dock__button cm-owner-dock__action">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
-                  <span class="cm-owner-dock__action-label">Public site</span>
+                  <span class="cm-owner-dock__action-label">ดูเว็บจริง</span>
                 </button>
               </div>
             </div>
@@ -1934,7 +1897,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               <div class="cm-owner-dock__actions">
                 <button type="button" sc-camel-on-click="{{ signOut }}" class="cm-owner-dock__button cm-owner-dock__action cm-owner-dock__button--quiet">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>
-                  <span class="cm-owner-dock__action-label">Log out</span>
+                  <span class="cm-owner-dock__action-label">ออกจากระบบ</span>
                 </button>
               </div>
             </div>
@@ -1946,14 +1909,14 @@ textarea.input { min-height: 90px; resize: vertical; }
 </sc-if>
 
 <sc-if value="{{ preview }}" hint-placeholder-val="{{ false }}">
-  <div data-admin-preview-bar="true" aria-label="Draft preview controls" style="position:fixed;top:0;left:0;right:0;z-index:65;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px clamp(14px,3vw,26px);background:var(--color-neutral-900);color:var(--color-neutral-100);box-shadow:var(--shadow-md)">
+  <div lang="th" data-admin-preview-bar="true" aria-label="เครื่องมือ Preview ของ Draft" style="position:fixed;top:0;left:0;right:0;z-index:65;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px clamp(14px,3vw,26px);background:var(--color-neutral-900);color:var(--color-neutral-100);box-shadow:var(--shadow-md)">
     <span style="display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700;min-width:0;flex:1 1 240px">
       <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;flex:0 0 auto;fill:none;stroke:var(--color-accent-300);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Draft preview · visitors don’t see this until you publish</span>
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Preview ของ Draft · ผู้เข้าชมจะยังไม่เห็นจนกว่าจะ Publish</span>
     </span>
     <div data-admin-preview-actions="true" style="margin-left:auto;display:flex;gap:8px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end">
-      <button type="button" sc-camel-on-click="{{ openEdit }}" style="border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;background:transparent;color:var(--color-neutral-100);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--color-neutral-100) 45%,transparent);transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 16%,transparent)">Open editor</button>
-      <button type="button" sc-camel-on-click="{{ goPublicSite }}" style="border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;background:transparent;color:var(--color-neutral-100);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--color-neutral-100) 45%,transparent);transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 16%,transparent)">Public site</button>
+      <button type="button" sc-camel-on-click="{{ openEdit }}" style="border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;background:transparent;color:var(--color-neutral-100);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--color-neutral-100) 45%,transparent);transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 16%,transparent)">เปิดหน้าแก้ไข</button>
+      <button type="button" sc-camel-on-click="{{ goPublicSite }}" style="border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;background:transparent;color:var(--color-neutral-100);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--color-neutral-100) 45%,transparent);transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 16%,transparent)">ดูเว็บจริง</button>
       <button type="button" sc-camel-on-click="{{ requestPublish }}" style="border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:8px 16px;border-radius:999px;background:{{ publishBg }};color:{{ publishFg }};transition:background .2s ease">{{ publishLabel }}</button>
     </div>
   </div>
@@ -1962,43 +1925,43 @@ textarea.input { min-height: 90px; resize: vertical; }
 <!-- Admin owner entry is private-only; public visitor routes intentionally expose no reopen chrome. -->
 
 <sc-if value="{{ adminOpen }}" hint-placeholder-val="{{ false }}">
-<aside style="position:fixed;top:0;right:0;bottom:0;z-index:94;width:min(430px,100vw);display:flex;flex-direction:column;background:var(--color-bg);box-shadow:-14px 0 40px color-mix(in srgb,#2e2b25 26%,transparent);animation:none">
+<aside lang="th" style="position:fixed;top:0;right:0;bottom:0;z-index:94;width:min(430px,100vw);display:flex;flex-direction:column;background:var(--color-bg);box-shadow:-14px 0 40px color-mix(in srgb,#2e2b25 26%,transparent);animation:none">
 
   <div style="flex:0 0 auto;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-4) var(--space-3);border-bottom:1px solid var(--color-neutral-300)">
     <div style="display:flex;flex-direction:column;margin-right:auto;min-width:0">
-      <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;line-height:1.2">Admin portal</div>
+      <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;line-height:1.2">Admin Portal</div>
       <div style="font-size:11.5px;color:var(--color-neutral-700)">
-        Draft mode · Publish to update the live site
+        กำลังแก้ไข Draft · กด Publish เพื่ออัปเดตเว็บจริง
       </div>
     </div>
-    <button type="button" sc-camel-on-click="{{ closeAdmin }}" aria-label="Close admin panel" title="Close panel" style="width:38px;height:38px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;background:var(--color-surface);color:var(--color-text);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
+    <button type="button" sc-camel-on-click="{{ closeAdmin }}" aria-label="ปิดแผง Admin" title="ปิดแผงเครื่องมือ" style="width:38px;height:38px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;background:var(--color-surface);color:var(--color-text);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
       <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
     </button>
   </div>
 
   <div style="flex:0 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,132px),1fr));gap:6px;padding:var(--space-3) var(--space-4);overflow:visible">
-    <button type="button" sc-camel-on-click="{{ goSections }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabSecBg }};color:{{ tabSecFg }}">Sections</button>
-    <button type="button" sc-camel-on-click="{{ goContent }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabConBg }};color:{{ tabConFg }}">Content</button>
-    <button type="button" sc-camel-on-click="{{ goBrand }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabBraBg }};color:{{ tabBraFg }}">Brand &amp; contact</button>
-    <button type="button" sc-camel-on-click="{{ goTheme }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabThmBg }};color:{{ tabThmFg }}">Theme &amp; data</button>
-    <button type="button" sc-camel-on-click="{{ goVersions }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabVerBg }};color:{{ tabVerFg }}">Versions</button>
+    <button type="button" sc-camel-on-click="{{ goSections }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabSecBg }};color:{{ tabSecFg }}">ส่วนต่าง ๆ</button>
+    <button type="button" sc-camel-on-click="{{ goContent }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabConBg }};color:{{ tabConFg }}">เนื้อหา</button>
+    <button type="button" sc-camel-on-click="{{ goBrand }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabBraBg }};color:{{ tabBraFg }}">แบรนด์และติดต่อ</button>
+    <button type="button" sc-camel-on-click="{{ goTheme }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabThmBg }};color:{{ tabThmFg }}">ธีมและข้อมูล</button>
+    <button type="button" sc-camel-on-click="{{ goVersions }}" style="min-width:0;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:10px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .2s ease,color .2s ease;background:{{ tabVerBg }};color:{{ tabVerFg }}">ประวัติเวอร์ชัน</button>
   </div>
 
-  <div style="flex:1 1 auto;overflow-y:auto;padding:0 var(--space-4) var(--space-8);display:flex;flex-direction:column;gap:var(--space-3)">
+  <div data-admin-panel-scroll style="flex:1 1 auto;overflow-y:auto;padding:0 var(--space-4) var(--space-8);display:flex;flex-direction:column;gap:var(--space-3)">
 
     <!-- SECTIONS TAB -->
     <sc-if value="{{ tabSections }}" hint-placeholder-val="{{ true }}">
       <div style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-700)">
-        Site structure. Pick a section to edit copy, cards, rows, logos, and table data. Reorder and visibility stay here; layout settings are tucked under Advanced.
+        โครงสร้างเว็บไซต์ เลือกส่วนที่ต้องการแก้ไขข้อความ การ์ด รูปภาพ และตาราง จัดลำดับและการแสดงผลได้ที่นี่ ส่วนการจัดวางอยู่ใน Layout เพิ่มเติม
       </div>
       <sc-for list="{{ secList }}" as="r" hint-placeholder-count="10">
         <div data-admin-section-row="{{ r.id }}" style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-3);border-radius:var(--radius-md);background:{{ r.rowBg }};opacity:{{ r.dim }};transition:background .2s ease, opacity .2s ease">
           <div style="display:flex;align-items:center;gap:var(--space-2)">
             <div style="display:flex;flex-direction:column;gap:4px;flex:0 0 auto">
-              <button type="button" sc-camel-on-click="{{ r.up }}" aria-label="Move section up" style="width:38px;height:38px;border:0;cursor:pointer;border-radius:10px 10px 6px 6px;background:var(--color-neutral-200);color:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
+              <button type="button" sc-camel-on-click="{{ r.up }}" disabled="{{ r.first }}" aria-label="เลื่อนส่วนนี้ขึ้น" title="เลื่อนส่วนนี้ขึ้น" style="width:38px;height:38px;border:0;cursor:pointer;border-radius:10px 10px 6px 6px;background:var(--color-neutral-200);color:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
                 <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round"><path d="m18 15-6-6-6 6"></path></svg>
               </button>
-              <button type="button" sc-camel-on-click="{{ r.down }}" aria-label="Move section down" style="width:38px;height:38px;border:0;cursor:pointer;border-radius:6px 6px 10px 10px;background:var(--color-neutral-200);color:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
+              <button type="button" sc-camel-on-click="{{ r.down }}" disabled="{{ r.last }}" aria-label="เลื่อนส่วนนี้ลง" title="เลื่อนส่วนนี้ลง" style="width:38px;height:38px;border:0;cursor:pointer;border-radius:6px 6px 10px 10px;background:var(--color-neutral-200);color:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
                 <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
               </button>
             </div>
@@ -2015,25 +1978,25 @@ textarea.input { min-height: 90px; resize: vertical; }
                 <span>{{ r.summary }}</span>
               </div>
             </div>
-            <button type="button" sc-camel-on-click="{{ r.toggle }}" aria-label="Toggle section" style="width:54px;height:36px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:4px;display:flex;align-items:center;background:{{ r.swBg }};transition:background .25s ease">
+            <button type="button" role="switch" aria-checked="{{ r.on }}" sc-camel-on-click="{{ r.toggle }}" aria-label="แสดงหรือซ่อนส่วนนี้" title="แสดงหรือซ่อนส่วนนี้" style="width:54px;height:36px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:4px;display:flex;align-items:center;background:{{ r.swBg }};transition:background .25s ease">
               <span style="width:28px;height:28px;border-radius:999px;background:var(--color-neutral-100);transform:{{ r.swX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span>
             </button>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;padding-left:46px">
-            <sc-if value="{{ r.canEditContent }}" hint-placeholder-val="{{ true }}"><button type="button" sc-camel-on-click="{{ r.pick }}" data-admin-section-edit="{{ r.id }}" style="min-height:38px;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:0 14px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:var(--color-neutral-800)">Edit content</button></sc-if>
+            <sc-if value="{{ r.canEditContent }}" hint-placeholder-val="{{ true }}"><button type="button" sc-camel-on-click="{{ r.pick }}" data-admin-section-edit="{{ r.id }}" style="min-height:38px;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:0 14px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:var(--color-neutral-800)">แก้ไขเนื้อหา</button></sc-if>
             <details style="flex:1 1 190px;min-width:min(100%,190px);border-radius:18px;background:color-mix(in srgb,var(--color-neutral-200) 72%,transparent);overflow:hidden">
               <summary style="min-height:38px;display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;padding:0 13px;font-size:12px;font-weight:800;color:var(--color-neutral-800)">
-                <span>Advanced layout</span>
+                <span>Layout เพิ่มเติม</span>
                 <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--color-neutral-700)">{{ r.bgLabel }}</span>
               </summary>
               <div style="display:flex;flex-direction:column;gap:10px;padding:0 11px 11px">
-                <button type="button" sc-camel-on-click="{{ r.cycleBg }}" style="min-height:36px;border:0;cursor:pointer;font:inherit;font-size:11.8px;font-weight:700;padding:0 13px;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease" style-hover="background:var(--color-neutral-300)">Background · {{ r.bgLabel }}</button>
+                <button type="button" sc-camel-on-click="{{ r.cycleBg }}" style="min-height:36px;border:0;cursor:pointer;font:inherit;font-size:11.8px;font-weight:700;padding:0 13px;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease" style-hover="background:var(--color-neutral-300)">พื้นหลัง · {{ r.bgLabel }}</button>
             <sc-if value="{{ r.hasCols }}" hint-placeholder-val="{{ true }}">
               <span style="display:flex;align-items:center;gap:7px;min-height:36px;padding:3px 5px 3px 12px;border-radius:999px;background:var(--color-bg);font-size:11.8px;font-weight:700;color:var(--color-neutral-800)">
                 <span>{{ r.layoutLabel }}</span>
-                <button type="button" sc-camel-on-click="{{ r.less }}" data-admin-cols-minus="{{ r.id }}" aria-label="Decrease columns" style="width:36px;height:36px;border:0;cursor:pointer;border-radius:999px;background:var(--color-surface);color:var(--color-text);display:flex;align-items:center;justify-content:center;font:inherit;font-size:16px;line-height:1">−</button>
+                <button type="button" sc-camel-on-click="{{ r.less }}" data-admin-cols-minus="{{ r.id }}" aria-label="ลดคอลัมน์" style="width:36px;height:36px;border:0;cursor:pointer;border-radius:999px;background:var(--color-surface);color:var(--color-text);display:flex;align-items:center;justify-content:center;font:inherit;font-size:16px;line-height:1">−</button>
                 <span style="min-width:12px;text-align:center;font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif">{{ r.cols }}</span>
-                <button type="button" sc-camel-on-click="{{ r.more }}" data-admin-cols-plus="{{ r.id }}" aria-label="Increase columns" style="width:36px;height:36px;border:0;cursor:pointer;border-radius:999px;background:var(--color-surface);color:var(--color-text);display:flex;align-items:center;justify-content:center;font:inherit;font-size:16px;line-height:1">+</button>
+                <button type="button" sc-camel-on-click="{{ r.more }}" data-admin-cols-plus="{{ r.id }}" aria-label="เพิ่มคอลัมน์" style="width:36px;height:36px;border:0;cursor:pointer;border-radius:999px;background:var(--color-surface);color:var(--color-text);display:flex;align-items:center;justify-content:center;font:inherit;font-size:16px;line-height:1">+</button>
               </span>
             </sc-if>
               </div>
@@ -2065,19 +2028,19 @@ textarea.input { min-height: 90px; resize: vertical; }
         <label class="om-cms-field"><span>{{ link.label }}</span><input data-admin-section-link="{{ link.key }}" value="{{ link.value }}" sc-camel-on-change="{{ link.change }}" sc-camel-on-blur="{{ link.commit }}"></label>
       </sc-for>
       <sc-if value="{{ hasCalculatorFields }}">
-        <details class="om-cms-group" data-cms-group="Calculator data"><summary>Calculator data &amp; sources</summary><div class="om-cms-fields">
+        <details class="om-cms-group" data-cms-group="Calculator data"><summary>ข้อมูลและแหล่งอ้างอิงเครื่องคำนวณ</summary><div class="om-cms-fields">
           <sc-for list="{{ calculatorFields }}" as="field"><label class="om-cms-field"><span>{{ field.label }}</span><input data-calculator-field="{{ field.key }}" type="{{ field.type }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}"></label></sc-for>
         </div></details>
       </sc-if>
       <sc-for list="{{ editItems }}" as="it" hint-placeholder-count="3">
         <div data-admin-repeatable-id="{{ it.id }}" style="display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:var(--color-surface);opacity:{{ it.rowOpacity }}">
           <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap">
-            <span style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-right:auto">Item {{ it.n }}</span>
+            <span style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-right:auto">รายการ {{ it.n }}</span>
             <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ it.stateBg }};color:{{ it.stateFg }}">{{ it.stateLabel }}</span>
             <span style="display:flex;align-items:center;gap:6px">
-              <button type="button" sc-camel-on-click="{{ it.up }}" aria-label="Move item up" title="Move item up" style="width:28px;height:28px;opacity:{{ it.upOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ it.down }}" aria-label="Move item down" title="Move item down" style="width:28px;height:28px;opacity:{{ it.downOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ it.duplicate }}" aria-label="Duplicate item" title="Duplicate item" style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ it.up }}" aria-label="เลื่อนรายการขึ้น" title="เลื่อนรายการขึ้น" style="width:28px;height:28px;opacity:{{ it.upOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ it.down }}" aria-label="เลื่อนรายการลง" title="เลื่อนรายการลง" style="width:28px;height:28px;opacity:{{ it.downOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ it.duplicate }}" aria-label="ทำสำเนารายการ" title="ทำสำเนารายการ" style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ it.toggleVisible }}" style="border:0;cursor:pointer;font:inherit;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;background:var(--color-bg);color:var(--color-accent-800);transition:background .2s ease" style-hover="background:var(--color-accent-200)">{{ it.visibilityLabel }}</button>
             </span>
           </div>
@@ -2093,33 +2056,33 @@ textarea.input { min-height: 90px; resize: vertical; }
             </label>
           </sc-for>
           <sc-if value="{{ it.hasIcon }}">
-            <label class="om-cms-field"><span>Icon</span><select aria-label="Item icon" value="{{ it.icon }}" sc-camel-on-change="{{ it.onIcon }}"><sc-for list="{{ it.iconOptions }}" as="option"><option value="{{ option.key }}">{{ option.label }}</option></sc-for></select></label>
+            <label class="om-cms-field"><span>ไอคอน</span><select aria-label="ไอคอนรายการ" value="{{ it.icon }}" sc-camel-on-change="{{ it.onIcon }}"><sc-for list="{{ it.iconOptions }}" as="option"><option value="{{ option.key }}">{{ option.label }}</option></sc-for></select></label>
           </sc-if>
           <sc-if value="{{ it.hasTone }}">
-            <div role="group" aria-label="Card tone" style="display:flex;gap:8px"><sc-for list="{{ it.toneOptions }}" as="tone"><button type="button" title="{{ tone.key }}" aria-label="{{ tone.key }}" aria-pressed="{{ tone.selected }}" sc-camel-on-click="{{ tone.choose }}" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--color-bg);background:{{ tone.color }};cursor:pointer"><sc-if value="{{ tone.selected }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:white;fill:none;stroke-width:2"><path d="m5 12 4 4 10-10"/></svg></sc-if></button></sc-for></div>
+            <div role="group" aria-label="สีการ์ด" style="display:flex;gap:8px"><sc-for list="{{ it.toneOptions }}" as="tone"><button type="button" title="{{ tone.key }}" aria-label="{{ tone.key }}" aria-pressed="{{ tone.selected }}" sc-camel-on-click="{{ tone.choose }}" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--color-bg);background:{{ tone.color }};cursor:pointer"><sc-if value="{{ tone.selected }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:white;fill:none;stroke-width:2"><path d="m5 12 4 4 10-10"/></svg></sc-if></button></sc-for></div>
           </sc-if>
           <sc-if value="{{ it.hasPhotoControl }}">
-            <label class="om-cms-field"><span>Photo (optional)</span><input aria-label="Testimonial photo" value="{{ it.photoInput.value }}" sc-camel-on-change="{{ it.photoInput.change }}" sc-camel-on-blur="{{ it.photoInput.commit }}"></label>
-            <label class="om-cms-field"><span>Photo alt text</span><input aria-label="Testimonial photo alt" value="{{ it.photoAltInput.value }}" sc-camel-on-change="{{ it.photoAltInput.change }}" sc-camel-on-blur="{{ it.photoAltInput.commit }}"></label>
+            <label class="om-cms-field"><span>รูปภาพ (ไม่บังคับ)</span><input aria-label="รูปผู้รีวิว" value="{{ it.photoInput.value }}" sc-camel-on-change="{{ it.photoInput.change }}" sc-camel-on-blur="{{ it.photoInput.commit }}"></label>
+            <label class="om-cms-field"><span>คำอธิบายรูป (Alt text)</span><input aria-label="คำอธิบายรูปผู้รีวิว" value="{{ it.photoAltInput.value }}" sc-camel-on-change="{{ it.photoAltInput.change }}" sc-camel-on-blur="{{ it.photoAltInput.commit }}"></label>
           </sc-if>
           <sc-if value="{{ it.showLogo }}" hint-placeholder-val="{{ false }}">
             <label style="display:flex;flex-direction:column;gap:4px">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ไฟล์โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Logo file</sc-if></span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ไฟล์โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ไฟล์โลโก้</sc-if></span>
               <span style="display:flex;align-items:center;gap:8px">
                 <span role="img" aria-hidden="true" style="{{ it.logoThumb }}"></span>
                 <input value="{{ it.logo }}" sc-camel-on-change="{{ it.onLogo }}" placeholder="assets/ins/15-name.png" style="flex:1 1 auto;min-width:0;font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
               </span>
             </label>
           </sc-if>
-          <sc-if value="{{ it.showLogo }}"><label class="om-cms-field"><span>Logo alt text</span><input aria-label="Insurer logo alt" value="{{ it.logoAltInput.value }}" sc-camel-on-change="{{ it.logoAltInput.change }}" sc-camel-on-blur="{{ it.logoAltInput.commit }}"></label></sc-if>
+          <sc-if value="{{ it.showLogo }}"><label class="om-cms-field"><span>คำอธิบายโลโก้ (Alt text)</span><input aria-label="คำอธิบายโลโก้บริษัทประกัน" value="{{ it.logoAltInput.value }}" sc-camel-on-change="{{ it.logoAltInput.change }}" sc-camel-on-blur="{{ it.logoAltInput.commit }}"></label></sc-if>
           <sc-if value="{{ it.hasCells }}" hint-placeholder-val="{{ false }}">
             <label style="display:flex;flex-direction:column;gap:8px">
-              <span>Tier illustration (optional)</span>
+              <span>ภาพชั้นประกัน (ไม่บังคับ)</span>
               <sc-if value="{{ it.hasIllustration }}"><img sc-camel-src="{{ it.illustrationThumb }}" alt="" width="96" height="96" style="object-fit:contain"></sc-if>
-              <input aria-label="Tier illustration" value="{{ it.illustration }}" sc-camel-on-change="{{ it.onIllustration }}" style="font:inherit;font-size:14px;padding:10px;border:1px solid var(--color-neutral-300);border-radius:8px;min-width:0">
+              <input aria-label="ภาพชั้นประกัน" value="{{ it.illustration }}" sc-camel-on-change="{{ it.onIllustration }}" style="font:inherit;font-size:14px;padding:10px;border:1px solid var(--color-neutral-300);border-radius:8px;min-width:0">
             </label>
             <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ความคุ้มครอง (กดเพื่อสลับ)</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Coverage (tap to change)</sc-if></span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ความคุ้มครอง (กดเพื่อสลับ)</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ความคุ้มครอง (แตะเพื่อเปลี่ยน)</sc-if></span>
               <sc-for list="{{ it.cells }}" as="cell" hint-placeholder-count="5">
                 <button type="button" sc-camel-on-click="{{ cell.cycle }}" style="display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--color-neutral-300);cursor:pointer;font:inherit;padding:8px 11px;border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-hover="border-color:{{ A_base }}">
                   <span style="width:22px;height:22px;flex:0 0 auto;border-radius:999px;background:{{ cell.bg }};color:{{ cell.fg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">{{ cell.glyph }}</span>
@@ -2133,31 +2096,31 @@ textarea.input { min-height: 90px; resize: vertical; }
       </sc-for>
 
       <sc-if value="{{ hasHeads }}" hint-placeholder-val="{{ false }}">
-        <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-2)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">หัวตารางความคุ้มครอง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Coverage columns</sc-if></div>
+        <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-2)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">หัวตารางความคุ้มครอง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">คอลัมน์ความคุ้มครอง</sc-if></div>
         <sc-for list="{{ editHeads }}" as="hd" hint-placeholder-count="5">
           <div data-admin-repeatable-head-id="{{ hd.id }}" style="display:flex;align-items:center;gap:8px">
-            <button type="button" sc-camel-on-click="{{ hd.up }}" aria-label="Move column up" title="Move column up">↑</button>
-            <button type="button" sc-camel-on-click="{{ hd.down }}" aria-label="Move column down" title="Move column down">↓</button>
+            <button type="button" sc-camel-on-click="{{ hd.up }}" aria-label="เลื่อนคอลัมน์ขึ้น" title="เลื่อนคอลัมน์ขึ้น">↑</button>
+            <button type="button" sc-camel-on-click="{{ hd.down }}" aria-label="เลื่อนคอลัมน์ลง" title="เลื่อนคอลัมน์ลง">↓</button>
             <input value="{{ hd.value }}" sc-camel-on-change="{{ hd.onInput }}" style="flex:1 1 auto;min-width:0;font:inherit;font-size:14px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
             <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ hd.stateBg }};color:{{ hd.stateFg }}">{{ hd.stateLabel }}</span>
-            <button type="button" sc-camel-on-click="{{ hd.toggleVisible }}" aria-label="Toggle column visibility" style="min-height:30px;flex:0 0 auto;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px;transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)">{{ hd.visibilityLabel }}</button>
+            <button type="button" sc-camel-on-click="{{ hd.toggleVisible }}" aria-label="แสดงหรือซ่อนคอลัมน์" style="min-height:30px;flex:0 0 auto;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px;transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)">{{ hd.visibilityLabel }}</button>
           </div>
         </sc-for>
-        <button type="button" sc-camel-on-click="{{ addHead }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:11px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ Add column</button>
+        <button type="button" sc-camel-on-click="{{ addHead }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:11px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ เพิ่มคอลัมน์</button>
       </sc-if>
 
       <sc-if value="{{ hasCards }}" hint-placeholder-val="{{ false }}">
-        <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-2)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">การ์ดในส่วนนี้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Cards in this section</sc-if></div>
+        <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-2)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">การ์ดในส่วนนี้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">การ์ดในส่วนนี้</sc-if></div>
         <sc-for list="{{ editCards }}" as="cd">
           <div data-admin-repeatable-card-id="{{ cd.id }}" style="display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:var(--color-surface);opacity:{{ cd.rowOpacity }}">
             <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap">
               <sc-if value="{{ cd.hasLogo }}" hint-placeholder-val="{{ false }}"><span role="img" aria-label="{{ cd.logoAlt }}" style="{{ cd.logoThumb }}"></span></sc-if>
-              <span style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-left:auto">Card {{ cd.n }}</span>
+              <span style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-left:auto">การ์ด {{ cd.n }}</span>
               <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ cd.stateBg }};color:{{ cd.stateFg }}">{{ cd.stateLabel }}</span>
-              <button type="button" sc-camel-on-click="{{ cd.up }}" aria-label="Move card up" title="Move card up" style="width:28px;height:28px;opacity:{{ cd.upOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ cd.down }}" aria-label="Move card down" title="Move card down" style="width:28px;height:28px;opacity:{{ cd.downOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ cd.duplicate }}" aria-label="Duplicate card" title="Duplicate card" style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ cd.toggleVisible }}" aria-label="Toggle card visibility" style="min-height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px;transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)">{{ cd.visibilityLabel }}</button>
+              <button type="button" sc-camel-on-click="{{ cd.up }}" aria-label="เลื่อนการ์ดขึ้น" title="เลื่อนการ์ดขึ้น" style="width:28px;height:28px;opacity:{{ cd.upOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ cd.down }}" aria-label="เลื่อนการ์ดลง" title="เลื่อนการ์ดลง" style="width:28px;height:28px;opacity:{{ cd.downOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ cd.duplicate }}" aria-label="ทำสำเนาการ์ด" title="ทำสำเนาการ์ด" style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ cd.toggleVisible }}" aria-label="แสดงหรือซ่อนการ์ด" style="min-height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px;transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)">{{ cd.visibilityLabel }}</button>
             </div>
             <sc-for list="{{ cd.fields }}" as="f" hint-placeholder-count="3">
               <label style="display:flex;flex-direction:column;gap:4px">
@@ -2172,107 +2135,107 @@ textarea.input { min-height: 90px; resize: vertical; }
             </sc-for>
             <sc-if value="{{ cd.showLogo }}" hint-placeholder-val="{{ false }}">
             <label style="display:flex;flex-direction:column;gap:4px">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ที่อยู่โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Logo path</sc-if></span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ที่อยู่โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Path โลโก้</sc-if></span>
               <input value="{{ cd.logo }}" sc-camel-on-change="{{ cd.onLogo }}" style="font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
             </label>
             <label style="display:flex;flex-direction:column;gap:4px">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">Logo alt text</span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">คำอธิบายโลโก้ (Alt text)</span>
               <input value="{{ cd.logoAlt }}" sc-camel-on-change="{{ cd.onLogoAlt }}" style="font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
             </label>
             </sc-if>
           </div>
         </sc-for>
         <sc-if value="{{ canAddCard }}" hint-placeholder-val="{{ false }}">
-          <button type="button" sc-camel-on-click="{{ addCard }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:12px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ Add {{ addCardLabel }}</button>
+          <button type="button" sc-camel-on-click="{{ addCard }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:12px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ เพิ่ม{{ addCardLabel }}</button>
         </sc-if>
       </sc-if>
 
       <sc-if value="{{ canAddItem }}" hint-placeholder-val="{{ true }}">
-        <button type="button" sc-camel-on-click="{{ addItem }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:12px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ Add {{ addLabel }}</button>
+        <button type="button" sc-camel-on-click="{{ addItem }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:12px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ เพิ่ม{{ addLabel }}</button>
       </sc-if>
       <div style="font-size:11.5px;line-height:1.55;color:var(--color-neutral-700)">
-        <button type="button" class="om-media-edit" sc-camel-on-click="{{ goMedia }}">Images &amp; crop</button>
+        <button type="button" class="om-media-edit" sc-camel-on-click="{{ goMedia }}">รูปภาพและ Crop</button>
       </div>
     </sc-if>
 
     <!-- BRAND TAB -->
     <sc-if value="{{ tabBrand }}" hint-placeholder-val="{{ false }}">
-      <details class="hm-admin-design" data-home-design-controls>
-        <summary>Home composition</summary>
-        <fieldset><legend>Featured motor classes</legend><sc-for list="{{ homeTierChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
-        <fieldset><legend>Preview comparison axes</legend><sc-for list="{{ homeAxisChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
-        <fieldset><legend>Layout</legend><label><input type="checkbox" checked="{{ homeCompact }}" sc-camel-on-change="{{ toggleHomeDensity }}">Compact spacing</label><label><input type="checkbox" checked="{{ homeSharp }}" sc-camel-on-change="{{ toggleHomeRadius }}">Smaller corners</label></fieldset>
-        <fieldset><legend>Coverage task links</legend><sc-for list="{{ homeTasks }}" as="task"><div class="hm-admin-task"><label><input type="checkbox" checked="{{ task.on }}" sc-camel-on-change="{{ task.toggle }}">Visible</label><label>Label<input value="{{ task.labelInput.value }}" sc-camel-on-change="{{ task.labelInput.change }}" sc-camel-on-blur="{{ task.labelInput.commit }}"></label><label>Destination<input value="{{ task.targetInput.value }}" sc-camel-on-change="{{ task.targetInput.change }}" sc-camel-on-blur="{{ task.targetInput.commit }}"></label><div><button type="button" title="Move up" aria-label="Move task up" sc-camel-on-click="{{ task.up }}">↑</button><button type="button" title="Move down" aria-label="Move task down" sc-camel-on-click="{{ task.down }}">↓</button><button type="button" sc-camel-on-click="{{ task.duplicate }}">Duplicate</button></div></div></sc-for><button type="button" sc-camel-on-click="{{ addHomeTask }}">Add task link</button></fieldset>
+      <details class="hm-admin-design" data-home-design-controls data-cms-group="Page composition">
+        <summary>องค์ประกอบหน้าแรก</summary>
+        <fieldset><legend>ชั้นประกันรถที่แนะนำ</legend><sc-for list="{{ homeTierChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
+        <fieldset><legend>หัวข้อความคุ้มครองใน Preview</legend><sc-for list="{{ homeAxisChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
+        <fieldset><legend>Layout</legend><label><input type="checkbox" checked="{{ homeCompact }}" sc-camel-on-change="{{ toggleHomeDensity }}">ระยะห่างแบบกระชับ</label><label><input type="checkbox" checked="{{ homeSharp }}" sc-camel-on-change="{{ toggleHomeRadius }}">ลดความมนของมุม</label></fieldset>
+        <fieldset><legend>ลิงก์บริการ (เฉพาะหน้าแรก)</legend><sc-for list="{{ homeTasks }}" as="task"><div class="hm-admin-task"><label><input type="checkbox" checked="{{ task.on }}" sc-camel-on-change="{{ task.toggle }}">แสดง</label><label>ข้อความ<input value="{{ task.labelInput.value }}" sc-camel-on-change="{{ task.labelInput.change }}" sc-camel-on-blur="{{ task.labelInput.commit }}"></label><label>ปลายทางลิงก์<input value="{{ task.targetInput.value }}" sc-camel-on-change="{{ task.targetInput.change }}" sc-camel-on-blur="{{ task.targetInput.commit }}"></label><div><button type="button" title="เลื่อนขึ้น" aria-label="เลื่อนลิงก์ขึ้น" sc-camel-on-click="{{ task.up }}">↑</button><button type="button" title="เลื่อนลง" aria-label="เลื่อนลิงก์ลง" sc-camel-on-click="{{ task.down }}">↓</button><button type="button" sc-camel-on-click="{{ task.duplicate }}">ทำสำเนา</button></div></div></sc-for><button type="button" sc-camel-on-click="{{ addHomeTask }}">เพิ่มลิงก์บริการ</button></fieldset>
       </details>
-      <div role="group" aria-label="Content language" style="display:flex;gap:4px;align-self:flex-start;padding:4px;background:var(--color-surface);border-radius:8px">
-        <button type="button" aria-label="Edit Thai content" aria-pressed="{{ th }}" sc-camel-on-click="{{ setTH }}" style="min-width:48px;min-height:40px;border:0;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ thBg }};color:{{ thFg }}">TH</button>
-        <button type="button" aria-label="Edit English content" aria-pressed="{{ en }}" sc-camel-on-click="{{ setEN }}" style="min-width:48px;min-height:40px;border:0;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ enBg }};color:{{ enFg }}">EN</button>
+      <div role="group" aria-label="ภาษาของเนื้อหา" style="display:flex;gap:4px;align-self:flex-start;padding:4px;background:var(--color-surface);border-radius:8px">
+        <button type="button" aria-label="แก้ไขเนื้อหาภาษาไทย" aria-pressed="{{ th }}" sc-camel-on-click="{{ setTH }}" style="min-width:48px;min-height:40px;border:0;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ thBg }};color:{{ thFg }}">TH</button>
+        <button type="button" aria-label="แก้ไขเนื้อหาภาษาอังกฤษ" aria-pressed="{{ en }}" sc-camel-on-click="{{ setEN }}" style="min-width:48px;min-height:40px;border:0;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ enBg }};color:{{ enFg }}">EN</button>
       </div>
-      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-1)">Identity</div>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Monogram</span><input value="{{ brandInitial }}" sc-camel-on-change="{{ onBInit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Short name</span><input value="{{ bName }}" sc-camel-on-change="{{ onBName }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Full name</span><input value="{{ bFull }}" sc-camel-on-change="{{ onBFull }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Role line</span><input value="{{ bRole }}" sc-camel-on-change="{{ onBRole }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label class="om-cms-field"><span>Credential line</span><textarea rows="2" data-admin-credential="true" value="{{ credentialInput.value }}" sc-camel-on-change="{{ credentialInput.change }}" sc-camel-on-blur="{{ credentialInput.commit }}"></textarea></label>
-      <div data-admin-media-control="advisor-logo" style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><div style="display:flex;align-items:center;gap:12px"><sc-if value="{{ hasAdvisorLogo }}"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:52px;height:52px;border-radius:999px;object-fit:contain;background:var(--color-bg);box-shadow:var(--shadow-sm)"></sc-if><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:11.5px;font-weight:800;color:var(--color-neutral-700);letter-spacing:.06em;text-transform:uppercase">Advisor logo</span><span style="font-size:12px;line-height:1.4;color:var(--color-neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ advisorLogoLabel }}</span></div></div><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Logo path or HTTPS URL</span><input data-admin-logo-path="true" value="{{ advisorLogoInput.value }}" sc-camel-on-change="{{ advisorLogoInput.change }}" sc-camel-on-blur="{{ advisorLogoInput.commit }}" placeholder="assets/logos/aia-logo.png" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:&quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,&quot;Noto Sans Thai&quot;,system-ui,sans-serif" style-focus="border-color:{{ A_base }}"></label><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Logo alt text</span><input data-admin-logo-alt="true" value="{{ advisorLogoAlt }}" sc-camel-on-change="{{ onAdvisorLogoAlt }}" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" sc-camel-on-click="{{ resetAdvisorLogo }}" style="min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 15px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">Clear image</button></div></div>
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-1)">ข้อมูลแบรนด์</div>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ชื่อย่อ</span><input value="{{ brandInitial }}" sc-camel-on-change="{{ onBInit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ชื่อย่อแบรนด์</span><input value="{{ bName }}" sc-camel-on-change="{{ onBName }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ชื่อเต็ม</span><input value="{{ bFull }}" sc-camel-on-change="{{ onBFull }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ข้อความบทบาท</span><input value="{{ bRole }}" sc-camel-on-change="{{ onBRole }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label class="om-cms-field"><span>ข้อความใบอนุญาต</span><textarea rows="2" data-admin-credential="true" value="{{ credentialInput.value }}" sc-camel-on-change="{{ credentialInput.change }}" sc-camel-on-blur="{{ credentialInput.commit }}"></textarea></label>
+      <div data-admin-media-control="advisor-logo" style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><div style="display:flex;align-items:center;gap:12px"><sc-if value="{{ hasAdvisorLogo }}"><img sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" style="width:52px;height:52px;border-radius:999px;object-fit:contain;background:var(--color-bg);box-shadow:var(--shadow-sm)"></sc-if><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:11.5px;font-weight:800;color:var(--color-neutral-700);letter-spacing:.06em;text-transform:uppercase">โลโก้ผู้ให้คำปรึกษา</span><span style="font-size:12px;line-height:1.4;color:var(--color-neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ advisorLogoLabel }}</span></div></div><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Path โลโก้หรือ HTTPS URL</span><input data-admin-logo-path="true" value="{{ advisorLogoInput.value }}" sc-camel-on-change="{{ advisorLogoInput.change }}" sc-camel-on-blur="{{ advisorLogoInput.commit }}" placeholder="assets/logos/aia-logo.png" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:&quot;Google Sans&quot;,&quot;Google Sans Thai&quot;,&quot;Noto Sans Thai&quot;,system-ui,sans-serif" style-focus="border-color:{{ A_base }}"></label><label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">คำอธิบายโลโก้ (Alt text)</span><input data-admin-logo-alt="true" value="{{ advisorLogoAlt }}" sc-camel-on-change="{{ onAdvisorLogoAlt }}" style="font:inherit;font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" sc-camel-on-click="{{ resetAdvisorLogo }}" style="min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 15px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">ล้างรูป</button></div></div>
 
-      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">Contact</div>
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">ช่องทางติดต่อ</div>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">LINE ID</span><input value="{{ lineId }}" sc-camel-on-change="{{ onLineId }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">LINE link</span><input value="{{ lineUrlInput.value }}" sc-camel-on-change="{{ lineUrlInput.change }}" sc-camel-on-blur="{{ lineUrlInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Facebook name</span><input value="{{ facebookName }}" sc-camel-on-change="{{ onFacebookName }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Facebook link</span><input value="{{ facebookUrlInput.value }}" sc-camel-on-change="{{ facebookUrlInput.change }}" sc-camel-on-blur="{{ facebookUrlInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ลิงก์ LINE</span><input value="{{ lineUrlInput.value }}" sc-camel-on-change="{{ lineUrlInput.change }}" sc-camel-on-blur="{{ lineUrlInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ชื่อ Facebook</span><input value="{{ facebookName }}" sc-camel-on-change="{{ onFacebookName }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ลิงก์ Facebook</span><input value="{{ facebookUrlInput.value }}" sc-camel-on-change="{{ facebookUrlInput.change }}" sc-camel-on-blur="{{ facebookUrlInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">WhatsApp</span><input value="{{ whatsapp }}" sc-camel-on-change="{{ onWhatsapp }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Phone</span><input value="{{ phoneInput.value }}" sc-camel-on-change="{{ phoneInput.change }}" sc-camel-on-blur="{{ phoneInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Email</span><input value="{{ emailInput.value }}" sc-camel-on-change="{{ emailInput.change }}" sc-camel-on-blur="{{ emailInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Hours</span><input value="{{ hours }}" sc-camel-on-change="{{ onHours }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Service area</span><input value="{{ area }}" sc-camel-on-change="{{ onArea }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">เบอร์โทร</span><input value="{{ phoneInput.value }}" sc-camel-on-change="{{ phoneInput.change }}" sc-camel-on-blur="{{ phoneInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">อีเมล</span><input value="{{ emailInput.value }}" sc-camel-on-change="{{ emailInput.change }}" sc-camel-on-blur="{{ emailInput.commit }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">เวลาทำการ</span><input value="{{ hours }}" sc-camel-on-change="{{ onHours }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">พื้นที่บริการ</span><input value="{{ area }}" sc-camel-on-change="{{ onArea }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
 
-      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">Header &amp; footer</div>
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">Header และ Footer</div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Show header</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">แสดง Header</span>
         <button type="button" sc-camel-on-click="{{ tHeader }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swHeader }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swHeaderX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Header sticks on scroll</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">ตรึง Header เมื่อเลื่อนหน้า</span>
         <button type="button" sc-camel-on-click="{{ tSticky }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swSticky }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swStickyX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Desktop nav links</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">เมนูบน Desktop</span>
         <button type="button" sc-camel-on-click="{{ tNav }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swNav }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swNavX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Header LINE button</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">ปุ่ม LINE บน Header</span>
         <button type="button" sc-camel-on-click="{{ tHeadCta }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swHeadCta }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swHeadCtaX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Mobile sticky bar</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">แถบติดต่อด้านล่างบนมือถือ</span>
         <button type="button" sc-camel-on-click="{{ tStickyBar }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swStickyBar }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swStickyBarX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Show footer</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">แสดง Footer</span>
         <button type="button" sc-camel-on-click="{{ tFooter }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swFooter }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swFooterX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:9px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">Footer columns</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">จำนวนคอลัมน์ Footer</span>
         <span style="display:flex;align-items:center;gap:8px">
           <button type="button" sc-camel-on-click="{{ footLess }}" style="width:26px;height:26px;border:0;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-text);font:inherit;font-size:15px;line-height:1">−</button>
           <span style="min-width:10px;text-align:center;font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;font-size:13px">{{ footCols }}</span>
           <button type="button" sc-camel-on-click="{{ footMore }}" style="width:26px;height:26px;border:0;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-text);font:inherit;font-size:15px;line-height:1">+</button>
         </span>
       </div>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Footer tagline</span><textarea rows="2" value="{{ footTagline }}" sc-camel-on-change="{{ onFootTag }}" style="font:inherit;font-size:14px;line-height:1.5;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical" style-focus="border-color:{{ A_base }}"></textarea></label>
-      <label class="om-cms-field"><span>Legal disclosure</span><textarea rows="4" data-admin-legal="true" value="{{ legalInput.value }}" sc-camel-on-change="{{ legalInput.change }}" sc-camel-on-blur="{{ legalInput.commit }}"></textarea></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ข้อความแนะนำใน Footer</span><textarea rows="2" value="{{ footTagline }}" sc-camel-on-change="{{ onFootTag }}" style="font:inherit;font-size:14px;line-height:1.5;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical" style-focus="border-color:{{ A_base }}"></textarea></label>
+      <label class="om-cms-field"><span>ข้อความกฎหมายและการเปิดเผยข้อมูล</span><textarea rows="4" data-admin-legal="true" value="{{ legalInput.value }}" sc-camel-on-change="{{ legalInput.change }}" sc-camel-on-blur="{{ legalInput.commit }}"></textarea></label>
     </sc-if>
 
     <sc-if value="{{ tabBrand }}">
       <details class="om-cms-group" data-cms-group="Images & crop">
-        <summary>Images &amp; crop</summary>
+        <summary>รูปภาพและ Crop</summary>
         <div class="om-cms-fields">
           <sc-for list="{{ imageSlots }}" as="slot">
             <div class="om-media-row" data-media-slot="{{ slot.path }}">
               <sc-if value="{{ slot.hasImage }}"><img sc-camel-src="{{ slot.image }}" alt="" loading="lazy" width="64" height="48" style="object-fit:contain"></sc-if>
               <div><strong>{{ slot.label }}</strong><small>{{ slot.width }} × {{ slot.height }}</small></div>
-              <button type="button" sc-camel-on-click="{{ slot.edit }}">Edit image</button>
+              <button type="button" sc-camel-on-click="{{ slot.edit }}">แก้ไขรูป</button>
             </div>
           </sc-for>
         </div>
@@ -2287,34 +2250,34 @@ textarea.input { min-height: 90px; resize: vertical; }
                 <sc-if value="{{ field.hasImage }}"><img class="om-cms-image" sc-camel-src="{{ field.image }}" alt="{{ field.label }}"></sc-if>
                 <textarea rows="2" data-cms-field="{{ field.path }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}" sc-camel-on-blur="{{ field.commit }}"></textarea>
               </label>
-              <sc-if value="{{ field.isMedia }}"><button type="button" sc-camel-on-click="{{ field.editImage }}" class="om-media-edit">Edit image</button></sc-if>
+              <sc-if value="{{ field.isMedia }}"><button type="button" sc-camel-on-click="{{ field.editImage }}" class="om-media-edit">แก้ไขรูป</button></sc-if>
             </sc-for>
           </div>
         </details>
       </sc-for>
       <details class="om-cms-group" data-cms-group="Navigation">
-        <summary>Navigation</summary>
+        <summary>เมนูและลิงก์</summary>
         <div class="om-cms-fields">
-          <label class="om-cms-field"><span>Header button label</span><input data-cms-header-cta="true" value="{{ headerCtaInput.value }}" sc-camel-on-change="{{ headerCtaInput.change }}" sc-camel-on-blur="{{ headerCtaInput.commit }}"></label>
+          <label class="om-cms-field"><span>ข้อความปุ่มบน Header</span><input data-cms-header-cta="true" value="{{ headerCtaInput.value }}" sc-camel-on-change="{{ headerCtaInput.change }}" sc-camel-on-blur="{{ headerCtaInput.commit }}"></label>
           <sc-for list="{{ adminHeroLinks }}" as="link">
             <label class="om-cms-field"><span>{{ link.label }}</span><input data-cms-hero-link="{{ link.key }}" value="{{ link.input.value }}" sc-camel-on-change="{{ link.input.change }}" sc-camel-on-blur="{{ link.input.commit }}"></label>
           </sc-for>
           <sc-for list="{{ adminNavItems }}" as="nav">
             <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--color-neutral-300)">
-              <label class="om-cms-field"><span>Label</span><input data-cms-nav-label="{{ nav.key }}" value="{{ nav.labelInput.value }}" sc-camel-on-change="{{ nav.labelInput.change }}" sc-camel-on-blur="{{ nav.labelInput.commit }}"></label>
-              <button type="button" title="Remove link" aria-label="Remove link" sc-camel-on-click="{{ nav.remove }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-              <label class="om-cms-field"><span>Destination</span><input value="{{ nav.hrefInput.value }}" sc-camel-on-change="{{ nav.hrefInput.change }}" sc-camel-on-blur="{{ nav.hrefInput.commit }}"></label>
-              <button type="button" title="Move link up" aria-label="Move link up" disabled="{{ nav.first }}" sc-camel-on-click="{{ nav.up }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="m6 15 6-6 6 6"/></svg></button>
+              <label class="om-cms-field"><span>ข้อความ</span><input data-cms-nav-label="{{ nav.key }}" value="{{ nav.labelInput.value }}" sc-camel-on-change="{{ nav.labelInput.change }}" sc-camel-on-blur="{{ nav.labelInput.commit }}"></label>
+              <button type="button" title="นำลิงก์ออก" aria-label="นำลิงก์ออก" sc-camel-on-click="{{ nav.remove }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              <label class="om-cms-field"><span>ปลายทางลิงก์</span><input value="{{ nav.hrefInput.value }}" sc-camel-on-change="{{ nav.hrefInput.change }}" sc-camel-on-blur="{{ nav.hrefInput.commit }}"></label>
+              <button type="button" title="เลื่อนลิงก์ขึ้น" aria-label="เลื่อนลิงก์ขึ้น" disabled="{{ nav.first }}" sc-camel-on-click="{{ nav.up }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="m6 15 6-6 6 6"/></svg></button>
             </div>
           </sc-for>
-          <button type="button" sc-camel-on-click="{{ addNavItem }}" style="align-self:flex-start;padding:10px 14px;border:1px solid var(--color-neutral-300);border-radius:8px;background:var(--color-bg);color:var(--color-text);font:inherit;cursor:pointer">Add link</button>
+          <button type="button" sc-camel-on-click="{{ addNavItem }}" style="align-self:flex-start;padding:10px 14px;border:1px solid var(--color-neutral-300);border-radius:8px;background:var(--color-bg);color:var(--color-text);font:inherit;cursor:pointer">เพิ่มลิงก์</button>
         </div>
       </details>
     </sc-if>
 
     <!-- THEME TAB -->
     <sc-if value="{{ tabTheme }}" hint-placeholder-val="{{ false }}">
-      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-1)">Accent</div>
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-1)">สีหลัก</div>
       <div style="display:flex;gap:var(--space-3);align-items:center">
         <button type="button" sc-camel-on-click="{{ setTerracotta }}" title="Terracotta" style="width:44px;height:44px;border:0;cursor:pointer;border-radius:999px;background:var(--color-accent);box-shadow:{{ ringTerracotta }};transition:box-shadow .2s ease,transform .2s ease" style-hover="transform:translateY(-2px)"></button>
         <button type="button" sc-camel-on-click="{{ setSage }}" title="Sage" style="width:44px;height:44px;border:0;cursor:pointer;border-radius:999px;background:var(--color-accent-2);box-shadow:{{ ringSage }};transition:box-shadow .2s ease,transform .2s ease" style-hover="transform:translateY(-2px)"></button>
@@ -2323,25 +2286,25 @@ textarea.input { min-height: 90px; resize: vertical; }
       </div>
 
       <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">SEO</div>
-      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Public title</span><input data-admin-seo-title="true" value="{{ seoTitle }}" sc-camel-on-change="{{ onSeoTitle }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">ชื่อหน้าในผลค้นหา</span><input data-admin-seo-title="true" value="{{ seoTitle }}" sc-camel-on-change="{{ onSeoTitle }}" style="font:inherit;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text)" style-focus="border-color:{{ A_base }}"></label>
       <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Meta description</span><textarea data-admin-seo-description="true" rows="3" value="{{ seoDescription }}" sc-camel-on-change="{{ onSeoDescription }}" style="font:inherit;font-size:14px;line-height:1.5;padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical" style-focus="border-color:{{ A_base }}"></textarea></label>
       <div data-admin-seo-guard="true" style="display:flex;flex-direction:column;gap:5px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-neutral-300)"><span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700)">Canonical / robots</span><span style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-800)">{{ seoCanonical }}</span><span style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-800)">{{ seoRobots }}</span></div>
 
-      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">Backup &amp; restore</div>
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-3)">สำรองและกู้คืน</div>
       <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
         <button type="button" sc-camel-on-click="{{ doExport }}" style="border:0;cursor:pointer;font:inherit;font-size:13px;font-weight:600;padding:10px 16px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:var(--color-neutral-800)">Export JSON</button>
         <button type="button" sc-camel-on-click="{{ doImport }}" style="border:0;cursor:pointer;font:inherit;font-size:13px;font-weight:600;padding:10px 16px;border-radius:999px;background:var(--color-surface);color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-300)">Import JSON</button>
       </div>
-      <textarea rows="12" value="{{ io }}" sc-camel-on-change="{{ onIo }}" placeholder="Export drops your whole site config here. Paste one back and press Import." style="font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;font-size:11.5px;line-height:1.5;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical" style-focus="border-color:{{ A_base }}"></textarea>
+      <textarea rows="12" value="{{ io }}" sc-camel-on-change="{{ onIo }}" placeholder="กด Export เพื่อแสดงข้อมูลเว็บไซต์ หรือวาง JSON แล้วกด Import เพื่อนำเข้า" style="font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;font-size:11.5px;line-height:1.5;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical" style-focus="border-color:{{ A_base }}"></textarea>
       <div style="font-size:11.5px;line-height:1.55;color:var(--color-neutral-700)">
-        <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ข้อมูลจริงอยู่ใน Firestore เป็นหลัก Export/Import ใช้สำหรับสำรองหรือย้าย draft เท่านั้น</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Firestore is the primary content store. Export/Import is only for backup or draft transfer.</sc-if>
+        <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ข้อมูลจริงอยู่ใน Firestore เป็นหลัก Export/Import ใช้สำหรับสำรองหรือย้าย draft เท่านั้น</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ข้อมูลหลักอยู่ใน Firestore ใช้ Export/Import สำหรับสำรองหรือย้าย Draft เท่านั้น</sc-if>
       </div>
     </sc-if>
 
     <!-- VERSIONS TAB -->
     <sc-if value="{{ tabVersions }}" hint-placeholder-val="{{ false }}">
       <div style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-700)">
-        Every Publish is saved here. Press Restore to roll the live site back to that version - the last 20 are kept.
+        เก็บประวัติการ Publish ล่าสุด 20 เวอร์ชัน กด Restore เพื่อนำเวอร์ชันนั้นกลับมาแสดงบนเว็บจริง
       </div>
       <sc-if value="{{ hasHist }}" hint-placeholder-val="{{ true }}">
         <sc-for list="{{ histList }}" as="v" hint-placeholder-count="4">
@@ -2350,7 +2313,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             <div style="display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0">
               <span style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;line-height:1.25">
                 {{ v.when }}
-                <sc-if value="{{ v.isLive }}" hint-placeholder-val="{{ true }}"><span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">เว็บจริง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Live</sc-if></span></sc-if>
+                <sc-if value="{{ v.isLive }}" hint-placeholder-val="{{ true }}"><span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">เว็บจริง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">เว็บจริง</sc-if></span></sc-if>
               </span>
               <span style="font-size:11.5px;color:var(--color-neutral-700)">{{ v.stamp }}</span>
               <sc-if value="{{ v.restored }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--color-accent-800)">↺ {{ v.restoreNote }}</span></sc-if>
@@ -2359,7 +2322,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               <button type="button" sc-camel-on-click="{{ v.restore }}" style="flex:0 0 auto;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;padding:8px 16px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-accent-200);border-color:{{ A_base }}">Restore</button>
             </sc-if>
             <sc-if value="{{ v.isLive }}" hint-placeholder-val="{{ true }}">
-              <span style="flex:0 0 auto;font-size:12px;font-weight:700;color:var(--color-accent-2-800);padding:9px 6px">Current</span>
+              <span style="flex:0 0 auto;font-size:12px;font-weight:700;color:var(--color-accent-2-800);padding:9px 6px">เวอร์ชันปัจจุบัน</span>
             </sc-if>
           </div>
         </sc-for>
@@ -2373,15 +2336,23 @@ textarea.input { min-height: 90px; resize: vertical; }
       <span style="width:9px;height:9px;flex:0 0 auto;border-radius:999px;background:{{ statusDot }}"></span>
       <span style="font-weight:700;color:var(--color-text)">{{ statusText }}</span>
       <span style="margin-left:auto;font-size:11.5px">
-        <sc-if value="{{ savedFlash }}" hint-placeholder-val="{{ false }}"><span style="color:var(--color-accent-2-800);font-weight:700">Draft saved ✓</span></sc-if>
-        <sc-if value="{{ pubFlash }}" hint-placeholder-val="{{ false }}"><span style="color:var(--color-accent-2-800);font-weight:700">Success ✓</span></sc-if>
+        <sc-if value="{{ savedFlash }}" hint-placeholder-val="{{ false }}"><span style="color:var(--color-accent-2-800);font-weight:700">บันทึก Draft แล้ว ✓</span></sc-if>
+        <sc-if value="{{ pubFlash }}" hint-placeholder-val="{{ false }}"><span style="color:var(--color-accent-2-800);font-weight:700">เรียบร้อย ✓</span></sc-if>
       </span>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button type="button" sc-camel-on-click="{{ openEdit }}" style="flex:1 1 112px;min-width:104px;min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">Edit text</button>
-      <a href="/admin" style="flex:1 1 112px;min-width:104px;min-height:40px;display:flex;align-items:center;justify-content:center;text-align:center;border:1.5px solid var(--color-neutral-400);font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:transparent;color:var(--color-text);text-decoration:none;transition:background .2s ease" style-hover="background:var(--color-neutral-200);color:var(--color-text)">Main</a>
-            <button type="button" sc-camel-on-click="{{ goPublicSite }}" style="flex:1 1 112px;min-width:104px;min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">Public site</button>
-      <button type="button" sc-camel-on-click="{{ signOut }}" style="flex:1 1 124px;min-width:114px;min-height:40px;border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:var(--color-neutral-800);color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:var(--color-neutral-900)">Log out</button>
+      <button type="button" sc-camel-on-click="{{ openEdit }}" style="flex:1 1 112px;min-width:104px;min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">แก้ไขข้อความ</button>
+      <a href="/admin" style="flex:1 1 112px;min-width:104px;min-height:40px;display:flex;align-items:center;justify-content:center;text-align:center;border:1.5px solid var(--color-neutral-400);font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:transparent;color:var(--color-text);text-decoration:none;transition:background .2s ease" style-hover="background:var(--color-neutral-200);color:var(--color-text)">หน้า Admin</a>
+            <button type="button" sc-camel-on-click="{{ goPublicSite }}" style="flex:1 1 112px;min-width:104px;min-height:40px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">ดูเว็บจริง</button>
+      <button type="button" sc-camel-on-click="{{ signOut }}" style="flex:1 1 124px;min-width:114px;min-height:40px;border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:800;padding:0 12px;border-radius:999px;background:var(--color-neutral-800);color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:var(--color-neutral-900)">ออกจากระบบ</button>
+    </div>
+    <div class="cm-editor-history-panel">
+      <div class="cm-editor-history" role="group" aria-label="ย้อนการแก้ไข Draft">
+        <button type="button" data-editor-undo aria-label="Undo" aria-disabled="{{ editorUndoDisabled }}" title="{{ editorUndoTitle }}" sc-camel-on-click="{{ editorUndo }}">↶ Undo</button>
+        <button type="button" data-editor-redo aria-label="Redo" aria-disabled="{{ editorRedoDisabled }}" title="{{ editorRedoTitle }}" sc-camel-on-click="{{ editorRedo }}">↷ Redo</button>
+        <button type="button" data-editor-reset sc-camel-on-click="{{ requestResetDraft }}">Reset Draft</button>
+      </div>
+      <p class="cm-editor-history-note">{{ editorHistoryHint }}<br>Reset เพื่อกลับไปยัง Publish ล่าสุด · เว็บจริงไม่เปลี่ยน</p>
     </div>
     <div style="display:flex;gap:8px">
       <button type="button" sc-camel-on-click="{{ requestSaveDraft }}" style="flex:1 1 0;min-width:0;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13px;font-weight:700;padding:11px 10px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">{{ saveLabel }}</button>
@@ -2394,15 +2365,21 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 
 
+<sc-if value="{{ showEditorHistoryNotice }}" hint-placeholder-val="{{ false }}">
+  <span role="status" aria-live="polite" data-noedit="true" style="position:fixed;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">{{ editorAnnouncement }}</span>
+</sc-if>
+<sc-if value="{{ showAdminBusyShield }}" hint-placeholder-val="{{ false }}">
+  <div data-noedit="true" aria-hidden="true" style="position:fixed;inset:0;z-index:92;cursor:wait;background:rgba(246,239,228,.15)"></div>
+</sc-if>
 <sc-if value="{{ showAdminConfirm }}" hint-placeholder-val="{{ false }}">
   <div data-admin-confirm="true" data-noedit="true" role="presentation" style="position:fixed;inset:0;z-index:98;display:flex;align-items:center;justify-content:center;padding:clamp(18px,4vw,40px);background:color-mix(in srgb,var(--color-neutral-900) 46%,transparent);backdrop-filter:blur(6px)">
-    <section role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title" style="width:min(440px,100%);border-radius:28px;background:var(--color-bg);color:var(--color-text);box-shadow:var(--shadow-lg);padding:clamp(22px,4vw,30px);display:flex;flex-direction:column;gap:14px">
+    <section role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-body" aria-busy="{{ adminBusy }}" style="width:min(440px,100%);max-height:calc(100dvh - 36px);overflow:auto;border-radius:28px;background:var(--color-bg);color:var(--color-text);box-shadow:var(--shadow-lg);padding:clamp(22px,4vw,30px);display:flex;flex-direction:column;gap:14px">
       <div style="font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700)">{{ confirmKicker }}</div>
       <h2 id="admin-confirm-title" style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:clamp(25px,4vw,34px);line-height:1.08;letter-spacing:0;color:var(--color-text)">{{ confirmTitle }}</h2>
-      <p style="margin:0;color:var(--color-neutral-800);font-size:15px;line-height:1.55">{{ confirmBody }}</p>
+      <p id="admin-confirm-body" aria-live="polite" style="margin:0;color:var(--color-neutral-800);font-size:15px;line-height:1.55">{{ confirmBody }}</p>
       <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px">
-        <button type="button" sc-camel-on-click="{{ cancelConfirm }}" style="min-height:44px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:800;padding:0 18px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">Cancel</button>
-        <button type="button" sc-camel-on-click="{{ confirmAdminAction }}" style="min-height:44px;border:0;cursor:pointer;font:inherit;font-size:13.5px;font-weight:900;padding:0 20px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);transition:background .2s ease,transform .2s ease" style-hover="background:var(--color-accent-700);transform:translateY(-1px)">{{ confirmActionLabel }}</button>
+        <button type="button" data-confirm-cancel aria-disabled="{{ adminBusy }}" sc-camel-on-click="{{ cancelConfirm }}" style="min-height:44px;border:1.5px solid var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:800;padding:0 18px;border-radius:999px;background:transparent;color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-200)">ยกเลิก</button>
+        <button type="button" data-confirm-accept aria-disabled="{{ adminBusy }}" sc-camel-on-click="{{ confirmAdminAction }}" style="min-height:44px;border:0;cursor:pointer;font:inherit;font-size:13.5px;font-weight:900;padding:0 20px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);transition:background .2s ease,transform .2s ease" style-hover="background:var(--color-accent-700);transform:translateY(-1px)">{{ confirmActionLabel }}</button>
       </div>
     </section>
   </div>
@@ -2425,10 +2402,10 @@ textarea.input { min-height: 90px; resize: vertical; }
       <div style="font-size:14px;font-weight:900;line-height:1.25">{{ toastTitle }}</div>
       <div style="font-size:12.5px;line-height:1.45;color:var(--color-neutral-200)">{{ toastBody }}</div>
       <sc-if value="{{ toastCanUndo }}" hint-placeholder-val="{{ false }}">
-        <button type="button" sc-camel-on-click="{{ undoActionToast }}" style="align-self:flex-start;margin-top:6px;min-height:34px;border:1.5px solid color-mix(in srgb,var(--color-neutral-100) 35%,transparent);cursor:pointer;font:inherit;font-size:12px;font-weight:900;padding:0 14px;border-radius:999px;background:transparent;color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 16%,transparent)">Undo</button>
+        <button type="button" sc-camel-on-click="{{ undoActionToast }}" style="align-self:flex-start;margin-top:6px;min-height:34px;border:1.5px solid color-mix(in srgb,var(--color-neutral-100) 35%,transparent);cursor:pointer;font:inherit;font-size:12px;font-weight:900;padding:0 14px;border-radius:999px;background:transparent;color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 16%,transparent)">{{ toastUndoLabel }}</button>
       </sc-if>
     </div>
-    <button type="button" sc-camel-on-click="{{ dismissToast }}" aria-label="Close notification" title="Close notification" style="width:34px;height:34px;border:0;cursor:pointer;border-radius:999px;background:color-mix(in srgb,var(--color-neutral-100) 12%,transparent);color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 22%,transparent)">
+    <button type="button" sc-camel-on-click="{{ dismissToast }}" aria-label="ปิดข้อความแจ้งเตือน" title="ปิดข้อความแจ้งเตือน" style="width:34px;height:34px;border:0;cursor:pointer;border-radius:999px;background:color-mix(in srgb,var(--color-neutral-100) 12%,transparent);color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:color-mix(in srgb,var(--color-neutral-100) 22%,transparent)">
       <svg sc-camel-view-box="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
     </button>
   </div>

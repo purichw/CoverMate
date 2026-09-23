@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import vm from "node:vm";
+import { isDeepStrictEqual } from "node:util";
 
 import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
+import { importCoverMateContract } from "./lib/contract-loader.mjs";
 import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
 import { readImageVersions } from "./lib/visitor-source.mjs";
 
@@ -32,6 +34,10 @@ const viewports = [
   ["tablet", 820, 1180],
   ["mobile", 390, 844]
 ];
+const selectedViewport = process.env.COVERMATE_SMOKE_VIEWPORT || "";
+if (selectedViewport && !viewports.some(([name]) => name === selectedViewport)) {
+  throw new Error(`Unknown smoke viewport: ${selectedViewport}`);
+}
 
 const routes = [
   ["/", "main"],
@@ -232,10 +238,13 @@ function adminOpsApiMock(route) {
 
 function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftText = {}) {
   return `
-    let liveConfig = ${JSON.stringify(liveConfig)};
-    let draftConfig = ${JSON.stringify(draftConfig)};
-    let liveText = ${JSON.stringify(liveText)};
-    let draftText = ${JSON.stringify(draftText)};
+    import { sanitizeStateDoc } from '/covermate-contract.js';
+    const initialLive = sanitizeStateDoc(${JSON.stringify({ config: liveConfig, text: liveText })}, { repeatableIds: true });
+    const initialDraft = sanitizeStateDoc(${JSON.stringify({ config: draftConfig, text: draftText })}, { repeatableIds: true });
+    let liveConfig = initialLive.config;
+    let draftConfig = initialDraft.config;
+    let liveText = initialLive.text;
+    let draftText = initialDraft.text;
     const smokeUser = {
       uid: "smoke-owner",
       email: "owner@example.com",
@@ -284,6 +293,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
       },
       saveSiteState: async (name, config, text) => {
         await pause();
+        ({ config, text } = sanitizeStateDoc({ config, text }, { repeatableIds: true }));
         window.__covermateSaveCalls.push({ name, config, text, ts: Date.now() });
         if (name === "draft") {
           draftConfig = config;
@@ -344,7 +354,7 @@ async function clickAdminTab(page, label) {
 }
 
 function adminAsideLocator(page) {
-  return page.locator("aside").filter({ hasText: "Admin portal" }).last();
+  return page.locator("aside").filter({ hasText: "Admin Portal" }).last();
 }
 
 async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, label, expectedPopupPath = "/") {
@@ -368,7 +378,7 @@ async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, lab
       route: window.location.pathname + window.location.search + window.location.hash,
       marker: window.localStorage.getItem("purich-admin-ever-v7"),
       hasOwnerBar: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).some(visible),
-      hasAdminAside: Array.from(document.querySelectorAll("aside")).some((el) => visible(el) && /Admin portal/.test(el.innerText || "")),
+      hasAdminAside: Array.from(document.querySelectorAll("aside")).some((el) => visible(el) && /Admin Portal/.test(el.innerText || "")),
       text: document.body.innerText
     };
   });
@@ -407,20 +417,20 @@ async function changeField(locator, value) {
 }
 
 async function selectAdminSection(page, id) {
-  await clickAdminTab(page, "Sections");
+  await clickAdminTab(page, "ส่วนต่าง ๆ");
   const row = page.locator(`[data-admin-section-row="${id}"]`).first();
   await row.scrollIntoViewIfNeeded();
   await row.locator(`[data-admin-section-edit="${id}"]`).click();
   await page.waitForFunction(
     (sectionId) => Array.from(document.querySelectorAll("aside"))
-      .some((aside) => /Admin portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${sectionId}`)),
+      .some((aside) => /Admin Portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${sectionId}`)),
     id,
     { timeout: 5000 }
   );
 }
 
 async function clickSectionColumnControl(page, id, direction) {
-  await clickAdminTab(page, "Sections");
+  await clickAdminTab(page, "ส่วนต่าง ๆ");
   const row = page.locator(`[data-admin-section-row="${id}"]`).first();
   await row.scrollIntoViewIfNeeded();
   const details = row.locator("details").first();
@@ -460,7 +470,7 @@ async function newSmokePage(options) {
     };
     window.__covermateVisibleOwnerBarCount = () => Array.from(document.querySelectorAll("[data-admin-owner-bar]")).filter(isVisible).length;
     window.__covermateVisibleAdminAside = () => Array.from(document.querySelectorAll("aside")).some((el) =>
-      isVisible(el) && /Admin portal/.test(el.innerText || "")
+      isVisible(el) && /Admin Portal/.test(el.innerText || "")
     );
   });
   return page;
@@ -590,14 +600,14 @@ async function verifyRemoteHydrationContract() {
   });
   await ownerPage.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
   await ownerPage.waitForFunction(() => Boolean(document.body), null, { timeout: 10000 });
-  await waitForBodyText(ownerPage, /Admin portal/);
+  await waitForBodyText(ownerPage, /Admin Portal/);
   const ownerState = await ownerPage.evaluate(() => ({
     text: document.body.innerText,
     insurerText: document.querySelector("#insurers")?.innerText || "",
     opts: window.__covermateHydrateOpts || null,
     history: JSON.parse(window.localStorage.getItem("purich-history-v3") || "[]")
   }));
-  if (!ownerState.text.includes("Admin portal")) {
+  if (!ownerState.text.includes("Admin Portal")) {
     failures.push("remote hydration: owner route did not render admin panel under mocked remote content");
   }
   if (
@@ -618,8 +628,13 @@ async function verifyRemoteHydrationContract() {
 }
 
 async function verifyAdminActionWorkflow() {
-  const liveConfig = renamedConfig("Live Action Smoke");
-  const draftConfig = renamedConfig("Draft Action Smoke");
+  const contract = await importCoverMateContract();
+  const liveConfig = contract.sanitizeMotorCountConfig(renamedConfig("Live Action Smoke"), { repeatableIds: true });
+  const draftConfig = contract.sanitizeMotorCountConfig(renamedConfig("Draft Action Smoke"), { repeatableIds: true });
+  // This flow covers Save/Publish on authored content. Legacy inline-copy
+  // adoption has its own CMS tests and legitimately consumes provenance flags.
+  liveConfig.cmsLegacyCopy = [];
+  draftConfig.cmsLegacyCopy = [];
   const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
   const nativeDialogs = [];
   const pageErrors = [];
@@ -648,18 +663,32 @@ async function verifyAdminActionWorkflow() {
     );
   });
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Admin Portal/);
   await waitForBodyText(page, /Draft Action Smoke/);
+  await page.waitForFunction(() => Object.keys(sessionStorage).some(key => key.startsWith("covermate-editor-history-v1:")));
+  const beforeSave = await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find(key => key.startsWith("covermate-editor-history-v1:"));
+    const history = JSON.parse(sessionStorage.getItem(key));
+    return {
+      // The initialized editor snapshot includes canonical CMS migration/IDs;
+      // the fixture's raw cache predates that normalization.
+      draft: history.entries[history.cursor].snapshot,
+      live: {
+        config: JSON.parse(localStorage.getItem("purich-live-config-v3") || "{}"),
+        text: JSON.parse(localStorage.getItem("purich-live-text-v3") || "{}")
+      }
+    };
+  });
 
   const actionAdminAside = adminAsideLocator(page);
   const saveButton = actionAdminAside.locator("button").filter({ hasText: /^Save draft$/ }).last();
   await saveButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   let dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
-  if (!dialogText.includes("Save draft?") || !dialogText.includes("Visitors will keep seeing")) {
+  if (!dialogText.includes("Save draft นี้ไหม?") || !dialogText.includes("ผู้เข้าชมจะยังเห็นเว็บเวอร์ชันที่ Publish ไว้")) {
     failures.push("admin actions: Save draft did not open the custom confirmation dialog");
   }
-  await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Cancel" }).click();
+  await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "ยกเลิก" }).click();
   await page.waitForTimeout(200);
   const saveAfterCancel = await page.evaluate(() => window.__covermateSaveCalls.length);
   if (saveAfterCancel !== 0) {
@@ -672,12 +701,20 @@ async function verifyAdminActionWorkflow() {
   await page.locator('[data-admin-progress="true"]').waitFor({ state: "visible", timeout: 3000 }).catch(() =>
     failures.push("admin actions: Save draft did not show an in-progress status")
   );
-  await waitForBodyText(page, /Draft saved/);
+  await waitForBodyText(page, /บันทึก Draft แล้ว/);
   let actionState = await page.evaluate(() => ({
     saveCalls: window.__covermateSaveCalls.length,
     publishCalls: window.__covermatePublishCalls.length,
     toastText: document.querySelector('[data-admin-toast="true"]')?.innerText || "",
-    confirmVisible: Boolean(document.querySelector('[data-admin-confirm="true"]'))
+    confirmVisible: Boolean(document.querySelector('[data-admin-confirm="true"]')),
+    savedDraft: {
+      config: window.__covermateSaveCalls.at(-1)?.config,
+      text: window.__covermateSaveCalls.at(-1)?.text
+    },
+    live: {
+      config: JSON.parse(localStorage.getItem("purich-live-config-v3") || "{}"),
+      text: JSON.parse(localStorage.getItem("purich-live-text-v3") || "{}")
+    }
   }));
   if (actionState.confirmVisible) {
     failures.push("admin actions: Save draft confirmation stayed visible after success");
@@ -685,33 +722,37 @@ async function verifyAdminActionWorkflow() {
   if (actionState.saveCalls !== 1 || actionState.publishCalls !== 0) {
     failures.push(`admin actions: Save draft expected 1 save and 0 publishes, got ${actionState.saveCalls}/${actionState.publishCalls}`);
   }
-  if (!/Draft saved/.test(actionState.toastText) || !/Undo/.test(actionState.toastText)) {
-    failures.push("admin actions: Save draft success toast with Undo is missing");
+  if (!/บันทึก Draft แล้ว/.test(actionState.toastText)) {
+    failures.push("admin actions: Save draft success toast is missing");
   }
-  await page.locator('[data-admin-toast="true"]').getByRole("button", { name: "Undo" }).click();
-  await waitForBodyText(page, /Draft restored/);
-  actionState = await page.evaluate(() => ({
-    saveCalls: window.__covermateSaveCalls.length,
-    toastText: document.querySelector('[data-admin-toast="true"]')?.innerText || ""
-  }));
-  if (actionState.saveCalls !== 2 || !/Draft restored/.test(actionState.toastText)) {
-    failures.push(`admin actions: Save draft undo did not restore the previous draft (${actionState.saveCalls}, ${actionState.toastText})`);
+  if (!isDeepStrictEqual(actionState.savedDraft, beforeSave.draft)) {
+    failures.push("admin actions: Save draft did not save the exact current Draft snapshot");
+    fs.mkdirSync('uat-results', { recursive: true });
+    fs.writeFileSync('uat-results/smoke-draft-snapshot-mismatch.json', JSON.stringify({ expected: beforeSave.draft, actual: actionState.savedDraft }, null, 2));
   }
-  await page.getByLabel("Close notification").click();
+  if (!isDeepStrictEqual(actionState.live, beforeSave.live)) {
+    failures.push("admin actions: Save draft changed Live content");
+  }
+  // Editor-history browser checks prove Save retains global Undo/Redo history.
+  // Save itself must not offer the obsolete toast-only Draft rollback.
+  if (await page.locator('[data-admin-toast="true"]').getByRole("button", { name: "Undo", exact: true }).count()) {
+    failures.push("admin actions: Save draft still offers obsolete toast rollback");
+  }
+  await page.getByLabel("ปิดข้อความแจ้งเตือน").click();
   await page.locator('[data-admin-toast="true"]').waitFor({ state: "detached", timeout: 5000 });
 
   const publishButton = actionAdminAside.locator("button").filter({ hasText: /^Publish$/ }).last();
   await publishButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
-  if (!dialogText.includes("Publish changes?") || !dialogText.includes("live visitor site")) {
+  if (!dialogText.includes("Publish การแก้ไขนี้ไหม?") || !dialogText.includes("แสดงบนเว็บจริง")) {
     failures.push("admin actions: Publish did not open the custom confirmation dialog");
   }
   await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Publish" }).click();
   await page.locator('[data-admin-progress="true"]').waitFor({ state: "visible", timeout: 3000 }).catch(() =>
     failures.push("admin actions: Publish did not show an in-progress status")
   );
-  await waitForBodyText(page, /Published/);
+  await waitForBodyText(page, /Publish แล้ว/);
   actionState = await page.evaluate(() => ({
     saveCalls: window.__covermateSaveCalls.length,
     publishCalls: window.__covermatePublishCalls.length,
@@ -721,11 +762,11 @@ async function verifyAdminActionWorkflow() {
   if (actionState.publishCalls !== 1 || actionState.liveName !== "Draft Action Smoke") {
     failures.push(`admin actions: Publish did not update live mock content (${actionState.publishCalls}, ${actionState.liveName})`);
   }
-  if (!/Published/.test(actionState.toastText) || !/Undo/.test(actionState.toastText)) {
+  if (!/Publish แล้ว/.test(actionState.toastText) || !/Undo/.test(actionState.toastText)) {
     failures.push("admin actions: Publish success toast with Undo is missing");
   }
-  await page.locator('[data-admin-toast="true"]').getByRole("button", { name: "Undo" }).click();
-  await waitForBodyText(page, /Publish undone/);
+  await page.locator('[data-admin-toast="true"]').getByRole("button", { name: "ย้อน Publish · เปลี่ยนเว็บจริง", exact: true }).click();
+  await waitForBodyText(page, /Undo การ Publish แล้ว/);
   actionState = await page.evaluate(() => ({
     publishCalls: window.__covermatePublishCalls.length,
     lastPublish: window.__covermatePublishCalls[window.__covermatePublishCalls.length - 1],
@@ -735,10 +776,10 @@ async function verifyAdminActionWorkflow() {
   if (actionState.publishCalls !== 2 || actionState.liveName !== "Live Action Smoke" || !actionState.lastPublish?.undoOf) {
     failures.push(`admin actions: Publish undo did not restore previous live content (${JSON.stringify(actionState)})`);
   }
-  if (!/Publish undone/.test(actionState.toastText)) {
+  if (!/Undo การ Publish แล้ว/.test(actionState.toastText)) {
     failures.push("admin actions: Publish undo toast is missing");
   }
-  await page.getByLabel("Close notification").click();
+  await page.getByLabel("ปิดข้อความแจ้งเตือน").click();
   await page.locator('[data-admin-toast="true"]').waitFor({ state: "detached", timeout: 5000 });
 
   if (nativeDialogs.length) {
@@ -777,16 +818,16 @@ async function verifyAdminBuilderControls() {
   });
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Admin Portal/);
   await waitForBodyText(page, /Draft Builder Smoke/);
 
-  await clickAdminTab(page, "Sections");
+  await clickAdminTab(page, "ส่วนต่าง ๆ");
   const heroContentEditCount = await page.locator('[data-admin-section-row="hero"] [data-admin-section-edit="hero"]').count();
   if (heroContentEditCount !== 1) {
     failures.push("admin builder: hero must expose structured content editing alongside inline editing");
   }
 
-  await clickAdminTab(page, "Brand & contact");
+  await clickAdminTab(page, "แบรนด์และติดต่อ");
   const adminAside = adminAsideLocator(page);
   const brandPanelText = await adminAside.innerText();
   if (/Upload logo|Logo uploaded|file upload|drag .*logo/i.test(brandPanelText)) {
@@ -810,7 +851,7 @@ async function verifyAdminBuilderControls() {
   }
 
   await changeField(page.locator('[data-admin-logo-path="true"]'), "data:image/svg+xml,bad");
-  await waitForBodyText(page, /Invalid media path/);
+  await waitForBodyText(page, /ที่อยู่รูปภาพไม่ถูกต้อง/);
   const rejectedLogoState = await page.evaluate(() => {
     const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
     return {
@@ -821,22 +862,22 @@ async function verifyAdminBuilderControls() {
   if (rejectedLogoState.logo.startsWith("data:")) {
     failures.push("admin builder: invalid data-image logo was stored in draft config");
   }
-  if (!/Invalid media path/.test(rejectedLogoState.toast)) {
+  if (!/ที่อยู่รูปภาพไม่ถูกต้อง/.test(rejectedLogoState.toast)) {
     failures.push("admin builder: invalid media path toast is missing");
   }
   await changeField(page.locator('[data-admin-logo-path="true"]'), "assets/logos/srikrung-logo.png");
   await changeField(page.locator('[data-admin-logo-alt="true"]'), "Srikrung broker logo");
-  await changeField(adminAside.locator("label").filter({ hasText: "LINE link" }).locator("input"), "http://bad.example");
-  await waitForBodyText(page, /Invalid contact link/);
-  await changeField(adminAside.locator("label").filter({ hasText: "LINE link" }).locator("input"), "https://line.me/ti/p/~covermate-smoke");
-  await changeField(adminAside.locator("label").filter({ hasText: "Email" }).locator("input"), "not-an-email");
-  await waitForBodyText(page, /Invalid email/);
-  await changeField(adminAside.locator("label").filter({ hasText: "Email" }).locator("input"), "owner@covermate.example");
+  await changeField(adminAside.locator("label").filter({ hasText: "ลิงก์ LINE" }).locator("input"), "http://bad.example");
+  await waitForBodyText(page, /ลิงก์ติดต่อไม่ถูกต้อง/);
+  await changeField(adminAside.locator("label").filter({ hasText: "ลิงก์ LINE" }).locator("input"), "https://line.me/ti/p/~covermate-smoke");
+  await changeField(adminAside.locator("label").filter({ hasText: "อีเมล" }).locator("input"), "not-an-email");
+  await waitForBodyText(page, /อีเมลไม่ถูกต้อง/);
+  await changeField(adminAside.locator("label").filter({ hasText: "อีเมล" }).locator("input"), "owner@covermate.example");
   await changeField(page.locator('[data-admin-credential="true"]'), "Owner-managed credential");
   await changeField(page.locator('[data-admin-legal="true"]'), "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}");
   await page.locator('[data-cms-group="Licences"] summary').click();
   await changeField(page.locator('[data-cms-field="licences.life.number"]'), "9000000001");
-  await clickAdminTab(page, "Theme & data");
+  await clickAdminTab(page, "ธีมและข้อมูล");
   await changeField(page.locator('[data-admin-seo-title="true"]'), "CoverMate smoke SEO title");
   await changeField(page.locator('[data-admin-seo-description="true"]'), "Smoke-tested guarded SEO description for the CoverMate admin rebuild.");
   const cmsControlState = await page.evaluate(() => {
@@ -866,7 +907,7 @@ async function verifyAdminBuilderControls() {
   ) {
     failures.push("admin builder: guarded SEO title/description did not persist");
   }
-  if (!cmsControlState.seoGuard.includes("Canonical: https://covermateinsurance.com/") || !/admin, edit, and preview stay noindex/i.test(cmsControlState.seoGuard)) {
+  if (!cmsControlState.seoGuard.includes("Canonical: https://covermateinsurance.com/") || !/Admin, Edit และ Preview ยังคงเป็น noindex/.test(cmsControlState.seoGuard)) {
     failures.push("admin builder: SEO canonical/robots guard copy is missing");
   }
   if (cmsControlState.footerLegal !== "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}" || cmsControlState.lifeLicence !== "9000000001") {
@@ -876,7 +917,7 @@ async function verifyAdminBuilderControls() {
     failures.push("admin builder: owner credential was not preserved");
   }
 
-  await clickAdminTab(page, "Sections");
+  await clickAdminTab(page, "ส่วนต่าง ๆ");
   const coverageAccordionState = await page.evaluate(() => {
     const anchor = document.querySelector("#cover");
     return {
@@ -911,7 +952,7 @@ async function verifyAdminBuilderControls() {
   await selectAdminSection(page, "insurers");
   const insurersBefore = await readDraftSection(page, "insurers");
   const insurerCardCountBefore = (insurersBefore?.cards || []).length;
-  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ Add insurer card$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มการ์ดบริษัทประกัน$/ }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -926,7 +967,7 @@ async function verifyAdminBuilderControls() {
   const tiersBefore = await readDraftSection(page, "tiers");
   const tierHeadCountBefore = (tiersBefore?.heads || []).length;
   const tierItemCountBefore = (tiersBefore?.items || []).length;
-  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ Add column$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มคอลัมน์$/ }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -938,7 +979,7 @@ async function verifyAdminBuilderControls() {
     { timeout: 5000 }
   ).catch(() => failures.push("admin builder: + Add column did not sync coverage cells across all tier rows"));
 
-  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ Add tier$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มชั้นประกัน$/ }).click();
   await page.waitForFunction(
     ({ id, expectedItems, expectedHeads }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -1041,8 +1082,8 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   }
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
-  await page.getByLabel("Close admin panel").click();
+  await waitForBodyText(page, /Admin Portal/);
+  await page.getByLabel("ปิดแผง Admin").click();
   await page.waitForFunction(
     () => /^\/admin\/?$/.test(window.location.pathname) && !window.location.search && !window.location.hash,
     null,
@@ -1053,28 +1094,30 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
     route: window.location.pathname + window.location.search + window.location.hash,
     hasReopen: Boolean(document.querySelector('[data-admin-owner-bar="reopen"]')),
     marker: window.localStorage.getItem("purich-admin-ever-v7"),
+    hasEditorControls: Boolean(document.querySelector('[data-admin-owner-bar="edit"], [data-editor-undo], [data-editor-reset]')),
+    hasSavePublishControls: Array.from(document.querySelectorAll('button')).some(el => /^(Text edit|Save draft|Publish)$/.test(el.textContent.trim())),
     text: document.body.innerText
   }));
   if (
     !/^\/admin\/?$/.test(closedState.route) ||
     closedState.hasReopen ||
     closedState.marker ||
-    /Text edit|Save draft|Publish/.test(closedState.text)
+    closedState.hasEditorControls || closedState.hasSavePublishControls
   ) {
     failures.push(`public chrome guard: closing admin panel did not stay inside /admin (${JSON.stringify(closedState)})`);
   }
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Admin Portal/);
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "Public site" }).last().click(),
+    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
     "/admin/content",
     "public chrome guard: Public site from /admin/content"
   );
 
   await page.goto(new URL("/admin/edit", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Editing on page/);
+  await waitForBodyText(page, /กำลังแก้ไขหน้าเว็บ/);
   await page.evaluate(() => {
     const toggle = document.getElementById("covermate-owner-tools-toggle");
     if (toggle) {
@@ -1084,7 +1127,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   });
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "Public site" }).last().click(),
+    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
     "/admin/edit",
     "public chrome guard: Public site from /admin/edit"
   );
@@ -1212,9 +1255,9 @@ async function verifyPreviewIsolationContract() {
     failures.push(`preview isolation: /admin/preview leaked editing/admin chrome or marker (${JSON.stringify(previewState)})`);
   }
   if (
-    !previewState.previewBarText.includes("Draft preview") ||
-    !previewState.previewBarText.includes("Open editor") ||
-    !previewState.previewBarText.includes("Public site") ||
+    !previewState.previewBarText.includes("Preview ของ Draft") ||
+    !previewState.previewBarText.includes("เปิดหน้าแก้ไข") ||
+    !previewState.previewBarText.includes("ดูเว็บจริง") ||
     !previewState.previewBarText.includes("Publish")
   ) {
     failures.push(`preview isolation: /admin/preview top bar actions are incomplete (${JSON.stringify(previewState.previewBarText)})`);
@@ -1226,7 +1269,7 @@ async function verifyPreviewIsolationContract() {
     failures.push(`preview isolation: /admin/preview metadata is not noindex (${previewState.robots})`);
   }
 
-  await page.locator("[data-admin-preview-bar]").getByRole("button", { name: "Open editor" }).click();
+  await page.locator("[data-admin-preview-bar]").getByRole("button", { name: "เปิดหน้าแก้ไข" }).click();
   await page.waitForFunction(
     () => window.location.pathname === "/admin/edit" && !window.location.search && !window.location.hash,
     null,
@@ -1240,7 +1283,7 @@ async function verifyPreviewIsolationContract() {
   await waitForBodyText(page, /Draft Preview Smoke/);
   await expectPublicSitePopup(
     page,
-    () => page.locator("[data-admin-preview-bar]").getByRole("button", { name: "Public site" }).click(),
+    () => page.locator("[data-admin-preview-bar]").getByRole("button", { name: "ดูเว็บจริง" }).click(),
     "/admin/preview",
     "preview isolation: Public site from /admin/preview"
   );
@@ -1291,14 +1334,15 @@ async function verifyStaticSeoFiles() {
   }
 }
 
-if (smokeSuite === "admin-builder") {
-  await verifyAdminBuilderControls();
+if (smokeSuite === "admin-builder" || smokeSuite === "admin-actions") {
+  if (smokeSuite === "admin-actions") await verifyAdminActionWorkflow();
+  else await verifyAdminBuilderControls();
   await browser.close();
   if (failures.length) {
     console.error(failures.join("\n"));
     process.exit(1);
   }
-  console.log(`CoverMate admin builder smoke passed for ${baseUrl}`);
+  console.log(`CoverMate ${smokeSuite} smoke passed for ${baseUrl}`);
   process.exit(0);
 }
 
@@ -1310,6 +1354,7 @@ await verifyPublicRouteSuppressesStaleOwnerChrome();
 await verifyPreviewIsolationContract();
 
 for (const [name, width, height] of viewports) {
+  if (selectedViewport && name !== selectedViewport) continue;
   const page = await newSmokePage({
     viewport: { width, height },
     deviceScaleFactor: 1
@@ -1318,8 +1363,15 @@ for (const [name, width, height] of viewports) {
   const failedRequests = [];
   const pageErrors = [];
   let navigationStarted = 0;
+  let navigationId = 0;
+  const requestNavigation = new WeakMap();
+  const navigationAssetAborts = [];
   page.on('request', request => {
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigationStarted = Date.now();
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      navigationStarted = Date.now();
+      navigationId++;
+    }
+    requestNavigation.set(request, navigationId);
   });
 
   page.on("requestfailed", (request) => {
@@ -1328,6 +1380,13 @@ for (const [name, width, height] of viewports) {
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
     if (Date.now() - navigationStarted < 2500 && isBenignNavigationAbort(url, failureText)) return;
+    if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && requestNavigation.get(request) < navigationId) {
+      const parsed = new URL(url);
+      if (parsed.origin === baseOrigin && ['font', 'stylesheet', 'image'].includes(request.resourceType()) && /^\/assets\/(fonts|brand)\/[^/]+\.(woff2|css|png|webp|svg|jpe?g)$/.test(parsed.pathname)) {
+        navigationAssetAborts.push({ path: parsed.pathname, fromNavigation: requestNavigation.get(request), toNavigation: navigationId });
+        return;
+      }
+    }
     if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500) {
       const parsed = new URL(url);
       if (parsed.origin === 'https://www.googletagmanager.com' && ['/gtag/js', '/td'].includes(parsed.pathname)) return;
@@ -1907,7 +1966,7 @@ for (const [name, width, height] of viewports) {
   }
 
   await page.goto(new URL("/admin/login", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Sign in with Google/);
+  await waitForBodyText(page, /เข้าสู่ระบบด้วย Google/);
   await page.evaluate(() => window.localStorage.removeItem("covermate-admin-session"));
   const loginFlowState = await page.evaluate(() => ({
     text: document.body.innerText,
@@ -1916,13 +1975,13 @@ for (const [name, width, height] of viewports) {
     clientWidth: document.documentElement.clientWidth,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!loginFlowState.text.includes("Sign in with Google")) {
+  if (!loginFlowState.text.includes("เข้าสู่ระบบด้วย Google")) {
     failures.push(`${name} login: Google sign-in button did not render`);
   }
   if (!loginFlowState.text.includes("Firebase Auth")) {
     failures.push(`${name} login: Firebase Auth allowlist copy is missing`);
   }
-  if (/Failed to resolve module|Firebase could not initialise|Firebase sign-in could not start/.test(loginFlowState.text)) {
+  if (/Failed to resolve module|เริ่มต้น Firebase ไม่สำเร็จ|เข้าสู่ระบบไม่สำเร็จ/.test(loginFlowState.text)) {
     failures.push(`${name} login: Firebase module/load error is visible`);
   }
   if (loginFlowState.text.includes("[object Object]")) {
@@ -1962,11 +2021,13 @@ for (const [name, width, height] of viewports) {
   await page.route("**/api/ops/**", adminOpsApiMock);
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin Portal/);
+  await page.locator('.admin-home[data-home-state="empty"], .admin-home[data-home-state="ready"]').waitFor();
   const adminState = await page.evaluate(() => ({
     text: document.body.innerText,
     moduleCards: Array.from(document.querySelectorAll("[data-admin-home-card]")).map((el) => ({
       kind: el.getAttribute("data-admin-home-card"),
       text: el.innerText,
+      title: el.querySelector('h2')?.textContent.trim() || "",
       tag: el.tagName.toLowerCase(),
       action: el.getAttribute("data-action"),
       module: el.getAttribute("data-module")
@@ -1976,21 +2037,18 @@ for (const [name, width, height] of viewports) {
     clientWidth: document.documentElement.clientWidth,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("Owner / Administrator · verified")) {
+  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("เจ้าของ / Admin · ยืนยันสิทธิ์แล้ว")) {
     failures.push(`${name} /admin: authenticated Admin Portal Home did not render`);
   }
   if (
-    !adminState.text.includes("Live: leads/tasks/audit") ||
-    !adminState.text.includes("Website CMS") ||
-    !adminState.text.includes("First-party CoverMate records")
+    !adminState.text.includes("เชื่อมต่องานลูกค้าแล้ว") ||
+    !adminState.text.includes("CMS เว็บไซต์") ||
+    !adminState.text.includes("รายงานจากข้อมูล CoverMate")
   ) {
     failures.push(`${name} /admin: single-shell live system status copy is missing`);
   }
-  const launcherLabels = adminState.moduleCards.map((card) => {
-    const firstLine = card.text.split("\n").map((part) => part.trim()).filter(Boolean)[0] || "";
-    return firstLine;
-  });
-  const expectedLauncherLabels = ["Operations", "Website content", "Analytics", "Settings"];
+  const launcherLabels = adminState.moduleCards.map(card => card.title);
+  const expectedLauncherLabels = ["งานลูกค้า", "จัดการเว็บไซต์", "Analytics", "ตั้งค่า"];
   if (JSON.stringify(launcherLabels) !== JSON.stringify(expectedLauncherLabels)) {
     failures.push(`${name} /admin: expected module labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
   }
@@ -2012,7 +2070,7 @@ for (const [name, width, height] of viewports) {
   if (/Manage your site|Edit the words|Arrange & customise|Unpacking/.test(adminState.text)) {
     failures.push(`${name} /admin: legacy launcher copy is visible`);
   }
-  if (!adminState.text.includes("Public site") || !adminState.text.includes("Log out")) {
+  if (!adminState.text.includes("ดูเว็บไซต์") || !adminState.text.includes("ออกจากระบบ")) {
     failures.push(`${name} /admin: supporting Public site or Log out action is missing`);
   }
   if (adminState.text.includes("[object Object]")) {
@@ -2030,7 +2088,7 @@ for (const [name, width, height] of viewports) {
 
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("link", { name: "Public site" }).click(),
+    () => page.getByRole("link", { name: "ดูเว็บไซต์" }).click(),
     "/admin",
     `${name} /admin Public site`
   );
@@ -2150,7 +2208,7 @@ for (const [name, width, height] of viewports) {
     rows: document.querySelectorAll("#recent-leads tr").length
   }));
   await analyticsPage.close();
-  if (!analyticsState.text.includes("G-5TF3C235EF") || !analyticsState.text.includes("Visitor funnel") || !analyticsState.text.includes("Lead trend")) {
+  if (!analyticsState.text.includes("G-5TF3C235EF") || !analyticsState.text.includes("Funnel ผู้เข้าชม") || !analyticsState.text.includes("แนวโน้มเคส")) {
     failures.push(`${name} /admin/analytics: analytics dashboard core sections missing`);
   }
   if (analyticsState.leadKpi !== "2" || !analyticsState.leadNames.includes("Ari") || !analyticsState.leadNames.includes("Ben")) {
@@ -2181,13 +2239,13 @@ for (const [name, width, height] of viewports) {
   if (analyticsPageErrors.length) failures.push(`${name} /admin/analytics: ${analyticsPageErrors.join(" | ")}`);
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Admin Portal/);
   const ownerPanelState = await page.evaluate(() => ({
     text: document.body.innerText,
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
-    adminTabs: ["Sections", "Content", "Brand & contact", "Theme & data", "Versions"].map((label) => {
+    adminTabs: ["ส่วนต่าง ๆ", "เนื้อหา", "แบรนด์และติดต่อ", "ธีมและข้อมูล", "ประวัติเวอร์ชัน"].map((label) => {
       const button = Array.from(document.querySelectorAll("button")).find(
         (el) => (el.textContent || "").trim() === label
       );
@@ -2204,10 +2262,10 @@ for (const [name, width, height] of viewports) {
     }),
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!ownerPanelState.text.includes("Admin portal")) {
+  if (!ownerPanelState.text.includes("Admin Portal")) {
     failures.push(`${name} /admin/content: owner control panel did not render`);
   }
-  if (!ownerPanelState.text.includes("Versions")) {
+  if (!ownerPanelState.text.includes("ประวัติเวอร์ชัน")) {
     failures.push(`${name} /admin/content: versions/history tab is missing`);
   }
   if (ownerPanelState.text.includes("[object Object]")) {
@@ -2235,20 +2293,20 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/content: owner panel metadata is not noindex (${ownerPanelState.robots})`);
   }
   if (
-    !ownerPanelState.text.includes("Edit text") ||
-    !ownerPanelState.text.includes("Main") ||
-    !ownerPanelState.text.includes("Public site") ||
-    !ownerPanelState.text.includes("Log out") ||
+    !ownerPanelState.text.includes("แก้ไขข้อความ") ||
+    !ownerPanelState.text.includes("หน้า Admin") ||
+    !ownerPanelState.text.includes("ดูเว็บจริง") ||
+    !ownerPanelState.text.includes("ออกจากระบบ") ||
     !ownerPanelState.text.includes("Publish")
   ) {
     failures.push(`${name} /admin/content: admin utility actions are missing`);
   }
 
   for (const [tabName, expectedText] of [
-    ["Content", "#hero"],
-    ["Brand & contact", "Credential line"],
-    ["Theme & data", "SEO"],
-    ["Versions", "Every Publish is saved here"]
+    ["เนื้อหา", "#hero"],
+    ["แบรนด์และติดต่อ", "ข้อความใบอนุญาต"],
+    ["ธีมและข้อมูล", "SEO"],
+    ["ประวัติเวอร์ชัน", "เก็บประวัติการ Publish ล่าสุด 20 เวอร์ชัน"]
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
@@ -2260,7 +2318,7 @@ for (const [name, width, height] of viewports) {
     if (!tabState.text.includes(expectedText)) {
       failures.push(`${name} /admin/content ${tabName}: expected tab content missing`);
     }
-    if (tabName === 'Content' && !(await page.locator('[data-admin-copy-key]').count())) {
+    if (tabName === 'เนื้อหา' && !(await page.locator('[data-admin-copy-key]').count())) {
       failures.push(`${name} /admin/content: selected section has no editable copy fields`);
     }
     if (tabState.text.includes("[object Object]")) {
@@ -2271,7 +2329,7 @@ for (const [name, width, height] of viewports) {
     }
   }
 
-  await page.getByLabel("Close admin panel").click();
+  await page.getByLabel("ปิดแผง Admin").click();
   await page.waitForFunction(
     () => /^\/admin\/?$/.test(window.location.pathname) && !window.location.search && !window.location.hash,
     null,
@@ -2295,6 +2353,8 @@ for (const [name, width, height] of viewports) {
           rect.height > 0
       ),
       adminMarker: window.localStorage.getItem("purich-admin-ever-v7"),
+      hasEditorControls: Boolean(document.querySelector('[data-admin-owner-bar="edit"], [data-editor-undo], [data-editor-reset]')),
+      hasSavePublishControls: Array.from(document.querySelectorAll('button')).some(el => /^(Text edit|Save draft|Publish)$/.test(el.textContent.trim())),
       route: window.location.pathname + window.location.search + window.location.hash,
       text: document.body.innerText,
       scrollWidth: document.documentElement.scrollWidth,
@@ -2310,7 +2370,7 @@ for (const [name, width, height] of viewports) {
   if (
     !/^\/admin\/?$/.test(closedAdminState.route) ||
     closedAdminState.adminMarker ||
-    /Text edit|Save draft|Publish/.test(closedAdminState.text)
+    closedAdminState.hasEditorControls || closedAdminState.hasSavePublishControls
   ) {
     failures.push(`${name} /admin/content close: did not stay inside /admin (${JSON.stringify(closedAdminState)})`);
   }
@@ -2318,16 +2378,16 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/content close: horizontal overflow ${closedAdminState.scrollWidth} > ${closedAdminState.clientWidth}`);
   }
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Admin Portal/);
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "Public site" }).last().click(),
+    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
     "/admin/content",
     `${name} /admin/content Public site`
   );
 
   await page.goto(new URL("/admin/content?page=motor", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin portal/);
+  await waitForBodyText(page, /Admin Portal/);
   const ownerMotorPanelState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     pageRoute: document.documentElement.getAttribute("data-covermate-route"),
@@ -2358,14 +2418,14 @@ for (const [name, width, height] of viewports) {
   }
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "Public site" }).last().click(),
+    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
     "/admin/content?page=motor",
     `${name} /admin/content?page=motor Public site`,
     "/motor"
   );
 
   await page.goto(new URL("/admin/preview", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Draft preview · visitors don’t see this until you publish/);
+  await waitForBodyText(page, /Preview ของ Draft · ผู้เข้าชมจะยังไม่เห็นจนกว่าจะ Publish/);
   const previewState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     text: document.body.innerText,
@@ -2385,9 +2445,9 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/preview: expected preview route, got ${previewState.route}`);
   }
   if (
-    !previewState.text.includes("Draft preview · visitors don’t see this until you publish") ||
-    !previewState.text.includes("Open editor") ||
-    !previewState.text.includes("Public site") ||
+    !previewState.text.includes("Preview ของ Draft · ผู้เข้าชมจะยังไม่เห็นจนกว่าจะ Publish") ||
+    !previewState.text.includes("เปิดหน้าแก้ไข") ||
+    !previewState.text.includes("ดูเว็บจริง") ||
     !previewState.text.includes("Publish")
   ) {
     failures.push(`${name} /admin/preview: draft preview top bar actions missing`);
@@ -2424,11 +2484,11 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/edit: owner edit toolbar is missing`);
   }
   if (
-    !editState.toolbarText.includes("Editing") ||
+    !editState.toolbarText.includes("กำลังแก้ไข") ||
     editState.toolbarText.includes("Mode") ||
     editState.toolbarText.includes("Text edit") ||
     editState.toolbarText.includes("Panel open") ||
-    !editState.toolbarText.includes("Tools") ||
+    !editState.toolbarText.includes("เครื่องมือ") ||
     editState.toolbarText.includes("Close")
   ) {
     failures.push(`${name} /admin/edit: compact edit toolbar should show Editing + Tools, without Mode/Text edit/Close`);
@@ -2455,13 +2515,13 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/edit: edit toolbar tools did not expand`);
   }
   if (
-    !editToolsState.toolbarText.includes("Panel") ||
-    !editToolsState.toolbarText.includes("Main") ||
-    !editToolsState.toolbarText.includes("Public site") ||
+    !editToolsState.toolbarText.includes("แผงเครื่องมือ") ||
+    !editToolsState.toolbarText.includes("หน้า Admin") ||
+    !editToolsState.toolbarText.includes("ดูเว็บจริง") ||
     !editToolsState.toolbarText.includes("Save draft") ||
     !editToolsState.toolbarText.includes("Preview") ||
     !editToolsState.toolbarText.includes("Publish") ||
-    !editToolsState.toolbarText.includes("Log out") ||
+    !editToolsState.toolbarText.includes("ออกจากระบบ") ||
     editToolsState.toolbarText.includes("Close")
   ) {
     failures.push(`${name} /admin/edit: expanded edit toolbar owner actions are missing or still show Close`);
@@ -2493,7 +2553,7 @@ for (const [name, width, height] of viewports) {
     }
   });
   await page.waitForTimeout(150);
-  await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "Panel" }).click();
+  await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "แผงเครื่องมือ" }).click();
   await page.waitForTimeout(400);
   const editPanelState = await page.evaluate(() => ({
     toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
@@ -2504,7 +2564,7 @@ for (const [name, width, height] of viewports) {
   if (!editPanelState.hasAdminAside) {
     failures.push(`${name} /admin/edit panel: admin drawer did not open from Tools`);
   }
-  if (!editPanelState.toolbarText.includes("Panel") || !editPanelState.toolbarText.includes("Editing")) {
+  if (!editPanelState.toolbarText.includes("แผงเครื่องมือ") || !/(กำลังแก้ไข|แก้ไข ·)/.test(editPanelState.toolbarText)) {
     failures.push(`${name} /admin/edit panel: owner dock did not show editing + panel status (${editPanelState.toolbarText})`);
   }
   if (editPanelState.toolsOpen) {
@@ -2514,8 +2574,8 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/edit panel: text editing stopped while panel was open`);
   }
 
-  const editorPanel = page.locator("aside").filter({ hasText: "Admin portal" }).first();
-  await page.getByTitle("Close panel").click();
+  const editorPanel = page.locator("aside").filter({ hasText: "Admin Portal" }).first();
+  await page.getByTitle("ปิดแผงเครื่องมือ").click();
   await editorPanel.waitFor({ state: "hidden", timeout: 10000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   await page.waitForFunction(
@@ -2542,8 +2602,8 @@ for (const [name, width, height] of viewports) {
     !editPanelClosedState.toolbarVisible ||
     !editPanelClosedState.hasOwnerBar ||
     editPanelClosedState.hasAdminAside ||
-    !/Editing(?: on page)?/.test(editPanelClosedState.text) ||
-    /Admin portal/.test(editPanelClosedState.text)
+    !/กำลังแก้ไข(?:หน้าเว็บ)?/.test(editPanelClosedState.text) ||
+    /Admin Portal/.test(editPanelClosedState.text)
   ) {
     failures.push(`${name} /admin/edit panel close: did not stay in editor with panel hidden (${JSON.stringify(editPanelClosedState)})`);
   }
@@ -2553,7 +2613,7 @@ for (const [name, width, height] of viewports) {
 
   await page.goto(new URL("/admin/edit?page=motor", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 10000 });
-  await waitForBodyText(page, /Editing on page|ประกันรถยนต์|Motor/);
+  await waitForBodyText(page, /กำลังแก้ไขหน้าเว็บ|ประกันรถยนต์|Motor/);
   const motorEditState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     pageRoute: document.documentElement.getAttribute("data-covermate-route"),
@@ -2572,7 +2632,7 @@ for (const [name, width, height] of viewports) {
       failures.push(`${name} /admin/edit?page=motor: missing editable motor section #${id}`);
     }
   }
-  if (!/Editing(?: on page)?/.test(motorEditState.toolbarText) || !motorEditState.toolbarText.includes("Tools")) {
+  if (!/กำลังแก้ไข(?:หน้าเว็บ)?/.test(motorEditState.toolbarText) || !motorEditState.toolbarText.includes("เครื่องมือ")) {
     failures.push(`${name} /admin/edit?page=motor: edit dock state is unclear (${motorEditState.toolbarText})`);
   }
   if (motorEditState.contentEditableCount < 12) {
@@ -2592,10 +2652,10 @@ for (const [name, width, height] of viewports) {
     }
   });
   await page.waitForTimeout(150);
-  await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "Panel" }).click();
+  await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "แผงเครื่องมือ" }).click();
   await page.waitForTimeout(400);
-  const motorEditorPanel = page.locator("aside").filter({ hasText: "Admin portal" }).first();
-  await page.getByTitle("Close panel").click();
+  const motorEditorPanel = page.locator("aside").filter({ hasText: "Admin Portal" }).first();
+  await page.getByTitle("ปิดแผงเครื่องมือ").click();
   await motorEditorPanel.waitFor({ state: "hidden", timeout: 10000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   const motorEditPanelClosedState = await page.evaluate(() => ({
@@ -2622,12 +2682,13 @@ for (const [name, width, height] of viewports) {
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin Portal/);
-  await page.getByRole("button", { name: "Log out" }).first().click();
+  await page.getByRole("button", { name: "ออกจากระบบ" }).first().click();
   await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);
   }
 
+  if (navigationAssetAborts.length) console.log(`${name}: confirmed prior-document asset cancellations ${JSON.stringify(navigationAssetAborts)}`);
   if (failedRequests.length) failures.push(`${name}: ${failedRequests.join(" | ")}`);
   if (pageErrors.length) failures.push(`${name}: ${pageErrors.join(" | ")}`);
   await page.close();

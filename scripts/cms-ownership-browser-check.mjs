@@ -51,8 +51,8 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(baseUrl + '/admin/edit');
   await page.locator('label[for="covermate-owner-tools-toggle"]').click();
-  await page.getByRole('button', { name: 'Panel', exact: true }).click();
-  await page.getByRole('button', { name: 'Brand & contact', exact: true }).click();
+  await page.getByRole('button', { name: 'แผงเครื่องมือ', exact: true }).click();
+  await page.getByRole('button', { name: 'แบรนด์และติดต่อ', exact: true }).click();
   const group = name => page.locator(`[data-cms-group="${name}"]`);
   const openGroup = async name => { if (!await group(name).evaluate(el => el.open)) await group(name).locator('summary').click(); };
   const edit = async (key, value) => {
@@ -76,7 +76,7 @@ try {
   await edit('formOptions.query.quote.th', 'ขอรายละเอียดราคา');
   assert.equal(await page.locator('#talk option[value="quote"]').innerText(), 'ขอรายละเอียดราคา');
   await page.locator('#talk select[name="qtype"]').selectOption('quote');
-  await page.getByRole('button', { name: 'Edit English content' }).click();
+  await page.getByRole('button', { name: 'แก้ไขเนื้อหาภาษาอังกฤษ' }).click();
   await openGroup('Calculator labels');
   await edit('publicCopy.calcSpending.en', '');
   await openGroup('Consultation form labels');
@@ -97,7 +97,7 @@ try {
   await openGroup('Life focus');
   await edit('lifeFocus.title.en', 'Owner life headline');
   await page.locator('[data-cms-field="lifeFocus.title.en"]').scrollIntoViewIfNeeded();
-  await page.locator('aside').filter({ hasText: 'Admin portal' }).screenshot({ path: path.join(output, 'admin-copy-controls.png'), timeout: 60000 });
+  await page.locator('aside').filter({ hasText: 'Admin Portal' }).screenshot({ path: path.join(output, 'admin-copy-controls.png'), timeout: 60000 });
   await openGroup('Licences');
   await edit('licences.life.label.en', 'Licensed life adviser');
   await openGroup('Home licences');
@@ -105,7 +105,7 @@ try {
   await edit('homeDesign.licenceBackground', '');
   assert.equal(await page.locator('#home-licence-title').innerText(), 'Our regulated advisory roles');
   assert.equal(await page.locator('#licences').evaluate(el => getComputedStyle(el, '::before').backgroundImage), 'none', 'Cleared artwork has no fallback');
-  await page.getByRole('button', { name: 'Edit Thai content' }).click();
+  await page.getByRole('button', { name: 'แก้ไขเนื้อหาภาษาไทย' }).click();
   await openGroup('Licences');
   await page.locator('[data-cms-field="licences.life.number"]').scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(output, 'admin-licences.png') });
@@ -151,12 +151,12 @@ try {
   await page.waitForFunction(() => document.documentElement.hasAttribute('data-covermate-preview') && document.querySelector('#hero')?.textContent.includes('9000000001'));
   assert.ok(await page.locator('#hero').innerText().then(text => text.includes('9000000001')), 'Preview renders draft licence');
   await page.goto(baseUrl + '/admin/content');
-  await page.getByRole('button', { name: 'Brand & contact', exact: true }).click();
+  await page.getByRole('button', { name: 'แบรนด์และติดต่อ', exact: true }).click();
   await openGroup('Licences');
   assert.equal(await page.locator('[data-cms-field="licences.life.number"]').inputValue(), '9000000001', 'Reload restores saved CMS field');
   await page.locator('aside').getByRole('button', { name: 'Publish', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Publish', exact: true }).click();
-  await page.waitForFunction(() => document.body.innerText.includes('Published'));
+  await page.waitForFunction(() => document.body.innerText.includes('Publish แล้ว'));
   assert.equal(publishes, 1);
   assert.equal(live.config.licences.life.number, '9000000001');
   assert.equal(live.config.publicCopy.calcSpending.th, 'แก้จากหน้าเว็บ');

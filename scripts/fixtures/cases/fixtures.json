@@ -1,0 +1,563 @@
+{
+  "schemaVersion": "2.0",
+  "demoOnly": true,
+  "asOf": "2026-09-22T07:00:00Z",
+  "timezone": "Asia/Bangkok",
+  "cases": [
+    {
+      "id": "demo-case-001",
+      "caseNumber": "CM-2026-001",
+      "source": "website",
+      "submittedAt": "2026-09-22T03:00:00Z",
+      "updatedAt": "2026-09-22T03:00:00Z",
+      "version": 1,
+      "contact": {
+        "name": "คุณตัวอย่าง 01",
+        "phone": "0800000001",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 01",
+        "contactInput": "0800000001",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-001",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-22T03:00:00Z"
+      },
+      "workingNote": "",
+      "status": "new",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-002",
+      "caseNumber": "CM-2026-002",
+      "source": "website",
+      "submittedAt": "2026-09-21T03:00:00Z",
+      "updatedAt": "2026-09-21T03:00:00Z",
+      "version": 1,
+      "contact": {
+        "name": "คุณตัวอย่าง 02",
+        "phone": null,
+        "lineId": "demo_contact_02",
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "unsure",
+      "enquiryTopic": "ยังไม่แน่ใจ ต้องการคำแนะนำ",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 02",
+        "contactInput": "demo_contact_02",
+        "enquiryTopic": "ยังไม่แน่ใจ ต้องการคำแนะนำ",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-002",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-21T03:00:00Z"
+      },
+      "workingNote": "",
+      "status": "new",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-003",
+      "caseNumber": "CM-2026-003",
+      "source": "website",
+      "submittedAt": "2026-09-20T03:00:00Z",
+      "updatedAt": "2026-09-20T03:00:00Z",
+      "version": 1,
+      "contact": {
+        "name": "คุณตัวอย่าง 03",
+        "phone": null,
+        "lineId": null,
+        "email": null,
+        "rawContact": "ติดต่อ LINE: demo_contact_03"
+      },
+      "interestType": "unsure",
+      "enquiryTopic": "ยังไม่แน่ใจ ต้องการคำแนะนำ",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 03",
+        "contactInput": "ติดต่อ LINE: demo_contact_03",
+        "enquiryTopic": "ยังไม่แน่ใจ ต้องการคำแนะนำ",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-003",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-20T03:00:00Z"
+      },
+      "workingNote": "",
+      "status": "new",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-004",
+      "caseNumber": "CM-2026-004",
+      "source": "website",
+      "submittedAt": "2026-09-19T03:00:00Z",
+      "updatedAt": "2026-09-21T09:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 04",
+        "phone": "0800000004",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 04",
+        "contactInput": "0800000004",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-004",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-19T03:00:00Z"
+      },
+      "workingNote": "เตรียมข้อมูลตอบลูกค้า ยังไม่ได้ตั้งให้ส่ง reminder",
+      "status": "in_progress",
+      "followUp": {
+        "dueAt": "2026-09-21T08:00:00Z",
+        "reminderEnabled": false
+      },
+      "followUpRevision": 1,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-005",
+      "caseNumber": "CM-2026-005",
+      "source": "manual",
+      "submittedAt": "2026-09-18T03:00:00Z",
+      "updatedAt": "2026-09-21T09:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 05",
+        "phone": "0800000005",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": null,
+      "privacyReceipt": null,
+      "workingNote": "คุยรายละเอียดเพิ่มเติมช่วงบ่าย",
+      "status": "in_progress",
+      "followUp": {
+        "dueAt": "2026-09-22T09:00:00Z",
+        "reminderEnabled": true
+      },
+      "followUpRevision": 1,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-006",
+      "caseNumber": "CM-2026-006",
+      "source": "website",
+      "submittedAt": "2026-09-17T03:00:00Z",
+      "updatedAt": "2026-09-21T09:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 06",
+        "phone": "0800000006",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 06",
+        "contactInput": "0800000006",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-006",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-17T03:00:00Z"
+      },
+      "workingNote": "ลูกค้าติดต่อได้แล้ว รอข้อมูลเพิ่ม",
+      "status": "contacted_reachable",
+      "followUp": {
+        "dueAt": "2026-09-23T02:00:00Z",
+        "reminderEnabled": false
+      },
+      "followUpRevision": 1,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-007",
+      "caseNumber": "CM-2026-007",
+      "source": "manual",
+      "submittedAt": "2026-09-16T03:00:00Z",
+      "updatedAt": "2026-09-21T09:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 07",
+        "phone": "0800000007",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": null,
+      "privacyReceipt": null,
+      "workingNote": "",
+      "status": "contacted_reachable",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-008",
+      "caseNumber": "CM-2026-008",
+      "source": "website",
+      "submittedAt": "2026-09-15T03:00:00Z",
+      "updatedAt": "2026-09-21T09:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 08",
+        "phone": "0800000008",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 08",
+        "contactInput": "0800000008",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-008",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-15T03:00:00Z"
+      },
+      "workingNote": "โทรแล้วไม่รับสาย ตั้งเตือนให้ลองใหม่",
+      "status": "contacted_no_answer",
+      "followUp": {
+        "dueAt": "2026-09-22T06:00:00Z",
+        "reminderEnabled": true
+      },
+      "followUpRevision": 1,
+      "closedAt": null
+    },
+    {
+      "id": "demo-case-009",
+      "caseNumber": "CM-2026-009",
+      "source": "website",
+      "submittedAt": "2026-09-14T03:00:00Z",
+      "updatedAt": "2026-09-18T04:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 09",
+        "phone": "0800000009",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 09",
+        "contactInput": "0800000009",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-009",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-14T03:00:00Z"
+      },
+      "workingNote": "",
+      "status": "closed_completed",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": "2026-09-18T04:00:00Z"
+    },
+    {
+      "id": "demo-case-010",
+      "caseNumber": "CM-2026-010",
+      "source": "manual",
+      "submittedAt": "2026-09-13T03:00:00Z",
+      "updatedAt": "2026-09-19T04:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 10",
+        "phone": "0800000010",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": null,
+      "privacyReceipt": null,
+      "workingNote": "",
+      "status": "closed_completed",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": "2026-09-19T04:00:00Z"
+    },
+    {
+      "id": "demo-case-011",
+      "caseNumber": "CM-2026-011",
+      "source": "website",
+      "submittedAt": "2026-09-12T03:00:00Z",
+      "updatedAt": "2026-09-20T04:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 11",
+        "phone": "0800000011",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 11",
+        "contactInput": "0800000011",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-011",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-12T03:00:00Z"
+      },
+      "workingNote": "",
+      "status": "closed_completed",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": "2026-09-20T04:00:00Z"
+    },
+    {
+      "id": "demo-case-012",
+      "caseNumber": "CM-2026-012",
+      "source": "website",
+      "submittedAt": "2026-09-11T03:00:00Z",
+      "updatedAt": "2026-09-21T04:00:00Z",
+      "version": 3,
+      "contact": {
+        "name": "คุณตัวอย่าง 12",
+        "phone": "0800000012",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "originalSubmission": {
+        "name": "คุณตัวอย่าง 12",
+        "contactInput": "0800000012",
+        "enquiryTopic": "สอบถามประกันรถยนต์",
+        "message": "ข้อมูลสมมติสำหรับทดสอบหน้าจอเท่านั้น ไม่ใช่ข้อมูลลูกค้าจริง"
+      },
+      "privacyReceipt": {
+        "id": "demo-receipt-012",
+        "noticeVersion": "demo-notice-v1",
+        "noticeText": "ข้อความตัวอย่างประกอบ fixture เท่านั้น ไม่ใช่ข้อความกฎหมายสำหรับนำไปใช้งานจริง",
+        "accepted": true,
+        "acceptedAt": "2026-09-11T03:00:00Z"
+      },
+      "workingNote": "",
+      "status": "closed_declined",
+      "followUp": null,
+      "followUpRevision": 0,
+      "closedAt": "2026-09-21T04:00:00Z"
+    }
+  ],
+  "activities": [
+    {
+      "id": "demo-activity-001",
+      "caseId": "demo-case-001",
+      "createdAt": "2026-09-22T03:00:00Z",
+      "actorId": null,
+      "type": "created",
+      "fieldsChanged": [],
+      "statusBefore": null,
+      "statusAfter": "new",
+      "noteSnapshot": null
+    }
+  ],
+  "notifications": [
+    {
+      "id": "demo-notification-001",
+      "recipientId": "demo-owner",
+      "type": "new_case",
+      "caseId": "demo-case-001",
+      "followUpRevision": null,
+      "title": "New website enquiry",
+      "body": "CM-2026-001 is ready to review.",
+      "dedupeKey": "new_case:demo-case-001",
+      "createdAt": "2026-09-22T03:00:00Z",
+      "readAt": null,
+      "resolvedAt": null
+    },
+    {
+      "id": "demo-notification-002",
+      "recipientId": "demo-owner",
+      "type": "new_case",
+      "caseId": "demo-case-002",
+      "followUpRevision": null,
+      "title": "New website enquiry",
+      "body": "CM-2026-002 is ready to review.",
+      "dedupeKey": "new_case:demo-case-002",
+      "createdAt": "2026-09-21T03:00:00Z",
+      "readAt": "2026-09-21T04:00:00Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "demo-notification-003",
+      "recipientId": "demo-owner",
+      "type": "new_case",
+      "caseId": "demo-case-003",
+      "followUpRevision": null,
+      "title": "New website enquiry",
+      "body": "CM-2026-003 is ready to review.",
+      "dedupeKey": "new_case:demo-case-003",
+      "createdAt": "2026-09-20T03:00:00Z",
+      "readAt": "2026-09-20T04:00:00Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "demo-notification-004",
+      "recipientId": "demo-owner",
+      "type": "follow_up_due",
+      "caseId": "demo-case-008",
+      "followUpRevision": 1,
+      "title": "Follow-up due",
+      "body": "CM-2026-008 is ready to review.",
+      "dedupeKey": "follow_up_due:demo-case-008:1",
+      "createdAt": "2026-09-22T06:00:00Z",
+      "readAt": null,
+      "resolvedAt": null
+    }
+  ],
+  "preferences": {
+    "ownerId": "demo-owner",
+    "timezone": "Asia/Bangkok",
+    "inAppEnabled": true,
+    "email": {
+      "newCase": false,
+      "followUpDue": false
+    },
+    "version": 1,
+    "updatedAt": "2026-09-01T02:00:00Z"
+  },
+  "capabilities": {
+    "inAppAvailable": true,
+    "emailAvailable": false,
+    "verifiedEmailLabel": null,
+    "schedulerAvailable": false,
+    "schedulerCadenceMinutes": null,
+    "lineAvailable": false
+  },
+  "expectedSummary": {
+    "asOf": "2026-09-22T07:00:00Z",
+    "timezone": "Asia/Bangkok",
+    "total": 12,
+    "open": 8,
+    "closed": 4,
+    "new": 3,
+    "followUpsDue": 2,
+    "overdue": 1,
+    "noAnswer": 1,
+    "closedThisMonth": 4
+  },
+  "expectedUnreadCount": 2,
+  "requestExamples": {
+    "websiteSubmission": {
+      "name": "คุณตัวอย่าง",
+      "contactInput": "demo_line_contact",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "message": "ข้อความทดสอบ ไม่ใช่คำขอจริง",
+      "consent": {
+        "accepted": true,
+        "noticeVersion": "demo-notice-v1"
+      }
+    },
+    "manualCase": {
+      "contact": {
+        "name": "คุณตัวอย่าง 01",
+        "phone": "0800000001",
+        "lineId": null,
+        "email": null,
+        "rawContact": null
+      },
+      "interestType": "motor",
+      "enquiryTopic": "สอบถามประกันรถยนต์",
+      "status": "new",
+      "workingNote": "ข้อมูลทดสอบเท่านั้น",
+      "followUp": null
+    },
+    "patchCase": {
+      "expectedVersion": 3,
+      "changes": {
+        "status": "contacted_reachable",
+        "workingNote": "ติดต่อได้แล้ว นัดคุยอีกครั้ง",
+        "followUp": {
+          "dueAt": "2026-09-22T09:00:00Z",
+          "reminderEnabled": true
+        }
+      }
+    },
+    "closeCase": {
+      "expectedVersion": 3,
+      "changes": {
+        "status": "closed_completed"
+      }
+    },
+    "reopenCase": {
+      "expectedVersion": 4,
+      "changes": {
+        "status": "in_progress"
+      },
+      "reopen": true
+    },
+    "preferencesPatch": {
+      "expectedVersion": 1,
+      "email": {
+        "newCase": false,
+        "followUpDue": false
+      }
+    }
+  }
+}

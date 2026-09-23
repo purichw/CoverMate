@@ -1,4 +1,5 @@
 .tools/
+/node_modules
 .env*
 uat-results/
 exports/
@@ -7,3 +8,5 @@ docs/
 scripts/
 firebase.emulators.json
 tsconfig.contracts.json
+# Historical design reference; active tokens are built from src/visitor.
+/organic.css

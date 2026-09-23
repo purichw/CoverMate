@@ -43,7 +43,9 @@ try {
   await form.locator('button[type=submit]').click();
   const response = await responsePromise;
   assert.equal(response.status(), 200);
-  const { id } = await response.json();
+  const receipt = await response.json();
+  assert.equal(receipt.accepted, true);
+  const id = (await db.collection('contactLeadsUat').where('caseRecord.caseNumber', '==', receipt.reference).get()).docs[0].id;
   assert.equal((await db.doc(`contactLeadsUat/${id}`).get()).data().name, fixture);
   await form.getByText('ได้รับข้อมูลแล้ว เราจะติดต่อกลับโดยเร็วที่สุด').waitFor();
   report.form = true;
@@ -67,7 +69,6 @@ try {
   await admin.locator('[data-action=module][data-module=operations]').first().waitFor();
   const timeOrigin = await admin.evaluate(() => performance.timeOrigin);
   await admin.locator('[data-action=module][data-module=operations]').first().click();
-  await admin.locator('[data-action=op-tab][data-tab=leads]').first().click();
   await admin.getByText(fixture, { exact: true }).first().waitFor();
   report.adminReadback = true;
   for (const module of ['settings', 'content', 'home']) {
@@ -75,14 +76,18 @@ try {
     assert.equal(await admin.evaluate(() => performance.timeOrigin), timeOrigin);
   }
   report.sameDocumentTabs = true;
+  if (process.argv.includes('--cases-only')) {
+    console.log('Cases intake journey passed: real public form retry, persisted receipt, authenticated Admin readback and Home/Settings/Content navigation.');
+    await owner.close(); await visitorContext.close();
+  } else {
   await admin.goto(baseUrl + '/admin/content' + suffix);
-  await admin.getByLabel('Close admin panel').click();
+  await admin.getByLabel('ปิดแผง Admin').click();
   await admin.waitForURL(url => url.pathname === '/admin');
   await admin.goto(baseUrl + '/admin/edit' + suffix);
   await admin.locator('[contenteditable=true][data-ek]').first().waitFor();
   await admin.locator('label[for=covermate-owner-tools-toggle]').click();
-  await admin.getByRole('button', { name: 'Panel', exact: true }).click();
-  await admin.getByTitle('Close panel').click();
+  await admin.getByRole('button', { name: 'แผงเครื่องมือ', exact: true }).click();
+  await admin.getByTitle('ปิดแผงเครื่องมือ').click();
   assert.equal(new URL(admin.url()).pathname, '/admin/edit');
   report.panelClose = true;
   await admin.locator('label[for=covermate-owner-tools-toggle]').click();
@@ -94,7 +99,7 @@ try {
   await preview.locator('[data-admin-preview-bar]').waitFor();
   report.previewNamespace = true;
   const publicPromise = owner.waitForEvent('page');
-  await preview.locator('[data-admin-preview-bar]').getByRole('button', { name: 'Public site' }).click();
+  await preview.locator('[data-admin-preview-bar]').getByRole('button', { name: 'ดูเว็บจริง' }).click();
   const live = await publicPromise;
   await live.waitForLoadState();
   assert.equal(new URL(live.url()).pathname, '/');
@@ -133,6 +138,7 @@ try {
   fs.writeFileSync('uat-results/nfr/journeys.json', JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
   assert.ok(report.axe.every(r => r.violations.length === 0), 'Accessibility violations; see journeys.json.');
+  }
 } finally {
   fs.writeFileSync('uat-results/nfr/journeys.json', JSON.stringify(report, null, 2));
   console.log('Closing journey browser.');

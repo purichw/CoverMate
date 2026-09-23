@@ -74,16 +74,16 @@ service cloud.firestore {
     }
 
     match /contactLeads/{leadId} {
-      allow create: if canWriteOpsRecords(false);
-      allow read: if canReadOpsRecords(false);
-      allow update: if canWriteOpsRecords(false);
+      allow create: if canWriteOpsRecords(false) && !request.resource.data.keys().hasAny(['caseRecord', 'caseIntakeNotification', 'legacyCaseProjection']);
+      allow read: if canReadOpsRecords(false) && (!resource.data.keys().hasAny(['caseRecord']) || adminRole() in ['owner', 'admin', 'administrator']);
+      allow update: if canWriteOpsRecords(false) && !resource.data.keys().hasAny(['caseRecord']) && !request.resource.data.keys().hasAny(['caseRecord', 'caseIntakeNotification', 'legacyCaseProjection']);
       allow delete: if false;
     }
 
     match /contactLeadsUat/{leadId} {
-      allow create: if canWriteOpsRecords(true);
-      allow read: if canReadOpsRecords(true);
-      allow update: if canWriteOpsRecords(true);
+      allow create: if canWriteOpsRecords(true) && !request.resource.data.keys().hasAny(['caseRecord', 'caseIntakeNotification', 'legacyCaseProjection']);
+      allow read: if canReadOpsRecords(true) && (!resource.data.keys().hasAny(['caseRecord']) || adminRole() in ['owner', 'admin', 'administrator']);
+      allow update: if canWriteOpsRecords(true) && !resource.data.keys().hasAny(['caseRecord']) && !request.resource.data.keys().hasAny(['caseRecord', 'caseIntakeNotification', 'legacyCaseProjection']);
       allow delete: if false;
     }
 

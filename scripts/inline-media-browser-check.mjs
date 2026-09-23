@@ -9,6 +9,8 @@ import { toFirestoreFields } from './lib/uat-env.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 
 const contract = await importCoverMateContract();
+const adminLabels = { CMS_CONTENT_FIELDS: contract.CMS_CONTENT_FIELDS };
+vm.runInNewContext(fs.readFileSync('src/visitor/admin-labels.js','utf8') + '\nthis.mediaLabel = cmsAdminMediaLabel;', adminLabels);
 const defaults = vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)');
 const config = contract.sanitizeMotorCountConfig(JSON.parse(defaults), { repeatableIds: true });
 // Populate optional slots to verify their rendered owners, without live data.
@@ -76,8 +78,8 @@ try {
     await page.screenshot({ path: path.join(output, name) });
     report.screenshots.push({ file: name, url: page.url(), viewport: page.viewportSize() });
   };
-  const dialog = page.getByRole('dialog', { name: 'Edit image', exact: true });
-  const cancel = async () => { await dialog.getByRole('button', { name: 'Cancel', exact: true }).last().click(); await dialog.waitFor({ state: 'detached' }); };
+  const dialog = page.getByRole('dialog', { name: 'แก้ไขรูปภาพ', exact: true });
+  const cancel = async () => { await dialog.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click(); await dialog.waitFor({ state: 'detached' }); };
   const openImage = async (source, owner, keyboard = false) => {
     await source.scrollIntoViewIfNeeded();
     const button = page.locator(`[data-inline-media="${owner}"]`).first();
@@ -92,7 +94,7 @@ try {
     if (keyboard) await button.press('Enter'); else await button.click();
     await dialog.waitFor();
     const slot = contract.cmsImageSlots(draft.config, owner.endsWith('.en') ? 'en' : 'th').find(slot => slot.path === owner);
-    assert.equal(await dialog.locator('.cm-media-head p').innerText(), slot.label);
+    assert.equal(await dialog.locator('.cm-media-head p').innerText(), adminLabels.mediaLabel(slot));
     return button;
   };
   const auditImages = async lang => {
@@ -108,7 +110,7 @@ try {
   await shot('home-inline-images-desktop.png');
   await page.locator('[data-inline-media="homeDesign.botanicalIllustration"]').click();
   await dialog.waitFor();
-  assert.equal(await dialog.locator('.cm-media-head p').innerText(), contract.cmsImageSlots(draft.config, 'th').find(slot => slot.path === 'homeDesign.botanicalIllustration').label);
+  assert.equal(await dialog.locator('.cm-media-head p').innerText(), 'ภาพพื้นหลัง Hero');
   await cancel();
   const header = page.locator('header [data-cms-image]').first();
   const routeBefore = page.url();
@@ -123,13 +125,13 @@ try {
   await page.locator('.cm-media-dialog .cropper-container').waitFor();
   await shot('advisor-crop-desktop.png');
   await dialog.locator('input[type=file]').setInputFiles(path.resolve(sample));
-  await dialog.getByRole('radio', { name: 'Fit whole image', exact: true }).check();
+  await dialog.getByRole('radio', { name: 'แสดงรูปเต็ม', exact: true }).check();
   failUpload = true;
-  await dialog.getByRole('button', { name: 'Use image in draft', exact: true }).click();
-  await dialog.getByText('Upload unavailable in test', { exact: true }).waitFor();
+  await dialog.getByRole('button', { name: 'ใช้รูปนี้ใน draft', exact: true }).click();
+  await dialog.getByText('บันทึกไม่สำเร็จ รูปเดิมยังไม่เปลี่ยน', { exact: true }).waitFor();
   assert.equal(draft.config.brand.advisorLogo, config.brand.advisorLogo);
   failUpload = false;
-  await dialog.getByRole('button', { name: 'Use image in draft', exact: true }).click();
+  await dialog.getByRole('button', { name: 'ใช้รูปนี้ใน draft', exact: true }).click();
   await dialog.waitFor({ state: 'detached' });
   await page.waitForResponse(r => r.url().endsWith('/__inline-state') && r.request().method() === 'POST');
   const newLogo = draft.config.brand.advisorLogo;

@@ -118,8 +118,8 @@ try {
   await page.goto(baseUrl+'/admin/edit');
   const openPanel = async () => {
     await page.locator('label[for="covermate-owner-tools-toggle"]').click();
-    await page.getByRole('button',{name:'Panel',exact:true}).click();
-    await page.getByRole('button',{name:'Sections',exact:true}).click();
+    await page.getByRole('button',{name:'แผงเครื่องมือ',exact:true}).click();
+    await page.getByRole('button',{name:'ส่วนต่าง ๆ',exact:true}).click();
   };
   await openPanel();
   await page.locator('[data-admin-section-edit="faq"]').waitFor();
@@ -128,9 +128,9 @@ try {
   const row = page.locator(`[data-admin-repeatable-id="${moved.id}"]`);
   assert.equal(await row.locator('input,textarea').count(),4);
   const adminLanguage = async name => {
-    await page.getByRole('button',{name:'Brand & contact',exact:true}).click();
-    await page.getByRole('button',{name:`Edit ${name} content`,exact:true}).click();
-    await page.getByRole('button',{name:'Content',exact:true}).click();
+    await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();
+    await page.getByRole('button',{name:name === 'Thai' ? 'แก้ไขเนื้อหาภาษาไทย' : 'แก้ไขเนื้อหาภาษาอังกฤษ',exact:true}).click();
+    await page.getByRole('button',{name:'เนื้อหา',exact:true}).click();
   };
   for (const [lang,name] of [['th','Thai'],['en','English']]) {
     await adminLanguage(name);
@@ -139,10 +139,10 @@ try {
     await answer.press('Tab');
   }
   await row.scrollIntoViewIfNeeded();
-  await row.getByRole('button',{name:'Move item up',exact:true}).click();
-  await row.getByRole('button',{name:'Hide',exact:true}).click();
+  await row.getByRole('button',{name:'เลื่อนรายการขึ้น',exact:true}).click();
+  await row.getByRole('button',{name:'ซ่อน',exact:true}).click();
   assert.equal(await page.locator(`#faq [data-content-id="${moved.id}"]`).count(),0);
-  await row.getByRole('button',{name:'Restore',exact:true}).click();
+  await row.getByRole('button',{name:'แสดงอีกครั้ง',exact:true}).click();
   assert.equal(await page.locator('#faq details').count(),visibleCount);
   await row.scrollIntoViewIfNeeded();
   await page.screenshot({path:path.join(out,'admin-faq-editor.png')});

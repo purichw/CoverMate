@@ -68,7 +68,7 @@ Committed primary display logo files:
 | File | Use |
 | --- | --- |
 | `assets/brand/covermate-advisory-logo-th.png` | Thai public logo, including the Thai advisory line. |
-| `assets/brand/covermate-advisory-logo-en.png` | English public logo and English-only admin chrome. |
+| `assets/brand/covermate-advisory-logo-en.png` | English public logo and Admin brand artwork. |
 | `assets/brand/covermate-footer-logo-th.png` | Thai footer-only logo with a light outline for the dark footer. |
 | `assets/brand/covermate-footer-logo-en.png` | English footer-only logo with a light outline for the dark footer. |
 
@@ -116,9 +116,11 @@ and root favicons use asset hashes, without overriding custom CMS URLs.
 All visible website text must use the Google Sans family across both Thai and
 English versions.
 
-Admin chrome/action labels are intentionally English-only so owner controls do
-not mix Thai and English. Keep labels like `Main`, `Publish`, `Success`, and
-`Log out` in English even when the public site is viewing Thai copy.
+Admin controls use natural Thai independently of the public content language.
+Keep familiar workflow terms such as `Publish`, `Preview`, `Save draft`, `Undo`,
+`Analytics`, and brand/service names in English. TH/EN selects the content being
+edited; it does not switch Admin UI language. Never translate saved customer
+content or data keys. See `docs/ADMIN_LANGUAGE.md`.
 
 This includes:
 
