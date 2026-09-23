@@ -58,6 +58,10 @@ website release. Prior Admin release evidence remains in
   `contactLeadsUat` record and durable activity/notification. Headless App Check
   returned 403; this is normal-browser alternative evidence, not a passing
   headless result. App Check was not weakened. No Production enquiry was sent.
+- Final optimized preview also accepted `CM-53497B3429` through the normal
+  browser. IAM readback confirmed exactly one UAT record, privacy receipt and
+  durable notification intent. Its exact preview hostname was appended to the
+  existing reCAPTCHA allowlist; all previous domains and restrictions remain.
 - Owner-approved UAT Live baseline refresh copied public Production config/text
   plus the approved Calculator rollout. UAT Draft, customer data and Production
   were preserved, with conditional-write readback. Private backup:
@@ -78,3 +82,11 @@ GitHub `verify`, production alias/SHA readback, approved narrow Calculator CMS
 enablement and read-only Production smoke. Do not infer release completion from
 this pre-push record. Rollback must preserve accepted Cases and CMS owner edits;
 retain the previous production deployment and private CMS backups for recovery.
+
+First exact-SHA CI (`35891250088`, `7759a34`) passed all component checks,
+performance and admin-builder, then stopped on a tablet font request aborted
+during the rapid public/admin navigation smoke. Production aliasing remained
+blocked. The harness now awaits the previous document's fonts before explicit
+navigation and also asserts no failed font faces on rendered visitor routes;
+network-error assertions remain enabled. Retry CI on the follow-up SHA before
+production. This follow-up changes the harness, not shipped runtime files.

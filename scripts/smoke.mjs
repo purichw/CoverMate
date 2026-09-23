@@ -448,6 +448,12 @@ const failures = [];
 async function newSmokePage(options) {
   const context = await browser.newContext(options);
   const page = await context.newPage();
+  const navigate = page.goto.bind(page);
+  page.goto = async (...args) => {
+    // Do not cancel a late font fetch when the harness leaves a rendered page.
+    await page.evaluate(() => document.fonts.ready);
+    return navigate(...args);
+  };
   const closePage = page.close.bind(page);
   page.close = async (...args) => {
     await closePage(...args).catch(() => {});
@@ -1416,7 +1422,7 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && (url.startsWith("blob:") || url.includes("/admin/login"))) {
       return;
     }
-    failedRequests.push(`${url} :: ${failureText}`);
+    failedRequests.push(`${url} :: ${failureText} (request navigation ${requestNavigation.get(request)}, current ${navigationId}, page ${page.url()})`);
   });
   page.on("response", (response) => {
     const url = response.url();
@@ -1471,6 +1477,11 @@ for (const [name, width, height] of viewports) {
       { timeout: 30000 }
     );
     await page.waitForTimeout(600);
+    const fontErrors = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return [...document.fonts].filter(font => font.status === 'error').map(font => font.family);
+    });
+    if (fontErrors.length) failures.push(`${name} ${route}: failed font faces ${fontErrors.join(', ')}`);
     await page.waitForFunction(() => window.__covermateTelemetryInstalled === true, null, { timeout: 5000 });
     if (baseOrigin === 'https://covermateinsurance.com' && name === 'desktop' && route === '/') {
       // Finalize a real LCP sample with a harmless first interaction, then prove delivery.
