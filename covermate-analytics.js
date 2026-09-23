@@ -4,6 +4,11 @@
   if (window.CoverMateAnalytics && window.CoverMateAnalytics.installed) return;
 
   var MEASUREMENT_ID = "G-5TF3C235EF";
+  var CONSENT_KEY = "covermate-analytics-consent";
+  var CONSENT_VERSION = 1;
+  var CONSENT_DAYS = 180;
+  var consent = readConsent();
+  var consentTimer;
   var ALLOWED_HOSTS = ["covermateinsurance.com"];
   var OWNER_HASHES = { "#admin": true, "#edit": true, "#preview": true };
   var EVENT_DEBOUNCE_MS = 800;
@@ -35,8 +40,68 @@
     installed: true,
     enabled: false,
     reason: "not-initialized",
-    trackEvent: function () {}
+    trackEvent: function () {},
+    getConsent: consentStatus,
+    setConsent: setConsent
   };
+  window["ga-disable-" + MEASUREMENT_ID] = true;
+
+  function readConsent() {
+    try {
+      var value = JSON.parse(window.localStorage.getItem(CONSENT_KEY));
+      var now = Date.now();
+      return value && value.version === CONSENT_VERSION && typeof value.analytics === "boolean" &&
+        Number.isFinite(value.updatedAt) && value.updatedAt <= now &&
+        Number.isFinite(value.expiresAt) && value.expiresAt > now &&
+        value.expiresAt - value.updatedAt === CONSENT_DAYS * 86400000 ? value : null;
+    } catch (error) { return null; }
+  }
+
+  function consentStatus() {
+    if (!consent || consent.expiresAt <= Date.now()) return "unknown";
+    return consent.analytics ? "granted" : "denied";
+  }
+
+  function consentValues(granted) {
+    return { analytics_storage: granted ? "granted" : "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" };
+  }
+
+  function clearAnalyticsCookies() {
+    // Delete only this site's GA cookies, including legacy parent-domain cookies.
+    var names = document.cookie.split(";").map(function (part) { return part.trim().split("=")[0]; });
+    var domains = ["", window.location.hostname];
+    if (window.location.hostname === "covermateinsurance.com" || /\.covermateinsurance\.com$/.test(window.location.hostname)) domains.push(".covermateinsurance.com");
+    names.filter(function (name) { return /^_ga(?:_|$)/.test(name) || name === "_gid" || /^_gat(?:_|$)/.test(name); }).forEach(function (name) {
+      domains.forEach(function (domain) {
+        document.cookie = name + "=; Max-Age=0; Path=/; SameSite=Lax" + (domain ? "; Domain=" + domain : "");
+      });
+    });
+  }
+
+  function syncConsent() {
+    var allowed = canTrack();
+    window["ga-disable-" + MEASUREMENT_ID] = !allowed;
+    window.CoverMateAnalytics.enabled = allowed && state.loaded;
+    if (state.loaded && window.gtag) window.gtag("consent", "update", consentValues(allowed));
+    if (!allowed) {
+      state.pageKey = "";
+      state.lastEvent = Object.create(null);
+      state.formStarted = Object.create(null);
+      clearAnalyticsCookies();
+    }
+    clearTimeout(consentTimer);
+    if (consent && consent.expiresAt > Date.now()) consentTimer = window.setTimeout(syncConsent, Math.min(consent.expiresAt - Date.now(), 86400000));
+    window.dispatchEvent(new CustomEvent("covermate:analytics-consent", { detail: { status: consentStatus() } }));
+    if (allowed) trackPageView();
+  }
+
+  function setConsent(analytics) {
+    if (typeof analytics !== "boolean") return;
+    var now = Date.now();
+    consent = { version: CONSENT_VERSION, analytics: analytics, updatedAt: now, expiresAt: now + CONSENT_DAYS * 86400000 };
+    try { window.localStorage.setItem(CONSENT_KEY, JSON.stringify(consent)); } catch (error) { /* This page still honors the choice when storage is unavailable. */ }
+    syncConsent();
+  }
 
   function isAllowedHost() {
     return ALLOWED_HOSTS.indexOf(window.location.hostname) >= 0;
@@ -82,6 +147,12 @@
     }
     if (ownerSession()) {
       window.CoverMateAnalytics.reason = "owner-session";
+      return false;
+    }
+    if (consentStatus() !== "granted") {
+      window.CoverMateAnalytics.reason = "consent-" + consentStatus();
+      window["ga-disable-" + MEASUREMENT_ID] = true;
+      window.CoverMateAnalytics.enabled = false;
       return false;
     }
     window.CoverMateAnalytics.reason = "enabled";
@@ -144,15 +215,21 @@
     if (state.loaded) return canTrack();
     if (!canTrack()) return false;
     state.loaded = true;
+    window["ga-disable-" + MEASUREMENT_ID] = false;
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function () {
       window.dataLayer.push(arguments);
     };
+    window.gtag("consent", "default", consentValues(false));
+    window.gtag("consent", "update", consentValues(true));
     window.gtag("js", new Date());
     window.gtag("config", MEASUREMENT_ID, {
       send_page_view: false,
       allow_google_signals: false,
       allow_ad_personalization_signals: false,
+      page_location: pageLocation(),
+      cookie_expires: CONSENT_DAYS * 86400,
+      cookie_update: false,
       cookie_flags: "SameSite=Lax;Secure",
       transport_type: "beacon"
     });
@@ -234,7 +311,7 @@
   window.addEventListener("input", function (event) {
     var intent = calculatorIntent(event.target);
     if (intent) trackEvent(intent.name, intent.params);
-    if (event.target && event.target.closest && event.target.closest("form")) {
+    if (canTrack() && event.target && event.target.closest && event.target.closest("form")) {
       var formType = formTypeForTarget(event.target);
       if (!state.formStarted[formType]) {
         state.formStarted[formType] = true;
@@ -248,14 +325,21 @@
   }, true);
 
   window.addEventListener("hashchange", function () {
-    window.setTimeout(trackPageView, 0);
+    window.setTimeout(syncConsent, 0);
   });
+
+  window.addEventListener("storage", function (event) {
+    if (event.key === CONSENT_KEY || event.key === null) { consent = readConsent(); syncConsent(); }
+    else if (event.key === "covermate-admin-session") syncConsent();
+  });
+  window.addEventListener("pageshow", syncConsent);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) syncConsent(); });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
-      window.setTimeout(trackPageView, 0);
+      window.setTimeout(syncConsent, 0);
     }, { once: true });
   } else {
-    window.setTimeout(trackPageView, 0);
+    window.setTimeout(syncConsent, 0);
   }
 }());

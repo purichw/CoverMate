@@ -690,6 +690,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 </helmet>
 
 <style>/* COVERMATE_HOME_STYLES */</style>
+<style>/* COVERMATE_CALCULATOR_STYLES */</style>
+<style>/* COVERMATE_SUBMISSION_STYLES */</style>
 <sc-if value="{{ showHeader }}" hint-placeholder-val="{{ true }}">
 <header style="position:{{ headerPos }};top:0;z-index:40;background:{{ headerBg }};backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);box-shadow:{{ headerShadow }};transition:box-shadow .35s ease, background .35s ease">
   <div style="max-width:var(--wrap);margin:0 auto;padding:{{ headerPad }} clamp(12px,3.8vw,var(--gut));display:flex;align-items:center;gap:clamp(8px,2.4vw,var(--space-4));transition:padding .35s cubic-bezier(.22,.61,.36,1)">
@@ -913,141 +915,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   </sc-if>
 
   <!-- ─── FIT CALCULATOR ─── -->
-  <sc-if value="{{ s.isFit }}" hint-placeholder-val="{{ false }}">
-    <section id="{{ s.id }}" data-screen-label="Calculator" style="scroll-margin-top:clamp(86px,9vw,124px);position:relative;overflow:hidden;background:{{ s.bg }};color:{{ s.fg }}">
-      <div style="position:absolute;top:-14vw;left:-8vw;width:34vw;height:34vw;min-width:260px;min-height:260px;border-radius:999px;background:{{ s.card }};opacity:.55;pointer-events:none"></div>
-      <div style="position:relative;max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:clamp(28px,4vw,64px);align-items:start">
-
-        <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-          <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-2)">
-            <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
-            <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,44px);line-height:1.24;color:{{ s.fg }};white-space:pre-line;text-wrap:pretty" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
-            <p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:46ch;text-wrap:pretty" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
-          </div>
-
-          <div data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3)">
-            <div style="font-size:13px;font-weight:700;color:{{ s.muted }};letter-spacing:.02em" data-cms-copy="publicCopy.calcSituation">
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcSituation }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcSituation }}</sc-if>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,168px),1fr));gap:var(--space-2)">
-              <sc-for list="{{ sitList }}" as="o" hint-placeholder-count="4">
-                <button type="button" sc-camel-on-click="{{ o.pick }}" style="cursor:pointer;font:inherit;text-align:center;border:0;min-height:96px;padding:var(--space-3);border-radius:var(--radius-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;transition:background .25s ease, color .25s ease, transform .25s cubic-bezier(.22,.61,.36,1);background:{{ o.bg }};color:{{ o.fg }}" style-hover="transform:translateY(-2px)">
-                  <sc-if value="{{ o.hasIconImage }}"><img data-cms-image="{{ o.mediaIconPath }}" sc-camel-src="{{ o.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ o.hasVectorIcon }}"><svg sc-camel-view-box="0 0 24 24" style="width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><sc-for list="{{ o.paths }}" as="d" hint-placeholder-count="1"><path d="{{ d }}"></path></sc-for></svg></sc-if>
-                  <span data-content-path="{{ o.copy }}" style="display:block;max-width:16ch;font-size:14px;font-weight:700;line-height:1.3;text-wrap:balance">{{ o.label }}</span>
-                </button>
-              </sc-for>
-            </div>
-          </div>
-
-          <div data-reveal="2" style="display:flex;flex-direction:column;gap:var(--space-4);background:{{ s.card }};border-radius:var(--radius-lg);padding:var(--space-4)">
-            <div style="font-size:13px;font-weight:700;color:{{ s.muted }};letter-spacing:.02em" data-cms-copy="publicCopy.calcInputs">
-              <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcInputs }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcInputs }}</sc-if>
-            </div>
-            <label style="display:flex;flex-direction:column;gap:var(--space-1)">
-              <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcSpending"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcSpending }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcSpending }}</sc-if></span>
-                <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ incomeLabel }}</span>
-              </span>
-              <input type="range" min="15000" max="400000" step="5000" value="{{ income }}" sc-camel-on-change="{{ onIncome }}" style="--fill:{{ incomePct }}">
-            </label>
-            <label style="display:flex;flex-direction:column;gap:var(--space-1)">
-              <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcYears"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcYears }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcYears }}</sc-if></span>
-                <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ depsLabel }}</span>
-              </span>
-              <input type="range" min="0" max="{{ depsMax }}" step="1" value="{{ deps }}" sc-camel-on-change="{{ onDeps }}" style="--fill:{{ depsPct }}">
-            </label>
-            <label style="display:flex;flex-direction:column;gap:var(--space-1)">
-              <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcDebt"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcDebt }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcDebt }}</sc-if></span>
-                <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ debtLabel }}</span>
-              </span>
-              <input type="range" min="0" max="12000000" step="250000" value="{{ debt }}" sc-camel-on-change="{{ onDebt }}" style="--fill:{{ debtPct }}">
-            </label>
-            <label style="display:flex;flex-direction:column;gap:var(--space-1)">
-              <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcResources"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcResources }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcResources }}</sc-if></span>
-                <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ resourcesLabel }}</span>
-              </span>
-              <input type="range" min="0" max="12000000" step="250000" value="{{ resources }}" sc-camel-on-change="{{ onResources }}" style="--fill:{{ resourcesPct }}">
-            </label>
-            <label style="display:flex;flex-direction:column;gap:var(--space-1)">
-              <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcRoomBenefit"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcRoomBenefit }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcRoomBenefit }}</sc-if></span>
-                <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ roomBenefitLabel }}</span>
-              </span>
-              <input type="range" min="0" max="20000" step="500" value="{{ roomBenefit }}" sc-camel-on-change="{{ onRoomBenefit }}" style="--fill:{{ roomBenefitPct }}">
-            </label>
-            <label style="display:flex;flex-direction:column;gap:var(--space-1)">
-              <span style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-                <span style="font-size:14px;font-weight:600" data-cms-copy="publicCopy.calcRecovery"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcRecovery }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcRecovery }}</sc-if></span>
-                <span data-noedit="" style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:19px;color:{{ s.muted }};white-space:nowrap">{{ recoveryLabel }}</span>
-              </span>
-              <input type="range" min="3" max="24" step="3" value="{{ recovery }}" sc-camel-on-change="{{ onRecovery }}" style="--fill:{{ recoveryPct }}">
-            </label>
-          </div>
-        </div>
-
-        <div data-reveal="1" data-noedit="" style="min-width:0;position:sticky;top:96px">
-          <sc-if value="{{ noSit }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-6);border-radius:var(--radius-lg);border:2px dashed {{ s.line }};color:{{ s.muted }};font-size:14.5px;line-height:1.55">
-              <svg sc-camel-view-box="0 0 24 24" style="width:22px;height:22px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m5 12 7-7 7 7"></path><path d="M12 19V5"></path></svg>
-              <span data-cms-copy="publicCopy.calcHint"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcHint }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcHint }}</sc-if></span>
-            </div>
-          </sc-if>
-
-          <sc-if value="{{ hasSit }}" hint-placeholder-val="{{ true }}">
-            <div style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(20px,2.4vw,32px);box-shadow:var(--shadow-lg);animation:omRise .4s cubic-bezier(.22,.61,.36,1) both">
-              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ A_text }}" data-cms-copy="publicCopy.calcEstimateFor">
-                <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcEstimateFor }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcEstimateFor }}</sc-if> · <span data-content-path="{{ sitNamePath }}">{{ sitName }}</span>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:2px">
-                <div style="font-size:13.5px;color:var(--color-neutral-700)" data-cms-copy="publicCopy.calcLifeNeed"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcLifeNeed }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcLifeNeed }}</sc-if></div>
-                <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:clamp(34px,4.4vw,52px);line-height:1.08;color:{{ A_mid }};letter-spacing:0">{{ sumAssured }}</div>
-              </div>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:var(--space-2)">
-                <div style="background:var(--color-accent-2-200);border-radius:var(--radius-md);padding:var(--space-3);display:flex;flex-direction:column;gap:2px">
-                  <div style="font-size:12px;font-weight:600;color:var(--color-accent-2-800);line-height:1.35" data-cms-copy="publicCopy.calcRoomGap"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcRoomGap }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcRoomGap }}</sc-if></div>
-                  <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:22px;line-height:1.2;color:var(--color-accent-2-900)">{{ roomLabel }}</div>
-                </div>
-                <div style="background:var(--color-accent-2-200);border-radius:var(--radius-md);padding:var(--space-3);display:flex;flex-direction:column;gap:2px">
-                  <div style="font-size:12px;font-weight:600;color:var(--color-accent-2-800);line-height:1.35" data-cms-copy="publicCopy.calcCiBuffer"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcCiBuffer }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcCiBuffer }}</sc-if></div>
-                  <div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:22px;line-height:1.2;color:var(--color-accent-2-900)">{{ lumpLabel }}</div>
-                </div>
-              </div>
-              <div style="background:var(--color-surface);border-radius:var(--radius-md);padding:var(--space-3);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap">
-                <span style="font-size:13px;font-weight:600;line-height:1.35" data-cms-copy="publicCopy.calcReference"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcReference }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcReference }}</sc-if></span>
-                <span data-noedit style="font-size:15px;font-weight:700;overflow-wrap:anywhere;color:{{ A_mid }}">{{ budgetRange }}</span>
-                <sc-if value="{{ hasReferenceSource }}"><a href="{{ referenceSource }}" target="_blank" rel="noopener" data-noedit style="font-size:13px;text-decoration:underline;overflow-wrap:anywhere">{{ referenceSource }}</a></sc-if>
-                <p data-content-path="{{ referenceNotePath }}" style="margin:0;font-size:13px;line-height:1.5">{{ referenceNote }}</p>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:var(--space-1);margin-top:var(--space-1)">
-                <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)" data-cms-copy="publicCopy.calcReview">
-                  <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcReview }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcReview }}</sc-if>
-                </div>
-                <sc-for list="{{ recs }}" as="r" hint-placeholder-count="3">
-                  <div style="display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-2) 0">
-                    <span style="width:27px;height:27px;flex:0 0 auto;border-radius:999px;background:{{ A_action }};color:{{ A_on }};display:flex;align-items:center;justify-content:center;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:14px;padding-bottom:1px">{{ r.n }}</span>
-                    <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
-                      <span data-content-path="{{ r.titlePath }}" style="font-size:15px;font-weight:700;line-height:1.35">{{ r.title }}</span>
-                      <span data-content-path="{{ r.whyPath }}" style="font-size:13.5px;line-height:1.55;color:var(--color-neutral-800);text-wrap:pretty">{{ r.why }}</span>
-                    </span>
-                  </div>
-                </sc-for>
-              </div>
-              <sc-if value="{{ showTalkAnchor }}" hint-placeholder-val="{{ true }}">
-                <a href="#talk" style="display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)" data-cms-copy="publicCopy.calcSend">
-                  <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.calcSend }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.calcSend }}</sc-if>
-                  <svg sc-camel-view-box="0 0 24 24" style="width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-                </a>
-              </sc-if>
-              <div style="font-size:11.5px;line-height:1.55;color:var(--color-neutral-700);text-wrap:pretty" data-content-path="{{ s.copy.note }}"><span data-content-path="{{ s.copy.note }}">{{ s.note }}</span></div>
-            </div>
-          </sc-if>
-        </div>
-      </div>
-    </section>
-  </sc-if>
+  <!-- COVERMATE_CALCULATOR_TEMPLATE -->
 
   <!-- ─── STEPS ─── -->
   <sc-if value="{{ s.isSteps }}" hint-placeholder-val="{{ false }}">
@@ -1090,10 +958,10 @@ textarea.input { min-height: 90px; resize: vertical; }
           <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:clamp(12px,1.6vw,20px);max-width:840px;margin:0 auto">
             <sc-for list="{{ insLogos }}" as="l" hint-placeholder-count="14">
               <sc-if value="{{ l.hasLogo }}" hint-placeholder-val="{{ true }}">
-                <span role="img" aria-label="{{ l.name }}" data-cms-image="{{ l.mediaLogoPath }}" style="{{ l.style }}" style-hover="transform:translateY(-5px);box-shadow:var(--shadow-md)"></span>
+                <span class="cm-insurer-logo" style="{{ l.style }}"><img sc-camel-src="{{ l.logo }}" alt="{{ l.name }}" data-cms-image="{{ l.mediaLogoPath }}" loading="lazy" width="96" height="96"></span>
               </sc-if>
               <sc-if value="{{ l.noLogo }}" hint-placeholder-val="{{ false }}">
-                <span style="{{ l.textStyle }}" style-hover="transform:translateY(-5px);box-shadow:var(--shadow-md)">{{ l.name }}</span>
+                <span class="cm-insurer-logo" style="{{ l.textStyle }}">{{ l.name }}</span>
               </sc-if>
             </sc-for>
           </div>
@@ -1300,7 +1168,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   <!-- ─── RENEWAL REMINDERS ─── -->
   <sc-if value="{{ s.isRenew }}" hint-placeholder-val="{{ false }}">
     <section id="{{ s.id }}" data-screen-label="Renewals" style="scroll-margin-top:clamp(86px,9vw,124px);background:{{ s.bg }};color:{{ s.fg }};border-radius:var(--radius-lg)">
-      <details class="hm-renew-disclosure" open="{{ notHome }}"><summary data-noedit><span data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></span><span aria-hidden="true">+</span></summary>
+      <details class="hm-renew-disclosure" open="{{ legacyDesign }}"><summary data-noedit><span data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></span><span aria-hidden="true">+</span></summary>
       <div style="max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(28px,4vw,64px);align-items:start">
         <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
           <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-2)">
@@ -1482,74 +1350,6 @@ textarea.input { min-height: 90px; resize: vertical; }
     </section>
   </sc-if>
 
-  <!-- ─── HOW I GET PAID ─── -->
-  <sc-if value="{{ s.isFees }}" hint-placeholder-val="{{ false }}">
-    <section id="{{ s.id }}" data-screen-label="Fees" style="scroll-margin-top:clamp(86px,9vw,124px);position:relative;overflow:hidden;background:{{ s.bg }};color:{{ s.fg }}">
-      <div style="position:absolute;top:-14vw;left:-8vw;width:34vw;height:34vw;min-width:240px;min-height:240px;border-radius:999px;background:{{ s.card }};opacity:.45;pointer-events:none"></div>
-      <div style="position:relative;max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:flex;flex-direction:column;gap:clamp(28px,3.5vw,48px)">
-        <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-2);max-width:56ch">
-          <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
-          <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,46px);line-height:1.22;white-space:pre-line;text-wrap:pretty" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
-          <p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:48ch;text-wrap:pretty" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
-        </div>
-
-        <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--space-4)">
-          <sc-for list="{{ s.cards }}" as="c" hint-placeholder-count="3">
-            <div style="position:relative;display:flex;flex-direction:column;gap:10px;padding:calc(var(--space-4) * 1.25);border-radius:var(--radius-lg);background:{{ s.card }};color:{{ s.cardFg }};overflow:hidden">
-              <div style="position:absolute;top:10px;right:14px;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:clamp(76px,6vw,104px);line-height:.9;color:{{ A_base }};opacity:.12;pointer-events:none">{{ c.n }}</div>
-              <div style="position:relative;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ s.kickerFg }}">{{ c.kicker }}</div>
-              <div style="position:relative;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(19px,2vw,24px);line-height:1.24;text-wrap:pretty">{{ c.title }}</div>
-              <div style="position:relative;font-size:14.5px;line-height:1.7;color:{{ s.muted }};text-wrap:pretty">{{ c.body }}</div>
-            </div>
-          </sc-for>
-        </div>
-
-        <dl data-reveal="2" style="margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--space-4) clamp(28px,4vw,56px)">
-          <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="4">
-            <div style="display:flex;flex-direction:column;gap:4px;padding-left:var(--space-3);border-left:2px solid {{ A_base }}">
-              <dt style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ it.copy.label }}"><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></dt>
-              <dd style="margin:0;font-size:15px;line-height:1.7;color:{{ s.muted }};text-wrap:pretty" data-content-path="{{ it.copy.value }}"><span data-content-path="{{ it.copy.value }}">{{ it.value }}</span></dd>
-            </div>
-          </sc-for>
-        </dl>
-
-        <div data-reveal="3" style="display:flex;align-items:flex-start;gap:10px;padding:var(--space-4);border-radius:var(--radius-lg);background:{{ s.card }};color:{{ s.cardFg }};font-size:13.5px;line-height:1.65;text-wrap:pretty">
-          <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;flex:0 0 auto;margin-top:3px;fill:none;stroke:{{ A_base }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-          <span data-content-path="{{ s.copy.note }}">{{ s.note }}</span>
-        </div>
-      </div>
-    </section>
-  </sc-if>
-
-  <!-- ─── PDPA ─── -->
-  <sc-if value="{{ s.isPdpa }}" hint-placeholder-val="{{ false }}">
-    <section id="{{ s.id }}" data-screen-label="Privacy" style="scroll-margin-top:clamp(86px,9vw,124px);background:{{ s.bg }};color:{{ s.fg }}">
-      <div style="max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(28px,4vw,64px);align-items:start">
-        <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-3);min-width:0;position:sticky;top:96px">
-          <span style="width:50px;height:50px;flex:0 0 auto;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-800);display:flex;align-items:center;justify-content:center">
-            <svg sc-camel-view-box="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"></path><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-          </span>
-          <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
-          <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
-          <p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:44ch;text-wrap:pretty" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
-        </div>
-        <div data-reveal="1" style="margin:0;display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-          <dl style="margin:0;display:flex;flex-direction:column;gap:var(--space-4)">
-          <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="5">
-            <div style="display:flex;flex-direction:column;gap:4px;padding-left:var(--space-3);border-left:2px solid {{ A_base }}">
-              <dt style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ it.copy.label }}"><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></dt>
-              <dd style="margin:0;font-size:15px;line-height:1.7;color:{{ s.muted }};text-wrap:pretty" data-content-path="{{ it.copy.value }}"><span data-content-path="{{ it.copy.value }}">{{ it.value }}</span></dd>
-            </div>
-          </sc-for>
-          </dl>
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:var(--space-4);border-radius:var(--radius-lg);background:{{ s.card }};color:{{ s.cardFg }};font-size:13.5px;line-height:1.65;text-wrap:pretty">
-            <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;flex:0 0 auto;margin-top:3px;fill:none;stroke:{{ A_base }};stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-            <span data-content-path="{{ s.copy.note }}">{{ s.note }}</span>
-          </div>
-        </div>
-      </div>
-    </section>
-  </sc-if>
 
 
   <!-- ─── CONTACT ─── -->
@@ -1558,12 +1358,13 @@ textarea.input { min-height: 90px; resize: vertical; }
       <div style="position:absolute;bottom:-16vw;right:-10vw;width:40vw;height:40vw;min-width:280px;min-height:280px;border-radius:999px;background:{{ s.card }};opacity:.5;pointer-events:none"></div>
       <div style="position:relative;max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(28px,4vw,64px);align-items:start">
 
-        <sc-if value="{{ isHome }}">
+        <sc-if value="{{ sharedDesign }}">
           <div class="cm-contact-info">
             <div class="cm-contact-intro">
               <p class="cm-contact-kicker" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p>
               <h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2>
-              <p data-content-path="{{ s.copy.body }}">{{ s.body }}</p>
+              <sc-if value="{{ homeAdvisor.hasContactIntro }}"><p class="cm-contact-advisor"><span data-cms-copy="advisor.contactBefore">{{ homeAdvisor.contactBefore }}</span> <span data-cms-copy="advisor.fullName">{{ homeAdvisor.name }}</span> <span data-cms-copy="advisor.contactAfter">{{ homeAdvisor.contactAfter }}</span></p></sc-if>
+              <sc-if value="{{ !homeAdvisor.hasContactIntro }}"><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></sc-if>
             </div>
             <div class="cm-contact-methods">
               <h3 data-cms-copy="homeDesign.contactChannelsLabel">{{ homeCopy.contactChannelsLabel }}</h3>
@@ -1593,7 +1394,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             </div>
           </div>
         </sc-if>
-        <sc-if value="{{ notHome }}"><div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
+        <sc-if value="{{ legacyDesign }}"><div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
           <div style="display:flex;flex-direction:column;gap:var(--space-2)">
             <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
             <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(28px,4vw,48px);line-height:1.14;color:{{ s.fg }};white-space:nowrap;text-wrap:nowrap;max-width:100%" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
@@ -1639,24 +1440,29 @@ textarea.input { min-height: 90px; resize: vertical; }
           </div>
         </div></sc-if>
 
-        <form sc-camel-on-submit="{{ submit }}" aria-busy="{{ leadPending }}" data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(22px,2.6vw,34px);box-shadow:var(--shadow-lg);min-width:0">
-          <sc-if value="{{ isHome }}"><div class="cm-contact-form-heading">
+        <div class="cm-contact-flow" data-contact-flow-region>
+        <div class="cm-submission-live" role="status" aria-live="polite" aria-atomic="true">{{ submissionAnnounce }}</div>
+        <sc-if value="{{ !contactFlowPanel }}">
+        <form sc-camel-on-submit="{{ submit }}" sc-camel-no-validate="{{ enhancedContact }}" aria-busy="{{ leadPending }}" data-reveal="1" style="display:flex;flex-direction:column;gap:var(--space-3);background:var(--color-bg);color:var(--color-text);border-radius:var(--radius-lg);padding:clamp(22px,2.6vw,34px);box-shadow:var(--shadow-lg);min-width:0">
+          <sc-if value="{{ sharedDesign }}"><div class="cm-contact-form-heading">
             <span class="cm-contact-icon" aria-hidden="true">
               <sc-if value="{{ contactFormIcon }}"><img data-cms-image="homeDesign.contactIconForm" sc-camel-src="{{ contactFormIcon }}" alt=""></sc-if>
               <sc-if value="{{ !contactFormIcon }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ contactChatPaths }}" as="path"><path d="{{ path }}"></path></sc-for><path d="M8 11h.01M12 11h.01M16 11h.01"></path></svg></sc-if>
             </span>
             <div><h3 data-cms-copy="homeDesign.contactFormHeading">{{ homeCopy.contactFormHeading }}</h3><p data-cms-copy="homeDesign.contactFormHelper">{{ homeCopy.contactFormHelper }}</p></div>
           </div></sc-if>
-          <sc-if value="{{ notHome }}"><div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3" data-cms-copy="publicCopy.contactTitle">
+          <sc-if value="{{ legacyDesign }}"><div style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:21px;line-height:1.3" data-cms-copy="publicCopy.contactTitle">
             <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactTitle }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactTitle }}</sc-if>
           </div></sc-if>
           <label style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactName"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactName }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactName }}</sc-if></span>
-            <input name="name" autocomplete="name" placeholder="{{ contactNamePlaceholder }}" value="{{ fName }}" sc-camel-on-change="{{ onName }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+            <input id="contact-name" name="name" required maxlength="120" aria-invalid="{{ !!contactNameError }}" aria-describedby="{{ contactNameError ? 'contact-name-error' : '' }}" autocomplete="name" placeholder="{{ contactNamePlaceholder }}" value="{{ fName }}" sc-camel-on-change="{{ onName }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+            <sc-if value="{{ contactNameError }}"><span id="contact-name-error" class="cm-contact-field-error">{{ contactNameError }}</span></sc-if>
           </label>
           <label style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactContact"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactContact }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactContact }}</sc-if></span>
-            <input name="contact" required aria-required="true" aria-invalid="{{ contactInvalid }}" aria-describedby="{{ contactErrorId }}" autocomplete="tel" placeholder="{{ contactContactPlaceholder }}" value="{{ fContact }}" sc-camel-on-change="{{ onContact }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+            <input id="contact-contact" name="contact" required aria-required="true" aria-invalid="{{ contactInvalid }}" aria-describedby="{{ contactErrorId }}" autocomplete="tel" placeholder="{{ contactContactPlaceholder }}" value="{{ fContact }}" sc-camel-on-change="{{ onContact }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+            <sc-if value="{{ contactContactError }}"><span id="contact-contact-error" class="cm-contact-field-error">{{ contactContactError }}</span></sc-if>
           </label>
           <div class="hm-enquiry-type" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:var(--space-3)">
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
@@ -1686,12 +1492,13 @@ textarea.input { min-height: 90px; resize: vertical; }
           </details>
           <label class="cm-contact-details" style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactDetails"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactDetails }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactDetails }}</sc-if></span>
-            <textarea name="topic" rows="3" placeholder="{{ contactDetailsPlaceholder }}" value="{{ fTopic }}" sc-camel-on-change="{{ onTopic }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:var(--radius-md);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}"></textarea>
+            <textarea id="contact-topic" name="topic" maxlength="500" rows="3" aria-invalid="{{ !!contactTopicError }}" aria-describedby="{{ contactTopicError ? 'contact-topic-error' : '' }}" placeholder="{{ contactDetailsPlaceholder }}" value="{{ fTopic }}" sc-camel-on-change="{{ onTopic }}" style="font:inherit;font-size:15px;padding:13px 18px;border-radius:var(--radius-md);border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);resize:vertical;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}"></textarea>
+            <sc-if value="{{ contactTopicError }}"><span id="contact-topic-error" class="cm-contact-field-error">{{ contactTopicError }}</span></sc-if>
           </label>
           <sc-if value="{{ canShareCalculator }}"><label data-noedit class="hm-share-calculator"><input type="checkbox" checked="{{ shareCalculator }}" sc-camel-on-change="{{ onShareCalculator }}"><span data-cms-copy="homeDesign.includeCalculator">{{ homeCopy.includeCalculator }}</span></label></sc-if>
           <div data-noedit="" data-consultation-summary style="font-size:14px;line-height:1.55;color:var(--color-neutral-700);border-radius:var(--radius-md);text-wrap:pretty">{{ summary }}</div>
           <label data-noedit="" style="display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;padding:var(--space-3);border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-surface) 78%,var(--color-bg));border:1.5px solid var(--color-neutral-300);cursor:pointer">
-            <input type="checkbox" checked="{{ fConsent }}" sc-camel-on-change="{{ onConsent }}" aria-required="true" aria-invalid="{{ consentInvalid }}" aria-describedby="{{ contactErrorId }}" style="width:20px;height:20px;margin:1px 0 0;accent-color:{{ A_base }};cursor:pointer">
+            <input id="contact-consent" type="checkbox" checked="{{ fConsent }}" sc-camel-on-change="{{ onConsent }}" aria-required="true" aria-invalid="{{ consentInvalid }}" aria-describedby="{{ consentErrorId }}" style="width:20px;height:20px;margin:1px 0 0;accent-color:{{ A_base }};cursor:pointer">
             <span style="display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.5;color:var(--color-neutral-800)">
               <span><span data-cms-copy="ui.consultationConsent">{{ consultationConsent }}</span></span>
               <sc-if value="{{ showPrivacyAnchor }}" hint-placeholder-val="{{ true }}">
@@ -1699,6 +1506,8 @@ textarea.input { min-height: 90px; resize: vertical; }
               </sc-if>
             </span>
           </label>
+          <sc-if value="{{ contactConsentError }}"><div id="contact-consent-error" class="cm-contact-field-error">{{ contactConsentError }}</div></sc-if>
+          <sc-if value="{{ contactFormError || contactMultipleErrors }}"><div class="cm-contact-validation" tabindex="-1"><p>{{ contactFormError || submissionCopy.invalidFields }}</p><sc-for list="{{ contactErrorLinks }}" as="error"><a href="{{ error.href }}" sc-camel-on-click="{{ error.focus }}">{{ error.label }}</a></sc-for></div></sc-if>
           <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
             <button type="submit" style="cursor:pointer;border:0;font:inherit;display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};transform:translateY(-2px)" style-active="transform:translateY(0)" data-cms-copy="publicCopy.contactSubmit">
               <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactSubmit }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactSubmit }}</sc-if>
@@ -1727,6 +1536,9 @@ textarea.input { min-height: 90px; resize: vertical; }
             <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" data-content-path="{{ s.copy.note }}">{{ s.note }}</a></sc-if>
           </div>
         </form>
+        </sc-if>
+        <!-- COVERMATE_SUBMISSION_TEMPLATE -->
+        </div>
       </div>
     </section>
   </sc-if>
@@ -1740,13 +1552,14 @@ textarea.input { min-height: 90px; resize: vertical; }
         <div class="hm-section-copy">
           <sc-if value="{{ homeCopy.licenceEyebrow }}"><p class="hm-eyebrow" data-cms-copy="homeDesign.licenceEyebrow">{{ homeCopy.licenceEyebrow }}</p></sc-if>
           <h2 id="home-licence-title" data-cms-copy="homeDesign.licenceTitle">{{ homeCopy.licenceTitle }}</h2>
-          <sc-if value="{{ s.hasBody }}"><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></sc-if>
+          <sc-if value="{{ s.hasLicenceIntro }}"><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></sc-if>
         </div>
         <sc-if value="{{ homeCopy.licenceStatement }}"><div class="hm-licence-statement"><p data-cms-copy="homeDesign.licenceStatement">{{ homeCopy.licenceStatement }}</p><span class="hm-statement-stroke" aria-hidden="true"></span></div></sc-if>
       </div>
+      <sc-if value="{{ homeAdvisor.name }}"><p class="hm-licence-advisor"><span data-cms-copy="advisor.licenceLabel">{{ homeAdvisor.licenceLabel }}</span> <span data-cms-copy="advisor.fullName">{{ homeAdvisor.name }}</span></p></sc-if>
       <div class="hm-licence-grid">
         <sc-for list="{{ s.cards }}" as="cd">
-          <article class="hm-licence-card" data-content-id="{{ cd.key }}">
+          <article class="hm-licence-card" data-licence-role="{{ cd.licenceRole }}" data-content-id="{{ cd.key }}">
             <sc-if value="{{ cd.hasLogo }}"><div class="hm-licence-logo"><img data-cms-image="{{ cd.mediaLogoPath }}" sc-camel-src="{{ cd.logo }}" alt="{{ cd.logoAlt }}" width="136" height="160" loading="lazy"></div></sc-if>
             <div class="hm-licence-copy">
               <p class="hm-eyebrow" data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p>
@@ -1807,14 +1620,40 @@ textarea.input { min-height: 90px; resize: vertical; }
     </div>
     <div class="cm-footer-bottom">
       <p class="cm-footer-category" data-cms-copy="footer.categoryLine">{{ footerCopy.categoryLine }}</p>
+      <sc-if value="{{ showCookieControls }}"><button type="button" class="cm-cookie-settings" data-cookie-settings sc-camel-on-click="{{ onCookieSettings }}" data-cms-copy="cookieConsent.settings">{{ cookieCopy.settings }}</button></sc-if>
       <sc-if value="{{ footerCopy.statement }}"><p class="cm-footer-statement" data-cms-copy="footer.statement">{{ footerCopy.statement }}</p></sc-if>
     </div>
   </div>
 </footer>
 </sc-if>
 
+<sc-if value="{{ showCookieFallback }}"><div class="cm-cookie-settings-fallback"><button type="button" class="cm-cookie-settings" data-cookie-settings sc-camel-on-click="{{ onCookieSettings }}">{{ cookieCopy.settings }}</button></div></sc-if>
+
+<sc-if value="{{ showVisitorDock }}">
+<div class="cm-visitor-dock">
+<sc-if value="{{ showCookieBanner }}">
+<section class="cm-cookie-banner" aria-labelledby="cm-cookie-title" data-noedit="true" sc-camel-on-key-down="{{ onCookieKeydown }}">
+  <div class="cm-cookie-inner">
+    <div class="cm-cookie-copy">
+      <h2 id="cm-cookie-title" tabindex="-1" data-cms-copy="cookieConsent.title">{{ cookieCopy.title }}</h2>
+      <p data-cms-copy="cookieConsent.body">{{ cookieCopy.body }}</p>
+      <sc-if value="{{ cookieHasChoice }}"><p class="cm-cookie-status"><sc-if value="{{ cookieGranted }}">{{ cookieCopy.allowed }}</sc-if><sc-if value="{{ cookieDenied }}">{{ cookieCopy.denied }}</sc-if></p></sc-if>
+      <details class="cm-cookie-details"><summary data-cms-copy="cookieConsent.details">{{ cookieCopy.details }}</summary><div>
+        <p data-cms-copy="cookieConsent.explanation">{{ cookieCopy.explanation }}</p>
+        <p data-cms-copy="cookieConsent.retention">{{ cookieCopy.retention }}</p>
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" data-cms-copy="cookieConsent.googlePrivacy">{{ cookieCopy.googlePrivacy }}</a>
+      </div></details>
+    </div>
+    <div class="cm-cookie-actions">
+      <button type="button" data-cookie-reject sc-camel-on-click="{{ onCookieReject }}" data-cms-copy="cookieConsent.reject">{{ cookieCopy.reject }}</button>
+      <button type="button" data-cookie-accept sc-camel-on-click="{{ onCookieAccept }}" data-cms-copy="cookieConsent.accept">{{ cookieCopy.accept }}</button>
+    </div>
+    <sc-if value="{{ cookieHasChoice }}"><button type="button" class="cm-cookie-close" sc-camel-on-click="{{ onCookieClose }}" aria-label="{{ cookieCopy.close }}" title="{{ cookieCopy.close }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></sc-if>
+  </div>
+</section>
+</sc-if>
 <sc-if value="{{ showSticky }}" hint-placeholder-val="{{ true }}">
-<div data-om="mob" data-cm-sticky style="position:sticky;bottom:0;z-index:35;display:flex;gap:var(--space-2);padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb, var(--color-bg) 92%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -2px 18px color-mix(in srgb,#2e2b25 14%,transparent)">
+<div data-om="mob" data-cm-sticky style="display:flex;gap:var(--space-2);padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb, var(--color-bg) 92%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -2px 18px color-mix(in srgb,#2e2b25 14%,transparent)">
   <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}" style="display:flex;align-items:center;justify-content:center;width:54px;height:54px;flex:0 0 auto;border-radius:999px;background:var(--color-surface);color:var(--color-text);transition:background .2s ease" style-hover="background:var(--color-neutral-300);color:var(--color-text)" style-active="background:var(--color-neutral-400)">
     <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M13.83 19a17 17 0 0 1-8.83-8.83l2.4-1.7a1 1 0 0 0 .3-1.3L6.2 3.6a1 1 0 0 0-1.2-.5L2.5 4A2 2 0 0 0 1.2 6.3 20 20 0 0 0 17.7 22.8a2 2 0 0 0 2.3-1.3l.9-2.5a1 1 0 0 0-.5-1.2l-3.6-1.5a1 1 0 0 0-1.3.3z"></path></svg>
   </a></sc-if>
@@ -1822,6 +1661,8 @@ textarea.input { min-height: 90px; resize: vertical; }
     <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
     <span data-cms-copy="header.cta">{{ headerCta }}</span>
   </a></sc-if>
+</div>
+</sc-if>
 </div>
 </sc-if>
 
@@ -1952,19 +1793,19 @@ textarea.input { min-height: 90px; resize: vertical; }
     <!-- SECTIONS TAB -->
     <sc-if value="{{ tabSections }}" hint-placeholder-val="{{ true }}">
       <div style="font-size:12.5px;line-height:1.55;color:var(--color-neutral-700)">
-        โครงสร้างเว็บไซต์ เลือกส่วนที่ต้องการแก้ไขข้อความ การ์ด รูปภาพ และตาราง จัดลำดับและการแสดงผลได้ที่นี่ ส่วนการจัดวางอยู่ใน Layout เพิ่มเติม
+        ลำดับส่วนต่าง ๆ · {{ adminPageName }}
       </div>
       <sc-for list="{{ secList }}" as="r" hint-placeholder-count="10">
         <div data-admin-section-row="{{ r.id }}" style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-3);border-radius:var(--radius-md);background:{{ r.rowBg }};opacity:{{ r.dim }};transition:background .2s ease, opacity .2s ease">
           <div style="display:flex;align-items:center;gap:var(--space-2)">
-            <div style="display:flex;flex-direction:column;gap:4px;flex:0 0 auto">
+            <sc-if value="{{ r.canMove }}"><div style="display:flex;flex-direction:column;gap:4px;flex:0 0 auto">
               <button type="button" sc-camel-on-click="{{ r.up }}" disabled="{{ r.first }}" aria-label="เลื่อนส่วนนี้ขึ้น" title="เลื่อนส่วนนี้ขึ้น" style="width:38px;height:38px;border:0;cursor:pointer;border-radius:10px 10px 6px 6px;background:var(--color-neutral-200);color:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
                 <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round"><path d="m18 15-6-6-6 6"></path></svg>
               </button>
               <button type="button" sc-camel-on-click="{{ r.down }}" disabled="{{ r.last }}" aria-label="เลื่อนส่วนนี้ลง" title="เลื่อนส่วนนี้ลง" style="width:38px;height:38px;border:0;cursor:pointer;border-radius:6px 6px 10px 10px;background:var(--color-neutral-200);color:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;transition:background .2s ease" style-hover="background:var(--color-neutral-300)">
                 <svg sc-camel-view-box="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
               </button>
-            </div>
+            </div></sc-if>
             <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px">
               <div style="display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap">
                 <span style="font-size:14.8px;font-weight:800;line-height:1.25;color:var(--color-text)">{{ r.name }}</span>
@@ -1973,18 +1814,20 @@ textarea.input { min-height: 90px; resize: vertical; }
               </div>
               <div style="font-size:12px;line-height:1.45;color:var(--color-neutral-800);text-wrap:pretty">{{ r.role }}</div>
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.2px;color:var(--color-neutral-700)">
-                <span style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif">#{{ r.sub }}</span>
+                <span style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif">{{ r.sub }}</span>
                 <span>·</span>
                 <span>{{ r.summary }}</span>
               </div>
+              <div style="font-size:11.2px;line-height:1.45;color:var(--color-neutral-700)">{{ r.scope }}<sc-if value="{{ r.position }}"> · {{ r.position }}</sc-if></div>
+              <sc-if value="{{ r.dependency }}"><div style="font-size:11.2px;line-height:1.45;color:var(--color-neutral-700)">{{ r.dependency }}</div></sc-if>
             </div>
-            <button type="button" role="switch" aria-checked="{{ r.on }}" sc-camel-on-click="{{ r.toggle }}" aria-label="แสดงหรือซ่อนส่วนนี้" title="แสดงหรือซ่อนส่วนนี้" style="width:54px;height:36px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:4px;display:flex;align-items:center;background:{{ r.swBg }};transition:background .25s ease">
+            <sc-if value="{{ r.canToggle }}"><button type="button" role="switch" aria-checked="{{ r.on }}" sc-camel-on-click="{{ r.toggle }}" aria-label="แสดงหรือซ่อนส่วนนี้" title="แสดงหรือซ่อนส่วนนี้" style="width:54px;height:36px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:4px;display:flex;align-items:center;background:{{ r.swBg }};transition:background .25s ease">
               <span style="width:28px;height:28px;border-radius:999px;background:var(--color-neutral-100);transform:{{ r.swX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span>
-            </button>
+            </button></sc-if>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;padding-left:46px">
             <sc-if value="{{ r.canEditContent }}" hint-placeholder-val="{{ true }}"><button type="button" sc-camel-on-click="{{ r.pick }}" data-admin-section-edit="{{ r.id }}" style="min-height:38px;border:0;cursor:pointer;font:inherit;font-size:12.2px;font-weight:800;padding:0 14px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);transition:background .2s ease" style-hover="background:var(--color-neutral-800)">แก้ไขเนื้อหา</button></sc-if>
-            <details style="flex:1 1 190px;min-width:min(100%,190px);border-radius:18px;background:color-mix(in srgb,var(--color-neutral-200) 72%,transparent);overflow:hidden">
+            <sc-if value="{{ r.hasLayout }}"><details style="flex:1 1 190px;min-width:min(100%,190px);border-radius:18px;background:color-mix(in srgb,var(--color-neutral-200) 72%,transparent);overflow:hidden">
               <summary style="min-height:38px;display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;padding:0 13px;font-size:12px;font-weight:800;color:var(--color-neutral-800)">
                 <span>Layout เพิ่มเติม</span>
                 <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--color-neutral-700)">{{ r.bgLabel }}</span>
@@ -2000,7 +1843,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               </span>
             </sc-if>
               </div>
-            </details>
+            </details></sc-if>
           </div>
         </div>
       </sc-for>
@@ -2012,6 +1855,9 @@ textarea.input { min-height: 90px; resize: vertical; }
         <span style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-size:18px">{{ curName }}</span>
         <span style="font-size:11px;color:var(--color-neutral-700);font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif">#{{ curId }}</span>
       </div>
+      <div style="font-size:12px;color:var(--color-neutral-700)">{{ contentScope }}</div>
+      <sc-if value="{{ contentDependency }}"><p style="margin:0;font-size:12px;line-height:1.5;color:var(--color-neutral-700)">{{ contentDependency }}</p></sc-if>
+      <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ contentShortcuts }}" as="shortcut"><button type="button" class="om-media-edit" data-admin-content-shortcut="{{ shortcut.key }}" sc-camel-on-click="{{ shortcut.open }}">{{ shortcut.label }}</button></sc-for></div>
       <sc-for list="{{ editFields }}" as="f" hint-placeholder-count="3">
         <label style="display:flex;flex-direction:column;gap:5px">
           <span style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">{{ f.label }}</span>
@@ -2030,6 +1876,15 @@ textarea.input { min-height: 90px; resize: vertical; }
       <sc-if value="{{ hasCalculatorFields }}">
         <details class="om-cms-group" data-cms-group="Calculator data"><summary>ข้อมูลและแหล่งอ้างอิงเครื่องคำนวณ</summary><div class="om-cms-fields">
           <sc-for list="{{ calculatorFields }}" as="field"><label class="om-cms-field"><span>{{ field.label }}</span><input data-calculator-field="{{ field.key }}" type="{{ field.type }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}"></label></sc-for>
+        </div></details>
+        <details class="om-cms-group" data-needs-catalog-admin><summary>AIA · Product catalog &amp; review</summary><div class="om-cms-fields">
+          <label class="om-cms-field"><span>Product records (JSON)</span><textarea rows="12" data-needs-catalog-json value="{{ calculatorCatalogText }}" sc-camel-on-change="{{ onCalculatorCatalog }}"></textarea></label>
+          <button type="button" sc-camel-on-click="{{ addCalculatorProduct }}">Add draft product</button><button type="button" data-needs-save-catalog sc-camel-on-click="{{ saveCalculatorCatalog }}">Save catalog to draft</button>
+          <label class="om-cms-field"><span>Hospital references (JSON)</span><textarea rows="8" data-needs-references-json value="{{ calculatorReferenceText }}" sc-camel-on-change="{{ onCalculatorReferences }}"></textarea></label>
+          <button type="button" sc-camel-on-click="{{ addCalculatorReference }}">Add draft reference</button><button type="button" data-needs-save-references sc-camel-on-click="{{ saveCalculatorReferences }}">Save references to draft</button>
+          <p role="alert">{{ calculatorCatalogError }}</p>
+          <label class="om-cms-field"><span>Reviewed by</span><input data-needs-reviewer value="{{ calculatorReviewer }}" sc-camel-on-change="{{ onCalculatorReviewer }}"></label>
+          <sc-for list="{{ calculatorReviewRows }}" as="record"><div class="om-cms-field"><strong>{{ record.title }}</strong><span>{{ record.status }}</span><span>{{ record.issues }}</span><button type="button" data-needs-approve="{{ record.id }}" disabled="{{ record.disabled }}" sc-camel-on-click="{{ record.approve }}">Approve reviewed record</button></div></sc-for>
         </div></details>
       </sc-if>
       <sc-for list="{{ editItems }}" as="it" hint-placeholder-count="3">
@@ -2134,6 +1989,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               </label>
             </sc-for>
             <sc-if value="{{ cd.showLogo }}" hint-placeholder-val="{{ false }}">
+              <label class="om-cms-field"><span>ประเภทใบอนุญาต</span><sc-raw-select data-admin-licence-role="{{ cd.id }}" value="{{ cd.licenceRole }}" sc-camel-on-change="{{ cd.onLicenceRole }}"><sc-for list="{{ cd.licenceRoleOptions }}" as="option"><option value="{{ option.value }}">{{ option.label }}</option></sc-for></sc-raw-select></label>
             <label style="display:flex;flex-direction:column;gap:4px">
               <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ที่อยู่โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Path โลโก้</sc-if></span>
               <input value="{{ cd.logo }}" sc-camel-on-change="{{ cd.onLogo }}" style="font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
@@ -2161,7 +2017,7 @@ textarea.input { min-height: 90px; resize: vertical; }
     <!-- BRAND TAB -->
     <sc-if value="{{ tabBrand }}" hint-placeholder-val="{{ false }}">
       <details class="hm-admin-design" data-home-design-controls data-cms-group="Page composition">
-        <summary>องค์ประกอบหน้าแรก</summary>
+        <summary>องค์ประกอบที่ใช้ร่วมกัน</summary>
         <fieldset><legend>ชั้นประกันรถที่แนะนำ</legend><sc-for list="{{ homeTierChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
         <fieldset><legend>หัวข้อความคุ้มครองใน Preview</legend><sc-for list="{{ homeAxisChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
         <fieldset><legend>Layout</legend><label><input type="checkbox" checked="{{ homeCompact }}" sc-camel-on-change="{{ toggleHomeDensity }}">ระยะห่างแบบกระชับ</label><label><input type="checkbox" checked="{{ homeSharp }}" sc-camel-on-change="{{ toggleHomeRadius }}">ลดความมนของมุม</label></fieldset>

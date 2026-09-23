@@ -628,14 +628,14 @@ const DEFAULTS = {
       "cols": 2,
       "th": {
         "kicker": "เครื่องมือและข้อมูลที่เป็นประโยชน์",
-        "title": "ประเมินความต้องการ\nคุ้มครองเบื้องต้น",
-        "body": "เครื่องมือนี้แยกการประเมินเป็นสามส่วน: ทุนชีวิตจากค่าใช้จ่ายจำเป็นและปีที่ครอบครัวต้องพึ่งพา, ส่วนต่างค่าห้องอ้างอิงจากข้อมูลโรงพยาบาลที่มีแหล่งที่มา, และเงินก้อนสำหรับช่วงพักฟื้นจากโรคร้ายแรง",
+        "title": "คุณควรมีความคุ้มครองเท่าไหร่ ลองคำนวณคร่าว ๆ",
+        "body": "เครื่องมือนี้ช่วยประเมินความต้องการความคุ้มครองเบื้องต้น เพื่อวางแผนให้เหมาะกับคุณและคนที่คุณรัก ไม่ใช่ใบเสนอราคา และไม่ต้องกรอกข้อมูลติดต่อเพื่อคำนวณ",
         "note": "อ้างอิงชุดข้อมูล 2026-08-15-v0.1 และวิธีคำนวณที่แยกชีวิต สุขภาพ และโรคร้ายแรงออกจากกัน ตัวเลขเป็นจุดเริ่มต้นในการคุย ไม่ใช่ใบเสนอราคา คำแนะนำเฉพาะบุคคล หรือค่าใช้จ่ายที่ต้องจ่ายแน่นอน"
       },
       "en": {
         "kicker": "Tools and useful resources",
-        "title": "Estimate your\nstarting protection need",
-        "body": "This tool separates the estimate into three parts: life cover from essential spending and support years, a hospital room-gap reference with source provenance, and a recovery buffer for critical illness.",
+        "title": "How much protection might you need?",
+        "body": "Explore a starting estimate for you and those you love. This is a planning tool, not a quote. No contact information is needed to calculate.",
         "note": "Based on reference dataset 2026-08-15-v0.1 and methodology that keeps life, health and critical illness separate. The result is a discussion starting point, not a quotation, personalised advice, or a guaranteed out-of-pocket amount."
       },
       "items": [],

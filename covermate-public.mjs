@@ -169,7 +169,7 @@ async function appCheckToken() {
   return (await check.getToken(instance)).token;
 }
 
-export async function submitContactLead(input = {}) {
+export async function prepareContactLead(input = {}) {
   if (String(input.topic || '').length > 500) throw new Error('Please keep your message within 500 characters.');
   const noticeDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(input.noticeText || '')));
   const noticeVersion = 'contact-' + [...new Uint8Array(noticeDigest)].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 24);
@@ -182,19 +182,49 @@ export async function submitContactLead(input = {}) {
     noticeVersion, consentKind: input.consentKind === 'renewal' ? 'renewal' : 'consultation',
     sourcePath: new URL(input.sourcePath || location.pathname, location.origin).pathname
   };
-  const signature = JSON.stringify(payload);
-  if (!pendingIds.has(signature)) pendingIds.set(signature, crypto.randomUUID());
+  if (input.calculator) {
+    const { sanitizeNeedsSnapshot } = await import('./covermate-calculator.mjs');
+    payload.calculator = sanitizeNeedsSnapshot(input.calculator);
+  }
+  return Object.freeze({ body: JSON.stringify(payload), key: crypto.randomUUID() });
+}
+
+export async function sendContactLead(request) {
   let tokenTimer;
-  const token = await Promise.race([
+  let token;
+  try { token = await Promise.race([
     appCheckToken(),
     new Promise((_, reject) => { tokenTimer = setTimeout(() => reject(new DOMException('Verification timed out.', 'TimeoutError')), 15000); })
-  ]).finally(() => clearTimeout(tokenTimer));
-  const { response, data: result } = await fetchJSON(`/api/leads?cm_env=${environment.name}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': token, 'Idempotency-Key': pendingIds.get(signature) },
-    body: signature
-  }, 15000);
-  if (!response.ok) throw Object.assign(new Error(result.message || 'Could not send your enquiry.'), { code: result.error, status: response.status });
-  if (result?.accepted !== true || typeof result.reference !== 'string' || !result.reference.trim() || result.reference.length > 80) throw new DOMException('Receipt was not confirmed.', 'UnconfirmedReceipt');
+  ]).finally(() => clearTimeout(tokenTimer)); }
+  catch (error) { throw Object.assign(error, { outcome: 'failure', dispatched: false }); }
+  let response, result;
+  try {
+    ({ response, data: result } = await fetchJSON(`/api/leads?cm_env=${environment.name}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': token, 'Idempotency-Key': request.key },
+      body: request.body
+    }, 15000));
+  } catch (error) { throw Object.assign(error, { outcome: 'unknown', dispatched: true }); }
+  if (!response.ok) {
+    const fieldCodes = { name_required: { name: 'nameRequired' }, contact_required: { contact: 'contactRequired' }, consent_required: { consent: 'consentRequired' }, consent_changed: { consent: 'consentChanged' } };
+    const code = result?.error;
+    const fields = fieldCodes[code];
+    const rejected = ['app_check_required', 'invalid_app_check', 'not_configured', 'invalid_body', 'invalid_request_id', 'unknown_field', 'invalid_calculator', 'invalid_consent_kind'];
+    const outcome = response.status === 429 ? 'rate_limited' : fields || ['invalid_field', 'invalid_choice'].includes(code) ? 'invalid' : rejected.includes(code) ? 'failure' : 'unknown';
+    const after = response.headers.get('Retry-After');
+    const retryAt = after && (/^\d+$/.test(after) ? Date.now() + Number(after) * 1000 : Date.parse(after));
+    throw Object.assign(new Error('Enquiry was not confirmed.'), { code, outcome, fields: fields || { form: 'invalidFields' }, status: response.status, retryAt: Number.isFinite(retryAt) ? retryAt : null, dispatched: true });
+  }
+  if (result?.accepted !== true || typeof result.reference !== 'string' || !result.reference.trim() || result.reference.length > 80) {
+    throw Object.assign(new DOMException('Receipt was not confirmed.', 'UnconfirmedReceipt'), { outcome: 'unknown', dispatched: true });
+  }
+  return result;
+}
+
+export async function submitContactLead(input = {}) {
+  const request = await prepareContactLead(input);
+  const signature = request.body;
+  if (!pendingIds.has(signature)) pendingIds.set(signature, request.key);
+  const result = await sendContactLead({ body: signature, key: pendingIds.get(signature) });
   pendingIds.delete(signature);
   return result;
 }

@@ -1,6 +1,6 @@
 # CMS Content Ownership
 
-Updated: 2026-09-22. Code schema: version 8; deployed state is in HANDOFF.md. Version 3 adds
+Updated: 2026-09-23. Code schema: version 16; release evidence is in RELEASE_VISITOR_20260924.md. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
 Version 4 consolidates the former Guides into FAQ. Admin FAQ owns the question,
 answer, optional topic and reading time in both languages. The old section is
@@ -8,10 +8,46 @@ retained only as `cmsArchives.guides` for recovery, never as a public fallback.
 Version 5 reconciles section/Admin field names and legacy navigation labels.
 Version 6 adds the Home licence section's presentation fields without moving
 or rewriting its existing insurer card data. The section renders before Footer;
-its heading/eyebrow/statement/background are under Brand & contact > Home licences.
+its heading/eyebrow/statement/background are under Brand & contact > Licence band design
+(the internal group key remains `Home licences`).
 Versions 7/8 add Home contact and Footer design presentation fields. Their
 one-time seeds preserve existing channel values, section order, owner copy and
 deliberate blanks. No production publish is implied by these source migrations.
+Version 9 adds Fees/Privacy presentation copy and icon overrides under
+Brand & contact > Transparency design. It assigns missing icon/tone metadata
+once to the existing repeatable IDs, without rewriting legal/business copy,
+visibility or order. Item and fee-card image overrides have 1:1 crop slots.
+An empty icon override uses the vector icon; blank statement copy stays absent.
+Version 10 adds localized `cookieConsent.*` under Brand & contact > Cookie consent.
+It preserves form/privacy copy and has no production write. Required consent
+labels and disclosures use a localized fallback when blank, so CMS cannot hide
+the meaning of allow/refuse/withdraw. Tracking gates and consent duration remain
+code-owned; see ANALYTICS.md.
+Version 14 adds `contactSubmission.*` under Brand & contact > Contact submission.
+These Home status-panel labels are separate from form/privacy copy. Missing-only
+migration preserves deliberate blanks and has no production write. See
+[Contact submission](CONTACT_SUBMISSION.md) for behavior and release dependency.
+Version 15 adds Home-only `advisor.*` under Brand & contact > Advisor profile.
+Full name and personal role are independently editable in TH/EN; portrait is
+an optional shared image with a 4:5 crop and localized description. Names,
+roles and portrait start blank. Never seed a person from mockups, `brand.fullName`
+or the legacy `brand.media.photo` (which also belongs to Footer).
+One localized full name renders in Hero, before the licence cards, and in the
+Contact introduction. Hero keeps CoverMate primary and permanently shows the
+existing credentials, verification and hours; only Home loses its disclosure.
+Contact before/after-name fragments have separate CMS fields so inline editing
+does not hardcode a second name. Without a name in the current language, the
+original `sections.@talk.{th,en}.body` is shown unchanged; clearing both fragments
+also restores it. A missing photo has no placeholder and a missing translation
+does not borrow a personal name from another language. Licence card/company
+ownership, Footer, Motor and form behavior stay unchanged. This is a missing-only,
+idempotent source migration, not a production publish.
+Version 11 classifies existing insurer relationship cards once with `licenceRole`
+(`life`, `broker`, or blank). The card editor exposes **Licence role**. Home keeps
+all enabled cards; Motor uses only `broker` cards, including its Hero proof.
+Classification follows the card after reordering, renaming or replacing media.
+Hidden/deleted/blank broker cards never fall back to AIA. Footer ownership is
+unchanged. There is no new Motor section list or duplicated design payload.
 The whole-site follow-up adds canonical Motor/inline ownership, calculator
 data controls, and the image crop/upload workflow. See [audit](CMS_SITE_AUDIT.md)
 and [media operations](CMS_MEDIA.md) for scope and hosted verification limits.
@@ -22,30 +58,50 @@ Use deployment/source readback and the migration dry run to confirm live state.
 
 ## Owner Decision
 
+Version 16 adds optional Needs v2 planning, comparison and reviewed catalog fields.
+Source/review metadata and expiry govern product eligibility; no AIA products
+are seeded. Existing calculator data and deliberate owner values are preserved.
+See NEEDS_CALCULATOR.md and NEEDS_PRODUCT_REVIEW.md.
+
+Error page fields (introduced in schema v12 and retained in current schema):
+Brand & contact → Error page owns `errorPage.*` TH/EN copy and the neutral 1:1
+illustration. Shared logo, header navigation/CTA and contact fields keep their
+existing owners. Status and route/retry policy are code-owned. Optional blanks
+stay absent; core recovery copy has a bundled fallback. See
+[ERROR_PAGES.md](ERROR_PAGES.md) for loading/publish behavior and hosting limits.
+
 Preserve real business data and migrate it to Admin. Missing optional data stays
 absent. Firestore content wins, including deliberate blanks and empty arrays.
 
 | Surface | CMS owner |
 | --- | --- |
 | Shared licence numbers, provider logos and verification | `licences.life/nonLife/broker`, `licences.verifyUrl/verifyLabel` |
-| Advisor proof logo | Existing `brand.advisorLogo/advisorLogoAlt` |
+| Advisor proof logo | Home: `brand.advisorLogo/advisorLogoAlt`; Motor: first enabled insurer relationship card with `licenceRole:broker` |
+| Home personal advisor (3 placements) | `advisor.fullName/role/photo/photoAlt`, Brand & contact > Advisor profile; optional, real owner data only |
+| Home advisor headings/Contact fragments | `advisor.heading/licenceLabel/contactBefore/contactAfter`; same group; full name remains a single owner |
 | Header/Footer logos, mark, photo, QR, favicon | `brand.media.*` |
 | Contact channels | Existing `contact.*`; blank targets hide visitor links |
 | Menu labels/order/targets and header CTA | `header.nav/cta`, `motorPage.nav`, Brand & contact for selected page |
 | Home Hero secondary/accident link destinations | `sections[hero].cta2href/claimHref`, Brand & contact > Navigation |
-| Insurer logos/count and relationship cards | `sections[insurers].items/cards`; never guess a logo by position |
+| Insurer logos/count | `sections[insurers].items`; Sections > Motor insurer logos |
+| Final licence cards | `sections[insurers].cards`; Sections > Licences & service roles; fixed before Footer, not a new CMS section |
+| Motor relationship visibility | `sections.@insurers.cards.@id.licenceRole`; Licences & service roles > Licence role; Motor lists broker cards only, Home retains all roles |
 | Home tier illustrations | `sections.@tiers.items.@id.illustration`; same row's Admin editor |
 | FAQ and former reading items | `sections.@faq.items.@id.{th,en}.{q,a,label,meta}`; FAQ row editor |
-| Home quote/artwork and disclosure labels | `homeDesign.*`, Brand & contact > Home design |
-| Home final licence section presentation | `homeDesign.licenceEyebrow/Title/Statement/Background`, Brand & contact > Home licences; existing insurer cards retain their owners |
-| Featured tiers, comparison axes and task links | Stable IDs in `homeDesign`, Home composition controls |
+| Shared quote/artwork and disclosure labels | `homeDesign.*`, Brand & contact > Shared page design (internal key `Home design`) |
+| Fees/Privacy disclosure presentation | `homeDesign.{fees,privacy}{Statement,ClosingStatement,SummaryLabel,Icon}` and `homeDesign.transparencyNoteIcon`; Brand & contact > Transparency design |
+| Fees/Privacy item icons and fee-card icons | `sections.@id.items.@id.iconImage`, `sections.@fees.cards.@id.iconImage`; Images & crop, with item vector/tone selection in the section editor |
+| Shared final licence section presentation | `homeDesign.licenceEyebrow/Title/Statement/Background`, Brand & contact > Licence band design; existing insurer cards retain their owners |
+| Featured tiers, comparison axes and task links | Stable IDs in `homeDesign`, Shared page composition controls; task links remain Home-only |
 | Footer headings/privacy link | `footer.licenceHeading/navHeading/contactHeading/privacyLabel` |
 | Footer helper/closing copy, icons and art | `footer.licenceHelper/navHelper/contactHelper/statement/categoryLine`, `footer.icon*`, `footer.backgroundArt`; Brand & contact > Footer design |
-| Home Contact form heading/helpers/placeholders/icons/art | `homeDesign.contact*`; Brand & contact > Home contact (channel heading retains its existing Home design field) |
+| Shared Contact form heading/helpers/placeholders/icons/art | `homeDesign.contact*`; Brand & contact > Contact section design (internal key `Home contact`) |
 | Shared headings, consent, submission feedback | `ui.*` |
+| Analytics cookie banner, settings, disclosures and action labels | `cookieConsent.*`; Brand & contact > Cookie consent (separate from form consent) |
 | Social image/description | `seo.image/imageAlt` |
 | Section copy and emergency numbers | Section editor and canonical inline paths |
-| Calculator situations, recommendations and reference data | `sections.@fit.calculator`, Content > Calculator data & sources |
+| Needs v1 labels, statuses, methods, privacy and media | `calculatorDesign.*`, Brand & contact > Calculator design; shared Home renderer; schema v13 |
+| Calculator reference data and retained legacy scenarios | `sections.@fit.calculator`, Content > Calculator data & sources; v1 consumes health provenance, not retired transition/CI buffer assumptions |
 | All image slots, including optional content icon overrides | Brand & contact > Images & crop; `cmsImageSlots()` inventory |
 | Original image for recropping | `mediaEdits[canonicalPath].source`; output remains the existing string media field |
 | Motor trademark, tier/story helper labels | `publicCopy.*`, Shared section labels |

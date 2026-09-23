@@ -81,7 +81,7 @@ try {
   const dialog = page.getByRole('dialog', { name: 'แก้ไขรูปภาพ', exact: true });
   const cancel = async () => { await dialog.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click(); await dialog.waitFor({ state: 'detached' }); };
   const openImage = async (source, owner, keyboard = false) => {
-    await source.scrollIntoViewIfNeeded();
+    await source.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
     const button = page.locator(`[data-inline-media="${owner}"]`).first();
     await button.waitFor({ state: 'visible' });
     // Wait for the overlay to follow the source after scrolling.
@@ -89,7 +89,8 @@ try {
       const image = document.querySelector(`[data-cms-image="${owner}"]`), button = document.querySelector(`[data-inline-media="${owner}"]`);
       if (!image || !button) return false;
       const a = image.getBoundingClientRect(), b = button.getBoundingClientRect();
-      return Math.abs(a.left - b.left) < 3 && Math.abs(a.right - b.right) < 3;
+      return Math.abs(a.left - b.left) < 3 && Math.abs(a.right - b.right) < 3
+        && Math.abs(a.top - b.top) < 3;
     }, owner);
     if (keyboard) await button.press('Enter'); else await button.click();
     await dialog.waitFor();

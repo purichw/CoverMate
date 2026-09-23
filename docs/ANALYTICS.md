@@ -1,6 +1,60 @@
 # CoverMate Analytics
 
-Last updated: 2026-08-30
+Last updated: 2026-09-23
+
+## Visitor Cookie Consent
+
+The owner chose to retain GA4 with explicit opt-in. Release scope and gates are
+recorded in RELEASE_VISITOR_20260924.md.
+
+- `covermate-analytics.js` never creates the Google tag or its event queue before
+  a valid analytics choice. Unknown/declined/expired/malformed choices fail
+  closed. Basic consent mode defaults all four consent signals to denied, then
+  grants **analytics_storage only** before configuration and the first page view.
+- Advertising storage, ad user data, personalization and Google signals remain
+  disabled. No cookieless Google pings are intentionally sent before opt-in.
+  Existing production-host and owner/Admin exclusions still apply after opt-in.
+- The compact TH/EN banner shares a bottom dock with the existing mobile LINE
+  action, without overlapping it. Allow and decline have equal-size controls.
+  Details disclose Google as recipient, the cookie lifetime, international
+  processing possibility, withdrawal and the separate form-consent purpose.
+- `Cookie settings` in the footer reopens the choice without reloading, changing
+  the route or clearing a form. A normal bottom-of-page settings row remains if
+  CMS hides the footer. Owner/edit/preview surfaces do not display this visitor UI.
+- Local storage key `covermate-analytics-consent` contains version 1, analytics
+  boolean, `updatedAt`, `expiresAt`. Both choices expire after 180 days, an
+  implementation policy, not a claimed statutory deadline. GA cookies are capped
+  at 180 days without sliding renewal. Storage failure retains the explicit
+  choice in memory for this page only; refresh asks again.
+- Withdrawal immediately sets Google's `ga-disable-G-5TF3C235EF` flag, updates
+  consent to denied and clears first-party root-path GA cookies, not other site
+  cookies. Same-origin tabs synchronize via storage events. Already transmitted
+  data is not retroactively deleted. Earlier unconsented interactions are never
+  buffered/replayed after accepting.
+- This does not change contact/renewal consent, lead capture, essential site
+  storage, first-party operational diagnostics, Admin GA reporting or GA property
+  retention settings. No paid CMP, new backend, billing change or production CMS
+  write is introduced. GA traffic will reflect consenting visitors, while lead
+  totals still include all submitted leads; those populations are not identical.
+- Banner copy lives under CMS `cookieConsent.*` (Brand & contact > Cookie consent),
+  schema v10. Blank required consent copy falls back to the localized seed so
+  refusing/withdrawing cannot become an unlabeled control. Behavior, policy
+  version and duration are code-owned, not an owner switch to bypass consent.
+
+Targeted checks:
+
+```sh
+npm run check:analytics
+npm run check:consent
+PLAYWRIGHT_BROWSERS_PATH=.tools/playwright-browsers BROWSER=webkit npm run check:consent
+PLAYWRIGHT_BROWSERS_PATH=.tools/playwright-browsers BROWSER=firefox npm run check:consent
+```
+
+These browser fixtures intercept Google requests and block external writes;
+they do not send test visits/leads to production or prove GA property ingestion.
+Implementation references: [basic consent mode](https://support.google.com/analytics/answer/10000067?hl=en),
+[consent ordering](https://developers.google.com/tag-platform/security/guides/consent),
+[Google's analytics disable flag](https://developers.google.com/tag-platform/security/guides/privacy).
 
 ## Surfaces
 

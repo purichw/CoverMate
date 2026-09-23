@@ -122,6 +122,8 @@ try {
       await control('reset').focus(); await page.keyboard.press(shortcut);
     }
     else await control(kind).click();
+    // Snapshot application rebinds inline editing on the following frame.
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   }
   async function expectControl(kind, disabled) {
     if (!await control(kind).count()) await tools();
@@ -137,7 +139,12 @@ try {
     await expectHero(value);
   }
   async function expectHero(value) {
-    await page.waitForFunction(text => document.querySelector('#hero h1')?.textContent === text, value);
+    try {
+      await page.waitForFunction(text => document.querySelector('#hero h1')?.textContent === text, value);
+    } catch (error) {
+      console.error('Hero history mismatch', { expected: value, actual: await page.locator('#hero h1').textContent(), draft: (await localSnapshot()).config.sections.find(section => section.id === 'hero') });
+      throw error;
+    }
   }
   async function settledDraft() {
     const current = await localSnapshot();
@@ -231,7 +238,7 @@ try {
 
   await tools(false);
   const beforeNativeInput = await localSnapshot();
-  const nativeInput = page.locator('#talk input[name="name"]');
+  const nativeInput = page.locator('#contact-name');
   await nativeInput.scrollIntoViewIfNeeded();
   await nativeInput.fill(''); await nativeInput.pressSequentially('Native form input', { delay: 10 });
   await nativeInput.press('Control+z');
@@ -328,6 +335,30 @@ try {
   assert.deepEqual((await localSnapshot()).config.sections.map(section => section.id), orderAfter);
   report.checks.push('Section ordering changes through the actual move control and round-trips through Undo/Redo.');
   await screenshot('content-tools-desktop-1440.png', '/admin/content', 1440, 1000);
+
+  // These are intentionally incomplete buffers, not committed catalog content.
+  // History should preserve what an owner is typing without trying to parse it.
+  await page.locator('[data-admin-section-edit="fit"]').click();
+  await page.getByRole('button', { name: 'เนื้อหา', exact: true }).click();
+  const catalogGroup = page.locator('[data-needs-catalog-admin]');
+  if (!await catalogGroup.evaluate(element => element.open)) await catalogGroup.locator('summary').click();
+  const beforeStagedJson = await localSnapshot();
+  const stagedCatalog = '{\n  "version": "unsaved-buffer",\n  "products": [';
+  const stagedReferences = '[\n  { "id": "unsaved-room-reference"';
+  await page.locator('[data-needs-catalog-json]').fill(stagedCatalog);
+  await page.locator('[data-needs-catalog-json]').press('Tab');
+  await page.locator('[data-needs-references-json]').fill(stagedReferences);
+  await page.locator('[data-needs-references-json]').press('Tab');
+  assert.deepEqual(await localSnapshot(), beforeStagedJson, 'Staging uncommitted JSON never changes the saved draft.');
+  await historyAction('undo');
+  assert.equal(await page.locator('[data-needs-catalog-json]').inputValue(), stagedCatalog, 'Undo preserves the staged product JSON buffer.');
+  assert.equal(await page.locator('[data-needs-references-json]').inputValue(), stagedReferences, 'Undo preserves the staged reference JSON buffer.');
+  assert.deepEqual((await localSnapshot()).config.sections.map(section => section.id), orderBefore);
+  await historyAction('redo');
+  assert.equal(await page.locator('[data-needs-catalog-json]').inputValue(), stagedCatalog, 'Redo preserves the staged product JSON buffer.');
+  assert.equal(await page.locator('[data-needs-references-json]').inputValue(), stagedReferences, 'Redo preserves the staged reference JSON buffer.');
+  assert.deepEqual(await localSnapshot(), beforeStagedJson, 'Redo restores committed content while preserving separate uncommitted JSON buffers.');
+  report.checks.push('Unsaved product-catalog and reference JSON typed through the calculator controls survives Undo/Redo; staged buffers never enter saved Draft until their explicit Save action.');
 
   await settledDraft();
   // External change invalidates prior tab history, rather than replacing newer data.

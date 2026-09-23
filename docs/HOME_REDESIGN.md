@@ -1,6 +1,6 @@
 # Home Redesign: Local Draft
 
-Updated 2026-09-21. See [HANDOFF.md](HANDOFF.md) for the exact release revision,
+Updated 2026-09-23. See [HANDOFF.md](HANDOFF.md) for the exact release revision,
 production migration and verification status.
 A protected preview was created before the latest generator changes; the owner
 has resumed production release with Cloudinary. See [HANDOFF.md](HANDOFF.md)
@@ -12,14 +12,39 @@ not merely rearrangement of the previous page.
 
 ## Implementation Owners
 
+Home advisor identity is a three-placement addition, not another section redesign.
+`advisor.*` (CMS v15) owns the optional real name, role, portrait and localized
+intro copy. Home's existing Hero card stays open, with a 56x70px portrait next
+to the name when both are present. Licence/Contact only reuse the name, never
+the image. `proof-credentials.html` is the shared unchanged credentials/hours
+partial for the permanent Home card and the existing Motor disclosure.
+The real CMS currently has no personal identity; the preview retains CoverMate.
+See [CMS ownership](CMS_CONTENT_OWNERSHIP.md) for blank/language behavior.
+
+Home contact submission states now use shared `submission.html`/`submission.css`
+and `covermate-submission.mjs`, with CMS v14 localized copy. This is a Home-only
+activation of the shared panel; Motor/renewal retain their existing presentation.
+See [CONTACT_SUBMISSION.md](CONTACT_SUBMISSION.md) for contract and local evidence.
+
+September 23: Home and `/motor` now consume these same section components,
+tokens, responsive styles and contact/renewal forms. `home.html`, `home.css` and
+`homeDesign.*` keep their existing names for compatibility; they are shared
+owners, not a Home-only fork. Do not copy their markup or add a Motor stylesheet.
+`motorPage.sections`, `hero/trust/cover` and its navigation remain authoritative.
+Home-only sections are not injected. The final licence band is a presentation
+of the existing insurer cards, not a new CMS section. Motor filters those cards
+by the Admin-editable `licenceRole:broker`; Footer still includes AIA. See
+`scripts/motor-shared-design-check.mjs` for focused regression and visual proof.
+
 | Surface | Owner and behavior |
 | --- | --- |
-| Home sections | `src/visitor/home.html` and `home.css`, composed by `scripts/lib/visitor-source.mjs` |
-| Shared shell, forms, Motor | `src/visitor/template.html`; shared form/API changes are tested on existing paths |
+| Shared Home/Motor sections | `src/visitor/home.html` and `home.css`, composed once by `scripts/lib/visitor-source.mjs` |
+| Shared shell, forms, licences and Footer | `src/visitor/template.html`; shared form/API changes are tested on existing paths |
+| Home Needs v1 | `src/visitor/calculator.html` / `calculator.css`; shared three-mode renderer; `covermate-calculator.mjs` owns client/server math and snapshots. See `NEEDS_CALCULATOR.md` |
 | Projection, navigation, editor | `src/visitor/runtime.js` |
-| Schema v5 and semantic paths | `covermate-contract.js`; embedded into the visitor build |
+| Schema and semantic paths | `covermate-contract.js`; embedded into the visitor build; v11 adds relationship-card roles |
 | Deployable output | Generated `index.html`; never hand-edit |
-| Optional statement, hero artwork, labels | `homeDesign.*`, Brand & contact > Home design |
+| Optional statement, hero artwork, labels | `homeDesign.*`, Brand & contact > Shared page design (internal key `Home design`) |
 | Per-class illustration | `sections.@tiers.items.@id.illustration`, existing section row editor |
 | Featured tiers and preview axes | Stable item/head ID arrays in Home composition controls |
 | Task shortcuts | Separate ID-bearing `homeDesign.taskLinks`; not insurance categories |
@@ -36,6 +61,13 @@ share a responsive band; separating or reordering them in Admin keeps the owner
 order. Coverage has its own single `#cover` section again. Old embedded-only
 Admin navigation no longer excludes it. Unknown section types are not routed
 into the new Home template accidentally.
+
+The Admin Sections list uses the same route projection, with hidden sections
+retained for restore. Licence cards have a separate fixed final-band editor,
+still writing `sections.@insurers.cards`; Footer follows as the final fixed row.
+These two presentation entries are not inserted into stored section arrays.
+Motor's licence editor and visitor share the broker-only card filter. See
+`scripts/admin-structure-check.mjs` and `scripts/admin-structure-browser.mjs`.
 
 ## Compact Reference Composition
 
@@ -96,9 +128,8 @@ capabilities are separate:
   fields expanded. Rotation within the tablet range preserves open details.
   Footer disclosure columns retain a desktop-like horizontal arrangement on
   touch tablets; the desktop footer remains unchanged for mouse users.
-- Motor uses its desktop comparison table from 768px with local horizontal
-  scrolling, rather than a tall stack of phone cards. The table can receive
-  keyboard focus. Phone cards remain below 768px.
+- Motor now uses the same featured tier cards and keyboard-accessible full
+  comparison disclosure as Home, retaining every configured class and axis.
 - Touch controls and summaries are at least 44px high; form text remains 16px.
   The Admin crop dialog retains its fixed action row and scrollable content.
   All content, links, images, ratios and editing owners are still shared CMS data.
@@ -210,9 +241,14 @@ Home licence/relationship details are the final main section before Footer,
 always expanded. The former insurer-band disclosure is removed. Card content,
 logos and visibility still belong to `sections.@insurers.cards`, and its intro
 still belongs to `sections.@insurers.{th,en}.body`. Hero/Footer licence summaries
-and Motor remain unchanged. The section heading, eyebrow, statement and 3:1
+remain unchanged. Motor now uses this same component with broker-role cards
+only; the shared Home intro is omitted there because it describes AIA as well.
+The section heading, eyebrow, statement and 3:1
 background are editable under Brand & contact > Home licences (code schema v6).
-Desktop/tablet use two equal-height cards; mobile stacks them with contained logos.
+Desktop/tablet use two equal-height cards, or a full row for a single broker;
+mobile stacks them with contained logos. Motor Hero uses the broker card's
+logo/kicker and only the non-life licence number. No AIA body copy or logo is
+borrowed from Home, and a hidden broker card hides its proof instead of restoring it.
 
 ## Forms and Safety
 
@@ -234,9 +270,10 @@ crop slots and icons 1:1. Existing CMS logos and licence values remain canonical
 No mock QR, motor-only introduction, response-time promise or artificial 500
 character limit is added. Local screenshots are under `uat-results/contact-redesign/`.
 
-Calculator financial values enter an enquiry only after a real calculator input
-change **and** an explicit include-estimate checkbox. Changing language, loading
-CMS or having hidden default calculator state does not opt in.
+Home Needs v1 attaches only an active-tab snapshot explicitly selected with the
+calculator CTA. The contact form's include-estimate checkbox can remove it;
+consent and submit are still required to send. Changing language, loading CMS,
+typing figures or hidden defaults never opts in. See NEEDS_CALCULATOR.md.
 
 The public lead service keeps its existing idempotency key on failed/unconfirmed
 requests, bounds verification time, and requires the API's 64-character record

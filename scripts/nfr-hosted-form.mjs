@@ -69,7 +69,8 @@ try {
   assert.equal(record.privacyReceipt.noticeText, displayedNotice, 'Receipt keeps the exact notice the visitor accepted.');
   assert.equal(lead.consentKind, 'consultation');
   assert.equal((await doc.ref.collection('caseActivities').doc('created').get()).data().type, 'created');
-  await form.getByText('ได้รับข้อมูลแล้ว เราจะติดต่อกลับโดยเร็วที่สุด').waitFor();
+  await page.locator('#talk [data-submission-state="success"]').waitFor();
+  await page.locator('#talk .cm-submission-reference').getByText(receipt.reference, { exact: true }).waitFor();
   fs.mkdirSync('uat-results/nfr', { recursive: true });
   await page.screenshot({ path: 'uat-results/nfr/hosted-form.png' });
   const uid = `nfr-intake-${crypto.randomUUID()}`;

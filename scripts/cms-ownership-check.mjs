@@ -28,6 +28,14 @@ assert.ok(JSON.stringify(migrated).includes('{{lifeLicence}}'));
 assert.equal(migrated.sections.find(s => s.id === 'insurers').items[12].logo, 'assets/ins/13-aioi.png');
 assert.deepEqual(migrateCmsContent(migrated), migrated, 'Migration is idempotent');
 assert.equal(legacy.contact.phone, '08X-XXX-XXXX', 'Migration does not mutate source');
+const withoutConsentCopy=structuredClone(migrated);
+withoutConsentCopy.cmsContentVersion=9;
+delete withoutConsentCopy.cookieConsent;
+const withConsentCopy=migrateCmsContent(withoutConsentCopy);
+assert.ok(withConsentCopy.cookieConsent.reject.th);
+withConsentCopy.cookieConsent.title={th:'หัวข้อคุกกี้จาก CMS',en:'Owner cookie heading'};
+assert.deepEqual(migrateCmsContent(withConsentCopy).cookieConsent,withConsentCopy.cookieConsent,'Consent CMS copy survives normalization');
+assert.deepEqual(migrateCmsContent(withConsentCopy).sections,migrated.sections,'Cookie copy does not rewrite form or privacy content');
 
 const v5 = structuredClone(migrated);
 v5.cmsContentVersion = 5;
@@ -43,6 +51,28 @@ assert.ok(v6.homeDesign.licenceStatement.th);
 assert.deepEqual(migrateCmsContent(v6), v6, 'Licence presentation migration is idempotent');
 const licenceArt = contract.cmsImageSlots(v6).find(slot => slot.path === 'homeDesign.licenceBackground');
 assert.equal(licenceArt.width / licenceArt.height, 3, 'Admin background crop ratio');
+
+const v8 = structuredClone(migrated);
+v8.cmsContentVersion = 8;
+const oldFees = v8.sections.find(s=>s.id==='fees');
+oldFees.items.forEach(item=>{delete item.icon;delete item.tone;});
+oldFees.cards.forEach(card=>{delete card.icon;delete card.tone;});
+oldFees.items[0].icon='users';
+v8.homeDesign.feesStatement={th:'ข้อความเจ้าของ',en:''};
+delete v8.homeDesign.privacyStatement;
+const v9 = migrateCmsContent(v8);
+const newFees = v9.sections.find(s=>s.id==='fees');
+assert.deepEqual(newFees.items.map(i=>[i.id,i.th,i.en,i.on]),oldFees.items.map(i=>[i.id,i.th,i.en,i.on]),'Transparency metadata preserves business copy, IDs and visibility');
+assert.equal(newFees.items[0].icon,'users','Custom icon is not overwritten');
+assert.equal(newFees.items[1].icon,'ban');
+assert.deepEqual(v9.homeDesign.feesStatement,{th:'ข้อความเจ้าของ',en:''});
+assert.ok(v9.homeDesign.privacyStatement.th);
+assert.deepEqual(migrateCmsContent(v9),v9);
+newFees.items.reverse();
+assert.deepEqual(migrateCmsContent(v9).sections.find(s=>s.id==='fees').items,newFees.items,'Icons stay attached to reordered IDs');
+for (const slot of contract.cmsImageSlots(v9).filter(slot=>/homeDesign\.(fees|privacy|transparencyNote)Icon|sections\.@(fees|privacy)\..*iconImage/.test(slot.path))) {
+  assert.equal(slot.width/slot.height,1,'Transparency icon crop is square');
+}
 
 for (const version of [6,7]) {
   const older=structuredClone(migrated);

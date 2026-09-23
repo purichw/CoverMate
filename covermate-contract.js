@@ -385,8 +385,199 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 12;
+const CMS_CONTENT_VERSION = 16;
 const CMS_CONTENT_FIELDS = [
+  {path:'advisor.fullName',label:'Full name (real advisor only)',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
+  {path:'advisor.role',label:'Personal role',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
+  {path:'advisor.photo',label:'Home advisor portrait',group:'Advisor profile',media:true,seed:''},
+  {path:'advisor.photoAlt',label:'Portrait description',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
+  {path:'advisor.heading',label:'Hero advisor heading',group:'Advisor profile',localized:true,seed:{th:'ผู้ให้คำปรึกษา',en:'Your advisor'}},
+  {path:'advisor.licenceLabel',label:'Advisor introduction before licence cards',group:'Advisor profile',localized:true,seed:{th:'ผู้ให้คำปรึกษา:',en:'Your advisor:'}},
+  {path:'advisor.contactBefore',label:'Contact introduction before name',group:'Advisor profile',localized:true,seed:{th:'พูดคุยกับ',en:'Speak with'}},
+  {path:'advisor.contactAfter',label:'Contact introduction after name',group:'Advisor profile',localized:true,seed:{th:'ผ่าน LINE หรือฝากคำถามให้ติดต่อกลับ',en:'on LINE, or leave a question and we will get back to you.'}},
+  ...[
+    ['submittingTitle','กำลังส่งคำขอของคุณ','Sending your request'],
+    ['submittingBody','กรุณารอสักครู่ ระหว่างที่เรารอการยืนยันจากระบบ','Please wait while we confirm your submission.'],
+    ['slowTitle','กำลังรอการยืนยันจากระบบ','Still waiting for confirmation'],
+    ['slowBody','การเชื่อมต่อใช้เวลานานกว่าปกติ กรุณาอย่าส่งคำขอซ้ำระหว่างรอผล','This is taking longer than usual. Please avoid submitting the same request again while you wait.'],
+    ['successTitle','ได้รับคำขอของคุณแล้ว','Your request has been received'],
+    ['successBody','เราบันทึกข้อมูลเรียบร้อยแล้ว และจะติดต่อกลับตามช่องทางที่คุณระบุ','Your request has been saved. We will contact you using the details you provided.'],
+    ['successIntro','เล่าเรื่องที่ต้องการให้ช่วยเพิ่มเติมได้ทาง LINE','Continue on LINE to tell us more about your enquiry.'],
+    ['successLine','คุยต่อทาง LINE','Continue on LINE'],
+    ['successOptional','ไม่สะดวกคุยตอนนี้ก็ได้ คำขอของคุณถูกส่งแล้ว','Chatting now is optional. Your request has already been submitted.'],
+    ['failureTitle','ยังส่งคำขอไม่สำเร็จ','Your request could not be submitted'],
+    ['failureBody','ระบบยังไม่ได้รับคำขอของคุณ ข้อมูลที่กรอกยังอยู่ในแบบฟอร์มนี้','Your request has not been received. Your entries are still available in this form.'],
+    ['failureIntro','ติดต่อเราได้อีกทางผ่าน LINE เพื่อแจ้งเรื่องที่ต้องการสอบถาม','You can contact us through LINE instead.'],
+    ['failureLine','ติดต่อผ่าน LINE แทน','Contact us on LINE instead'],
+    ['unknownTitle','ยังยืนยันการส่งคำขอไม่ได้','We could not confirm your submission'],
+    ['unknownBody','การเชื่อมต่อขัดข้องระหว่างรอผล คำขออาจถูกบันทึกแล้ว คุณสามารถคุยกับเราทาง LINE และแจ้งว่าเพิ่งส่งแบบฟอร์ม','The connection was interrupted before we could confirm the result. Your request may have been saved. Please tell us on LINE that you recently submitted the form.'],
+    ['unknownIntro','แจ้งว่าเพิ่งส่งแบบฟอร์ม เพื่อช่วยตรวจคำขอเดิม','Let us know you recently submitted the form so we can check your enquiry.'],
+    ['unknownLine','คุยกับเราทาง LINE','Talk to us on LINE'],
+    ['limitedTitle','ยังส่งคำขอไม่ได้ในขณะนี้','We cannot accept another submission right now'],
+    ['limitedBody','กรุณาลองใหม่ภายหลัง หรือติดต่อเราทาง LINE','Please try again later or contact us on LINE.'],
+    ['retry','ลองส่งอีกครั้ง','Try submitting again'],['edit','กลับไปแก้ไขข้อมูล','Edit your details'],
+    ['viewDraft','กลับไปดูข้อมูล','View your entries'],['hideDraft','กลับไปดูผลการส่ง','Back to submission status'],
+    ['services','ดูบริการอื่น','Explore our services'],['newRequest','ส่งคำขอเรื่องอื่น','Start another enquiry'],
+    ['lineHelp','เปิด LINE ไม่ได้?','Having trouble opening LINE?'],['waitingLine','ติดต่อทาง LINE ระหว่างรอ','Contact us on LINE while you wait'],
+    ['reference','หมายเลขคำขอ','Request reference'],['hours','เวลาติดต่อ','Contact hours'],
+    ['support','อีกช่องทางสำหรับติดต่อเรา','Another way to contact us'],
+    ['privacyLink','อ่านว่าข้อมูลของคุณถูกใช้อย่างไร','How we use your information'],
+    ['unavailable','ช่องทางติดต่อออนไลน์ยังไม่พร้อม กรุณาลองใหม่ภายหลัง','Online contact is currently unavailable. Please try again later.'],
+    ['nameRequired','กรุณากรอกชื่อที่ให้เรียก','Please enter your name.'],
+    ['contactRequired','กรุณากรอก LINE ID หรือเบอร์โทร','Please enter your LINE ID or phone number.'],
+    ['consentRequired','กรุณายืนยันความยินยอมก่อนส่งคำขอ','Please confirm your consent before submitting.'],
+    ['consentChanged','ข้อความความยินยอมมีการเปลี่ยนแปลง กรุณาอ่านและยืนยันใหม่','The consent notice has changed. Please read it and confirm again.'],
+    ['topicTooLong','กรุณาระบุรายละเอียดไม่เกิน 500 ตัวอักษร','Please keep your message within 500 characters.'],
+    ['invalidFields','กรุณาตรวจสอบข้อมูลในแบบฟอร์มก่อนส่งอีกครั้ง','Please review the form before submitting again.']
+  ].map(([key,th,en])=>({path:'contactSubmission.'+key,label:key,group:'Contact submission',localized:true,seed:{th,en}})),
+  ...[
+    ['inputs','ข้อมูลของคุณ','Your information'],['inputsHelp','กรอกข้อมูลที่สะดวก เพื่อประเมินความคุ้มครองเบื้องต้น','Use your approximate figures to explore a starting estimate.'],
+    ['life','ประกันชีวิต','Life'],['ci','โรคร้ายแรง','Critical illness'],['health','สุขภาพ','Health'],
+    ['lifeSubtitle','ดูแลคนข้างหลัง','Support those you love'],['ciSubtitle','เงินใช้ระหว่างพักฟื้น','Support during recovery'],['healthSubtitle','ค่ารักษาพยาบาล','Medical cover review'],
+    ['statement','วางแผนวันนี้\nเพื่อคนสำคัญในวันหน้า','Plan today\nfor those you love'],['resultStatement','เพื่อความอุ่นใจ\nของคนที่คุณรัก','For the people\nyou care about'],
+    ['result','ผลการประเมิน (โดยประมาณ)','Your estimate'],['breakdown','สรุปรายการคำนวณ','Calculation breakdown'],['total','รวมส่วนที่ยังขาด','Remaining shortfall'],
+    ['supportCost','เงินที่ต้องใช้ดูแล','Support costs'],['transition','ค่าใช้จ่ายช่วงเปลี่ยนผ่าน','Transition costs'],['recoveryCost','ค่าใช้จ่ายระหว่างพักฟื้น','Recovery spending'],
+    ['recoveryOneOff','งบพักฟื้นที่ไม่ใช่ค่ารักษา','One-off non-medical recovery budget'],['medicalBuffer','เงินสำรองค่ารักษาส่วนที่จ่ายเอง','Chosen medical out-of-pocket buffer'],['roomDaily','ค่าห้องอ้างอิงต่อวัน','Daily room reference'],
+    ['details','รายละเอียดเพิ่มเติม (ถ้ามี)','Additional details (optional)'],['adviceTitle','คำแนะนำจาก CoverMate','A note from CoverMate'],
+    ['adviceBody','นี่เป็นเพียงการประเมินเบื้องต้น ไม่ใช่ใบเสนอราคา ผลลัพธ์แตกต่างกันตามข้อมูลและสถานการณ์จริง ควรพิจารณาเป้าหมายชีวิต สุขภาพ อายุ และความคุ้มครองเดิมประกอบ','A starting estimate, not a quote. Results depend on your inputs and circumstances. Consider your goals, health, age and existing cover before choosing a plan.'],
+    ['method','ดูวิธีคำนวณ','How this is calculated'],['methodBody','ตัวเลขแสดงตามค่าที่คำนวณได้ ไม่ปัดเป็นหลักแสน ผลลัพธ์ไม่ต่ำกว่าศูนย์ เป็นแนวทางวางแผน ไม่ใช่การรับประกันความเพียงพอ','Amounts are calculated without rounding to a lump sum and cannot be negative. This is a planning guide, not a guarantee of sufficient cover.'],
+    ['cta','ให้ CoverMate ช่วยดูต่อ','Talk it through with CoverMate'],['baht','บาท','THB'],['perMonth','บาท/เดือน','THB/mo'],['years','ปี','years'],['months','เดือน','months'],['perDay','บาท/วัน','THB/day'],
+    ['spendingHelp','ค่าใช้จ่ายจำเป็นของครอบครัวที่ต้องการให้มีเงินรองรับ ไม่ใช่รายได้ทั้งหมด','Essential household spending to support, not your total income.'],
+    ['yearsHelp','เลือกระยะเวลาจากตัวเลือกที่กำหนดไว้สำหรับการวางแผน','Choose a planning period from the configured options.'],
+    ['debtHelp','รวมยอดหนี้คงเหลือและภาระในอนาคตที่ต้องการเตรียมไว้','Remaining debt and future obligations you want to fund.'],
+    ['resourcesHelp','รวมเงินสำรองและทุนประกันเดิมที่กันไว้ใช้กับความต้องการนี้ โดยไม่หักซ้ำ','Earmarked assets and existing cover for this need. Do not deduct them twice.'],
+    ['roomHelp','ค่าห้องต่อวันที่กรมธรรม์เดิมมีสิทธิคุ้มครองตามเงื่อนไข','Eligible daily room benefit under your existing policy terms.'],
+    ['recoveryHelp','จำนวนเดือนที่ต้องการให้เงินรองรับค่าใช้จ่ายระหว่างพักฟื้น','Months of essential spending you want to fund during recovery.'],
+    ['photoAlt','',''],
+    ['lifeResult','ทุนประกันชีวิตส่วนที่ยังขาด','Life cover shortfall'],['ciResult','เงินก้อนโรคร้ายแรงส่วนที่ยังขาด','Critical illness funding shortfall'],['healthResult','ภาพรวมความคุ้มครองสุขภาพของคุณ','Your health cover overview'],
+    ['netMonthlyNeed','ค่าใช้จ่ายสุทธิต่อเดือน','Net monthly spending'],['roomGap','ส่วนต่างค่าห้องต่อวัน','Daily room difference'],
+    ['monthlyNeed','ค่าใช้จ่ายที่คนข้างหลังยังต้องใช้ต่อเดือน','Monthly spending for those you leave behind'],
+    ['monthlyNeedHelp','นับเฉพาะค่าใช้จ่ายที่ยังมีต่อไป ไม่ใช่รายได้ทั้งหมด','Count ongoing spending, not your total income.'],
+    ['otherMonthlyIncome','รายได้อื่นที่ครอบครัวยังได้รับต่อเดือน','Other monthly income your family will retain'],
+    ['otherMonthlyIncomeHelp','รายได้ที่ยังได้รับแม้คุณไม่อยู่ ใส่ 0 ถ้าไม่มี','Income that continues without you. Enter 0 if none.'],
+    ['yearsToSupport','ต้องการให้เงินก้อนนี้ดูแลต่ออีกกี่ปี','Years of financial support'],
+    ['yearsToSupportHelp','ระยะเวลาที่ต้องการรองรับค่าใช้จ่าย เป็นจำนวนปีเต็ม','The number of whole years you want to fund.'],
+    ['debtToClear','หนี้ที่ต้องการให้เงินก้อนนี้ชำระ','Debt you want to clear'],
+    ['debtToClearHelp','ยอดหนี้คงเหลือที่ต้องการชำระ อย่านับซ้ำกับค่าใช้จ่ายรายเดือน','Outstanding debt to repay. Avoid counting it again in monthly spending.'],
+    ['extraLumpSum','ภาระเงินก้อนเพิ่มเติม','Additional lump-sum obligations'],
+    ['extraLumpSumHelp','เช่น ค่าเล่าเรียนหรือค่าใช้จ่ายสุดท้าย ที่ยังไม่รวมในช่องอื่น','For example, education or final expenses not included elsewhere.'],
+    ['earmarkedAssets','เงินออม/สินทรัพย์ที่กันไว้ให้คนข้างหลัง','Assets earmarked for your family'],
+    ['earmarkedAssetsHelp','นับเฉพาะส่วนที่พร้อมนำมาใช้กับเป้าหมายนี้','Only assets available for this purpose.'],
+    ['existingLifeCover','เงินประกันชีวิตที่มีอยู่แล้ว','Existing life cover'],
+    ['existingLifeCoverHelp','ทุนชีวิตเดิมที่จะจ่ายให้ผู้รับประโยชน์ตามเงื่อนไข อย่านับซ้ำกับสินทรัพย์','Existing eligible life cover. Do not include it again in assets.'],
+    ['monthlyRecoveryNeed','ค่าใช้จ่ายจำเป็นต่อเดือนระหว่างพักฟื้น','Essential monthly recovery spending'],
+    ['monthlyRecoveryNeedHelp','ค่าใช้จ่ายที่ยังต้องจ่ายระหว่างหยุดงานหรือพักฟื้น','Ongoing essential costs while away from work.'],
+    ['recoveryMonths','ระยะเวลาที่ต้องการให้มีเงินรองรับ','Months of recovery support'],
+    ['recoveryMonthsHelp','จำนวนเดือนเต็มที่ต้องการวางแผนรองรับ ไม่ใช่ระยะรักษาที่คาดการณ์','Whole months to plan for, not a prediction of treatment duration.'],
+    ['otherSupportIncome','รายได้หรือเงินช่วยเหลือที่ยังได้รับต่อเดือน','Continuing monthly income or assistance'],
+    ['otherSupportIncomeHelp','รายได้หรือความช่วยเหลือที่ยังได้รับระหว่างพักฟื้น','Income or support that continues during recovery.'],
+    ['availableEmergencyFunds','เงินสำรองที่พร้อมใช้ในกรณีนี้','Emergency funds available for recovery'],
+    ['availableEmergencyFundsHelp','เฉพาะเงินสำรองที่พร้อมใช้โดยไม่กระทบเป้าหมายอื่น','Funds available without compromising other commitments.'],
+    ['existingCriticalIllnessCover','เงินก้อนโรคร้ายแรงที่มีอยู่แล้ว','Existing critical illness lump sum'],
+    ['existingCriticalIllnessCoverHelp','ตรวจโรค ระยะโรค และเงื่อนไขการจ่ายของกรมธรรม์เดิม','Check covered conditions, disease stages and payout terms.'],
+    ['extraRecoveryBudget','ค่าใช้จ่ายเพิ่มเติมระหว่างพักฟื้น (ถ้ามี)','Additional recovery costs (optional)'],
+    ['extraRecoveryBudgetHelp','ค่าใช้จ่ายเพิ่มเติมที่ไม่ซ้ำกับรายเดือน เช่น เดินทางหรือผู้ดูแล','Additional costs such as travel or care, not already in monthly spending.'],
+    ['roomReference','โรงพยาบาล / ระดับห้องที่คาดว่าจะใช้','Hospital or room level you expect to use'],
+    ['roomReferenceHelp','เลือกข้อมูลอ้างอิงที่มีแหล่งที่มา หรือใส่ค่าห้องที่ตรวจสอบเอง','Select the dated reference or enter a room rate you have checked.'],
+    ['customRoomDaily','ค่าห้องที่คาดว่าจะใช้ต่อวัน','Expected daily room rate'],
+    ['customRoomDailyHelp','ใส่ราคาที่ตรวจสอบกับโรงพยาบาลแล้ว ไม่รวมค่ารักษาอื่น','Use a rate checked with the hospital. Other treatment costs are excluded.'],
+    ['roomBenefit','ค่าห้องที่มีอยู่ในประกันเดิม','Existing daily room benefit'],
+    ['roomBenefitHelp','สิทธิค่าห้องที่ใช้ได้จริงหลังตรวจเงื่อนไข ไม่บวกสิทธิซ้ำซ้อน','Eligible daily room benefit. Do not double-count overlapping entitlements.'],
+    ['costSharing','มี deductible / co-pay หรือไม่','Deductible or co-pay'],
+    ['costSharingHelp','ตรวจว่าต้องจ่ายส่วนแรกหรือร่วมจ่ายกี่เปอร์เซ็นต์ และมีเพดานหรือไม่','Check the deductible, co-pay percentage and any applicable caps.'],
+    ['employerCover','มีสวัสดิการนายจ้างหรือไม่','Employer medical benefits'],
+    ['employerCoverHelp','ตรวจวงเงินและระยะเวลาที่ใช้สิทธิได้ รวมถึงเมื่อเปลี่ยนงาน','Check benefit limits and what happens when employment changes.'],
+    ['personalCover','มีประกันสุขภาพส่วนตัวหรือไม่','Personal health insurance'],
+    ['personalCoverHelp','ตรวจตารางผลประโยชน์ ข้อยกเว้น และระยะรอคอย','Review benefits, exclusions and waiting periods.'],
+    ['ownPayBudget','พร้อมจ่ายเองเพิ่มเติมได้ประมาณเท่าไร','Available out-of-pocket budget'],
+    ['ownPayBudgetHelp','เงินที่พร้อมจ่ายเพิ่มต่อการรักษาครั้งหนึ่ง ไม่ได้นำไปหักค่าห้องรายวัน','Available per treatment episode. Not subtracted from a daily room rate.'],
+    ['unknown','ยังไม่ทราบ / ยังไม่เลือก','Not sure / not selected'],['custom','ระบุค่าห้องเอง','Enter a room rate'],['none','ไม่มี','None'],['yes','มี','Yes'],['no','ไม่มี','No'],['deductible','มีค่าเสียหายส่วนแรก','Deductible'],['copay','มีส่วนร่วมจ่าย','Co-pay'],['both','มีทั้งสองแบบ','Both'],
+    ['incomplete','ข้อมูลยังไม่พอ','More information needed'],['review','ควรตรวจเพิ่ม','Review further'],['roomAligned','พอใช้สำหรับค่าห้องอ้างอิง','Room benefit matches the reference'],
+    ['healthAdvice','นี่เป็นเพียงการเทียบสิทธิค่าห้อง ไม่รับรองว่าความคุ้มครองทั้งหมดเพียงพอ ควรตรวจวงเงินรวม ค่ารักษา ข้อยกเว้น และเงื่อนไขร่วมจ่ายกับกรมธรรม์จริง','This compares room benefits only, not overall adequacy. Review total limits, treatment benefits, exclusions and cost-sharing terms in the actual policy.'],
+    ['ciAdvice','เป็นแนวทางวางแผนเงินระหว่างพักฟื้น ไม่ได้หมายความว่ากรมธรรม์ทุกแบบจะจ่ายตามยอดนี้ การจ่ายขึ้นกับโรค ระยะโรค และเงื่อนไขของแต่ละกรมธรรม์','A recovery funding guide, not a promised payout. Eligibility depends on covered conditions, disease stages and each policy\'s terms.'],
+    ['healthQuestions','สิ่งที่ควรถามต่อ','Questions to review'],
+    ['lifeMethod','ค่าใช้จ่ายสุทธิ = ค่าใช้จ่ายต่อเดือน หักรายได้ที่ยังได้รับ (ขั้นต่ำ 0) คูณ 12 และจำนวนปี บวกหนี้และภาระเงินก้อน แล้วหักสินทรัพย์และทุนชีวิตเดิม ไม่รวมเงินเฟ้อ ผลตอบแทน หรือภาระที่ไม่ได้กรอก','Net spending is monthly spending minus continuing income, with a floor of 0. Multiply by 12 and years, add debt and additional obligations, then deduct earmarked assets and existing life cover. Inflation, investment returns and unentered obligations are excluded.'],
+    ['ciMethod','ค่าใช้จ่ายต่อเดือน หักรายได้ที่ยังได้รับ (ขั้นต่ำ 0) คูณจำนวนเดือน บวกค่าใช้จ่ายเพิ่มเติม แล้วหักเงินสำรองและเงินก้อนโรคร้ายแรงเดิม ไม่ได้ประมาณค่ารักษาหรือสิทธิการเคลม','Subtract continuing support from monthly spending (minimum 0), multiply by months, add extra recovery costs, then deduct available funds and existing critical illness cover. This does not predict treatment bills or claim eligibility.'],
+    ['healthMethod','เทียบค่าห้องอ้างอิงกับสิทธิค่าห้องเดิมเท่านั้น หากมีส่วนต่างหรือร่วมจ่าย ควรตรวจเพิ่ม หากข้อมูลไม่ครบ ยังสรุปไม่ได้ เงินที่พร้อมจ่ายเองไม่ถูกหักจากค่าห้องต่อวัน เพราะเป็นคนละหน่วย','Compare the reference room rate with existing daily room benefits. A gap or cost-sharing prompts further review; missing details prevent a conclusion. A per-episode budget is not deducted from a daily room rate.'],
+    ['privacy','คำนวณได้โดยไม่ต้องให้ข้อมูลติดต่อ ข้อมูลอยู่บนหน้านี้เท่านั้น หากขอคำแนะนำต่อ สรุปจะถูกแนบไว้และส่งเมื่อคุณยินยอมและกดส่งฟอร์ม','No contact details are needed to calculate. Figures stay on this page. Continuing prepares an attachment that is sent only when you consent and submit the contact form.'],
+    ['pending','กำลังคำนวณ','Updating estimate'],['completePrompt','กรอกข้อมูลหลักให้ครบเพื่อดูผลประเมิน','Complete the core fields to see your estimate'],
+    ['invalid','กรุณาใส่ตัวเลขจำนวนเต็ม','Please enter a whole number'],['warning','ค่านี้สูงกว่าช่วงทั่วไป ลองตรวจสอบอีกครั้ง','Above the usual range. Please double-check.'],
+    ['reset','เริ่มใหม่เฉพาะแท็บนี้','Reset this tab'],['attached','แนบสรุปจากเครื่องคำนวณแล้ว','Calculator summary attached']
+  ].map(([key,th,en])=>({path:'calculatorDesign.'+key,label:key.replace(/([A-Z])/g,' $1'),group:'Calculator design',localized:true,seed:{th,en}})),
+  ...[
+    ['known','ระบุจำนวนเงิน','Enter amount'],['notSure','ไม่ทราบวงเงิน','I do not know the amount'],['notSureValue','ยังไม่ทราบ','Not sure'],['choose','เลือกคำตอบ','Choose an answer'],
+    ['partial','ยังไม่ทราบส่วนขาดสุดท้าย','Final shortfall is not yet known'],['provisionalGap','ยอดก่อนหักประกันเดิม','Amount before existing cover'],
+    ['partialNote','ยอดนี้ยังไม่ได้หักประกันเดิมที่คุณไม่ทราบ จึงยังไม่ใช่จำนวนที่ควรซื้อเพิ่ม','Unknown existing cover has not been deducted. This is not an amount to purchase.'],
+    ['debtDoubleCount','หากรวมยอดปิดหนี้แล้ว อย่านับค่างวดหนี้เดียวกันซ้ำในค่าใช้จ่ายรายเดือน','If debt is cleared with the lump sum, do not also count its future instalments in monthly expenses.'],
+    ['assetDoubleCount','อย่าหักเงินลงทุนทั้งก้อนพร้อมนับรายได้จากเงินก้อนเดียวกันต่อเนื่อง','Do not deduct investment capital while also counting ongoing income from that same capital.'],
+    ['ciNextEvent','ใช้เงินก้อนที่ยังจ่ายได้สำหรับเหตุครั้งถัดไป ไม่ใช่ยอดเคลมสะสมสูงสุด และไม่หักวงเงินสุขภาพออกจากเงินพักฟื้น','Use the benefit available for the next qualifying event, not lifetime cumulative claims. Medical limits do not offset recovery cash needs.'],
+    ['incomeCoversSpending','รายได้ที่ยังมีอยู่รองรับค่าใช้จ่ายรายเดือนส่วนนี้แล้ว','Continuing income covers this part of monthly spending.'],
+    ['valuation','วิธีประเมินค่าใช้จ่ายในอนาคต','Future spending model'],['valuationHelp','แบบตรงใช้ค่าปัจจุบันทุกปี แบบมูลค่าปัจจุบันใช้สมมติฐานที่คุณกำหนดเอง','Simple repeats today’s amount. Present value uses your own assumptions.'],
+    ['simple','ไม่ปรับเงินเฟ้อหรือผลตอบแทน','No inflation or return adjustment'],['presentValue','กำหนดสมมติฐานเอง','Use my assumptions'],
+    ['inflationPercent','เงินเฟ้อต่อปีที่สมมติ','Assumed annual inflation'],['inflationPercentHelp','จำนวนเต็ม 0–20% ไม่ใช่อัตราที่ CoverMate คาดการณ์','Whole percentage 0–20. Not a CoverMate forecast.'],
+    ['returnPercent','ผลตอบแทนสุทธิต่อปีที่สมมติ','Assumed net annual return'],['returnPercentHelp','หลังค่าใช้จ่ายและภาษี จำนวนเต็ม 0–20% ไม่ได้รับประกันผลตอบแทน','After costs and taxes, whole percentage 0–20. Returns are not guaranteed.'],
+    ['valuationNote','มูลค่าปัจจุบันใช้ค่าใช้จ่ายต้นปี ปรับเงินเฟ้อและคิดลดตามอัตราที่กรอก ปัดเพียงเศษบาทเมื่อรวมเสร็จ','Present value uses start-of-year expenses, your inflation and discount rates, rounded only to whole baht after summing.'],
+    ['medicalOOPBuffer','ค่ารักษาที่ตั้งใจออกเองเพิ่มเติม','Additional medical out-of-pocket buffer'],['medicalOOPBufferHelp','แยกจากผู้ดูแลและค่าเดินทาง อย่ารวมยอดเดียวกันในค่าใช้จ่ายพักฟื้นอีก','Separate from care and travel. Do not repeat the same amount in recovery expenses.'],
+    ['publicHealthScheme','สิทธิรักษาหลักของคุณ','Your public treatment entitlement'],['publicHealthSchemeHelp','ใช้เป็นบริบท ไม่แปลงสิทธิรัฐเป็นวงเงินสดโดยอัตโนมัติ','Context only. Public entitlements are not converted into a cash amount.'],
+    ['ucs','บัตรทอง','Universal Coverage'],['sso','ประกันสังคม','Social Security'],['civil','สิทธิข้าราชการ','Civil servant scheme'],['other','อื่น ๆ','Other'],
+    ['careSetting','รูปแบบการรักษาที่ต้องการ','Preferred care setting'],['careSettingHelp','ใช้ประกอบการตรวจโรงพยาบาลและพื้นที่คุ้มครอง ไม่ใช่การคาดการณ์ค่ารักษา','For hospital and territory review, not a treatment-cost prediction.'],
+    ['public','โรงพยาบาลรัฐ','Public hospital'],['private','โรงพยาบาลเอกชน','Private hospital'],['international','รวมการรักษาต่างประเทศ','Including overseas treatment'],
+    ['existingHealthStructure','รูปแบบประกันสุขภาพส่วนตัวเดิม','Existing personal health structure'],['existingHealthStructureHelp','ดูจากตารางผลประโยชน์ ถ้าแยกรายการจะไม่แปลงเป็นวงเงินต่อปี','Check the benefit schedule. Itemised benefits are not converted into an annual limit.'],
+    ['annual','วงเงินต่อปี','Annual aggregate'],['itemized','วงเงินแยกรายการ','Itemised limits'],
+    ['existingAnnualLimit','วงเงินต่อปีของประกันส่วนตัวเดิม','Existing personal annual limit'],['existingAnnualLimitHelp','เฉพาะวงเงินรวมต่อปี ไม่บวกวงเงินรายโรคหรือสิทธิที่เบิกซ้ำไม่ได้','Annual aggregate only. Do not add per-disease limits or overlapping reimbursement.'],
+    ['targetAnnualLimit','วงเงินต่อปีเป้าหมาย (ถ้าทราบ)','Target annual limit (if known)'],['targetAnnualLimitHelp','เป็นเป้าหมายที่คุณเลือก ไม่ใช่วงเงินที่ระบบแนะนำให้ทุกคน','Your own target, not a universal recommendation.'],
+    ['annualGap','ส่วนต่างวงเงินต่อปี','Annual limit difference'],['percent','%','%'],['perYear','บาท/ปี','THB/year'],
+    ['deductibleAmount','ค่าเสียหายส่วนแรก','Deductible amount'],['deductibleAmountHelp','จำนวนที่ต้องออกก่อนตามกรมธรรม์ เงื่อนไขต่อครั้งหรือต่อปีต้องตรวจแยก','Amount payable first. Check whether the policy applies it per episode or year.'],
+    ['copayPercent','สัดส่วนร่วมจ่าย','Co-pay percentage'],['copayPercentHelp','เปอร์เซ็นต์จำนวนเต็ม 0–100 ตรวจฐานคำนวณและเพดานกับกรมธรรม์','Whole percentage 0–100. Check the calculation basis and caps in the policy.'],
+    ['opdPreference','ต้องการผู้ป่วยนอก (OPD)','Outpatient cover preference'],['opdPreferenceHelp','ตรวจขอบเขตและวงเงินแยกจากผู้ป่วยใน','Review scope and limits separately from inpatient benefits.'],
+    ['territory','พื้นที่คุ้มครองที่ต้องการ','Required coverage territory'],['territoryHelp','เงื่อนไขประเทศและข้อยกเว้นต้องตรวจตามแผนจริง','Country conditions and exclusions require policy review.'],['thailand','ประเทศไทย','Thailand'],['worldwide','รวมต่างประเทศ','Including overseas'],
+    ['stressEnabled','ลองสถานการณ์ค่าใช้จ่ายที่กำหนดเอง','Explore a self-defined cost scenario'],['stressEnabledHelp','ไม่ใช่ราคาค่ารักษาคาดการณ์หรือการยืนยันสิทธิเรียกร้อง','Not a treatment-price forecast or claim entitlement.'],
+    ['scenarioEligibleCost','ค่าใช้จ่ายที่เข้าเงื่อนไขในสถานการณ์นี้','Eligible costs in this scenario'],['scenarioEligibleCostHelp','กรอกเฉพาะค่าใช้จ่ายที่ทราบว่าเข้าเงื่อนไข ไม่ใช่ยอดบิลที่ยังไม่ได้ตรวจ','Only costs you know are eligible, not an unreviewed total bill.'],
+    ['scenarioRemainingLimit','วงเงินที่เหลือใช้ได้ในสถานการณ์นี้','Remaining eligible limit for this scenario'],['scenarioRemainingLimitHelp','ตรวจวงเงินคงเหลือและวงเงินย่อยแล้ว ไม่ใช่ทุนตามหน้ากรมธรรม์เสมอไป','After checking remaining and sub-limits, not necessarily the policy headline limit.'],
+    ['scenarioOwnPay','ส่วนที่ออกเองตามสมมติฐาน','Illustrative own-payment'],['scenarioBudgetGap','เกินงบออกเองที่กำหนด','Amount above your own-payment budget'],
+    ['stressNote','สมมติหักส่วนแรกก่อน แล้วร่วมจ่าย และจำกัดด้วยวงเงินที่เหลือ กรมธรรม์จริงอาจคิดต่างกัน ต้องตรวจเงื่อนไขก่อนใช้ตัดสินใจ','Assumes deductible, then co-pay, then the remaining benefit cap. Actual policies may differ; verify the terms before deciding.'],
+    ['healthResultV2','ภาพรวมความคุ้มครองสุขภาพ','Your health coverage review'],['reviewRequired','ยังต้องตรวจรายละเอียดเพิ่มเติม','Further details need review'],['dimensionsAligned','ค่าห้องและวงเงินตรงเป้าหมายที่กรอก','Room and annual limit match your inputs'],
+    ['healthNotAdditive','ส่วนต่างวงเงินไม่ใช่จำนวนที่ต้องซื้อเพิ่ม ประกันต่างโครงสร้างอาจเบิกซ้อนกันไม่ได้','A limit difference is not an amount to buy. Different policies may not reimburse the same expense twice.'],
+    ['employerContext','สิทธิรัฐและสวัสดิการนายจ้างใช้ประกอบการตรวจ ไม่ถูกหักเป็นเงินประกันส่วนตัวถาวร','Public and employer benefits provide context; they are not deducted as permanent personal cover.'],
+    ['itemizedNote','ประกันเดิมแยกรายการ จึงไม่เปรียบเทียบเป็นวงเงินต่อปีตรง ๆ','Existing itemised cover cannot be compared directly as one annual limit.'],
+    ['datedReference','ข้อมูลค่าห้องเป็นราคา ณ วันที่ระบุ โปรดยืนยันกับโรงพยาบาลอีกครั้ง','Room data is dated. Confirm the current rate with the hospital.'],
+    ['referenceChoice','ข้อมูลโรงพยาบาลที่ตรวจแล้ว','Reviewed hospital reference'],['referenceChoiceHelp','แสดงเฉพาะรายการที่ผ่านการตรวจและยังไม่พ้นวันที่ทบทวน','Only approved records that are still within their review period.'],
+    ['referenceUnavailable','รายการเดิมต้องตรวจใหม่ กรุณาเลือกข้อมูลอ้างอิงอีกครั้ง','Previous reference needs review. Please select another reference.'],
+    ['healthMethodV2','เปรียบเทียบวงเงินต่อปีเฉพาะประกันโครงสร้างเดียวกัน ค่าห้องเทียบแยกเป็นรายวัน สิทธิรัฐและนายจ้างไม่ถูกแปลงเป็นเงิน หากข้อมูลไม่ทราบจะไม่สรุปว่าไม่มีความคุ้มครอง','Compare annual limits only on a comparable basis; compare rooms separately per day. Public and employer benefits are not converted to cash. Unknown never means no cover.'],
+    ['lifeMethodV2','ค่าใช้จ่ายสุทธิต่อเดือน (ขั้นต่ำ 0) × 12 × ปี บวกหนี้และภาระเงินก้อน หักสินทรัพย์ที่กันไว้และประกันเดิม หากเลือกสมมติฐานเองจะคำนวณค่าใช้จ่ายรายปีเป็นมูลค่าปัจจุบันแทน','Net monthly expenses (minimum 0) × 12 × years, plus debt and lump sums, less earmarked assets and existing life cover. Custom assumptions replace the spending total with its present value.'],
+    ['ciMethodV2','ค่าใช้จ่ายสุทธิต่อเดือน (ขั้นต่ำ 0) × เดือน บวกค่าใช้จ่ายพักฟื้นและค่ารักษาที่เลือกออกเอง หักเงินสำรองและเงินก้อนโรคร้ายแรงที่ยังจ่ายได้ครั้งถัดไป','Net monthly expenses (minimum 0) × months, plus recovery costs and chosen medical buffer, less earmarked funds and the next available CI benefit.'],
+    ['healthAdviceV2','ตรวจวงเงินรายรายการ ค่าห้อง พื้นที่คุ้มครอง ค่าใช้จ่ายร่วม และข้อยกเว้นประกอบ ตัวเลขนี้ไม่ยืนยันว่าความคุ้มครองทั้งหมดเพียงพอ','Review sub-limits, rooms, territory, cost sharing and exclusions. These figures do not establish overall adequacy.'],
+    ['planning','ข้อมูลสำหรับช่วยดูทางเลือก','Information for reviewing options'],['planningHelp','ระบุเท่าที่ทราบ หรือข้ามไปพูดคุยกับเราได้ ยังไม่ส่งข้อมูลจนกว่าจะยินยอมและส่งแบบฟอร์ม','Provide what you know, or continue to talk with us. Nothing is sent until you consent and submit the form.'],
+    ['planNext','ดูข้อมูลสำหรับเลือกแผน','Review plan requirements'],['attachAndContinue','แนบสรุปและไปแบบฟอร์มติดต่อ','Attach summary and continue to contact'],['skipPlanning','ไปแบบฟอร์มโดยไม่แนบข้อมูลเลือกแผน','Continue without plan-review details'],
+    ['age','อายุ','Age'],['ageHelp','อายุเต็มปี ใช้คัดกรองเบื้องต้น บริษัทอาจใช้เกณฑ์นับอายุต่างกัน','Age in full years for preliminary screening. Insurer age conventions may differ.'],
+    ['occupationClass','ชั้นอาชีพตามบริษัทประกัน (ถ้าทราบ)','Insurer occupation class (if known)'],['occupationClassHelp','ไม่ต้องเดาชั้นอาชีพ หากไม่ทราบให้ผู้ให้คำปรึกษาตรวจ','Do not guess. An adviser can check the insurer’s classification.'],['class1','ชั้น 1','Class 1'],['class2','ชั้น 2','Class 2'],['class3','ชั้น 3','Class 3'],['class4','ชั้น 4','Class 4'],
+    ['basePolicy','มีกรมธรรม์หลัก AIA อยู่แล้ว','Existing AIA base policy'],['basePolicyHelp','สัญญาเพิ่มเติมต้องตรวจรุ่นกรมธรรม์หลักที่แนบได้อีกครั้ง','Riders require a separate compatibility check for the exact base policy.'],
+    ['basePolicyId','รหัสแบบกรมธรรม์หลัก (ไม่ใช่เลขกรมธรรม์)','Base plan code (not your policy number)'],['basePolicyIdHelp','ใส่เฉพาะรหัสแบบประกันถ้าทราบ ไม่ใส่เลขกรมธรรม์ส่วนบุคคล เว้นว่างให้ผู้ให้คำปรึกษาตรวจได้','Only the product code if known, never your personal policy number. Leave blank for adviser review.'],
+    ['horizonYears','ต้องการคุ้มครองอีกกี่ปี','Desired coverage horizon'],['horizonYearsHelp','ระยะที่ต้องการรองรับภาระ ไม่ใช่ระยะจ่ายเบี้ย','The period to protect your obligations, not the premium payment term.'],
+    ['monthlyBudget','งบเบี้ยต่อเดือน (ถ้าทราบ)','Monthly premium budget (if known)'],['monthlyBudgetHelp','ใช้เปรียบเทียบทางเลือก ไม่ลดตัวเลขความต้องการที่คำนวณไว้','Used to compare options, never to reduce the calculated need.'],
+    ['annualIncome','รายได้ต่อปี (ถ้าทราบ)','Annual income (if known)'],['annualIncomeHelp','บางแผนมีเงื่อนไขวงเงินตามรายได้ ยังต้องตรวจหลักเกณฑ์จริง','Some plans have income-related limits requiring further verification.'],
+    ['residence','ประเทศที่พำนัก','Residence'],['residenceHelp','ใช้ตรวจเงื่อนไขการสมัครเบื้องต้น','Used for preliminary eligibility screening.'],
+    ['paInterest','ต้องการดูความคุ้มครองอุบัติเหตุด้วย','Also review accident protection'],['paInterestHelp','แยกการเสียชีวิต อุบัติเหตุค่ารักษา และรายได้ ไม่รวมเป็นยอดเดียวกับประกันชีวิต','Death, accident medical and income needs remain separate from the life total.'],
+    ['motorcycle','ใช้รถจักรยานยนต์','Motorcycle exposure'],['motorcycleHelp','ตรวจเงื่อนไขอุบัติเหตุและข้อยกเว้นของแต่ละแผน','Check each plan’s accident terms and exclusions.'],
+    ['accidentDeathTarget','เป้าหมายเงินก้อนกรณีเสียชีวิตจากอุบัติเหตุ','Accident-death target'],['existingAccidentDeath','เงินกรณีเสียชีวิตที่ใช้ได้กับอุบัติเหตุอยู่แล้ว','Existing death benefits applicable to accidents'],
+    ['accidentMedicalTarget','เป้าหมายค่ารักษาอุบัติเหตุต่อครั้ง','Accident medical target per episode'],['existingAccidentMedical','ค่ารักษาอุบัติเหตุเดิมต่อครั้ง','Existing accident medical limit per episode'],
+    ['accidentMonthlyNeed','ค่าใช้จ่ายต่อเดือนเมื่อพักจากอุบัติเหตุ','Monthly accident recovery spending'],['accidentContinuingIncome','รายได้ที่ยังได้รับต่อเดือน','Continuing monthly income'],
+    ['accidentRecoveryMonths','เดือนที่ต้องการรองรับ','Months to support'],['existingAccidentIncome','เงินชดเชยรายได้ที่ใช้ได้ตลอดช่วงนี้','Income benefit available over this period'],
+    ['paHelp','กรอกเฉพาะผลประโยชน์ที่เข้าเงื่อนไขเดียวกัน อย่านับสิทธิซ้ำ และไม่รวมส่วนต่าง PA เข้ากับยอดชีวิต','Use benefits for the same event only, without double counting. PA gaps are not added to the life total.'],
+    ['paDeathGap','ส่วนต่างเงินกรณีเสียชีวิตจากอุบัติเหตุ','Accident-death difference'],['paMedicalGap','ส่วนต่างค่ารักษาอุบัติเหตุ','Accident medical difference'],['paIncomeGap','ส่วนต่างเงินพักฟื้นจากอุบัติเหตุ','Accident recovery income difference'],
+    ['awaitingCatalog','ยังไม่มีรายชื่อแผนที่ผ่านการตรวจสำหรับผลนี้ ผู้ให้คำปรึกษาจะช่วยตรวจทางเลือกให้','No verified plan list is available for this result. An adviser can review the options with you.'],
+    ['needsInformation','ยังต้องตรวจข้อมูลและเงื่อนไขก่อนแสดงรายชื่อแผน','More information and policy checks are needed before showing candidates.'],
+    ['candidateNotice','ตัวเลือกเบื้องต้น ไม่ใช่การรับรองความเหมาะสมหรือการอนุมัติรับประกัน ต้องตรวจเบี้ยและเงื่อนไขจริง','Preliminary candidates, not suitability guarantees or underwriting approval. Verify actual premiums and policy terms.'],
+    ['coverageFit','วงเงินตรงตามเป้าหมายที่กรอก','Coverage matches the entered target'],['eligibilityScreened','ผ่านเงื่อนไขเบื้องต้นที่ทราบ','Meets the known preliminary criteria'],['mechanismMatch','ประเภทผลประโยชน์ตรงกับความต้องการ','Benefit type matches the need'],
+    ['budgetUnknown','ยังต้องตรวจเบี้ยและงบประมาณ','Premium and budget need review'],['withinBudget','อยู่ในงบที่ระบุ ตามข้อมูลเบี้ยที่ตรวจไว้','Within the stated budget using reviewed premium data'],['overBudget','สูงกว่างบที่ระบุ ไม่เปลี่ยนยอดความต้องการ','Above the stated budget; calculated need is unchanged'],
+    ['rememberSession','จำข้อมูลในแท็บนี้จนปิดแท็บ','Remember entries in this tab until it closes'],['sessionUnavailable','เบราว์เซอร์ไม่อนุญาตให้จำข้อมูล ยังใช้คำนวณได้ตามปกติ','Browser storage is unavailable. You can still calculate.'],
+    ['invalidV2','ใส่จำนวนเต็มตั้งแต่ 0 และอยู่ในช่วงที่ระบุ ระยะเวลาต้องมากกว่า 0','Enter a nonnegative whole number within the stated range. Durations must be above 0.'],
+    ['privacyV2','คำนวณได้โดยไม่ให้ข้อมูลติดต่อ ข้อมูลไม่ถูกส่งระหว่างกรอก การแนบสรุปจะส่งเมื่อคุณยินยอมและกดส่งแบบฟอร์มเท่านั้น','Calculate without contact details. Entries are not transmitted while typing. An attached summary is sent only with your consent and form submission.']
+  ].map(([key,th,en])=>({path:'calculatorDesign.'+key,label:key.replace(/([A-Z])/g,' $1'),group:'Calculator design',localized:true,seed:{th,en}})),
+  {path:'calculatorDesign.background',label:'Calculator botanical background',group:'Calculator design',media:true,seed:'assets/brand/home-botanical-v1.webp'},
+  {path:'calculatorDesign.photo',label:'Calculator optional photo',group:'Calculator design',media:true,seed:''},
+  ...['life','ci','health'].map(key=>({path:'calculatorDesign.'+key+'Icon',label:key+' tab icon',group:'Calculator design',media:true,seed:''})),
+  ...['monthlyNeed','otherMonthlyIncome','yearsToSupport','debtToClear','extraLumpSum','earmarkedAssets','existingLifeCover','monthlyRecoveryNeed','recoveryMonths','otherSupportIncome','availableEmergencyFunds','existingCriticalIllnessCover','extraRecoveryBudget','roomReference','customRoomDaily','roomBenefit','costSharing','employerCover','personalCover','ownPayBudget'].map(key=>({path:'calculatorDesign.'+key+'Icon',label:key+' input icon',group:'Calculator design',media:true,seed:''})),
   {path:'errorPage.illustration',label:'Error illustration (leave centre blank for status number)',group:'Error page',media:true,seed:'assets/brand/error-illustration-v1.webp'},
   ...[
     ['eyebrow','ขออภัย','Sorry about that'],
@@ -415,6 +606,18 @@ const CMS_CONTENT_FIELDS = [
     ['statement','ให้เรื่องประกัน\nเป็นเรื่องที่เข้าใจได้','Making insurance\neasier to understand'],
     ['skip','ข้ามไปยังเนื้อหา','Skip to content']
   ].map(([key,th,en])=>({path:'errorPage.'+key,label:key.replace(/([A-Z])/g,' $1'),group:'Error page',localized:true,seed:{th,en}})),
+  {path:'cookieConsent.title',label:'Banner heading',group:'Cookie consent',localized:true,seed:{th:'คุกกี้วิเคราะห์การใช้งาน',en:'Analytics cookies'}},
+  {path:'cookieConsent.body',label:'Banner explanation',group:'Cookie consent',localized:true,seed:{th:'ขอใช้ Google Analytics เพื่อปรับปรุงเว็บไซต์ คุณปฏิเสธได้และยังใช้งานได้ตามปกติ',en:'May we use Google Analytics to improve this site? You can decline and still use everything.'}},
+  {path:'cookieConsent.accept',label:'Allow analytics',group:'Cookie consent',localized:true,seed:{th:'อนุญาต',en:'Allow'}},
+  {path:'cookieConsent.reject',label:'Decline analytics',group:'Cookie consent',localized:true,seed:{th:'ไม่อนุญาต',en:'Decline'}},
+  {path:'cookieConsent.settings',label:'Footer settings button',group:'Cookie consent',localized:true,seed:{th:'ตั้งค่าคุกกี้',en:'Cookie settings'}},
+  {path:'cookieConsent.details',label:'Details disclosure',group:'Cookie consent',localized:true,seed:{th:'รายละเอียด',en:'Details'}},
+  {path:'cookieConsent.explanation',label:'Cookie details',group:'Cookie consent',localized:true,seed:{th:'เมื่ออนุญาต Google จะได้รับข้อมูลหน้าเว็บและการใช้งาน เช่น การคลิกและประเภทอุปกรณ์ เพื่อจัดทำสถิติ โดยเราไม่ส่งชื่อ เบอร์โทร LINE ID หรือข้อความในฟอร์มไปกับเหตุการณ์ GA4 คุกกี้ _ga และ _ga_* มีอายุสูงสุด 180 วัน Google อาจประมวลผลข้อมูลในต่างประเทศ',en:'If you allow analytics, Google receives page and usage information such as clicks and device type for statistics. Our GA4 events exclude names, phone numbers, LINE IDs and form messages. The _ga and _ga_* cookies last up to 180 days. Google may process data outside your country.'}},
+  {path:'cookieConsent.retention',label:'Choice and withdrawal explanation',group:'Cookie consent',localized:true,seed:{th:'เราจำตัวเลือกนี้ในเบราว์เซอร์สูงสุด 180 วัน หากเบราว์เซอร์ไม่อนุญาตให้บันทึก จะจำได้เฉพาะหน้านี้ ถอนความยินยอมได้ที่ “ตั้งค่าคุกกี้” ท้ายเว็บ การถอนจะหยุดการเก็บข้อมูลใหม่ ไม่ลบข้อมูลที่ส่งไปแล้ว และไม่เปลี่ยนความยินยอมในฟอร์มติดต่อ',en:'We remember your choice in this browser for up to 180 days, or just this page if storage is blocked. Withdraw via Cookie settings in the footer. Withdrawal stops new collection, not data already sent, and does not change contact-form consent.'}},
+  {path:'cookieConsent.googlePrivacy',label:'Google privacy link',group:'Cookie consent',localized:true,seed:{th:'นโยบายความเป็นส่วนตัวของ Google',en:'Google privacy policy'}},
+  {path:'cookieConsent.allowed',label:'Allowed status',group:'Cookie consent',localized:true,seed:{th:'ปัจจุบัน: อนุญาตคุกกี้วิเคราะห์',en:'Current choice: analytics allowed'}},
+  {path:'cookieConsent.denied',label:'Declined status',group:'Cookie consent',localized:true,seed:{th:'ปัจจุบัน: ไม่อนุญาตคุกกี้วิเคราะห์',en:'Current choice: analytics declined'}},
+  {path:'cookieConsent.close',label:'Close without changes',group:'Cookie consent',localized:true,seed:{th:'ปิดโดยไม่เปลี่ยนตัวเลือก',en:'Close without changes'}},
   {path:'publicCopy.motorLogoNotice',label:'Motor insurer logo note',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้',en:'Logos are trademarks of their owners · shown as the insurers I can quote and compare'}},
   {path:'publicCopy.tierClassLabel',label:'Comparison: class heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'ชั้นประกัน',en:'Class'}},
   {path:'publicCopy.tierBestLabel',label:'Comparison: suitability heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เหมาะกับใคร',en:'Best for'}},
@@ -456,6 +659,13 @@ const CMS_CONTENT_FIELDS = [
   {path:'homeDesign.consentChanged',label:'Updated consent notice',group:'Form messages',localized:true,seed:{th:'ข้อความยินยอมมีการอัปเดต กรุณาอ่านและยืนยันใหม่ก่อนส่ง ข้อมูลที่กรอกยังอยู่',en:'The consent text has changed. Please read and confirm it again before sending. Your entries are still here.'}},
   {path:'homeDesign.formUnavailable',label:'Form unavailable notice',group:'Form messages',localized:true,seed:{th:'แบบฟอร์มนี้ปิดรับชั่วคราว ข้อมูลของคุณยังไม่ได้ถูกส่ง สามารถติดต่อผ่านช่องทางที่แสดงบนเว็บไซต์',en:'This form is temporarily unavailable. Your information has not been sent. Please use the contact channels shown on the site.'}},
   {path:'homeDesign.returnLabel',label:'Return to consultation',group:'Home design',localized:true,seed:{th:'กลับไปที่แบบฟอร์ม',en:'Return to the form'}},
+  {path:'homeDesign.feesStatement',label:'Fees: heading statement',group:'Transparency design',localized:true,seed:{th:'โปร่งใส\nและพูดตรงเสมอ',en:'Open and honest,\nalways'}},
+  {path:'homeDesign.privacyStatement',label:'Privacy: heading statement',group:'Transparency design',localized:true,seed:{th:'ข้อมูลของคุณ\nเราดูแลอย่างจริงจัง',en:'Your information,\nhandled with care'}},
+  {path:'homeDesign.feesSummaryLabel',label:'Fees: note heading',group:'Transparency design',localized:true,seed:{th:'สรุปสั้น ๆ',en:'In short'}},
+  {path:'homeDesign.privacySummaryLabel',label:'Privacy: note heading',group:'Transparency design',localized:true,seed:{th:'การดูแลข้อมูลของคุณ',en:'Looking after your information'}},
+  {path:'homeDesign.feesClosingStatement',label:'Fees: closing statement',group:'Transparency design',localized:true,seed:{th:'ดูแลคุณ\nอย่างจริงใจ',en:'Here for you,\nwith care'}},
+  {path:'homeDesign.privacyClosingStatement',label:'Privacy: closing statement',group:'Transparency design',localized:true,seed:{th:'เป็นส่วนตัว\nและใส่ใจ',en:'Private,\nand personal'}},
+  ...['fees','privacy','transparencyNote'].map(key => ({path:'homeDesign.'+key+'Icon',label:key+' icon override',group:'Transparency design',media:true,seed:''})),
   {path:'homeDesign.includeCalculator',label:'Explicit calculator sharing',group:'Home design',localized:true,seed:{th:'แนบผลประเมินนี้ในคำปรึกษา',en:'Include this estimate in my enquiry'}},
   {path:'homeDesign.logoNotice',label:'Insurer logo note',group:'Home design',localized:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของแต่ละบริษัท',en:'Logos are trademarks of their respective owners.'}},
   {path:'homeDesign.coveredLabel',label:'Matrix: covered',group:'Home design',localized:true,seed:{th:'คุ้มครอง',en:'Covered'}},
@@ -615,6 +825,9 @@ function cmsImageSlots(config, lang = 'th') {
   CMS_CONTENT_FIELDS.filter(field => field.media).forEach(field => {
     const size = /\.(headerLogo|footerLogo)$/.test(field.path) ? [1200,375]
       : field.path === 'seo.image' ? [1200,630]
+      : field.path === 'calculatorDesign.photo' ? [800,600]
+      : field.path === 'advisor.photo' ? [512,640]
+      : field.path === 'calculatorDesign.background' ? [1024,1536]
       : ['homeDesign.botanicalIllustration','homeDesign.licenceBackground','homeDesign.contactBackground','footer.backgroundArt'].includes(field.path) ? [1800,600] : [512,512];
     add(field.path + (field.localized ? '.' + lang : ''), field.label + (field.localized ? ' (' + lang.toUpperCase() + ')' : ''), ...size);
   });
@@ -628,10 +841,11 @@ function cmsImageSlots(config, lang = 'th') {
       if (section.type === 'insurers' || Object.hasOwn(item,'logo')) add(base + '.logo',label + ' / logo',416,288);
       if (section.type === 'tiers') add(base + '.illustration',label + ' / illustration');
       if (section.type === 'testimonials') add(base + '.photo',label + ' / photo');
-      if (['trust','products','review','steps','claim','renew'].includes(section.type)) add(base + '.iconImage',label + ' / icon');
+      if (['trust','products','review','steps','claim','renew','fees','pdpa'].includes(section.type)) add(base + '.iconImage',label + ' / icon');
     }
     for (const [index, card] of (section.cards || []).entries()) {
       if (section.type === 'insurers' || Object.hasOwn(card,'logo')) add(path + '.cards.@' + card.id + '.logo',section.id + ' / card ' + (index+1) + ' / logo',600,240);
+      if (section.type === 'fees') add(path + '.cards.@' + card.id + '.iconImage',section.id + ' / ' + (card[lang]?.title || 'card ' + (index+1)) + ' / icon');
     }
     if (section.type === 'fit') for (const [id, situation] of Object.entries(section.calculator?.situations || {})) {
       if (/^[\w-]+$/.test(id)) add(path + '.calculator.situations.' + id + '.iconImage','Calculator / ' + (situation[lang] || id) + ' / icon');
@@ -678,9 +892,31 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Classify legacy relationship cards once; later copy/media edits keep this role.
+  if (previousVersion < 11) (next.sections || []).filter(section => section.type === 'insurers').forEach(section => {
+    (section.cards || []).forEach(card => {
+      if (card.licenceRole !== undefined) return;
+      const body = [card.th?.body, card.en?.body].filter(Boolean).join(' ');
+      card.licenceRole = /\{\{brokerLicence\}\}/.test(body) || card.logo === 'assets/logos/srikrung-logo.png' ? 'broker'
+        : /\{\{lifeLicence\}\}/.test(body) || card.logo === 'assets/logos/aia-logo.png' ? 'life' : '';
+    });
+  });
+  // Assign presentation metadata once so icons follow stable item IDs after reordering.
+  if (previousVersion < 9) (next.sections || []).forEach(section => {
+    const icons = section.type === 'fees' ? ['chart','ban','chat','heartOutline'] : section.type === 'pdpa' ? ['file','settings','users','clock','user'] : null;
+    if (!icons) return;
+    (section.items || []).forEach((item,index) => {
+      if (item.icon === undefined) item.icon = icons[index] || 'file';
+      if (item.tone === undefined) item.tone = (section.type === 'fees' ? [1,2] : [2]).includes(index) ? 'sage' : 'accent';
+    });
+    if (section.type === 'fees') (section.cards || []).forEach((card,index) => {
+      if (card.icon === undefined) card.icon = ['file','handCoins','shieldCheck'][index] || 'file';
+      if (card.tone === undefined) card.tone = index === 2 ? 'sage' : 'accent';
+    });
+  });
   // Seed only newly introduced presentation fields; intentional blanks stay blank.
   if (previousVersion >= 5) {
-    CMS_CONTENT_FIELDS.filter(field => field.group === 'Error page' || field.group === 'Footer design' || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+    CMS_CONTENT_FIELDS.filter(field => (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
       if (field.localized) ['th','en'].forEach(lang => {
         const path = field.path + '.' + lang;
         if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);
@@ -827,6 +1063,9 @@ function adoptLegacyGuideCopy(next, text) {
 function sanitizeCmsMediaAndLinks(config) {
   const sections = [...(config.sections || []), ...['hero','trust','cover'].map(key => config.motorPage?.[key])].filter(Boolean);
   for (const section of sections) {
+    if (section.type === 'insurers') (section.cards || []).forEach(card => {
+      if (card.licenceRole !== undefined && !['','life','broker'].includes(card.licenceRole)) card.licenceRole = '';
+    });
     for (const owner of [section,section.th,section.en].filter(Boolean)) for (const key of ['cta1href','cta2href','claimHref']) {
       if (Object.hasOwn(owner,key)) owner[key] = /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(String(owner[key] || '')) ? owner[key] : '';
     }

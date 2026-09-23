@@ -1,0 +1,40 @@
+<sc-if value="{{ contactFlowPanel }}">
+  <div class="cm-submission" data-submission-state="{{ submissionKind }}" aria-busy="{{ submissionPending }}">
+    <div class="cm-submission-content">
+      <span class="cm-submission-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><sc-for list="{{ submissionIcon }}" as="d"><path d="{{ d }}"></path></sc-for></svg></span>
+      <h3 data-submission-heading tabindex="-1" data-cms-copy="{{ submissionTitlePath }}">{{ submissionTitle }}</h3>
+      <p class="cm-submission-body" data-cms-copy="{{ submissionBodyPath }}">{{ submissionBody }}</p>
+      <sc-if value="{{ submissionPending }}">
+        <span class="cm-submission-spinner" aria-hidden="true"></span>
+        <sc-if value="{{ submissionSlow && hasLine }}"><a class="cm-submission-text" href="{{ lineUrl }}" target="_blank" rel="noopener noreferrer" data-cms-copy="contactSubmission.waitingLine">{{ submissionCopy.waitingLine }}</a></sc-if>
+        <sc-if value="{{ showPrivacyAnchor }}"><a class="cm-submission-privacy" href="#privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionLock }}" as="d"><path d="{{ d }}"></path></sc-for></svg><span data-cms-copy="contactSubmission.privacyLink">{{ submissionCopy.privacyLink }}</span></a></sc-if>
+      </sc-if>
+      <sc-if value="{{ !submissionPending }}">
+        <sc-if value="{{ submissionSuccess }}">
+          <sc-if value="{{ submissionReference }}"><p class="cm-submission-reference"><span data-cms-copy="contactSubmission.reference">{{ submissionCopy.reference }}</span><strong>{{ submissionReference }}</strong></p></sc-if>
+          <sc-if value="{{ submissionHours }}"><div class="cm-submission-hours"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionClock }}" as="d"><path d="{{ d }}"></path></sc-for></svg><div><span data-cms-copy="contactSubmission.hours">{{ submissionCopy.hours }}</span><p data-cms-copy="contact.hours">{{ submissionHours }}</p></div></div></sc-if>
+        </sc-if>
+        <sc-if value="{{ hasLine }}">
+          <p class="cm-submission-intro"><sc-if value="{{ !submissionSuccess }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionIcon }}" as="d"><path d="{{ d }}"></path></sc-for></svg></sc-if><span data-cms-copy="{{ submissionIntroPath }}">{{ submissionIntro }}</span></p>
+          <sc-if value="{{ !submissionSuccess }}"><p class="cm-submission-divider" data-cms-copy="contactSubmission.support">{{ submissionCopy.support }}</p></sc-if>
+          <a class="cm-submission-line" href="{{ lineUrl }}" target="_blank" rel="noopener noreferrer">
+            <sc-if value="{{ submissionLineIcon }}"><span class="cm-submission-line-logo"><img sc-camel-src="{{ submissionLineIcon }}" alt="" width="28" height="28"></span></sc-if>
+            <span data-cms-copy="{{ submissionLinePath }}">{{ submissionLine }}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionArrow }}" as="d"><path d="{{ d }}"></path></sc-for></svg>
+          </a>
+          <sc-if value="{{ submissionSuccess }}"><p class="cm-submission-optional" data-cms-copy="contactSubmission.successOptional">{{ submissionCopy.successOptional }}</p></sc-if>
+        </sc-if>
+        <div class="cm-submission-actions" data-no-line="{{ !hasLine }}">
+          <sc-if value="{{ submissionCanRetry }}"><button type="button" disabled="{{ submissionRetryDisabled }}" sc-camel-on-click="{{ onSubmissionRetry }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionRetryIcon }}" as="d"><path d="{{ d }}"></path></sc-for></svg><span data-cms-copy="contactSubmission.retry">{{ submissionCopy.retry }}</span></button></sc-if>
+          <sc-if value="{{ submissionShowServices }}"><a href="#cover"><span data-cms-copy="contactSubmission.services">{{ submissionCopy.services }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionArrow }}" as="d"><path d="{{ d }}"></path></sc-for></svg></a></sc-if>
+        </div>
+        <sc-if value="{{ submissionFailure }}"><button type="button" class="cm-submission-text" sc-camel-on-click="{{ onSubmissionEdit }}" data-cms-copy="contactSubmission.edit">{{ submissionCopy.edit }}</button></sc-if>
+        <sc-if value="{{ submissionSuccess }}"><button type="button" class="cm-submission-text" sc-camel-on-click="{{ onSubmissionNew }}" data-cms-copy="contactSubmission.newRequest">{{ submissionCopy.newRequest }}</button></sc-if>
+        <sc-if value="{{ submissionUnknown }}"><button type="button" class="cm-submission-text" sc-camel-on-click="{{ onSubmissionView }}" aria-expanded="{{ submissionViewing }}" aria-controls="contact-submission-draft"><sc-if value="{{ !submissionViewing }}"><span data-cms-copy="contactSubmission.viewDraft">{{ submissionCopy.viewDraft }}</span></sc-if><sc-if value="{{ submissionViewing }}"><span data-cms-copy="contactSubmission.hideDraft">{{ submissionCopy.hideDraft }}</span></sc-if></button></sc-if>
+        <sc-if value="{{ submissionViewing }}"><dl id="contact-submission-draft" class="cm-submission-draft"><sc-for list="{{ submissionDraft }}" as="entry"><div><dt>{{ entry.label }}</dt><dd>{{ entry.value }}</dd></div></sc-for></dl></sc-if>
+        <sc-if value="{{ submissionHasLineHelp }}"><details class="cm-submission-help"><summary data-cms-copy="contactSubmission.lineHelp">{{ submissionCopy.lineHelp }}</summary><p>LINE <strong>{{ submissionLineId }}</strong></p><sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}">{{ phone }}</a></sc-if><sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}">{{ email }}</a></sc-if></details></sc-if>
+        <sc-if value="{{ !hasLine }}"><div class="cm-submission-fallback"><sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}">{{ phone }}</a></sc-if><sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}">{{ email }}</a></sc-if><sc-if value="{{ hasFacebook }}"><a href="{{ facebookUrl }}" target="_blank" rel="noopener noreferrer">{{ facebookName }}</a></sc-if><sc-if value="{{ !hasPhone && !hasEmail && !hasFacebook }}"><p data-cms-copy="contactSubmission.unavailable">{{ submissionCopy.unavailable }}</p></sc-if></div></sc-if>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>

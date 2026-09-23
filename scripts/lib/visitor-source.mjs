@@ -66,12 +66,20 @@ export function readVisitorSources() {
       .replace('/* COVERMATE_BOOT_STYLES */', () => transformSync(readText(new URL('src/visitor/boot.css', ROOT)), { loader: 'css', minify: true }).code)
       .replace('// COVERMATE_BOOT_SCRIPT', () => transformSync(readText(new URL('src/visitor/boot.js', ROOT)), { minify: true }).code),
     template: readText(VISITOR_SOURCE_PATHS.template)
+      .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
+      .replace('/* COVERMATE_SUBMISSION_STYLES */', () => readText(new URL('src/visitor/submission.css', ROOT)))
+      .replace('<!-- COVERMATE_CALCULATOR_TEMPLATE -->', () => readText(new URL('src/visitor/calculator.html', ROOT)))
+      .replace('/* COVERMATE_CALCULATOR_STYLES */', () => readText(new URL('src/visitor/calculator.css', ROOT)))
       .replace('<!-- COVERMATE_HOME_TEMPLATE -->', () => readText(new URL('src/visitor/home.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
       .replace('/* COVERMATE_HOME_STYLES */', () => readText(new URL('src/visitor/home.css', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
     runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
     adminLabels: readText(new URL('src/visitor/admin-labels.js', ROOT)),
     editorHistory: readText(new URL('src/visitor/editor-history.js', ROOT)).replace(/^export /gm, ''),
+    calculatorSource: readText(new URL('covermate-calculator.mjs', ROOT)).replace(/^export /gm, ''),
+    recommendationSource: readText(new URL('covermate-recommendations.mjs', ROOT)).replace(/^export /gm, ''),
+    submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),
     cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],
     seoSource: readText(new URL('covermate-seo.mjs', ROOT)).split('\nexport function renderSeoHead')[0].replace(/^export /gm, ''),
     imageVersions: readImageVersions()
@@ -86,6 +94,9 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
     .replace('// COVERMATE_CMS_SCHEMA_SOURCE', () => sources.cmsSchema)
     .replace('// COVERMATE_ADMIN_LABELS_SOURCE', () => sources.adminLabels)
     .replace('// COVERMATE_EDITOR_HISTORY_SOURCE', () => sources.editorHistory)
+    .replace('// COVERMATE_CALCULATOR_SOURCE', () => sources.calculatorSource)
+    .replace('// COVERMATE_RECOMMENDATION_SOURCE', () => sources.recommendationSource)
+    .replace('// COVERMATE_SUBMISSION_SOURCE', () => sources.submissionSource)
     .replace('// COVERMATE_SEO_SOURCE', () => sources.seoSource)
     .replace(VISITOR_ASSET_VERSIONS_SLOT, () => JSON.stringify(sources.imageVersions || readImageVersions()));
 }
@@ -94,9 +105,9 @@ export function buildVisitorTemplate(sources = readVisitorSources()) {
   assertSingleSlot(sources.template, VISITOR_RUNTIME_SLOT, "src/visitor/template.html");
   const defaults = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
   // Keep source and diagnostic builds readable; compact only shipped output.
-  // Identifier names are preserved because the embedded host resolves Component.
+  // No output format: esbuild retains top-level Component while compacting locals.
   const runtime = transformSync(buildVisitorRuntime({ ...sources, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' }), {
-    minifyWhitespace: true, charset: 'utf8'
+    minifyWhitespace: true, minifyIdentifiers: true, charset: 'utf8'
   }).code
     // Existing seed/export tools use these two boundaries in the generated HTML.
     .replace(/\bconst (DEFAULTS|SCHEMA)=/g, 'const $1 =');

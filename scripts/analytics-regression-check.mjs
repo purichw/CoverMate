@@ -7,6 +7,10 @@ const playwright = loadPlaywright();
 const { chromium } = playwright;
 const root = new URL("../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), "utf8");
+function seedConsent() {
+  const now = Date.now();
+  localStorage.setItem('covermate-analytics-consent', JSON.stringify({ version: 1, analytics: true, updatedAt: now, expiresAt: now + 180 * 86400000 }));
+}
 
 const analyticsHarness = `<!doctype html>
 <html>
@@ -118,6 +122,7 @@ async function routeStatic(page, firebaseBody = "export {};", analyticsPayload =
 
 async function verifyPublicEvents(browser) {
   const page = await browser.newPage();
+  await page.addInitScript(seedConsent);
   await routeStatic(page);
   await page.goto("https://covermateinsurance.com/?name=Ari&email=point@example.com&phone=0891234567", {
     waitUntil: "domcontentloaded"
@@ -215,6 +220,7 @@ async function verifyTrackingBoundaries(browser) {
       ['/motor', 'enabled'], ['/administrator', 'enabled']
     ]) {
       const page = await browser.newPage();
+      await page.addInitScript(seedConsent);
       await routeStatic(page, 'export {};', null, true);
       if (withoutContract) await page.route('**/covermate-contract.js', route => route.fulfill({ contentType: 'application/javascript', body: 'export {};' }));
       await page.goto(`https://covermateinsurance.com${path}`);
@@ -231,6 +237,86 @@ async function verifyTrackingBoundaries(browser) {
       await page.close();
     }
   }
+}
+
+async function verifyConsent(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  let googleRequests = 0;
+  page.on('request', request => { if (/googletagmanager|google-analytics/.test(request.url())) googleRequests++; });
+  await routeStatic(page);
+  await page.goto('https://covermateinsurance.com/');
+  await page.waitForFunction(() => window.CoverMateAnalytics?.reason === 'consent-unknown');
+  await page.locator('#line').click();
+  await page.locator('#lead-name').fill('Before consent');
+  assert.equal(googleRequests, 0, 'No Google request before a choice, even on interaction');
+  assert.equal(await page.evaluate(() => !!window.gtag), false, 'No Google event queue before consent');
+  await page.evaluate(() => window.CoverMateAnalytics.setConsent(false));
+  await page.reload();
+  assert.equal(await page.evaluate(() => window.CoverMateAnalytics.getConsent()), 'denied');
+  assert.equal(googleRequests, 0, 'Declining and refreshing do not load Google');
+  await page.evaluate(() => window.CoverMateAnalytics.setConsent(true));
+  await page.waitForFunction(() => window.CoverMateAnalytics.enabled);
+  const rows = await page.evaluate(() => Array.from(window.dataLayer, row => Array.from(row)));
+  assert.deepEqual(rows[0], ['consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'}]);
+  assert.equal(rows[1][2].analytics_storage, 'granted');
+  assert.equal(rows[1][2].ad_user_data, 'denied');
+  assert.equal(eventRows(rows).length, 1, 'Only current page view, no replay of declined clicks or form input');
+  await page.locator('#lead-name').fill('After consent');
+  assert.equal(countEvents(eventRows(await page.evaluate(() => window.dataLayer)), 'form_start'), 1);
+  const second = await context.newPage();
+  await routeStatic(second);
+  await second.goto('https://covermateinsurance.com/');
+  await second.waitForFunction(() => window.CoverMateAnalytics.enabled);
+  await page.evaluate(() => {
+    document.cookie = '_ga=test; Path=/';
+    document.cookie = '_ga_5TF3C235EF=test; Path=/; Domain=covermateinsurance.com';
+    document.cookie = 'keep-necessary=yes; Path=/';
+    window.CoverMateAnalytics.setConsent(false);
+  });
+  await second.waitForFunction(() => !window.CoverMateAnalytics.enabled && window.CoverMateAnalytics.getConsent() === 'denied');
+  const revoked = await page.evaluate(() => ({disabled:window['ga-disable-G-5TF3C235EF'],cookies:document.cookie,events:window.dataLayer.filter(row=>row[0]==='event').length}));
+  assert.equal(revoked.disabled,true);
+  assert.equal(revoked.cookies.includes('_ga'),false);
+  assert.ok(revoked.cookies.includes('keep-necessary=yes'));
+  await page.locator('#phone').click();
+  await page.evaluate(() => window.CoverMateAnalytics.trackEvent('quote_submit_success',{}));
+  assert.equal(await page.evaluate(() => window.dataLayer.filter(row=>row[0]==='event').length),revoked.events,'No new events after withdrawal');
+  await page.reload();
+  assert.equal(await page.locator('script[src*="googletagmanager"]').count(),0,'No tag after refreshing a withdrawn choice');
+  await page.evaluate(() => window.CoverMateAnalytics.setConsent(true));
+  assert.equal(await page.locator('script[src*="googletagmanager"]').count(),1,'Reconsent loads only one tag');
+  await page.evaluate(() => window.CoverMateAnalytics.setConsent(true));
+  assert.equal(countEvents(eventRows(await page.evaluate(() => window.dataLayer)), 'page_view'),1,'Repeated allow does not duplicate the page view');
+  await page.evaluate(() => {
+    const current = Date.now;
+    Date.now = () => current() + 181 * 86400000;
+    window.dispatchEvent(new Event('pageshow'));
+  });
+  assert.equal(await page.evaluate(() => window.CoverMateAnalytics.getConsent()),'unknown','A choice expires even while the page stays open');
+  assert.equal(await page.evaluate(() => window['ga-disable-G-5TF3C235EF']),true);
+  await context.close();
+
+  for (const kind of ['malformed','expired','future','wrong-version','blocked']) {
+    const p = await browser.newPage();
+    await routeStatic(p);
+    await p.addInitScript(kind => {
+      if(kind === 'blocked') { Storage.prototype.getItem = Storage.prototype.setItem = () => { throw new Error('blocked'); }; return; }
+      const now=Date.now(), time=kind==='expired'?now-181*86400000:kind==='future'?now+86400000:now;
+      localStorage.setItem('covermate-analytics-consent',kind==='malformed'?'{broken':JSON.stringify({version:kind==='wrong-version'?2:1,analytics:true,updatedAt:time,expiresAt:time+180*86400000}));
+    },kind);
+    await p.goto('https://covermateinsurance.com/');
+    assert.equal(await p.evaluate(() => window.CoverMateAnalytics.getConsent()),'unknown',kind);
+    assert.equal(await p.locator('script[src*="googletagmanager"]').count(),0,kind);
+    if(kind==='blocked') {
+      await p.evaluate(() => window.CoverMateAnalytics.setConsent(true));
+      assert.equal(await p.evaluate(() => window.CoverMateAnalytics.enabled),true,'Blocked storage still honors explicit choice for this page');
+      await p.reload();
+      assert.equal(await p.evaluate(() => window.CoverMateAnalytics.getConsent()),'unknown','Blocked storage fails closed after refresh');
+    }
+    await p.close();
+  }
+  console.log('PASS consent: no tag before opt-in, decline/reload, grant ordering, no replay, withdrawal, cookie cleanup, cross-tab, invalid/expired/blocked storage');
 }
 
 async function verifyAnalyticsRouteAuth(browser) {
@@ -266,7 +352,7 @@ async function verifyAnalyticsRouteAuth(browser) {
     export {};
   `);
   await localOnly.waitForURL(/\/admin\/login$/, { timeout: 5000 });
-  assert.equal((await localOnly.locator("body").innerText()).includes("Recent leads"), false, "localStorage-only auth did not expose analytics shell");
+  assert.equal((await localOnly.locator("body").innerText()).includes("เคสล่าสุด"), false, "localStorage-only auth did not expose analytics shell");
   await localOnly.close();
 
   const unauthorized = await openWith(`
@@ -365,6 +451,7 @@ async function verifyAnalyticsRouteAuth(browser) {
 
 const browser = await launchChromium(chromium, { headless: true });
 try {
+  await verifyConsent(browser);
   await verifyPublicEvents(browser);
   await verifyTrackingBoundaries(browser);
   await verifyAnalyticsRouteAuth(browser);

@@ -1,4 +1,13 @@
 const ICONS = {
+  // Lucide icons, with circles expressed as paths for the existing path-only renderer.
+  coins: ['M13.744 17.736a6 6 0 1 1-7.48-7.48','M15 6h1v4','m6.134 14.768.866-.5 2 3.464','M22 8a6 6 0 1 1-12 0 6 6 0 0 1 12 0'],
+  handCoins: ['M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17','m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9','m2 16 6 6','M18.9 9a2.9 2.9 0 1 1-5.8 0 2.9 2.9 0 0 1 5.8 0','M9 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0'],
+  ban: ['M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0','M4.929 4.929 19.07 19.071'],
+  chart: ['M5 21v-6','M12 21V9','M19 21V3'],
+  settings: ['M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915','M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0'],
+  user: ['M17 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0','M20 21a8 8 0 0 0-16 0'],
+  heartOutline: ['M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5'],
+  shieldCheck: ['M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z','m9 12 2 2 4-4'],
   shield: ['M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'],
   pulse: ['M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2'],
   heart: ['M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z', 'M3.22 12H9.5l.7-1.5L12 16l2-8 1.3 4h5.42'],
@@ -80,22 +89,24 @@ const SECTION_ADMIN_META = {
   hero: { group: 'ส่วนแรกของหน้า', title: 'Hero', role: 'หัวข้อหลัก ข้อความแนะนำ ปุ่ม LINE และการ์ดผู้ให้คำปรึกษา' },
   motor: { group: 'หน้าประกันรถ', title: 'Hero ประกันรถ', role: 'ส่วนแรกของหน้า /motor ปุ่มติดต่อ และคู่มือเมื่อเกิดเหตุ' },
   'motor-trust': { group: 'หน้าประกันรถ', title: 'แถบสร้างความมั่นใจ', role: 'ข้อความสั้นสร้างความมั่นใจบนหน้าประกันรถ' },
-  'motor-cover': { group: 'หน้าประกันรถ', title: 'การ์ดความคุ้มครองรถ', role: 'การ์ดความคุ้มครองชั้น 1, 2+/3+, ชั้น 3 และ พ.ร.บ.' },
+  'motor-cover': { group: 'หน้าประกันรถ', title: 'การ์ดความคุ้มครองรถ', role: 'หมวดความคุ้มครองที่เปิดดูรายละเอียดได้ ใช้ดีไซน์ร่วมกับหน้าเว็บ' },
   trust: { group: 'ส่วนแรกของหน้า', title: 'แถบสร้างความมั่นใจ', role: 'ข้อความสั้นประกอบข้อมูลใต้ Hero' },
   cover: { group: 'ผลิตภัณฑ์', title: 'การ์ดความคุ้มครอง', role: 'ประเภทประกันหลักและสิ่งที่แต่ละประเภทคุ้มครอง' },
   review: { group: 'ผลิตภัณฑ์', title: 'ตรวจกรมธรรม์', role: 'รายการตรวจสอบกรมธรรม์เดิมก่อนซื้อเพิ่ม' },
-  fit: { group: 'เครื่องมือ', title: 'เครื่องคำนวณความต้องการ', role: 'ประเมินทุนชีวิต ค่าห้อง และความต้องการคุ้มครองเบื้องต้น' },
+  fit: { group: 'เครื่องมือ', title: 'เครื่องคำนวณความต้องการ', role: 'ประเมินชีวิต โรคร้ายแรง และสุขภาพ พร้อมแหล่งอ้างอิงและสรุปแนบฟอร์มติดต่อ' },
   how: { group: 'ขั้นตอนบริการ', title: 'ขั้นตอนการดูแล', role: 'ตั้งแต่เริ่มติดต่อจนถึงการดูแลต่อเนื่อง' },
-  insurers: { group: 'ประกันรถ', title: 'โลโก้บริษัทประกันรถ', role: 'โลโก้บริษัทประกัน ข้อความจำนวนบริษัท และการ์ดความสัมพันธ์ AIA / ศรีกรุง' },
+  insurers: { group: 'ประกันรถ', title: 'โลโก้บริษัทประกันรถ', role: 'โลโก้บริษัทและหัวข้อเปรียบเทียบ ส่วนใบอนุญาตอยู่แยกก่อน Footer' },
   tiers: { group: 'ประกันรถ', title: 'เปรียบเทียบความคุ้มครองรถ', role: 'การ์ดชั้นประกันแนะนำและตารางเปรียบเทียบเต็ม ใช้ข้อมูลความคุ้มครองชุดเดียวกัน' },
   claim: { group: 'ความช่วยเหลือ', title: 'ช่วยเหลือเคลม', role: 'ขั้นตอนเมื่อเกิดเหตุ สายด่วน และเอกสารสำหรับเคลม' },
   renew: { group: 'ความช่วยเหลือ', title: 'เตือนต่ออายุ', role: 'ฟอร์มขอรับการแจ้งเตือนต่ออายุกรมธรรม์' },
   voices: { group: 'ตัวอย่างบริการ', title: 'เคสเคลม', role: 'ตัวอย่างการดูแลเคลม โดยใช้ข้อมูลจริงและไม่สร้างรีวิวขึ้นเอง' },
-  about: { group: 'ข้อมูลบริการ', title: 'เกี่ยวกับ CoverMate', role: 'ใบอนุญาต บทบาท ภาษา และข้อมูลผู้ให้คำปรึกษา' },
+  about: { group: 'ข้อมูลบริการ', title: 'เกี่ยวกับ CoverMate', role: 'แนะนำบริการและผู้ให้คำปรึกษา รายละเอียดใบอนุญาตอยู่ส่วนท้าย' },
   faq: { group: 'ข้อมูลบริการ', title: 'คำถามที่พบบ่อย', role: 'แก้ไขคำตอบ หมวดคำถาม และเวลาอ่านได้ที่นี่' },
   fees: { group: 'ข้อมูลบริการ', title: 'ค่าตอบแทนของ CoverMate', role: 'อธิบายค่าตอบแทนและขั้นตอนการชำระอย่างโปร่งใส' },
   privacy: { group: 'ความเป็นส่วนตัว', title: 'ความเป็นส่วนตัว / PDPA', role: 'ข้อมูลที่เก็บ วัตถุประสงค์ และช่องทางขอลบข้อมูล' },
   talk: { group: 'ติดต่อ', title: 'ติดต่อและขอให้โทรกลับ', role: 'ช่องทางติดต่อ เวลาทำการ ฟอร์มสอบถาม และความยินยอม' },
+  licences: { group: 'ใบอนุญาต', title: 'ใบอนุญาตและบทบาทบริการ', role: 'แถบก่อน Footer ใช้ข้อมูลการ์ดใบอนุญาตชุดเดิม' },
+  footer: { group: 'ใช้ร่วมทุกหน้า', title: 'Footer', role: 'แบรนด์ ใบอนุญาต ลิงก์ และช่องทางติดต่อท้ายหน้า' }
 };
 
 function isEmbeddedCoverageSection(section) {
@@ -287,6 +298,9 @@ function repeatableIndex(list, id, fallbackIndex) {
   return fallbackIndex >= 0 && fallbackIndex < list.length ? fallbackIndex : -1;
 }
 
+// COVERMATE_CALCULATOR_SOURCE
+// COVERMATE_RECOMMENDATION_SOURCE
+// COVERMATE_SUBMISSION_SOURCE
 // COVERMATE_EDITOR_HISTORY_SOURCE
 
 // /motor is the dedicated public motor landing page. Home #motor still aliases
@@ -294,9 +308,28 @@ function repeatableIndex(list, id, fallbackIndex) {
 class Component extends DCLogic {
   state = {
     menuOpen: false,
+    analyticsConsent: window.CoverMateAnalytics?.getConsent() || 'unknown',
+    cookieSettingsOpen: false,
     compactHome: window.innerWidth < 768,
     touchInteraction: window.matchMedia?.('(any-pointer: coarse)')?.matches === true,
-    calculatorTouched: false,
+    calculatorMode: 'life',
+    calculatorMethodOpen: false,
+    calculatorInputs: Object.fromEntries(['life','ci','health'].map(mode=>[mode,needsInitialInputs(mode)])),
+    calculatorCommitted: Object.fromEntries(['life','ci','health'].map(mode=>[mode,needsInitialInputs(mode)])),
+    calculatorPending: {},
+    calculatorSnapshot: null,
+    calculatorDetails: {},
+    calculatorPlanning: false,
+    calculatorProfile: needsInitialProfile(),
+    calculatorPa: needsInitialInputs('pa'),
+    calculatorRemember: false,
+    calculatorStorageError: false,
+    calculatorCatalogDraft: null,
+    calculatorCatalogError: '',
+    calculatorReviewer: '',
+    calculatorReferenceId: '',
+    calculatorReferenceDraft: null,
+    calculatorAttachmentText: '',
     shareCalculator: false,
     lang: new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th',
     site: clone(DEFAULTS),
@@ -312,12 +345,6 @@ class Component extends DCLogic {
     tab: 'sections',
     sel: 'hero',
     situation: null,
-    income: 50000,
-    deps: 1,
-    debt: 0,
-    resources: 0,
-    roomBenefit: 5000,
-    recovery: 6,
     form: { name: '', contact: '', topic: '', qtype: '', coverage: '', consent: false },
     renew: { kind: '', month: '', contact: '', consent: false },
     renewSent: false,
@@ -326,6 +353,7 @@ class Component extends DCLogic {
     sent: false,
     leadSubmitting: false,
     leadError: '',
+    contactSubmission: { kind: 'editing', fields: {}, reference: '' },
     io: '',
     scrolled: false,
     editMode: false,
@@ -349,7 +377,12 @@ class Component extends DCLogic {
     document.addEventListener('input', this._editorInput, true);
     this._editorPointer = () => { this._editorGesture = null; this._editorHistory?.breakGroup(); };
     document.addEventListener('pointerdown', this._editorPointer, true);
+    this.restoreCalculatorSession();
     this.migrate();
+    this._consentChange = () => this.setState({ analyticsConsent: window.CoverMateAnalytics?.getConsent() || 'unknown' });
+    window.addEventListener('covermate:analytics-consent', this._consentChange);
+    this._consentChange();
+    this._dockObserver = window.ResizeObserver ? new ResizeObserver(() => this.syncVisitorDock()) : null;
 
     this._onScroll = () => {
       const y = window.scrollY || 0;
@@ -421,11 +454,54 @@ class Component extends DCLogic {
     this.syncSeo();
   }
 
+  updateCalculatorInput(mode, key, raw, blur = false) {
+    const field = NEEDS_FIELDS[mode].find(entry=>entry.key===key);
+    if (!field) return;
+    let value = String(raw);
+    if (!field.choices && blur && value !== 'unknown') {
+      const parsed = parseNeedsNumber(value,field.positive);
+      if (!parsed.invalid) value = parsed.value === null ? '' : parsed.value.toLocaleString('en-US');
+    }
+    if (this.state.calculatorInputs[mode][key] === value) return;
+    this.calculatorTimers ||= {};
+    clearTimeout(this.calculatorTimers[mode]);
+    this.setState(s=>({calculatorInputs:{...s.calculatorInputs,[mode]:{...s.calculatorInputs[mode],[key]:value}},calculatorPending:{...s.calculatorPending,[mode]:true}}));
+    this.calculatorTimers[mode] = setTimeout(()=>this.setState(s=>({calculatorCommitted:{...s.calculatorCommitted,[mode]:{...s.calculatorInputs[mode]}},calculatorPending:{...s.calculatorPending,[mode]:false}}),()=>this.persistCalculatorSession()),275);
+  }
+  resetCalculator(mode) {
+    clearTimeout(this.calculatorTimers?.[mode]);
+    this.setState(s=>({calculatorInputs:{...s.calculatorInputs,[mode]:needsInitialInputs(mode)},calculatorCommitted:{...s.calculatorCommitted,[mode]:needsInitialInputs(mode)},calculatorPending:{...s.calculatorPending,[mode]:false},calculatorPlanning:false}),()=>this.persistCalculatorSession());
+  }
+  persistCalculatorSession() {
+    const key='covermate.needsCalculator.v2';
+    try {
+      if(!this.state.calculatorRemember){window.sessionStorage.removeItem(key);return;}
+      // Opt-in tab memory excludes contact details, eligibility and attachments.
+      window.sessionStorage.setItem(key,JSON.stringify({version:NEEDS_VERSION,mode:this.state.calculatorMode,inputs:this.state.calculatorInputs,details:this.state.calculatorDetails,referenceId:this.state.calculatorReferenceId}));
+    } catch {if(this.state.calculatorRemember)this.setState({calculatorStorageError:true,calculatorRemember:false});}
+  }
+  restoreCalculatorSession() {
+    try {
+      const value=JSON.parse(window.sessionStorage.getItem('covermate.needsCalculator.v2') || 'null');
+      if(value?.version!==NEEDS_VERSION || !['life','ci','health'].includes(value.mode))return;
+      const inputs=Object.fromEntries(['life','ci','health'].map(mode=>[mode,Object.fromEntries(NEEDS_FIELDS[mode].map(field=>{
+        const v=value.inputs?.[mode]?.[field.key];
+        return [field.key,typeof v==='string' && v.length<80 ? v : needsInitialInputs(mode)[field.key]];
+      }))]));
+      this.setState({calculatorMode:value.mode,calculatorInputs:inputs,calculatorCommitted:JSON.parse(JSON.stringify(inputs)),calculatorDetails:Object.fromEntries(['life','ci','health'].map(mode=>[mode,value.details?.[mode]===true])),calculatorReferenceId:typeof value.referenceId==='string'&&/^[a-z0-9-]{1,80}$/.test(value.referenceId)?value.referenceId:'',calculatorRemember:true});
+    } catch {/* Invalid or unavailable tab memory never blocks the calculator. */}
+  }
   componentWillUnmount() {
     document.removeEventListener('keydown', this._editorKeydown, true);
     document.removeEventListener('input', this._editorInput, true);
     document.removeEventListener('pointerdown', this._editorPointer, true);
+    this.contactFlow?.dispose();
+    clearTimeout(this._contactRetryTimer);
+    Object.values(this.calculatorTimers || {}).forEach(clearTimeout);
     this.clearInlineMedia();
+    window.removeEventListener('covermate:analytics-consent', this._consentChange);
+    this._dockObserver?.disconnect();
+    document.documentElement.style.removeProperty('--cm-dock-height');
     document.removeEventListener('keydown', this._homeKeydown);
     document.removeEventListener('click', this._homeAnchorClick);
     document.removeEventListener('toggle', this._homeToggle, true);
@@ -448,7 +524,9 @@ class Component extends DCLogic {
 
   sweep() {
     this.syncInlineMedia();
+    this.syncVisitorDock();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
+    document.querySelectorAll('.hm-advisor-photo').forEach(img => { if (img.complete) img.toggleAttribute('data-failed', !img.naturalWidth); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
     if (!nodes.length) return;
     const h = window.innerHeight || 800;
@@ -456,6 +534,35 @@ class Component extends DCLogic {
       const r = nodes[i].getBoundingClientRect();
       if (r.top < h * 0.94 && r.bottom > 0) nodes[i].classList.add('om-in');
     }
+  }
+
+  syncVisitorDock() {
+    const dock = document.querySelector('.cm-visitor-dock');
+    if (dock !== this._visitorDock) {
+      this._dockObserver?.disconnect();
+      this._visitorDock = dock;
+      if (dock) this._dockObserver?.observe(dock);
+    }
+    const height = Math.ceil(dock?.getBoundingClientRect().height || 0);
+    if (height !== this._dockHeight) {
+      this._dockHeight = height;
+      document.documentElement.style.setProperty('--cm-dock-height', height + 'px');
+    }
+  }
+
+  openCookieSettings(event) {
+    this._cookieReturnFocus = event.currentTarget;
+    this.setState({ cookieSettingsOpen: true }, () => requestAnimationFrame(() => document.getElementById('cm-cookie-title')?.focus({ preventScroll: true })));
+  }
+
+  closeCookieSettings(choice) {
+    if (typeof choice === 'boolean') window.CoverMateAnalytics?.setConsent(choice);
+    this.setState({ cookieSettingsOpen: false }, () => requestAnimationFrame(() => {
+      const target = this._cookieReturnFocus?.isConnected ? this._cookieReturnFocus : [...document.querySelectorAll('[data-cm-sticky] a, [data-cookie-settings]')].find(el => el.getClientRects().length);
+      target?.focus({ preventScroll: true });
+      this._cookieReturnFocus = null;
+      this.syncVisitorDock();
+    }));
   }
 
   toggleMenu(open, event) {
@@ -666,7 +773,7 @@ class Component extends DCLogic {
     this._editorHistory?.breakGroup();
     this.setState({ confirmAction: {
       kind: 'reset', kicker: 'Reset Draft', title: 'กลับไปยัง Publish ล่าสุด?',
-      body: 'แทนที่ Draft ทั้งเว็บด้วยเวอร์ชันที่ Publish ล่าสุด รวมข้อความ TH / EN รูปภาพ และการจัดวาง เว็บจริงจะไม่เปลี่ยน หลัง Reset ยังใช้ Undo เพื่อคืนงานก่อนหน้านี้ได้',
+      body: 'แทนที่ Draft ทั้งเว็บด้วยเวอร์ชันที่ Publish ล่าสุด รวมข้อความ TH / EN รูปภาพ และการจัดวาง เว็บจริงจะไม่เปลี่ยน หลัง Reset ยังใช้ Undo เพื่อคืนงานก่อนหน้านี้ได้' + ((this.state.calculatorCatalogDraft !== null || this.state.calculatorReferenceDraft !== null) ? ' ข้อความ JSON ที่ยังไม่กด Save จะยังอยู่ในช่องแก้ไข' : ''),
       actionLabel: 'Reset Draft'
     } }, () => this.focusAdminConfirm());
   }
@@ -1854,6 +1961,83 @@ class Component extends DCLogic {
     requestAnimationFrame(() => document.querySelector('#' + section + ' [role="alert"]')?.focus());
   }
 
+  contactAction(action) {
+    // Safari does not focus pointer-activated buttons; retain that explicit intent.
+    this._contactFocusPending = true;
+    try { return action(); } finally { this._contactFocusPending = false; }
+  }
+
+  getContactFlow() {
+    if (this.contactFlow) return this.contactFlow;
+    const service = () => import(window.location.origin + '/covermate-public.mjs');
+    this.contactFlow = new ContactSubmission({
+      prepare: async input => (await service()).prepareContactLead(input),
+      send: async request => (await service()).sendContactLead(request),
+      onChange: outcome => {
+        const region = document.querySelector('[data-contact-flow-region]');
+        const activeAtChange = document.activeElement;
+        const explicitFlowAction = this._contactFocusPending;
+        const focusWithin = !!region?.contains(activeAtChange) || explicitFlowAction;
+        const kindChanged = this.state.contactSubmission.kind !== outcome.kind;
+        const copyKind = { submitting_slow:'slow',rate_limited:'limited' }[outcome.kind] || outcome.kind;
+        const patch = { contactSubmission: { ...outcome }, contactAnnouncement: kindChanged && (!focusWithin || outcome.kind === 'submitting_slow') ? copyKind+'Title' : '' };
+        if (kindChanged && ['success','failure','unknown','rate_limited'].includes(outcome.kind)) {
+          try { window.CoverMateAnalytics?.trackEvent?.(outcome.kind === 'success' ? 'quote_submit_success' : 'quote_submit_error', { form_type:'consultation', ...(outcome.kind === 'success' ? this._contactAnalytics : {}) }); } catch (_) { /* Analytics must not change a persisted outcome. */ }
+        }
+        if (outcome.kind === 'success') Object.assign(patch, {
+          form: { name:'', contact:'', topic:'', qtype:'', coverage:'', consent:false },
+          calculatorSnapshot:null, calculatorAttachmentText:'', shareCalculator:false
+        });
+        if (outcome.fields?.consent === 'consentChanged') {
+          patch.form = { ...this.state.form, consent:false };
+          service().then(cm => cm.hydrateLocalContent()).catch(() => {});
+        }
+        clearTimeout(this._contactRetryTimer);
+        if (outcome.kind === 'rate_limited' && outcome.retryAt > Date.now()) {
+          this._contactRetryTimer = setTimeout(() => this.setState({ contactSubmission: { ...this.contactFlow.state } }), Math.min(outcome.retryAt - Date.now(), 2147483647));
+        }
+        this.setState(patch, () => {
+          if (!focusWithin) return;
+          requestAnimationFrame(() => {
+            const current = document.activeElement;
+            const root = document.querySelector('[data-contact-flow-region]');
+            if (current !== document.body && !root?.contains(current) && !(explicitFlowAction && current === activeAtChange)) return;
+            const target = kindChanged && ['invalid','editing'].includes(outcome.kind)
+              ? root?.querySelector('[aria-invalid="true"]') || root?.querySelector('input[name="name"]')
+              : kindChanged && outcome.kind !== 'submitting_slow' ? root?.querySelector('[data-submission-heading]') : null;
+            target?.focus({ preventScroll:true });
+            if (target) {
+              const bounds = target.getBoundingClientRect();
+              if (bounds.top < 90 || bounds.bottom > window.innerHeight - 70) target.scrollIntoView({ block:'center', behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth' });
+            }
+          });
+        });
+      }
+    });
+    return this.contactFlow;
+  }
+
+  submitContactFlow(input) {
+    const flow = this.getContactFlow();
+    if (flow.busy || !['editing','invalid'].includes(flow.state.kind)) return;
+    const fields = contactFieldErrors(input);
+    if (Object.keys(fields).length) {
+      flow.update({ kind:'invalid',fields });
+      requestAnimationFrame(() => document.querySelector('[data-contact-flow-region] [aria-invalid="true"]')?.focus({preventScroll:true}));
+      return;
+    }
+    this._contactAnalytics = { enquiry_type:input.qtype || 'unspecified',coverage:input.coverage || 'unspecified' };
+    return flow.submit(input);
+  }
+
+  updateContactField(key, value) {
+    this.setState(s => ({form:{...s.form,[key]:value},sent:false,leadError:''}));
+    if (this.state.routePage === 'home' && this.contactFlow && ['editing','invalid'].includes(this.contactFlow.state.kind)) {
+      const fields = {...this.contactFlow.state.fields}; delete fields[key]; delete fields.form;
+      this.contactFlow.update({fields});
+    }
+  }
+
   fmtShort(n, th) {
     if (n >= 1000000) { const m = n / 1000000; return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + (th ? ' ล้าน' : 'M'); }
     return Math.round(n / 1000) + (th ? ' พัน' : 'K');
@@ -1952,7 +2136,28 @@ class Component extends DCLogic {
     const routePage = S.routePage === 'motor' ? 'motor' : 'home';
     const motorPageConfig = this.getMotorPage(site);
     const isHome = routePage === 'home' && !S.motor && !S.life;
+    const isMotor = routePage === 'motor' || S.motor;
+    const sharedDesign = isHome || isMotor;
+    const homeAdvisor = {
+      name:isHome ? cmsText('advisor.fullName') : '', role:cmsText('advisor.role'),
+      photo:assetURL(cmsMedia(site.advisor?.photo || '')), photoAlt:cmsText('advisor.photoAlt') || cmsText('advisor.fullName'),
+      heading:cmsText('advisor.heading'), licenceLabel:cmsText('advisor.licenceLabel'),
+      contactBefore:cmsText('advisor.contactBefore'), contactAfter:cmsText('advisor.contactAfter')
+    };
+    homeAdvisor.hasContactIntro = !!(homeAdvisor.name && (homeAdvisor.contactBefore || homeAdvisor.contactAfter));
+    const routeCards = section => (section?.cards || []).filter(card => card && (!isMotor || section.type !== 'insurers' || card.licenceRole === 'broker'));
     const homeDesign = site.homeDesign || {};
+    const insurerSection = (site.sections || []).find(section => section.type === 'insurers');
+    const brokerCard = insurerSection?.on !== false ? insurerSection?.cards?.find(card => card.on !== false && card.licenceRole === 'broker') : null;
+    const brokerCardPath = brokerCard ? 'sections.@' + insurerSection.id + '.cards.@' + brokerCard.id : '';
+    const heroProof = isMotor ? {
+      visible:!!brokerCard, logo:assetURL(brokerCard?.logo || ''), logoAlt:brokerCard?.logoAlt || '',
+      logoPath:brokerCardPath + '.logo', credential:brokerCard ? t({[lk]:brokerCard[lk]?.kicker}) : '',
+      credentialPath:brokerCardPath + '.' + lk + '.kicker', life:false
+    } : {
+      visible:true, logo:assetURL(site.brand.advisorLogo), logoAlt:site.brand.advisorLogoAlt || '',
+      logoPath:'brand.advisorLogo', credential:t(site.brand.credential), credentialPath:'brand.credential.' + lk, life:true
+    };
     let workSections = (routePage === 'motor' || S.motor) ? this.buildMotorPageSections(site) : (site.sections || []);
     if (S.life) {
       const find = (id) => site.sections.find(x => x.id === id) || null;
@@ -2085,11 +2290,11 @@ class Component extends DCLogic {
         cmsBody: s.id === 'life' ? 'lifeFocus.body' : '', cmsCta1: s.id === 'life' ? 'lifeFocus.cta1' : '',
         cmsCta2: s.id === 'life' ? 'lifeFocus.cta2' : '', cmsNote: s.id === 'life' ? 'lifeFocus.note' : '',
         isHero: s.type === 'hero', isMainHero: s.type === 'hero' && s.id === 'hero', isFocusHero: s.type === 'hero' && s.id !== 'hero', isTrust: s.type === 'trust', isProducts: s.type === 'products',
-        isFit: s.type === 'fit', isSteps: s.type === 'steps', isInsurers: s.type === 'insurers',
+        isFit: isHome && s.type === 'fit', isSteps: s.type === 'steps', isInsurers: s.type === 'insurers',
         isVoices: s.type === 'testimonials', isStories: s.type === 'stories', isAbout: s.type === 'about', isFaq: s.type === 'faq',
         isContact: s.type === 'contact',
         isClaim: s.type === 'claim', isRenew: s.type === 'renew', isReview: s.type === 'review',
-        isPdpa: s.type === 'pdpa', isFees: s.type === 'fees', isTiers: s.type === 'tiers',
+        isTiers: s.type === 'tiers',
         al: s.align === 'c' ? 'c' : 'l',
         hl: s.bg === 'dark' ? 'var(--color-accent-300)' : 'var(--color-accent-700)',
         kicker: c.kicker || '', title: c.title || '', body: c.body || '', note: c.note || '',
@@ -2113,9 +2318,9 @@ class Component extends DCLogic {
         heroClaimHref: heroClaimHref,
         showHeroClaim: !!(c.claimText && heroClaimHref && sectionHrefAvailable(heroClaimHref)),
         items: (s.id === 'hero' && heroServices.length) ? heroServices : items,
-        cards: (s.cards || []).filter(cd => cd && cd.on !== false).map((cd, i) => {
+        cards: routeCards(s).filter(cd => cd.on !== false).map((cd, i) => {
           const cc = cd[lk] || {};
-          return { key: cd.id || (s.id + '-c' + i), logo: assetURL(cd.logo || ''), logoAlt: cd.logoAlt || '',
+          return { key: cd.id || (s.id + '-c' + i), licenceRole:cd.licenceRole || '', logo: assetURL(cd.logo || ''), logoAlt: cd.logoAlt || '',
             mediaLogoPath: sectionPath + '.cards.@' + cd.id + '.logo',
             copy: Object.fromEntries(['kicker','title','body'].map(field => [field, sectionPath + '.cards.@' + cd.id + '.' + lk + '.' + field])),
             hasLogo: !!cd.logo,
@@ -2126,28 +2331,53 @@ class Component extends DCLogic {
         })
       };
       sectionView.copy = Object.fromEntries(['kicker','title','body','note','cta1','cta2','claimText','claimLinkText'].map(field => [field, sectionPath + '.' + lk + '.' + field]));
-      sectionView.isHomeLayout = isHome && ['hero','trust','products','insurers','tiers','faq','guides','about','review','steps','claim','fees','pdpa'].includes(s.type);
+      sectionView.homeTransparency = ['fees','pdpa'].includes(s.type);
+      sectionView.isHomeLayout = sectionView.homeTransparency || (sharedDesign && ['hero','trust','products','insurers','tiers','faq','about','review','steps','claim'].includes(s.type));
       ['hero','trust','products','insurers','tiers','faq','guides','about','review','steps','claim'].forEach(type => { sectionView['home' + type[0].toUpperCase() + type.slice(1)] = s.type === type; });
-      sectionView.homeDisclosure = ['about','fees','pdpa'].includes(s.type);
+      sectionView.homeDisclosure = s.type === 'about';
+      sectionView.productIntro = isMotor && s.type === 'products';
+      sectionView.productHeading = sectionView.productIntro ? sectionView.title : cmsText('ui.coverageLabel');
+      sectionView.productHeadingPath = sectionView.productIntro ? sectionPath + '.' + lk + '.title' : '';
+      sectionView.productHeadingCms = sectionView.productIntro ? '' : 'ui.coverageLabel';
+      sectionView.hasLicenceIntro = !isMotor && !!c.body;
+      if (sectionView.homeTransparency) {
+        const designKey = s.type === 'fees' ? 'fees' : 'privacy';
+        const iconPath = 'homeDesign.' + designKey + 'Icon';
+        sectionView.transparency = {
+          isPrivacy:s.type === 'pdpa', className:'cm-transparency cm-transparency-' + designKey,
+          headingIcon:assetURL(cmsGet(site,iconPath)), headingIconPath:iconPath, headingPaths:ICONS[s.type === 'fees' ? 'coins' : 'lock'],
+          noteIcon:assetURL(homeDesign.transparencyNoteIcon), notePaths:ICONS.shieldCheck,
+          statement:cmsText('homeDesign.' + designKey + 'Statement'), statementPath:'homeDesign.' + designKey + 'Statement',
+          closing:cmsText('homeDesign.' + designKey + 'ClosingStatement'), closingPath:'homeDesign.' + designKey + 'ClosingStatement',
+          summaryLabel:cmsText('homeDesign.' + designKey + 'SummaryLabel'), summaryPath:'homeDesign.' + designKey + 'SummaryLabel',
+          itemGrid:s.type === 'fees' ? 'cm-transparency-grid cm-transparency-topics' : 'cm-transparency-grid cm-transparency-privacy-grid',
+          items:items.map(item => ({...item,tone:(s.items || []).find(raw=>raw.id===item.contentId)?.tone || 'accent'})),
+          cards:sectionView.cards.map(card => {
+            const raw = (s.cards || []).find(entry => entry.id === card.key) || {};
+            return {...card,paths:ICONS[raw.icon] || ICONS.file,tone:raw.tone || 'accent',iconImage:assetURL(raw.iconImage),mediaIconPath:sectionPath + '.cards.@' + card.key + '.iconImage'};
+          })
+        };
+      }
       sectionView.homeInformation = ['review','steps','claim'].includes(s.type);
       sectionView.homeInformationExpanded = S.editMode || s.type === 'claim';
       sectionView.homeHasContext = !!(c.body || c.note || (s.type === 'review' && c.cta1));
       sectionView.homeType = s.type;
       sectionView.mediaBackgroundPath = s.type === 'hero' ? 'homeDesign.botanicalIllustration' : '';
-      sectionView.contactMediaBackgroundPath = isHome ? 'homeDesign.contactBackground' : '';
+      sectionView.contactMediaBackgroundPath = sharedDesign ? 'homeDesign.contactBackground' : '';
       sectionView.homeStyle = '--band:' + p.bg + ';--ink:' + p.fg + ';--muted:' + p.muted + ';--eyebrow:' + p.kicker + ';--paper:' + p.card + ';--paper-ink:' + p.cardFg + ';--line:' + p.line + ';--columns:' + (s.cols || 3);
       sectionView.homeStyle += ';--hm-action:' + A.action + ';--hm-card:' + (site.theme.radius === 'sharp' ? 8 : 16) + 'px;--hm-panel:' + (site.theme.radius === 'sharp' ? 12 : 24) + 'px;--hm-space:' + (site.theme.density === 'compact' ? 14 : 20) + 'px';
       if (s.type === 'hero' && homeDesign.botanicalIllustration) sectionView.homeStyle += ';--hm-hero-art:url("' + assetURL(homeDesign.botanicalIllustration) + '")';
       if (s.type === 'insurers') sectionView.homeLicenceStyle = sectionView.homeStyle + (homeDesign.licenceBackground ? ';--hm-licence-art:url("' + assetURL(homeDesign.licenceBackground) + '")' : '');
-      if (s.type === 'contact') sectionView.contactStyle = '--contact-ink:'+p.fg+';--contact-muted:'+p.muted+';--contact-link:'+sectionView.hl+';scroll-margin-top:110px;position:relative;overflow:hidden;background:'+p.bg+';color:'+p.fg+(isHome && homeDesign.contactBackground ? ';--cm-contact-art:url("' + assetURL(homeDesign.contactBackground) + '")' : '');
+      if (s.type === 'contact') sectionView.contactStyle = '--contact-ink:'+p.fg+';--contact-muted:'+p.muted+';--contact-link:'+sectionView.hl+';scroll-margin-top:110px;position:relative;overflow:hidden;background:'+p.bg+';color:'+p.fg+(sharedDesign && homeDesign.contactBackground ? ';--cm-contact-art:url("' + assetURL(homeDesign.contactBackground) + '")' : '');
       sectionView.homeTeaser = s.type === 'about' ? t(homeDesign.aboutTeaser) : '';
       sectionView.homeStatement = t(homeDesign.heroStatement);
       sectionView.homeHasStatement = !!t(homeDesign.heroStatement);
       sectionView.homeHeroClass = t(homeDesign.heroStatement) ? 'hm-hero-grid has-statement' : 'hm-hero-grid';
+      if (!heroProof.visible) sectionView.homeHeroClass += ' without-proof';
       sectionView.featured = (homeDesign.featuredTierIds || []).map(id => items.find(item => item.contentId === id)).filter(Boolean).map(item => ({...item, cells: (homeDesign.previewAxisIds || []).map(id => item.cells.find(cell => cell.headId === id)).filter(Boolean)}));
       sectionView.hasFeatured = sectionView.featured.length > 0;
       sectionView.openComparison = !sectionView.hasFeatured;
-      sectionView.taskLinks = (homeDesign.taskLinks || []).filter(link => link.on !== false && link.target && t(link.label) && sectionHrefAvailable(link.target)).map(link => ({key:link.id,label:t(link.label),href:normalizeSectionHref(link.target),copy:'homeDesign.taskLinks.@' + link.id + '.label.' + lk}));
+      sectionView.taskLinks = (isHome ? homeDesign.taskLinks || [] : []).filter(link => link.on !== false && link.target && t(link.label) && sectionHrefAvailable(link.target)).map(link => ({key:link.id,label:t(link.label),href:normalizeSectionHref(link.target),copy:'homeDesign.taskLinks.@' + link.id + '.label.' + lk}));
       if (sectionView.isHomeLayout) Object.keys(sectionView).filter(key => /^is[A-Z]/.test(key) && key !== 'isHomeLayout').forEach(key => { sectionView[key] = false; });
       return sectionView;
     });
@@ -2158,25 +2388,9 @@ class Component extends DCLogic {
     const situationKeys = Object.keys(situationConfig).filter(k => situationConfig[k] && situationConfig[k].on !== false);
     const activeSituationKey = S.situation && situationConfig[S.situation] ? S.situation : (situationKeys[0] || '');
     const sit = activeSituationKey ? situationConfig[activeSituationKey] : null;
-    const lifeCalc = fitCalculator.life || DEFAULT_NEEDS_CALCULATOR.life;
     const healthCalc = fitCalculator.health || DEFAULT_NEEDS_CALCULATOR.health;
-    const ciCalc = fitCalculator.criticalIllness || DEFAULT_NEEDS_CALCULATOR.criticalIllness;
-    const supportOptions = Array.isArray(lifeCalc.supportYears) && lifeCalc.supportYears.length ? lifeCalc.supportYears : DEFAULT_NEEDS_CALCULATOR.life.supportYears;
-    const supportIndex = Math.max(0, Math.min(supportOptions.length - 1, Number(S.deps) || 0));
-    const supportYears = Number(supportOptions[supportIndex]) || 1;
-    const monthlyEssential = Math.max(0, Number(S.income) || 0);
-    const obligations = Math.max(0, Number(S.debt) || 0);
-    const resources = Math.max(0, Number(S.resources) || 0);
-    const roomBenefit = Math.max(0, Number(S.roomBenefit) || 0);
-    const recoveryMonths = Math.max(3, Number(S.recovery) || Number(ciCalc.defaultRecoveryMonths) || 6);
-    const transitionFinalCosts = Math.max(0, Number(lifeCalc.transitionFinalCosts) || 0);
-    const lifeNeed = Math.max(0, monthlyEssential * 12 * supportYears + obligations + transitionFinalCosts - resources);
-    const sumAssured = Math.round(lifeNeed / 100000) * 100000;
     const roomRef = healthCalc.selectedRoomReference || DEFAULT_NEEDS_CALCULATOR.health.selectedRoomReference;
     const roomDaily = Math.max(0, Number(roomRef.totalFixedDaily ?? roomRef.publishedPrice) || 0);
-    const roomGap = Math.max(0, roomDaily - roomBenefit);
-    const ciNeed = Math.max(0, monthlyEssential * recoveryMonths + Math.max(0, Number(ciCalc.oneOffRecoveryNonMedicalBudget) || 0) + Math.max(0, Number(ciCalc.chosenMedicalOopBuffer) || 0) - resources);
-    const lump = Math.round(ciNeed / 100000) * 100000;
     const sourceName = t(roomRef.hospitalName);
     const roomTypeName = typeof roomRef.roomType === 'string' ? roomRef.roomType : t(roomRef.roomType);
     const referenceLabel = [sourceName, roomTypeName, this.fmt(roomDaily) + '/' + (roomRef.priceUnit || 'day'), roomRef.confidenceLevel, roomRef.lastChecked].filter(Boolean).join(' · ');
@@ -2193,6 +2407,110 @@ class Component extends DCLogic {
       pick: () => this.setState({ situation: k })
     }));
 
+    // One shared field/result renderer, with isolated draft and debounced values per tab.
+    const calcCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.localized && field.path.startsWith('calculatorDesign.')).map(field => [field.path.slice(17),cmsText(field.path)]));
+    const calcMode = ['life','ci','health'].includes(S.calculatorMode) ? S.calculatorMode : 'life';
+    const calcModes = ['life','ci','health'];
+    const calcRaw = S.calculatorInputs[calcMode];
+    const verifiedReferences=(Array.isArray(fitCalculator.referenceCatalog)?fitCalculator.referenceCatalog:[]).filter(ref=>needsReferenceApproved(ref));
+    const selectedReference=verifiedReferences.find(ref=>ref.id===S.calculatorReferenceId);
+    const calcReference = selectedReference?{daily:selectedReference.daily,name:selectedReference.name[lk],sourceUrl:selectedReference.sourceUrl,lastChecked:selectedReference.lastChecked}:S.calculatorReferenceId?{daily:null,name:calcCopy.referenceUnavailable,sourceUrl:'',lastChecked:''}:{daily:roomDaily,name:[sourceName,roomTypeName].filter(Boolean).join(' / '),sourceUrl:cleanHttpsUrl(roomRef.sourceUrl,''),lastChecked:roomRef.lastChecked};
+    const calcDraft = calculateNeeds(calcMode,calcRaw,calcReference);
+    const calcResult = calculateNeeds(calcMode,S.calculatorCommitted[calcMode],calcReference);
+    const calcPending = !!S.calculatorPending[calcMode];
+    const calcReady = calcDraft.ready && calcResult.ready && !calcPending;
+    let planningProfile, planningInvalid=false,planningInvalidField='';
+    try {planningProfile=sanitizeNeedsProfile(S.calculatorProfile);} catch(error) {planningInvalid=true;planningInvalidField=error.field;planningProfile={...needsInitialProfile(),paInterest:S.calculatorProfile.paInterest};}
+    const paResult=calculateNeeds('pa',S.calculatorPa);
+    const planningReady=!planningInvalid && (planningProfile.paInterest!=='yes' || paResult.ready);
+    const updateProfile=(key,value)=>this.setState(s=>({calculatorProfile:{...s.calculatorProfile,[key]:value}}));
+    const updatePa=(key,value)=>this.setState(s=>({calculatorPa:{...s.calculatorPa,[key]:value}}));
+    const fieldView=(field,raw,assessment,change,prefix)=>({
+      key:prefix+'-'+field.key,inputKey:field.key,id:'calculator-input-'+field.key,helpId:'calculator-help-'+field.key,
+      describedBy:'calculator-help-'+field.key+' calculator-message-'+field.key,messageId:'calculator-message-'+field.key,
+      label:calcCopy[field.key],labelPath:'calculatorDesign.'+field.key,help:calcCopy[field.key+'Help']||calcCopy.paHelp,helpPath:'calculatorDesign.'+(calcCopy[field.key+'Help']?field.key+'Help':'paHelp'),
+      paths:ICONS[field.icon] || ICONS.users,unit:calcCopy[field.unit],required:!!field.required,placeholder:field.example?.toLocaleString('en-US'),
+      image:assetURL(site.calculatorDesign?.[field.key+'Icon'] || ''),imagePath:'calculatorDesign.'+field.key+'Icon',
+      value:raw[field.key]==='unknown' && !field.choices?'':raw[field.key],numeric:!field.choices,select:!!field.choices,invalid:assessment.invalid.includes(field.key),
+      inputMode:field.text?'text':'numeric',unknownAllowed:!!field.unknown,unknown:raw[field.key]==='unknown',
+      unknownLabel:field.unit==='years'?calcCopy.notSureValue:calcCopy.notSure,
+      toggleUnknown:e=>change(field.key,e.target.checked?'unknown':''),
+      message:assessment.invalid.includes(field.key)?calcCopy.invalidV2:assessment.warnings.includes(field.key)?calcCopy.warning:'',
+      options:(field.choices || []).map(value=>({value,label:value==='published'?referenceLabel:value===''?calcCopy.choose:calcCopy[value]})),
+      change:e=>change(field.key,e.target.value),blur:e=>change(field.key,e.target.value,true)
+    });
+    const calcFields = needsFields(calcMode,calcRaw).map(field=>({
+      ...fieldView(field,calcRaw,calcDraft,(key,value,blur)=>this.updateCalculatorInput(calcMode,key,value,blur),calcMode),advanced:!!field.advanced
+    }));
+    if(calcMode==='health' && calcRaw.roomReference==='published' && (verifiedReferences.length || S.calculatorReferenceId)) {
+      const field=fieldView({key:'referenceChoice',choices:['default',...verifiedReferences.map(ref=>ref.id)]},{referenceChoice:S.calculatorReferenceId||'default'},{invalid:[],warnings:[]},(_key,value)=>this.setState({calculatorReferenceId:value==='default'?'':value},()=>this.persistCalculatorSession()),'health');
+      field.options=[{value:'default',label:referenceLabel},...verifiedReferences.map(ref=>({value:ref.id,label:ref.name[lk]+' · '+ref.lastChecked})),...(S.calculatorReferenceId&&!selectedReference?[{value:S.calculatorReferenceId,label:calcCopy.referenceUnavailable}]:[])];field.ephemeral=true;
+      calcFields.splice(calcFields.findIndex(f=>f.inputKey==='roomReference')+1,0,field);
+    }
+    const calcRow = (key,amount,detail='',deduct=false) => ({path:'calculatorDesign.'+key,label:calcCopy[key],value:Number.isFinite(amount)?(deduct?'\u2212 ':'')+this.fmt(amount):calcCopy.notSure,detail});
+    const I = calcResult.inputs;
+    const calcRows = calcMode === 'life' ? [
+      calcRow('netMonthlyNeed',calcResult.netMonthlyNeed),calcRow('supportCost',calcResult.supportCost,I.valuation==='presentValue'?calcCopy.presentValue:`${calcResult.netMonthlyNeed?.toLocaleString('en-US')} \u00d7 12 \u00d7 ${I.yearsToSupport}`),
+      calcRow('debtToClear',I.debtToClear),calcRow('extraLumpSum',I.extraLumpSum),calcRow('earmarkedAssets',I.earmarkedAssets,'',true),calcRow('existingLifeCover',I.existingLifeCover,'',true)
+    ] : calcMode === 'ci' ? [
+      calcRow('netMonthlyNeed',calcResult.netMonthlyNeed),calcRow('recoveryCost',calcResult.supportCost,`${calcResult.netMonthlyNeed?.toLocaleString('en-US')} \u00d7 ${I.recoveryMonths}`),
+      calcRow('extraRecoveryBudget',I.extraRecoveryBudget),calcRow('medicalOOPBuffer',I.medicalOOPBuffer),calcRow('availableEmergencyFunds',I.availableEmergencyFunds,'',true),calcRow('existingCriticalIllnessCover',I.existingCriticalIllnessCover,'',true)
+    ] : [calcRow('targetAnnualLimit',I.targetAnnualLimit),calcRow('existingAnnualLimit',I.existingHealthStructure==='none'?0:I.existingAnnualLimit),calcRow('annualGap',calcResult.annualGap),
+      calcRow('roomDaily',calcResult.roomDaily),calcRow('roomBenefit',I.existingHealthStructure==='none'?0:I.roomBenefit),calcRow('roomGap',calcResult.roomGap),
+      ...['publicHealthScheme','careSetting','existingHealthStructure','costSharing','employerCover'].map(key=>({path:'calculatorDesign.'+key,label:calcCopy[key],value:calcCopy[I[key] || 'unknown']})),
+      ...(I.stressEnabled==='yes'?[calcRow('scenarioOwnPay',calcResult.scenarioOwnPay),calcRow('scenarioBudgetGap',calcResult.scenarioBudgetGap)]:[])];
+    if(calcResult.calculationStatus==='partial' && calcMode!=='health')calcRows.push(calcRow('provisionalGap',calcResult.provisionalGap));
+    const calculatorResultPath = 'calculatorDesign.'+(calcMode==='health'?'healthResultV2':calcMode+'Result');
+    const calculatorResultText = calcMode==='health'?calcCopy[calcResult.status]:calcResult.shortfall===null?calcCopy.partial:this.fmt(calcResult.shortfall);
+    const catalog=fitCalculator.productCatalog || {version:NEEDS_CATALOG_VERSION,products:[]};
+    const matches=matchNeedsProducts({domain:calcMode,result:calcResult,profile:planningProfile,paResult,basePolicyId:planningProfile.basePolicyId,catalog});
+    const attachCalculator=(event,includeProfile)=>{
+      if(!calcReady || includeProfile&&!planningReady){event.preventDefault();return;}
+      const snapshot=createNeedsSnapshot(calcMode,calcRaw,calcReference,lk,undefined,includeProfile?{profile:planningProfile,pa:planningProfile.paInterest==='yes'?S.calculatorPa:undefined}:undefined);
+      if(!snapshot){event.preventDefault();return;}
+      const inputText=calcFields.filter(field=>!field.ephemeral).map(field=>field.label+': '+(field.select?field.options.find(option=>option.value===snapshot.inputs[field.inputKey])?.label:snapshot.inputs[field.inputKey]==='unknown'||snapshot.inputs[field.inputKey]===null?calcCopy.notSure:Number(snapshot.inputs[field.inputKey]).toLocaleString('en-US'))+(field.unit?' '+field.unit:'')).join(' · ');
+      const profileText=includeProfile?' · '+calcCopy.planning+': '+NEEDS_PROFILE_FIELDS.filter(f=>Object.hasOwn(planningProfile,f.key)).map(f=>calcCopy[f.key]+': '+(f.choices?calcCopy[planningProfile[f.key]]:planningProfile[f.key]==='unknown'?calcCopy.notSure:String(planningProfile[f.key]))).join(' · '):'';
+      const paText=includeProfile && planningProfile.paInterest==='yes'?' · '+calcCopy.paHelp+' · '+[calcRow('paDeathGap',paResult.deathGap),calcRow('paMedicalGap',paResult.medicalGap),calcRow('paIncomeGap',paResult.incomeGap)].map(r=>r.label+': '+r.value).join(' · '):'';
+      this.setState({calculatorSnapshot:snapshot,calculatorAttachmentText:calcCopy[calcMode]+' · '+calculatorResultText+' · '+inputText+profileText+paText,shareCalculator:true,sent:false});
+    };
+    const profileFields=NEEDS_PROFILE_FIELDS.filter(field=>!field.when||Object.entries(field.when).every(([key,values])=>values.includes(S.calculatorProfile[key]))).map(field=>fieldView(field,S.calculatorProfile,{invalid:planningInvalid?[planningInvalidField]:[],warnings:[]},updateProfile,'profile'));
+    const paFields=planningProfile.paInterest==='yes'?needsFields('pa',S.calculatorPa).map(field=>fieldView(field,S.calculatorPa,paResult,updatePa,'pa')):[];
+    const calculatorView = {
+      calcCopy,calculatorStyle:'--calc-action:'+A.action+';--calc-art:'+(site.calculatorDesign?.background?'url("'+assetURL(site.calculatorDesign.background)+'")':'none'),
+      calculatorPhoto:assetURL(site.calculatorDesign?.photo || ''),calculatorTabId:'calculator-tab-'+calcMode,
+      calculatorReferenceName:calcReference.name+' · '+calcReference.lastChecked,calculatorReferenceSource:calcReference.sourceUrl,
+      calculatorHealth:calcMode === 'health',calculatorRows:calcRows,calculatorReady:calcReady,calculatorPending:calcPending,calculatorIncomplete:!calcReady,calculatorShowBreakdown:calcDraft.ready && calcResult.ready,
+      calculatorStatus:calcPending?calcCopy.pending:!calcReady?calcCopy.completePrompt:calcResult.calculationStatus==='partial'?calcCopy.partialNote:'',
+      calculatorFieldsView:S.calculatorPlanning?[...profileFields,...paFields]:calcFields.filter(field=>!field.advanced || S.calculatorDetails[calcMode]),
+      calculatorNumeric:calcMode!=='health' && calcResult.shortfall!==null,calculatorShowReference:calcMode==='health'&&calcRaw.roomReference==='published',
+      calculatorNotes:calcResult.notes.map(key=>({key,text:calcCopy[key],path:'calculatorDesign.'+key})),
+      calculatorAdvice:calcMode==='life'?calcCopy.adviceBody:calcCopy[calcMode==='health'?'healthAdviceV2':'ciAdvice'],calculatorAdvicePath:'calculatorDesign.'+(calcMode==='life'?'adviceBody':calcMode==='health'?'healthAdviceV2':'ciAdvice'),
+      calculatorResultPath,calculatorResultLabel:cmsText(calculatorResultPath),
+      calculatorResult:calcDraft.ready && calcResult.ready?calculatorResultText:calcCopy.incomplete,calculatorResultClass:calcMode==='health'||!calcDraft.ready||calcResult.shortfall===null?'cm-calc-status':'',
+      calculatorMethod:calcCopy[calcMode+'MethodV2'],calculatorMethodPath:'calculatorDesign.'+calcMode+'MethodV2',
+      calculatorMethodFields:calcFields,
+      calculatorMethodOpen:S.calculatorMethodOpen || S.editMode,toggleCalculatorMethod:()=>this.setState({calculatorMethodOpen:!S.calculatorMethodOpen}),
+      calculatorReset:()=>this.resetCalculator(calcMode),calculatorResetPaths:ICONS.refresh,
+      calculatorDetailsOpen:!!S.calculatorDetails[calcMode],toggleCalculatorDetails:()=>this.setState(s=>({calculatorDetails:{...s.calculatorDetails,[calcMode]:!s.calculatorDetails[calcMode]}}),()=>this.persistCalculatorSession()),
+      calculatorRemember:S.calculatorRemember,calculatorStorageError:S.calculatorStorageError,
+      toggleCalculatorRemember:e=>this.setState({calculatorRemember:e.target.checked,calculatorStorageError:false},()=>this.persistCalculatorSession()),
+      calculatorPlanning:S.calculatorPlanning,calculatorPlanningIncomplete:!calcReady||!planningReady,
+      startCalculatorPlanning:()=>{if(calcReady)this.setState({calculatorPlanning:true},()=>document.getElementById('calculator-input-heading')?.focus({preventScroll:true}));},
+      backCalculator:()=>this.setState({calculatorPlanning:false}),
+      continueCalculator:e=>attachCalculator(e,false),continueCalculatorPlanning:e=>attachCalculator(e,true),
+      calculatorMatchStatus:calcCopy[matches.status]||'',calculatorCandidates:matches.candidates.map(p=>({...p,title:p.name[lk],detail:p.reasons.map(reason=>calcCopy[reason]).join(' · '),budget:calcCopy[p.budgetStatus],sourceUrl:p.source.url})),
+      calculatorPaRows:planningProfile.paInterest==='yes'?[calcRow('paDeathGap',paResult.deathGap),calcRow('paMedicalGap',paResult.medicalGap),calcRow('paIncomeGap',paResult.incomeGap)]:[],
+      calculatorTabs:calcModes.map((key,index)=>({
+        key,id:'calculator-tab-'+key,label:calcCopy[key],labelPath:'calculatorDesign.'+key,subtitle:calcCopy[key+'Subtitle'],subtitlePath:'calculatorDesign.'+key+'Subtitle',
+        image:assetURL(site.calculatorDesign?.[key+'Icon'] || ''),imagePath:'calculatorDesign.'+key+'Icon',paths:ICONS[{life:'heartOutline',ci:'shieldCheck',health:'heart'}[key]],
+        selected:key===calcMode,tabIndex:key===calcMode?0:-1,pick:()=>this.setState({calculatorMode:key,calculatorPlanning:false},()=>this.persistCalculatorSession()),
+        keydown:e=>{
+          const next=e.key==='ArrowRight'?(index+1)%3:e.key==='ArrowLeft'?(index+2)%3:e.key==='Home'?0:e.key==='End'?2:null;
+          if(next===null)return;e.preventDefault();this.setState({calculatorMode:calcModes[next],calculatorPlanning:false},()=>{document.getElementById('calculator-tab-'+calcModes[next])?.focus({preventScroll:true});this.persistCalculatorSession();});
+        }
+      }))
+    };
+
     const bgLabels = { bg: 'พื้นครีม', surface: 'พื้นยกระดับ', sage: 'แถบเขียว Sage', dark: 'แถบสีเข้ม' };
     const countVisible = (list) => (Array.isArray(list) ? list.filter(item => item && item.on !== false).length : 0);
     const sectionSummary = (s) => {
@@ -2201,41 +2519,34 @@ class Component extends DCLogic {
       const cardCount = countVisible(s.cards);
       const headCount = countVisible(s.heads);
       if (s.type === 'tiers') {
-        parts.push(headCount + ' คอลัมน์');
-        parts.push(itemCount + ' แถว');
+        parts.push((homeDesign.featuredTierIds || []).filter(id => (s.items || []).some(item => item.id === id && item.on !== false)).length + ' ชั้นแนะนำ');
+        parts.push(itemCount + ' ชั้นประกัน');
+        parts.push(headCount + ' หัวข้อความคุ้มครอง');
       } else {
         if (itemCount) parts.push(itemCount + (s.type === 'trust' ? ' ข้อความสั้น' : s.type === 'insurers' ? ' โลโก้' : ' รายการ'));
-        if (cardCount) parts.push(cardCount + ' การ์ด');
+        if (cardCount && s.type !== 'insurers') parts.push(cardCount + ' การ์ด');
       }
       if (!parts.length) parts.push('ส่วนเดียว');
       return parts.join(' · ');
     };
-    const homeAdminPairs = (site.sections || []).map((s, i) => ({ source: 'sections', s: s, i: i, id: s && s.id })).filter(pair => pair.s);
-    const motorLocalMap = {
-      motor: { key: 'hero', s: motorPageConfig.hero },
-      'motor-trust': { key: 'trust', s: motorPageConfig.trust },
-      'motor-cover': { key: 'cover', s: motorPageConfig.cover }
-    };
-    const sharedAdminPair = (id) => homeAdminPairs.find(pair => pair.id === id) || null;
-    const motorAdminPairs = [];
-    const seenMotorAdmin = {};
-    const pushMotorAdminPair = (id) => {
-      if (!id || seenMotorAdmin[id]) return;
-      seenMotorAdmin[id] = true;
-      if (motorLocalMap[id] && motorLocalMap[id].s) {
-        motorAdminPairs.push({ source: 'motorPage', motorKey: motorLocalMap[id].key, s: motorLocalMap[id].s, id: id });
-        return;
-      }
-      const pair = sharedAdminPair(id);
-      if (pair) motorAdminPairs.push(pair);
-    };
-    const motorAdminOrder = Array.isArray(motorPageConfig.sections) ? motorPageConfig.sections : [];
-    motorAdminOrder.forEach(pushMotorAdminPair);
-    Object.keys(motorLocalMap).forEach(pushMotorAdminPair);
-    const adminSectionPairs = routePage === 'motor' ? motorAdminPairs : homeAdminPairs;
+    // Use the visitor's route projection, retaining hidden rows for recovery.
+    // Fixed presentation rows keep their existing CMS owners, never new sections.
+    const orderedAdminPairs = workSections.filter(Boolean).map(s => {
+      const motorKey = routePage === 'motor' && ['hero','trust','cover'].find(key => motorPageConfig[key]?.id === s.id);
+      return { source: motorKey ? 'motorPage' : 'sections', motorKey, s, id:s.id, ownerId:s.id };
+    });
+    const licencePair = orderedAdminPairs.find(pair => pair.s.type === 'insurers');
+    const adminSectionPairs = orderedAdminPairs.concat(
+      sharedDesign && licencePair ? [{...licencePair, id:'licences', kind:'licences', fixed:true}] : [],
+      [{id:'footer',kind:'footer',fixed:true,s:{type:'footer',on:site.footer.show}}]
+    );
+    const openAdminGroup = key => this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{
+      const group = [...document.querySelectorAll('[data-cms-group]')].find(node => node.dataset.cmsGroup === key);
+      if (group) { group.open = true; group.scrollIntoView({block:'start'}); group.querySelector('summary')?.focus({preventScroll:true}); }
+    }));
     const fallbackAdminPair = adminSectionPairs.find(pair => pair.s.type !== 'hero') || adminSectionPairs[0] || null;
-    const selectedAdminPair = adminSectionPairs.find(pair => pair.s.id === S.sel) || fallbackAdminPair;
-    const activeAdminSel = selectedAdminPair ? selectedAdminPair.s.id : S.sel;
+    const selectedAdminPair = adminSectionPairs.find(pair => pair.id === S.sel) || fallbackAdminPair;
+    const activeAdminSel = selectedAdminPair ? selectedAdminPair.id : S.sel;
     const firstContentAdminId = (adminSectionPairs.find(pair => pair.s.type !== 'hero') || fallbackAdminPair || { s: { id: 'trust' } }).s.id;
     const resolvePairInConfig = (draft, pair) => {
       if (!draft || !pair) return null;
@@ -2244,24 +2555,22 @@ class Component extends DCLogic {
         if (!page[pair.motorKey]) page[pair.motorKey] = clone(((DEFAULTS.motorPage || {})[pair.motorKey]) || {});
         return page[pair.motorKey];
       }
-      return (draft.sections || []).find(sec => sec && sec.id === pair.id) || null;
+      return (draft.sections || []).find(sec => sec && sec.id === pair.ownerId) || null;
     };
     const updatePair = (pair, fn) => this.upd(draft => {
       const section = resolvePairInConfig(draft, pair);
       if (section) fn(section, draft);
     });
     const moveAdminPair = (pair, dir) => {
-      if (!pair) return;
-      if (routePage !== 'motor') { this.move(pair.id, dir); return; }
+      if (!pair || pair.fixed) return;
+      const target = orderedAdminPairs[orderedAdminPairs.findIndex(entry => entry.id === pair.id) + dir];
+      if (!target) return;
       this.upd(draft => {
-        const page = draft.motorPage = draft.motorPage || {};
-        let order = Array.isArray(page.sections) ? page.sections.slice() : [];
-        adminSectionPairs.forEach(p => { if (p && p.id && order.indexOf(p.id) < 0) order.push(p.id); });
-        const i = order.indexOf(pair.id);
-        const j = i + dir;
-        if (i < 0 || j < 0 || j >= order.length) return;
-        const temp = order[i]; order[i] = order[j]; order[j] = temp;
-        page.sections = order;
+        const order = routePage === 'motor' ? draft.motorPage.sections : draft.sections;
+        const idOf = entry => typeof entry === 'string' ? entry : entry.id;
+        const i = order.findIndex(entry => idOf(entry) === pair.id);
+        const j = order.findIndex(entry => idOf(entry) === target.id);
+        if (i >= 0 && j >= 0) [order[i],order[j]] = [order[j],order[i]];
       });
     };
     const updatePairRepeatable = (pair, key, itemId, fallbackIndex, fn) => updatePair(pair, section => {
@@ -2273,26 +2582,34 @@ class Component extends DCLogic {
     const selectedSectionUpdater = (fn) => updatePair(selectedAdminPair, fn);
     const secList = adminSectionPairs.map((pair, adminOrder) => {
       const s = pair.s;
-      const meta = SECTION_ADMIN_META[s.id] || SECTION_ADMIN_META[s.type] || { group: 'ส่วนของหน้า', title: TYPE_LABEL[s.type]?.th || s.type, role: 'ส่วนของเว็บไซต์ที่แก้ไขได้' };
-      const visible = s.on !== false;
+      const meta = SECTION_ADMIN_META[pair.id] || SECTION_ADMIN_META[s.type] || { group: 'ส่วนของหน้า', title: (TYPE_LABEL[s.type]?.th || s.type), role: 'ส่วนของเว็บไซต์ที่แก้ไขได้' };
+      const isLicence = pair.kind === 'licences', isFooter = pair.kind === 'footer';
+      const visible = s.on !== false && (!isLicence || countVisible(routeCards(s)) > 0);
+      const scope = isFooter ? 'ใช้ร่วมกันทุกหน้า' : pair.source === 'motorPage' ? 'เฉพาะหน้าประกันรถ' : motorPageConfig.sections.includes(pair.ownerId) ? 'ใช้ร่วมกับ' + (isMotor ? 'หน้าแรก' : 'ประกันรถยนต์') : 'เฉพาะหน้าแรก';
       return {
-        key: s.id, id: s.id, on: visible, sel: activeAdminSel === s.id,
-        name: meta.title || TYPE_LABEL[s.type]?.th || s.type, group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
-        sub: s.id, summary: sectionSummary(s), canEditContent: !!SCHEMA[s.type],
-        statusLabel: visible ? 'แสดงอยู่' : 'ซ่อนอยู่',
+        key: pair.id, id: pair.id, on: visible, sel: activeAdminSel === pair.id,
+        name: meta.title || (TYPE_LABEL[s.type]?.th || s.type), group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
+        sub: isFooter ? 'Footer' : '#' + (pair.id === 'insurers' && isHome ? 'motor' : pair.id),
+        summary: isFooter ? 'ส่วนท้ายหน้า' : isLicence ? countVisible(routeCards(s)) + (isMotor ? ' การ์ดนายหน้า' : ' การ์ดใบอนุญาต') : sectionSummary(s),
+        scope, position:pair.fixed ? 'อยู่ท้ายหน้าเสมอ' : '',
+        dependency:isLicence ? 'แสดงตามส่วนบริษัทประกันและการ์ดใบอนุญาตแต่ละใบ' : '',
+        canEditContent:isFooter || !!SCHEMA[s.type], canMove:!pair.fixed, canToggle:!isLicence, hasLayout:!pair.fixed,
+        statusLabel: visible ? 'แสดงอยู่' : isLicence && s.on === false ? 'ซ่อนส่วนบริษัทประกันอยู่' : isLicence ? 'ไม่มีการ์ดที่แสดงอยู่' : 'ซ่อนอยู่',
         statusBg: visible ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)',
         statusFg: visible ? 'var(--color-accent-2-900)' : 'var(--color-accent-800)',
-        cols: String(s.cols), hasCols: !!(SCHEMA[s.type] || {}).cols && (!isHome || !['trust','insurers','review','steps','claim'].includes(s.type)),
+        cols: String(s.cols), hasCols: !!(SCHEMA[s.type] || {}).cols && (!sharedDesign || !['trust','insurers','review','steps','claim','tiers'].includes(s.type)),
         bgName: s.bg, bgLabel: bgLabels[s.bg] || s.bg || 'ค่าเริ่มต้น',
         layoutLabel: s.type === 'tiers' ? 'ความกว้างตารางบน Desktop' : 'การ์ดต่อแถว',
-        rowBg: activeAdminSel === s.id ? A.soft : 'var(--color-bg)',
+        rowBg: activeAdminSel === pair.id ? A.soft : 'var(--color-bg)',
         dim: visible ? '1' : '.52',
         swBg: visible ? A.base : 'var(--color-neutral-400)',
         swX: visible ? 'translateX(18px)' : 'none',
-        first: adminOrder === 0, last: adminOrder === adminSectionPairs.length - 1,
-        toggle: () => updatePair(pair, section => { section.on = section.on === false; }),
+        first: pair.fixed || adminOrder === 0, last: pair.fixed || adminOrder === orderedAdminPairs.length - 1,
+        toggle: () => { if (isLicence) return; if (isFooter) this.upd(draft=>{draft.footer.show=!draft.footer.show;}); else updatePair(pair, section => { section.on = section.on === false; }); },
         up: () => moveAdminPair(pair, -1), down: () => moveAdminPair(pair, 1),
-        pick: () => this.setState({ sel: s.id, tab: 'content' }),
+        pick: () => isFooter ? openAdminGroup('Footer design') : this.setState({ sel: pair.id, tab: 'content' },()=>requestAnimationFrame(()=>{
+          const panel=document.querySelector('[data-admin-panel-scroll]');if(panel) panel.scrollTop=0;
+        })),
         less: () => updatePair(pair, section => { section.cols = Math.max(1, (Number(section.cols) || 1) - 1); }),
         more: () => updatePair(pair, section => { section.cols = Math.min(isHome && section.type === 'products' ? 6 : 4, (Number(section.cols) || 1) + 1); }),
         cycleBg: () => updatePair(pair, section => { const o = ['bg', 'surface', 'sage', 'dark']; section.bg = o[(o.indexOf(section.bg) + 1) % o.length]; })
@@ -2300,9 +2617,12 @@ class Component extends DCLogic {
     });
 
     const cur = selectedAdminPair ? selectedAdminPair.s : null;
-    const sch = cur ? SCHEMA[cur.type] : null;
+    const editingLicences = selectedAdminPair?.kind === 'licences';
+    const sch = cur ? editingLicences ? {...SCHEMA.insurers,fields:isMotor?[]:['body'],item:null,card:SCHEMA.insurers.card,addCardLabel:'licence card'}
+      : cur.type === 'insurers' && sharedDesign ? {...SCHEMA.insurers,fields:['kicker','title',...(cur.cta1href&&!/^\/motor(?:[#?]|$)/.test(cur.cta1href)?['cta1']:[])],card:null}
+      : cur.id === 'cover' && isHome ? {...SCHEMA.products,fields:[]} : SCHEMA[cur.type] : null;
     const curPath = selectedAdminPair?.source === 'motorPage' ? 'motorPage.' + selectedAdminPair.motorKey : 'sections.@' + cur?.id;
-    const editLinks = cur ? (cur.type === 'hero' ? ['cta2href','claimHref'] : ['cta1href'].filter(key => Object.prototype.hasOwnProperty.call(cur,key))).map(key => {
+    const editLinks = cur && !editingLicences ? (cur.type === 'hero' ? ['cta2href','claimHref'] : ['cta1href'].filter(key => Object.prototype.hasOwnProperty.call(cur,key) && !/^\/motor(?:[#?]|$)/.test(cur[key]))).map(key => {
       const localKey = key === 'claimHref' && cur[lk]?.claimHref !== undefined ? lk + '.' + key : key;
       return {key, label:key === 'claimHref' ? 'ปลายทางลิงก์ช่วยเหลือเคลม' : key === 'cta2href' ? 'ปลายทางปุ่มรอง' : 'ปลายทางปุ่มหลัก', ...cmsInput(curPath + '.' + localKey,{nav:true})};
     }) : [];
@@ -2322,13 +2642,9 @@ class Component extends DCLogic {
       };
       add('datasetVersion','เวอร์ชันชุดข้อมูล');
       add('sourcePackage','ชุดแหล่งอ้างอิง');
-      for(const [key,label] of [['hospitalName.'+lk,'ชื่อโรงพยาบาล'],['roomType.'+lk,'ประเภทห้อง'],['note.'+lk,'หมายเหตุแหล่งอ้างอิง'],['lastChecked','ตรวจสอบล่าสุด (YYYY-MM-DD)'],['confidenceLevel','Confidence grade']]) add('health.selectedRoomReference.'+key,label);
+      for(const [key,label] of [['hospitalName.'+lk,'ชื่อโรงพยาบาล'],['roomType.'+lk,'ประเภทห้อง'],['note.'+lk,'หมายเหตุแหล่งอ้างอิง'],['lastChecked','ตรวจสอบล่าสุด (YYYY-MM-DD)'],['confidenceLevel','ระดับความเชื่อมั่น']]) add('health.selectedRoomReference.'+key,label);
       add('health.selectedRoomReference.sourceUrl','URL แหล่งอ้างอิง','url');
-      add('health.selectedRoomReference.totalFixedDaily','Daily reference amount','number');
-      add('life.transitionFinalCosts','Transition / final costs','number');
-      add('life.supportYears','Support years (comma separated)','list');
-      add('criticalIllness.oneOffRecoveryNonMedicalBudget','One-off recovery budget','number');
-      add('criticalIllness.chosenMedicalOopBuffer','Medical OOP buffer','number');
+      add('health.selectedRoomReference.totalFixedDaily','ค่าใช้จ่ายอ้างอิงต่อวัน','number');
       for(const [id,situation] of Object.entries(cur.calculator?.situations || {})) {
         if (!/^[\w-]+$/.test(id)) continue;
         add('situations.'+id+'.'+lk,id+' / หัวข้อ');
@@ -2339,11 +2655,62 @@ class Component extends DCLogic {
         });
       }
     }
+    const emptyCatalog={version:NEEDS_CATALOG_VERSION,products:[]};
+    const storedCatalog=cur?.calculator?.productCatalog || emptyCatalog;
+    const storedReferences=cur?.calculator?.referenceCatalog || [];
+    const catalogSave=(kind)=>{
+      try {
+        const isProducts=kind==='products',saved=isProducts?storedCatalog.products:storedReferences;
+        const value=isProducts?validateNeedsCatalog(JSON.parse(S.calculatorCatalogDraft??JSON.stringify(storedCatalog))):validateNeedsReferences(JSON.parse(S.calculatorReferenceDraft??JSON.stringify(storedReferences)));
+        const rows=isProducts?value.products:value;
+        for(const row of rows){const previous=saved.find(p=>p.id===row.id);row.review=previous && catalogFingerprint(previous)===catalogFingerprint(row)?previous.review:{status:'draft'};}
+        this.upd(config=>cmsSet(config,curPath+'.calculator.'+(isProducts?'productCatalog':'referenceCatalog'),value));
+        this.setState({calculatorCatalogDraft:null,calculatorReferenceDraft:null,calculatorCatalogError:''});
+      }catch(error){this.setState({calculatorCatalogError:error.message});}
+    };
+    const calculatorDataView={
+      calculatorCatalogText:S.calculatorCatalogDraft??JSON.stringify(storedCatalog,null,2),
+      calculatorReferenceText:S.calculatorReferenceDraft??JSON.stringify(storedReferences,null,2),calculatorCatalogError:S.calculatorCatalogError,
+      onCalculatorCatalog:e=>this.setState({calculatorCatalogDraft:e.target.value}),onCalculatorReferences:e=>this.setState({calculatorReferenceDraft:e.target.value}),
+      saveCalculatorCatalog:()=>catalogSave('products'),saveCalculatorReferences:()=>catalogSave('references'),
+      addCalculatorProduct:()=>{this.setState({calculatorCatalogDraft:JSON.stringify({...storedCatalog,products:[...storedCatalog.products,createProductDraft('draft-'+Date.now())]},null,2)});},
+      addCalculatorReference:()=>this.setState({calculatorReferenceDraft:JSON.stringify([...storedReferences,{id:'room-'+Date.now(),name:{th:'',en:''},daily:null,sourceUrl:'',lastChecked:'',validUntil:'',review:{status:'draft'}}],null,2)}),
+      calculatorReviewer:S.calculatorReviewer,onCalculatorReviewer:e=>this.setState({calculatorReviewer:e.target.value}),
+      calculatorReviewRows:[...storedCatalog.products.map(record=>({record,kind:'products',issues:productReviewIssues(record)})),...storedReferences.map(record=>({record,kind:'references',issues:referenceReviewIssues(record)}))].map(({record,kind,issues})=>({
+        id:record.id,title:record.name?.[lk] || record.id,issues:issues.join(', '),
+        status:(kind==='products'?needsProductApproved(record):needsReferenceApproved(record))?'Approved':'Draft / review required',
+        disabled:!!issues.length || !S.calculatorReviewer.trim() || S.calculatorCatalogDraft!==null || S.calculatorReferenceDraft!==null,
+        approve:()=>{
+          try {
+            const approved=kind==='products'?reviewProduct(record,S.calculatorReviewer):reviewNeedsReference(record,S.calculatorReviewer);
+            this.upd(config=>{
+              const fullPath=curPath+'.calculator.'+(kind==='products'?'productCatalog':'referenceCatalog');
+              const existing=cmsGet(config,fullPath),rows=kind==='products'?existing.products:existing;
+              const current=rows.find(p=>p.id===record.id);
+              if(!current || catalogFingerprint(current)!==catalogFingerprint(record))throw new Error('Record changed. Review again.');
+              const next=rows.map(p=>p.id===record.id?approved:p);cmsSet(config,fullPath,kind==='products'?{...existing,products:next}:next);
+            });this.setState({calculatorCatalogError:''});
+          }catch(error){this.setState({calculatorCatalogError:error.message});}
+        }
+      }))
+    };
     const editFields = (cur && sch) ? sch.fields.map(f => ({
       key: f, label: FIELD_LABEL[f].th, value: (cur[lk] && cur[lk][f]) || '',
       big: !!MULTILINE[f], small: !MULTILINE[f],
       onInput: (e) => { const v = e.target.value; selectedSectionUpdater(section => { section[lk] = section[lk] || {}; section[lk][f] = v; }); }
     })) : [];
+    if (cur?.id === 'cover' && isHome) editFields.push({
+      key:'ui.coverageLabel',label:'หัวข้อความคุ้มครอง',value:cmsText('ui.coverageLabel'),big:false,small:true,
+      onInput:e=>this.upd(config=>setCmsCopy(config,'ui.coverageLabel.'+lk,e.target.value))
+    });
+    const contentGroups = editingLicences ? ['Advisor profile','Home licences','Licences']
+      : ({hero:['Advisor profile','Home design','Navigation'],motor:['Home design','Navigation'],cover:['Page composition'],
+          tiers:['Page composition','Home design'],fit:['Calculator design'],talk:['Advisor profile','Home contact','Contact submission','Consultation form labels','Form choices'],
+          fees:['Transparency design'],privacy:['Transparency design','Cookie consent']})[cur?.id] || [];
+    const contentShortcuts = contentGroups.filter(key=>!['Contact submission','Advisor profile'].includes(key)||isHome).map(key=>({
+      key,label:cmsAdminLabel(key),
+      open:()=>openAdminGroup(key)
+    }));
     const editItems = (cur && sch && sch.item && cur.items) ? cur.items.map((it, ii) => {
       const itemId = (it && it.id) || '';
       const hidden = !!(it && it.on === false);
@@ -2362,11 +2729,11 @@ class Component extends DCLogic {
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][f] = v; }); }
         })),
         hasCells: !!(cur.type === 'tiers'),
-        hasIcon: ['trust','products','review','steps','claim','renew'].includes(cur.type),
+        hasIcon: ['trust','products','review','steps','claim','renew','fees','pdpa'].includes(cur.type),
         icon: it.icon || 'check',
         iconOptions: Object.keys(ICONS).map(key => ({key,label:({coins:'เหรียญ',handCoins:'รับเงิน',ban:'ข้อยกเว้น',chart:'กราฟ',settings:'ตั้งค่า',user:'ผู้ใช้',heartOutline:'หัวใจ',shieldCheck:'โล่พร้อมเครื่องหมายถูก',shield:'โล่',pulse:'ชีพจร',heart:'สุขภาพ',umbrella:'ร่ม',annuity:'แนวโน้มเติบโต',car:'รถยนต์',check:'เครื่องหมายถูก',zap:'สายฟ้า',compare:'เปรียบเทียบ',chat:'แชต',users:'กลุ่มคน',sprout:'จรวด',briefcase:'กระเป๋างาน',clock:'นาฬิกา',phone:'โทรศัพท์',mail:'อีเมล',pin:'ตำแหน่ง',star:'ดาว',refresh:'รีเฟรช',arrow:'ลูกศร',down:'ลูกศรลง',seal:'ตรารับรอง',alert:'แจ้งเตือน',camera:'กล้อง',bell:'กระดิ่ง',file:'เอกสาร',lock:'ล็อก',quote:'คำพูด'})[key] || key})),
         onIcon: e => { const value=e.target.value; if (ICONS[value]) updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].icon=value;}); },
-        hasTone: cur.type === 'products',
+        hasTone: ['products','fees','pdpa'].includes(cur.type),
         toneOptions: ['accent','sage','ink'].map(key => ({key,selected:(it.tone || 'accent') === key,color:key === 'sage' ? 'var(--color-accent-2)' : key === 'ink' ? 'var(--color-neutral-800)' : A.base, choose:()=>updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].tone=key;})})),
         hasPhotoControl: cur.type === 'testimonials',
         photoInput: cmsInput(curPath + '.items.@' + itemId + '.photo',{media:true}),
@@ -2424,25 +2791,37 @@ class Component extends DCLogic {
     };
     const cardKeys = (sch && sch.card) || null;
     const showLogo = !!(cur && cur.type === 'insurers');
-    const editCards = (cur && cardKeys && cur.cards) ? cur.cards.map((cd, ci) => {
+    const editableCards = cur && cardKeys ? (editingLicences ? routeCards(cur) : cur.cards || []) : [];
+    const moveEditableCard = (cardId, dir) => {
+      const index = editableCards.findIndex(card=>card.id===cardId), target = editableCards[index+dir];
+      if (!target) return;
+      selectedSectionUpdater(section=>{
+        const i=section.cards.findIndex(card=>card.id===cardId),j=section.cards.findIndex(card=>card.id===target.id);
+        if(i>=0&&j>=0) [section.cards[i],section.cards[j]]=[section.cards[j],section.cards[i]];
+      });
+    };
+    const editCards = editableCards.map((cd, ci) => {
       const cardId = (cd && cd.id) || '';
       const hidden = !!(cd && cd.on === false);
       return {
         key: cardId || (cur.id + '-card' + ci), id: cardId, n: String(ci + 1), showLogo: showLogo,
+        licenceRole:cd.licenceRole || '',
+        licenceRoleOptions:[{value:'',label:'อื่น ๆ (เฉพาะหน้าแรก)'},{value:'life',label:'ตัวแทนประกันชีวิต (เฉพาะหน้าแรก)'},{value:'broker',label:'นายหน้าประกันรถ (หน้าแรก + ประกันรถ)'}],
+        onLicenceRole:e => { if (!['','life','broker'].includes(e.target.value)) return; updatePairRepeatable(selectedAdminPair,'cards',cardId,ci,(_section,list,idx)=>{ if(list[idx]) list[idx].licenceRole=e.target.value; }); },
         hidden: hidden,
         rowOpacity: hidden ? '.62' : '1',
         stateLabel: hidden ? 'ซ่อนอยู่' : 'แสดงอยู่',
         stateBg: hidden ? 'var(--color-neutral-200)' : 'var(--color-accent-2-200)',
         stateFg: hidden ? 'var(--color-neutral-700)' : 'var(--color-accent-2-800)',
         visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
-        upOpacity: ci === 0 ? '.42' : '1', downOpacity: ci === cur.cards.length - 1 ? '.42' : '1',
+        upOpacity: ci === 0 ? '.42' : '1', downOpacity: ci === editableCards.length - 1 ? '.42' : '1',
         logo: showLogo ? (cd.logo || '') : '', logoAlt: cd.logoAlt || '',
         hasLogo: !!(showLogo && cd.logo),
         logoThumb: 'display:block;height:22px;width:88px;background-image:url("' + assetURL(cd.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center center',
         onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
         onLogoAlt: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logoAlt = v; }); },
-        up: () => this.moveRepeatable(cur.id, 'cards', cardId, ci, -1),
-        down: () => this.moveRepeatable(cur.id, 'cards', cardId, ci, 1),
+        up: () => moveEditableCard(cardId, -1),
+        down: () => moveEditableCard(cardId, 1),
         duplicate: () => this.duplicateRepeatable(cur.id, 'cards', cardId, ci),
         toggleVisible: () => hidden ? this.restoreRepeatable(cur.id, 'cards', cardId, ci) : this.removeRepeatable(cur.id, 'cards', cardId, ci),
         fields: cardKeys.map(k => ({
@@ -2451,15 +2830,15 @@ class Component extends DCLogic {
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][k] = v; }); }
         }))
       };
-    }) : [];
+    });
 
 
     const f = S.form;
     const QUERY = Object.fromEntries(['quote', 'compare', 'general', 'review', 'claim'].map(key => [key, cmsText('formOptions.query.' + key)]));
     const COVER = Object.fromEntries(['life', 'health', 'motor', 'accident', 'savings', 'unsure'].map(key => [key, cmsText('formOptions.coverage.' + key)]));
     const RENEW_KIND = Object.fromEntries(['motor', 'compulsory', 'health', 'life', 'accident'].map(key => [key, cmsGet(site, 'formOptions.renewal.' + key) || {}]));
-    let summary = sit && S.calculatorTouched && S.shareCalculator
-      ? copyTemplate('publicCopy.consultationSummary', { situation: sit[lk], income: this.fmt(S.income), lifeNeed: this.fmt(sumAssured) })
+    let summary = S.calculatorSnapshot && S.shareCalculator
+      ? S.calculatorAttachmentText
       : cmsText('publicCopy.consultationIntro');
     if (f.qtype && QUERY[f.qtype]) summary += ' · ' + cmsText('publicCopy.summaryTopic') + ' ' + QUERY[f.qtype];
     if (f.coverage && COVER[f.coverage]) summary += ' · ' + cmsText('publicCopy.summaryCoverage') + ' ' + COVER[f.coverage];
@@ -2496,6 +2875,13 @@ class Component extends DCLogic {
     }, []);
     const showTalkAnchor = sectionHrefAvailable('#talk');
     const showPrivacyAnchor = sectionHrefAvailable('#privacy');
+    const enhancedContact = isHome;
+    const submission = S.contactSubmission;
+    const submissionKind = submission.kind;
+    const submissionPending = ['submitting','submitting_slow'].includes(submissionKind);
+    const submissionPrefix = {submitting_slow:'slow',rate_limited:'limited'}[submissionKind] || submissionKind;
+    const submissionCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Contact submission').map(field=>[field.path.split('.')[1],cmsText(field.path)]));
+    const submissionLineKind = submissionKind === 'rate_limited' ? 'failure' : submissionKind;
 
     const _live = this.loadLive();
     const _liveSig = this.sig(_live.config, _live.text);
@@ -2513,15 +2899,57 @@ class Component extends DCLogic {
     }));
 
     return {
+      enhancedContact,
+      contactFlowPanel:enhancedContact && !['editing','invalid'].includes(submissionKind),
+      submissionCopy, submissionKind, submissionPending,
+      submissionTitle:submissionCopy[submissionPrefix+'Title'],
+      submissionBody:submissionCopy[submissionPrefix+'Body'],
+      submissionTitlePath:'contactSubmission.'+submissionPrefix+'Title',
+      submissionBodyPath:'contactSubmission.'+submissionPrefix+'Body',
+      submissionLine:submissionCopy[submissionLineKind+'Line'],
+      submissionIntro:submissionCopy[submissionLineKind+'Intro'],
+      submissionLinePath:'contactSubmission.'+submissionLineKind+'Line',
+      submissionIntroPath:'contactSubmission.'+submissionLineKind+'Intro',
+      submissionSuccess:submissionKind==='success',
+      submissionSlow:submissionKind==='submitting_slow',
+      submissionUnknown:submissionKind==='unknown',
+      submissionFailure:['failure','rate_limited'].includes(submissionKind),
+      submissionCanRetry:['failure','rate_limited'].includes(submissionKind) && (submissionKind!=='rate_limited' || !!submission.retryAt),
+      submissionRetryDisabled:submissionKind==='rate_limited' && submission.retryAt>Date.now(),
+      submissionReference:submission.reference,
+      submissionHours:submissionKind==='success'?t(site.contact.hours):'',
+      submissionLineIcon:assetURL(homeDesign.contactIconLine),
+      submissionLineId:site.contact.lineId,
+      submissionHasLineHelp:!!site.contact.lineUrl && !!site.contact.lineId,
+      submissionShowServices:submissionKind==='success' && sectionHrefAvailable('#cover'),
+      submissionViewing:!!submission.viewing,
+      submissionDraft:[['publicCopy.contactName',f.name],['publicCopy.contactContact',f.contact],['publicCopy.contactTopic',QUERY[f.qtype]||''],['publicCopy.contactCoverage',COVER[f.coverage]||''],['publicCopy.contactDetails',f.topic],['homeDesign.includeCalculator',S.shareCalculator?S.calculatorAttachmentText:'']].filter(([,value])=>value).map(([path,value])=>({label:cmsText(path),value})),
+      submissionAnnounce:submissionCopy[S.contactAnnouncement] || '',
+      submissionIcon:submissionKind==='success'?ICONS.check:submissionPending?[...ICONS.chat,'M8 11h.01M12 11h.01M16 11h.01']:[ICONS.clock[0],'M12 8v4','M12 16h.01'],
+      submissionClock:ICONS.clock,submissionArrow:ICONS.arrow,submissionRetryIcon:ICONS.refresh,submissionLock:ICONS.lock,
+      onSubmissionRetry:()=>this.contactAction(()=>this.getContactFlow().retry()),
+      onSubmissionEdit:()=>this.contactAction(()=>this.getContactFlow().edit()),
+      onSubmissionView:()=>this.getContactFlow().viewDraft(),
+      onSubmissionNew:()=>this.contactAction(()=>this.getContactFlow().startNew()),
+      contactNameError:enhancedContact?submissionCopy[submission.fields.name]||'':'',
+      contactContactError:enhancedContact?submissionCopy[submission.fields.contact]||'':'',
+      contactTopicError:enhancedContact?submissionCopy[submission.fields.topic]||'':'',
+      contactConsentError:enhancedContact?submissionCopy[submission.fields.consent]||'':'',
+      contactFormError:enhancedContact?submissionCopy[submission.fields.form]||'':'',
+      contactMultipleErrors:enhancedContact && Object.keys(submission.fields).filter(key=>key!=='form').length>1,
+      contactErrorLinks:enhancedContact?Object.entries(submission.fields).filter(([key])=>key!=='form').map(([key,value])=>({href:'#contact-'+key,label:submissionCopy[value],focus:event=>{event.preventDefault();document.getElementById('contact-'+key)?.focus();}})):[],
       th: th, en: !th,
       isHome: isHome, notHome: !isHome, homeRoute: isHome ? 'home' : 'motor',
+      homeAdvisor,
+      sharedDesign:sharedDesign, legacyDesign:!sharedDesign, heroProof:heroProof,
+      ...calculatorView,
       homeCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.localized && field.path.startsWith('homeDesign.')).map(field => [field.path.slice(11), cmsText(field.path)])),
       homeWideDetails: (!S.compactHome && !S.touchInteraction) || S.editMode,
       publicNotice: S.publicNoticeKey ? cmsText(S.publicNoticeKey) : '',
       footerGridStyle: '--footer-columns:' + Math.max(1, Math.min(4, Number(site.footer.columns) || 4)) + ';--footer-tablet-columns:' + Math.max(1, Math.min(2, Number(site.footer.columns) || 2)),
       menuOpen: S.menuOpen,
       openMenu: e => this.toggleMenu(true, e), closeMenu: e => this.toggleMenu(false, e),
-      shareCalculator: S.shareCalculator, canShareCalculator: S.calculatorTouched,
+      shareCalculator: S.shareCalculator, canShareCalculator: !!S.calculatorSnapshot,
       onShareCalculator: e => this.setState({ shareCalculator: !!e.target.checked }),
       publicCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('publicCopy.')).map(field => [field.path.slice(11), cmsText(field.path)])),
       A_base: A.base, A_action: A.action, A_deep: A.deep, A_mid: A.mid, A_soft: A.soft, A_text: A.text, A_light: A.light, A_on: A.on,
@@ -2600,25 +3028,25 @@ class Component extends DCLogic {
       contactChatPaths:ICONS.chat, contactShieldPaths:ICONS.shield,
       contactFormIcon:assetURL(homeDesign.contactIconForm || ''),
       contactReassuranceIcon:assetURL(homeDesign.contactIconReassurance || ''),
-      contactNamePlaceholder:isHome ? cmsText('homeDesign.contactNamePlaceholder') : '',
-      contactContactPlaceholder:isHome ? cmsText('homeDesign.contactContactPlaceholder') : '',
-      contactDetailsPlaceholder:isHome ? cmsText('homeDesign.contactDetailsPlaceholder') : '',
+      contactNamePlaceholder:sharedDesign ? cmsText('homeDesign.contactNamePlaceholder') : '',
+      contactContactPlaceholder:sharedDesign ? cmsText('homeDesign.contactContactPlaceholder') : '',
+      contactDetailsPlaceholder:sharedDesign ? cmsText('homeDesign.contactDetailsPlaceholder') : '',
       footerAdvisorColumns: media.photo ? 'auto minmax(0,1fr)' : 'minmax(0,1fr)',
       insLogos: (() => {
         const sec = (site.sections || []).find(x => x.type === 'insurers');
         return ((sec && sec.items) || []).filter(it => it && it.on !== false).map((it, i) => {
           const tile = insTile(it, lk);
-          const box = 'display:flex;align-items:center;justify-content:center;width:clamp(72px,9vw,96px);aspect-ratio:1;border-radius:14px;background-color:var(--color-surface);box-shadow:var(--shadow-sm);animation:logoPop .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:' + (i * 45) + 'ms;transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s ease';
+          const box = 'display:flex;align-items:center;justify-content:center;width:clamp(72px,9vw,96px);aspect-ratio:1;border-radius:14px;background-color:#fff;box-shadow:var(--shadow-sm)';
           return {
             key: 'ins' + i, name: tile.name, hasLogo: !!tile.logo, noLogo: !tile.logo,
             mediaLogoPath:'sections.@'+sec.id+'.items.@'+it.id+'.logo',
-            style: box + ';background-image:url("' + assetURL(tile.logo) + '");background-repeat:no-repeat;background-size:contain;background-position:center',
+            logo: assetURL(tile.logo), style: box,
             textStyle: box + ';padding:8px;text-align:center;font-size:12px;font-weight:700;line-height:1.25;color:var(--color-neutral-800);text-wrap:balance'
           };
         });
       })(),
       sections: sections,
-      homeLicenceSections: isHome ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
+      homeLicenceSections: sharedDesign ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
       licenceFilePaths: ICONS.file,
       sectionGroups: sections.reduce((groups, section) => {
         const cluster = isHome && ['about','review','how'].includes(section.id);
@@ -2679,46 +3107,41 @@ class Component extends DCLogic {
       footerPrivacyNavText: cmsText('footer.privacyLabel'),
       footGrid: this.grid(F.columns, Math.round(760 / Math.max(1, F.columns))),
       showSticky: site.stickyBar && !S.menuOpen && !S.admin && !S.editMode && !S.preview,
+      showCookieControls: !!window.CoverMateAnalytics && !S.admin && !S.editMode && !S.preview,
+      showCookieFallback: !F.show && !!window.CoverMateAnalytics && !S.admin && !S.editMode && !S.preview,
+      showCookieBanner: !!window.CoverMateAnalytics && !S.menuOpen && !S.admin && !S.editMode && !S.preview && (S.cookieSettingsOpen || S.analyticsConsent === 'unknown'),
+      showVisitorDock: !S.menuOpen && !S.admin && !S.editMode && !S.preview && (site.stickyBar || (!!window.CoverMateAnalytics && (S.cookieSettingsOpen || S.analyticsConsent === 'unknown'))),
+      cookieCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.group === 'Cookie consent').map(field => [field.path.split('.')[1], cmsText(field.path) || field.seed[lk]])),
+      cookieHasChoice: S.analyticsConsent !== 'unknown',
+      cookieGranted: S.analyticsConsent === 'granted',
+      cookieDenied: S.analyticsConsent === 'denied',
+      onCookieSettings: event => this.openCookieSettings(event),
+      onCookieAccept: () => this.closeCookieSettings(true),
+      onCookieReject: () => this.closeCookieSettings(false),
+      onCookieClose: () => this.closeCookieSettings(),
+      onCookieKeydown: event => { if (event.key === 'Escape' && S.analyticsConsent !== 'unknown') { event.preventDefault(); this.closeCookieSettings(); } },
 
       sitList: sitList,
       hasSit: !!sit, noSit: !sit, sitName: sit ? (th ? sit.th : sit.en) : '', sitNamePath:sit?'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.'+lk:'',
-      income: S.income, incomeLabel: this.fmt(S.income),
-      onIncome: (e) => this.setState({ income: Number(e.target.value), calculatorTouched: true }),
-      deps: supportIndex, depsMax:Math.max(0,supportOptions.length-1), depsLabel: supportYears + (th ? ' ปี' : (supportYears === 1 ? ' year' : ' years')),
-      onDeps: (e) => this.setState({ deps: Number(e.target.value), calculatorTouched: true }),
-      debt: S.debt, debtLabel: S.debt === 0 ? (th ? 'ไม่มี' : 'None') : this.fmt(S.debt),
-      onDebt: (e) => this.setState({ debt: Number(e.target.value), calculatorTouched: true }),
-      resources: S.resources, resourcesLabel: S.resources === 0 ? (th ? 'ไม่มี' : 'None') : this.fmt(S.resources),
-      onResources: (e) => this.setState({ resources: Number(e.target.value), calculatorTouched: true }),
-      roomBenefit: S.roomBenefit, roomBenefitLabel: this.fmt(S.roomBenefit) + (th ? '/วัน' : '/day'),
-      onRoomBenefit: (e) => this.setState({ roomBenefit: Number(e.target.value), calculatorTouched: true }),
-      recovery: S.recovery, recoveryLabel: S.recovery + (th ? ' เดือน' : (S.recovery === 1 ? ' month' : ' months')),
-      onRecovery: (e) => this.setState({ recovery: Number(e.target.value), calculatorTouched: true }),
-      incomePct: Math.round((S.income - 15000) / (400000 - 15000) * 100) + '%',
-      depsPct: Math.round(supportIndex / Math.max(1,supportOptions.length-1) * 100) + '%',
-      debtPct: Math.round(S.debt / 12000000 * 100) + '%',
-      resourcesPct: Math.round(S.resources / 12000000 * 100) + '%',
-      roomBenefitPct: Math.round(S.roomBenefit / 20000 * 100) + '%',
-      recoveryPct: Math.round((S.recovery - 3) / (24 - 3) * 100) + '%',
-      sumAssured: this.fmt(sumAssured), roomLabel: this.fmt(roomGap), lumpLabel: this.fmtShort(lump, th),
       budgetRange: referenceLabel,
       referenceSource:cleanHttpsUrl(roomRef.sourceUrl,''),hasReferenceSource:!!cleanHttpsUrl(roomRef.sourceUrl,''),referenceNote:t(roomRef.note),referenceNotePath:'sections.@'+fitSectionRaw.id+'.calculator.health.selectedRoomReference.note.'+lk,
       recs: sit ? (sit.recs || []).map((r, i) => ({ key: 'r' + i, n: String(i + 1), title: th ? r.th : r.en, why: th ? r.wth : r.wen, titlePath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.recs.'+i+'.'+lk, whyPath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.recs.'+i+'.w'+lk })) : [],
 
       fName: f.name, fContact: f.contact, fTopic: f.topic, summary: summary,
       fQType: f.qtype, fCoverage: f.coverage, fConsent: !!f.consent,
-      contactCoverageOpen: !isHome || !!f.coverage,
-      contactInvalid:!!S.leadError && !String(f.contact || '').trim(),
-      consentInvalid:!!S.leadError && !!String(f.contact || '').trim() && !f.consent,
-      contactErrorId:S.leadError ? 'contact-form-error' : '',
+      contactCoverageOpen: !sharedDesign || !!f.coverage,
+      contactInvalid:enhancedContact?!!submission.fields.contact:!!S.leadError && !String(f.contact || '').trim(),
+      consentInvalid:enhancedContact?!!submission.fields.consent:!!S.leadError && !!String(f.contact || '').trim() && !f.consent,
+      contactErrorId:enhancedContact?(submission.fields.contact?'contact-contact-error':''):S.leadError ? 'contact-form-error' : '',
+      consentErrorId:enhancedContact?(submission.fields.consent?'contact-consent-error':''):S.leadError ? 'contact-form-error' : '',
       qtypeOpts: [{ value: '', label: cmsText('formOptions.topicPrompt'), cmsPath: 'formOptions.topicPrompt' }].concat(Object.keys(QUERY).map(k => ({ value: k, label: QUERY[k], cmsPath: 'formOptions.query.' + k }))),
       coverageOpts: [{ value: '', label: cmsText('formOptions.coveragePrompt'), cmsPath: 'formOptions.coveragePrompt' }].concat(Object.keys(COVER).map(k => ({ value: k, label: COVER[k], cmsPath: 'formOptions.coverage.' + k }))),
-      onQType: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { qtype: v }), sent: false, leadError: '' })); },
-      onCoverage: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { coverage: v }), sent: false, leadError: '' })); },
-      onName: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { name: v }), sent: false, leadError: '' })); },
-      onContact: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { contact: v }), sent: false, leadError: '' })); },
-      onTopic: (e) => { const v = e.target.value; this.setState(s => ({ form: Object.assign({}, s.form, { topic: v }), sent: false, leadError: '' })); },
-      onConsent: (e) => { const v = !!e.target.checked; this.setState(s => ({ form: Object.assign({}, s.form, { consent: v }), sent: false, leadError: '' })); },
+      onQType:e=>this.updateContactField('qtype',e.target.value),
+      onCoverage:e=>this.updateContactField('coverage',e.target.value),
+      onName:e=>this.updateContactField('name',e.target.value),
+      onContact:e=>this.updateContactField('contact',e.target.value),
+      onTopic:e=>this.updateContactField('topic',e.target.value),
+      onConsent:e=>this.updateContactField('consent',!!e.target.checked),
       leadPending: S.leadSubmitting,
       sent: S.sent, notSent: !S.sent && !S.leadSubmitting, hasLeadError: !!S.leadError, leadError: S.leadError,
       submit: async (e) => {
@@ -2726,7 +3149,10 @@ class Component extends DCLogic {
         if (this.state.leadSubmitting) return;
         if (!(this.state.site.sections || []).some(section => section.id === 'talk' && section.on !== false)) { this.setState({ publicNoticeKey:'homeDesign.formUnavailable' }); return; }
         const curForm = Object.assign({}, this.state.form || {});
+        const curCalculator = this.state.shareCalculator ? this.state.calculatorSnapshot : null;
         const langNow = this.state.lang === 'en' ? 'en' : 'th';
+        if (enhancedContact) return this.contactAction(()=>this.submitContactFlow(Object.assign({}, curForm, {language:langNow,summary,noticeText:cmsText('ui.consultationConsent'),sourcePath:window.location.pathname,
+          ...(curCalculator?{calculator:curCalculator}:{})})));
         if (!String(curForm.contact || '').trim()) {
           this.setState({ sent: false, leadError: cmsText('ui.contactRequired') });
           this.focusFormError('talk');
@@ -2742,7 +3168,8 @@ class Component extends DCLogic {
           if (!navigator.onLine) throw new DOMException('Offline.', 'OfflineError');
           const cm = await import(window.location.origin + '/covermate-public.mjs');
           if (!cm || !cm.submitContactLead) throw new Error('Lead service unavailable.');
-          await cm.submitContactLead(Object.assign({}, curForm, { language: langNow, summary: summary, consentKind: 'consultation', noticeText: cmsText('ui.consultationConsent'), sourcePath: window.location.pathname + window.location.search + window.location.hash }));
+          await cm.submitContactLead(Object.assign({}, curForm, { language: langNow, summary: summary, noticeText: cmsText('ui.consultationConsent'), sourcePath: window.location.pathname + window.location.search + window.location.hash,
+            ...(curCalculator ? {calculator:curCalculator} : {}) }));
           if (window.CoverMateAnalytics && window.CoverMateAnalytics.trackEvent) {
             window.CoverMateAnalytics.trackEvent('quote_submit_success', { form_type: 'consultation', enquiry_type: curForm.qtype || 'unspecified', coverage: curForm.coverage || 'unspecified' });
           }
@@ -2912,16 +3339,20 @@ class Component extends DCLogic {
         window.location.replace('/admin');
       },
       tabSections: S.tab === 'sections', tabContent: S.tab === 'content', tabBrand: S.tab === 'brand', tabTheme: S.tab === 'theme',
-      goSections: () => this.setState({ tab: 'sections' }), goContent: () => this.setState({ tab: 'content', sel: selectedAdminPair?.s.id || firstContentAdminId }),
+      goSections: () => this.setState({ tab: 'sections' }), goContent: () => this.setState({ tab: 'content', sel: selectedAdminPair?.id || firstContentAdminId }),
       goBrand: () => this.setState({ tab: 'brand' }), goTheme: () => this.setState({ tab: 'theme' }),
       tabSecBg: S.tab === 'sections' ? A.action : 'transparent', tabSecFg: S.tab === 'sections' ? A.on : 'var(--color-neutral-700)',
       tabConBg: S.tab === 'content' ? A.action : 'transparent', tabConFg: S.tab === 'content' ? A.on : 'var(--color-neutral-700)',
       tabBraBg: S.tab === 'brand' ? A.action : 'transparent', tabBraFg: S.tab === 'brand' ? A.on : 'var(--color-neutral-700)',
       tabThmBg: S.tab === 'theme' ? A.action : 'transparent', tabThmFg: S.tab === 'theme' ? A.on : 'var(--color-neutral-700)',
       secList: secList,
-      curName: cur ? TYPE_LABEL[cur.type]?.th || cur.type : '', curId: cur ? cur.id : '',
+      adminPageName:isMotor ? 'ประกันรถยนต์' : 'หน้าแรก',
+      curName:secList.find(row=>row.id===activeAdminSel)?.name || '', curId:activeAdminSel,
+      contentShortcuts,
+      contentScope:secList.find(row=>row.id===activeAdminSel)?.scope || '',
+      contentDependency:editingLicences ? (isMotor ? 'หน้านี้แสดงเฉพาะใบอนุญาตนายหน้าประกันรถ ใบอนุญาตประเภทอื่นยังอยู่ในหน้าแรก ' : '') + 'การแสดงส่วนนี้ขึ้นอยู่กับส่วนโลโก้บริษัทประกันรถ และซ่อนหรือแสดงการ์ดแต่ละใบได้ที่นี่' : '',
       editFields: editFields, editItems: editItems, editLinks: editLinks,
-      hasCalculatorFields:calculatorFields.length>0,calculatorFields,
+      hasCalculatorFields:calculatorFields.length>0,calculatorFields,...calculatorDataView,
       goMedia:()=>this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{const group=document.querySelector('[data-cms-group="Images & crop"]');if(group){group.open=true;group.scrollIntoView({block:'start'});}})),
       editHeads: editHeads, hasHeads: editHeads.length > 0,
       addHead: () => selectedSectionUpdater(c => {
@@ -2938,6 +3369,7 @@ class Component extends DCLogic {
         const blank = {}; keys.forEach(k => { blank[k] = ''; });
         c.cards = c.cards || [];
         const item = { on: true, n: String(c.cards.length + 1), th: Object.assign({}, blank), en: Object.assign({}, blank) };
+        if (editingLicences) item.licenceRole = isMotor ? 'broker' : '';
         item.id = createRepeatableId(c, 'cards', usedRepeatableIds(c, 'cards'));
         c.cards.push(item);
       }),

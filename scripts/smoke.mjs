@@ -949,10 +949,10 @@ async function verifyAdminBuilderControls() {
     failures.push("admin builder: hero coverage accordion did not render the coverage details from #cover data");
   }
 
-  await selectAdminSection(page, "insurers");
+  await selectAdminSection(page, "licences");
   const insurersBefore = await readDraftSection(page, "insurers");
   const insurerCardCountBefore = (insurersBefore?.cards || []).length;
-  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มการ์ดบริษัทประกัน$/ }).click();
+  await adminAsideLocator(page).getByRole('button', { name: '+ เพิ่มการ์ดใบอนุญาต', exact: true }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -1704,8 +1704,9 @@ for (const [name, width, height] of viewports) {
         htmlPreviewMode: document.documentElement.getAttribute("data-covermate-preview"),
         requiredConsentCheckboxCount:
           document.querySelectorAll('form input[type="checkbox"][aria-required="true"]').length,
-        hasRelationshipProof: /AIA/.test(document.querySelector('#licences')?.innerText || insurerText)
-          && /Srikrung|ศรีกรุง/i.test(document.querySelector('#licences')?.innerText || insurerText),
+        hasLifeRelationshipProof: /AIA/.test(document.querySelector('#licences')?.innerText || insurerText),
+        hasMotorRelationshipProof: /Srikrung|ศรีกรุง/i.test(document.querySelector('#licences')?.innerText || insurerText),
+        hasFooterLifeCredential: /AIA/.test(document.querySelector('footer')?.innerText || ''),
         hasFinalLicenceSection: Boolean(document.querySelector('main > section#licences:last-child')),
         missingAnchors,
         duplicateHeaderNavLabels: headerNavLabels.filter(
@@ -1896,8 +1897,12 @@ for (const [name, width, height] of viewports) {
     if (motorLogoRoutes.has(route) && (!hasExactMotorCount || /26\s*เจ้า|26\s*แห่ง|26\s*บริษัท|กว่า\s*14/.test(state.insurerText))) {
       failures.push(`${name} ${route}: insurer section count copy is not aligned to the 14 visible logos`);
     }
-    if (motorLogoRoutes.has(route) && !state.hasRelationshipProof) {
-      failures.push(`${name} ${route}: insurer relationship proof cards missing AIA/Srikrung copy`);
+    if (motorLogoRoutes.has(route)) {
+      const motorOnly = route === '/motor' || route === '/#motor-focus';
+      if (!state.hasMotorRelationshipProof || state.hasLifeRelationshipProof === motorOnly) {
+        failures.push(`${name} ${route}: licence proof must show ${motorOnly ? 'only Srikrung' : 'AIA and Srikrung'}`);
+      }
+      if (!state.hasFooterLifeCredential) failures.push(`${name} ${route}: shared footer lost its AIA credential`);
     }
     if (visitorRoutes.has(route) && !state.hasQueryTypeSelect) {
       failures.push(`${name} ${route}: contact form is missing enquiry-type select options`);

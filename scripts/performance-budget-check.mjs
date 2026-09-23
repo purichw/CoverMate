@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import { gzipSync } from "node:zlib";
 import { createPageHandler } from "../server/seo-page.mjs";
 
 import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
@@ -20,9 +21,11 @@ const viewports = [
 ];
 
 const maxCls = Number(process.env.COVERMATE_PERF_MAX_CLS || "0.1");
-// Licence, Contact and shared Footer templates + their CMS fields: ~769KB.
-// LCP/CLS, boot-time and separately loaded script budgets are unchanged.
-const maxHtmlBytes = Number(process.env.COVERMATE_PERF_MAX_HTML_BYTES || "775000");
+// Visitor release adds Needs v2, submission/consent states and editable TH/EN
+// copy. Local-identifier minification reduces its shell from ~943KB to ~893KB.
+// Keep 2% raw headroom plus a compressed-response cap; timing/CLS stay unchanged.
+const maxHtmlBytes = Number(process.env.COVERMATE_PERF_MAX_HTML_BYTES || "910000");
+const maxGzipBytes = 235000;
 const maxScriptBytes = Number(process.env.COVERMATE_PERF_MAX_SCRIPT_BYTES || "350000");
 // Published CMS JSON is variable content, measured separately from the shell.
 const maxPublishedBytes = 250000;
@@ -124,10 +127,12 @@ try {
           maxLongTask: Math.max(0, ...(window.__covermatePerf?.longTasks || []))
         };
       });
-      const publishedBytes = await page.evaluate(raw => {
+      const publishedHtml = await page.evaluate(raw => {
         const seed = new DOMParser().parseFromString(raw, 'text/html').getElementById('covermate-published-state');
-        return seed ? new TextEncoder().encode(seed.outerHTML).length : 0;
+        return seed ? seed.outerHTML : '';
       }, raw);
+      const publishedBytes = Buffer.byteLength(publishedHtml);
+      const shellGzipBytes = gzipSync(publishedHtml ? raw.replace(publishedHtml, '') : raw).length;
 
       results.push({
         route: route.label,
@@ -137,6 +142,7 @@ try {
         cls: Number(state.cls.toFixed(4)),
         htmlBytes: state.htmlBytes,
         publishedBytes,
+        shellGzipBytes,
         scriptBytes: state.scriptBytes,
         maxLongTask: state.maxLongTask
       });
@@ -152,6 +158,7 @@ try {
       }
       assert.ok(state.cls <= maxCls, `${route.label} ${viewport.label}: CLS ${state.cls}, budget ${maxCls}. Sources: ${JSON.stringify(state.shifts)}`);
       if (state.htmlBytes > 0) {
+        assert.ok(shellGzipBytes <= maxGzipBytes, `${route.label} ${viewport.label}: compressed shell ${shellGzipBytes} exceeds ${maxGzipBytes} bytes.`);
         assert.ok(state.htmlBytes - publishedBytes <= maxHtmlBytes, `${route.label} ${viewport.label}: shell HTML ${state.htmlBytes - publishedBytes} bytes, budget ${maxHtmlBytes}.`);
         assert.ok(publishedBytes <= maxPublishedBytes, `${route.label} ${viewport.label}: CMS payload ${publishedBytes} bytes, budget ${maxPublishedBytes}.`);
       }

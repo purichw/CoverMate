@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import vm from "node:vm";
+import { calculateNeeds, needsInitialInputs, parseNeedsNumber, createNeedsSnapshot, sanitizeNeedsSnapshot } from '../covermate-calculator.mjs';
 
 import { importCoverMateContract } from "./lib/contract-loader.mjs";
 import {
@@ -20,14 +21,23 @@ function extractDefaults(scriptSource) {
   return sandbox.DEFAULTS;
 }
 
-function roundHundredThousand(value) {
-  return Math.round(Math.max(0, value) / 100000) * 100000;
-}
-
 const template = buildVisitorTemplate();
 const scriptSource = buildVisitorRuntime();
 const defaults = extractDefaults(scriptSource);
 const fit = defaults.sections.find((section) => section && section.id === "fit");
+
+// Runtime, seed and server normalization must use the same fallback dataset.
+const fallbackStart = scriptSource.indexOf('const DEFAULT_NEEDS_CALCULATOR =');
+const fallbackEnd = scriptSource.indexOf('const ACCENTS', fallbackStart);
+const fallback = vm.runInNewContext(
+  scriptSource.slice(fallbackStart, fallbackEnd) + '; DEFAULT_NEEDS_CALCULATOR',
+  { DEFAULTS: defaults }
+);
+assert.deepEqual(JSON.parse(JSON.stringify(fallback)), JSON.parse(JSON.stringify(fit.calculator)), 'Runtime fallback matches the canonical seed');
+assert.deepEqual(JSON.parse(JSON.stringify(fallback)), DEFAULT_NEEDS_CALCULATOR, 'Runtime and server fallback datasets stay aligned');
+const originalTransitionCost = fit.calculator.life.transitionFinalCosts;
+fallback.life.transitionFinalCosts = -1;
+assert.equal(fit.calculator.life.transitionFinalCosts, originalTransitionCost, 'Fallback updates cannot mutate embedded defaults');
 
 assert.ok(fit, "fit section exists");
 assert.ok(fit.calculator, "fit section has calculator payload");
@@ -49,32 +59,51 @@ assert.ok(scriptSource.includes("const activeSituationKey ="), "runtime shows th
 assert.ok(template.includes("เงินสำรอง + ทุนเดิม"), "visitor calculator exposes existing resources input");
 assert.ok(template.includes("ค่าห้องในกรมธรรม์เดิม"), "visitor calculator exposes room benefit input");
 assert.ok(template.includes("ระยะพักฟื้นที่ต้องมีเงินรองรับ"), "visitor calculator exposes recovery period input");
-assert.ok(template.includes("ทุนชีวิตที่ควรเริ่มจาก"), "visitor calculator renders the life starting-need output card");
+assert.ok(template.includes("ทุนประกันชีวิตส่วนที่ยังขาด"), "visitor calculator renders the v1 life shortfall");
 assert.ok(template.includes("ส่วนต่างค่าห้องอ้างอิง"), "visitor calculator renders the room-gap output card");
 assert.ok(template.includes("เงินก้อนโรคร้ายแรง"), "visitor calculator renders the CI recovery output card");
 
-const monthlyEssential = 50000;
-const supportYears = fit.calculator.life.supportYears[1];
-const obligations = 0;
-const resources = 0;
-const expectedLifeNeed = roundHundredThousand(
-  monthlyEssential * 12 * supportYears +
-  obligations +
-  fit.calculator.life.transitionFinalCosts -
-  resources
-);
-assert.equal(expectedLifeNeed, 2000000, "default life need follows methodology formula");
-
-const expectedRoomGap = Math.max(0, fit.calculator.health.selectedRoomReference.totalFixedDaily - 5000);
-assert.equal(expectedRoomGap, 5550, "default room gap follows reference-difference formula");
-
-const expectedCiNeed = roundHundredThousand(
-  monthlyEssential * fit.calculator.criticalIllness.defaultRecoveryMonths +
-  fit.calculator.criticalIllness.oneOffRecoveryNonMedicalBudget +
-  fit.calculator.criticalIllness.chosenMedicalOopBuffer -
-  resources
-);
-assert.equal(expectedCiNeed, 700000, "default CI buffer follows recovery formula");
+const life = {monthlyNeed:50000,otherMonthlyIncome:20000,yearsToSupport:10,debtToClear:1000000,extraLumpSum:500000,earmarkedAssets:300000,existingLifeCover:0};
+const lifeResult = calculateNeeds('life',life);
+assert.equal(lifeResult.netMonthlyNeed,30000);
+assert.equal(lifeResult.shortfall,4800000,'Exact reference example');
+assert.equal(calculateNeeds('life',{...life,extraLumpSum:500001}).shortfall,4800001,'No silent rounding');
+assert.equal(calculateNeeds('life',{...life,earmarkedAssets:90000000}).shortfall,0);
+assert.equal(calculateNeeds('life',{...life,otherMonthlyIncome:90000}).shortfall,1200000,'Monthly need floors at zero before other obligations');
+assert.equal(calculateNeeds('life',{...life,monthlyNeed:''}).complete,false,'Missing core values do not produce a final estimate');
+assert.equal(calculateNeeds('life',{...life,debtToClear:''}).shortfall,3800000,'Optional blank is zero');
+assert.ok(calculateNeeds('life',{...life,monthlyNeed:500001}).warnings.includes('monthlyNeed'),'Soft limits never cap valid figures');
+assert.equal(parseNeedsNumber('1,000,000').value,1000000);
+assert.equal(parseNeedsNumber('๕๐,๐๐๐').value,50000);
+assert.equal(parseNeedsNumber('-150').invalid,true);
+assert.equal(parseNeedsNumber('12.9').invalid,true);
+assert.equal(parseNeedsNumber('0',true).invalid,true);
+assert.equal(parseNeedsNumber('1e10').invalid,true);
+assert.equal(parseNeedsNumber('abc').invalid,true);
+assert.equal(parseNeedsNumber('99999999999999999999').invalid,true);
+assert.equal(calculateNeeds('life',{...life,monthlyNeed:9007199254740991}).complete,false,'Overflow cannot become a quote or Infinity');
+const ci={monthlyRecoveryNeed:50000,recoveryMonths:12,otherSupportIncome:20000,availableEmergencyFunds:100000,existingCriticalIllnessCover:50000,extraRecoveryBudget:100000};
+assert.equal(calculateNeeds('ci',ci).shortfall,310000);
+assert.equal(calculateNeeds('ci',{...ci,availableEmergencyFunds:1000000}).shortfall,0);
+assert.equal(calculateNeeds('ci',{...ci,recoveryMonths:''}).complete,false);
+const health={...needsInitialInputs('health'),publicHealthScheme:'sso',careSetting:'private',existingHealthStructure:'annual',existingAnnualLimit:1000000,targetAnnualLimit:1000000,roomReference:'published',roomBenefit:5000,costSharing:'none',employerCover:'yes',ownPayBudget:10000};
+const reference={daily:10550,name:'BNH',sourceUrl:'https://www.bnhhospital.com/th/the-bnh-wards/',lastChecked:'2026-08-15'};
+assert.equal(calculateNeeds('health',health,reference).roomGap,5550);
+assert.equal(calculateNeeds('health',health,reference).status,'review');
+assert.equal(calculateNeeds('health',{...health,roomBenefit:11000},reference).status,'dimensionsAligned');
+assert.equal(calculateNeeds('health',{...health,roomBenefit:11000,costSharing:'copay',copayPercent:20},reference).status,'review');
+assert.equal(calculateNeeds('health',{...health,costSharing:''},reference).status,'reviewRequired');
+assert.equal(calculateNeeds('health',{...health,roomReference:'custom',customRoomDaily:7000},reference).roomGap,2000);
+assert.equal(calculateNeeds('health',{...health,roomReference:'custom',customRoomDaily:0},reference).roomGap,0);
+assert.equal(calculateNeeds('health',{...health,ownPayBudget:100000},reference).roomGap,5550,'Per-episode budget must not offset daily cost');
+for (const [mode,values] of [['life',life],['ci',ci],['health',health]]) {
+  const snapshot=createNeedsSnapshot(mode,values,reference,'th','2026-09-23T12:00:00.000Z');
+  assert.deepEqual(sanitizeNeedsSnapshot({...snapshot,result:{shortfall:1},injected:'discard'}),snapshot,'Server recomputes and whitelists snapshot');
+  assert.throws(()=>sanitizeNeedsSnapshot({...snapshot,inputs:{...snapshot.inputs,unknown:'x',...{[Object.keys(snapshot.inputs)[0]]:'<script>'}}}));
+  assert.throws(()=>sanitizeNeedsSnapshot({...snapshot,source:'tracking'}));
+}
+assert.equal(createNeedsSnapshot('life',{...life,monthlyNeed:''},{},'th'),null);
+assert.notDeepEqual(needsInitialInputs('life'),needsInitialInputs('ci'));
 
 const sanitized = sanitizeMotorCountConfig({
   header: { nav: [] },

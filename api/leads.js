@@ -24,6 +24,11 @@ module.exports = async function leadsApi(req, res) {
     if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(key)) throw error(422, 'invalid_request_id', 'A request ID is required.');
     const body = await readBody(req);
     const lead = validateLead(body);
+    if (body.calculator !== undefined) {
+      const { sanitizeNeedsSnapshot } = await import('../covermate-calculator.mjs');
+      try { lead.calculator = sanitizeNeedsSnapshot(body.calculator); }
+      catch { throw error(422, 'invalid_calculator', 'Please review the calculator summary and try again.'); }
+    }
     const secret = process.env.COVERMATE_RATE_LIMIT_SECRET || (isEmulator() ? 'local-test-only' : '');
     if (!secret) throw error(503, 'not_configured', 'Please contact us on LINE while this form is unavailable.');
     const ip = String(req.headers['x-vercel-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
@@ -70,7 +75,7 @@ module.exports = async function leadsApi(req, res) {
 function validateLead(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw error(422, 'invalid_body', 'Invalid enquiry.');
   if (body.consent !== true) throw error(422, 'consent_required', 'Consent is required.');
-  const allowed = ['name', 'contact', 'topic', 'summary', 'sourcePath', 'qtype', 'coverage', 'language', 'consent', 'noticeVersion', 'consentKind'];
+  const allowed = ['name', 'contact', 'topic', 'summary', 'sourcePath', 'qtype', 'coverage', 'language', 'consent', 'noticeVersion', 'consentKind', 'calculator'];
   if (Object.keys(body).some(key => !allowed.includes(key))) throw error(422, 'unknown_field', 'Unknown enquiry field.');
   if (!['consultation', 'renewal'].includes(body.consentKind)) throw error(422, 'invalid_consent_kind', 'Invalid consent notice.');
   const result = { consent: true };

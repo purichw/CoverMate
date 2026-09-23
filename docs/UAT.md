@@ -1,6 +1,23 @@
 # CoverMate UAT Environment
 
-Last updated: 2026-09-21
+Last updated: 2026-09-24
+
+## Published Content Baseline
+
+UAT Live should mirror published Production content, plus explicitly approved
+release overrides such as enabling Calculator. Candidate code may be newer than
+Production. An old CMS theme or copy is not a separate UAT design.
+
+With owner approval, `node scripts/refresh-uat-public-baseline.mjs` previews the
+refresh and `--apply` copies only public `config` and `text` from Production Live.
+It saves a private backup under ignored `uat-results/visitor-release/`, checks
+both documents' update times, and preserves UAT Draft and all customer data.
+It never writes Production. The current script also rehearses the already
+approved Calculator visibility/copy rollout. Review its plan before applying.
+
+Keeping UAT Draft preserves unfinished CMS tests. Publishing that older Draft
+can intentionally replace the Live baseline, so review it before Publish; do
+not treat Draft and Live as interchangeable snapshots.
 
 ## Cloudinary Media Checks
 

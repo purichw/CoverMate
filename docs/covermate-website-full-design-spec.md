@@ -1,8 +1,13 @@
 # CoverMate Website Current Product Spec
 
-Last updated: 2026-09-21
+Last updated: 2026-09-23
 
 ## Current Authority And Release State
+
+The September 23 Home contact submission candidate follows the owner's state
+mockup plus dedicated behavior spec. [CONTACT_SUBMISSION.md](CONTACT_SUBMISSION.md)
+owns its shared panel/controller, schema v14 copy, persisted receipt contract and
+local verification limits. It has not been pushed or deployed in this pass.
 
 The owner-approved September Home redesign supersedes the older expanded-page
 geometry in this document. Its canonical implementation/acceptance record is
@@ -24,6 +29,30 @@ contacts/media stay absent. [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md)
 supersedes historical read-only compliance/default-image statements below.
 
 Production baseline: `https://covermateinsurance.com`
+
+September 23 Error page candidate: [ERROR_PAGES.md](ERROR_PAGES.md) owns the
+shared responsive recovery screen and status/hosting matrix. It follows the
+owner's error mockups with Behavior SPEC corrections: real branding, neutral
+document art, selectable status, native Home, verified optional links/contact,
+conditional safe retry and no unverified Back. Error-only CSS does not redesign
+Home/Motor. Core survives unavailable JS/CMS; enhanced content supports TH/EN.
+The candidate is local; it does not imply custom Vercel platform-error coverage.
+
+September 23 Motor design candidate: `/motor` uses Home's actual shared section
+components and responsive styles, not a second implementation. Keep Motor's CMS
+section list/order and local Hero/trust/coverage data. Its body and final licence
+band show only the broker relationship; AIA is retained in Footer. Schema v11
+adds the card editor's `licenceRole`, preserving copy/media/order/visibility.
+Shared component ownership and retained compatibility names are documented in
+HOME_REDESIGN.md. This supersedes historical legacy Motor geometry below and is
+local until a matching release is recorded in HANDOFF.md.
+
+Cookie consent candidate: retain GA4 behind explicit opt-in. A compact, nonmodal
+TH/EN bar offers equally accessible allow/decline choices above the existing
+touch LINE action. It is not a second PDPA popup or form consent. Footer settings
+allow withdrawal, with no additional floating button. CMS `cookieConsent.*`
+owns copy; `ANALYTICS.md` owns data/consent behavior. Local until HANDOFF.md records
+a matching deployment.
 
 Implementation baseline: current source and generated candidate bundle in this
 repository. Use deployment/source readback for the exact production revision;
@@ -496,33 +525,31 @@ This section is a trust-builder. Avoid pushing conversion too hard here.
 
 ### Coverage Calculator
 
-Purpose: interactive estimate of recommended coverage.
+Purpose: Home-only planning estimate without contact details, not a quote or guaranteed adequate cover. September 23 v1 candidate supersedes the old salary/buffer model.
 
 Structure:
 
-- Dark brown section.
-- Left copy block with warm heading.
-- Right or adjacent calculator panel depending on viewport.
-- Segmented/card-like choices for situation context.
-- Inputs for essential monthly spending, support years, debts/future
-  obligations, liquid assets/existing cover, current room benefit, and recovery
-  period.
-- Three outputs: life starting need, health room-reference gap, and
-  critical-illness/recovery buffer.
+- Ivory/botanical section, three accessible Life/CI/Health tabs, white input
+  panel and sage result panel. Desktop/tablet two columns; mobile stacked.
+- Life has seven inputs including continuing income, separate assets/existing
+  cover and freely entered whole years. CI has six independent recovery inputs.
+- Exact nonnegative Life/CI shortfalls without rounding or implicit buffers.
+  Health is a cautious gap review using existing benefits, cost sharing,
+  employer/personal cover and own-pay budget, not a required lump sum.
 - Calculated numbers are prominent but not alarmist and must read as advisory
   starting points rather than guaranteed costs or quotations.
 
 Current refinements:
 
-- Life-stage option cards center their icon and label.
-- Cards must not look left-heavy.
-- Use terracotta cards against deep brown.
+- One shared input/result template and pure model, no copied tab implementations.
+- Session-memory values survive tab switching, not necessarily refresh. 275ms
+  debounce, comma formatting, soft limits, per-tab reset and inline methodology.
+- CTA scrolls to the existing contact form with a removable local summary.
+  No data leaves until explicit consent and submit; the server recalculates.
 - The calculator follows `/Users/point/CoverMate/docs/NEEDS_CALCULATOR.md`.
-  Do not reintroduce arbitrary salary/dependency multipliers.
-  `fit.calculator` in Firestore is the source of truth; embedded defaults only
-  fill missing nested assumptions. Situation-card labels, icons, tints, and
-  recommendation bullets are `fit.calculator.situations` data, and the first
-  enabled situation renders by default so results appear on initial load.
+  `calculatorDesign.*` owns current UI/media; `fit.calculator` retains dated
+  health references and legacy data. Old scenarios/buffers are not active v1 UI.
+  Home visibility is approved for the next deploy, not changed in production yet.
 
 ### Process
 
@@ -657,9 +684,13 @@ Purpose: explain why consultation can be free and how compensation works.
 
 Structure:
 
-- Three fee cards with clear headings and explanatory copy.
-- Prevent clipping of large decorative numbers.
-- Keep paragraph lines readable.
+- September 23 local candidate follows the owner's new desktop/mobile
+  references: four icon-led explanatory tiles, then three fee-flow tiles,
+  and a sage summary note. Numbers no longer dominate the fee cards.
+- Single disclosure remains compact when closed. Desktop tiles share row height;
+  tablet uses two explanatory columns and three flow columns; mobile stacks.
+- All body/heading/note text stays in the existing section CMS fields. Optional
+  statements and icon overrides belong to Transparency design (schema v9).
 
 ### PDPA / Privacy
 
@@ -667,9 +698,13 @@ Purpose: clarify data handling.
 
 Structure:
 
-- Calm informational section.
-- Bullet list of what is collected, why, retention/sharing stance, and user choices.
-- Avoid legal-wall density.
+- Same disclosure pattern, with five icon-led privacy tiles across desktop,
+  two columns on tablet and one on mobile. No decorative per-item chevrons:
+  these are readable facts, not links to nonexistent destinations.
+- Sage note and a real return-to-form link preserve unsent input. Native summary
+  controls preserve keyboard open/close and existing hash navigation.
+- Layout changes do not revise retention periods, rights, claims or obligations.
+  Local candidate status and evidence are recorded in HANDOFF.md.
 
 ### Contact / Lead Form
 
@@ -793,6 +828,26 @@ Layout:
 
 Do not remove the Admin Portal Home after login. It is the required hub.
 
+## Operations / Cases v2 candidate (23 September 2026)
+
+The latest approved handoff replaces the Operations dashboard/leads/tasks/audit
+sub-tabs with one Cases page. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md) for the
+implementation, API/data boundaries, legacy mapping, responsive layouts and
+verification evidence. This supersedes earlier Operations tab descriptions in
+this document; other Admin modules retain their existing routes.
+
+Cases uses six explicit statuses, global server summaries, filtered/paginated
+lists and an editor with explicit Save, version conflict handling and preserved
+drafts. Website enquiry text/privacy evidence are immutable; manual notes are
+separate. New APIs are verified-owner only. Existing lead documents and legacy
+tasks/history are retained on the same records through a read adapter.
+
+Desktop uses the approved cream/orange table and 440 px detail panel; mobile
+uses 2×2 metrics, cards and a full-screen editor. In-app notifications are
+persisted and deduplicated. Email/scheduler are unconfigured and stay visibly
+disabled; LINE integration is absent. Completed is not a policy-sale metric.
+This candidate is locally verified and has not been deployed by this task.
+
 ## Owner Edit Mode
 
 Route/hash: `/#edit`
@@ -847,6 +902,21 @@ Purpose: reorder, hide/show, style, and configure site sections.
 Required capabilities:
 
 - Sections tab: reorder, hide/show, choose background tone, change columns.
+- Sections follow the visitor route projection, including hidden rows for
+  restoration. Shared rows identify cross-page effects; Home and Motor ordering
+  stay independent. Motor must not append omitted local sections to the editor.
+- The final `Licences & service roles` band and `Footer` appear at the end as
+  fixed-position entries, with no reorder controls. Licence cards remain owned
+  by `sections.@insurers.cards`; their visibility follows the insurer section
+  and per-card switches. Motor's licence editor lists broker cards only, while
+  Home retains all roles. Footer uses its existing shared show/hide control.
+- `Motor insurer logos` edits the logo grid, not the final licence cards.
+  `Motor coverage comparison` describes featured classes plus full comparison;
+  it does not expose the retired table-width control. Related design controls
+  are linked from Content, with `Shared page composition`, `Shared page design`,
+  `Licence band design` and `Contact section design` display names. Original
+  schema keys and data remain unchanged. Selecting content resets the drawer's
+  internal scroll to the section heading.
 - Content tab: edit structured section content.
 - Repeatable Content tab rows/cards/columns are additive and reversible: adding
   creates a blank durable-ID item, duplicating creates a new ID, and hide/remove
@@ -1114,10 +1184,10 @@ Admin:
 - Admin Portal Home exists after login.
 - Portal target has exactly four primary cards: Operations, Website content,
   Analytics, Settings.
-- Operations sub-tabs expose Dashboard, Leads, Tasks, and Audit without leaving
-  the admin shell. Unbuilt modules stay hidden instead of rendering not-wired
-  states or fake records.
-- Owner/admin controls use English labels.
+- Operations exposes the unified Cases workspace without leaving the admin
+  shell. Legacy Dashboard/Leads/Tasks/Audit links resolve to Cases; records and
+  history stay preserved. Unbuilt modules and fake records stay hidden.
+- Owner/admin controls use natural Thai; retain conventional Publish, Preview, Save, Analytics and service names. Content TH/EN selection stays independent.
 - Logout and mode switching are reachable from edit and control-panel flows.
 - Closing the control panel while editing returns to the same editor context;
   use `Public site` only when intentionally opening the clean public route in a

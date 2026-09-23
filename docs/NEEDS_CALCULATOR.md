@@ -1,6 +1,232 @@
 # CoverMate Needs Calculator Contract
 
-Last updated: 2026-09-21
+Last updated: 2026-09-23
+
+## Home V2 Candidate (Current, Local Only)
+
+The owner approved implementing the research-backed calculator and recommendation
+infrastructure on September 23, with actual AIA product names/terms to be supplied
+and checked together later. No production publish, database write, push or deploy
+is included. The three Home tabs and existing contact consent/submission flow stay
+in place; Motor receives no calculator.
+
+### Ownership And Compatibility
+
+- `covermate-calculator.mjs` owns v2 fields, pure formulas, eligibility/PA inputs
+  and snapshot validation. Browser and lead API share the exact code. Frozen v1
+  validation remains for already-open tabs; v1 arithmetic is not reinterpreted.
+- `covermate-recommendations.mjs` owns deterministic eligibility, coverage fit,
+  catalog validation and explicit record approval. No product data is seeded.
+- `src/visitor/calculator.html` reuses one field renderer for Life, CI, Health and
+  the optional planning/PA step. Desktop/mobile/TH/EN use the same models.
+- CMS v16 adds missing copy only. Existing translations, blanks, visibility,
+  illustrations and owner data survive. No form, consent or routing contract was
+  changed. `index.html` is generated with `npm run build:visitor`.
+
+### Calculation Rules
+
+Initial required inputs are blank, not illustrative personal answers. Explicit
+`0`, empty (`null`) and `unknown` are distinct. Negative, fractional, malformed,
+invalid-duration and unsafe-integer calculations cannot produce a final result.
+Amounts above soft review thresholds are not silently capped. Durations are
+bounded to 1–60 years/months. Zero monthly spending is valid for debt-only needs.
+
+Life retains the exact 4.8M example from v1. Unknown existing cover produces
+`shortfall:null`, `calculationStatus:partial`, and a separately labelled
+`provisionalGap` before existing cover. Debt/instalment and asset/income overlap
+warnings are explicit. Optional present-value mode uses user-entered integer
+inflation/net-return percentages, 0–20, with start-of-year spending:
+
+```text
+supportCost = round(sum(netMonthly * 12 * ((1 + inflation)/(1 + return))^year))
+              for year = 0 ... supportYears-1
+```
+
+These are user scenarios, not forecasts or recommended rates. Simple mode is the
+default. Only fractional baht in the final PV total are rounded.
+
+CI adds a separate optional `medicalOOPBuffer`, without reintroducing implicit
+medical or transition buffers. Existing cover means the next available qualifying
+CI payout, not a lifetime multi-pay total. Health limits never offset CI cash needs.
+
+Health starts with rights/care preference and personal benefit structure. Annual
+target is optional. Annual deltas require comparable annual personal cover (or an
+explicitly absent policy); itemised/unknown policies remain review-required.
+Room gaps are separate daily figures. Public/employer rights stay contextual,
+never an invented cash deduction. Even matching dimensions do not establish whole
+policy adequacy. Optional expense scenarios explicitly assume deductible, then
+co-pay, then remaining eligible limit. They are not cost forecasts or claim quotes.
+
+PA is optional in the planning step, not a fourth tab. Accident death, medical per
+episode and recovery-income gaps stay separate and are never added to Life.
+
+### Handoff And Privacy
+
+- Calculations remain local with 275ms debounce, independent tab drafts and
+  tab-local reset. No financial/profile fields are sent to analytics or URLs.
+- An unchecked opt-in allows only calculator inputs/tab/details/reference ID in
+  sessionStorage. Contact/profile/PA intake and attachments are excluded. Without
+  opt-in refresh clears entries; storage denial never prevents calculation.
+- Main CTA opens optional local eligibility intake. Visitors can skip it and use
+  the existing contact form. No request is sent by either calculator CTA.
+- Attaching captures an immutable active-tab snapshot plus optional validated
+  profile/PA. Unknown results may be attached with their status. Subsequent edits
+  do not change the attachment until the visitor attaches again.
+- Only checked attachment + existing contact consent + explicit form submission
+  send the snapshot. Server recomputes Life/CI/Health/PA and whitelists fields.
+  Product rankings/approval claims are not accepted in visitor lead payloads.
+
+### Product And Source Review
+
+CMS > Needs calculator > AIA Product catalog & review edits:
+
+```text
+sections.@fit.calculator.productCatalog = {version:'aia-candidates-v1', products:[]}
+sections.@fit.calculator.referenceCatalog = []
+```
+
+JSON edits validate on explicit save, with errors preserving the draft text.
+Saving changed record content invalidates its previous review. Approval requires
+a reviewer and complete fields. Approval still only updates the CMS draft;
+publishing uses the existing owner workflow. Details/schema are in
+`docs/NEEDS_PRODUCT_REVIEW.md`.
+
+Unapproved, changed, expired, unavailable or unauthorized product records never
+become automatic candidates. Eligibility is checked before fit. Missing age,
+occupation, exact rider/base-plan compatibility, horizon or income-rule data is
+not a pass. Budget comparison cannot rewrite need. Insufficient product bands
+do not turn into an invented recommendation. Health matches the full annual/room
+targets, cost-sharing tolerance and territory/OPD, not just an additive gap.
+Itemised product schedules need adviser review; no scalar conversion is invented.
+
+The existing dated room reference remains available with its source/date notice.
+Additional hospital records require owner review and validity dates. A selected
+record that expires/changes requires reselection; it never silently switches to
+another hospital. Real additional sources and real AIA products are intentionally
+absent until reviewed, not replaced with mock content.
+
+### Evidence
+
+- `npm run check:needs-v2`: formulas, unknown/blank, PV, health/PA, v1 compatibility,
+  source validity, approval invalidation, hard filters and product fit.
+- `npm run check:needs-contract`: real runtime + actual lead handler with local
+  dependency doubles; consent, opt-out, immutable summaries and recomputation.
+- `npm run check:needs`, `check:cms`, `check:types`, `check:contact`.
+- `npm run check:calculator-design`: local network-isolated responsive journeys
+  and TH/EN screenshots; fake local receipts, never real enquiries.
+- `node scripts/admin-structure-browser.mjs --needs`: local in-memory CMS draft,
+  validation, approval, changed-record invalidation, reload and mobile evidence.
+
+Research inputs: the owner's three September 23 research reports. The broad
+needs-versus-resources methodology was cross-checked with
+[ASIC MoneySmart](https://moneysmart.gov.au/how-life-insurance-works/life-insurance-calculator).
+Foreign default economic assumptions were not imported. Product benefits, prices,
+underwriting rules and Thai legal claims were not inferred from research citations.
+
+## Home V1 Candidate (Historical)
+
+The owner's September 23 pasted v1 behavior spec supersedes the legacy model
+documented below. Local only: no deployment or production CMS write this turn.
+The owner explicitly approved enabling Home `#fit` at the next deploy. Motor
+keeps its original sections and never receives this Home-only calculator.
+
+### Shared Owners
+
+- `covermate-calculator.mjs`: pure field definitions, integer parsing, the three
+  models and versioned summary validation. Embedded by the visitor generator;
+  the lead API imports the same functions and recomputes results.
+- `src/visitor/calculator.html` and `calculator.css`: one shared tab, input,
+  result, breakdown and methodology layout. No copied Life/CI/Health forms.
+- `src/visitor/runtime.js`: isolated per-tab draft/committed values, 275ms
+  debounce, keyboard tab navigation, tab-local reset, help and local attachment.
+- `calculatorDesign.*`: TH/EN labels, explanations, statuses, privacy copy,
+  optional photo, botanical background and icon overrides. Admin crop uses
+  4:3 for the optional photo, 2:3 for botanical art and 1:1 for icons.
+- `sections.@fit.calculator.health.selectedRoomReference`: existing CMS room
+  amount and provenance. Custom room rates are session inputs, not CMS writes.
+
+### Models
+
+```text
+lifeNet = max(0, monthlyNeed - otherMonthlyIncome)
+life = max(0, lifeNet * 12 * yearsToSupport + debtToClear
+           + extraLumpSum - earmarkedAssets - existingLifeCover)
+
+ciNet = max(0, monthlyRecoveryNeed - otherSupportIncome)
+ci = max(0, ciNet * recoveryMonths + extraRecoveryBudget
+         - availableEmergencyFunds - existingCriticalIllnessCover)
+```
+
+No automatic rounding or implicit transition/medical buffers. The supplied
+50,000 / 20,000 / 10-year example with 1M debt, 500K obligations and 300K assets
+returns exactly 4.8M. Optional amounts initially equal zero, not the mock's
+illustrative balances. Life core examples are 50K/20K/10; CI is 50K/6 months.
+
+Health reviews a selected dated CMS reference or a custom daily rate, existing
+room benefit, deductible/co-pay, employer/personal cover and per-episode own-pay
+budget. Missing/unknown details show incomplete. A room gap, cost sharing, or no
+existing cover prompts further review. The most positive status is specifically
+"room benefit matches the reference", never overall policy adequacy. Own-pay
+budget is not subtracted from a daily rate. Treatment costs, claims eligibility
+and policy payout guarantees are not inferred.
+
+### Interaction And Privacy
+
+- Numeric keypad, comma formatting on blur, integer parsing including Thai
+  numerals. Negative amounts become zero; periods are positive whole numbers.
+  Optional blanks mean zero; missing core fields withhold a final calculation.
+  Extreme valid numbers receive a soft warning, not a hidden cap. Broken formats
+  and arithmetic outside safe integer precision do not generate a final result.
+- Life/CI state is independent. Tabs retain values; reset affects only that tab.
+  Refresh may reset everything. No financial values in local/session storage,
+  analytics events, URL, autosave or lead system while calculating.
+- CTA prepares an immutable active-tab snapshot and scrolls to existing `#talk`.
+  Includes type, language, whitelisted inputs, calculated result, timestamp,
+  `/`, source `home_needs_calculator`, and model version. It does not submit.
+  Contact details/consent remain untouched. The visitor can uncheck the summary
+  attachment; it is omitted from the payload. Later calculator edits never
+  silently alter a previously attached snapshot; click CTA again to replace it.
+- Only explicit consent plus contact-form submit sends the selected snapshot.
+  `covermate-public.mjs` and `api/leads.js` validate it. Server recalculates rather
+  than trusting browser-supplied results; existing rate limits/idempotency apply.
+- Methodology expands inline with each field's meaning and exclusions. No empty
+  advanced accordion, duplicate contact form, new route or modal was added.
+- Desktop/tablet use two columns; mobile stacks. Existing botanical artwork is
+  reused. The optional family-photo CMS slot is empty rather than inventing a
+  family testimonial or adding a paid/generated asset.
+
+### CMS And Release Follow-Up
+
+Schema v13 adds the design fields without replacing existing owner copy, blank
+images or visibility choices. Legacy situations, support-year list, transition
+cost and CI buffers remain in stored content for compatibility, but are not
+used by v1 formulas. Inactive legacy numeric controls are no longer offered as
+if they affected the new model. Scenario data remains editable/retained but the
+old situation/recommendation UI is not part of Home v1.
+
+The saved live fixture has `fit.on:false` and stale hidden income-multiplier
+intro copy. The preview enables fit and uses new canonical intro copy locally.
+At the next authorized release, reconcile published intro text conditionally
+against that known stale version and enable Home fit as approved. Back up and
+update live/draft independently with revision checks; do not publish an unrelated
+draft or blindly overwrite owner edits. Production has not been changed here.
+
+### Targeted Evidence
+
+`npm run check:needs`, `check:needs-contract`, `check:calculator-design` cover
+the exact models, overflow/blank/invalid/extreme values, shared component/CMS,
+tab isolation/reset, explicit attachment/removal, real client serialization and
+the actual API handler with local dependency doubles. Browser checks use local
+fixtures and fake receipts, not actual lead writes. Chromium covers 1440/820/
+390/320px and mobile EN; `BROWSER=webkit` or `BROWSER=firefox` runs mobile TH.
+Ignored evidence lives in `uat-results/calculator-design/`.
+
+## Historical Model (Inactive)
+
+Everything below records the previous model for migration/recovery context,
+not the current v1 interface or financial formula. Do not restore these hidden
+assumptions into v1. The dated hospital reference remains CMS data, not a claim
+that its price has been reverified in September.
 
 ## Unreleased Admin Parity
 

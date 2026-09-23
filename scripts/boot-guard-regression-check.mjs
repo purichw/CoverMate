@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 
-import { loadPlaywright } from "./lib/playwright.mjs";
+import { loadPlaywright, launchChromium } from "./lib/playwright.mjs";
 import { startStaticServer } from "./lib/static-server.mjs";
 
 const playwright = loadPlaywright();
@@ -37,7 +37,7 @@ async function main() {
         { name: "home", url: `${local.baseUrl}/?bootGuardCheck=1` },
         { name: "motor", url: `${local.baseUrl}/motor?bootGuardCheck=1` }
       ];
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchChromium(chromium, { headless: true });
 
   try {
     for (const target of targets) {

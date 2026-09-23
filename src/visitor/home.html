@@ -1,3 +1,4 @@
+<!-- Shared visitor sections: route-specific projection, one markup/style owner. -->
 <sc-if value="{{ s.isHomeLayout }}">
 <section id="{{ s.id }}" class="hm-band" data-home-section="{{ s.homeType }}" data-cms-background="{{ s.mediaBackgroundPath }}" style="{{ s.homeStyle }}">
   <div class="hm-wrap">
@@ -12,30 +13,40 @@
             <sc-if value="{{ s.hasCta2 }}"><a class="hm-text-link" href="{{ s.cta2href }}"><span data-content-path="{{ s.copy.cta2 }}">{{ s.cta2 }}</span><span aria-hidden="true">↓</span></a></sc-if>
           </div>
           <sc-if value="{{ s.hasNote }}"><p class="hm-help" data-content-path="{{ s.copy.note }}">{{ s.note }}</p></sc-if>
+          <sc-if value="{{ s.showHeroClaim }}"><p class="hm-help"><span data-content-path="{{ s.copy.claimText }}">{{ s.heroClaimText }}</span> <a class="hm-text-link" href="{{ s.heroClaimHref }}" data-content-path="{{ s.copy.claimLinkText }}">{{ s.heroClaimLinkText }}</a></p></sc-if>
         </div>
         <sc-if value="{{ s.homeHasStatement }}"><div class="hm-statement"><p data-cms-copy="homeDesign.heroStatement">{{ s.homeStatement }}</p><span class="hm-statement-stroke" aria-hidden="true"></span></div></sc-if>
-        <aside class="hm-proof">
+        <sc-if value="{{ heroProof.visible }}"><aside class="hm-proof">
+          <sc-if value="{{ isHome }}">
+            <div class="hm-advisor-heading"><span data-cms-copy="advisor.heading">{{ homeAdvisor.heading }}</span><span aria-hidden="true"> · </span><strong data-cms-copy="brand.name">{{ brandName }}</strong></div>
+            <sc-if value="{{ homeAdvisor.name }}"><div class="hm-advisor-person">
+              <sc-if value="{{ homeAdvisor.photo }}"><img class="hm-advisor-photo" data-cms-image="advisor.photo" sc-camel-src="{{ homeAdvisor.photo }}" alt="{{ homeAdvisor.photoAlt }}" width="56" height="70"></sc-if>
+              <div><p class="hm-advisor-name" data-cms-copy="advisor.fullName">{{ homeAdvisor.name }}</p><sc-if value="{{ homeAdvisor.role }}"><p class="hm-advisor-role" data-cms-copy="advisor.role">{{ homeAdvisor.role }}</p></sc-if></div>
+            </div></sc-if>
+            <div class="hm-advisor-affiliation">
+              <sc-if value="{{ heroProof.logo }}"><img data-cms-image="{{ heroProof.logoPath }}" sc-camel-src="{{ heroProof.logo }}" alt="{{ heroProof.logoAlt }}" width="44" height="44"></sc-if>
+              <p data-content-path="{{ heroProof.credentialPath }}">{{ heroProof.credential }}</p>
+            </div>
+            <!-- COVERMATE_PROOF_CREDENTIALS -->
+          </sc-if>
+          <sc-if value="{{ notHome }}">
           <details class="hm-proof-details" open="{{ homeWideDetails }}">
           <summary class="hm-proof-heading">
-            <sc-if value="{{ hasAdvisorLogo }}"><img data-cms-image="brand.advisorLogo" sc-camel-src="{{ advisorLogo }}" alt="{{ advisorLogoAlt }}" width="56" height="56"></sc-if>
-            <div><span class="hm-help" data-cms-copy="ui.advisorLabel">{{ s.heroAdvisorEyebrow }}</span><strong data-cms-copy="brand.fullName">{{ brandFull }}</strong><p data-cms-copy="brand.credential">{{ brandCred }}</p></div>
+            <sc-if value="{{ heroProof.logo }}"><img data-cms-image="{{ heroProof.logoPath }}" sc-camel-src="{{ heroProof.logo }}" alt="{{ heroProof.logoAlt }}" width="56" height="56"></sc-if>
+            <div><span class="hm-help" data-cms-copy="ui.advisorLabel">{{ s.heroAdvisorEyebrow }}</span><strong data-cms-copy="brand.fullName">{{ brandFull }}</strong><p data-content-path="{{ heroProof.credentialPath }}">{{ heroProof.credential }}</p></div>
             <span class="hm-plus" aria-hidden="true">+</span>
           </summary>
-          <div class="hm-licences" data-noedit>
-            <sc-if value="{{ hasLifeLicence }}"><p>{{ s.heroLifeLicense }}</p></sc-if>
-            <sc-if value="{{ hasNonLifeLicence }}"><p>{{ s.heroNonLifeLicense }}</p></sc-if>
-            <sc-if value="{{ hasVerifyLink }}"><a class="hm-text-link" href="{{ footerOicHref }}" target="_blank" rel="noopener">{{ s.heroVerifyLabel }} <span aria-hidden="true">↗</span></a></sc-if>
-          </div>
-          <sc-if value="{{ hours }}"><div class="hm-proof-service"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p data-cms-copy="contact.hours">{{ hours }}</p></div></sc-if>
+          <!-- COVERMATE_PROOF_CREDENTIALS -->
           </details>
-        </aside>
+          </sc-if>
+        </aside></sc-if>
       </div>
     </sc-if>
 
     <sc-if value="{{ s.homeTrust }}"><ul class="hm-trust"><sc-for list="{{ s.items }}" as="it"><li><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></li></sc-for></ul></sc-if>
 
     <sc-if value="{{ s.homeProducts }}">
-      <div class="hm-heading"><h2 data-cms-copy="ui.coverageLabel">{{ s.heroAssistLabel }}</h2><div class="hm-actions"><sc-for list="{{ s.taskLinks }}" as="link"><a class="hm-text-link" href="{{ link.href }}"><span data-content-path="{{ link.copy }}">{{ link.label }}</span> <span aria-hidden="true">→</span></a></sc-for></div></div>
+      <div class="hm-heading"><div class="hm-section-copy"><sc-if value="{{ s.productIntro }}"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p></sc-if><h2 data-content-path="{{ s.productHeadingPath }}" data-cms-copy="{{ s.productHeadingCms }}">{{ s.productHeading }}</h2><sc-if value="{{ s.productIntro }}"><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></sc-if></div><div class="hm-actions"><sc-for list="{{ s.taskLinks }}" as="link"><a class="hm-text-link" href="{{ link.href }}"><span data-content-path="{{ link.copy }}">{{ link.label }}</span> <span aria-hidden="true">→</span></a></sc-for></div></div>
       <div class="hm-cover-grid">
         <sc-for list="{{ s.items }}" as="it">
           <details data-content-id="{{ it.key }}" class="hm-cover-card" name="home-coverage" style="--tile:{{ it.soft }};--tile-icon:{{ it.fill }}">
@@ -70,6 +81,51 @@
         <div class="hm-benefits"><sc-for list="{{ s.items }}" as="it"><details data-content-id="{{ it.key }}" open="{{ s.homeInformationExpanded }}"><summary><span class="hm-icon" style="--tile-icon:{{ it.deep }};--tile:{{ it.soft }}"><sc-if value="{{ s.homeSteps }}"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><span aria-hidden="true">{{ it.n }}</span></sc-if></sc-if><sc-if value="{{ s.homeReview }}"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></sc-if><sc-if value="{{ s.homeClaim }}"><sc-if value="{{ it.hasIconImage }}"><img data-cms-image="{{ it.mediaIconPath }}" sc-camel-src="{{ it.iconImage }}" alt="" width="28" height="28" style="object-fit:contain;flex:0 0 auto"></sc-if><sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if></sc-if></span><h3 data-content-path="{{ it.copy.title }}">{{ it.title }}</h3><span class="hm-plus" aria-hidden="true">+</span></summary><div class="hm-benefit-detail"><p data-content-path="{{ it.copy.body }}">{{ it.body }}</p><sc-if value="{{ it.value }}"><p data-content-path="{{ it.copy.value }}">{{ it.value }}</p></sc-if></div></details></sc-for></div>
       </div>
       <sc-if value="{{ s.homeClaim }}"><div class="hm-emergency"><sc-for list="{{ s.cards }}" as="cd"><article><p data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p><a href="{{ cd.tel }}" data-content-path="{{ cd.copy.title }}">{{ cd.title }}</a><p data-content-path="{{ cd.copy.body }}">{{ cd.body }}</p></article></sc-for></div></sc-if>
+    </sc-if>
+
+    <sc-if value="{{ s.homeTransparency }}">
+      <details class="hm-section-disclosure {{ s.transparency.className }}" open="{{ editMode }}">
+        <summary class="cm-transparency-heading">
+          <span class="cm-transparency-icon cm-transparency-emblem" aria-hidden="true">
+            <sc-if value="{{ s.transparency.headingIcon }}"><img sc-camel-src="{{ s.transparency.headingIcon }}" data-cms-image="{{ s.transparency.headingIconPath }}" alt="" width="40" height="40"></sc-if>
+            <sc-if value="{{ !s.transparency.headingIcon }}"><svg viewBox="0 0 24 24"><sc-for list="{{ s.transparency.headingPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>
+          </span>
+          <div class="cm-transparency-intro"><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></div>
+          <sc-if value="{{ s.transparency.statement }}"><span class="cm-transparency-statement"><i class="cm-transparency-leaves" aria-hidden="true"></i><span data-cms-copy="{{ s.transparency.statementPath }}">{{ s.transparency.statement }}</span></span></sc-if>
+          <span class="hm-plus cm-transparency-toggle" aria-hidden="true">+</span>
+        </summary>
+        <div class="cm-transparency-content">
+          <dl class="{{ s.transparency.itemGrid }}">
+            <sc-for list="{{ s.transparency.items }}" as="it"><div class="cm-transparency-tile" data-content-id="{{ it.key }}" data-tone="{{ it.tone }}">
+              <span class="cm-transparency-icon" aria-hidden="true">
+                <sc-if value="{{ it.hasIconImage }}"><img sc-camel-src="{{ it.iconImage }}" data-cms-image="{{ it.mediaIconPath }}" alt="" width="28" height="28"></sc-if>
+                <sc-if value="{{ it.hasVectorIcon }}"><svg viewBox="0 0 24 24"><sc-for list="{{ it.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>
+              </span>
+              <div><dt data-content-path="{{ it.copy.label }}">{{ it.label }}</dt><dd data-content-path="{{ it.copy.value }}">{{ it.value }}</dd></div>
+            </div></sc-for>
+          </dl>
+          <sc-if value="{{ s.transparency.cards.length }}"><div class="cm-transparency-grid cm-transparency-flow">
+            <sc-for list="{{ s.transparency.cards }}" as="cd"><article class="cm-transparency-tile" data-content-id="{{ cd.key }}" data-tone="{{ cd.tone }}">
+              <span class="cm-transparency-icon" aria-hidden="true">
+                <sc-if value="{{ cd.iconImage }}"><img sc-camel-src="{{ cd.iconImage }}" data-cms-image="{{ cd.mediaIconPath }}" alt="" width="28" height="28"></sc-if>
+                <sc-if value="{{ !cd.iconImage }}"><svg viewBox="0 0 24 24"><sc-for list="{{ cd.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>
+              </span>
+              <div><p class="cm-transparency-kicker" data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p><h3 data-content-path="{{ cd.copy.title }}">{{ cd.title }}</h3><p data-content-path="{{ cd.copy.body }}">{{ cd.body }}</p></div>
+            </article></sc-for>
+          </div></sc-if>
+          <div class="cm-transparency-bottom">
+            <sc-if value="{{ s.hasNote }}"><div class="cm-transparency-note">
+              <span class="cm-transparency-note-icon" aria-hidden="true">
+                <sc-if value="{{ s.transparency.noteIcon }}"><img sc-camel-src="{{ s.transparency.noteIcon }}" data-cms-image="homeDesign.transparencyNoteIcon" alt="" width="28" height="28"></sc-if>
+                <sc-if value="{{ !s.transparency.noteIcon }}"><svg viewBox="0 0 24 24"><sc-for list="{{ s.transparency.notePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>
+              </span>
+              <div><sc-if value="{{ s.transparency.summaryLabel }}"><strong data-cms-copy="{{ s.transparency.summaryPath }}">{{ s.transparency.summaryLabel }}</strong></sc-if><p data-content-path="{{ s.copy.note }}">{{ s.note }}</p></div>
+            </div></sc-if>
+            <sc-if value="{{ s.transparency.closing }}"><p class="cm-transparency-statement cm-transparency-closing"><i class="cm-transparency-leaves" aria-hidden="true"></i><span data-cms-copy="{{ s.transparency.closingPath }}">{{ s.transparency.closing }}</span></p></sc-if>
+            <sc-if value="{{ s.transparency.isPrivacy }}"><sc-if value="{{ showTalkAnchor }}"><a class="cm-transparency-return" href="#talk"><span data-cms-copy="homeDesign.returnLabel">{{ homeCopy.returnLabel }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></a></sc-if></sc-if>
+          </div>
+        </div>
+      </details>
     </sc-if>
 
     <sc-if value="{{ s.homeDisclosure }}">
