@@ -1,13 +1,14 @@
 # CoverMate Architecture
 
-Last updated: 2026-09-21. See [HANDOFF.md](HANDOFF.md) for production versus
-candidate status and the owner-authorized production release.
+Last updated: 2026-09-24. This document maps the current source. See
+[HANDOFF.md](HANDOFF.md) for deployed versus candidate status and
+[REFACTOR_20260924.md](REFACTOR_20260924.md) for refactor verification evidence.
 
 ## Current Shape
 
 CoverMate uses a generated visitor bundle on Vercel. Its source lives in
 `src/visitor/`; `scripts/generate-visitor-bundle.mjs` generates `index.html`
-and `server/asset-versions.json`. The pending September 21 SEO implementation
+and `server/asset-versions.json`. The SEO implementation
 serves `/` and `/motor` through `api/page.js`: it reads published CMS metadata
 and replaces both initial document heads using `covermate-seo.mjs`. The visual
 body remains client-rendered. Admin login/launcher remain static HTML; owner
@@ -19,7 +20,7 @@ The current visitor bundle is maintained against the product specs, repository d
 Downloaded offline prototype HTML is not automatically portable. Some exports can depend on sidecar runtime files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw template placeholders like `{{ brandName }}`. Treat those files as historical references until they are compiled into self-contained HTML or shipped with a complete dependency folder.
 
 Backend APIs use Vercel functions: `/api/ops/*`, `/api/analytics`, `/api/leads`
-and `/api/telemetry`; `/api/page` and `/api/media` are candidate additions.
+and `/api/telemetry`, plus `/api/page` and `/api/media`.
 The media API uses signed Cloudinary uploads with a Free-plan quota guard;
 see [CMS_MEDIA.md](CMS_MEDIA.md). Admin identity is
 backed by Firebase Auth plus Firestore `admins/{uid}` allowlist checks, and CMS
@@ -55,6 +56,12 @@ flowchart TD
   Analytics --> Leads
   Launcher --> PublicEdit["/admin/edit"]
   Launcher --> PublicAdmin["/admin/content"]
+  Launcher --> Cases["Owner-only Cases workspace"]
+  Cases --> OpsAPI["/api/ops: verified token, allowlist, environment"]
+  OpsAPI --> CasesService["Cases handler/service/repository: Admin SDK"]
+  OpsAPI --> LegacyOps["Legacy Operations service: user-token REST"]
+  CasesService --> Leads
+  LegacyOps --> Leads
 ```
 
 ## Source Surfaces
@@ -78,14 +85,18 @@ flowchart TD
 `src/visitor/shell.html` owns the outer shell, first-paint cloak, favicon/head
 metadata, imports, and bundler-template slot. `src/visitor/template.html` owns
 the embedded template. `src/visitor/defaults.js` owns default CMS config.
-`src/visitor/runtime.js` owns the injected visitor runtime. Use
+`src/visitor/runtime.js` owns rendering, route/mode state, normalization,
+hydration, and DOM projection. `src/visitor/cms-controller.js` adds the owner
+commands through `withCmsController`: queued draft persistence, save/publish,
+reset, media actions, shortcuts, and edit history. `editor-history.js` owns the
+bounded Draft snapshot history; it does not publish content. Use
 `npm run build:visitor` to regenerate `index.html`; `npm run
 check:visitor-source` verifies the generated artifact matches source.
 
 `home.html` and `home.css` own the new Home projection, composed into the shared
-template without replacing Motor. The candidate generator compacts serialized
-defaults and static CSS, leaving source files readable. Its final performance
-rerun is pending; do not infer a passed budget from a successful build.
+template without replacing Motor. The generator compacts defaults, CSS, and
+runtime code while keeping authored source readable. Performance and release
+evidence belongs in HANDOFF and the release checks, not this ownership map.
 
 Legacy incoming `/#edit`, `/#admin`, and `/#preview` remain session-gated for
 compatibility, but current admin UI must generate `/admin/...` paths instead.
@@ -157,14 +168,22 @@ by `admin/index.html`. It has no browser-seeded operations data and no local
 workflow fallback. It obtains a Firebase ID token from the verified admin
 session and calls `/api/ops/*`.
 
-`api/ops.js` owns Operations Portal backend reads and writes on Vercel. It
-verifies the Firebase ID token, checks the Firestore `admins/{uid}` allowlist,
-applies role permissions server-side, reads the active runtime lead collection,
-and writes lead status, timeline, task, follow-up, and per-lead audit state back
-to Firestore.
+The visible Operations workspace mounts `admin/ops/cases.js` and `cases.css`
+for owner-only Cases. Legacy Dashboard/Leads/Tasks/Audit render helpers and API
+routes remain compatibility code, not current navigation tabs. Planned
 Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers
-currently return `source: "not_wired"` metadata, so the UI displays an explicit
-not-wired state instead of browser-seeded or fake records.
+are hidden; their legacy endpoints retain `source: "not_wired"` responses.
+
+`api/ops.js` owns the shared HTTP, Firebase ID-token, allowlist, environment,
+rate-limit, and error boundary. `server/ops-access.cjs` owns role permissions.
+It dispatches modern Cases and notification routes to
+`server/cases-handler.cjs`, whose owner gate precedes service operations.
+`server/cases-service.cjs` owns case commands/transactions and
+`server/cases-repository.cjs` owns Admin SDK collection access. Legacy routes
+use `server/legacy-ops-service.cjs` and the user-token Firestore REST adapter in
+`server/ops-firestore.cjs`, preserving Rules enforcement and existing query
+caps. The split does not introduce a storage migration or new index/query
+behavior. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md) for the canonical contract.
 
 `assets/ins/*.png` owns insurer logo media for the motor-insurance logo section.
 The exported reference also carries AIA/Srikrung Broker relationship-card logo
@@ -187,8 +206,13 @@ visitor template/runtime should import this module instead of parsing generated
 `covermate-contract.js` owns same-origin asset URL versioning and leaves
 external/signed URLs untouched.
 
-`covermate-public.mjs` owns visible/online public live-content refresh and
-failure backoff. The visitor's `applyLiveContent` merges only CMS content,
+`covermate-freshness.mjs` owns shared timing constants and backoff calculation:
+the published server reader caches for 30 seconds, public HTML permits a
+30-second shared-cache lifetime, and the browser polls every 60 seconds with a
+5-second minimum gap and a 300-second maximum failure backoff. These are
+separate layers, not an instant-publish guarantee. `covermate-public.mjs` owns
+browser visibility/connectivity, in-flight work, and lifecycle scheduling.
+The visitor's `applyLiveContent` merges only CMS content,
 separately from `applyMode` navigation, so polling does not reset input or owner
 drafts. `npm run check:live-content` covers network failure/lifecycle scenarios
 in a local browser with controlled Firestore REST responses; `smoke:nfr` covers
@@ -219,7 +243,9 @@ requests, and manual dispatch.
 `scripts/security-contract-check.mjs` is a static guard for Vercel security
 headers, Firestore deny-by-default/admin/lead validation rules, GA PII
 boundaries, and server-side Operations API authorization. It complements, but
-does not replace, future Firebase emulator rule tests.
+does not replace, the Auth/Firestore emulator suite (`npm run check:emulators`).
+`npm run check:refactor` checks the extracted Operations, CMS-controller,
+freshness, and shared test-fixture boundaries.
 
 `scripts/performance-budget-check.mjs` is a lightweight local/CI budget gate
 for `/` and `/motor` on mobile and desktop. It checks first visible render, raw
@@ -250,7 +276,10 @@ Within the selected namespace:
 - save draft: write `states/draft`
 - publish or restore: atomically write `states/live`, `states/draft`, and a new
   version document
-- visitor lead submit: create a validated lead document
+- visitor lead submit: `/api/leads` atomically creates a validated lead,
+  canonical case record, intake marker, and initial case activity
+- owner Cases: server-authorized Admin SDK transactions update canonical case,
+  activity, idempotency, and notification records in the selected namespace
 - admin analytics: read lead documents in the browser after admin
   verification; read aggregate GA4 traffic through `/api/analytics` when Vercel
   service-account env vars are configured
@@ -265,28 +294,32 @@ defaults are cold-start fallback only. Admin sign-in is Firebase backed, but
 
 Runtime config is normalized after Firestore/local reads to fill newly added
 sections and fields that older live documents do not yet contain. This
-normalization is additive only: it fills missing structure, preserves existing
-live/draft values, and must not replace admin-edited remote content with bundled
-fallback copy.
+normalization fills missing structure and applies explicit versioned migrations
+and protected-field rules. It must not casually replace admin-edited remote
+content with bundled copy. Migration exceptions and recovery archives are
+documented in [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md); the current
+version is `CMS_CONTENT_VERSION` in `covermate-contract.js`.
 
-The `fit` calculator is one of those additive normalized structures. Its
-methodology payload lives under `sections[].calculator` for the `fit` section,
-with fallback constants exported from `covermate-contract.js` as
-`DEFAULT_NEEDS_CALCULATOR`. The current dataset is
-`covermate-reference-data-v0.1` / `2026-08-15-v0.1`. Live Firestore values win
-over the fallback, while missing nested fields are filled so older live
-documents can still render the current life, health, and critical-illness
-calculator model. See [NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md).
+The Home `fit` calculator stores methodology/source/catalog payloads under
+`sections[].calculator`, with missing-field defaults from
+`DEFAULT_NEEDS_CALCULATOR`. `covermate-calculator.mjs` owns pure Life/CI/Health
+formulas, optional PA/profile inputs, and lead-attachment validation;
+`covermate-recommendations.mjs` owns deterministic eligibility, fit, and explicit
+catalog review. The API uses the same snapshot validator, retaining frozen v1
+compatibility for already-open tabs. Live CMS values win over defaults, and
+no real product catalog is invented from absent data. See
+[NEEDS_CALCULATOR.md](NEEDS_CALCULATOR.md) and
+[NEEDS_PRODUCT_REVIEW.md](NEEDS_PRODUCT_REVIEW.md).
 
 Versioned migrations also reconcile semantic text ownership and consolidate
-Guides into FAQ (v4); v5 corrects Admin/section field names. Recovery archives
+Guides into FAQ. Recovery archives
 must not refill deleted/hidden content. These are local read-time migrations
 until an authorized write, not permission to overwrite live data. See
 [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md).
 
 After the embedded app reads hydrated live content, it syncs SEO title,
 description, Open Graph/Twitter tags, canonical URL, robots meta, `html[lang]`,
-and `script#covermate-jsonld` from the current live state. The candidate server
+and `script#covermate-jsonld` from the current live state. The server
 wrapper additionally produces published CMS metadata before JavaScript; static
 metadata remains the documented failure fallback, not a competing source.
 
@@ -322,31 +355,33 @@ behavior.
 
 The Admin Portal no longer exposes that control panel as a separate `Arrange
 and customise` launcher card. Operators enter `/admin/edit` first, then open
-`Tools -> Panel` from the editor dock when they need section order, visibility,
+`เครื่องมือ → แผงเครื่องมือ` from the editor dock when they need section order, visibility,
 brand, footer, backup, restore, preview, or publish controls.
 
-Explicit `Save draft` and `Publish` are recoverable owner actions. They use
-custom confirmation dialogs, wait for successful Firestore writes, and then show
-dismissible success toasts with a 30-second `Undo`. Undo for draft restores the
-previous draft state; undo for publish republishes the previous live state and
-records that undo in version history.
+Explicit `Save draft` and `Publish` use custom confirmation dialogs and wait for
+successful Firestore writes. Whole-Draft Undo/Redo is a separate bounded,
+per-tab snapshot history: saving or publishing does not clear it, and Undo
+changes Draft only. A successful Publish additionally offers a 30-second
+`ย้อน Publish · เปลี่ยนเว็บจริง` action that republishes the previous live state
+and records a version. Reset reads fresh Live and writes Draft transactionally;
+a failure preserves existing Draft work. See
+[CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md) for history bounds, shortcuts,
+save ordering, and advanced calculator buffer handling.
 
 The owner CMS modes also own the admin continuation UI:
 
 - closing the direct `/admin/content` drawer clears owner markers and lands
   on `/admin`;
-- closing a panel opened from `/admin/edit` via `Tools → Panel` only hides the
+- closing a panel opened from `/admin/edit` via `เครื่องมือ → แผงเครื่องมือ` only hides the
   drawer and keeps `/admin/edit`, the owner dock, and inline edit affordances
   active;
-- `/admin/edit` shows its own warm-ink owner dock: the collapsed row keeps only
-  `Editing on page` and `Tools` visible. If the admin drawer is open while text
-  editing stays active, the status becomes `Editing on page · Panel open`, and
-  the Tools menu collapses after the Panel destination is chosen.
-  `Tools` expands a single dark-ink command palette grouped into `Draft` and
-  `Go to` actions. `Publish` is the only terracotta-filled action; the other
+- `/admin/edit` shows its own warm-ink owner dock with Thai editing status,
+  visible Undo/Redo, and `เครื่องมือ`. Opening the panel updates that status and
+  collapses the command menu. `เครื่องมือ` expands a dark-ink command palette
+  grouped by draft and navigation actions. `Publish` is the terracotta-filled action; the other
   owner commands stay quiet cream/outline actions;
-- leaving `/admin/edit` is done through the `Tools` menu (`Main`, `Panel`,
-  `Public site`, or `Log out`); there is no separate collapsed `Close` button;
+- leaving `/admin/edit` is done through the `เครื่องมือ` menu (`หน้า Admin`,
+  `ดูเว็บจริง`, or `ออกจากระบบ`); there is no separate collapsed close button;
 - `Public site` / `View live site` always opens the clean public route (`/` or
   `/motor`, depending on the owner route scope) in a new browser tab. It must
   not move the current Admin tab out of the `/admin` namespace. Legacy incoming
@@ -358,7 +393,7 @@ The owner CMS modes also own the admin continuation UI:
 Visible Admin controls use natural Thai with conventional English terms.
 Labels include `แผงเครื่องมือ`, `แก้ไขข้อความ`, `หน้า Admin`, `ดูเว็บจริง`,
 `Save draft`, `Preview`, `Publish`, and `ออกจากระบบ`. The content-language selector
-continues editing TH/EN data independently; see `docs/ADMIN_LANGUAGE.md`.
+continues editing TH/EN data independently; see [ADMIN_LANGUAGE.md](ADMIN_LANGUAGE.md).
 
 The mobile interaction contract is enforced by a template-level
 `covermate-responsive-touch-policy` patch on all three HTML surfaces. It keeps
@@ -436,9 +471,11 @@ not terminate the template early.
 Do not add admin routes, hash aliases, draft/preview URLs, or owner modes to
 `sitemap.xml`.
 
-Do not relax `contactLeads/*` or `contactLeadsUat/*` public create rules
-without preserving explicit field allowlists, length caps, `status == "new"`,
-`read == false`, and server timestamp validation.
+Do not enable direct public Firestore lead writes. `/api/leads` owns App Check,
+allowlisted fields, limits, idempotency, and published consent-receipt validation.
+Canonical Cases, activities, mutation receipts, and notifications are written
+through their authorized server boundary, not browser Rules bypasses. Preserve
+the production/UAT namespace and owner-only Cases gate.
 
 CSP is enforced with the renderer's documented inline/eval/blob allowances.
 Do not confuse this with a strict nonce/hash policy, or revert it to Report-Only
@@ -448,8 +485,9 @@ because of older notes. Consult `vercel.json` and `NFR_HARDENING.md`.
 
 These are proposals, not current implementation.
 
-Server-backed CMS authentication/persistence already exist. Media provider
-replacement is pending; do not rebuild Auth or migrate Firestore for that task.
+Server-backed CMS authentication/persistence and signed Cloudinary media uploads
+already exist. Keep future provider changes behind the media adapter; they do
+not require rebuilding Auth or migrating Firestore.
 
 For maintainability, migrate the exported HTML bundles into source components
 while preserving current product decisions and using historical references only as optional visual fixtures.

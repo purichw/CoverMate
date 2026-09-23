@@ -1,30 +1,48 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import vm from 'node:vm';
+import { firebaseMock } from './fixtures/ops-portal.mjs';
+import { createCasesFixture } from './fixtures/cases.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import C from '../server/cases-contract.cjs';
 import AxeBuilder from '@axe-core/playwright';
-const source = fs.readFileSync('scripts/ops-portal-regression-check.mjs', 'utf8');
-const { firebaseMock } = vm.runInNewContext(source.slice(source.indexOf('const firebaseMock ='), source.indexOf('function json(')) + ';({firebaseMock})');
-const fixtures = JSON.parse(fs.readFileSync('scripts/fixtures/cases/fixtures.json'));
+const fixtures = createCasesFixture();
 const now = fixtures.asOf;
 let records = structuredClone(fixtures.cases), notices = structuredClone(fixtures.notifications), failSave = false, conflict = false, failList = false;
 const output = process.env.CASES_SCREENSHOT_DIR || 'uat-results/cases-v2'; fs.mkdirSync(output, { recursive: true });
 const { server, baseUrl } = await startStaticServer();
 const browser = await launchChromium((await loadPlaywright()).chromium);
 const errors = [];
+const summaryQueue = [];
+let summarySequence = 0;
+function holdSummary(overrides = {}) {
+  let start, release;
+  const gate = { id: String(++summarySequence), overrides,
+    started: new Promise(resolve => { start = resolve; }),
+    ready: new Promise(resolve => { release = resolve; }),
+    start: () => start(), release: () => release() };
+  summaryQueue.push(gate);
+  return gate;
+}
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   await context.addInitScript(() => localStorage.setItem('covermate-admin-session', JSON.stringify({ firebase: true, uid: 'smoke-admin', email: 'purich@example.test', name: 'CoverMate Owner', role: 'admin', ts: Date.now(), exp: Date.now() + 3600000 })));
   await context.route('**/covermate-firebase.js', route => route.fulfill({ contentType: 'text/javascript', body: firebaseMock }));
   await context.route('**/api/ops/**', async route => {
     const req = route.request(), url = new URL(req.url()), path = url.pathname.replace('/api/ops/', '').split('/');
-    let result, status = 200;
+    let result, status = 200, summaryGate;
     try {
       if (path[0] === 'cases') {
         if (failList && (!path[1] || path[1] === 'summary')) throw Object.assign(new Error('Cases service temporarily unavailable.'), { status: 503 });
-        if (path[1] === 'summary') result = C.summary(records, now);
+        if (path[1] === 'summary') {
+          result = C.summary(records, now);
+          summaryGate = summaryQueue.shift();
+          if (summaryGate) {
+            summaryGate.start();
+            await summaryGate.ready;
+            Object.assign(result, summaryGate.overrides);
+          }
+        }
         else if (req.method() === 'POST') { const r = C.createCase(req.postDataJSON(), { id: crypto.randomUUID(), now }); records.push(r); result = r; }
         else if (!path[1]) result = C.listCases(records, url.searchParams, now);
         else {
@@ -42,10 +60,54 @@ try {
       else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false };
       else result = { rows: [], total: 0, source: 'test' };
     } catch (e) { status = e.status || 500; result = { code: e.code || 'test_error', message: e.message }; }
-    await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(result) });
+    await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(result),
+      ...(summaryGate ? { headers: { 'x-fixture-summary': summaryGate.id } } : {}) });
   });
   const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+  const metricValues = () => {
+    const summary = C.summary(records, now);
+    return ['new', 'followUpsDue', 'noAnswer', 'closedThisMonth'].map(key => String(summary[key]));
+  };
+  const waitForMetrics = () => page.waitForFunction(expected => JSON.stringify([...document.querySelectorAll('.case-metric strong')].map(node => node.textContent)) === JSON.stringify(expected), metricValues(), { timeout: 5000 });
+  async function releaseSummary(gate) {
+    const delivered = page.waitForResponse(response => response.headers()['x-fixture-summary'] === gate.id);
+    gate.release();
+    await (await delivered).finished();
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  }
+  const initialSummary = holdSummary();
   await page.goto(baseUrl + '/admin#operations');
+  await initialSummary.started;
+  const searched = records.find(record => record.status === 'new');
+  await page.locator('#globalSearch').fill(searched.caseNumber);
+  await page.locator(`.cases-table [data-case-id="${searched.id}"]`).waitFor();
+  assert.equal(await page.locator('.cases-table tbody tr').count(), 1, 'Search completes while global summary is delayed.');
+  assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), ['—', '—', '—', '—']);
+  await releaseSummary(initialSummary);
+  await waitForMetrics();
+  assert.equal(await page.locator('.cases-table tbody tr').count(), 1, 'Late summary cannot replace the filtered list.');
+  await page.screenshot({ path: `${output}/summary-after-immediate-search.png`, fullPage: false, animations: 'disabled' });
+  await page.locator('#globalSearch').fill('');
+  await page.waitForFunction(() => document.querySelectorAll('.cases-table tbody tr').length === 8);
+
+  const staleRefresh = holdSummary({ new: 77 });
+  await page.getByRole('button', { name: 'รีเฟรชเคส', exact: true }).click(); await staleRefresh.started;
+  const latestRefresh = holdSummary();
+  await page.getByRole('button', { name: 'รีเฟรชเคส', exact: true }).click(); await latestRefresh.started;
+  await releaseSummary(latestRefresh); await waitForMetrics();
+  await releaseSummary(staleRefresh);
+  assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), metricValues(), 'An older full refresh cannot overwrite the newest summary.');
+
+  const beforeLeave = holdSummary({ new: 88 });
+  await page.getByRole('button', { name: 'รีเฟรชเคส', exact: true }).click(); await beforeLeave.started;
+  await page.locator('[data-action="module"][data-module="home"]:visible').first().click();
+  await page.waitForFunction(() => document.body.dataset.module === 'home');
+  await page.locator('.nav-button[data-module="operations"]').click();
+  await page.waitForFunction(() => document.body.dataset.module === 'operations');
+  await waitForMetrics();
+  await page.locator('.cases-table tbody tr').first().waitFor();
+  await releaseSummary(beforeLeave);
+  assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), metricValues(), 'A response from a previous visit cannot overwrite the returned workspace.');
   await page.locator('.cases-table tbody tr').first().waitFor();
   assert.equal(await page.locator('.cases-table tbody tr').count(), 8);
   const desktopAxe = await new AxeBuilder({ page }).include('.cases-screen').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
@@ -108,5 +170,5 @@ try {
   assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), ['—', '—', '—', '—']);
   failList = false; await page.locator('.case-list').getByRole('button', { name: 'ลองอีกครั้ง', exact: true }).click(); await page.locator('.case-name').first().waitFor();
   assert.deepEqual(errors, []);
-  console.log('Cases browser checks passed: responsive list/detail, draft discard/keep, save failure, conflict reload, persisted save, manual create, unavailable email and no horizontal overflow.');
+  console.log('Cases browser checks passed: immediate search with delayed summary, out-of-order refresh, leave/return, responsive list/detail, draft discard/keep, save failure, conflict reload, persisted save, manual create, unavailable email and no horizontal overflow.');
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

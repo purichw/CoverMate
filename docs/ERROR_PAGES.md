@@ -1,7 +1,8 @@
 # CoverMate shared error pages
 
-Updated: 2026-09-23. Scoped release candidate; current preview, verification and
-pending production status are tracked in `RELEASE_CHAT_20260923.md`.
+Updated: 2026-09-24. The September 23 implementation/verification evidence is
+preserved below. `HANDOFF.md` and current release records own deployed status;
+`RELEASE_CHAT_20260923.md` records the original scoped release.
 
 ## Authority and design decisions
 
@@ -40,8 +41,10 @@ Google Sans Thai fonts and actual localized CoverMate logos.
 | `api/not-found.js` | Fixed JSON 404 for unmatched non-page resources |
 | `vercel.json` | Existing routes plus trailing API/assets/admin fallback rewrites |
 
-The Error page group uses schema v12. This scoped release contains no v13
-calculator changes and requires no production CMS migration or Publish.
+The Error page group was introduced in schema v12 and remains in the current
+v16 schema. Its original scoped release excluded later calculator changes;
+that historical scope does not describe the full current visitor integration.
+The source-boundary refactor adds no Error page field, CMS migration or Publish.
 Error artwork has a 1:1 CMS image slot; use an image with
 an empty browser centre because the status number is rendered separately.
 
@@ -89,6 +92,10 @@ Health goes to `/#cover`; Motor card goes to `/motor`; header Motor goes to
 
 Dynamic error responses are private/no-store. 4xx pages have noindex; transient
 5xx do not add a global noindex policy to otherwise healthy public routes.
+`covermate-freshness.mjs` now names the existing successful-public-response
+cache policy used by `server/seo-page.mjs`; errors, owner pages and UAT still
+receive private/no-store. The independent Error client retains its one-read,
+four-second deadline rather than joining visitor background polling.
 
 ## Hosting limits
 
@@ -104,6 +111,12 @@ The local harness does not prove Vercel edge routing. Preview verification of
 filesystem precedence and actual host 404s, followed by production readback,
 remain separate release checks. Their current results are recorded in
 `RELEASE_CHAT_20260923.md`; preview readiness alone is not routing proof.
+
+At the original September 23 local checkpoint, `vercel build` stopped because
+project build settings were absent; credentials were not pulled to complete the
+UI task. This historical limit is also preserved in
+`HISTORY_LOCAL_CANDIDATES_20260923.md` and does not establish the current release
+state.
 
 ## Verification and preview
 

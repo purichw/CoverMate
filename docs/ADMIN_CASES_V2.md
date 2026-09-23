@@ -2,6 +2,10 @@
 
 Implemented from `COVERMATE_ADMIN_CODEX_ALL_IN_ONE.md` v2, supplied 23 September 2026. Its workflow decisions override the earlier screenshot and pasted prompt. This is an implementation record, not a claim that the candidate is deployed.
 
+Current module map and request-lifecycle contract reviewed on 2026-09-24.
+`HANDOFF.md` and release records own the exact deployed revision; the local
+evidence below remains scoped to its original checks.
+
 ## Design and scope
 
 One Cases workspace replaces the visible Operations dashboard/leads/tasks/audit tabs. Preserve the actual CoverMate logo and Google Sans / Google Sans Thai, cream canvas, dark sidebar, orange primary action, muted status surfaces and compact table/detail composition. No role switching, exports, bulk actions, fake Live badge, assignment, pipeline or LINE integration in Cases.
@@ -14,6 +18,13 @@ One Cases workspace replaces the visible Operations dashboard/leads/tasks/audit 
 
 The mini dashboard uses global server counts independently of search/filter/page. Default Open scope, 20 records per page, 100 server cap, filter-bound stable cursors. Dates use Asia/Bangkok. Follow-ups due includes overdue dates even when reminders are off; Today includes future times today. Completed means an enquiry is finished, **not a policy sale**.
 
+List and summary requests have independent generation counters. An immediate
+search/filter can replace the list while the initial global summary is still
+pending; the valid summary must still populate the metrics without replacing
+the filtered rows. A newer full refresh supersedes both earlier results, and
+leaving Cases invalidates both generations. Late responses from an earlier
+visit must not affect a later visit.
+
 ## Owners and files
 
 | Surface | Owner |
@@ -21,12 +32,22 @@ The mini dashboard uses global server counts independently of search/filter/page
 | Admin shell and legacy route compatibility | `admin/index.html`, `admin/ops/app.js` |
 | Cases UI, drafts, filters, detail, notifications | `admin/ops/cases.js`, `admin/ops/cases.css` |
 | Validation, status transitions, dates, filters, legacy projection | `server/cases-contract.cjs` |
+| Cases/notification endpoint routing and verified-owner gate | `server/cases-handler.cjs` |
 | Transactions, activities, idempotency, notifications, preferences | `server/cases-service.cjs` |
-| Existing verified Auth/allowlist and new endpoint dispatch | `api/ops.js` |
+| Admin SDK collection selection and complete case reads | `server/cases-repository.cjs` |
+| Verified Auth/allowlist, environment selection, dispatch and HTTP/error envelope | `api/ops.js` |
+| Shared normalized roles and legacy permissions | `server/ops-access.cjs` |
+| Legacy Leads/Tasks/Audit compatibility operations | `server/legacy-ops-service.cjs` |
+| Legacy Firestore REST transport and field conversion | `server/ops-firestore.cjs` |
 | Public create-only intake and abuse limits | `api/leads.js` |
 | Server-verified CMS privacy evidence | `server/enquiry-privacy.cjs` |
 | Public payload/receipt adapter | `covermate-public.mjs`, `src/visitor/runtime.js` |
 | Public fields and generated artifact | `src/visitor/template.html`, generated `index.html` |
+
+`api/ops.js` authenticates before dispatch. The Cases handler depends on service
+operations; the service uses the repository and existing pure contract. Legacy
+REST operations retain their status, permission, audit and conflict behavior.
+The file split changes no endpoint, namespace, stored schema or public receipt.
 
 ## Data and API contracts
 
@@ -88,10 +109,18 @@ Recovery: preserve canonical fields/subcollections and original data, revert the
 
 ## Verification and release boundary
 
-Local test fixtures are extracted from the supplied handoff under `scripts/fixtures/cases/` and excluded from deploy by `.vercelignore`. They are never fallback data in the application.
+Local test fixtures are extracted from the supplied handoff under
+`scripts/fixtures/cases/`. `scripts/fixtures/cases.mjs` returns fresh fixture
+graphs, optionally namespaced for emulator isolation;
+`scripts/fixtures/ops-portal.mjs` owns the legacy Operations/session fixtures.
+They are excluded from deploy by `.vercelignore` and are never application
+fallback data.
 
 - `node scripts/cases-contract-check.mjs`: fixed-clock metrics; search/cursor binding; state transitions; no-op/conflicts; reminder revisions; legacy preservation.
-- `node scripts/cases-browser-check.mjs`: actual Admin UI with isolated API fixtures; desktop/tablet/mobile; draft failure/conflict/reload/save; manual create; focus; menu; unavailable email; overflow; axe checks of list/editor.
+- `node scripts/cases-browser-check.mjs`: actual Admin UI with isolated API fixtures; immediate search with a delayed global summary, out-of-order full refresh and leave/return; desktop/tablet/mobile; draft failure/conflict/reload/save; manual create; focus; menu; unavailable email; overflow; axe checks of list/editor.
+- `node scripts/ops-service-boundary-check.mjs`: isolated API/service boundaries,
+  dispatch and permission behavior. `node scripts/test-fixtures-check.mjs` checks
+  fixture isolation and namespace references; both belong to `check:refactor`.
 - `node scripts/cases-api-check.mjs` inside Auth+Firestore emulators: actual endpoints/transactions/rules; authorization; durable public receipt/activity/intent; idempotency; concurrent writes; deduped reminders; resolution/read ownership; canonical write denial; legacy retention.
 - `node scripts/nfr-journeys.mjs --cases-only` inside emulators: actual website form, failed-network retry, persisted case and authenticated Admin readback; existing Home/Settings/Content navigation.
 - Calculator endpoint adapter, public request deadline checks, generated visitor parity and whitespace checks are scoped regression checks.

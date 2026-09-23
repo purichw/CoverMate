@@ -1,9 +1,11 @@
 # CoverMate Data Contract
 
-Last updated: 2026-09-21
+Last updated: 2026-09-24
 
-Candidate schema is v5; production migration/publish for this candidate has not
-occurred. See [HANDOFF.md](HANDOFF.md) and [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md).
+This is the current source contract. `CMS_CONTENT_VERSION` in
+`covermate-contract.js` is the schema-version authority. See
+[HANDOFF.md](HANDOFF.md) for deployed versus candidate state and
+[CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md) for migration policy.
 
 ## Persistence Model
 
@@ -25,13 +27,21 @@ Hard-coded defaults are only a cold-start fallback when no remote live document
 and no local cache exist. They must not reset or replace live/draft database
 content after Firestore has produced a valid document.
 
-Public freshness is owned by `covermate-public.mjs`: every live read uses
+`covermate-freshness.mjs` owns shared freshness constants. The published server
+reader caches for 30 seconds; public HTML uses
+`public, max-age=0, s-maxage=30`. These independent reader/CDN layers can retain
+old head metadata for roughly their combined lifetimes. They are separate from
+the browser refresh loop and do not apply to private Draft/Preview writes.
+
+Browser freshness is owned by `covermate-public.mjs`: every live read uses
 `cache: 'no-store'` and a 10-second request timeout. Boot still allows a
 1.5-second fallback window, with late successful data applied in place. An open
 public tab checks live content every 60 seconds while visible/online, and on
 focus, visibility return, reconnect, BFCache resume, or a same-origin live-cache
 storage event. Bursts coalesce with a 5-second minimum gap; failed reads back off
-up to 5 minutes and retain the last valid state. Storage events trigger a server
+up to 5 minutes and retain the last valid state. A scheduled poll waits a full
+60 seconds after completion; lifecycle triggers still respect minimum-gap and
+failure backoff. Storage events trigger a server
 read, not publication of another tab's arbitrary local values.
 
 Content comparison includes normalized config and text, not just the CMS
@@ -72,9 +82,9 @@ Implications:
 - Firestore Security Rules enforce remote admin data access and CMS writes
 - runtime SEO metadata and JSON-LD derive from the hydrated live state, so stale
   cache/defaults must not override live metadata either
-- public lead submissions write validated lead documents in the selected
-  environment collection; admin analytics and the Operations Portal read them
-  only after an allowlisted admin session is active
+- public lead submissions use `/api/leads` to atomically create validated lead,
+  canonical case, intake marker, and initial activity in the selected namespace;
+  browser reads of canonical case-bearing leads require an owner role
 - `/admin/ops` does not store lead, task, status, note, or audit state in
   browser storage; those reads and writes go through `/api/ops/*`
 
@@ -93,15 +103,20 @@ Implications:
 | `purich-site-config-v7` | Public bundle | Site configuration namespace used by the exported app. |
 | `covermate-text-v7` | Public bundle | Legacy editable text namespace read during migration. |
 | `purich-struct-cards-v4` | Public bundle | Structural migration marker for latest product-reference sections, insurer/claim/fee/tier fields, logo backfill, and read-time schema normalization. |
+| `covermate-editor-history-v1:<site-or-host>:<uid-or-email>` | Owner editor, sessionStorage | Bounded per-tab Draft snapshots, restored only when the current Draft snapshot matches; memory fallback if storage fails. |
 
-`purich-history-v3` is capped by the exported bundle. The current reference keeps
-the latest 20 publish/restore snapshots.
+`purich-history-v3` keeps the latest 20 cached publish/restore snapshots. It is
+separate from Draft Undo/Redo, which targets up to 30 snapshots within a 2 MiB
+budget while always preserving the current snapshot, and coalesces a continuous
+edit gesture for one second. See
+[CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md).
 
 ## CMS Section Shape Notes
 
 The public and owner surfaces render from the same `config.sections` array.
-Runtime normalization fills missing sections and fields from `DEFAULTS` without
-overwriting edited copy.
+Runtime normalization fills missing sections and fields from `DEFAULTS` and
+applies documented versioned migrations/protected-field rules. Explicit blanks,
+hidden content, and edited translations must survive those migrations.
 
 Current section types include `hero`, `trust`, `products`, `review`, `fit`,
 `steps`, `insurers`, `tiers`, `claim`, `renew`, `stories`, `about`,
@@ -154,10 +169,10 @@ after Firebase Google Auth succeeds and Firestore `admins/{uid}` has
 `admin/index.html` may read `covermate-admin-session` and the hydrated live
 config cache for Admin Portal branding.
 
-`index.html` hydrates Firestore live before public rendering. In owner modes it
-may write draft state, publish live state, and restore versions through
-`covermate-firebase.js`. It may update local keys only as cache/fallback after
-remote reads or successful remote writes.
+The generated visitor runtime hydrates Firestore Live with the bounded boot
+fallback above. In owner modes it writes Draft, publishes Live, and restores
+versions through `covermate-firebase.js`. Local Draft updates can precede queued
+autosave; local keys remain cache/fallback and are never proof of remote success.
 
 Explicit owner actions have recoverability requirements:
 
@@ -166,12 +181,22 @@ Explicit owner actions have recoverability requirements:
 - `Publish` must ask for confirmation, complete the `states/live`,
   `states/draft`, and version-history writes, and only then show a success
   toast.
-- Both success toasts must be dismissible and include a 30-second `Undo`.
-- Undo after `Save draft` restores the previous draft snapshot to
-  `states/draft`.
-- Undo after `Publish` republishes the previous live snapshot and records the
-  undo in version history.
+- Both success toasts are dismissible. Save preserves the bounded Draft
+  Undo/Redo history and does not create a separate rollback toast.
+- Draft Undo/Redo restores a normalized snapshot into Draft and queues its
+  remote save. Save/Publish do not clear this history; Undo never implicitly
+  changes the live website.
+- The separate 30-second `ย้อน Publish · เปลี่ยนเว็บจริง` action republishes the
+  previous live snapshot and records the rollback in version history.
+- Reset reads fresh Live and transactionally replaces Draft only. Failure
+  preserves work; unsaved advanced calculator JSON buffers remain available.
 - Native browser confirmation dialogs are not part of the product contract.
+
+`src/visitor/cms-controller.js` owns owner commands, the 700 ms draft-save
+schedule, and generation invalidation. `covermate-firebase.js` serializes remote
+writes and enforces revision conflicts. Queued autosave acknowledgements do not
+rewrite local cache over a newer edit/Undo. Runtime rendering and normalization
+remain in `src/visitor/runtime.js`; snapshot storage is in `editor-history.js`.
 
 Inline owner text edits also treat an empty string as intentional content. A
 text override key with value `""` must be saved, reloaded, and published as a
@@ -189,25 +214,18 @@ owner markers. The public bundle still consumes legacy incoming
 owner UI must not generate those URLs. Closing direct `/admin/content` returns
 to `/admin`, and closing a panel opened from `/admin/edit` stays in the editor.
 
-`/#preview` is an authenticated draft-only render. It may request draft and
+`/admin/preview` (plus legacy `/#preview`) is an authenticated draft-only render. It may request draft and
 version hydration, but it must not write the legacy `purich-admin-ever-v7`
-marker or expose edit/admin chrome. Its `Public site` exit clears owner state
-and returns to clean `/`, where live content remains the only normal source.
+marker or expose edit/admin chrome. Its public-site action opens clean `/` or
+`/motor` in a new tab, where Live remains the normal content source.
 
-The public/admin CMS normalizes known legacy values that conflict with current
-product decisions before rendering, caching, saving, or publishing. This is a
-guardrail for stale Firestore/live-draft data, not a general content override.
-Database content prevails except where a value directly conflicts with these
-product contracts:
-
-- `#motor` nav entries normalize to `#insurers` and duplicate motor nav entries
-  are removed.
-- legacy insurer count overrides normalize to the visible insurer-logo count.
-  With the current committed logo data this count is `14`. Do not reintroduce
-  stale higher-count copy unless the active `insurers.items` data and owner
-  approval both support a new count.
-- legacy contact headings with forced line breaks normalize to
-  `ขอรับคำปรึกษา` / `Request a consultation`.
+The public/admin CMS normalizes known legacy data through versioned migrations
+and sanitizers before use. [CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md)
+defines semantic text adoption, Guides-to-FAQ recovery archives, media/contact
+validation, and explicit blank preservation. Do not infer a general license to
+overwrite current copy from an older migration. Public `/#motor` remains an
+anchor alias for the `insurers` section; visible logo counts derive from active
+items rather than forcing the default count onto an owner-edited list.
 
 ## Editable Site Config Fields
 
@@ -239,7 +257,7 @@ boundary, while unrelated positional text keys remain untouched. See
 [CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration ordering.
 
 Media fields remain committed asset paths or HTTPS URL strings plus supported
-alt metadata. The approved candidate adds `cmsImageSlots()` and ratio-locked
+alt metadata. `cmsImageSlots()` provides supported slots with ratio-locked
 Admin crop/fit. `mediaEdits[canonicalPath]` stores source/output URLs for recrop,
 not binaries. Explicit blank or direct replacement invalidates old source
 metadata. Cloudinary Free is the approved upload adapter, replacing Firebase
@@ -300,20 +318,28 @@ See [CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration and release 
 | Path | Access model | Purpose |
 | --- | --- | --- |
 | `admins/{uid}` | Signed-in users can read their own admin doc; admins can read admin docs; writes are blocked by rules. | Manual owner allowlist. Bootstrap from Firebase Console. |
-| `sites/covermate/states/live` | Public read; admin write. | Canonical published visitor CMS state. |
-| `sites/covermate/states/draft` | Admin read/write. | Canonical working draft state for owner modes. |
-| `sites/covermate/versions/{versionId}` | Admin read/write. | Canonical publish/restore history, newest first by `ts`. |
-| `contactLeads/{leadId}` | Public submission through `/api/leads` only; direct unauthenticated writes denied; role-gated admin reads/updates; client delete blocked. | Canonical lead capture store for consultation, renewal, Analytics and Operations; API verifies App Check/consent/limits/idempotency. |
-| `sites/covermate/analytics/{analyticsDoc}` | Admin read/write. | Reserved GA4/Data API summaries or scheduled analytics exports. |
-| `sites/covermate-uat/states/live` | Public read; admin write. | UAT published visitor CMS state for Vercel preview/local UAT. |
-| `sites/covermate-uat/states/draft` | Admin read/write. | UAT working draft state for owner modes. |
-| `sites/covermate-uat/versions/{versionId}` | Admin read/write. | UAT publish/restore history. |
-| `contactLeadsUat/{leadId}` | Same validation and admin access as `contactLeads/*`. | Isolated UAT lead capture and Operations workflow state. |
-| `sites/covermate-uat/analytics/{analyticsDoc}` | Admin read/write. | Reserved UAT analytics summaries or scheduled exports. |
+| `sites/covermate/states/live` | Public read; owner create/update with revision checks. | Published visitor CMS state. |
+| `sites/covermate/states/draft` | Scoped admin read; owner create/update with revision checks. | Working Draft. |
+| `sites/covermate/versions/{versionId}` | Scoped admin read; owner create only; update/delete denied. | Immutable publish/restore history, newest first by `ts`. |
+| `contactLeads/{leadId}` | Public intake through `/api/leads`; no direct public writes. Canonical `caseRecord` documents are owner-readable and server-written. Legacy-only rows retain role-gated reads/creates/updates; browser delete denied. | Lead intake plus additive Cases record. |
+| `sites/covermate/analytics/{analyticsDoc}` | Scoped admin read; owner write. | Reserved analytics summaries/exports. |
+| `sites/covermate-uat/states/{live\|draft}` | Same content rules as production, with UAT namespace scope. | Isolated UAT CMS states. |
+| `sites/covermate-uat/versions/{versionId}` | Scoped admin read; owner create only. | UAT publish/restore history. |
+| `contactLeadsUat/{leadId}` | Same canonical/legacy split as production, with UAT scope. | Isolated UAT lead/Cases store. |
+| `sites/covermate-uat/analytics/{analyticsDoc}` | Scoped admin read; owner write. | Reserved UAT analytics summaries. |
+| `{leadCollection}/{id}/caseActivities/{activityId}` | Authorized server API only; browser Rules deny. | Immutable canonical activity entries. |
+| `{leadCollection}/{id}/caseMutations/{mutationId}` | Authorized server API only; browser Rules deny. | Per-owner idempotent mutation receipts. |
+| `caseNotifications{Uat?}/{id}`, `casePreferences{Uat?}/{uid}` | Authorized owner API only; browser Rules deny. | Per-owner notifications/preferences; `Uat` suffix isolates preview data. |
+
+Here owner includes the normalized `owner`, `admin`, and `administrator`
+allowlist aliases. Unknown roles are denied. `uatOnly` admins cannot access
+production data. Admin SDK APIs bypass Firestore Rules and must retain their
+own verified identity, owner, and environment checks.
 
 `covermate-firebase.js` owns Firestore hydration, draft save, publish, restore,
-version-history reads, public lead submission, and Firebase Auth session
-hydration.
+version-history reads, a compatibility delegate for public lead submission,
+and Firebase Auth session hydration. The public adapter and `/api/leads` own
+actual visitor submission.
 
 `/api/analytics` owns live aggregate GA4 reporting for `/admin/analytics`. It
 requires a Firebase ID token, verifies the user against `admins/{uid}`, and uses
@@ -322,37 +348,47 @@ sessions, users, page views, event counts, acquisition, device, and page rows;
 it must not return visitor names, contact details, LINE IDs, emails, message
 text, or other submitted freeform values.
 
-`/api/ops/*` owns Operations Portal reads and writes. The server receives a
-Firebase ID token, verifies it through Firebase Identity Toolkit, checks
-`admins/{uid}` through Firestore, applies the role permission matrix, then reads
-or updates Firestore through REST. The browser does not keep an operations data
-fallback.
+`/api/ops/*` shares token verification, allowlist, environment, rate-limit, and
+HTTP/error handling. Cases/notification routes then require owner access in
+`server/cases-handler.cjs` and use `cases-service.cjs` transactions plus the
+Admin SDK `cases-repository.cjs`. Legacy Operations routes keep their role
+matrix and user-token REST/Rules path through `legacy-ops-service.cjs` and
+`ops-firestore.cjs`. No browser workflow-data fallback exists. The extraction
+preserves query behavior: Cases still scans the complete small dataset;
+legacy list endpoints retain existing caps.
 
 ## Lead Document Shape
 
-Public creates under `contactLeads/*` or `contactLeadsUat/*` must match the
-rules-validated shape:
+`/api/leads` validates the public request and writes the following fields under
+`contactLeads/*` or `contactLeadsUat/*`. Server-added fields are not accepted as
+arbitrary public input. See [CONTACT_SUBMISSION.md](CONTACT_SUBMISSION.md).
 
 | Field | Type | Constraint |
 | --- | --- | --- |
-| `name` | string | Max 120 chars. |
+| `name` | string | Required for consultation, max 120 chars; unnamed renewal gets the server fallback label. |
 | `contact` | string | Required non-empty, max 160 chars. |
-| `topic` | string | Max 2000 chars. |
+| `topic` | string | Max 500 chars. |
 | `qtype` | string | Empty, `quote`, `compare`, `general`, `review`, or `claim`. |
 | `coverage` | string | Empty, `life`, `health`, `motor`, `accident`, `savings`, or `unsure`. |
 | `consent` | boolean | Required `true`; visitor confirmed contact/data-use consent before submission. |
 | `language` | string | `th` or `en`. |
 | `summary` | string | Max 1200 chars. Must not be sent to GA. |
-| `sourcePath` | string | Max 220 chars. |
-| `status` | string | Public creates must be `new`. |
-| `read` | boolean | Public creates must be `false`. |
-| `createdAt` | timestamp | Must equal Firestore `request.time`. |
-| `updatedAt` | timestamp | Must equal Firestore `request.time`. |
+| `sourcePath` | string | Max 220 chars; normalized to `/` or `/motor`. |
+| `noticeVersion`, `consentKind` | string | Published receipt version and `consultation`/`renewal`; verified against the live consent notice. |
+| `calculator` | optional object | Whitelisted immutable attachment; shared calculator code recomputes results, including supported v1 compatibility. No product ranking/approval claims accepted. |
+| `status`, `read` | string, boolean | Server initializes `new`, `false`. |
+| `createdAt`, `updatedAt` | timestamp | Server timestamps. |
+| `caseRecord` | object | Canonical case with immutable original submission and server-verified privacy receipt. |
+| `caseIntakeNotification` | boolean | Server intake marker; eligible new-case alerts materialize on owner catch-up. |
+| `requestFingerprint`, `consentVersion`, `retentionReviewAt` | server metadata | Idempotency payload binding, verified receipt version, and retention review date. |
 
-Admin users may update status/read fields later, but public visitors may only
-create new validated leads.
+App Check, UUIDv4 idempotency keys, and environment-bound abuse limits apply.
+The API returns only `{ accepted: true, reference }` on success. The lead,
+canonical record, intake marker, and initial `caseActivities/created` commit in
+one transaction; retries with a changed payload conflict.
 
-The Operations Portal API may add admin-only fields after a lead exists:
+Legacy Operations fields remain for compatibility and are preserved when a
+case is adapted. They are not the modern Cases write model:
 
 | Field | Type | Purpose |
 | --- | --- | --- |
@@ -373,6 +409,27 @@ contact details and consent, stores `qtype: "review"`, maps renewal kind to the
 nearest allowed `coverage` category, and keeps the selected renewal type/month
 in `topic` and `summary`. Neither form may send contact fields or freeform text
 to Google Analytics.
+
+## Canonical Cases
+
+`caseRecord` is additive on the existing lead document. Reading a legacy row
+adapts it without writes; the first canonical edit preserves original top-level
+fields, `ops.tasks`, `ops.audit`, and `timeline`, and adds compatibility metadata.
+Unknown legacy status/date values require review instead of fabricated history.
+Manual cases have no fabricated website consent receipt.
+
+Case mutations require expected version and idempotency data. Changed fields,
+activity, notification resolution, and the mutation receipt commit together.
+No-op edits do not increment version or add activity. Canonical status values
+and follow-up transitions are owned by `server/cases-contract.cjs`; completed
+means the enquiry was completed, not that a policy was sold.
+
+Owner notifications use deterministic keys for each case or follow-up revision.
+Visit/visible polling catches up eligible new website cases and due follow-ups;
+legacy imports do not generate new-intake alerts. Read state belongs to the
+recipient, resolved notices do not count as unread, and no server scheduler,
+email provider, or LINE sender is connected. See
+[ADMIN_CASES_V2.md](ADMIN_CASES_V2.md) for the complete model and response contract.
 
 ## Migration Rules
 
@@ -408,8 +465,9 @@ Before deploying changes that affect storage shape or admin behavior:
 
 ## Known Limitations
 
-The exact nested config/text/history shape is owned by the embedded exported
-bundle. Inspect the bundle before making schema-level edits.
+The nested CMS shape is owned by the shared contract, authored visitor
+defaults/runtime, and Firebase adapter. Inspect those sources and migrations
+before schema edits; `index.html` is generated output.
 
 The current insurer section count is derived from visible insurer logo items. The section also includes
 separate broker/agency relationship cards. Treat those cards as structural

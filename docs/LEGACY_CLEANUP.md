@@ -1,9 +1,21 @@
 # Legacy cleanup — scoped release and historical passes
 
-2026-09-23. Release status and current evidence are tracked in
-`RELEASE_CHAT_20260923.md`; the candidate is not claimed as production.
+Current source note: 2026-09-24. `HANDOFF.md` and
+`RELEASE_VISITOR_20260924.md` own the current release state. The September 23
+selected-release scope, snapshots and measurements below are historical;
+`RELEASE_CHAT_20260923.md` remains their release record.
 
-## Selected release scope
+The current integration includes the separate transparency renderer and newer
+visitor/calculator/contact work. Preserve those upstream features when applying
+cleanup or refactoring; the historical exclusions below are not instructions to
+remove them. Editor commands now live in `src/visitor/cms-controller.js` and
+history in `editor-history.js`, bundled into the same visitor runtime. This is
+a source boundary, not a separately loaded owner app. The unchanged published
+cache/refresh policy lives in `covermate-freshness.mjs`; backend and fixture
+ownership is documented in `ADMIN_CASES_V2.md`. No runtime/CMS data is deleted
+by these extractions.
+
+## Historical selected release scope — 2026-09-23
 
 The isolated release includes the Guides/old-loader cleanup below, the unused
 `TEXT_KEY`/guide flag removal, a clone of the existing canonical calculator
@@ -88,7 +100,8 @@ In that original working tree, measured against the pre-pass snapshot,
 `index.html` decreased from 796,097 to
 739,657 bytes (56,440 bytes / 7.1%). Local gzip output decreased from 190,854 to
 180,394 bytes. These are file/compression measurements, not a claimed production
-speed improvement. The original 775,000-byte shell budget remains unchanged.
+speed improvement. At that historical checkpoint the 775,000-byte shell budget
+was unchanged; current limits are defined in `scripts/performance-budget-check.mjs`.
 The local Home/Motor desktop/mobile performance check passed; measured CLS was
 0–0.0266 against the existing 0.1 limit.
 

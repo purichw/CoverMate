@@ -1,13 +1,23 @@
 # CoverMate Website Current Product Spec
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
 ## Current Authority And Release State
+
+Current source includes the September visitor work and the source-boundary
+refactor: CMS commands/history have module owners, Cases routing/storage and
+legacy Operations are separated, and published-content freshness has an explicit
+shared policy. These changes preserve product behavior, content/schema and
+existing timing. Admin controls use Thai independently of public TH/EN content;
+editor Undo/Redo/Reset affect Draft, while the separate Publish rollback changes
+Live. The dated candidate and snapshot notes below retain their original evidence
+scope; they are not current deployment claims. `HANDOFF.md` and release records
+own exact-SHA CI and hosted status.
 
 The September 23 Home contact submission candidate follows the owner's state
 mockup plus dedicated behavior spec. [CONTACT_SUBMISSION.md](CONTACT_SUBMISSION.md)
 owns its shared panel/controller, schema v14 copy, persisted receipt contract and
-local verification limits. It has not been pushed or deployed in this pass.
+local verification limits; current release status is recorded in `HANDOFF.md`.
 
 The owner-approved September Home redesign supersedes the older expanded-page
 geometry in this document. Its canonical implementation/acceptance record is
@@ -62,7 +72,7 @@ Audience: future maintainers, design partners, product owners, and implementatio
 
 ## Purpose
 
-CoverMate is a Thai insurance advisory site for life, health, and motor insurance. The public site must feel like a calm, trustworthy personal advisor rather than a generic insurance comparison marketplace. The admin side is private owner tooling for editing content, arranging sections, publishing Firestore drafts, and reviewing owner analytics.
+CoverMate is a Thai insurance advisory site for life, health, and motor insurance. The public site must feel like a calm, trustworthy personal advisor rather than a generic insurance comparison marketplace. The admin side is private owner tooling for managing enquiry Cases, editing content, arranging sections, publishing Firestore drafts, and reviewing owner analytics.
 
 This spec records the current product and visual contract so future updates are made against the real site, not older offline prototypes or screenshots.
 
@@ -249,10 +259,14 @@ Primary source files (do not hand-edit generated visitor HTML):
 
 - Home: `/Users/point/CoverMate/src/visitor/home.html` and `home.css`
 - Shared/Motor/owner modes: `/Users/point/CoverMate/src/visitor/template.html` and `runtime.js`
+- CMS commands, autosave, Reset/Publish and media actions: `/Users/point/CoverMate/src/visitor/cms-controller.js`; local snapshot history: `editor-history.js`
+- Calculator/recommendation/submission contracts: `/Users/point/CoverMate/covermate-calculator.mjs`, `covermate-recommendations.mjs`, and `covermate-submission.mjs`
+- Published-content TTLs and client retry timing: `/Users/point/CoverMate/covermate-freshness.mjs`, consumed by `server/seo-page.mjs` and `covermate-public.mjs`
 - Generated deploy artifact: `/Users/point/CoverMate/index.html`
 - Admin Portal shell: `/Users/point/CoverMate/admin/index.html`
 - Admin login: `/Users/point/CoverMate/admin/login/index.html`
 - Admin analytics: `/Users/point/CoverMate/admin/analytics/index.html`
+- Cases UI: `/Users/point/CoverMate/admin/ops/cases.js`; backend router/service/repository and legacy Operations owners are mapped in `docs/ADMIN_CASES_V2.md`
 - Firebase helpers: `/Users/point/CoverMate/covermate-firebase.js`
 - GA4 helpers: `/Users/point/CoverMate/covermate-analytics.js`
 - Shared font files/CSS: `/Users/point/CoverMate/assets/fonts/covermate-fonts.css`
@@ -770,7 +784,7 @@ Required elements:
 - Centered warm card on cream background with soft green/peach decorative shapes.
 - Brand row with circular `C`, `CoverMate`, and `ADMIN · PRIVATE`.
 - Thai heading `เข้าสู่ระบบผู้ดูแล`.
-- English explanatory copy.
+- Thai explanatory, help and error copy, retaining familiar product/service names.
 - Google sign-in button.
 - Firebase Auth status/help box.
 - Session note and public-site link.
@@ -789,6 +803,10 @@ Route: `/admin`
 
 Purpose: private owner starting point inside the single Admin Portal shell.
 
+`ADMIN_HOME_DESIGN.md` owns the current desktop/mobile composition and Home
+read lifecycle. Thai labels name the existing modules; the English module names
+below identify their stable product concepts, not an English-only chrome rule.
+
 Required elements:
 
 - Single shared admin shell; sidebar changes views client-side without a full
@@ -802,13 +820,11 @@ Required elements:
   - `Settings`
 - Cards expose only surfaces that are live or operationally useful today.
   Unbuilt modules stay hidden until real API contracts exist.
-- Quick actions:
-  - `Edit public-page words`
-  - `Preview website draft`
-  - `Review lead intake`
-  - `Open follow-ups`
-- System status rows for Firebase admin session, Operations backend, Website
-  CMS, and first-party analytics.
+- Quick actions open content editing, Draft preview, all Cases and due follow-ups.
+- Home counts and the three newest Cases come from canonical Cases endpoints.
+  A connection badge reports successful Home reads, independently of the
+  verified session; CMS/Analytics source descriptions are not universal health
+  checks. Errors retain navigation and offer retry.
 - Inside the `Website content` module, use one unified `Edit the words` entry
   for copy and panel access. Do not reintroduce a separate `Arrange and
   customise` card; the panel is reached from the editor dock through `Tools ->
@@ -824,11 +840,11 @@ Layout:
 
 - Desktop: four cards in one row when space allows.
 - Tablet: two-column modules.
-- Mobile: one column with generous spacing.
+- Mobile: two module columns with stacked utility panels and readable wrapping.
 
 Do not remove the Admin Portal Home after login. It is the required hub.
 
-## Operations / Cases v2 candidate (23 September 2026)
+## Operations / Cases v2
 
 The latest approved handoff replaces the Operations dashboard/leads/tasks/audit
 sub-tabs with one Cases page. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md) for the
@@ -846,11 +862,14 @@ Desktop uses the approved cream/orange table and 440 px detail panel; mobile
 uses 2×2 metrics, cards and a full-screen editor. In-app notifications are
 persisted and deduplicated. Email/scheduler are unconfigured and stay visibly
 disabled; LINE integration is absent. Completed is not a policy-sale metric.
-This candidate is locally verified and has not been deployed by this task.
+List and global-summary requests have independent generations: a quick search
+must not discard the pending summary or let it replace the filtered list. Newer
+full refreshes and leaving the workspace invalidate older results. Local/hosted
+verification remains separately recorded in `ADMIN_CASES_V2.md` and `HANDOFF.md`.
 
 ## Owner Edit Mode
 
-Route/hash: `/#edit`
+Route: `/admin/edit`; legacy `/#edit` remains compatible.
 
 Purpose: click-to-type text editing over the public page.
 
@@ -875,7 +894,7 @@ Behavior:
 
 ## Owner Draft Preview
 
-Route/hash: `/#preview`
+Route: `/admin/preview`; legacy `/#preview` remains compatible.
 
 Purpose: authenticated preview of the saved draft as a visitor would see it.
 
@@ -884,7 +903,7 @@ Behavior:
 - Reads draft content, not live content, as the normal preview source.
 - Shows exactly one top preview bar.
 - Preview bar actions are `Open editor`, `Public site`, and `Publish`.
-- `Open editor` returns to `/#edit`.
+- `Open editor` returns to `/admin/edit`, preserving the selected Home/Motor scope.
 - `Public site` opens clean `/` in a new browser tab.
 - Does not generate `/?view=public`.
 - Does not show the edit dock, admin drawer, screen switcher, public reopen bar,
@@ -895,7 +914,7 @@ Behavior:
 
 ## Owner Control Panel
 
-Route/hash: `/#admin`
+Route: `/admin/content`; legacy `/#admin` remains compatible.
 
 Purpose: reorder, hide/show, style, and configure site sections.
 
@@ -933,11 +952,22 @@ Required capabilities:
 - Explicit `Save draft` and `Publish` must open custom confirmation dialogs, not
   native browser dialogs.
 - Successful `Save draft` waits for the Firestore draft write, then shows a
-  dismissible toast with `Undo` available for 30 seconds.
+  dismissible success toast without a post-save Undo action. Editor history
+  remains available.
 - Successful `Publish` waits for Firestore live/draft/version writes, then shows
   a dismissible toast with `Undo` available for 30 seconds.
-- `Undo` after publish restores the previous live snapshot by publishing it
-  back to Firestore.
+- The post-Publish action is labeled **ย้อน Publish · เปลี่ยนเว็บจริง** and
+  restores the previous live snapshot by publishing it back to Firestore.
+- Persistent editor Undo/Redo and Reset Draft are separate. History contains
+  complete content snapshots across languages, ordering and media, scoped to
+  this owner/site/browser tab. Reset reads current Live transactionally and
+  writes Draft only; Undo Reset restores the previous Draft. Failure/conflict
+  retains current work. Save/Publish do not clear editor history.
+- Uncommitted calculator JSON/import buffers survive history application but
+  are not themselves historical Draft content. Explicit persistence blocks
+  mutations while pending; generation checks and `cache:false` autosaves
+  prevent older asynchronous work from replacing newer edits. See
+  `CMS_EDITOR_HISTORY.md` for the full contract and direct controller tests.
 - Closing the drawer from the direct `/admin/content` control-panel route returns to
   `/admin`.
 - Closing the drawer after it was opened from `/admin/edit` via `Tools → Panel`
@@ -946,11 +976,10 @@ Required capabilities:
 - No owner bar should appear on a fresh or reloaded public `/` route just because the browser is signed in.
 - Must include a way to switch to edit mode and return to Main.
 - `/admin/edit` uses the warm-ink owner dock product direction.
-  The default state shows only `Editing on page` and `Tools`; if the admin
-  drawer is open while inline editing remains active, the status becomes
-  `Editing on page · Panel open`. `Tools` expands a single dark-ink command
+  The default state shows editing status, Undo/Redo and `เครื่องมือ`; the status
+  also identifies an open panel. `เครื่องมือ` expands a single dark-ink command
   palette above the dock. Desktop uses two
-  groups, `Draft` (`Save draft`, `Preview`, `Publish`) and `Go to` (`Panel`,
+  groups for Draft (`Save draft`, `Preview`, `Publish`, `Reset Draft`) and navigation (`Panel`,
   `Main`, `Public site`, `Log out`); mobile stacks the same groups in one
   scrollable column with a 460px cap when viewport height allows. `Publish` is
   the only terracotta-filled dock action.
@@ -961,9 +990,17 @@ Required capabilities:
 - The drawer must stack above visitor sticky header/navigation on mobile and
   should not fade in over the public header.
 
-Admin panel labels should be English even when public language is Thai.
+Admin panel labels use natural Thai in either website-content language. Retain
+familiar terms such as Publish, Preview, Save draft, Undo/Redo and service names;
+never translate stored field paths, enums or owner-entered copy. The display-only
+metadata dictionary lives in `src/visitor/admin-labels.js`; see `ADMIN_LANGUAGE.md`.
 
 ## Admin Analytics
+
+The `/admin` shell's Analytics module currently displays operational metrics
+from its legacy Operations lead data. It does not load GA4. The standalone
+`/admin/analytics` dashboard below owns the Firestore/GA4 traffic views; preserve
+that distinction when updating navigation or documentation.
 
 Route: `/admin/analytics`
 
@@ -1027,6 +1064,12 @@ Cache policy:
 - Fresh Firestore live content must override stale local cache/default content.
 - Fallback defaults must never overwrite live content after live data is successfully loaded.
 - Only fetch what the page needs when practical, but correctness of live content is more important than over-aggressive caching.
+- `covermate-freshness.mjs` defines the existing 30-second per-namespace server
+  reader TTL, 30-second public CDN TTL and zero browser max-age. The server TTL
+  begins after a successful read; failures do not serve expired server content.
+- Public client polling keeps its 60-second interval, 5-second minimum gap and
+  exponential retry cap of 300 seconds. Visibility/connectivity and route
+  invalidation remain in `covermate-public.mjs`; Draft/Publish behavior is separate.
 
 Lead privacy:
 
@@ -1127,6 +1170,9 @@ Do:
 - Keep admin private surfaces visually related but operationally clear.
 - Keep `/admin` as the Admin Portal Home with Operations, Website content,
   Analytics, and Settings.
+- Keep explicit paths between `/admin`, `/admin/edit`, and `/admin/content`;
+  public-site actions open clean public routes in a new tab, while close/main
+  actions return to the existing Admin/editor context.
 - Keep Google Sans family everywhere.
 - Keep Firestore-first live content behavior visible in design copy/states.
 - Keep unbuilt admin modules hidden instead of showing fake records or
@@ -1142,10 +1188,6 @@ Do not:
   `#insurers`.
 - Remove `/admin` Admin Portal Home after login.
 - Hide logout in only one owner mode.
-- Keep explicit paths between `/admin`, `/admin/edit`, and `/admin/content`;
-  public-site actions open clean public routes in a new tab, while close/main
-  actions return to Admin/editor context instead of dumping the current tab on
-  the visitor page.
 - Replace live/dynamic CMS text with hard-coded design-only content.
 - Let fallback/cache states override live Firestore content or current logo-count normalization.
 - Send private visitor contact details to GA.
@@ -1192,7 +1234,8 @@ Admin:
 - Closing the control panel while editing returns to the same editor context;
   use `Public site` only when intentionally opening the clean public route in a
   new tab.
-- Analytics uses the existing server Data API, or honest setup/error/empty states.
+- Standalone traffic Analytics uses the existing server Data API, or honest
+  setup/error/empty states; shell Analytics retains its operational data scope.
 - Analytics mobile spacing is comfortable.
 
 System:
@@ -1208,6 +1251,8 @@ System:
 These are intentionally not required for the current visual design unless the owner asks:
 
 - Optional scheduled GA4 export (the server Data API already exists).
-- Full source refactor out of embedded generated HTML into component modules.
+- Further separation of the remaining visitor rendering/host runtime, if needed.
+  CMS commands/history and calculator/submission logic already have source module
+  owners; the generated embedded renderer remains active.
 - Richer authenticated production smoke harness.
 - Additional real customer story assets.

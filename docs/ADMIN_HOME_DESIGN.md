@@ -1,8 +1,9 @@
 # Admin Home: reference-led dashboard
 
-Implemented locally on 2026-09-23. Scope is `/admin#home` and its Home shell
-variant. No production publish, deployment, database migration or authorization
-change is included.
+Implemented locally on 2026-09-23; source ownership reviewed on 2026-09-24.
+Scope is `/admin#home` and its Home shell variant. The implementation evidence
+below does not establish deployment; `HANDOFF.md` and the release records own
+current release status. The source refactor changes no Home design or authorization.
 
 ## Direction and ownership
 
@@ -36,6 +37,10 @@ always uses open cases. Home search and “ดูทั้งหมด” use al
 - Home reads `cases/summary` and `cases?scope=all&sort=newest&limit=3` through the
   existing authenticated Operations API. It does not use the capped legacy
   `leads` row count as the canonical case count.
+- Home accepts only its newest complete read generation. After navigation to
+  Cases, the Cases workspace independently tracks list and global-summary
+  generations, so a quick search cannot discard a still-pending valid summary.
+  Backend ownership is recorded in [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md).
 - “Recent activity” becomes **เคสที่รับเข้ามาล่าสุด**, ordered by actual submission
   time. Current APIs do not expose a combined CMS/settings/case audit feed.
   Each row opens the corresponding canonical case.
@@ -92,7 +97,8 @@ Final generation prompt:
 ## Verification
 
 `scripts/admin-home-browser-check.mjs` uses an isolated static server, verified
-Firebase-session fixture and canonical Cases-contract fixtures. External network
+Firebase-session fixture and canonical Cases-contract fixtures, shared through
+`scripts/fixtures/ops-portal.mjs` and `scripts/fixtures/cases.mjs`. External network
 and case mutations are blocked. A notification-read POST is handled only by the
 local fixture to exercise the Home-to-case journey. Screenshots show synthetic
 data, not live clients.

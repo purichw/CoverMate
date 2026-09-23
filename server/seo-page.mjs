@@ -4,6 +4,7 @@ import { resolveCoverMateEnvironment, isVercelPreviewHost } from '../covermate-e
 import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy } from '../covermate-contract.js';
 import { extractBundlerTemplate, replaceBundlerTemplate } from './bundler-template.mjs';
 import { renderErrorPage } from './error-page.mjs';
+import { PUBLISHED_READER_TTL_MS, PUBLIC_HTML_CACHE_CONTROL } from '../covermate-freshness.mjs';
 
 const START = '<!-- COVERMATE_SEO_START -->', END = '<!-- COVERMATE_SEO_END -->';
 const assetVersions = JSON.parse(fs.readFileSync(new URL('./asset-versions.json', import.meta.url), 'utf8'));
@@ -55,7 +56,7 @@ export function createPublishedReader({ fetcher = fetch, now = Date.now, timeout
   return async siteId => {
     if (!['covermate', 'covermate-uat'].includes(siteId)) throw new Error('Unknown public site.');
     const entry = cache.get(siteId);
-    if (entry && now() - entry.at < 30000) return entry.value;
+    if (entry && now() - entry.at < PUBLISHED_READER_TTL_MS) return entry.value;
     if (pending.has(siteId)) return pending.get(siteId);
     const request = (async () => {
       const controller = new AbortController();
@@ -111,7 +112,7 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
       loadedConfig = state?.config;
       rendering = true;
       const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, publishedState: state, siteId: environment.siteId });
-      if (!noindex) res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30');
+      if (!noindex) res.setHeader('Cache-Control', PUBLIC_HTML_CACHE_CONTROL);
       res.statusCode = 200;
       res.end(req.method === 'HEAD' ? '' : html);
     } catch {

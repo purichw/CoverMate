@@ -1,0 +1,4 @@
+interface:
+  display_name: "CoverMate Design Spec"
+  short_description: "Keep CoverMate design updates aligned"
+  default_prompt: "Use $covermate-design-spec to update CoverMate designs against the current production and admin spec."

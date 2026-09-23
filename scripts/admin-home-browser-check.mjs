@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { firebaseMock, createLegacyOpsState } from './fixtures/ops-portal.mjs';
+import { createCasesFixture } from './fixtures/cases.mjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
@@ -13,18 +14,16 @@ import { ownerPathForMode } from '../covermate-contract.js';
 // Use the same verified-session and legacy-data fixtures as the Operations QA.
 // All Operations requests below are local fixtures. The only allowed mutation is
 // marking a synthetic notification read; case writes and live writes are blocked.
-const legacySource = fs.readFileSync('scripts/ops-portal-regression-check.mjs', 'utf8');
-const { firebaseMock, apiState: legacyFixtures } = vm.runInNewContext(
-  legacySource.slice(legacySource.indexOf('const firebaseMock ='), legacySource.indexOf('function json(')) + ';({firebaseMock,apiState})'
-);
-const fixtures = JSON.parse(fs.readFileSync('scripts/fixtures/cases/fixtures.json', 'utf8'));
+const legacyFixtures = createLegacyOpsState();
+const fixtures = createCasesFixture();
 const output = path.resolve(process.env.ADMIN_HOME_SCREENSHOT_DIR || 'uat-results/admin-home');
 fs.mkdirSync(output, { recursive: true });
 const sourceFiles = [
   'admin/index.html', 'admin/home.css', 'admin/home-view.js', 'admin/ops/app.js',
   'admin/ops/cases.js', 'admin/ops/cases.css', 'covermate-contract.js',
   'assets/fonts/covermate-fonts.css', 'assets/brand/covermate-advisory-logo-en.png',
-  'assets/brand/admin-landscape-v1.webp', 'scripts/admin-home-browser-check.mjs'
+  'assets/brand/admin-landscape-v1.webp', 'scripts/admin-home-browser-check.mjs',
+  'scripts/fixtures/ops-portal.mjs', 'scripts/fixtures/cases.mjs', 'scripts/fixtures/cases/fixtures.json'
 ];
 const sourceHashes = () => Object.fromEntries(sourceFiles.map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
 const report = {
@@ -39,7 +38,7 @@ const report = {
     identity: 'Purich Worawarachai (synthetic owner session)',
     casesFixture: 'scripts/fixtures/cases/fixtures.json',
     fixtureAsOf: fixtures.asOf,
-    legacyFixture: 'scripts/ops-portal-regression-check.mjs apiState',
+    legacyFixture: 'scripts/fixtures/ops-portal.mjs createLegacyOpsState()',
     externalNetwork: 'blocked',
     productionWrites: 0,
     allowedMockMutation: 'POST /api/ops/notifications/{fixture-id}/read only',

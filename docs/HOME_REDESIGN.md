@@ -1,10 +1,8 @@
-# Home Redesign: Local Draft
+# Home And Motor Shared Design
 
-Updated 2026-09-23. See [HANDOFF.md](HANDOFF.md) for the exact release revision,
-production migration and verification status.
-A protected preview was created before the latest generator changes; the owner
-has resumed production release with Cloudinary. See [HANDOFF.md](HANDOFF.md)
-for the current exact-source checks, deployment and CMS migration status.
+Updated 2026-09-24. This design is included in upstream source `7759a34`.
+See [HANDOFF.md](HANDOFF.md) for exact-source checks and deployment/CMS status;
+an older preview or source commit does not prove the current production state.
 The authorized input is `covermate-home-codex-handoff-v1.0`, specifically the
 approved no-large-portrait Desktop, Tablet and Mobile references. Later owner
 direction explicitly includes the palette, contrast, icons and illustrations,
@@ -18,7 +16,8 @@ intro copy. Home's existing Hero card stays open, with a 56x70px portrait next
 to the name when both are present. Licence/Contact only reuse the name, never
 the image. `proof-credentials.html` is the shared unchanged credentials/hours
 partial for the permanent Home card and the existing Motor disclosure.
-The real CMS currently has no personal identity; the preview retains CoverMate.
+At the September 23 review the real CMS had no personal identity, so that preview
+retained CoverMate. Read current Live/Draft before making new content assumptions.
 See [CMS ownership](CMS_CONTENT_OWNERSHIP.md) for blank/language behavior.
 
 Home contact submission states now use shared `submission.html`/`submission.css`
@@ -40,8 +39,9 @@ by the Admin-editable `licenceRole:broker`; Footer still includes AIA. See
 | --- | --- |
 | Shared Home/Motor sections | `src/visitor/home.html` and `home.css`, composed once by `scripts/lib/visitor-source.mjs` |
 | Shared shell, forms, licences and Footer | `src/visitor/template.html`; shared form/API changes are tested on existing paths |
-| Home Needs v1 | `src/visitor/calculator.html` / `calculator.css`; shared three-mode renderer; `covermate-calculator.mjs` owns client/server math and snapshots. See `NEEDS_CALCULATOR.md` |
-| Projection, navigation, editor | `src/visitor/runtime.js` |
+| Home Needs v2 | `src/visitor/calculator.html` / `calculator.css`; shared three-mode renderer; `covermate-calculator.mjs` owns client/server math and snapshots, with v1 payload compatibility. See `NEEDS_CALCULATOR.md` |
+| Projection, navigation, editor rendering | `src/visitor/runtime.js` |
+| Editor commands, Draft history orchestration | `src/visitor/cms-controller.js`, backed by `editor-history.js` and `covermate-firebase.js` |
 | Schema and semantic paths | `covermate-contract.js`; embedded into the visitor build; v11 adds relationship-card roles |
 | Deployable output | Generated `index.html`; never hand-edit |
 | Optional statement, hero artwork, labels | `homeDesign.*`, Brand & contact > Shared page design (internal key `Home design`) |

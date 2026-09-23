@@ -7,6 +7,7 @@ const commands = [
   ["npm", ["run", "build:telemetry"]],
   ["npm", ["run", "build:media"]],
   ["npm", ["run", "check:types"]],
+  ["npm", ["run", "check:refactor"]],
   ["npm", ["run", "check:nfr"]],
   ["npm", ["run", "check:public-request"]],
   ["npm", ["run", "build:visitor"]],

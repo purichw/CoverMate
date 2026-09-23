@@ -1,5 +1,9 @@
 # CMS Draft history
 
+Current source contract reviewed: 2026-09-24. Deployment evidence remains in
+`HANDOFF.md` and the relevant release record; the dated check counts below are
+historical evidence for their stated scope.
+
 The website editor (`/admin/edit`) and content tools (`/admin/content`) share Undo, Redo and Reset Draft. These controls act on the complete website Draft, including both languages, positional text overrides, images and their source metadata, section order/visibility, theme, contact and SEO settings. They do not change the published website.
 
 ## Interaction
@@ -19,15 +23,30 @@ The website editor (`/admin/edit`) and content tools (`/admin/content`) share Un
 
 Authentication, visitor form/calculator values, current language, route, preview mode, publishing timestamps and backend revisions are outside edit history. Undo restores the content without navigating or changing the chosen language. Reset does not delete Cloudinary assets; it restores image references.
 
-This release retains the baseline calculator and its existing CMS controls.
-Advanced calculator JSON/import buffers are not included; no buffer-preservation
-behavior or related Reset warning is claimed for this candidate.
+Advanced calculator catalog/reference JSON and the import buffer are uncommitted
+editor input, not Draft history. Applying Undo/Redo or Reset preserves those
+buffers; committed field-edit state is cleared when a snapshot is applied.
+Reset confirmation warns when an advanced calculator JSON buffer is present.
+The buffer must still pass its normal validation/Save action before it becomes
+Draft content. This supersedes the narrower September 23 baseline-only scope.
 
 Explicit save/publish/reset operations block further content mutations while pending. Debounced writes carry a generation token, preventing delayed SDK loads from submitting an older Draft after a newer action. Background saves use `cache:false`, so a delayed acknowledgement cannot replace a newer local edit. The Firebase write queue orders writes already sent; revision checks still reject edits from a stale admin session.
+
+`src/visitor/cms-controller.js` now owns these commands and persistence
+coordination through `withCmsController`. The host in `runtime.js` still owns
+state/rendering, normalization, route/language and DOM text projection;
+`covermate-firebase.js` retains the actual writes and authorization. The generator
+bundles the controller together with `editor-history.js` into the same visitor
+artifact. Delayed save completions may not replace a newer error or local Draft;
+Reset and history changes invalidate older queued autosaves.
 
 ## Verification
 
 - `node scripts/editor-history-model-check.mjs`: snapshot isolation, coalescing, branching, blank content, ordering/media, storage validation and bounds.
+- `node scripts/cms-controller-check.mjs`: direct controller/history imports with
+  fake host/storage/clock/Firebase boundaries; debounce, generation invalidation,
+  Save/Publish/Reset failures, complete Undo/Redo snapshots, buffer preservation,
+  owner history isolation and Publish rollback expiry. Included in `check:refactor`.
 - `node scripts/editor-reset-contract-check.mjs`: actual Firebase module with isolated SDK fixtures; authorization, Draft-only transaction, fresh Live, conflict/offline preservation and write ordering.
 - `node scripts/editor-history-browser-check.mjs`: actual generated editor UI with isolated Firebase fixtures; desktop/mobile interaction and screenshot evidence under `uat-results/editor-history`.
 - `node scripts/text-editor-browser-check.mjs`: existing inline text and repeatable-content regression checks.
@@ -41,3 +60,12 @@ and `uat-results/editor-history/report.json`. History-model and Firebase
 reset/write-order checks also passed. The excluded advanced JSON scenario is
 not part of this count. Full release CI and hosted verification are tracked in
 `RELEASE_CHAT_20260923.md`; these local checks are not production evidence.
+
+The original working checkout separately recorded a September 23 local pass of
+12 editor-history scenarios, including the advanced JSON case, plus history-model,
+Firebase reset/write-order, generated-bundle and focused empty-text/reload/refill
+checks. Its older full text-editor harness passed empty-text and FAQ cases, then
+timed out on the legacy insurer-card selector `data-admin-repeatable-card-id`.
+That broader harness was not claimed as passing and insurer-editor coverage was
+not expanded. This preserves the original local record without changing the
+11-scenario scoped-release count above or claiming a new production verification.

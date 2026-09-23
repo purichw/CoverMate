@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "check:refactor": "node scripts/test-fixtures-check.mjs && node scripts/cms-controller-check.mjs && node scripts/ops-service-boundary-check.mjs && node scripts/freshness-policy-check.mjs",
+    "check:freshness": "node scripts/freshness-policy-check.mjs",
     "build:telemetry": "node scripts/build-telemetry.mjs",
     "check:types": "tsc -p tsconfig.contracts.json",
     "check:seo": "node scripts/seo-check.mjs",

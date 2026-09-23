@@ -102,20 +102,60 @@ Credential options:
   admin path used by `/api/ops` and `/api/analytics`. Prefer a dedicated
   allowlist document with `active: true`, `role: readonly`, and `uatOnly: true`
   for read-only API smoke.
+  This does not authorize Cases: `/api/ops/cases*` is owner-only. Use an
+  explicitly UAT-only owner for Cases checks and a readonly identity to verify
+  the expected denial. Creating a Firebase account alone does not add an active
+  recognized-role allowlist document.
 - `COVERMATE_UAT_USE_GCLOUD=1` uses the local operator's Google Cloud IAM token
   for Firestore readback. This proves the hosted browser writes to
   `contactLeadsUat`, but it does not prove Firebase Rules/admin API auth.
 - Email/password works only if that provider is enabled in Firebase Auth. Google
-  admin sign-in still needs manual browser login or a copied ID token.
+  admin sign-in still needs manual browser login or a copied ID token. Authorized
+  automation can also use a signed custom token for a temporary UAT-only admin.
 
 `uatOnly: true` credentials are accepted only when the resolved environment is
 UAT. Production host/API requests reject them before reading Operations or
 Analytics data, and Firestore Rules block them from production CMS/lead paths.
 
-Before testing admin flows on a Vercel preview URL, add that preview domain to
+For Google popup/redirect sign-in on a Vercel preview URL, add that preview domain to
 Firebase Authentication -> Settings -> Authorized domains. If Google sign-in
 fails on preview, fix the domain or the admin allowlist; do not weaken the
 browser gate or Firestore Rules.
+
+### Real CMS and Cases regression
+
+Use existing authorized credentials before requesting new ones. Keep credential
+values in process environment or ignored local configuration, never in docs,
+source, screenshots or reports. `COVERMATE_SERVER_CREDENTIALS` is service-account
+JSON for the server SDK; Firestore access and Auth user-management permissions
+are separate. The Cases harness accepts an optional short-lived
+`COVERMATE_UAT_AUTH_ACCESS_TOKEN` for authorized IAM Auth create/disable and
+`GOOGLE_CLOUD_QUOTA_PROJECT=covermate-purich` when user credentials need a quota
+project. This does not require changing IAM roles or persistent gcloud config.
+
+```bash
+node scripts/nfr-cloud-publish.mjs --uat-cloud --cms-only
+node scripts/refactor-hosted-cases-check.mjs --write-uat
+```
+
+Both require the exact `COVERMATE_UAT_URL`; protection bypass headers must be
+limited to that origin. The CMS harness additionally needs a 32-byte base64
+`COVERMATE_BACKUP_KEY`, backs up live/draft privately, and conditionally restores
+them without overwriting a different actor's changes. Retain the key separately
+from shared evidence until restoration is verified. Its allowlist is
+deactivated; disable its exact temporary Auth user through authorized access
+afterward. It does not submit a lead when `--cms-only` is used.
+
+The Cases harness creates only labeled synthetic UAT records, filters captures
+to its own case, verifies real UI/API persistence, summary loading, permissions,
+validation and conflicts, then closes its case and disables its temporary users
+and allowlists. It compares pre-existing records without copying customer data
+into reports. It does not delete records or send external notifications.
+
+Record checkout/file hashes, route, role, data namespace, actual checks and
+cleanup. Reuse older results only for unchanged surfaces; a production-baseline
+preview does not verify later merged visitor features. The hosted public-form
+App Check path is a separate check; never describe `--cms-only` as a form pass.
 
 Hosted lead forms also require that exact preview hostname in the existing
 reCAPTCHA Enterprise web key's allowed domains. This is separate from Firebase

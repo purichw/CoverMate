@@ -1,8 +1,8 @@
 # CoverMate Site Map
 
-Last updated: 2026-09-21. This map includes the Home/CMS/SEO
-changes. See [HANDOFF.md](HANDOFF.md) for actual release state, not route presence
-in the working tree alone.
+Last updated: 2026-09-24. This map describes source routes. See
+[HANDOFF.md](HANDOFF.md) for deployed versus candidate status; route presence
+in the working tree is not deployment evidence.
 
 ## Routes
 
@@ -18,13 +18,11 @@ in the working tree alone.
 | `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the legacy reference set | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
 | `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Analytics, and Settings | `admin/index.html` |
-| `/admin/ops` | Owner / operations | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
-| `/#edit` | Owner | Inline text editing mode | `index.html` |
-| `/#admin` | Owner | Control panel mode | `index.html` |
-| `/#preview` | Owner | Preview mode | `index.html` |
-| `/admin/content?page=home\|motor` | Owner | Control panel for the selected page | Shared visitor source; candidate private boot head via `api/page.js` |
-| `/admin/edit?page=home\|motor` | Owner | Inline editor; Panel can open without leaving it | Shared visitor source; candidate private boot head via `api/page.js` |
-| `/admin/preview?page=home\|motor` | Owner | Private draft preview | Shared visitor source; candidate private boot head via `api/page.js` |
+| `/admin/ops` | Verified admin; Cases owner-only | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
+| `/#edit`, `/#admin`, `/#preview` | Owner | Session-gated compatibility aliases for editor, panel, preview; do not generate new links | `covermate-contract.js`, `src/visitor/runtime.js` |
+| `/admin/content?page=home\|motor` | Owner | Control panel for the selected page | Shared visitor runtime/controller; private boot head via `api/page.js` |
+| `/admin/edit?page=home\|motor` | Owner | Inline editor; panel can open without leaving it | Shared visitor runtime/controller; private boot head via `api/page.js` |
+| `/admin/preview?page=home\|motor` | Owner | Private draft preview | Shared visitor runtime; private boot head via `api/page.js` |
 
 ## Indexing Map
 
@@ -48,11 +46,11 @@ SEO implementation details live in [`SEO.md`](SEO.md).
 
 The public home is a single-page landing experience. The product also includes
 `/motor`, a dedicated motor-insurance page in the same bundle and brand system.
-Exact implementation details live inside the exported bundle, so inspect the
-DOM before renaming section IDs or anchors.
+Authored templates and runtime live in `src/visitor/`; inspect those sources
+and the rendered DOM before renaming section IDs or anchors.
 
 Supported section roles, not a promise that every section is visible: CMS order
-and `on` values win. The approved local proposal is documented in `HOME_REDESIGN.md`.
+and `on` values win. The Home direction is documented in [HOME_REDESIGN.md](HOME_REDESIGN.md).
 
 | Section | Role |
 | --- | --- |
@@ -60,7 +58,7 @@ and `on` values win. The approved local proposal is documented in `HOME_REDESIGN
 | Trust bar | Fast credibility markers such as licensed broker, AIA care, LINE support, and insurer count. |
 | Coverage | Compact standalone `#cover` grid with expandable category details and matching Admin section controls. |
 | Policy review | Explains the free policy review offer and what visitors can send in. |
-| Fit/calculator | Helps visitors estimate life starting need, health room-reference gap, and critical-illness/recovery buffer from explicit inputs. |
+| Fit/calculator | Home Life/CI/Health planning with explicit blank/unknown states, optional eligibility/PA intake, reviewed sources, and opt-in contact attachment. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
 | Motor insurers | Home static logo grid with disclosed AIA/Srikrung relationship proof; Motor retains its own presentation. |
 | Motor tier comparison | Home shows three CMS-ID-selected illustrated classes and a full disclosed five-class/five-axis comparison; Motor retains table/mobile cards. |
@@ -101,10 +99,10 @@ Supported Motor route sections; visibility remains CMS-owned:
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
 | Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Analytics, Settings, public-site exit, and log out. |
 | Analytics | `/admin` | First-party admin reporting inside the shared shell. The legacy `/admin/analytics` route may remain reachable for older bookmarks, but new navigation stays in the shell. |
-| Operations Portal | `/admin` or `/admin/ops` | Authenticated operations workspace inside the shared shell. Dashboard, Leads, Tasks, and Audit are live through `/api/ops/*`; Customers, Consultations, Quotes, Policies, Renewals, Documents, and Insurers stay hidden until real API contracts exist. The API verifies Firebase admin identity, checks role permissions server-side, and stores supported lead workflow/audit state in the active runtime lead collection. |
-| Inline editor | `/#edit` | Tap editable copy directly on the public page. |
-| Control panel | `/#admin` | Manage sections, content, brand/chrome, theme/data, export/restore, and publish. |
-| Draft preview | `/#preview` | Authenticated draft-only visitor rendering with one preview top bar. |
+| Cases workspace (งานลูกค้า) | `/admin#operations` or compatibility `/admin/ops` | Owner-only case inbox/detail, follow-up, activity, and in-app notifications through `/api/ops/*`. Legacy Dashboard/Leads/Tasks/Audit APIs remain compatibility code, not visible tabs. Planned modules remain hidden. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md). |
+| Inline editor | `/admin/edit` | Tap editable copy directly on the page; whole-Draft Undo/Redo and owner commands. |
+| Control panel | `/admin/content` | Manage sections, content, brand/chrome, media, SEO, theme/data, export/restore, Draft, and Publish. |
+| Draft preview | `/admin/preview` | Authenticated draft-only visitor rendering with one preview top bar. |
 
 ## Navigation Contracts
 
@@ -130,24 +128,28 @@ Admin login must land on `/admin` after sign-in.
 
 The `/admin` home actions must stay aligned with the live admin product:
 
-- "Operations" switches to the Operations workspace inside the shared `/admin`
+- `งานลูกค้า` switches to owner-only Cases inside the shared `/admin`
   shell; `/admin/ops` is accepted as a compatibility entry
-- "Website content" switches to the Website content module inside the shared
-  shell. Its primary action opens `/admin/edit`; the editor dock's `Tools ->
-  Panel` command opens the control panel for section order, visibility, brand,
+- `จัดการเว็บไซต์` switches to the content module inside the shared
+  shell. Its primary action opens `/admin/edit`; the editor dock's `เครื่องมือ →
+  แผงเครื่องมือ` command opens the control panel for section order, visibility, brand,
   footer, backup, restore, preview, and publish.
-- "Analytics" switches to the Analytics module inside the shared shell
-- "Settings" switches to the Settings module inside the shared shell
-- "Public site" clears owner markers and opens clean `/`
+- `Analytics` switches to the Analytics module inside the shared shell
+- `ตั้งค่า` switches to the Settings module inside the shared shell
+- `ดูเว็บจริง` opens clean `/` in a new tab and keeps the current Admin tab
+
+Admin chrome is Thai with conventional English terms; the TH/EN selector
+changes website content only. See [ADMIN_LANGUAGE.md](ADMIN_LANGUAGE.md).
 
 Inside the Admin Portal shell, unbuilt modules must stay hidden and must not show
 fake records, not-wired tables, or browser-local workflow data.
 
 Unauthenticated direct access to `/admin`, `/admin/analytics`, `/admin/ops`,
-`/#edit`, `/#admin`, and `/#preview` must redirect to `/admin/login`.
+`/admin/edit`, `/admin/content`, `/admin/preview`, and their legacy owner hashes
+must redirect to `/admin/login`.
 
-`/#preview` renders draft content only after owner authentication. Its top bar
-contains `Open editor`, `Public site`, and `Publish`; edit docks, admin drawers,
+`/admin/preview` renders draft content only after owner authentication. Its top bar
+contains editor, public-site, and Publish actions; edit docks, admin drawers,
 screen switchers, public reopen controls, and legacy owner markers must not
 appear there.
 

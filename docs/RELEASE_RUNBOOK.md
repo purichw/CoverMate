@@ -1,19 +1,20 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
 ## Current Authorization
 
-The owner authorized push/deploy of the work in this chat on September 23.
-The active scope is the isolated candidate listed in
-[RELEASE_CHAT_20260923.md](RELEASE_CHAT_20260923.md): loading, custom errors,
-Admin Home/Cases/Thai, CMS history/reset, independent cleanup and final offline
-deliverables. It does not include all pending work in the original checkout.
-Preserve unrelated calculator/public redesign/consent/Admin structure changes.
+The September 24 task authorizes updating project documentation and the two
+CoverMate skills, then pushing the integrated refactor. The candidate is built
+on upstream `167535e`, preserving the already-committed visitor/calculator/contact
+work. [REFACTOR_20260924.md](REFACTOR_20260924.md) owns this integration's scope
+and verification. The September 23 scope in
+[RELEASE_CHAT_20260923.md](RELEASE_CHAT_20260923.md) remains a historical record.
+Preserve unrelated uncommitted work in the original checkout.
 
-This is a code/assets and compatible Cases Rules release: **do not run a content
-migration, Publish a Draft, reseed customer records or apply a bulk data
-migration.** Reset Draft is a user-operated editor feature, not a rollout step.
+This push does not change Rules or authorize a content migration, Publish of
+existing Draft, customer reseeding, or bulk data migration. Reset Draft is a
+user-operated editor feature, not a rollout step.
 Final SHA, full CI, hosted UAT and production readback remain separately recorded
 gates; do not bypass the exact-SHA CI requirement.
 
@@ -21,7 +22,7 @@ Historical September 21 authorization selected Cloudinary Free; Firebase Storage
 remains rejected. [HANDOFF.md](HANDOFF.md) preserves earlier deployment records.
 [CMS_MEDIA.md](CMS_MEDIA.md) owns credentials, cost boundaries and hosted upload
 checks. Older migration instructions below are reference procedures only and do
-not authorize or require those operations for the September 23 release.
+not authorize or require those operations for this push.
 
 ## Production
 
@@ -97,6 +98,12 @@ specific setting; it does not authorize commit, push, deploy or data migration.
 
 ## Local Verification
 
+Use the current integration checkout and upstream commit. The refactor's
+`c7bada4` hosted preview proves that baseline only; merging later visitor work
+requires affected checks on the combined source. Preserve newer lazy imports,
+output minification and regression assertions rather than overlaying stale
+working-tree copies. See [REFACTOR_20260924.md](REFACTOR_20260924.md).
+
 Install dependencies:
 
 ```bash
@@ -125,6 +132,7 @@ For a shorter manual split, run:
 
 ```bash
 npm run check:bundles
+npm run check:refactor
 npm run check:contracts
 npm run check:security
 npm run check:performance
@@ -187,6 +195,11 @@ npm run smoke:uat
 If admin sign-in fails on the preview URL, add that exact preview domain in
 Firebase Authentication -> Settings -> Authorized domains. Do not bypass
 Firebase Auth or the `admins/{uid}` allowlist for UAT browser/admin flows.
+
+Cases needs an owner role even for reads; readonly checks should expect denial
+there. A successful Firebase login alone is not Admin authorization. Use the
+real CMS/Cases harnesses and cleanup described in [UAT.md](UAT.md) when these
+flows are in scope. A docs-only push does not justify new UAT identities or data.
 
 Before testing hosted forms on a new preview, register its exact hostname in
 the existing reCAPTCHA Enterprise key's allowed domains, preserving all current
@@ -291,8 +304,10 @@ Minimum checks:
   debounced draft save path
 - `/#admin` `Save draft` and `Publish` use custom confirmation dialogs, not
   native browser dialogs
-- `Save draft` success waits for the Firestore draft write, then shows a
-  dismissible toast with a 30-second `Undo` that restores the previous draft
+- `Save draft` success waits for the Firestore draft write, preserves editor
+  history and does not offer a separate post-save rollback. Draft Undo/Redo and
+  Reset follow [CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md), including native
+  form Undo, retained JSON buffers and failure/conflict preservation.
 - `Publish` success waits for the Firestore live/draft/version writes, then
   shows a dismissible toast with a 30-second `Undo` that republishes the
   previous live snapshot
@@ -304,12 +319,10 @@ Minimum checks:
 - `/#admin` keeps sign-out reachable without using a lone ambiguous drawer-header
   "ออก" control
 - `/#edit` renders click-to-edit mode with editable text fields
-- `/#edit` owner dock is compact by default: `Editing on page` and `Tools`
-  stay visible; opening `Tools → Panel` keeps text editing active and changes
-  the status to `Editing on page · Panel open`. Expanding `Tools` opens the
-  warm-ink command palette with `Draft` (`Save draft`, `Preview`, `Publish`) and
-  `Go to` (`Panel`, `Main`, `Public site`, `Log out`) groups. `Publish` is the
-  only terracotta-filled dock action
+- `/#edit` owner dock stays compact; its Thai status/tools controls preserve
+  direct editing while the panel is open. Draft Undo/Redo stay available, and
+  Reset is separated from Publish. Use [ADMIN_LANGUAGE.md](ADMIN_LANGUAGE.md)
+  for labels; `Save draft`, `Preview` and `Publish` remain familiar English terms.
 - `Tools → Public site` in edit mode opens the clean public route in a new tab
   without owner chrome
 - unauthenticated owner routes redirect to `/admin/login`

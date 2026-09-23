@@ -23,7 +23,7 @@ const notificationBody = n => {
 export function createCasesWorkspace({ root, api, session, searchInput, navigate, getCurrentModule = () => 'operations' }) {
   const s = { active: false, rows: [], summary: null, list: null, loading: true, error: '', summaryError: '', scope: 'open', status: '', followUp: 'any', closedMonth: false, search: '', sort: '', cursor: '', pages: [], panel: null, record: null, draft: null, activities: [], activityOffset: null, legacy: null, saving: false, errorSave: '', conflict: null, notifications: [], unreadCount: 0, notificationError: '', unreadOnly: false, notificationCursor: null, preferences: null, capabilities: null, expandedFilters: false, generation: 0 };
   const overlay = document.createElement('div'); overlay.className = 'case-overlay'; document.body.append(overlay);
-  let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, panelGeneration = 0;
+  let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, panelGeneration = 0, summaryGeneration = 0;
   const dockQuery = matchMedia('(min-width:1600px)');
   function syncModalMode() {
     const docked = dockQuery.matches && ['detail', 'new'].includes(s.panel);
@@ -42,6 +42,9 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   async function load({ listOnly = false } = {}) {
     if (!s.active) return;
     const generation = ++s.generation;
+    // Filtering replaces the list request, but must not discard the global
+    // summary already in flight. Only a newer full load supersedes that summary.
+    const requestedSummaryGeneration = listOnly ? null : ++summaryGeneration;
     s.loading = true; s.error = ''; render();
     const params = new URLSearchParams({ scope: s.scope, followUp: s.followUp, search: s.search, limit: '20' });
     if (s.status) params.set('status', s.status);
@@ -51,11 +54,16 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     const tasks = [api(`cases?${params}`)];
     if (!listOnly) tasks.push(api('cases/summary'));
     const results = await Promise.allSettled(tasks);
-    if (generation !== s.generation || !s.active) return;
-    s.loading = false;
-    if (results[0].status === 'fulfilled') { s.list = results[0].value; s.rows = s.list.items; }
-    else { s.error = results[0].reason.message; s.rows = []; s.list = null; }
-    if (!listOnly) {
+    if (!s.active) return;
+    const currentList = generation === s.generation;
+    const currentSummary = !listOnly && requestedSummaryGeneration === summaryGeneration;
+    if (!currentList && !currentSummary) return;
+    if (currentList) {
+      s.loading = false;
+      if (results[0].status === 'fulfilled') { s.list = results[0].value; s.rows = s.list.items; }
+      else { s.error = results[0].reason.message; s.rows = []; s.list = null; }
+    }
+    if (currentSummary) {
       s.summaryError = results[1].status === 'rejected' ? results[1].reason.message : '';
       s.summary = results[1].status === 'fulfilled' ? results[1].value : null;
     }
@@ -301,7 +309,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   }
   return {
     mount() { if (s.active) { render(); return; } s.active = true; s.reopening = false; render(); load(); refreshNotifications(); pollTimer = setInterval(checkVisible, 300000); },
-    async leave() { if (!(await guard())) return false; await closePanel(); s.active = false; s.generation++; clearInterval(pollTimer); root.classList.remove('cases-screen'); return true; },
+    async leave() { if (!(await guard())) return false; await closePanel(); s.active = false; s.generation++; summaryGeneration++; clearTimeout(searchTimer); clearInterval(pollTimer); root.classList.remove('cases-screen'); return true; },
     setSearch(value) { s.search = value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(() => filter({ search: s.search }), 250); },
     newCase, openCase, openNotifications, refreshNotifications, configureView,
     async openNavigation() { if (!(await guard())) return; s.draft = null; s.record = null; s.panel = 'navigation'; returnFocus = document.activeElement; renderPanel(); updateSelected(); },

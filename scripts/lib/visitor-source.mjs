@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import vm from "node:vm";
 import { createHash } from "node:crypto";
-import { transformSync } from "esbuild";
+import { fileURLToPath } from "node:url";
+import { buildSync, transformSync } from "esbuild";
 import { createSeoModel, renderSeoHead } from "../../covermate-seo.mjs";
 import { sanitizeStateDoc } from "../../covermate-contract.js";
 
@@ -76,7 +77,11 @@ export function readVisitorSources() {
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
     runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
     adminLabels: readText(new URL('src/visitor/admin-labels.js', ROOT)),
-    editorHistory: readText(new URL('src/visitor/editor-history.js', ROOT)).replace(/^export /gm, ''),
+    cmsController: buildSync({
+      entryPoints: [fileURLToPath(new URL('src/visitor/cms-controller.js', ROOT))],
+      bundle: true, write: false, format: 'iife', globalName: 'CoverMateCms',
+      target: 'es2022', charset: 'utf8'
+    }).outputFiles[0].text,
     calculatorSource: readText(new URL('covermate-calculator.mjs', ROOT)).replace(/^export /gm, ''),
     recommendationSource: readText(new URL('covermate-recommendations.mjs', ROOT)).replace(/^export /gm, ''),
     submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),
@@ -90,10 +95,11 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
   assertSingleSlot(sources.runtime, VISITOR_DEFAULTS_SLOT, "src/visitor/runtime.js");
   assertSingleSlot(sources.runtime, VISITOR_ASSET_VERSIONS_SLOT, "src/visitor/runtime.js");
   assertSingleSlot(sources.runtime, '// COVERMATE_CMS_SCHEMA_SOURCE', 'src/visitor/runtime.js');
+  assertSingleSlot(sources.runtime, '// COVERMATE_CMS_CONTROLLER_SOURCE', 'src/visitor/runtime.js');
   return sources.runtime.replace(VISITOR_DEFAULTS_SLOT, () => sources.defaults.trimEnd())
     .replace('// COVERMATE_CMS_SCHEMA_SOURCE', () => sources.cmsSchema)
     .replace('// COVERMATE_ADMIN_LABELS_SOURCE', () => sources.adminLabels)
-    .replace('// COVERMATE_EDITOR_HISTORY_SOURCE', () => sources.editorHistory)
+    .replace('// COVERMATE_CMS_CONTROLLER_SOURCE', () => sources.cmsController)
     .replace('// COVERMATE_CALCULATOR_SOURCE', () => sources.calculatorSource)
     .replace('// COVERMATE_RECOMMENDATION_SOURCE', () => sources.recommendationSource)
     .replace('// COVERMATE_SUBMISSION_SOURCE', () => sources.submissionSource)

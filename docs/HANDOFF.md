@@ -1,8 +1,51 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
-## September 23 Scoped Chat Release — Candidate
+## Current source and documentation checkpoint
+
+- Integration checkout: `.tools/refactor-docs-20260924`, branch
+  `codex/refactor-docs-20260924`. The original root checkout retains its local
+  files and uncommitted exports; it is not reset to the pushed commit. Inspect
+  branch/status before editing or rebuilding there, and do not overlay those
+  older build/harness files onto the integrated source.
+- The current integration builds on upstream `167535e`, including the visitor
+  work from `7759a34`, font-navigation smoke and contact-journey follow-ups. It adds the CMS
+  controller, Operations/Cases module split, shared freshness policy,
+  independent test fixtures and the Cases initial-search/summary race fix.
+  `docs/REFACTOR_20260924.md` records exact ownership and evidence boundaries.
+- The earlier refactor preview at
+  `https://covermate-7dk2jpqi6-purich-w.vercel.app` used `c7bada4`, so its hosted
+  CMS/Cases pass does not certify the later visitor feature set. The combined
+  checkout is verified again before the authorized push; exact-SHA CI and
+  production alias remain distinct evidence.
+- Combined local checks are complete: CI checks through Cases, corrected
+  performance under unchanged budgets, both final smoke suites and full Firebase
+  emulators passed. See the September 24 verification section in the refactor
+  report for the fixture fixes, split-run evidence and limits. GitHub CI still
+  evaluates the exact pushed SHA independently.
+- Admin Home/Cases, natural Thai controls, Draft Undo/Redo/Reset and the separate
+  post-Publish undo are current contracts. Read `ADMIN_CASES_V2.md`,
+  `ADMIN_LANGUAGE.md` and `CMS_EDITOR_HISTORY.md`; older English-only and
+  Dashboard/Leads/Tasks/Audit tab descriptions below are historical.
+- Visitor Calculator v2, contact submission/retry, opt-in analytics and shared
+  Home/Motor design are now upstream source. Preserve its lazy optional
+  calculator sanitizer, output identifier minification and current payload
+  budgets. The old 775KB refactor-baseline failure is not a current-budget test.
+- Canonical project docs are linked from README/PROJECT_MAP. The two CoverMate
+  skills are versioned in `skills/` and synchronized with the installed copies;
+  generic cross-project skills remain unchanged. Historical releases/snapshots
+  retain their dates and scope; they are not the current production declaration.
+- Original-checkout candidate notes and their local evidence are preserved in
+  [HISTORY_LOCAL_CANDIDATES_20260923.md](HISTORY_LOCAL_CANDIDATES_20260923.md).
+  Consult the current contract docs before following any older procedure.
+- This task authorizes documentation/skill updates and push. It does not
+  authorize publishing existing CMS Draft, changing Rules, migrating customer
+  records or manually promoting a failed/pending deployment. Main pushes use
+  the existing Git-linked CI/Vercel gate. Final push/CI results are recorded in
+  the task handoff after terminal confirmation.
+
+## September 23 Scoped Chat Release — Historical preparation
 
 - Prepared from baseline `702daaeef07297829773b8ed9c52cc53488603c6` in
   `.tools/release-chat-20260923`. The original working checkout and unrelated
@@ -504,10 +547,11 @@ terracotta-filled action inside the dock; `Save draft`, `Preview`, `Panel`,
 opens the clean public route in a new browser tab and must not move the current
 Admin tab out of the `/admin` namespace.
 
-Admin `Save draft` and `Publish` now use custom confirmation dialogs, wait for
-successful Firestore writes, then show dismissible success toasts with
-30-second `Undo`. Save undo restores the previous draft; publish undo
-republishes the previous live visitor snapshot.
+Admin `Save draft` flushes the latest Draft without clearing editor Undo/Redo
+history. Reset reads the newest published snapshot into Draft and is undoable.
+Only Publish retains a separate 30-second live rollback action, labeled
+**ย้อน Publish · เปลี่ยนเว็บจริง**. See `CMS_EDITOR_HISTORY.md` for the current
+commands and failure behavior; older post-Save rollback screenshots are historical.
 
 Public navbar anchors such as `#how` scroll in place without rebuilding the
 visitor DOM. This is the current anti-flicker contract for same-page navigation.
@@ -516,9 +560,9 @@ All visible visitor and admin text uses the Google Sans family for Thai and
 English, including headings, logo text, controls, forms, owner tools, and
 analytics.
 
-Visible Admin chrome/action labels are intentionally English-only: `Panel`,
-`Edit text`, `Main`, `Save draft`, `Preview`, `Publish`, `Success`, and
-`Log out`.
+Visible Admin controls use natural Thai with conventional English workflow
+terms such as `Save draft`, `Preview`, `Publish`, `Undo` and `Redo`. Follow
+`ADMIN_LANGUAGE.md`; changing public TH/EN content does not translate Admin chrome.
 
 Insurer logos are present under `assets/ins`. Active slot 13 now uses Aioi
 Bangkok Insurance at `assets/ins/13-aioi.png`. CMS schema version 1 migrates the

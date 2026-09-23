@@ -1,6 +1,6 @@
 # CoverMate Non-Functional Requirements
 
-Last updated: 2026-09-21
+Last updated: 2026-09-24
 
 The September 5 hardening activation is documented in
 [NFR_HARDENING.md](NFR_HARDENING.md). New Home/CMS/media/browser/SEO release
@@ -12,6 +12,8 @@ historical hardening baseline with a later candidate build.
 Implemented:
 
 - Firebase Auth plus Firestore `admins/{uid}` allowlist gates admin writes.
+- Cases is owner-only and uses server transactions; UAT-only identities are
+  rejected from production data paths. Legacy APIs retain their role policy.
 - Public lead creates go through `/api/leads` with App Check, validation,
   HMAC-keyed rate limits, and idempotency. Firestore rules deny direct
   unauthenticated writes to both production and UAT lead collections.
@@ -70,6 +72,10 @@ Implemented support:
 - `scripts/validate-bundles.mjs` catches broken embedded template JSON quickly.
 - `npm run check:performance` exercises `/` and `/motor` on mobile and desktop
   with browser-derived first-visible, LCP/CLS, overflow, and payload budgets.
+- Current numeric payload limits live in `scripts/performance-budget-check.mjs`;
+  the visitor release added a compressed-shell limit alongside its reviewed raw
+  budget. Historical 775KB measurements are not current thresholds. Preserve
+  shipped identifier minification and the optional calculator lazy import.
 
 Open performance work:
 
@@ -112,6 +118,13 @@ Implemented:
 - Draft/live/version writes keep local fallback caches updated only after remote
   success or as fallback.
 - Publish creates version history.
+- Draft Undo/Redo and Reset preserve the published site. Reset reads current
+  Live with revision checks; failed actions retain work. The separately labeled
+  post-Publish undo intentionally changes Live. See `CMS_EDITOR_HISTORY.md`.
+- Filtered Cases list and global summary requests have independent stale-result
+  protection; immediate search and navigation must not leave metrics pending.
+- `covermate-freshness.mjs` owns unchanged separate server/CDN caches and client
+  refresh/backoff timing. Their clocks and limits are covered by focused tests.
 - Lead create uses Firestore server timestamps.
 
 Operational requirements:

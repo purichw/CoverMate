@@ -1,12 +1,13 @@
 import { cacheSiteState, validStateDoc, sanitizeStateDoc, cleanText, cleanLeadChoice, isAdminNamespacePath, isOwnerHash, LIVE_CONFIG_KEY, LIVE_TEXT_KEY } from './covermate-contract.js';
 import { resolveCoverMateEnvironment } from './covermate-environment.mjs';
 import { publicFirestoreRoot, emulatorEnabled, firebaseConfig, FIREBASE_VERSION } from './covermate-firebase-config.mjs';
+import { LIVE_REFRESH_INTERVAL_MS, liveRefreshDelay } from './covermate-freshness.mjs';
+
+export { LIVE_REFRESH_INTERVAL_MS };
 
 const environment = resolveCoverMateEnvironment();
 let appCheckPromise;
 const pendingIds = new Map();
-export const LIVE_REFRESH_INTERVAL_MS = 60000;
-const MIN_REFRESH_GAP_MS = 5000;
 let inFlight, lastSignature, lastAttempt = 0, failures = 0, timer, syncing = false, queued = false;
 let routeGeneration = 0;
 
@@ -26,10 +27,9 @@ function stableJSON(value) {
 function scheduleRefresh(delay = LIVE_REFRESH_INTERVAL_MS) {
   clearTimeout(timer);
   if (!syncing || !canRefresh()) return;
-  const retryDelay = failures ? Math.min(300000, LIVE_REFRESH_INTERVAL_MS * 2 ** (failures - 1)) : MIN_REFRESH_GAP_MS;
   timer = setTimeout(() => {
     if (canRefresh()) hydrateLocalContent().catch(() => {});
-  }, Math.max(delay, lastAttempt + retryDelay - Date.now()));
+  }, liveRefreshDelay({ delay, lastAttempt, failures, now: Date.now() }));
 }
 function requestRefresh() {
   clearTimeout(timer);

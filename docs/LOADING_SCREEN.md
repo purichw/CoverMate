@@ -1,6 +1,8 @@
 # CoverMate initial loading screen
 
-Implemented locally on 2026-09-23. This document is not deployment evidence.
+Implemented locally on 2026-09-23; source boundaries reviewed on 2026-09-24.
+The dated measurements below are historical. `HANDOFF.md` and current release
+records own deployment evidence and the combined visitor budget.
 
 The cream boot guard now shows the approved CoverMate identity, a gold activity
 bar and a short localized status. Typography and the existing page design stay
@@ -48,6 +50,10 @@ unchanged. The bar is indeterminate: it does not claim a download percentage.
 - `scripts/lib/visitor-source.mjs` inlines/minifies the loader and removes
   bootstrap whitespace at build time. Edit source and run `npm run build:visitor`;
   do not hand-edit the generated `index.html`.
+- `covermate-freshness.mjs` names the existing published-content cache and
+  background refresh policy. It is independent of the loader's 300ms/4s/10s
+  display/recovery timers. Refreshing mounted content still does not replay
+  this screen; the CMS-controller extraction also leaves boot behavior intact.
 
 ## Verification
 
@@ -66,7 +72,8 @@ mobile and error screenshots were visually inspected. Engine checks are not
 physical iPhone, Android or LINE-app certification. No production deploy or
 full auth/admin/emulator suite was run for this loading-screen change.
 
-The performance-budget pass was run in the isolated loading-screen checkout at
+Historical 2026-09-23 performance checkpoint: the performance-budget pass was
+run in the isolated loading-screen checkout at
 base `702daae`. After integration, the main workspace also contains unrelated
 pending Home/transparency changes. Its generated shell is 788,402 bytes against
 the existing 775,000-byte limit; with the old shell it would be 792,140 bytes.
@@ -74,3 +81,6 @@ The loader therefore reduces this combined output by 3,738 bytes, but the main
 workspace still needs its combined HTML-size budget resolved before a release.
 The integrated loading-screen, SEO and generated-bundle checks passed. Do not
 treat the isolated performance pass as a release pass for all pending work.
+These figures and the then-current 775,000-byte limit are not current combined
+bundle measurements or a current release blocker. The reviewed visitor budget
+and subsequent verification are recorded in `RELEASE_VISITOR_20260924.md`.

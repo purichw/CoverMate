@@ -3,12 +3,12 @@
 CoverMate visitor and admin surfaces for Vercel, with Firebase Auth/Firestore
 and serverless APIs. Primary domain: `https://covermateinsurance.com`.
 
-**September 21 checkpoint:** Home redesign, CMS schema v5, media tools and
-CMS-backed SEO are uncommitted candidate work, not the production release.
-A protected preview exists but predates the latest local generator changes.
-The owner selected Cloudinary Free and resumed full production deployment;
-Firebase Storage is not used. Start with [`docs/HANDOFF.md`](docs/HANDOFF.md) for exact status and
-[`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md) for the media/cost decision.
+Start with [`docs/HANDOFF.md`](docs/HANDOFF.md) for the current source,
+verification and release checkpoint. Git history, a ready preview and published
+Firestore content are separate states; do not infer production from a generated
+build. The media backend is Cloudinary Free; Firebase Auth and Firestore remain
+in use, while Firebase Storage is not used. See
+[`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md) for the media/cost contract.
 
 Visitor code is source-authored in `src/visitor/` and generated into the
 deployable `index.html`. Edit `src/visitor/*`, then run
@@ -19,6 +19,9 @@ The broad local/CI quality gate is `npm run check:ci`. It validates generated
 visitor artifacts, shared contracts, security headers/rules invariants,
 Firestore/UAT boundaries, browser boot behavior, analytics/API assumptions,
 performance budgets, Admin/Operations regressions, and the local smoke suite.
+`npm run check:refactor` is the focused gate for CMS controller/history,
+Operations boundaries, independent fixtures and freshness policy. Real local
+Auth/Rules/API/browser integration is covered by `npm run check:emulators`.
 
 Start with [`PROJECT_MAP.md`](PROJECT_MAP.md) for the route, data, admin,
 asset, deployment, and verification map.
@@ -31,6 +34,23 @@ GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
 manual workflow dispatches.
 
 ## Project Documents
+
+- [`docs/ADMIN_CASES_V2.md`](docs/ADMIN_CASES_V2.md) - owner-only Cases,
+  explicit Save, follow-ups, conflict recovery and legacy compatibility
+- [`docs/ADMIN_HOME_DESIGN.md`](docs/ADMIN_HOME_DESIGN.md) and
+  [`docs/ADMIN_LANGUAGE.md`](docs/ADMIN_LANGUAGE.md) - current Admin Home and
+  natural Thai controls with conventional English workflow terms
+- [`docs/CMS_EDITOR_HISTORY.md`](docs/CMS_EDITOR_HISTORY.md) - Draft Undo/Redo,
+  Reset to newest published content and separate post-Publish undo
+- [`docs/REFACTOR_20260924.md`](docs/REFACTOR_20260924.md) - source boundaries,
+  baseline-specific regression evidence and integration notes
+- [`docs/CONTACT_SUBMISSION.md`](docs/CONTACT_SUBMISSION.md) - validated
+  contact flow, idempotency, outcome recovery and privacy-safe receipts
+- [`docs/LOADING_SCREEN.md`](docs/LOADING_SCREEN.md) and
+  [`docs/ERROR_PAGES.md`](docs/ERROR_PAGES.md) - branded loading and shared error
+  behavior, locale and failure boundaries
+- [`skills/README.md`](skills/README.md) - versioned CoverMate skills and
+  installed-copy synchronization
 
 - [`docs/BROWSER_COMPATIBILITY.md`](docs/BROWSER_COMPATIBILITY.md) - visitor
   browser support, LINE in-app priority, isolated cross-engine checks and

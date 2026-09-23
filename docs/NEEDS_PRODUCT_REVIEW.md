@@ -1,7 +1,9 @@
 # Needs Product And Reference Review
 
-Local v2 implementation. No actual AIA names, premiums or benefit terms have been
-approved or published. The owner will supply/check them in a subsequent session.
+The v2 workflow is included in upstream source `7759a34`. No actual AIA names,
+premiums or benefit terms are seeded or approved by code. Real catalog approval
+and publication are separate owner actions; read current CMS data for their
+status. See `HANDOFF.md` for deployment evidence.
 This is a versioned data/rules workflow, not training a model on customer data.
 
 ## Admin Workflow

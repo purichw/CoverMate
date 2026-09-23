@@ -1,10 +1,13 @@
-# CMS Site Audit
+# CMS Site Audit — Historical September 21 Checkpoint
 
 Date: 2026-09-21. Scope: Home, Motor, shared visitor surfaces and their owner
 controls. Unreleased candidate changes; no live/draft database migration or publish.
 A protected preview exists, but the final working tree is not fully CI-verified.
 Cloudinary Free replaces Firebase Storage; the owner authorized production.
-See [current checkpoint](HANDOFF.md).
+See [current checkpoint](HANDOFF.md). Findings and counts below record that
+audit; current controller/module ownership and later schema contracts live in
+[CMS_CONTENT_OWNERSHIP.md](CMS_CONTENT_OWNERSHIP.md) and
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Repairs
 

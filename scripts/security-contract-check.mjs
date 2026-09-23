@@ -80,11 +80,12 @@ assert.doesNotMatch(
 );
 
 const opsApi = read("api/ops.js");
+const legacyOps = read("server/legacy-ops-service.cjs");
 assert.match(opsApi, /bearerToken\(req\)/, "Operations API must require a bearer Firebase ID token.");
 assert.match(opsApi, /identityLookup\(token\)/, "Operations API must verify Firebase ID tokens server-side.");
 assert.match(opsApi, /firestoreGet\(`admins\/\$\{encodeURIComponent\(uid\)\}`/, "Operations API must check admin allowlist server-side.");
-assert.match(opsApi, /requirePermission\(actor,\s*"edit_records"\)/, "Operations API must enforce edit permissions server-side.");
-assert.match(opsApi, /requirePermission\(actor,\s*"change_status"\)/, "Operations API must enforce status permissions server-side.");
-assert.doesNotMatch(opsApi, /localStorage|window\./, "Serverless API must not depend on browser-only state.");
+assert.match(legacyOps, /requirePermission\(actor,\s*"edit_records"\)/, "Operations service must enforce edit permissions server-side.");
+assert.match(legacyOps, /requirePermission\(actor,\s*"change_status"\)/, "Operations service must enforce status permissions server-side.");
+assert.doesNotMatch(opsApi + legacyOps, /localStorage|window\./, "Serverless API must not depend on browser-only state.");
 
 console.log("CoverMate security contract check passed");

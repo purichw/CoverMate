@@ -23,7 +23,7 @@ let resetFailures = 0;
 const writes = [];
 const output = path.resolve(process.env.EDITOR_HISTORY_SCREENSHOT_DIR || 'uat-results/editor-history');
 fs.mkdirSync(output, { recursive: true });
-const owners = ['src/visitor/runtime.js', 'src/visitor/editor-history.js', 'src/visitor/template.html', 'src/visitor/defaults.js', 'src/visitor/shell.html', 'covermate-firebase.js', 'covermate-contract.js', 'index.html', 'scripts/editor-history-browser-check.mjs'];
+const owners = ['src/visitor/runtime.js', 'src/visitor/cms-controller.js', 'src/visitor/editor-history.js', 'src/visitor/template.html', 'src/visitor/defaults.js', 'src/visitor/shell.html', 'scripts/lib/visitor-source.mjs', 'covermate-firebase.js', 'covermate-contract.js', 'index.html', 'scripts/editor-history-browser-check.mjs'];
 const hashes = () => Object.fromEntries(owners.map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
 const report = {
   passed: false, startedAt: new Date().toISOString(), sourceHashes: hashes(), checks: [], screenshots: [], pageErrors: [], blockedExternalRequests: [],
@@ -146,9 +146,9 @@ try {
       throw error;
     }
   }
-  async function settledDraft() {
+  async function settledDraft(afterSaveCount = -1) {
     const current = await localSnapshot();
-    await poll(() => isDeepStrictEqual({ config: draft.config, text: draft.text }, current), 'Remote draft should match the current local draft after autosave.');
+    await poll(() => saveCount > afterSaveCount && isDeepStrictEqual({ config: draft.config, text: draft.text }, current), 'Remote draft should acknowledge autosave and match the current local draft.');
     return current;
   }
   async function screenshot(name, route, width, height) {
@@ -354,17 +354,24 @@ try {
   assert.equal(await page.locator('[data-needs-catalog-json]').inputValue(), stagedCatalog, 'Undo preserves the staged product JSON buffer.');
   assert.equal(await page.locator('[data-needs-references-json]').inputValue(), stagedReferences, 'Undo preserves the staged reference JSON buffer.');
   assert.deepEqual((await localSnapshot()).config.sections.map(section => section.id), orderBefore);
+  const savesBeforeStagedRedo = saveCount;
   await historyAction('redo');
   assert.equal(await page.locator('[data-needs-catalog-json]').inputValue(), stagedCatalog, 'Redo preserves the staged product JSON buffer.');
   assert.equal(await page.locator('[data-needs-references-json]').inputValue(), stagedReferences, 'Redo preserves the staged reference JSON buffer.');
   assert.deepEqual(await localSnapshot(), beforeStagedJson, 'Redo restores committed content while preserving separate uncommitted JSON buffers.');
   report.checks.push('Unsaved product-catalog and reference JSON typed through the calculator controls survives Undo/Redo; staged buffers never enter saved Draft until their explicit Save action.');
 
-  await settledDraft();
+  // Redo returns to content the service may already hold, so equality alone
+  // cannot prove its newly scheduled autosave has completed. Wait for that
+  // acknowledgement before simulating a separate owner's authoritative edit.
+  await settledDraft(savesBeforeStagedRedo);
+  report.provenance.externalDraftSaveBoundary = { beforeRedo: savesBeforeStagedRedo, acknowledgedBeforeExternalChange: saveCount };
   // External change invalidates prior tab history, rather than replacing newer data.
   contract.cmsSet(draft.config, livePath, 'Externally changed draft');
   draft = clean({ ...draft, revision: Number(draft.revision || 0) + 1 });
+  const externalRevision = draft.revision;
   await page.goto(baseUrl + '/admin/edit'); await ready(); await expectHero('Externally changed draft');
+  assert.equal(draft.revision, externalRevision, 'Loading the external draft must not send a stale draft save.');
   await expectControl('undo', true); await expectControl('redo', true);
   report.checks.push('A changed authoritative draft invalidates stale session history; it cannot overwrite the newer draft on reload.');
 

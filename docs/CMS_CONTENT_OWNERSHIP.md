@@ -1,6 +1,6 @@
 # CMS Content Ownership
 
-Updated: 2026-09-23. Code schema: version 16; release evidence is in RELEASE_VISITOR_20260924.md. Version 3 adds
+Updated: 2026-09-24. Code schema: version 16; release evidence is in RELEASE_VISITOR_20260924.md. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
 Version 4 consolidates the former Guides into FAQ. Admin FAQ owns the question,
 answer, optional topic and reading time in both languages. The old section is
@@ -119,6 +119,29 @@ Its backend is signed Cloudinary Free with owner authorization and UAT isolation
 See [media decision](CMS_MEDIA.md#backend-decision-and-cost-boundary).
 No binary data is stored in CMS documents.
 
+## Editing and persistence owners
+
+- `src/visitor/runtime.js` owns rendered view models, route/language state,
+  normalization and DOM projection. `src/visitor/cms-controller.js` supplies
+  the existing editor commands, inline/media editing, Draft autosave and
+  explicit Save/Reset/Publish operations through `withCmsController`.
+- `src/visitor/editor-history.js` owns local content snapshots and Undo/Redo.
+  `covermate-firebase.js` owns verified persistence, transaction ordering and
+  revision conflicts. The controller does not replace those authorization or
+  concurrency checks.
+- `scripts/lib/visitor-source.mjs` bundles the controller/history into the
+  existing visitor artifact. This source extraction adds no public editor
+  surface and does not make the editor a separately loaded application.
+- Admin control labels use Thai independently of the selected website TH/EN
+  content; `src/visitor/admin-labels.js` maps schema metadata for display only.
+  Data paths and stored owner copy retain their original values.
+
+Editor Undo/Redo and Reset change Draft only. Save Draft confirms persistence
+without a post-save rollback toast; Publish's separate 30-second rollback
+changes Live. See [CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md) for history,
+uncommitted JSON buffers and failure recovery. The source refactor changes no
+schema, stored content, Publish behavior or cache duration.
+
 ## Licence Synchronization
 
 Version 1 converts exact legacy numbers in section/legal copy to
@@ -211,6 +234,7 @@ npm run check:phase6
 npm run check:contracts
 npm run check:live-content
 npm run check:text-editor:browser
+node scripts/cms-controller-check.mjs
 ```
 
 The CMS browser suite intercepts state writes with a local test service and

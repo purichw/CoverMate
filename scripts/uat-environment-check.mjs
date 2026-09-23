@@ -47,8 +47,9 @@ assert.doesNotMatch(firebaseSource, /"sites",\s*"covermate",\s*"states"/, "Fireb
 const opsSource = repoFile("api/ops.js");
 assert.match(opsSource, /resolveRequestEnvironment/, "Ops API must resolve runtime environment.");
 assert.match(opsSource, /admin\.uatOnly === true && !\(environment && environment\.isUat\)/, "Ops API must reject UAT-only credentials outside UAT.");
-assert.match(opsSource, /leadCollectionFor\(actor\)/, "Ops API must route lead reads and writes through the environment collection.");
-assert.doesNotMatch(opsSource, /collectionId:\s*"contactLeads"/, "Ops API queries must not hard-code production contactLeads.");
+const legacyOpsSource = repoFile("server/legacy-ops-service.cjs");
+assert.match(legacyOpsSource, /leadCollectionFor\(actor\)/, "Ops service must route lead reads and writes through the environment collection.");
+assert.doesNotMatch(opsSource + legacyOpsSource, /collectionId:\s*"contactLeads"/, "Ops API queries must not hard-code production contactLeads.");
 
 const analyticsSource = repoFile("api/analytics.js");
 assert.match(analyticsSource, /COVERMATE_UAT_GA4_PROPERTY_ID/);

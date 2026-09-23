@@ -1,13 +1,10 @@
 const { randomUUID } = require('node:crypto');
-const { serverDb } = require('./firebase.cjs');
+const { stores, recordsFor } = require('./cases-repository.cjs');
+const { createCasesHandler } = require('./cases-handler.cjs');
 const { error, readBody } = require('./http.cjs');
 const C = require('./cases-contract.cjs');
 
 const capabilities = actor => ({ inAppAvailable: true, emailAvailable: false, verifiedEmailLabel: actor.emailVerified && actor.email ? actor.email.replace(/^(.{1,2})[^@]*(@.*)$/, '$1•••$2') : null, schedulerAvailable: false, schedulerCadenceMinutes: null, lineAvailable: false });
-const stores = actor => {
-  const db = serverDb(), suffix = actor.environment?.isUat ? 'Uat' : '';
-  return { db, cases: db.collection(actor.environment?.leadCollection || 'contactLeads'), notifications: db.collection(`caseNotifications${suffix}`), preferences: db.collection(`casePreferences${suffix}`) };
-};
 const safeId = value => { if (typeof value !== 'string' || !/^[\w-]{1,128}$/.test(value)) throw error(404, 'not_found', 'Case not found.'); return value; };
 const keyFor = req => {
   const key = String(req.headers['idempotency-key'] || '');
@@ -25,10 +22,6 @@ function stageWebsiteCreate(tx, ref, record) {
   // The durable intake marker and creation activity commit with the enquiry.
   // Notification documents are materialised per verified owner on next visit.
   tx.create(ref.collection('caseActivities').doc('created'), activity(record, null, record.submittedAt, 'created', [], null, 'created'));
-}
-async function recordsFor(actor) {
-  const snap = await stores(actor).cases.get();
-  return snap.docs.map(doc => C.adaptCase(doc.id, doc.data()));
 }
 function notice(record, uid, type, now) {
   const follow = type === 'follow_up_due', dedupeKey = follow ? `follow_up_due:${record.id}:${record.followUpRevision}` : `new_case:${record.id}`;
@@ -139,34 +132,15 @@ async function markRead(actor, id) {
   });
   return { ok: true };
 }
-async function handle(req, actor, path) {
-  if (actor.role !== 'owner') throw error(403, 'forbidden', 'Cases are available to the verified owner.');
-  const method = req.method || 'GET', params = new URL(req.url, 'https://covermate.local').searchParams, now = new Date().toISOString();
-  if (path[0] === 'cases') {
-    if (method === 'GET' && path[1] === 'summary') return C.summary(await recordsFor(actor), now);
-    if (method === 'GET' && !path[1]) return C.listCases(await recordsFor(actor), params, now);
-    if (method === 'POST' && !path[1]) return createManual(req, actor);
-    if (method === 'GET' && path.length === 2) return getCase(actor, path[1], params);
-    if (method === 'PATCH' && path.length === 2) return patch(req, actor, path[1]);
-  }
-  if (path[0] === 'notifications') {
-    if (method === 'GET' && path.length === 1) return notificationList(actor, params);
-    if (method === 'POST' && (path[1] === 'read-all' || path[2] === 'read')) { C.object(await readBody(req), []); return markRead(actor, path[1]); }
-  }
-  if (path[0] === 'notification-capabilities' && method === 'GET') return capabilities(actor);
-  if (path[0] === 'notification-preferences') {
-    if (method === 'GET') return getPreferences(actor);
-    if (method === 'PATCH') {
-      const body = await readBody(req); keyFor(req);
-      C.object(body, ['expectedVersion', 'email'], 'body', ['expectedVersion', 'email']); C.object(body.email, ['newCase', 'followUpDue'], 'email', ['newCase', 'followUpDue']);
-      if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1 || Object.values(body.email).some(value => typeof value !== 'boolean')) C.fail('email', 'Invalid preference values.');
-      if (body.email.newCase !== false || body.email.followUpDue !== false) throw error(503, 'email_not_configured', 'Email is not configured.');
-      const prefs = await getPreferences(actor);
-      if (prefs.version !== body.expectedVersion) throw error(409, 'version_conflict', 'Preferences changed. Reload and try again.');
-      return prefs; // All supported preferences are already enabled; email unavailable.
-    }
-  }
-  if (path[0] === 'notification-test-email') throw error(503, 'email_not_configured', 'Email is not configured.');
-  throw error(404, 'not_found', 'Unknown case operation.');
+async function patchPreferences(req, actor) {
+  const body = await readBody(req); keyFor(req);
+  C.object(body, ['expectedVersion', 'email'], 'body', ['expectedVersion', 'email']); C.object(body.email, ['newCase', 'followUpDue'], 'email', ['newCase', 'followUpDue']);
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1 || Object.values(body.email).some(value => typeof value !== 'boolean')) C.fail('email', 'Invalid preference values.');
+  if (body.email.newCase !== false || body.email.followUpDue !== false) throw error(503, 'email_not_configured', 'Email is not configured.');
+  const prefs = await getPreferences(actor);
+  if (prefs.version !== body.expectedVersion) throw error(409, 'version_conflict', 'Preferences changed. Reload and try again.');
+  return prefs; // All supported preferences are already enabled; email unavailable.
 }
+
+const handle = createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences });
 module.exports = { handle, websiteRecord, stageWebsiteCreate, activity, catchUp, recordsFor, capabilities };

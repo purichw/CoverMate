@@ -1,14 +1,16 @@
 # CoverMate Needs Calculator Contract
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
-## Home V2 Candidate (Current, Local Only)
+## Home V2 (Current source contract)
 
 The owner approved implementing the research-backed calculator and recommendation
 infrastructure on September 23, with actual AIA product names/terms to be supplied
-and checked together later. No production publish, database write, push or deploy
-is included. The three Home tabs and existing contact consent/submission flow stay
-in place; Motor receives no calculator.
+and checked together later. This implementation is included in upstream source
+commit `7759a34`; deployment and exact-SHA verification are tracked separately in
+`HANDOFF.md` and `RELEASE_VISITOR_20260924.md`. Source inclusion does not publish
+CMS Draft or approve product records. The three Home tabs and existing contact
+consent/submission flow stay in place; Motor receives no calculator.
 
 ### Ownership And Compatibility
 

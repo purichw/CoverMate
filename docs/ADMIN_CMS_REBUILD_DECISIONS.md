@@ -1,6 +1,6 @@
 # CoverMate Admin/CMS Rebuild Decisions
 
-Last updated: 2026-09-21
+Last updated: 2026-09-24
 
 This is the authoritative decision record for the current Admin/CMS product.
 It records owner-approved behavior that future implementation and design work
@@ -17,18 +17,24 @@ Panel leak, or stale higher-count insurer copy are stale.
 4. Brand/compliance direction for Google Sans, Organic visual system, voice, licence/OIC wording, AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
 5. Historical offline prototypes or screenshots as visual evidence only, never as product authority.
 
-Brand/compliance direction remains authoritative for Google Sans, Organic tokens, warm advisor posture, English owner chrome, licence/OIC wording, AIA-agent versus Srikrung-broker distinction, and claim-story restrictions.
+Brand/compliance direction remains authoritative for Google Sans, Organic tokens,
+warm advisor posture, licence/OIC wording, AIA-agent versus Srikrung-broker
+distinction, and claim-story restrictions. Current owner controls use natural
+Thai with familiar workflow/service terms retained; the public TH/EN content
+selector does not switch Admin language. See `ADMIN_LANGUAGE.md`.
 
 ## Decided Conflicts
 
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
 | Admin Portal Home | `/admin` is now the unified private gateway for `Operations`, `Website content`, `Analytics`, and `Settings`. | Updated after Operations became API-backed. The old three-card "Manage your site" launcher is retired. |
-| Operations portal | Approved as an Operations module inside the shared Admin Portal shell. | `/admin/ops/` remains a compatibility entry, but the current implementation is the same shell as `/admin`. `/admin/ops/app.js` calls `/api/ops/*`, which verifies Firebase admin identity, enforces role permissions, and stores workflow/audit state in the active runtime lead collection. |
+| Operations portal | One Cases workspace inside the shared Admin Portal shell replaces the visible Dashboard/Leads/Tasks/Audit tabs. | `/admin/ops/` and old tab links remain compatibility entries into Cases. Existing documents/tasks/audit are preserved; canonical Cases endpoints require a verified owner. See `ADMIN_CASES_V2.md` for API/module ownership. |
 | Public exit | `Public site` / `View live site` opens a clean public route in a new tab. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
 | Admin close / edit exit | Admin stays on Admin URLs. Direct `/admin/content` close returns to `/admin`; a panel opened from `/admin/edit` closes back to the same editor. | `Main` returns to `/admin`. `Public site` opens a new clean public tab and must not move the current Admin tab. |
-| Draft preview | Private `/#preview`, draft data only, one top preview bar. | No edit dock, drawer, screen switcher, or public admin marker. |
+| Draft preview | Private `/admin/preview` with legacy `/#preview` compatibility, draft data only, one top preview bar. | No edit dock, drawer, screen switcher, or public admin marker. |
+| Draft history and reset | Editor Undo/Redo and Reset affect the complete Draft only; Save Draft has no post-save rollback toast. | Reset reads current Live transactionally; one history step can restore the pre-reset Draft. Publish retains the separate 30-second **ย้อน Publish · เปลี่ยนเว็บจริง** action. See `CMS_EDITOR_HISTORY.md`. |
+| Source ownership | Extract editor commands and backend responsibilities without changing product behavior. | `cms-controller.js` is bundled into the existing visitor runtime; Cases routing/service/repository and legacy Operations adapters retain existing endpoints and data. This is not a separate editor application or data migration. |
 | Public site | Owner-approved compact Home redesign supersedes the old geometry. `cover` is a standalone compact Home/Admin section again. | Keep real journeys and CMS section order/visibility, not mandatory expanded legacy bands. See HOME_REDESIGN.md. |
 | Motor entry points | `/motor` is the dedicated motor-insurance campaign page in the same product. `#motor -> #insurers` and `#life -> #cover` remain Home aliases. | `/motor` has local motor nav plus a Home link. Home keeps one in-page Motor item and an explicit path to the campaign. |
 | Reading items | No separate Guides public/Admin section in v4+. Existing items move into FAQ with stable identity and bilingual content. | `#guides -> #faq`; recovery archive is never a display fallback. |
@@ -74,7 +80,7 @@ Phase 6 adds media metadata, global contact controls, and guarded SEO editing.
 Phase 7 aligns analytics instrumentation/reporting without breaking event
 history or sending PII.
 
-Phase 8, the Operations portal, now lives as a module inside the shared Admin
+Phase 8 originally connected Operations as a module inside the shared Admin
 Portal shell. `/admin/ops/` remains a compatibility route; it reuses the admin
 session/Firebase allowlist and calls
 `/api/ops/*` for lead reads, lead creation, status updates, notes, follow-up
@@ -83,6 +89,9 @@ state on the active runtime lead collection (`contactLeads/*` in production and
 `contactLeadsUat/*` in UAT). Later work may
 split customers, policies, documents, scheduler jobs, retention/deletion, and
 global audit into dedicated collections after privacy/security review.
+The September 23 Cases decision supersedes that visible tab layout while
+retaining legacy API/data compatibility. Its canonical workflow and notification
+contracts are in `ADMIN_CASES_V2.md`.
 Until those contracts exist, Customers, Consultations, Quotes, Policies,
 Renewals, Documents, and Insurers must stay hidden in the UI and must not show
 demo, not-wired, or browser-seeded records.

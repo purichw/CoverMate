@@ -1,6 +1,9 @@
 # Contact Submission States
 
-Updated: 2026-09-23. Local candidate only, not pushed or deployed.
+Updated: 2026-09-24. Included in upstream source `7759a34`; exact deployment
+and verification status are tracked in [HANDOFF.md](HANDOFF.md). The current
+combined emulator journey follows these panels, including unknown delivery
+and known-failure retry; source inclusion is not proof of hosted App Check.
 
 ## Authority And Scope
 

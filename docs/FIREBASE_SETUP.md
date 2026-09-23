@@ -1,6 +1,6 @@
 # CoverMate Firebase Setup
 
-Last updated: 2026-09-21
+Last updated: 2026-09-24
 
 ## Storage And Billing Checkpoint
 
@@ -75,6 +75,12 @@ uatOnly: false
 The app checks this document before creating the browser-local
 `covermate-admin-session` cache.
 
+Firebase sign-in and Admin authorization are separate. Creating an Auth account
+or enabling Email/Password does not create this allowlist record. The public
+Admin login remains Google-based; authorized automation may use an enabled
+provider/custom token. Roles are checked by the API/Rules as well as the UI;
+Cases specifically requires `owner`. Unknown or inactive roles fail closed.
+
 Expected first-run behavior:
 
 1. Sign in at `/admin/login`.
@@ -133,6 +139,7 @@ config: <site configuration object>
 text: <editable text override object>
 updatedAt: <server timestamp>
 updatedBy: { uid, email, role }
+revision: <monotonically increasing concurrency version>
 ```
 
 Version documents add:
@@ -143,6 +150,12 @@ createdAt: <server timestamp>
 createdBy: { uid, email, role }
 restoredFrom: <optional source version timestamp/id>
 ```
+
+Reset Draft reads the newest Live snapshot and writes Draft transactionally;
+it does not publish or create a new Live state. Undo/Redo are tab/identity-scoped
+Draft history. `covermate-firebase.js` owns revision checks and persistence;
+`src/visitor/cms-controller.js` owns editor commands and autosave scheduling.
+See [CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md).
 
 If Firestore does not yet have `states/live`, the static bundle falls back to
 the embedded defaults or the last-known local cache. After the first successful
@@ -177,8 +190,11 @@ details. The renewal reminder form uses the same validated collection with
 `qtype: "review"` and stores the selected insurance type/month in generated
 topic and summary fields.
 
-Admin users can read or update leads; client delete stays blocked by Firestore
-Rules. `/admin/analytics` uses
+Canonical Cases mutations go through owner-only `/api/ops/cases*`; browser
+direct writes/deletes remain denied. Legacy lead/task endpoints retain their
+existing role checks and compatibility envelope. Cases creation also writes
+activity and durable notification intent atomically. See
+[ADMIN_CASES_V2.md](ADMIN_CASES_V2.md). `/admin/analytics` uses
 `CoverMateFirebase.loadContactLeads()` to render Firestore lead analytics and
 `/api/analytics` to request aggregate GA4 traffic when server credentials are
 configured.
@@ -195,6 +211,11 @@ For automated UAT API smoke, create a dedicated test admin user when possible,
 then add that UID under `admins/{uid}` with `active: true`, `role: readonly`,
 and `uatOnly: true`. Keep its password or ID token in `.env.uat.local` or the
 CI/Vercel environment, never in Git.
+
+Readonly is for endpoints that permit read-only access, not Cases. A Cases
+regression requires a temporary `role: owner`, `uatOnly: true` identity and a
+separate readonly identity for denial checks. Use [UAT.md](UAT.md) for the
+existing hosted harness, process-only IAM credentials and cleanup procedure.
 
 ```text
 COVERMATE_UAT_ADMIN_EMAIL=<test admin email>

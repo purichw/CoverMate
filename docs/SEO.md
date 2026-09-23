@@ -1,7 +1,7 @@
 # CoverMate SEO
 
-Last updated: 2026-09-23. See `HANDOFF.md` for current preview/production evidence;
-the owner has authorized the complete release, including CMS-backed metadata.
+Last updated: 2026-09-24. See `HANDOFF.md` for current source, authorization and
+preview/production evidence. This document describes the maintained SEO contract.
 
 ## Primary Domain
 
@@ -38,6 +38,8 @@ boundary, not robots.txt.
 the visitor runtime. `api/page.js` delegates to `server/seo-page.mjs`, which
 reads only the public `sites/{siteId}/states/live` document. It uses the same
 CMS sanitizer as the browser, including semantic copy and insurer counts.
+The separate server/CDN freshness constants now live in
+`covermate-freshness.mjs`; their existing 30-second windows are unchanged.
 
 Home also needs the root-only `middleware.js` rewrite. Vercel serves an existing
 `index.html` before `vercel.json` rewrites, so the JSON root rule alone does not

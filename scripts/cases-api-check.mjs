@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { createCasesFixture } from './fixtures/cases.mjs';
 import { createRequire } from 'node:module';
 import { startNfrServer } from './nfr-server.mjs';
 import C from '../server/cases-contract.cjs';
@@ -7,7 +7,8 @@ import privacy from '../server/enquiry-privacy.cjs';
 import { CMS_CONTENT_FIELDS } from '../covermate-contract.js';
 if (process.env.FIRESTORE_EMULATOR_HOST !== '127.0.0.1:8088' || process.env.COVERMATE_TEST_MODE !== 'emulator') throw new Error('Use isolated emulators only.');
 const require = createRequire(import.meta.url), db = require('../server/firebase.cjs').serverDb();
-const fixtures = JSON.parse(fs.readFileSync('scripts/fixtures/cases/fixtures.json'));
+const runId = `cases-${crypto.randomUUID()}`;
+const fixtures = createCasesFixture(runId);
 const { server, baseUrl } = await startNfrServer();
 const tokens = {}, ids = {};
 try {
@@ -17,13 +18,16 @@ try {
     tokens[role] = account.idToken; ids[role] = account.localId;
   }
   const call = async (path, method = 'GET', body, role = 'owner', key = crypto.randomUUID()) => {
-    const response = await fetch(`${baseUrl}/api/${path}${path.includes('?') ? '&' : '?'}cm_env=uat`, { method, headers: { 'Content-Type': 'application/json', ...(tokens[role] ? { Authorization: `Bearer ${tokens[role]}` } : {}), 'Idempotency-Key': key, 'x-vercel-forwarded-for': 'cases-api-suite' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+    const response = await fetch(`${baseUrl}/api/${path}${path.includes('?') ? '&' : '?'}cm_env=uat`, { method, headers: { 'Content-Type': 'application/json', ...(tokens[role] ? { Authorization: `Bearer ${tokens[role]}` } : {}), 'Idempotency-Key': key, 'x-vercel-forwarded-for': runId }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
     return { status: response.status, body: await response.json() };
   };
-  for (const r of fixtures.cases) await db.doc(`contactLeadsUat/${r.id}`).set({ caseRecord: r, createdAt: new Date(r.submittedAt), updatedAt: new Date(r.updatedAt) });
+  const existing = await db.collection('contactLeadsUat').get();
+  const baseline = await call('ops/cases/summary'); assert.equal(baseline.status, 200);
+  for (const r of fixtures.cases) await db.doc(`contactLeadsUat/${r.id}`).create({ caseRecord: r, createdAt: new Date(r.submittedAt), updatedAt: new Date(r.updatedAt) });
   assert.equal((await call('ops/cases', 'GET', undefined, 'missing')).status, 401);
   for (const role of ['readonly', 'advisor', 'inactive']) assert.equal((await call('ops/cases', 'GET', undefined, role)).status, 403);
-  const firstSummary = await call('ops/cases/summary'); assert.equal(firstSummary.status, 200); assert.equal(firstSummary.body.total, 12);
+  const firstSummary = await call('ops/cases/summary'); assert.equal(firstSummary.status, 200);
+  assert.equal(firstSummary.body.total, baseline.body.total + fixtures.cases.length, 'Exactly this run\'s 12 fixture cases are added to global metrics.');
   const summaryBefore = await call('ops/cases/summary'); await call('ops/cases?status=new'); assert.equal((await call('ops/cases/summary')).body.total, summaryBefore.body.total);
   const manualKey = crypto.randomUUID(), manual = await call('ops/cases', 'POST', fixtures.requestExamples.manualCase, 'owner', manualKey);
   assert.equal(manual.status, 201, JSON.stringify(manual)); assert.equal(manual.body.privacyReceipt, null);
@@ -46,12 +50,21 @@ try {
   // Move only this isolated fixture's clock into the past to exercise catch-up.
   record.followUp.dueAt = new Date(Date.now() - 60000).toISOString(); await db.doc(`contactLeadsUat/${id}`).update({ caseRecord: record });
   await Promise.all([call('ops/notifications'), call('ops/notifications'), call('ops/notifications')]);
-  let notices = (await call('ops/notifications')).body;
+  const allNotifications = async () => {
+    const items = []; let cursor = null;
+    do {
+      const page = await call(`ops/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`);
+      assert.equal(page.status, 200);
+      items.push(...page.body.items); cursor = page.body.nextCursor;
+    } while (cursor);
+    return items;
+  };
+  const notices = { items: await allNotifications() };
   const due = notices.items.filter(n => n.caseId === id); assert.equal(due.length, 1); assert.equal(due[0].type, 'follow_up_due');
   assert.equal((await call(`ops/notifications/${due[0].id}/read`, 'POST', {}, 'owner2')).status, 404);
   const closed = await patch(record, { status: 'closed_completed' }); assert.equal(closed.status, 200); record = closed.body;
   assert.equal(record.followUp, null); assert.ok(record.closedAt); assert.equal(record.followUpRevision, 2);
-  const resolved = (await call('ops/notifications')).body.items.find(n => n.id === due[0].id); assert.ok(resolved.resolvedAt);
+  const resolved = (await allNotifications()).find(n => n.id === due[0].id); assert.ok(resolved.resolvedAt);
   assert.equal((await patch(record, { status: 'new' })).status, 409);
   record = (await patch(record, { status: 'in_progress' }, { reopen: true })).body; assert.equal(record.followUp, null); assert.equal(record.closedAt, null);
   const compatibility = await call(`ops/leads/${id}`); assert.equal(compatibility.body.status, 'in_progress'); assert.equal(compatibility.body.name, record.contact.name); assert.equal(compatibility.body.consent.given, false);
@@ -75,7 +88,7 @@ try {
   assert.equal((await db.doc(`contactLeadsUat/${intakeId}`).collection('caseActivities').get()).size, 1); assert.equal(stored.caseIntakeNotification, true);
   const totalBeforeRead = (await call('ops/notifications')).body.unreadCount;
   await call(`ops/cases/${intakeId}`); assert.equal((await call('ops/notifications')).body.unreadCount, totalBeforeRead);
-  const newNotice = (await call('ops/notifications')).body.items.find(n => n.caseId === intakeId); assert.equal(newNotice.type, 'new_case');
+  const newNotice = (await allNotifications()).find(n => n.caseId === intakeId); assert.equal(newNotice.type, 'new_case');
   await call(`ops/notifications/${newNotice.id}/read`, 'POST', {}); assert.equal((await call('ops/notifications')).body.unreadCount, totalBeforeRead - 1);
   assert.equal((await db.doc(`contactLeadsUat/${intakeId}`).get()).data().caseRecord.status, 'new');
   const direct = async (role, method, path, body) => fetch(`http://127.0.0.1:8088/v1/projects/demo-covermate/databases/(default)/documents/${path}`, { method, headers: { Authorization: `Bearer ${tokens[role]}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -83,10 +96,12 @@ try {
   assert.equal((await direct('owner', 'PATCH', `contactLeadsUat/${intakeId}`, { fields: { status: { stringValue: 'lost' } } })).status, 403);
   assert.equal((await direct('owner', 'GET', `caseNotificationsUat/${newNotice.id}`)).status, 403, 'Notification data is available only through owner-scoped API.');
   const legacy = { name: 'Legacy', contact: 'test', status: 'lost', createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-02-01'), ops: { tasks: { followUp: { dueAt: '2025-03-01', title: 'Retain me' } }, audit: [{ action: 'old' }] }, timeline: [{ text: 'Old history' }] };
-  await db.doc('contactLeadsUat/legacy-proof').set(legacy);
-  const legacyRead = (await call('ops/cases/legacy-proof')).body.record;
+  const legacyId = `${runId}-legacy-proof`;
+  await db.doc(`contactLeadsUat/${legacyId}`).create(legacy);
+  const legacyRead = (await call(`ops/cases/${legacyId}`)).body.record;
   assert.equal(legacyRead.closedAt, null);
-  const edited = await call('ops/cases/legacy-proof', 'PATCH', { expectedVersion: legacyRead.version, changes: { workingNote: 'Add note' } }); assert.equal(edited.status, 200);
-  const retained = (await db.doc('contactLeadsUat/legacy-proof').get()).data(); assert.deepEqual(retained.ops, legacy.ops); assert.deepEqual(retained.timeline, legacy.timeline);
-  console.log('Real Cases API checks passed: owner authorization, atomic intake/activity/intent, privacy evidence, retries, concurrency, no-op, reminder dedupe/resolution, owner-scoped reads, canonical direct-write denial and legacy preservation.');
+  const edited = await call(`ops/cases/${legacyId}`, 'PATCH', { expectedVersion: legacyRead.version, changes: { workingNote: 'Add note' } }); assert.equal(edited.status, 200);
+  const retained = (await db.doc(`contactLeadsUat/${legacyId}`).get()).data(); assert.deepEqual(retained.ops, legacy.ops); assert.deepEqual(retained.timeline, legacy.timeline);
+  for (const doc of existing.docs) assert.deepEqual((await doc.ref.get()).data(), doc.data(), 'Existing suite records are preserved.');
+  console.log(`Real Cases API checks passed with ${baseline.body.total} pre-existing records: owner authorization, atomic intake/activity/intent, privacy evidence, retries, concurrency, no-op, reminder dedupe/resolution, owner-scoped reads, canonical direct-write denial and legacy preservation.`);
 } finally { await new Promise(resolve => server.close(resolve)); }

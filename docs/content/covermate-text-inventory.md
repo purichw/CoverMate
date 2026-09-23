@@ -1,5 +1,11 @@
 # CoverMate Website Page Text Inventory For ChatGPT Copy Review
 Generated: 2026-09-09T04:30:15.060Z
+
+Historical export: these rows and the companion JSON are a dated capture, not
+the current CMS or source inventory. Before new copy work, read current Live/
+Draft and regenerate the inventory; preserve this export's capture provenance.
+See [current handoff](../HANDOFF.md).
+
 ## Source Precedence
 1. `production-live` entries, when present, were captured from `https://covermateinsurance.com` and should be treated as the current visible public website source.
 2. `repo-defaults` entries are the repository cold-start CMS payload. Firestore live content still prevails in production when it loads successfully.
