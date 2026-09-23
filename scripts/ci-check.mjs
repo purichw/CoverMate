@@ -43,6 +43,7 @@ const commands = [
   ["npm", ["run", "check:media"]],
   ["npm", ["run", "check:media:inline"]],
   ["npm", ["run", "check:ops"]],
+  ["npm", ["run", "check:admin-email-template"]],
   ["npm", ["run", "check:performance"]],
   ["git", ["diff", "--check"]]
 ];

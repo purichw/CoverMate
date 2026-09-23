@@ -41,6 +41,15 @@ browser or logs. Recipient and sender never come from form input.
 
 ## Admin and evidence
 
+The HTML and plain-text variants share `server/admin-email-template.cjs`.
+Both new-case and test emails use the same frame/header, metadata and primary
+button. Colors, rounded rust CTA and typography follow the current Home/Motor
+visitor design. Email markup uses inline table styles instead of browser-only
+components or CSS variables, with Google Sans/Thai and safe client fallbacks.
+The logo comes from the published Thai `brand.media.headerLogo`; an intentional
+blank remains blank. First-attempt HTML is frozen with the payload so a later
+Publish or template deploy cannot change a retried Resend request.
+
 Owner-only `GET /api/ops/notification-capabilities` returns
 `intakeEmailAvailable` and `intakeEmailRecipient`. Availability means complete
 configuration, not a successful provider call. Existing `emailAvailable:false`
@@ -60,7 +69,10 @@ reset expired ambiguous attempts or change their frozen payload.
 Checks: `npm run check:admin-email` (real emulator transactions/fake provider),
 `npm run check:contact:intake` (receipt, replay, consent, no external send), and
 `node scripts/cases-browser-check.mjs --notifications` (configured/unconfigured
-UI, retry-key reuse and acceptance feedback).
+UI, retry-key reuse and acceptance feedback), and
+`node scripts/admin-email-template-check.mjs` (both template variants, responsive
+rendering and image-blocked readability). Browser screenshots do not certify
+every mail client's rendering; plain text remains available independently.
 
 Rollback through the normal commit/CI/deployment gate. Existing cases and outbox
 delivery evidence remain intact; rollback must not delete or replay them.

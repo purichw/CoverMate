@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "check:admin-email": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/admin-notification-check.mjs\"",
+    "check:admin-email-template": "node scripts/admin-email-template-check.mjs",
     "check:refactor": "node scripts/test-fixtures-check.mjs && node scripts/cms-controller-check.mjs && node scripts/ops-service-boundary-check.mjs && node scripts/freshness-policy-check.mjs",
     "check:freshness": "node scripts/freshness-policy-check.mjs",
     "build:telemetry": "node scripts/build-telemetry.mjs",

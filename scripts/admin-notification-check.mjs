@@ -113,18 +113,60 @@ try {
   assert.ok(!JSON.stringify(accepted.payload).includes(privateText));
   assert.ok(!JSON.stringify(accepted.payload).includes('private-contact@example.test'));
 
-  // A lost provider response is ambiguous; all retries reuse the frozen payload/key.
-  let ambiguousAttempts = 0;
-  const ambiguous = notifier(() => {
-    if (++ambiguousAttempts === 1) throw new Error(privateText);
-    return ok('fake-after-ambiguous-response');
-  });
-  const ambiguousId = await stage('ambiguous'), beforeAmbiguous = calls.length;
-  assert.equal((await ambiguous.deliver(db, ambiguousId, production)).accepted, true);
-  const ambiguousCalls = calls.slice(beforeAmbiguous);
-  assert.equal(ambiguousCalls.length, 2);
-  assert.deepEqual(ambiguousCalls[0], ambiguousCalls[1]);
-  assert.equal((await read(ambiguousId)).attempts, 2);
+  // Branding comes from published Thai media at first claim. Keep this shared
+  // emulator document intact after the focused fixture block, including on error.
+  const publishedRef = db.doc('sites/covermate/states/live');
+  const publishedBefore = (await publishedRef.get()).data() || {};
+  const customLogo = 'https://assets.example.test/published-th-logo.png';
+  const englishLogo = 'https://assets.example.test/published-en-logo.png';
+  const changedLogo = 'https://assets.example.test/changed-th-logo.png';
+  const fallbackLogo = 'https://covermateinsurance.com/assets/brand/covermate-advisory-logo-th.png';
+  const publishLogo = headerLogo => publishedRef.set({ config: { brand: { media: headerLogo === undefined ? {} : { headerLogo } } } });
+  const imageSources = html => [...html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match => match[1]);
+  try {
+    for (const [label, headerLogo, expectedLogo] of [
+      ['published-logo', { th: customLogo, en: englishLogo }, customLogo],
+      ['missing-logo', undefined, fallbackLogo],
+      ['blank-logo', { th: '', en: englishLogo }, null]
+    ]) {
+      const id = await stage(label);
+      await publishLogo(headerLogo);
+      assert.equal((await normal.deliver(db, id, production)).accepted, true);
+      const sent = (await read(id)).payload;
+      assert.equal(typeof sent.html, 'string');
+      const images = imageSources(sent.html);
+      assert.ok(!images.includes(englishLogo), 'Admin email selects the published Thai logo.');
+      if (expectedLogo) assert.ok(images.includes(expectedLogo), `${label} uses the expected logo image.`);
+      else assert.equal(images.length, 0, 'An intentional blank remains blank without a fallback image.');
+    }
+
+    // A lost provider response is ambiguous. Publishing a replacement logo
+    // before retry must not change any bytes under the same provider key.
+    await publishLogo({ th: customLogo, en: englishLogo });
+    let ambiguousAttempts = 0;
+    const ambiguous = notifier(async () => {
+      if (++ambiguousAttempts === 1) {
+        await publishLogo({ th: changedLogo, en: englishLogo });
+        throw new Error(privateText);
+      }
+      return ok('fake-after-ambiguous-response');
+    });
+    const ambiguousId = await stage('ambiguous'), beforeAmbiguous = calls.length;
+    assert.equal((await ambiguous.deliver(db, ambiguousId, production)).accepted, true);
+    const ambiguousCalls = calls.slice(beforeAmbiguous);
+    assert.equal(ambiguousCalls.length, 2);
+    assert.deepEqual(ambiguousCalls[0], ambiguousCalls[1], 'CMS changes cannot alter the frozen HTML, payload or provider key during retry.');
+    assert.ok(imageSources(ambiguousCalls[1].payload.html).includes(customLogo));
+    assert.ok(!ambiguousCalls[1].payload.html.includes(changedLogo));
+    assert.equal((await publishedRef.get()).data().config.brand.media.headerLogo.th, changedLogo);
+    const recovered = await read(ambiguousId);
+    assert.equal(recovered.attempts, 2);
+    assert.deepEqual(recovered.payload, ambiguousCalls[0].payload);
+  } finally {
+    // Restore with set; an initially absent local fixture remains an empty doc.
+    await publishedRef.set(publishedBefore);
+  }
+  assert.deepEqual((await publishedRef.get()).data(), publishedBefore);
 
   // Explicit permanent failure stops; retryable HTTP statuses can recover.
   const permanent = notifier(() => reject(422));
@@ -282,7 +324,7 @@ try {
   }
   assert.ok(failureLogs.length > 0);
   assert.ok(failureLogs.every(line => !line.includes(privateText) && !line.includes(values.RESEND_API_KEY)));
-  console.log('PASS real notification outbox: atomic commit/abort, concurrent lease, accepted replay, frozen ambiguity retries, provider failures, persisted recovery, retry bounds, environment/config suppression, owner test dedupe and atomic rate limit. All provider calls used the injected fake.');
+  console.log('PASS real notification outbox: atomic commit/abort, concurrent lease, accepted replay, published Thai logo/fallback/blank, frozen HTML across CMS changes and ambiguity retries, provider failures, persisted recovery, retry bounds, environment/config suppression, owner test dedupe and atomic rate limit. All provider calls used the injected fake.');
 } finally {
   console.error = originalError;
 }

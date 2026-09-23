@@ -64,7 +64,12 @@ assert.deepEqual([slots.find(s=>s.path==='calculatorDesign.monthlyNeedIcon').wid
 console.log('PASS debounced shared component, tab isolation/reset, CMS ownership, Home-only scope and explicit snapshot attachment');
 
 // Run the actual endpoint body with local dependency doubles. No server or credentials.
-const require=createRequire(import.meta.url),records=[];
+const require=createRequire(import.meta.url),records=[],notificationCalls=[];
+let notificationTransportCalls=0;
+const notification=require('../server/admin-notification.cjs').createNotifier({
+  values:{VERCEL_ENV:'production',RESEND_API_KEY:'calculator-contract-fixture',ADMIN_NOTIFICATION_FROM:'sender@example.test',ADMIN_NOTIFICATION_EMAIL:'owner@example.test'},
+  request:async()=>{notificationTransportCalls++;assert.fail('UAT calculator intake must not contact an email provider');}
+});
 const db={collection:name=>({doc:id=>({id,path:name+'/'+id,get:async()=>({exists:false})})}),runTransaction:async fn=>fn({get:async()=>({exists:false,data:()=>({})}),set(){},create:(ref,data)=>records.push({ref,data})})};
 const fakeRequire=name=>{
   if(name==='node:crypto')return require(name);
@@ -73,6 +78,11 @@ const fakeRequire=name=>{
   if(name==='../server/firebase.cjs')return {serverApp:()=>({}),serverDb:()=>db,isEmulator:()=>true};
   if(name==='../server/enquiry-privacy.cjs')return {verifyReceipt:async()=>({noticeVersion:'calculator-test-only'})};
   if(name==='../server/cases-service.cjs')return {websiteRecord:()=>({caseNumber:'CM-CALCULATOR-TEST'}),stageWebsiteCreate(){}};
+  if(name==='../server/admin-notification.cjs')return Object.fromEntries(['stage','dispatch'].map(method=>[method,(...args)=>{
+    const environment=args.at(-1);assert.equal(environment.isUat,true);
+    notificationCalls.push(method);
+    assert.equal(notification[method](...args),undefined,'UAT intake suppresses production email work');
+  }]));
   if(name==='../server/http.cjs')return {readBody:async req=>req.body,json:(_res,status,body)=>({status,body}),error:(status,code,message)=>Object.assign(new Error(message),{status,code}),reportFailure:()=>assert.fail('Unexpected server error')};
   throw new Error('Unexpected dependency '+name);
 };
@@ -96,4 +106,7 @@ const planning=model.createNeedsSnapshot('life',snapshot.inputs,{},'th',undefine
 assert.equal((await call({...base,calculator:{...planning,pa:{...planning.pa,result:{deathGap:1}}}})).status,200);
 assert.equal(records[3].data.calculator.pa.result.deathGap,500000);
 assert.equal((await call({...base,calculator:{...planning,profile:{...planning.profile,age:999}}})).status,422);
-console.log('PASS lead endpoint recalculation, whitelisting, opt-out, invalid input and consent boundary with local-only doubles');
+assert.deepEqual(notificationCalls,['stage','dispatch','stage','dispatch','stage','dispatch','stage','dispatch'],'Only accepted calculator enquiries reach the notification boundary');
+assert.equal(notificationTransportCalls,0,'UAT intake never contacts the email provider, even with configured sender and recipient');
+assert.ok(records.every(({ref})=>ref.path.startsWith('local-only/')),'UAT intake creates no email outbox records');
+console.log('PASS lead endpoint recalculation, whitelisting, opt-out, invalid input, consent boundary and UAT email suppression with local-only doubles');

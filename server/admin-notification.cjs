@@ -2,9 +2,9 @@ const { randomUUID, createHash } = require('node:crypto');
 const { setTimeout: pause } = require('node:timers/promises');
 const { waitUntil } = require('@vercel/functions');
 const { error, reportFailure } = require('./http.cjs');
+const { renderAdminEmail } = require('./admin-email-template.cjs');
 
 const COLLECTION = 'caseEmailOutbox';
-const ADMIN_URL = 'https://covermateinsurance.com/admin/ops';
 const RETRY_WINDOW = 23 * 60 * 60 * 1000; // Stay inside Resend's 24-hour deduplication window.
 const emailPattern = /^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/;
 
@@ -18,14 +18,21 @@ function createNotifier({ values = process.env, request = fetch, now = Date.now,
     if (!values.RESEND_API_KEY || !emailPattern.test(to) || !emailPattern.test(sender) || /[\r\n]/.test(from)) return null;
     return { from, to, key: values.RESEND_API_KEY };
   }
-  function payload(job, config) {
-    const test = job.kind === 'test';
+  function payload(job, config, published) {
+    // Follow the visitor's published Thai header logo, including intentional blanks.
+    const header = published?.config?.brand?.media?.headerLogo;
+    const selected = typeof header === 'string' ? header : header?.th;
+    let logoUrl = '';
+    try {
+      const value = selected === undefined ? '/assets/brand/covermate-advisory-logo-th.png' : selected;
+      if (typeof value === 'string' && value.trim()) {
+        const url = new URL(value, 'https://covermateinsurance.com/');
+        if (url.protocol === 'https:' && !url.username && !url.password) logoUrl = url.href;
+      }
+    } catch { /* Invalid/empty published media uses the readable brand name. */ }
     return {
       from: config.from, to: [config.to],
-      subject: test ? '[ทดสอบ] CoverMate · การแจ้งเตือนเคสใหม่' : `CoverMate · มีเคสใหม่ ${job.caseNumber}`,
-      text: test
-        ? `อีเมลนี้ใช้ตรวจสอบการแจ้งเตือนเคสใหม่ของ CoverMate\nไม่มีการสร้างเคสลูกค้าจากการทดสอบนี้\n\nเปิด Admin: ${ADMIN_URL}`
-        : `มีลูกค้าส่งแบบฟอร์มเข้ามาใน CoverMate\n\nเลขเคส: ${job.caseNumber}\nเวลารับเรื่อง: ${new Date(job.createdAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false })} (เวลาไทย)\n\nเปิดดูรายละเอียดและติดต่อกลับใน Admin:\n${ADMIN_URL}\n\nข้อมูลติดต่อและข้อความของลูกค้าอยู่ใน Admin`
+      ...renderAdminEmail({ kind: job.kind, caseNumber: job.caseNumber, createdAt: job.createdAt, logoUrl })
     };
   }
   function stage(tx, db, record, environment) {
@@ -57,8 +64,9 @@ function createNotifier({ values = process.env, request = fetch, now = Date.now,
           return { skip: 'needs_review' };
         }
         if (job.leaseUntil > time || job.nextAttemptAt > time) return { skip: 'pending' };
+        const published = job.payload ? null : (await tx.get(db.doc('sites/covermate/states/live'))).data();
         const update = { status: 'sending', attempts: job.attempts + 1, firstAttemptAt: job.firstAttemptAt ?? time,
-          leaseToken: token, leaseUntil: time + 30000, payload: job.payload || payload(job, config) };
+          leaseToken: token, leaseUntil: time + 30000, payload: job.payload || payload(job, config, published) };
         tx.update(ref, update);
         return { job: { ...job, ...update } };
       });
