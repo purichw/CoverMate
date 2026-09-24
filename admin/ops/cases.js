@@ -118,6 +118,12 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   function render() {
     if (!s.active) return;
     if (!['admin', 'administrator', 'owner'].includes(session.role)) { root.innerHTML = '<div class="case-empty"><h1>เคสลูกค้า</h1><p>ส่วนนี้สำหรับเจ้าของที่ยืนยันสิทธิ์แล้ว</p></div>'; return; }
+    // Each load renders both its pending and completed list. Preserve the filter
+    // only while it still owns focus; a later response must not steal focus back.
+    const active = document.activeElement;
+    const focusedFilter = root.contains(active)
+      ? (active.matches('select') ? active : active.closest('.cm-select-shell')?.querySelector('select'))?.dataset.caseFilter
+      : null;
     const activeCount = Number(s.followUp !== 'any') + Number(s.closedMonth);
     root.classList.add('cases-screen');
     root.innerHTML = `<div class="case-page-head"><div><h1>เคสลูกค้า</h1><p>รวมเคสและงานติดตามลูกค้า</p></div><div class="case-head-actions">${btn('notifications', icon('bell'), 'aria-label="การแจ้งเตือน"', 'case-icon-button case-mobile-bell')}${btn('new', '+ เพิ่มเคส', '', 'case-primary')}</div></div>
@@ -130,6 +136,12 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       ${s.error ? `<div class="case-empty" role="alert"><h2>โหลดเคสไม่ได้</h2><p>${esc(s.error)}</p>${btn('retry', 'ลองอีกครั้ง')}</div>` : s.loading ? '<div class="case-skeleton" aria-label="กำลังโหลด"><div></div><div></div><div></div></div>' : !s.rows.length ? `<div class="case-empty"><h2>${s.summary?.total ? 'ไม่พบเคสที่ตรงกัน' : 'ยังไม่มีเคส'}</h2><p>${s.summary?.total ? 'ลองเปลี่ยนขอบเขตเคสหรือล้างตัวกรอง' : 'คำถามจากเว็บไซต์จะแสดงที่นี่ หรือเพิ่มเคสที่รับเองได้เลย'}</p>${btn(s.summary?.total ? 'clear-filters' : 'new', s.summary?.total ? 'ล้างตัวกรอง' : '+ เพิ่มเคส')}</div>` : `<table class="cases-table"><thead><tr><th>เคส</th><th>ช่องทางติดต่อ</th><th>สถานะ</th><th>กำหนดติดตาม</th><th>อัปเดตล่าสุด</th></tr></thead><tbody>${s.rows.map(row).join('')}</tbody></table><div class="case-mobile-list">${s.rows.map(card).join('')}</div>`}
       ${s.list && !s.loading && s.list.filteredTotal ? `<div class="case-pagination"><span>แสดง ${s.pages.length * 20 + 1}–${s.pages.length * 20 + s.rows.length} จาก ${s.list.filteredTotal}</span><div>${btn('previous', 'ก่อนหน้า', s.pages.length ? '' : 'disabled')}${btn('next', 'ถัดไป', s.list.nextCursor ? '' : 'disabled')}</div></div>` : ''}</section>`;
     syncButtons(); updateSelected();
+    if (focusedFilter) {
+      window.CoverMateSelect?.refresh();
+      const replacement = root.querySelector(`select[data-case-filter="${CSS.escape(focusedFilter)}"]`);
+      const trigger = replacement?.nextElementSibling;
+      (trigger?.matches('.cm-select-trigger') ? trigger : replacement)?.focus({ preventScroll: true });
+    }
   }
   function row(r) { return `<tr data-case-id="${esc(r.id)}" data-case-action="open" data-id="${esc(r.id)}"><td><button class="case-name" data-case-action="open" data-id="${esc(r.id)}">${esc(r.contact.name)}</button><small>${esc(r.caseNumber)} · ${title(r.interestType)}</small><small>รับเรื่อง ${date(r.submittedAt)}</small></td><td>${esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact)}${r.contact.phone && r.contact.lineId ? `<small>LINE ${esc(r.contact.lineId)}</small>` : ''}</td><td>${badge(r.status)}</td><td>${followLabel(r)}</td><td>${date(r.updatedAt)}<small>${r.source === 'website' ? 'จากเว็บไซต์' : 'เพิ่มเอง'}</small></td></tr>`; }
   function card(r) { return `<button class="case-card" data-case-action="open" data-id="${esc(r.id)}" data-case-id="${esc(r.id)}"><span class="case-card-top"><strong>${esc(r.contact.name)}</strong>${badge(r.status)}</span><span class="case-card-contact">${esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact)}${icon('chevron')}</span><span class="case-card-meta">${esc(r.caseNumber)} · ${title(r.interestType)}</span><span class="case-card-due">${followLabel(r)}</span></button>`; }

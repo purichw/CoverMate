@@ -23,6 +23,10 @@ well as the visitor; do not edit that generated block by hand.
   changes. DOM/option changes, reset and resize are observed. Visitor's existing
   render sweep also refreshes controlled values, localization and layout.
 - Multiple-select/listbox controls are intentionally not converted.
+- Screens that replace their form asynchronously must preserve the currently
+  focused control on every render. Operations captures the active filter before
+  replacing its loading/completed list, refreshes its shared dropdown, and
+  restores that filter only if the user has not already moved focus elsewhere.
 
 ## Contact topics
 
@@ -36,6 +40,9 @@ or customer-record rewrites are required.
 `node scripts/custom-select-check.mjs` checks the exact topic order, CMS migration,
 client/server enums, public keyboard/pointer flows, language changes, error/edit
 preservation, calculator/renewal selection, Admin navigation, scoped axe checks,
-and component edge cases using local fixtures only. `--serve` starts a read-only
+and component edge cases using local fixtures only. Admin coverage holds a Cases
+response until after the loading render, then verifies final focus and the
+no-focus-stealing case. `--admin-only` runs that focused regression.
+`--serve` starts a read-only
 preview (contact submission disabled). `BROWSER=webkit` chooses another installed
 Playwright engine. Screenshots/reports are in `uat-results/custom-select/`.

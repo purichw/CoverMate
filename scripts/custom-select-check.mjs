@@ -61,8 +61,9 @@ else {
   const pw=loadPlaywright(), engine=process.env.BROWSER||'chromium';
   const browser=engine==='chromium'?await launchChromium(pw.chromium):await pw[engine].launch();
   const report={engine,checks:[],errors:[],baseUrl,network:'External requests blocked; synthetic local data; no live writes.'};
+  const pendingResponseReleases=new Set();
   try {
-    for(const [width,height,lang,path] of [[1440,1000,'th','/'],[390,844,'th','/'],[320,800,'en','/motor']]) {
+    for(const [width,height,lang,path] of process.argv.includes('--admin-only')?[]:[[1440,1000,'th','/'],[390,844,'th','/'],[320,800,'en','/motor']]) {
       const context=await browser.newContext({viewport:{width,height},reducedMotion:'reduce'});
       await context.route('**/*',r=>new URL(r.request().url()).origin===baseUrl?r.continue():r.abort());
       await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:client.replace('    appCheckToken(),',"    Promise.resolve('fixture'),")}));
@@ -131,6 +132,7 @@ else {
       report.checks.push(`${path} ${width}px ${lang}: exact topics, all choices, keyboard/cancel/Tab/outside, language, no overflow, scoped axe, payload + error/edit preservation`);
       await context.close();
     }
+    if(!process.argv.includes('--admin-only')) {
     const page=await browser.newPage();page.on('pageerror',error=>report.errors.push(error.message));
     await page.goto(baseUrl+'/select-fixture');
     const trigger=page.locator('#fixture + button');await trigger.click();
@@ -148,14 +150,28 @@ else {
     await trigger.click();await page.locator('#fixture').evaluate(n=>n.parentElement.remove());await page.waitForFunction(()=>!document.querySelector('[role=listbox]'));
     report.checks.push('Primitive: labels, required, optgroups, disabled skip/control, typeahead, reset, dynamic options, unmount cleanup');
     await page.close();
+    }
     const context=await browser.newContext({viewport:{width:390,height:844}});
     await context.addInitScript(()=>localStorage.setItem('covermate-admin-session',JSON.stringify({firebase:true,uid:'smoke-admin',email:'qa@example.test',name:'QA',role:'admin',ts:Date.now(),exp:Date.now()+3600000})));
     await context.route('**/*',r=>new URL(r.request().url()).origin===baseUrl?r.continue():r.abort());
     await context.route('**/covermate-firebase.js',r=>r.fulfill({contentType:'text/javascript',body:firebaseMock}));
     const fixtures=createCasesFixture();
-    await context.route('**/api/**',r=>{
+    let heldCases=null;
+    function holdNextCases() {
+      assert.equal(heldCases,null);
+      let arrive,release;
+      const requested=new Promise(resolve=>{arrive=resolve;});
+      const responseGate=new Promise(resolve=>{release=resolve;});
+      pendingResponseReleases.add(release);
+      heldCases={arrive,responseGate};
+      return {requested,release:()=>{pendingResponseReleases.delete(release);release();}};
+    }
+    await context.route('**/api/**',async r=>{
       const url=new URL(r.request().url());
       assert.equal(r.request().method(),'GET','Admin test is read-only');
+      if(url.pathname.endsWith('/cases')&&heldCases) {
+        const held=heldCases;heldCases=null;held.arrive();await held.responseGate;
+      }
       const data=url.pathname.endsWith('/cases/summary')?Cases.summary(fixtures.cases,fixtures.asOf):url.pathname.endsWith('/cases')?Cases.listCases(fixtures.cases,url.searchParams,fixtures.asOf):url.pathname.endsWith('/notifications')?{items:[],unreadCount:0,nextCursor:null}:{rows:[],total:0};
       return r.fulfill({contentType:'application/json',body:JSON.stringify(data)});
     });
@@ -166,13 +182,36 @@ else {
     await admin.screenshot({path:`${out}/${engine}-admin-mobile.png`});
     await admin.keyboard.press('End');await admin.keyboard.press('Escape');assert.equal(await module.getAttribute('aria-expanded'),'false');
     assert.equal(await admin.locator('#caseStatusFilter').evaluate(n=>n.parentElement.querySelectorAll('button').length),1);
+    // Hold the real fixture response until the first (loading) render has already
+    // restored focus. Releasing it guarantees the second render occurs later.
+    const statusRequest=holdNextCases();
     await module.click();await admin.keyboard.press('ArrowDown');await admin.keyboard.press('Enter');
+    await statusRequest.requested;
     await admin.waitForFunction(()=>document.querySelector('#caseStatusFilter')?.selectedIndex===1);
     assert.notEqual(await admin.locator('#caseStatusFilter').inputValue(),'');
     await admin.waitForFunction(()=>document.activeElement===document.querySelector('#caseStatusFilter + button'));
-    report.checks.push('Actual Admin Operations mobile filter: shared component, label, cancellation, selection survives list re-render');
+    await admin.locator('.case-list[aria-busy="true"]').waitFor();
+    statusRequest.release();
+    await admin.locator('.case-list[aria-busy="false"]').waitFor();
+    await admin.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const statusFocus=await admin.evaluate(()=>({selectedIndex:document.querySelector('#caseStatusFilter').selectedIndex,focused:document.activeElement===document.querySelector('#caseStatusFilter + button'),activeTag:document.activeElement.tagName,activeId:document.activeElement.id}));
+    report.delayedStatusFocus=statusFocus;
+    fs.writeFileSync(`${out}/${engine}-delayed-focus.json`,JSON.stringify(statusFocus,null,2));
+    assert.equal(statusFocus.selectedIndex,1);
+    assert.equal(statusFocus.focused,true,'Delayed Cases response must preserve focus after the second filter render');
+    const noStealRequest=holdNextCases();
+    await module.click();await admin.keyboard.press('ArrowDown');await admin.keyboard.press('Enter');
+    await noStealRequest.requested;
+    await admin.waitForFunction(()=>document.activeElement===document.querySelector('#caseStatusFilter + button'));
+    await admin.locator('#globalSearch').focus();
+    noStealRequest.release();
+    await admin.locator('.case-list[aria-busy="false"]').waitFor();
+    await admin.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.equal(await admin.locator('#caseStatusFilter').evaluate(n=>n.selectedIndex),2);
+    assert.equal(await admin.locator('#globalSearch').evaluate(n=>document.activeElement===n),true,'Delayed Cases response must not steal focus after the user moves to search');
+    report.checks.push('Actual Admin Operations mobile filter: shared component, label, cancellation, delayed-response second-render focus restoration and no stealing focus from search');
     await context.close();
     assert.deepEqual(report.errors,[]);
     fs.writeFileSync(`${out}/${engine}-report.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
-  } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}
+  } finally {for(const release of pendingResponseReleases)release();await browser.close();await new Promise(resolve=>server.close(resolve));}
 }
