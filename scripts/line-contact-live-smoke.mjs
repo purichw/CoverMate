@@ -3,9 +3,13 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { CMS_CONTENT_VERSION } from '../covermate-contract.js';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
+import { vercelBypassHeaders } from './lib/uat-env.mjs';
 
 // Read-only hosted verification: never sign in, submit a form, or publish CMS data.
 const origin = process.env.COVERMATE_URL || 'https://covermateinsurance.com';
+const target=new URL(origin);
+assert.ok(target.protocol==='https:' && !target.username && !target.password && (target.hostname==='covermateinsurance.com' || /^covermate-[a-z0-9-]+-purich-w\.vercel\.app$/.test(target.hostname)));
+const bypass=target.hostname==='covermateinsurance.com'?{}:vercelBypassHeaders();
 const out = process.env.COVERMATE_SMOKE_OUT || 'uat-results/line-release';
 fs.mkdirSync(out,{recursive:true});
 const report = {origin,at:new Date().toISOString(),writes:0,routes:[],errors:[],failedAssets:[]};
@@ -13,6 +17,7 @@ const browser = await launchChromium(loadPlaywright().chromium);
 try {
   for(const [route,lang,width,height] of [['/','th',1440,1000],['/','th',390,844],['/','en',320,740],['/motor','en',1440,1000],['/motor','th',390,844]]) {
     const page = await browser.newPage({viewport:{width,height},isMobile:width<768,hasTouch:width<768,reducedMotion:'reduce'});
+    if(Object.keys(bypass).length) await page.route('**/*',route=>route.continue({headers:{...route.request().headers(),...(new URL(route.request().url()).origin===origin?bypass:{})}}));
     page.on('pageerror',e=>report.errors.push({route,lang,width,error:e.message}));
     page.on('requestfailed',r=>{if(['image','font','stylesheet','script'].includes(r.resourceType()))report.failedAssets.push({url:r.url(),error:r.failure()?.errorText});});
     const response = await page.goto(origin+route+'?lang='+lang+'&line_release=20260924',{waitUntil:'domcontentloaded'});
@@ -23,14 +28,33 @@ try {
     assert.equal(config.schema,CMS_CONTENT_VERSION);
     assert.ok(config.lineUrl && config.sticky,'The published site should expose its configured LINE contact');
     if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();
-    await page.locator('[data-line-launcher]').waitFor();
+    if(width>=768) await page.locator('[data-line-launcher]').waitFor();
+    else {
+      assert.equal(await page.locator('[data-line-contact]').count(),0);
+      const dockLine=page.locator('[data-cm-sticky] a').last();
+      assert.equal(await dockLine.isVisible(),true);
+      assert.equal(await dockLine.getAttribute('href'),config.lineUrl);
+    }
     assert.equal(await page.locator('#cm-line-panel').count(),0);
+    const topic=page.locator('#talk select[name=qtype]');
+    await topic.scrollIntoViewIfNeeded();
+    const trigger=page.locator('#talk select[name=qtype] + button');await trigger.waitFor();
+    assert.deepEqual(await topic.locator('option').evaluateAll(nodes=>nodes.map(node=>node.value)),['','quote','assess','review','renewal','service','claim','general']);
+    await trigger.click();await page.locator('[role=listbox]').waitFor();
+    await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');assert.equal(await topic.inputValue(),'quote');
+    await trigger.click();await page.keyboard.press('Escape');assert.equal(await page.locator('[role=listbox]').count(),0);
     for(const selector of ['#talk','footer'])await page.locator(selector).scrollIntoViewIfNeeded();
     await page.evaluate(async()=>{for(const image of document.images){image.loading='eager';await image.decode().catch(()=>{});}});
     const logos = await page.locator('.cm-line-mark img,.cm-contact-line img,.cm-footer-line img').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({src:n.currentSrc,complete:n.complete,naturalWidth:n.naturalWidth,displayHeight:n.getBoundingClientRect().height,filter:getComputedStyle(n).filter})));
     assert.ok(logos.filter(n=>n.src.includes('LINE_Brand_icon.png')).length>=3);
     for(const logo of logos){assert.ok(logo.complete&&logo.naturalWidth>0);assert.equal(logo.filter,'none');assert.ok(logo.displayHeight>=(width<768?40:20));}
     await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
+    if(width<768) {
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      if(route==='/'&&lang==='th')await page.screenshot({path:`${out}/home-${width}.png`});
+      report.routes.push({route,lang,width,...config,logos,mobileFloating:false,bottomCta:true,customDropdown:true});
+      await page.close();continue;
+    }
     await page.locator('[data-line-launcher]').click();
     await page.locator('#cm-line-panel').waitFor();
     assert.equal(await page.locator('[data-line-action]').getAttribute('href'),config.lineUrl);
@@ -46,8 +70,8 @@ try {
     report.routes.push({route,lang,width,...config,logos,geometry});
     await page.close();
   }
-  for(const file of ['assets/brand/LINE_Brand_icon.png','assets/visitor/line-contact.css','assets/visitor/submission.css','covermate-contract.js']) {
-    const response = await fetch(origin+'/'+file+'?line_release=20260924');assert.equal(response.status,200);
+  for(const file of ['assets/brand/LINE_Brand_icon.png','assets/visitor/line-contact.css','assets/visitor/submission.css','assets/visitor/select.css','assets/visitor/select.js','covermate-contract.js']) {
+    const response = await fetch(origin+'/'+file+'?line_release=20260924',{headers:bypass,redirect:'manual'});assert.equal(response.status,200);
     const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
     assert.equal(hash(Buffer.from(await response.arrayBuffer())),hash(fs.readFileSync(file)),'Hosted file must match release source: '+file);
   }

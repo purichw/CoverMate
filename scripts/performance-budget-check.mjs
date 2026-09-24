@@ -53,6 +53,11 @@ try {
         deviceScaleFactor: 1,
         isMobile: viewport.label === "mobile"
       });
+      // Local fixtures must not depend on the production WAF for their canonical favicon.
+      if (server) await context.route('https://covermateinsurance.com/favicon.svg*', async route => {
+        const url = new URL(route.request().url());
+        await route.fulfill({ response: await route.fetch({ url: baseUrl + url.pathname + url.search }) });
+      });
       const page = await context.newPage();
       const pageErrors = [];
       const failedRequests = [];

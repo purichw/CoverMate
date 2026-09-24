@@ -12,12 +12,13 @@ import Cases from '../server/cases-contract.cjs';
 
 const keys = ['quote','assess','review','renewal','service','claim','general'];
 const labels = ['ขอใบเสนอราคา / เปรียบเทียบแผน','ประเมินความคุ้มครองที่เหมาะสม','ตรวจ / ทบทวนกรมธรรม์ที่มีอยู่','ต่ออายุประกัน','บริการหลังการขาย / แก้ไขกรมธรรม์','สอบถาม / ขอความช่วยเหลือเรื่องเคลม','คำถามทั่วไป / เรื่องอื่น ๆ'];
-const legacy = {cmsContentVersion:17,formOptions:{query:{quote:{th:'ขอใบเสนอราคา',en:'Request a quote'},review:{th:'ของเจ้าของ',en:''}}}};
+const legacy = {cmsContentVersion:18,formOptions:{query:{quote:{th:'ขอใบเสนอราคา',en:'Request a quote'},review:{th:'ของเจ้าของ',en:''}}}};
 const migrated = migrateCmsContent(legacy);
 assert.equal(migrated.formOptions.query.quote.th, labels[0]);
 assert.deepEqual(migrated.formOptions.query.review, {th:'ของเจ้าของ',en:''});
 assert.deepEqual(migrateCmsContent(migrated),migrated);
-assert.equal(legacy.cmsContentVersion,17);
+assert.equal(legacy.cmsContentVersion,18);
+assert.equal(migrated.cmsContentVersion,19);
 for (const key of keys) assert.equal(typeof migrated.formOptions.query[key].en,'string');
 
 // Exercise the real client serializer and server validator without Firebase writes.

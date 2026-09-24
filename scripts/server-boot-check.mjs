@@ -26,6 +26,10 @@ fs.mkdirSync('uat-results/server-boot', { recursive: true });
 try {
   for (const route of ['/', '/motor']) for (const lang of ['th', 'en']) for (const width of [390, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
+    if(route==='/' && lang==='th' && width===390) await page.route('**/assets/visitor/home.css?*',async r=>{
+      await new Promise(resolve=>setTimeout(resolve,1600));
+      await r.continue();
+    });
     let reads = 0;
     page.on('pageerror', e => report.errors.push(e.message));
     await page.route('**/states/live', async r => {

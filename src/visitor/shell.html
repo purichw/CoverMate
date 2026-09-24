@@ -70,8 +70,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   function scheduleReveal(ms) {
     try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
     revealTimer = window.setTimeout(function() {
-      // A font deadline may reveal a mounted page, never an unpacked template.
-      if (document.documentElement.hasAttribute('data-covermate-route') && document.querySelector('main h1')) revealCoverMate();
+      // A font deadline may reveal a styled page, never an unpacked/unstyled template.
+      const stylesReady = [...document.querySelectorAll('link[rel="stylesheet"][href*="/assets/visitor/"]')].every(link => link.sheet);
+      if (stylesReady && document.documentElement.hasAttribute('data-covermate-route') && document.querySelector('main h1')) revealCoverMate();
     }, ms);
   }
   function revealCoverMate() {

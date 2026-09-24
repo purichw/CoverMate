@@ -1213,7 +1213,12 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         const reveal = window.__covermateReveal;
         if (reveal) {
           delete window.__covermateReveal;
-          (document.fonts ? document.fonts.ready : Promise.resolve()).then(reveal);
+          // External visitor styles mount with the component, after the document head.
+          const styles=[...document.querySelectorAll('link[rel="stylesheet"][href*="/assets/visitor/"]')];
+          Promise.all(styles.map(link=>link.sheet ? Promise.resolve() : new Promise((resolve,reject)=>{
+            link.addEventListener('load',resolve,{once:true});
+            link.addEventListener('error',reject,{once:true});
+          }))).then(()=>document.fonts?.ready).then(reveal).catch(()=>window.CoverMateBoot?.fail());
         }
       });
       if (anchor && !owner && anchor.indexOf('-focus') < 0) this.scrollToAnchor(anchor, { smooth: false, waitForFonts: true });

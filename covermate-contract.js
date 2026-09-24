@@ -777,7 +777,7 @@ const CMS_CONTENT_FIELDS = [
     ["query.service","query / service","บริการหลังการขาย / แก้ไขกรมธรรม์","After-sales service / policy changes"],
     ["query.claim","query / claim","สอบถาม / ขอความช่วยเหลือเรื่องเคลม","Claims questions / assistance"],
     ["query.general","query / general","คำถามทั่วไป / เรื่องอื่น ๆ","General questions / other enquiries"],
-    ["query.compare","query / compare (legacy)","เปรียบเทียบแผน","Compare plans"],
+    ["query.compare","query / compare","เปรียบเทียบแผน","Compare plans"],
     ["coverage.life","coverage / life","ประกันชีวิต","Life"],
     ["coverage.health","coverage / health","ประกันสุขภาพ","Health"],
     ["coverage.motor","coverage / motor","ประกันรถยนต์","Motor"],
@@ -985,17 +985,11 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
-  // Replace only previous defaults. Owner edits and intentional blanks survive.
-  if (previousVersion < 19) {
-    const oldTopics = {quote:['ขอใบเสนอราคา','Request a quote'],general:['สอบถามทั่วไป','General question'],review:['ทบทวนกรมธรรม์เดิม','Review my existing policy'],claim:['ช่วยเรื่องเคลม','Help with a claim']};
-    CMS_CONTENT_FIELDS.filter(field=>field.path.startsWith('formOptions.query.')).forEach(field=>{
-      ['th','en'].forEach((lang,index)=>{
-        const path=field.path+'.'+lang, value=cmsGet(next,path);
-        if(value===undefined || value===oldTopics[field.path.split('.').at(-1)]?.[index]) cmsSet(next,path,field.seed[lang]);
-        if(value===undefined && previousVersion<5) next.cmsLegacyCopy=[...new Set([...(next.cmsLegacyCopy||[]),path])];
-      });
-    });
-  }
+  const oldTopics = {quote:['ขอใบเสนอราคา','Request a quote'],general:['สอบถามทั่วไป','General question'],review:['ทบทวนกรมธรรม์เดิม','Review my existing policy'],claim:['ช่วยเรื่องเคลม','Help with a claim']};
+  for(const f of CMS_CONTENT_FIELDS) ['th','en'].forEach((lang,i)=>{
+    const old=oldTopics[f.path.replace('formOptions.query.','')]?.[i], path=f.path+'.'+lang;
+    if(old!==undefined && cmsGet(next,path)===old) cmsSet(next,path,f.seed[lang]);
+  });
   // Replace only the bundled legacy mark, never a custom upload or an intentional blank.
   if (previousVersion < 17) ['homeDesign.contactIconLine','footer.iconLine'].forEach(path => {
     if (cmsGet(next,path) === 'assets/brand/line-icon.svg') cmsSet(next,path,'assets/brand/LINE_Brand_icon.png');
@@ -1024,7 +1018,7 @@ function migrateCmsContent(config) {
   });
   // Seed only newly introduced presentation fields; intentional blanks stay blank.
   if (previousVersion >= 5) {
-    CMS_CONTENT_FIELDS.filter(field => (previousVersion < 18 && field.group === 'Motor comparison') || (previousVersion < 17 && field.group === 'LINE contact') || (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+    CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('formOptions.query.') || (previousVersion < 18 && field.group === 'Motor comparison') || (previousVersion < 17 && field.group === 'LINE contact') || (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
       if (field.localized) ['th','en'].forEach(lang => {
         const path = field.path + '.' + lang;
         if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);

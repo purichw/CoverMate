@@ -27,6 +27,7 @@ const commands = [
   ["node", ["scripts/release-needs-content.mjs", "--test"]],
   ["npm", ["run", "check:contact"]],
   ["node", ["scripts/line-contact-check.mjs"]],
+  ["node", ["scripts/custom-select-check.mjs"]],
   ["npm", ["run", "check:advisor"]],
   ["npm", ["run", "check:admin-structure"]],
   ["npm", ["run", "check:motor-design", "--", "--contract-only"]],
