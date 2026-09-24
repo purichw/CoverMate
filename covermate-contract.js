@@ -432,8 +432,13 @@ function normalizeTierRemarks(config, options = {}) {
 }
 
 const CMS_CONTENT_VERSION = 18;
-function localizedCmsFields(prefix,group,entries) {
-  return entries.map(([key,label,th,en])=>({path:prefix+'.'+key,label,group,localized:true,seed:{th,en}}));
+function localizedCmsFields(prefix,group,entries,legacyInline) {
+  return entries.map(([key,label,th,en])=>{
+    const field={path:prefix+'.'+key,label,group,localized:true};
+    if (legacyInline !== undefined) field.legacyInline=legacyInline;
+    field.seed={th,en};
+    return field;
+  });
 }
 const CMS_CONTENT_FIELDS = [
   {path:'advisor.fullName',label:'Full name (real advisor only)',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
@@ -700,11 +705,13 @@ const CMS_CONTENT_FIELDS = [
     ["contactContactPlaceholder","Contact placeholder","เช่น LINE ID หรือเบอร์โทรของคุณ","Your LINE ID or phone number"],
     ["contactDetailsPlaceholder","Details placeholder","เล่าเรื่องที่อยากให้เราช่วยดูเพิ่มเติม","Tell us what you would like help with"]
   ]),
-  {path:'homeDesign.comparisonTitle',label:'หัวตารางเปรียบเทียบ',group:'Motor comparison',localized:true,seed:{th:'ตารางเปรียบเทียบความคุ้มครอง',en:'Compare motor coverage'}},
-  {path:'homeDesign.comparisonSubtitle',label:'คำอธิบายหัวตาราง',group:'Motor comparison',localized:true,seed:{th:'เลือกความคุ้มครองที่ใช่ สำหรับคุณ',en:'Find the cover that fits you'}},
-  {path:'homeDesign.comparisonMobileSubtitle',label:'คำแนะนำการเปิดหัวข้อบนมือถือ',group:'Motor comparison',localized:true,seed:{th:'เลือกหัวข้อเพื่อดูความคุ้มครองของแต่ละชั้น',en:'Choose a topic to compare each class'}},
-  {path:'homeDesign.comparisonNotesLabel',label:'ชื่อแถวหมายเหตุ',group:'Motor comparison',localized:true,seed:{th:'หมายเหตุ',en:'Notes'}},
-  {path:'homeDesign.comparisonStatement',label:'ข้อความปิดท้ายตาราง (ไม่บังคับ)',group:'Motor comparison',localized:true,seed:{th:'ขับขี่สบายใจ\nให้เราดูแล',en:'Drive with confidence.\nWe are here for you.'}},
+  ...localizedCmsFields("homeDesign","Motor comparison",[
+    ["comparisonTitle","หัวตารางเปรียบเทียบ","ตารางเปรียบเทียบความคุ้มครอง","Compare motor coverage"],
+    ["comparisonSubtitle","คำอธิบายหัวตาราง","เลือกความคุ้มครองที่ใช่ สำหรับคุณ","Find the cover that fits you"],
+    ["comparisonMobileSubtitle","คำแนะนำการเปิดหัวข้อบนมือถือ","เลือกหัวข้อเพื่อดูความคุ้มครองของแต่ละชั้น","Choose a topic to compare each class"],
+    ["comparisonNotesLabel","ชื่อแถวหมายเหตุ","หมายเหตุ","Notes"],
+    ["comparisonStatement","ข้อความปิดท้ายตาราง (ไม่บังคับ)","ขับขี่สบายใจ\nให้เราดูแล","Drive with confidence.\nWe are here for you."]
+  ]),
   {path:'homeDesign.contactBackground',label:'Background artwork',group:'Home contact',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   ...['line','facebook','hours','area','reassurance','form'].map(key => ({path:'homeDesign.contactIcon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Home contact',media:true,seed:key==='line'?'assets/brand/LINE_Brand_icon.png':key==='facebook'?'assets/brand/facebook-icon.svg':''})),
   ...localizedCmsFields("lineContact","LINE contact",[
@@ -758,26 +765,28 @@ const CMS_CONTENT_FIELDS = [
   {"path":"lifeFocus.noUnitLinked","label":"Trust: unit-linked policy","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ไม่เสนอยูนิตลิงก์","en":"No unit-linked plans"}},
   {"path":"lifeFocus.exclusions","label":"Trust: exclusions","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"อธิบายข้อยกเว้นก่อนเซ็น","en":"Exclusions explained upfront"}},
   {"path":"lifeFocus.claims","label":"Trust: claims support","group":"Life focus","localized":true,"legacyInline":true,"seed":{"th":"ดูแลต่อเนื่องถึงการเคลม","en":"Support through claims"}},
-  {"path":"formOptions.topicPrompt","label":"topicPrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— เลือกหัวข้อ —","en":"— Select a topic —"}},
-  {"path":"formOptions.coveragePrompt","label":"coveragePrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— เลือกความคุ้มครอง —","en":"— Select coverage —"}},
-  {"path":"formOptions.policyPrompt","label":"policyPrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— ประกันประเภทไหน —","en":"— Which policy —"}},
-  {"path":"formOptions.monthPrompt","label":"monthPrompt","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"— หมดอายุเดือนไหน —","en":"— Expires which month —"}},
-  {"path":"formOptions.query.quote","label":"query / quote","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ขอใบเสนอราคา","en":"Request a quote"}},
-  {"path":"formOptions.query.compare","label":"query / compare","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"เปรียบเทียบแผน","en":"Compare plans"}},
-  {"path":"formOptions.query.general","label":"query / general","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"สอบถามทั่วไป","en":"General question"}},
-  {"path":"formOptions.query.review","label":"query / review","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ทบทวนกรมธรรม์เดิม","en":"Review my existing policy"}},
-  {"path":"formOptions.query.claim","label":"query / claim","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ช่วยเรื่องเคลม","en":"Help with a claim"}},
-  {"path":"formOptions.coverage.life","label":"coverage / life","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันชีวิต","en":"Life"}},
-  {"path":"formOptions.coverage.health","label":"coverage / health","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันสุขภาพ","en":"Health"}},
-  {"path":"formOptions.coverage.motor","label":"coverage / motor","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันรถยนต์","en":"Motor"}},
-  {"path":"formOptions.coverage.accident","label":"coverage / accident","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันอุบัติเหตุ","en":"Accident"}},
-  {"path":"formOptions.coverage.savings","label":"coverage / savings","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันสะสมทรัพย์","en":"Savings & retirement"}},
-  {"path":"formOptions.coverage.unsure","label":"coverage / unsure","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ยังไม่แน่ใจ","en":"Not sure yet"}},
-  {"path":"formOptions.renewal.motor","label":"renewal / motor","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันรถยนต์","en":"Motor"}},
-  {"path":"formOptions.renewal.compulsory","label":"renewal / compulsory","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"พ.ร.บ. รถยนต์","en":"Compulsory (พ.ร.บ.)"}},
-  {"path":"formOptions.renewal.health","label":"renewal / health","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันสุขภาพ","en":"Health"}},
-  {"path":"formOptions.renewal.life","label":"renewal / life","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันชีวิต","en":"Life"}},
-  {"path":"formOptions.renewal.accident","label":"renewal / accident","group":"Form choices","localized":true,"legacyInline":true,"seed":{"th":"ประกันอุบัติเหตุ","en":"Personal accident"}},
+  ...localizedCmsFields("formOptions","Form choices",[
+    ["topicPrompt","topicPrompt","— เลือกหัวข้อ —","— Select a topic —"],
+    ["coveragePrompt","coveragePrompt","— เลือกความคุ้มครอง —","— Select coverage —"],
+    ["policyPrompt","policyPrompt","— ประกันประเภทไหน —","— Which policy —"],
+    ["monthPrompt","monthPrompt","— หมดอายุเดือนไหน —","— Expires which month —"],
+    ["query.quote","query / quote","ขอใบเสนอราคา","Request a quote"],
+    ["query.compare","query / compare","เปรียบเทียบแผน","Compare plans"],
+    ["query.general","query / general","สอบถามทั่วไป","General question"],
+    ["query.review","query / review","ทบทวนกรมธรรม์เดิม","Review my existing policy"],
+    ["query.claim","query / claim","ช่วยเรื่องเคลม","Help with a claim"],
+    ["coverage.life","coverage / life","ประกันชีวิต","Life"],
+    ["coverage.health","coverage / health","ประกันสุขภาพ","Health"],
+    ["coverage.motor","coverage / motor","ประกันรถยนต์","Motor"],
+    ["coverage.accident","coverage / accident","ประกันอุบัติเหตุ","Accident"],
+    ["coverage.savings","coverage / savings","ประกันสะสมทรัพย์","Savings & retirement"],
+    ["coverage.unsure","coverage / unsure","ยังไม่แน่ใจ","Not sure yet"],
+    ["renewal.motor","renewal / motor","ประกันรถยนต์","Motor"],
+    ["renewal.compulsory","renewal / compulsory","พ.ร.บ. รถยนต์","Compulsory (พ.ร.บ.)"],
+    ["renewal.health","renewal / health","ประกันสุขภาพ","Health"],
+    ["renewal.life","renewal / life","ประกันชีวิต","Life"],
+    ["renewal.accident","renewal / accident","ประกันอุบัติเหตุ","Personal accident"]
+  ],true),
   {"path":"seo.areaServed","label":"Service area","group":"Business metadata","localized":false,"seed":"Bangkok Metropolitan Region, Thailand"},
   {"path":"seo.knowsAbout","label":"Expertise (one per line)","group":"Business metadata","localized":false,"seed":"AIA life insurance\nAIA health insurance\nMotor insurance comparison\nInsurance claims support"},
   {"path":"seo.homeServiceName","label":"Home service name","group":"Business metadata","localized":true,"seed":{"th":"ที่ปรึกษาประกันชีวิต สุขภาพ และรถยนต์","en":"Life, health, and motor insurance advisory"}},
@@ -786,39 +795,51 @@ const CMS_CONTENT_FIELDS = [
   {"path":"seo.motorServiceType","label":"Motor service type","group":"Business metadata","localized":false,"seed":"Motor insurance comparison and broker advisory"},
   {"path":"seo.homeAudience","label":"Home audience","group":"Business metadata","localized":false,"seed":"People comparing personal insurance in Thailand"},
   {"path":"seo.motorAudience","label":"Motor audience","group":"Business metadata","localized":false,"seed":"People comparing motor insurance in Thailand"},
-  {"path":"publicCopy.calcSituation","label":"Situation","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"1 · ตอนนี้คุณอยู่ช่วงไหน","en":"1 · Where are you right now?"}},
-  {"path":"publicCopy.calcInputs","label":"Inputs","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"2 · ข้อมูลสำหรับคำนวณเบื้องต้น","en":"2 · Inputs for the first estimate"}},
-  {"path":"publicCopy.calcSpending","label":"Spending","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ค่าใช้จ่ายจำเป็นต่อเดือน","en":"Essential monthly spending"}},
-  {"path":"publicCopy.calcYears","label":"Years","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ต้องดูแลต่ออีกกี่ปี","en":"Years of support"}},
-  {"path":"publicCopy.calcDebt","label":"Debt","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"หนี้และภาระอนาคต","en":"Debts and future obligations"}},
-  {"path":"publicCopy.calcResources","label":"Resources","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"เงินสำรอง + ทุนเดิม","en":"Liquid assets + existing cover"}},
-  {"path":"publicCopy.calcRoomBenefit","label":"Room Benefit","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ค่าห้องในกรมธรรม์เดิม","en":"Current room benefit"}},
-  {"path":"publicCopy.calcRecovery","label":"Recovery","group":"Calculator labels","localized":true,"legacyInline":true,"seed":{"th":"ระยะพักฟื้นที่ต้องมีเงินรองรับ","en":"Recovery period to fund"}},
-  {"path":"publicCopy.calcHint","label":"Hint","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"เลือกช่วงชีวิตหนึ่งข้อ แล้วปรับตัวเลขด้านซ้ายเพื่อดูฐานคุ้มครองเบื้องต้น","en":"Pick a situation, then adjust the inputs to see a starting estimate."}},
-  {"path":"publicCopy.calcEstimateFor","label":"Estimate For","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ประมาณการสำหรับ","en":"Estimate for"}},
-  {"path":"publicCopy.calcLifeNeed","label":"Life Need","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ทุนชีวิตที่ควรเริ่มจาก","en":"Life need starting point"}},
-  {"path":"publicCopy.calcRoomGap","label":"Room Gap","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ส่วนต่างค่าห้องอ้างอิง","en":"Reference room gap"}},
-  {"path":"publicCopy.calcCiBuffer","label":"Ci Buffer","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"เงินก้อนโรคร้ายแรง","en":"CI recovery buffer"}},
-  {"path":"publicCopy.calcReference","label":"Reference","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"แหล่งข้อมูลอ้างอิง","en":"Reference source"}},
-  {"path":"publicCopy.calcReview","label":"Review","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ข้อที่ควรตรวจต่อ","en":"What to review next"}},
-  {"path":"publicCopy.calcSend","label":"Send","group":"Calculator labels","localized":true,"legacyInline":false,"seed":{"th":"ส่งตัวเลขนี้ให้เราดูต่อ","en":"Send us these numbers"}},
-  {"path":"publicCopy.renewalTitle","label":"Title","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"ตั้งเตือนต่ออายุ","en":"Set a renewal reminder"}},
-  {"path":"publicCopy.renewalPolicy","label":"Policy","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"กรมธรรม์ประเภทไหน","en":"Which policy"}},
-  {"path":"publicCopy.renewalMonth","label":"Month","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"หมดอายุเดือนไหน","en":"Expires in"}},
-  {"path":"publicCopy.renewalContact","label":"Contact","group":"Renewal form labels","localized":true,"legacyInline":true,"seed":{"th":"LINE ID หรือเบอร์โทร","en":"LINE ID or phone"}},
-  {"path":"publicCopy.renewalConsent","label":"Consent","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"ยินยอมให้ติดต่อกลับเพื่อแจ้งเตือนต่ออายุ และใช้ข้อมูลนี้เฉพาะการติดตามกรมธรรม์ที่ระบุ","en":"I agree to be contacted about this renewal reminder and to use this information only for the selected policy follow-up."}},
-  {"path":"publicCopy.renewalPrivacy","label":"Privacy","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"อ่านว่าข้อมูลถูกใช้อะไร","en":"Read how your data is used"}},
-  {"path":"publicCopy.renewalSubmit","label":"Submit","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"ตั้งเตือนให้เราจำ","en":"Remind me"}},
-  {"path":"publicCopy.renewalSuccess","label":"Success","group":"Renewal form labels","localized":true,"legacyInline":false,"seed":{"th":"ตั้งเตือนไว้แล้ว เราจะทักไปก่อน 60 วัน","en":"Set. We will message you 60 days ahead."}},
-  {"path":"publicCopy.contactScan","label":"Scan","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"สแกนเพื่อแอดไลน์","en":"Scan to add on LINE"}},
-  {"path":"publicCopy.contactTitle","label":"Title","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"สอบถามหรือขอใบเสนอราคา","en":"Ask a question or request a quotation"}},
-  {"path":"publicCopy.contactName","label":"Name","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"ชื่อที่ให้เรียก","en":"What should I call you"}},
-  {"path":"publicCopy.contactContact","label":"Contact","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"LINE ID หรือเบอร์โทร","en":"LINE ID or phone"}},
-  {"path":"publicCopy.contactTopic","label":"Topic","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"เรื่องที่ต้องการสอบถาม","en":"Type of enquiry"}},
-  {"path":"publicCopy.contactCoverage","label":"Coverage","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"ความคุ้มครองที่สนใจ","en":"Coverage of interest"}},
-  {"path":"publicCopy.contactDetails","label":"Details","group":"Consultation form labels","localized":true,"legacyInline":true,"seed":{"th":"รายละเอียดเพิ่มเติม (ถ้ามี)","en":"Anything else? (optional)"}},
-  {"path":"publicCopy.contactPrivacy","label":"Privacy","group":"Consultation form labels","localized":true,"legacyInline":false,"seed":{"th":"อ่านว่าข้อมูลถูกใช้อะไร","en":"Read how your data is used"}},
-  {"path":"publicCopy.contactSubmit","label":"Submit","group":"Consultation form labels","localized":true,"legacyInline":false,"seed":{"th":"ส่งข้อความ","en":"Send message"}},
+  ...localizedCmsFields("publicCopy","Calculator labels",[
+    ["calcSituation","Situation","1 · ตอนนี้คุณอยู่ช่วงไหน","1 · Where are you right now?"],
+    ["calcInputs","Inputs","2 · ข้อมูลสำหรับคำนวณเบื้องต้น","2 · Inputs for the first estimate"],
+    ["calcSpending","Spending","ค่าใช้จ่ายจำเป็นต่อเดือน","Essential monthly spending"],
+    ["calcYears","Years","ต้องดูแลต่ออีกกี่ปี","Years of support"],
+    ["calcDebt","Debt","หนี้และภาระอนาคต","Debts and future obligations"],
+    ["calcResources","Resources","เงินสำรอง + ทุนเดิม","Liquid assets + existing cover"],
+    ["calcRoomBenefit","Room Benefit","ค่าห้องในกรมธรรม์เดิม","Current room benefit"],
+    ["calcRecovery","Recovery","ระยะพักฟื้นที่ต้องมีเงินรองรับ","Recovery period to fund"]
+  ],true),
+  ...localizedCmsFields("publicCopy","Calculator labels",[
+    ["calcHint","Hint","เลือกช่วงชีวิตหนึ่งข้อ แล้วปรับตัวเลขด้านซ้ายเพื่อดูฐานคุ้มครองเบื้องต้น","Pick a situation, then adjust the inputs to see a starting estimate."],
+    ["calcEstimateFor","Estimate For","ประมาณการสำหรับ","Estimate for"],
+    ["calcLifeNeed","Life Need","ทุนชีวิตที่ควรเริ่มจาก","Life need starting point"],
+    ["calcRoomGap","Room Gap","ส่วนต่างค่าห้องอ้างอิง","Reference room gap"],
+    ["calcCiBuffer","Ci Buffer","เงินก้อนโรคร้ายแรง","CI recovery buffer"],
+    ["calcReference","Reference","แหล่งข้อมูลอ้างอิง","Reference source"],
+    ["calcReview","Review","ข้อที่ควรตรวจต่อ","What to review next"],
+    ["calcSend","Send","ส่งตัวเลขนี้ให้เราดูต่อ","Send us these numbers"]
+  ],false),
+  ...localizedCmsFields("publicCopy","Renewal form labels",[
+    ["renewalTitle","Title","ตั้งเตือนต่ออายุ","Set a renewal reminder"],
+    ["renewalPolicy","Policy","กรมธรรม์ประเภทไหน","Which policy"],
+    ["renewalMonth","Month","หมดอายุเดือนไหน","Expires in"],
+    ["renewalContact","Contact","LINE ID หรือเบอร์โทร","LINE ID or phone"]
+  ],true),
+  ...localizedCmsFields("publicCopy","Renewal form labels",[
+    ["renewalConsent","Consent","ยินยอมให้ติดต่อกลับเพื่อแจ้งเตือนต่ออายุ และใช้ข้อมูลนี้เฉพาะการติดตามกรมธรรม์ที่ระบุ","I agree to be contacted about this renewal reminder and to use this information only for the selected policy follow-up."],
+    ["renewalPrivacy","Privacy","อ่านว่าข้อมูลถูกใช้อะไร","Read how your data is used"],
+    ["renewalSubmit","Submit","ตั้งเตือนให้เราจำ","Remind me"],
+    ["renewalSuccess","Success","ตั้งเตือนไว้แล้ว เราจะทักไปก่อน 60 วัน","Set. We will message you 60 days ahead."]
+  ],false),
+  ...localizedCmsFields("publicCopy","Consultation form labels",[
+    ["contactScan","Scan","สแกนเพื่อแอดไลน์","Scan to add on LINE"],
+    ["contactTitle","Title","สอบถามหรือขอใบเสนอราคา","Ask a question or request a quotation"],
+    ["contactName","Name","ชื่อที่ให้เรียก","What should I call you"],
+    ["contactContact","Contact","LINE ID หรือเบอร์โทร","LINE ID or phone"],
+    ["contactTopic","Topic","เรื่องที่ต้องการสอบถาม","Type of enquiry"],
+    ["contactCoverage","Coverage","ความคุ้มครองที่สนใจ","Coverage of interest"],
+    ["contactDetails","Details","รายละเอียดเพิ่มเติม (ถ้ามี)","Anything else? (optional)"]
+  ],true),
+  ...localizedCmsFields("publicCopy","Consultation form labels",[
+    ["contactPrivacy","Privacy","อ่านว่าข้อมูลถูกใช้อะไร","Read how your data is used"],
+    ["contactSubmit","Submit","ส่งข้อความ","Send message"]
+  ],false),
   { path: 'brand.media.headerLogo', label: 'Header logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-advisory-logo-th.png', en: 'assets/brand/covermate-advisory-logo-en.png' } },
   { path: 'brand.media.footerLogo', label: 'Footer logo', group: 'Brand images', localized: true, media: true, seed: { th: 'assets/brand/covermate-footer-logo-th.png', en: 'assets/brand/covermate-footer-logo-en.png' } },
   { path: 'brand.media.mark', label: 'Brand icon', group: 'Brand images', media: true, seed: 'assets/brand/covermate-mark.png' },

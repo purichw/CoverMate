@@ -12,8 +12,9 @@ Source ownership:
 
 - `shell.html` is the outer static shell around the exported visitor bundle.
 - `template.html` is the embedded `__bundler/template` HTML with a runtime slot.
-- `home.html` and `home.css` are the compact Home projection; the
-  generator composes them into `template.html` while Motor stays shared.
+- `home.html` and `home.css` are the compact Home projection while Motor stays
+  shared. The generator composes the markup into `template.html` and emits
+  minified `assets/visitor/home.css` with a content-versioned stylesheet link.
 - `defaults.js` is the default CMS/site config injected into the runtime.
 - `runtime.js` owns rendering, route/mode state, normalized CMS projections,
   hydration, and DOM bindings in the injected `text/x-dc` runtime.
@@ -37,8 +38,11 @@ The generator preserves the exported bundler serialization rules through
 `index.html` has drifted from these sources.
 
 `build:visitor` also regenerates `server/asset-versions.json` for the published-CMS
-initial-head renderer. CSS, defaults, and runtime code are compacted only in
-generated output. Public refresh timing is shared through root
+initial-head renderer and the Home, LINE-contact and submission stylesheets in
+`assets/visitor/`. Their generated links retain the original cascade order and
+carry a hash of each stylesheet; the source check verifies these files as well
+as `index.html`. CSS, defaults, and runtime code are compacted only in generated
+output. Public refresh timing is shared through root
 `covermate-freshness.mjs`; its extraction does not change cache/poll intervals.
 
 See [architecture](../../docs/ARCHITECTURE.md),

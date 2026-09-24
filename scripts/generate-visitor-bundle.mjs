@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 import {
   buildVisitorIndex,
-  readContactStyleAssets,
+  readVisitorStyleAssets,
   readImageVersions,
   VISITOR_SOURCE_PATHS
 } from "./lib/visitor-source.mjs";
@@ -11,7 +11,7 @@ function main() {
   const next = buildVisitorIndex();
   const assetFile = new URL('../server/asset-versions.json', import.meta.url);
   const assets = JSON.stringify(readImageVersions(), null, 2) + '\n';
-  const styles = readContactStyleAssets();
+  const styles = readVisitorStyleAssets();
   const checkOnly = process.argv.includes("--check");
   if (checkOnly) {
     const current = fs.readFileSync(VISITOR_SOURCE_PATHS.index, "utf8");

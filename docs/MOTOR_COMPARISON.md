@@ -96,6 +96,19 @@ Targeted Axe checks and screenshots are written to
 `uat-results/motor-comparison/` (override with `--output=path`). These are local verification artifacts, not
 proof that a production release has been deployed.
 
+For an explicitly authorized hosted UAT check, use the existing process service
+credentials and `COVERMATE_BACKUP_KEY`, then run
+`node scripts/motor-comparison-hosted-check.mjs --write-uat --url=<CoverMate-Vercel-preview-URL>`.
+When the service account cannot manage Auth users, supply a separately authorized
+short-lived `COVERMATE_UAT_AUTH_ACCESS_TOKEN` for disabling/revoking this run's user only.
+This uses real Firebase sign-in with a temporary `uatOnly` owner, encrypts only
+the existing UAT live/draft backup, edits one existing cell, verifies Save,
+reload, Preview, Publish and a fresh visitor, then restores content only while
+the unique test identity remains the last writer. It revokes the allowlist and
+disables Auth; missing cleanup permissions produce an exact UID recovery receipt
+and a nonzero exit. Other writers are preserved. Normal UAT Publish history is
+retained. Production, leads and notification endpoints are excluded.
+
 For a read-only local preview of that same snapshot:
 
 ```sh
