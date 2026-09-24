@@ -153,12 +153,15 @@ Important dynamic fields:
   under `fit.calculator.situations`. It is additive-normalized so an older live
   document can render the current calculator without losing owner-managed copy
   or future custom assumption values.
-- `tiers.heads[]` defines motor comparison columns.
-- `tiers.items[]` defines class rows. Each tier row uses `st[]` states aligned
+- `tiers.heads[]` defines motor comparison topics (desktop rows and mobile disclosures).
+- `tiers.items[]` defines classes (desktop columns). Each tier uses `st[]` states aligned
   to `heads[]` by array index, where `y` means covered, `p` means conditional,
   and `n` means not covered. Missing/invalid states normalize to `n`. Durable
   IDs on tier rows and heads are identity metadata only; they do not change the
-  existing coverage-state index semantics.
+  existing coverage-state index semantics. `item.cellRemarks[headId].th/en`
+  stores independent localized remarks for every status. Explicit empty strings
+  suppress legacy conditional-note fallback. See [Motor comparison](MOTOR_COMPARISON.md)
+  for migration and editing behavior.
 
 ## Ownership Rules
 

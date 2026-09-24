@@ -58,6 +58,7 @@
     "check:cms:browser": "node scripts/cms-ownership-browser-check.mjs",
     "check:cms:site": "node scripts/cms-site-audit-check.mjs",
     "check:motor-design": "node scripts/motor-shared-design-check.mjs",
+    "check:motor-comparison": "node scripts/motor-comparison-browser-check.mjs",
     "check:cms:site:browser": "node scripts/cms-site-audit-check.mjs --browser",
     "check:media": "node scripts/media-editor-check.mjs",
     "check:media:inline": "node scripts/inline-media-browser-check.mjs",

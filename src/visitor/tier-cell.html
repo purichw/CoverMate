@@ -1,0 +1,9 @@
+<!-- Shared coverage cell: the CMS projection owns state, remarks and permissions. -->
+<div class="cm-tier-cell" data-tier-id="{{ cell.tierId }}" data-head-id="{{ cell.headId }}" data-status="{{ cell.status }}" data-noedit>
+  <sc-if value="{{ cell.editable }}"><button type="button" class="cm-tier-status cm-tier-status-edit" data-tier-status sc-camel-on-click="{{ cell.cycle }}" disabled="{{ cell.disabled }}" aria-label="{{ cell.statusActionLabel }}" title="{{ cell.statusActionLabel }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="color:{{ cell.fg }};background:{{ cell.bg }}"><path d="{{ cell.d }}"/></svg></button></sc-if>
+  <sc-if value="{{ cell.readonly }}"><span class="cm-tier-status" role="img" aria-label="{{ cell.statusLabel }}" title="{{ cell.statusLabel }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="color:{{ cell.fg }};background:{{ cell.bg }}"><path d="{{ cell.d }}"/></svg></span></sc-if>
+  <span class="cm-tier-cell-copy"><span class="cm-tier-cell-heading">{{ cell.head }}</span>
+    <sc-if value="{{ cell.editable }}"><button type="button" class="cm-tier-remark cm-tier-remark-edit" data-tier-remark sc-camel-on-click="{{ cell.editRemark }}" disabled="{{ cell.disabled }}" aria-label="{{ cell.remarkActionLabel }}"><sc-if value="{{ cell.hasNote }}">{{ cell.note }}</sc-if><sc-if value="{{ !cell.hasNote }}"><span class="cm-tier-add-remark">+ Remark</span></sc-if></button></sc-if>
+    <sc-if value="{{ cell.readonly }}"><sc-if value="{{ cell.hasNote }}"><span class="cm-tier-remark">{{ cell.note }}</span></sc-if></sc-if>
+  </span>
+</div>

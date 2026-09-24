@@ -73,8 +73,8 @@ try {
   assert.equal(await page.locator('.hm-logo-tile').count(),14);
   assert.equal(await page.locator('#claim,#fit,#voices').count(),0);
   assert.equal(await page.locator('.hm-tier-card').count(),3);
-  assert.equal(await page.locator('.hm-comparison-card').count(),5);
-  assert.equal(await page.locator('.hm-comparison-card').first().locator('li').count(),5);
+  assert.equal(await page.locator('.hm-tier-table [role="columnheader"]').count(),6);
+  assert.equal(await page.locator('.hm-tier-table [role="row"]').count(),8);
   assert.equal(await page.locator('#faq details').count(),9);
   assert.equal(await page.locator('#guides').count(),0);
   pass('D01,D05,D06,D09,D11,D12','Source categories, actual insurer list, hidden flags, complete tier matrix and FAQ/guide counts.');
@@ -163,8 +163,9 @@ try {
   assert.equal(await page.locator('article.hm-tier-card').count(),3);
   assert.equal(await page.locator('.hm-tier-card :is(summary,a,button,.hm-plus)').count(),0);
   assert.ok(await page.locator('.hm-tier-detail').first().isVisible());
-  await page.locator('#home-tier-comparison > summary').click();
-  assert.equal(await page.locator('#home-tier-comparison').evaluate(el=>el.open),true);
+  const comparisonAxis = page.locator('#home-tier-comparison details.hm-tier-accordion').nth(1);
+  await comparisonAxis.locator('summary').click();
+  assert.equal(await comparisonAxis.evaluate(el=>el.open),true);
   await shot('mobile-tier-expanded');
   pass('D02,N09','Keyboard coverage opening closes peer; featured tiers are static CMS cards, with the full comparison available separately.');
   await page.locator('#talk input[name="contact"]').fill('synthetic-refresh-id');

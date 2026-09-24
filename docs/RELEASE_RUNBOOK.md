@@ -245,7 +245,8 @@ Minimum checks:
 - insurer logos render from editable insurer items, including background-image
   logo tiles
 - insurer relationship proof cards render
-- motor tier comparison renders as a desktop table and mobile stacked cards
+- motor tier comparison renders as a desktop table and mobile topic disclosures;
+  only Edit mode exposes per-cell status and localized Remark controls
 - policy review, claim help, renewal reminders, guides, fee transparency, and
   privacy/PDPA sections render when present in the live schema
 - contact form enquiry-type and coverage selects render

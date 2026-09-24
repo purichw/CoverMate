@@ -55,7 +55,7 @@ try {
         }
       }
       if (route === '/') {
-        const comparison = page.locator('#home-tier-comparison');
+        const comparison = page.locator('#home-tier-comparison details.hm-tier-accordion').nth(1);
         await comparison.locator('summary').click();
         assert.equal(await comparison.evaluate(el => el.open),true,'Disclosure remains clickable above the persistent bar');
         await comparison.locator('summary').click();

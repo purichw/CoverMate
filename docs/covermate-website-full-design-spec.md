@@ -610,13 +610,17 @@ without sending visitors to a separate comparison page.
 Structure:
 
 - Section ID/type: `tiers`.
-- Desktop renders a table with 5 rows (`ชั้น 1`, `ชั้น 2+`, `ชั้น 2`,
-  `ชั้น 3+`, `ชั้น 3`) and 5 coverage axes.
-- Mobile renders stacked class cards so the visitor does not horizontally
-  scroll.
+- Desktop at 1000px and wider renders classes as columns (`ชั้น 1`, `ชั้น 2+`,
+  `ชั้น 2`, `ชั้น 3+`, `ชั้น 3`) and coverage topics as rows, with suitability
+  and class-note rows. The count follows enabled CMS classes/topics.
+- Smaller screens render topic disclosures, each listing all enabled classes;
+  suitability starts open. Home and Motor share this composition.
 - Cell states are data-driven: `y` covered, `p` conditional, `n` not covered.
-- The admin Content tab can edit headings, rows, row notes, cell states, add
-  columns, and add tiers.
+- Edit mode allows clicking a cell status to cycle it and editing a separate
+  localized Remark for every state. Content tools also edit headings, class
+  notes, cell states and remarks, and add/reorder/hide/duplicate topics/classes.
+- See [Motor comparison](MOTOR_COMPARISON.md) for the durable-ID remark map,
+  legacy migration, history and draft/publish contracts.
 
 Guardrails:
 

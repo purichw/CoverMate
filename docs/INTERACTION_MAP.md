@@ -226,11 +226,15 @@ For sections that use structured cards, the Content tab exposes card editing
 instead of relying on hard-coded copy. Current editable card sets include the
 insurer relationship proof cards, claim hotline/support cards, and fee
 transparency cards. The Content tab also exposes insurer item logo paths and
-the motor tier comparison rows/coverage columns/cell states. Repeatable items,
+the motor tier classes/coverage topics/cell states and localized Remarks. Edit
+mode also exposes status cycling and a Remark dialog directly on every cell.
+Remark editing supports Cancel/Escape, explicit clearing and the shared
+Undo/Redo/Draft/Preview/Publish flow; see [Motor comparison](MOTOR_COMPARISON.md).
+Repeatable items,
 cards, and tier headers carry durable CMS IDs so editing, adding, duplicating,
 deleting, and supported reorder controls keep identity with the intended
 logical item. Tier coverage states still follow the existing `items[].st[]` to
-`heads[]` index alignment.
+`heads[]` index alignment. Cell remarks use the durable head ID as their map key.
 
 Home exposes `cover` as its own compact public/Admin section; inline
 and panel controls share semantic owners. Guides items are now edited in FAQ.

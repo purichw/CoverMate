@@ -1939,11 +1939,15 @@ textarea.input { min-height: 90px; resize: vertical; }
             <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
               <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ความคุ้มครอง (กดเพื่อสลับ)</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ความคุ้มครอง (แตะเพื่อเปลี่ยน)</sc-if></span>
               <sc-for list="{{ it.cells }}" as="cell" hint-placeholder-count="5">
-                <button type="button" sc-camel-on-click="{{ cell.cycle }}" style="display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--color-neutral-300);cursor:pointer;font:inherit;padding:8px 11px;border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-hover="border-color:{{ A_base }}">
+                <div data-tier-id="{{ cell.tierId }}" data-head-id="{{ cell.headId }}" style="display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--color-neutral-300);border-radius:12px">
+                <button type="button" data-tier-status data-noedit sc-camel-on-click="{{ cell.cycle }}" style="display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--color-neutral-300);cursor:pointer;font:inherit;padding:8px 11px;border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-hover="border-color:{{ A_base }}">
                   <span style="width:22px;height:22px;flex:0 0 auto;border-radius:999px;background:{{ cell.bg }};color:{{ cell.fg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">{{ cell.glyph }}</span>
                   <span style="font-size:13px;line-height:1.4;margin-right:auto;min-width:0">{{ cell.label }}</span>
                   <span style="font-size:11.5px;font-weight:700;color:var(--color-neutral-700);white-space:nowrap">{{ cell.state }}</span>
                 </button>
+                <sc-if value="{{ cell.hasNote }}"><span style="font-size:13px;line-height:1.5;color:var(--color-accent-800);white-space:pre-wrap;overflow-wrap:anywhere">{{ cell.note }}</span></sc-if>
+                <button type="button" data-tier-remark data-noedit aria-label="{{ cell.remarkActionLabel }}" sc-camel-on-click="{{ cell.editRemark }}" style="align-self:flex-start;min-height:36px;border:0;border-radius:8px;padding:6px 10px;background:var(--color-accent-200);color:var(--color-accent-800);font:inherit;font-size:13px;font-weight:700;cursor:pointer">{{ cell.remarkLabel }}</button>
+                </div>
               </sc-for>
             </div>
           </sc-if>
@@ -1951,17 +1955,18 @@ textarea.input { min-height: 90px; resize: vertical; }
       </sc-for>
 
       <sc-if value="{{ hasHeads }}" hint-placeholder-val="{{ false }}">
-        <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-2)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">หัวตารางความคุ้มครอง</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">คอลัมน์ความคุ้มครอง</sc-if></div>
+        <div style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding-top:var(--space-2)">หัวข้อความคุ้มครอง</div>
         <sc-for list="{{ editHeads }}" as="hd" hint-placeholder-count="5">
-          <div data-admin-repeatable-head-id="{{ hd.id }}" style="display:flex;align-items:center;gap:8px">
-            <button type="button" sc-camel-on-click="{{ hd.up }}" aria-label="เลื่อนคอลัมน์ขึ้น" title="เลื่อนคอลัมน์ขึ้น">↑</button>
-            <button type="button" sc-camel-on-click="{{ hd.down }}" aria-label="เลื่อนคอลัมน์ลง" title="เลื่อนคอลัมน์ลง">↓</button>
-            <input value="{{ hd.value }}" sc-camel-on-change="{{ hd.onInput }}" style="flex:1 1 auto;min-width:0;font:inherit;font-size:14px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+          <div data-admin-repeatable-head-id="{{ hd.id }}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button type="button" sc-camel-on-click="{{ hd.up }}" aria-label="เลื่อนหัวข้อขึ้น" title="เลื่อนหัวข้อขึ้น" style="min-width:36px;min-height:36px">↑</button>
+            <button type="button" sc-camel-on-click="{{ hd.down }}" aria-label="เลื่อนหัวข้อลง" title="เลื่อนหัวข้อลง" style="min-width:36px;min-height:36px">↓</button>
+            <input aria-label="ชื่อหัวข้อความคุ้มครอง" value="{{ hd.value }}" sc-camel-on-change="{{ hd.onInput }}" style="flex:1 1 160px;min-width:0;font:inherit;font-size:14px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
             <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ hd.stateBg }};color:{{ hd.stateFg }}">{{ hd.stateLabel }}</span>
-            <button type="button" sc-camel-on-click="{{ hd.toggleVisible }}" aria-label="แสดงหรือซ่อนคอลัมน์" style="min-height:30px;flex:0 0 auto;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px;transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)">{{ hd.visibilityLabel }}</button>
+            <button type="button" sc-camel-on-click="{{ hd.duplicate }}" aria-label="ทำสำเนาหัวข้อความคุ้มครอง" style="min-height:36px;flex:0 0 auto;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px">ทำสำเนา</button>
+            <button type="button" sc-camel-on-click="{{ hd.toggleVisible }}" aria-label="แสดงหรือซ่อนหัวข้อ" style="min-height:36px;flex:0 0 auto;border:none;cursor:pointer;border-radius:999px;background:var(--color-neutral-200);color:var(--color-neutral-800);font:inherit;font-size:11.5px;font-weight:800;padding:0 10px;transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)">{{ hd.visibilityLabel }}</button>
           </div>
         </sc-for>
-        <button type="button" sc-camel-on-click="{{ addHead }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:11px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ เพิ่มคอลัมน์</button>
+        <button type="button" sc-camel-on-click="{{ addHead }}" style="border:1.5px dashed var(--color-neutral-400);cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;padding:11px;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-800);transition:background .2s ease,border-color .2s ease" style-hover="background:var(--color-surface);border-color:{{ A_base }}">+ เพิ่มหัวข้อความคุ้มครอง</button>
       </sc-if>
 
       <sc-if value="{{ hasCards }}" hint-placeholder-val="{{ false }}">
@@ -2226,6 +2231,22 @@ textarea.input { min-height: 90px; resize: vertical; }
 </sc-if>
 <sc-if value="{{ showAdminBusyShield }}" hint-placeholder-val="{{ false }}">
   <div data-noedit="true" aria-hidden="true" style="position:fixed;inset:0;z-index:92;cursor:wait;background:rgba(246,239,228,.15)"></div>
+</sc-if>
+<sc-if value="{{ showTierRemarkEditor }}" hint-placeholder-val="{{ false }}">
+  <div data-noedit="true" role="presentation" style="position:fixed;inset:0;z-index:98;display:flex;align-items:center;justify-content:center;padding:18px;background:color-mix(in srgb,var(--color-neutral-900) 46%,transparent);backdrop-filter:blur(6px)">
+    <section data-tier-remark-dialog role="dialog" aria-modal="true" aria-labelledby="tier-remark-title" aria-describedby="tier-remark-help" style="width:min(480px,100%);max-height:calc(100dvh - 36px);overflow:auto;border-radius:24px;padding:clamp(20px,4vw,30px);background:var(--color-bg);color:var(--color-text);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:14px">
+      <h2 id="tier-remark-title" style="margin:0;font:inherit;font-size:24px;font-weight:800">Remarks · {{ tierRemarkLanguage }}</h2>
+      <p style="margin:0;font-weight:700;line-height:1.5">{{ tierRemarkTitle }}</p>
+      <p id="tier-remark-help" style="margin:0;font-size:14px;line-height:1.5;color:var(--color-neutral-700)">เพิ่มคำอธิบายได้ทุกสถานะ เว้นว่างเพื่อนำ Remarks ออกจากช่องนี้ การเปลี่ยนแปลงจะอยู่ใน Draft จนกว่าจะ Publish</p>
+      <label for="tier-remark-input" style="font-weight:700;font-size:14px">Remarks (ไม่บังคับ)</label>
+      <textarea id="tier-remark-input" maxlength="1000" rows="4" value="{{ tierRemarkValue }}" sc-camel-on-input="{{ onTierRemarkInput }}" style="width:100%;box-sizing:border-box;min-height:120px;resize:vertical;border:1.5px solid var(--color-neutral-400);border-radius:12px;padding:12px;font:inherit;line-height:1.5;background:var(--color-neutral-100);color:var(--color-text)"></textarea>
+      <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px">
+        <button type="button" data-tier-remark-clear sc-camel-on-click="{{ clearTierRemark }}" style="margin-right:auto;min-height:44px;border:0;border-radius:999px;padding:0 14px;font:inherit;font-weight:700;background:transparent;color:var(--color-accent-800);cursor:pointer">ล้างข้อความ</button>
+        <button type="button" data-tier-remark-cancel sc-camel-on-click="{{ closeTierRemark }}" style="min-height:44px;border:1.5px solid var(--color-neutral-400);border-radius:999px;padding:0 18px;font:inherit;font-weight:700;background:transparent;color:var(--color-text);cursor:pointer">ยกเลิก</button>
+        <button type="button" data-tier-remark-save sc-camel-on-click="{{ saveTierRemark }}" style="min-height:44px;border:0;border-radius:999px;padding:0 18px;font:inherit;font-weight:800;background:var(--color-accent-700);color:var(--color-bg);cursor:pointer">บันทึก Remarks</button>
+      </div>
+    </section>
+  </div>
 </sc-if>
 <sc-if value="{{ showAdminConfirm }}" hint-placeholder-val="{{ false }}">
   <div data-admin-confirm="true" data-noedit="true" role="presentation" style="position:fixed;inset:0;z-index:98;display:flex;align-items:center;justify-content:center;padding:clamp(18px,4vw,40px);background:color-mix(in srgb,var(--color-neutral-900) 46%,transparent);backdrop-filter:blur(6px)">

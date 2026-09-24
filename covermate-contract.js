@@ -371,6 +371,7 @@ export function repeatableContentIndex(list, id, fallbackIndex) {
   return fallbackIndex >= 0 && fallbackIndex < list.length ? fallbackIndex : -1;
 }
 
+
 export const DEFAULT_ADVISOR_LOGO = "assets/logos/aia-logo.png";
 export const DEFAULT_ADVISOR_LOGO_ALT = "AIA";
 export const DEFAULT_CONTACT = {
@@ -385,7 +386,52 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 16;
+// Status remains positional for backwards compatibility. Remarks are keyed by
+// the durable coverage ID, so reordering or hiding an axis cannot move its copy.
+function normalizeTierRemarks(config, options = {}) {
+  const next = options.mutate ? (config || {}) : JSON.parse(JSON.stringify(config || {}));
+  const sections = [...(Array.isArray(next.sections) ? next.sections : []), ...['hero','trust','cover'].map(key => next.motorPage?.[key])];
+  sections.filter(section => section?.type === 'tiers').forEach(section => {
+    const tags = {
+      '1': {th:'คุ้มครองครบที่สุด',en:'Broadest cover'},
+      '2+': {th:'คุ้มค่า คุ้มครองรอบด้าน',en:'Value and wider protection'},
+      '2': {th:'เหมาะกับรถที่อายุเยอะขึ้น',en:'For older vehicles'},
+      '3+': {th:'ประหยัด คุ้มครองคู่กรณี',en:'Budget-friendly protection'},
+      '3': {th:'คุ้มครองพื้นฐาน',en:'Basic cover'}
+    };
+    const heads = Array.isArray(section.heads) ? section.heads : [];
+    heads.forEach(head => {
+      if (!head || head.icon !== undefined) return;
+      const label = `${head.th || ''} ${head.en || ''}`;
+      head.icon = /คู่กรณี|third party/i.test(label) ? 'users' : /อุบัติเหตุส่วนบุคคล|personal accident/i.test(label) ? 'user'
+        : /ธรรมชาติ|flood|natural disaster/i.test(label) ? 'cloudRain' : /หาย|ไฟไหม้|theft|fire/i.test(label) ? 'shieldCheck'
+        : /รถของผู้เอาประกัน|own car|own vehicle/i.test(label) ? 'car' : 'shield';
+    });
+    (section.items || []).forEach(item => {
+      if (!item || typeof item !== 'object') return;
+      item.cellRemarks = item.cellRemarks && typeof item.cellRemarks === 'object' && !Array.isArray(item.cellRemarks) ? item.cellRemarks : {};
+      const classLabel = [item.th?.label,item.en?.label].map(value => /^(?:ชั้น|Class)\s*(1|2\+?|3\+?)$/i.exec(String(value || '').trim())).find(Boolean);
+      ['th','en'].forEach(lang => {
+        item[lang] = item[lang] && typeof item[lang] === 'object' ? item[lang] : {};
+        if (item[lang].tag === undefined) item[lang].tag = classLabel ? tags[classLabel[1]][lang] : '';
+      });
+      heads.forEach((head,index) => {
+        if (typeof head?.id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{1,96}$/.test(head.id)) return;
+        const saved = item.cellRemarks[head.id];
+        const remark = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+        ['th','en'].forEach(lang => {
+          if (remark[lang] === undefined) remark[lang] = item.st?.[index] === 'p' ? String(item[lang]?.note || '') : '';
+          else if (typeof remark[lang] !== 'string') remark[lang] = '';
+          remark[lang] = remark[lang].slice(0,1000);
+        });
+        item.cellRemarks[head.id] = remark;
+      });
+    });
+  });
+  return next;
+}
+
+const CMS_CONTENT_VERSION = 17;
 const CMS_CONTENT_FIELDS = [
   {path:'advisor.fullName',label:'Full name (real advisor only)',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
   {path:'advisor.role',label:'Personal role',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
@@ -632,6 +678,11 @@ const CMS_CONTENT_FIELDS = [
   {path:'homeDesign.aboutTeaser',label:'Optional about teaser',group:'Home design',localized:true,seed:{th:'',en:''}},
   {path:'homeDesign.detailsLabel',label:'Read more',group:'Home design',localized:true,seed:{th:'อ่านเพิ่มเติม',en:'Read more'}},
   {path:'homeDesign.comparisonLabel',label:'Full comparison',group:'Home design',localized:true,seed:{th:'เปรียบเทียบความคุ้มครองทุกชั้น',en:'Compare all cover levels'}},
+  {path:'homeDesign.comparisonTitle',label:'หัวตารางเปรียบเทียบ',group:'Motor comparison',localized:true,seed:{th:'ตารางเปรียบเทียบความคุ้มครอง',en:'Compare motor coverage'}},
+  {path:'homeDesign.comparisonSubtitle',label:'คำอธิบายหัวตาราง',group:'Motor comparison',localized:true,seed:{th:'เลือกความคุ้มครองที่ใช่ สำหรับคุณ',en:'Find the cover that fits you'}},
+  {path:'homeDesign.comparisonMobileSubtitle',label:'คำแนะนำการเปิดหัวข้อบนมือถือ',group:'Motor comparison',localized:true,seed:{th:'เลือกหัวข้อเพื่อดูความคุ้มครองของแต่ละชั้น',en:'Choose a topic to compare each class'}},
+  {path:'homeDesign.comparisonNotesLabel',label:'ชื่อแถวหมายเหตุ',group:'Motor comparison',localized:true,seed:{th:'หมายเหตุ',en:'Notes'}},
+  {path:'homeDesign.comparisonStatement',label:'ข้อความปิดท้ายตาราง (ไม่บังคับ)',group:'Motor comparison',localized:true,seed:{th:'ขับขี่สบายใจ\nให้เราดูแล',en:'Drive with confidence.\nWe are here for you.'}},
   {path:'homeDesign.motorLabel',label:'Motor page link',group:'Home design',localized:true,seed:{th:'ดูประกันรถยนต์ทั้งหมด',en:'Explore motor insurance'}},
   {path:'homeDesign.menuLabel',label:'Navigation menu',group:'Home design',localized:true,seed:{th:'เมนู',en:'Menu'}},
   {path:'homeDesign.closeLabel',label:'Close menu',group:'Home design',localized:true,seed:{th:'ปิดเมนู',en:'Close menu'}},
@@ -916,7 +967,7 @@ function migrateCmsContent(config) {
   });
   // Seed only newly introduced presentation fields; intentional blanks stay blank.
   if (previousVersion >= 5) {
-    CMS_CONTENT_FIELDS.filter(field => (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+    CMS_CONTENT_FIELDS.filter(field => field.group === 'Motor comparison' || (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
       if (field.localized) ['th','en'].forEach(lang => {
         const path = field.path + '.' + lang;
         if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);
@@ -1044,7 +1095,8 @@ function isSemanticCopyPath(config, path) {
   const section = /^(?:(?:sections\.@[\w-]+|motorPage\.(?:hero|trust|cover))\.(?:(?:items|cards)\.@[\w-]+\.)?(?:th|en)\.[A-Za-z][A-Za-z0-9]*|sections\.@[\w-]+\.heads\.@[\w-]+\.(?:th|en))$/;
   const shared = /^(?:(?:brand\.(?:name|fullName|role|credential)|contact\.(?:hours|area)|footer\.(?:tagline|legal)|header\.cta)\.(?:th|en)|(?:header|motorPage)\.nav\.\d+\.label\.(?:th|en)|homeDesign\.taskLinks\.@[\w-]+\.label\.(?:th|en))$/;
   const calculator = /^sections\.@[\w-]+\.calculator\.(?:situations\.[\w-]+\.(?:(?:th|en)|recs\.\d+\.(?:th|en|wth|wen))|health\.selectedRoomReference\.(?:hospitalName|roomType|note)\.(?:th|en))$/;
-  return (section.test(path) || shared.test(path) || calculator.test(path)) && typeof cmsGet(config, path) === 'string';
+  const tierRemark = /^sections\.@[\w-]+\.items\.@[\w-]+\.cellRemarks\.[\w-]+\.(?:th|en)$/;
+  return (section.test(path) || shared.test(path) || calculator.test(path) || tierRemark.test(path)) && typeof cmsGet(config, path) === 'string';
 }
 
 function adoptLegacyGuideCopy(next, text) {
@@ -1105,7 +1157,7 @@ function adaptLegacyHomeCopy(config, overrides) {
 }
 // COVERMATE_CMS_SCHEMA_END
 
-export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, cmsGet, cmsSet, cmsMedia, cmsImageSlots, migrateCmsContent, resolveCmsContent, sanitizeCmsFields, isSemanticCopyPath, adaptLegacyHomeCopy };
+export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, normalizeTierRemarks, cmsGet, cmsSet, cmsMedia, cmsImageSlots, migrateCmsContent, resolveCmsContent, sanitizeCmsFields, isSemanticCopyPath, adaptLegacyHomeCopy };
 export const DEFAULT_SEO = {
   title: { th: "", en: "" },
   description: { th: "", en: "" }
@@ -1593,6 +1645,7 @@ export function sanitizeMotorCountConfig(config, options = {}) {
   if (options && options.repeatableIds) {
     ensureRepeatableContentIds(next, { mutate: true });
   }
+  normalizeTierRemarks(next, { mutate: true });
   return next;
 }
 
@@ -1733,6 +1786,7 @@ const contract = {
   createRepeatableContentId,
   ensureRepeatableContentIds,
   repeatableContentIndex,
+  normalizeTierRemarks,
   motorInsurerLogoCount,
   DEFAULT_ADVISOR_LOGO,
   DEFAULT_ADVISOR_LOGO_ALT,

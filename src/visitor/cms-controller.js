@@ -86,7 +86,7 @@ export function withCmsController(Base, {
     }
 
     stepEditorHistory(direction) {
-      if (this.state.remoteBusy || this.state.confirmAction || !this._editorHistory || this._applyingHistory) return;
+      if (this.state.remoteBusy || this.state.confirmAction || this.state.tierRemarkEditor || !this._editorHistory || this._applyingHistory) return;
       const result = this._editorHistory[direction]();
       if (!result) return;
       this._editorGesture = null;
@@ -98,6 +98,18 @@ export function withCmsController(Base, {
 
     editorKeydown(event) {
       if (!(this.state.admin || this.state.editMode)) return;
+      if (this.state.tierRemarkEditor) {
+        if (event.key === 'Escape') { event.preventDefault(); this.closeTierRemark(); }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); this.saveTierRemark(); }
+        if (event.key === 'Tab') {
+          const controls = [...document.querySelectorAll('[data-tier-remark-dialog] textarea,[data-tier-remark-dialog] button')].filter(el => !el.disabled);
+          const first = controls[0], last = controls[controls.length - 1];
+          const inside = document.activeElement?.closest('[data-tier-remark-dialog]');
+          if (event.shiftKey && (document.activeElement === first || !inside)) { event.preventDefault(); last?.focus(); }
+          else if (!event.shiftKey && (document.activeElement === last || !inside)) { event.preventDefault(); first?.focus(); }
+        }
+        return;
+      }
       if (this.state.confirmAction) {
         if (event.key === 'Escape') { event.preventDefault(); this.cancelConfirm(); }
         if (event.key === 'Tab') {
@@ -530,6 +542,68 @@ export function withCmsController(Base, {
       this.save(s);
     }
 
+    canEditTier() {
+      return (this.state.admin || this.state.editMode) && !this.state.preview && !this.state.remoteBusy && !this._applyingHistory;
+    }
+
+    cycleTierStatus(sectionId, itemId, headId) {
+      if (!this.canEditTier()) return;
+      this._editorGesture = null;
+      this._editorHistory?.breakGroup();
+      this.upd(config => {
+        const section = this.findConfigSectionById(config,sectionId);
+        const item = section?.items?.find(entry => entry.id === itemId);
+        const index = section?.heads?.findIndex(head => head.id === headId) ?? -1;
+        if (!item || index < 0) return;
+        window.CoverMateContract.normalizeTierRemarks(config,{mutate:true});
+        item.st = Array.isArray(item.st) ? item.st : [];
+        while (item.st.length < section.heads.length) item.st.push('n');
+        item.st[index] = item.st[index] === 'y' ? 'p' : item.st[index] === 'p' ? 'n' : 'y';
+      });
+      this.setState({editorAnnouncement:'เปลี่ยนสถานะความคุ้มครองใน Draft แล้ว'});
+    }
+
+    openTierRemark(sectionId,itemId,headId,lang,trigger) {
+      if (!this.canEditTier()) return;
+      const section = this.findConfigSectionById(this.state.site,sectionId);
+      const item = section?.items?.find(entry => entry.id === itemId);
+      const head = section?.heads?.find(entry => entry.id === headId);
+      if (!item || !head) return;
+      const index = section.heads.indexOf(head);
+      const value = item.cellRemarks?.[headId]?.[lang] ?? (item.st?.[index] === 'p' ? item[lang]?.note || '' : '');
+      this._tierRemarkReturnFocus = trigger || document.activeElement;
+      this._tierRemarkReturnLocation = {itemId,headId};
+      this.setState({tierRemarkEditor:{sectionId,itemId,headId,lang,value,title:(item[lang]?.label || '') + ' · ' + (head[lang] || '')}}, () => {
+        requestAnimationFrame(() => document.getElementById('tier-remark-input')?.focus());
+      });
+    }
+
+    closeTierRemark() {
+      if (this.state.remoteBusy) return;
+      this.setState({tierRemarkEditor:null}, () => requestAnimationFrame(() => {
+        const original = this._tierRemarkReturnFocus;
+        const location = this._tierRemarkReturnLocation;
+        const replacement = location && [...document.querySelectorAll('[data-tier-id][data-head-id]')].find(el => el.dataset.tierId === location.itemId && el.dataset.headId === location.headId && el.getClientRects().length)?.querySelector('[data-tier-remark]');
+        (original?.isConnected ? original : replacement)?.focus({preventScroll:true});
+      }));
+    }
+
+    saveTierRemark() {
+      const editor = this.state.tierRemarkEditor;
+      if (!editor || !this.canEditTier()) return;
+      this._editorGesture = null;
+      this._editorHistory?.breakGroup();
+      this.upd(config => {
+        const section = this.findConfigSectionById(config,editor.sectionId);
+        const item = section?.items?.find(entry => entry.id === editor.itemId);
+        if (!item || !section.heads?.some(head => head.id === editor.headId)) return;
+        window.CoverMateContract.normalizeTierRemarks(config,{mutate:true});
+        item.cellRemarks[editor.headId][editor.lang] = String(editor.value || '').slice(0,1000);
+      });
+      this.closeTierRemark();
+      this.setState({editorAnnouncement:'บันทึก Remarks ใน Draft แล้ว'});
+    }
+
     secIdx(id) { return this.state.site.sections.findIndex(x => x.id === id); }
 
     move(id, dir) {
@@ -566,6 +640,12 @@ export function withCmsController(Base, {
         copy.id = createRepeatableId(section, key, usedRepeatableIds(section, key));
         if (Object.prototype.hasOwnProperty.call(copy, 'n')) copy.n = String(list.length + 1);
         list.splice(i + 1, 0, copy);
+        if (key === 'heads') (section.items || []).forEach(row => {
+          row.st = Array.isArray(row.st) ? row.st : [];
+          row.st.splice(i + 1,0,row.st[i] || 'n');
+          row.cellRemarks = row.cellRemarks || {};
+          if (row.cellRemarks[list[i].id]) row.cellRemarks[copy.id] = clone(row.cellRemarks[list[i].id]);
+        });
       });
     }
 

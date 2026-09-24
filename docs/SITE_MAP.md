@@ -61,7 +61,7 @@ and `on` values win. The Home direction is documented in [HOME_REDESIGN.md](HOME
 | Fit/calculator | Home Life/CI/Health planning with explicit blank/unknown states, optional eligibility/PA intake, reviewed sources, and opt-in contact attachment. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
 | Motor insurers | Home static logo grid with disclosed AIA/Srikrung relationship proof; Motor retains its own presentation. |
-| Motor tier comparison | Home shows three CMS-ID-selected illustrated classes and a full disclosed five-class/five-axis comparison; Motor retains table/mobile cards. |
+| Motor tier comparison | Home and Motor share three CMS-ID-selected illustrated classes, a desktop class-by-topic table and mobile topic disclosures. Cell statuses and localized remarks are owner-editable. |
 | Claim help | Explains accident/claim assistance and emergency support expectations. |
 | Renewal reminders | Lets visitors request renewal reminders without replacing the consultation form. |
 | Claim stories | Customer proof focused on realistic claim/support scenarios. |
@@ -85,7 +85,7 @@ Supported Motor route sections; visibility remains CMS-owned:
 | Motor trust bar | Motor-specific credibility chips. |
 | Motor coverage accordions | Insurance-category accordion cards for motor-oriented intent. |
 | Motor insurers | Shared `insurers.items` 14-logo grid and AIA/Srikrung proof cards. |
-| Motor tier comparison | Shared class comparison table/cards. |
+| Motor tier comparison | Shared desktop comparison table / mobile topic disclosures. See [Motor comparison](MOTOR_COMPARISON.md). |
 | Process/how | Shared consultation workflow. |
 | Claim help | Shared accident/claim assistance section. |
 | Renewal reminders | Shared renewal reminder form/benefits. |

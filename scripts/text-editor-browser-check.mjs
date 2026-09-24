@@ -315,7 +315,7 @@ async function verifyHeadControls(page) {
   assert.equal(current.heads.length, before.heads.length, "Restoring a column duplicated it");
   assert.equal(current.heads[0].on, true, "Column restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ เพิ่มคอลัมน์", exact: true }).click();
+  await page.getByRole("button", { name: "+ เพิ่มหัวข้อความคุ้มครอง", exact: true }).click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");

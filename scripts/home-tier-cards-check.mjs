@@ -45,15 +45,16 @@ try {
       assert.equal(await tiers.locator('.hm-heading a').count(),0,'No redundant Motor link beside tier heading');
       assert.equal(await page.locator('a[href^="/motor"]').count(),0,'No public link to the standalone Motor campaign');
       const comparison = page.locator('#home-tier-comparison');
-      const summary = comparison.locator('summary');
-      assert.equal(await summary.evaluate(el=>getComputedStyle(el).fontSize),'18px');
-      assert.ok(await summary.evaluate(el=>el.getBoundingClientRect().height>=64));
-      await summary.focus();
-      await page.keyboard.press('Enter');
-      assert.equal(await comparison.evaluate(el=>el.open),true);
-      assert.equal(await comparison.locator('.hm-comparison-card').count(),5);
-      await page.keyboard.press('Space');
-      assert.equal(await comparison.evaluate(el=>el.open),false);
+      assert.equal(await comparison.locator('.hm-tier-table [role="columnheader"]').count(),6);
+      if (width < 1000) {
+        const axis = comparison.locator('details.hm-tier-accordion').nth(1);
+        const summary = axis.locator('summary');
+        assert.ok(await summary.evaluate(el=>el.getBoundingClientRect().height>=44));
+        await summary.focus(); await page.keyboard.press('Enter');
+        assert.equal(await axis.evaluate(el=>el.open),true);
+        await summary.focus(); await page.keyboard.press('Space');
+        assert.equal(await axis.evaluate(el=>el.open),false);
+      } else assert.equal(await comparison.locator('.hm-tier-table').isVisible(),true);
       await tiers.screenshot({path:path.join(output,`${lang}-${width}.png`)});
       console.log(`PASS ${lang} ${width}px: static cards, CMS copy, equal geometry, no Motor campaign link and comparison. Heights ${geometry[0].height}px.`);
     }

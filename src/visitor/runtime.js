@@ -34,6 +34,7 @@ const ICONS = {
   camera: ['M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z', 'M12 17a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'],
   bell: ['M10.27 21a2 2 0 0 0 3.46 0', 'M3.26 15.33A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.67C19.6 14.03 18 12.5 18 8a6 6 0 0 0-12 0c0 4.5-1.6 6.03-2.74 7.33'],
   file: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z', 'M14 2v5h6', 'M9 13h6', 'M9 17h4'],
+  cloudRain: ['M20 15.5A4.5 4.5 0 0 0 18 7h-1.3a6 6 0 0 0-11.4 1.5A3.5 3.5 0 0 0 4 15.2','m8 16-1 4','m13 16-1 4','m18 16-1 4'],
   lock: ['M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z', 'M8 11V7a4 4 0 0 1 8 0v4'],
   quote: ['M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z', 'M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z']
 };
@@ -51,7 +52,7 @@ const SCHEMA = {
   fit: { fields: ['kicker', 'title', 'body', 'note'], item: null, cols: false },
   steps: { fields: ['kicker', 'title', 'body'], item: ['title', 'body'], cols: true, addLabel: 'step' },
   insurers: { fields: ['kicker', 'title', 'body', 'cta1'], item: ['name'], cols: true, addLabel: 'insurer', itemLogo: true, card: ['kicker', 'title', 'body'], addCardLabel: 'insurer card' },
-  tiers: { fields: ['kicker', 'title', 'body', 'note'], item: ['label', 'note', 'value'], cols: false, addLabel: 'tier' },
+  tiers: { fields: ['kicker', 'title', 'body', 'note'], item: ['label', 'tag', 'note', 'value'], cols: false, addLabel: 'tier' },
   testimonials: { fields: ['kicker', 'title', 'body'], item: ['quote', 'name', 'meta'], cols: true, addLabel: 'quote' },
   about: { fields: ['kicker', 'title', 'body'], item: ['label', 'value'], cols: false, addLabel: 'fact' },
   faq: { fields: ['kicker', 'title', 'body'], item: ['q', 'a', 'label', 'meta'], cols: false, addLabel: 'question' },
@@ -71,6 +72,7 @@ const FIELD_LABEL = {
   label: L('ป้าย', 'Label'), value: L('ค่า', 'Value'), name: L('ชื่อ', 'Name'), quote: L('คำพูด', 'Quote'),
   meta: L('รายละเอียด', 'Detail'), q: L('คำถาม', 'Question'), a: L('คำตอบ', 'Answer'),
   valueNote: L('คำอธิบายใต้ตัวเลข', 'Note under the figure'),
+  tag: L('ป้ายสั้นใต้ชื่อชั้น (ไม่บังคับ)', 'Class badge (optional)'),
   claimText: L('ข้อความช่วยเหลือเมื่อเกิดเหตุ', 'Claim help text'), claimLinkText: L('ป้ายลิงก์เมื่อเกิดเหตุ', 'Claim help link label')
 };
 
@@ -363,6 +365,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     remoteAction: '',
     remoteError: '',
     confirmAction: null,
+    tierRemarkEditor: null,
     toast: null
   };
 
@@ -943,6 +946,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     ['hero', 'trust', 'cover'].forEach(key => this.suppressPlaceholderStories(cfg.motorPage && cfg.motorPage[key]));
     sanitizeCmsControlsConfig(cfg);
     if (shouldEnsureRepeatableIds) ensureRepeatableIds(cfg);
+    normalizeTierRemarks(cfg, { mutate: true });
     return cfg;
   }
 
@@ -1601,12 +1605,12 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
           mediaLogoPath: sectionPath + '.items.@' + it.id + '.logo',
           mediaPhotoPath: sectionPath + '.items.@' + it.id + '.photo',
           mediaIconPath: s.id === 'life-trust' ? (it.cmsPath ? it.cmsPath + 'Icon' : 'lifeFocus.licenceIcon') : sectionPath + '.items.@' + it.id + '.iconImage',
-          copy: Object.fromEntries(['label','title','sub','body','b1','b2','b3','note','q','a','meta','value','name','quote','valueNote'].map(field => [field, sectionPath + '.items.@' + it.id + '.' + lk + '.' + field])),
+          copy: Object.fromEntries(['label','tag','title','sub','body','b1','b2','b3','note','q','a','meta','value','name','quote','valueNote'].map(field => [field, sectionPath + '.items.@' + it.id + '.' + lk + '.' + field])),
           photo: assetURL(it.photo || ''), photoAlt: it.photoAlt || '', hasPhoto: !!it.photo,
           cmsPath: it.cmsPath || '',
           paths: ICONS[it.icon] || ICONS.check,
           iconImage:assetURL(it.iconImage),hasIconImage:!!it.iconImage,hasVectorIcon:!it.iconImage,
-          label: ic.label || '', value: ic.value || '', title: ic.title || '', sub: ic.sub || '',
+          label: ic.label || '', tag: ic.tag || '', hasTag: !!ic.tag, value: ic.value || '', title: ic.title || '', sub: ic.sub || '',
           b1: ic.b1 || '', b2: ic.b2 || '', b3: ic.b3 || '', name: tile ? tile.name : (ic.name || ''),
           quote: ic.quote || '', meta: ic.meta || '', q: ic.q || '', a: ic.a || '',
           body: ic.body || '', hasMetadata:!!(ic.label || ic.meta), fill: tone.fill, soft: tone.soft, deep: tone.deep,
@@ -1615,14 +1619,22 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
           cells: headPairs.map((hp, ci) => {
             const hd = heads[ci] || '';
             const v = (it.st || [])[hp.idx] || 'n';
+            const editable = (S.admin || S.editMode) && !S.preview;
+            const note = it.cellRemarks?.[hp.id]?.[lk] ?? (v === 'p' ? (ic.note || '') : '');
+            const statusLabel = cmsText(v === 'y' ? 'homeDesign.coveredLabel' : v === 'p' ? 'homeDesign.conditionalLabel' : 'homeDesign.notCoveredLabel');
             return {
               key: (it.id || (s.id + '-' + i)) + '-' + (hp.id || hp.idx), headId: hp.id, head: hd, status: v,
-              statusLabel: cmsText(v === 'y' ? 'homeDesign.coveredLabel' : v === 'p' ? 'homeDesign.conditionalLabel' : 'homeDesign.notCoveredLabel'),
+              tierId: it.id, tierLabel: ic.label || '', tierCopy: sectionPath + '.items.@' + it.id + '.' + lk + '.label',
+              statusLabel, editable, readonly: !editable, disabled: !!S.remoteBusy,
+              statusActionLabel: (ic.label || '') + ' · ' + hd + ': ' + statusLabel + (th ? ' — กดเพื่อเปลี่ยนสถานะ' : ' — change status'),
+              remarkActionLabel: (note ? (th ? 'แก้ไข Remarks' : 'Edit remarks') : (th ? 'เพิ่ม Remarks' : 'Add remarks')) + ' · ' + (ic.label || '') + ' · ' + hd,
+              cycle: event => { event?.preventDefault(); event?.stopPropagation(); this.cycleTierStatus(s.id,it.id,hp.id); },
+              editRemark: event => { event?.preventDefault(); event?.stopPropagation(); this.openTierRemark(s.id,it.id,hp.id,lk,event?.currentTarget); },
               bg: v === 'y' ? 'var(--color-accent-2)' : v === 'p' ? 'var(--color-accent-2-200)' : 'var(--color-neutral-200)',
               fg: v === 'y' ? 'var(--color-bg)' : v === 'p' ? 'var(--color-accent-2-900)' : 'var(--color-neutral-600)',
               headFg: v === 'n' ? p.cardMuted : p.cardFg,
               d: v === 'n' ? 'M18 6 6 18M6 6l12 12' : 'M20 6 9 17l-5-5',
-              note: v === 'p' ? (ic.note || '') : '', hasNote: v === 'p' && !!ic.note
+              note, hasNote: !!note
             };
           })
         };
@@ -1678,6 +1690,21 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         })
       };
       sectionView.copy = Object.fromEntries(['kicker','title','body','note','cta1','cta2','claimText','claimLinkText'].map(field => [field, sectionPath + '.' + lk + '.' + field]));
+      if (s.type === 'tiers') {
+        ['comparisonTitle','comparisonSubtitle','comparisonMobileSubtitle','comparisonNotesLabel','comparisonStatement'].forEach(key => {
+          sectionView[key] = cmsText('homeDesign.' + key);
+          sectionView[key + 'Copy'] = 'homeDesign.' + key + '.' + lk;
+        });
+        sectionView.hasComparisonStatement = !!sectionView.comparisonStatement;
+        sectionView.comparisonCount = items.length;
+        sectionView.hasComparison = items.length > 0;
+        const textCells = field => items.map(item => ({ key:item.key + '-' + field,tierId:item.contentId,tierLabel:item.label,tierCopy:item.copy.label,text:item[field] || '',copy:item.copy[field],hasText:!!item[field],emptyPlaceholder:!item[field] && !((S.admin || S.editMode) && !S.preview) }));
+        sectionView.comparisonRows = [
+          {key:s.id + '-suitability',label:cmsText('publicCopy.tierBestLabel'),labelCopy:'publicCopy.tierBestLabel.' + lk,paths:ICONS.users,isCoverage:false,isSuitability:true,isNotes:false,open:true,cells:textCells('value')},
+          ...headPairs.map((hp,index) => ({key:hp.id,label:heads[index],labelCopy:sectionPath + '.heads.@' + hp.id + '.' + lk,paths:ICONS[hp.h.icon] || ICONS.shield,isCoverage:true,isSuitability:false,isNotes:false,open:false,cells:items.map(item => item.cells[index])})),
+          {key:s.id + '-notes',label:sectionView.comparisonNotesLabel,labelCopy:sectionView.comparisonNotesLabelCopy,paths:ICONS.file,isCoverage:false,isSuitability:false,isNotes:true,open:false,cells:textCells('note')}
+        ];
+      }
       sectionView.homeTransparency = ['fees','pdpa'].includes(s.type);
       sectionView.isHomeLayout = sectionView.homeTransparency || (sharedDesign && ['hero','trust','products','insurers','tiers','faq','about','review','steps','claim'].includes(s.type));
       ['hero','trust','products','insurers','tiers','faq','guides','about','review','steps','claim'].forEach(type => { sectionView['home' + type[0].toUpperCase() + type.slice(1)] = s.type === type; });
@@ -2052,7 +2079,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     });
     const contentGroups = editingLicences ? ['Advisor profile','Home licences','Licences']
       : ({hero:['Advisor profile','Home design','Navigation'],motor:['Home design','Navigation'],cover:['Page composition'],
-          tiers:['Page composition','Home design'],fit:['Calculator design'],talk:['Advisor profile','Home contact','Contact submission','Consultation form labels','Form choices'],
+          tiers:['Page composition','Motor comparison'],fit:['Calculator design'],talk:['Advisor profile','Home contact','Contact submission','Consultation form labels','Form choices'],
           fees:['Transparency design'],privacy:['Transparency design','Cookie consent']})[cur?.id] || [];
     const contentShortcuts = contentGroups.filter(key=>!['Contact submission','Advisor profile'].includes(key)||isHome).map(key=>({
       key,label:cmsAdminLabel(key),
@@ -2071,7 +2098,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
         upOpacity: ii === 0 ? '.42' : '1', downOpacity: ii === cur.items.length - 1 ? '.42' : '1',
         fields: sch.item.map(f => ({
-          key: f, label: ((cur.type === 'faq' && f === 'label' ? L('หมวด (ไม่บังคับ)', 'Topic (optional)') : cur.type === 'faq' && f === 'meta' ? L('เวลาอ่าน (ไม่บังคับ)', 'Reading time (optional)') : FIELD_LABEL[f]).th), value: (it[lk] && it[lk][f]) || '',
+          key: f, label: ((cur.type === 'tiers' && f === 'label' ? L('ชื่อชั้นประกัน','Insurance class') : cur.type === 'tiers' && f === 'note' ? L('หมายเหตุท้ายตารางของชั้นนี้','Class notes') : cur.type === 'tiers' && f === 'value' ? L('เหมาะกับใคร','Suitable for') : cur.type === 'faq' && f === 'label' ? L('หมวด (ไม่บังคับ)', 'Topic (optional)') : cur.type === 'faq' && f === 'meta' ? L('เวลาอ่าน (ไม่บังคับ)', 'Reading time (optional)') : FIELD_LABEL[f]).th), value: (it[lk] && it[lk][f]) || '',
           big: !!MULTILINE[f], small: !MULTILINE[f],
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][f] = v; }); }
         })),
@@ -2096,19 +2123,17 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
         cells: (cur.type === 'tiers') ? (cur.heads || []).map((hd, ci) => {
           const v = (it.st || [])[ci] || 'n';
+          const note = it.cellRemarks?.[hd.id]?.[lk] ?? (v === 'p' ? it[lk]?.note || '' : '');
           return {
-            key: (hd && hd.id) || ('c' + ci), label: t(hd),
+            key: (hd && hd.id) || ('c' + ci), label: t(hd), tierId:itemId,headId:hd.id,note,hasNote:!!note,
+            remarkLabel:note ? 'แก้ไข Remarks' : 'เพิ่ม Remarks',
+            remarkActionLabel:(note ? 'แก้ไข Remarks' : 'เพิ่ม Remarks') + ' · ' + t(hd),
+            editRemark:event=>this.openTierRemark(cur.id,itemId,hd.id,lk,event?.currentTarget),
             state: v === 'y' ? 'คุ้มครอง' : v === 'p' ? 'มีเงื่อนไข' : 'ไม่คุ้มครอง',
             glyph: v === 'n' ? '✕' : '✓',
             bg: v === 'y' ? 'var(--color-accent-2)' : v === 'p' ? 'var(--color-accent-2-200)' : 'var(--color-neutral-200)',
             fg: v === 'y' ? 'var(--color-bg)' : v === 'p' ? 'var(--color-accent-2-900)' : 'var(--color-neutral-700)',
-            cycle: () => updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (sec, list, idx) => {
-              const o = list[idx];
-              if (!o) return;
-              o.st = Array.isArray(o.st) ? o.st : [];
-              while (o.st.length < (sec.heads || []).length) o.st.push('n');
-              o.st[ci] = v === 'y' ? 'p' : (v === 'p' ? 'n' : 'y');
-            })
+            cycle: () => this.cycleTierStatus(cur.id,itemId,hd.id)
           };
         }) : [],
         up: () => this.moveRepeatable(cur.id, 'items', itemId, ii, -1),
@@ -2128,6 +2153,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
         up: () => this.moveRepeatable(cur.id, 'heads', headId, hi, -1),
         down: () => this.moveRepeatable(cur.id, 'heads', headId, hi, 1),
+        duplicate: () => this.duplicateRepeatable(cur.id, 'heads', headId, hi),
         onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'heads', headId, hi, (section, heads, idx) => { const h = heads[idx]; if (h) h[lk] = v; }); },
         toggleVisible: () => hidden ? this.restoreRepeatable(cur.id, 'heads', headId, hi) : this.removeRepeatable(cur.id, 'heads', headId, hi)
       };
@@ -2642,6 +2668,14 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       requestPublish: () => this.requestPublish(),
       gotoAdmin: () => { this.goOwnerRoute('admin'); },
       showAdminConfirm: !!S.confirmAction,
+      showTierRemarkEditor: !!S.tierRemarkEditor,
+      tierRemarkTitle: S.tierRemarkEditor?.title || '',
+      tierRemarkLanguage: S.tierRemarkEditor?.lang === 'en' ? 'EN' : 'TH',
+      tierRemarkValue: S.tierRemarkEditor?.value || '',
+      onTierRemarkInput: event => this.setState({tierRemarkEditor:{...this.state.tierRemarkEditor,value:event.target.value}}),
+      clearTierRemark: () => this.setState({tierRemarkEditor:{...this.state.tierRemarkEditor,value:''}},()=>document.getElementById('tier-remark-input')?.focus()),
+      closeTierRemark: () => this.closeTierRemark(),
+      saveTierRemark: () => this.saveTierRemark(),
       confirmKicker: (S.confirmAction && S.confirmAction.kicker) || '',
       confirmTitle: (S.confirmAction && S.confirmAction.title) || '',
       confirmBody: S.remoteAction === 'reset' ? 'กำลังอ่าน Publish ล่าสุดและ Reset Draft กรุณารอสักครู่' : (S.confirmAction && S.confirmAction.body) || '',

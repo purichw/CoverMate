@@ -150,9 +150,15 @@ if (process.argv.includes('--serve')) {
       await cover.first().locator('summary').click(); assert.equal(await cover.first().evaluate(el=>el.open),true);
       await cover.nth(1).locator('summary').click(); assert.equal(await cover.first().evaluate(el=>el.open),false);
       const comparison = page.locator('#home-tier-comparison');
-      if (!await comparison.evaluate(el => el.open)) { await comparison.locator('summary').focus(); await page.keyboard.press('Enter'); }
-      assert.equal(await main.locator('.hm-comparison-card').count(),enabledTiers.length);
-      assert.equal(await main.locator('.hm-comparison-card').first().locator('li').count(),base.sections.find(s => s.type === 'tiers').heads.filter(head => head.on !== false).length);
+      const headCount = base.sections.find(s => s.type === 'tiers').heads.filter(head => head.on !== false).length;
+      assert.equal(await comparison.locator('.hm-tier-table [role="columnheader"]').count(),enabledTiers.length+1);
+      assert.equal(await comparison.locator('.hm-tier-table [role="row"]').count(),headCount+3);
+      if (width < 1000) {
+        const axis = comparison.locator('details.hm-tier-accordion').nth(1);
+        await axis.locator('summary').focus(); await page.keyboard.press('Enter');
+        assert.equal(await axis.evaluate(el=>el.open),true);
+        assert.equal(await axis.locator('.hm-tier-axis-values > li').count(),enabledTiers.length);
+      } else assert.equal(await comparison.locator('.hm-tier-table').isVisible(),true);
       const faq = main.locator('.hm-faq-grid details').first(); await faq.locator('summary').click(); assert.equal(await faq.evaluate(el=>el.open),true);
       await page.locator('#talk input[name=name]').fill('Unsent local check');
       await page.locator('.hm-renew-disclosure > summary').click();

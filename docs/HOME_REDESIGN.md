@@ -89,9 +89,11 @@ initial collapsed state, not a CSS height cap or a limit on future CMS content.
   insurer is inserted or substituted to make a screenshot match.
 - Three illustrated featured motor classes stay side by side even on mobile.
   They are static cards with visible CMS copy, without per-card detail links or
-  collapse controls. All five classes/axes remain in the separate comparison.
-  Its disclosure uses the CMS theme action color, white 18px bold text and a
-  minimum 64px target, with native keyboard/touch expansion and visible focus.
+  collapse controls. The shared comparison uses classes as desktop columns and
+  coverage topics as rows; below 1000px each topic has a native disclosure with
+  all classes. Its heading retains the CMS theme action color. Owners can cycle
+  each cell status and edit its independent localized Remark. See
+  [Motor comparison](MOTOR_COMPARISON.md).
 - Contact uses one mobile field column, two name/contact columns on desktop,
   and retains the original consent, contact rules and separate renewal form.
 - FAQ stays a compact grid and now includes the four former reading items.
@@ -128,8 +130,9 @@ capabilities are separate:
   fields expanded. Rotation within the tablet range preserves open details.
   Footer disclosure columns retain a desktop-like horizontal arrangement on
   touch tablets; the desktop footer remains unchanged for mouse users.
-- Motor now uses the same featured tier cards and keyboard-accessible full
-  comparison disclosure as Home, retaining every configured class and axis.
+- Motor uses the same featured tier cards, desktop comparison and
+  keyboard-accessible topic disclosures as Home, retaining every configured
+  class and axis.
 - Touch controls and summaries are at least 44px high; form text remains 16px.
   The Admin crop dialog retains its fixed action row and scrollable content.
   All content, links, images, ratios and editing owners are still shared CMS data.

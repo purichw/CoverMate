@@ -2,6 +2,18 @@
 
 Last updated: 2026-09-24
 
+## Motor comparison release candidate
+
+The motor comparison redesign and per-cell localized CMS remarks are prepared
+in `.tools/motor-comparison-20260924`, branch `codex/motor-comparison-20260924`.
+See [MOTOR_COMPARISON.md](MOTOR_COMPARISON.md) for source ownership, migration,
+editing behavior and regression commands. Home and Motor share the component;
+published coverage states remain unchanged. The owner has authorized push and
+production deployment of this chat's work. Preserve newer upstream LINE changes
+and the original root checkout's unrelated local files. Production rollout does
+not publish the existing CMS Draft or migrate customer records. Verify exact-SHA
+CI, hosted UAT and the production alias before calling this candidate deployed.
+
 ## System inbox email integration
 
 The current notification change builds on `edd8423`. Existing Production had all

@@ -72,6 +72,7 @@ export function readVisitorSources() {
       .replace('<!-- COVERMATE_CALCULATOR_TEMPLATE -->', () => readText(new URL('src/visitor/calculator.html', ROOT)))
       .replace('/* COVERMATE_CALCULATOR_STYLES */', () => readText(new URL('src/visitor/calculator.css', ROOT)))
       .replace('<!-- COVERMATE_HOME_TEMPLATE -->', () => readText(new URL('src/visitor/home.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
       .replace('/* COVERMATE_HOME_STYLES */', () => readText(new URL('src/visitor/home.css', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),

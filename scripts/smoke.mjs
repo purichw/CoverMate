@@ -1013,7 +1013,7 @@ async function verifyAdminBuilderControls() {
   const tiersBefore = await readDraftSection(page, "tiers");
   const tierHeadCountBefore = (tiersBefore?.heads || []).length;
   const tierItemCountBefore = (tiersBefore?.items || []).length;
-  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มคอลัมน์$/ }).click();
+  await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มหัวข้อความคุ้มครอง$/ }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
