@@ -50,6 +50,19 @@ export function readSelectAsset() {
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
+export function readContactPayloadAsset() {
+  const file = new URL('assets/visitor/contact-payload.js', ROOT);
+  const code = buildSync({
+    entryPoints: [fileURLToPath(new URL('covermate-contact-payload.mjs', ROOT))],
+    outfile: fileURLToPath(file), bundle: true, write: false, minify: true,
+    format: 'esm', target: 'es2022', charset: 'utf8',
+    // Already loaded by the public adapter; keep every other dependency in one
+    // retryable module so failed nested imports cannot poison browser recovery.
+    external: [fileURLToPath(new URL('covermate-contract.js', ROOT))]
+  }).outputFiles[0].text;
+  return { code, file };
+}
+
 export function readImageVersions(root = new URL("assets/", ROOT)) {
   const versions = {};
   function visit(directory, prefix) {

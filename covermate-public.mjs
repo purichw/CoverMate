@@ -169,8 +169,9 @@ async function appCheckToken() {
   return (await check.getToken(instance)).token;
 }
 
+let payloadModule, payloadAttempt = 0;
 export async function prepareContactLead(input = {}) {
-  const { prepareContactPayload } = await import('./covermate-contact-payload.mjs');
+  const { prepareContactPayload } = await (payloadModule ||= import('./assets/visitor/contact-payload.js?try=' + payloadAttempt++).catch(error => { payloadModule = null; throw error; }));
   return prepareContactPayload(input);
 }
 

@@ -59,7 +59,7 @@ try {
   assert.equal(protectedCalls, 0);
   report.checks.push('Hosted Admin boot with browser-local pending-auth fixture; hidden portal, real logo, no protected API calls');
   await admin.close();
-  for (const [url, file] of [['admin', 'admin/index.html'], ...['admin/ops/app.js', 'covermate-contract.js', 'covermate-public.mjs', 'covermate-contact-payload.mjs', 'covermate-submission.mjs', 'assets/brand/LINE_Brand_icon.png'].map(file => [file, file])]) {
+  for (const [url, file] of [['admin', 'admin/index.html'], ...['admin/ops/app.js', 'covermate-contract.js', 'covermate-public.mjs', 'covermate-contact-payload.mjs', 'assets/visitor/contact-payload.js', 'covermate-submission.mjs', 'assets/brand/LINE_Brand_icon.png'].map(file => [file, file])]) {
     const response = await fetch(`${origin}/${url}`, { headers: bypass, redirect: 'manual' });
     assert.equal(response.status, 200);
     const hash = data => createHash('sha256').update(data).digest('hex');

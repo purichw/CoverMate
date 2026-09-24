@@ -27,9 +27,11 @@ Source ownership:
 - `calculator.html` / `calculator.css` and `submission.html` / `submission.css`
   own their visitor UI. Calculation and validated attachment contracts live in
   root `covermate-calculator.mjs`; contact intake uses `covermate-public.mjs`
-  and `/api/leads`. The public adapter loads `covermate-contact-payload.mjs`
-  only when preparing an enquiry, keeping form validation off the initial
-  hydration path. Keep these contracts separate from CMS command extraction.
+  and `/api/leads`. `covermate-contact-payload.mjs` is compiled into the deferred
+  `assets/visitor/contact-payload.js` with its validation dependencies. Failed
+  module loads use a fresh URL on user retry; successful loads are reused.
+  This keeps form validation off the initial hydration path. Keep these
+  contracts separate from CMS command extraction.
 - `boot.js` / `boot.css` and `../shared/boot.html` own the shared first-paint
   loading surface for Visitor and `/admin`. `scripts/lib/boot-surface.mjs`
   inlines these into both entry points through `build:visitor`; do not edit

@@ -39,13 +39,31 @@ try {
   await fill();
   await visitorContext.setOffline(true);
   await form.locator('button[type=submit]').click();
+  await visitor.locator('[data-submission-state=failure]').waitFor();
+  assert.equal(requests.some(url => new URL(url).pathname === '/api/leads'), false, 'Cold offline preparation must not dispatch a request.');
+  await visitor.locator('[data-cms-copy="contactSubmission.edit"]').click();
+  assert.equal(await form.locator('input[name=name]').inputValue(), fixture);
+  assert.equal(await form.locator('input[type=checkbox]').isChecked(), true);
+  assert.equal((await db.collection('contactLeadsUat').where('name', '==', fixture).get()).size, 0);
+  report.offlineBeforeDispatchPreserved = true;
+  await visitorContext.setOffline(false);
+  let interruptedPosts = 0;
+  // Recover in the same page, then interrupt the dispatched transport for ambiguity.
+  const interruptLead = async route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    interruptedPosts++;
+    await route.abort('connectionreset');
+  };
+  await visitor.route('**/api/leads?*', interruptLead);
+  await form.locator('button[type=submit]').click();
   await visitor.locator('[data-submission-state=unknown]').waitFor();
+  assert.equal(interruptedPosts, 1, 'The unknown-delivery scenario must reach the POST transport.');
   assert.equal(await visitor.locator('[data-cms-copy="contactSubmission.retry"]').count(), 0, 'Unknown delivery must not invite a duplicate submission.');
   await visitor.locator('[data-cms-copy="contactSubmission.viewDraft"]').click();
   assert.ok((await visitor.locator('#contact-submission-draft').innerText()).includes(fixture), 'Unknown delivery preserves a read-only draft.');
   assert.equal((await db.collection('contactLeadsUat').where('name', '==', fixture).get()).size, 0);
-  report.offlineUnknownPreserved = true;
-  await visitorContext.setOffline(false);
+  report.interruptedRequestUnknownPreserved = true;
+  await visitor.unroute('**/api/leads?*', interruptLead);
   await visitor.reload();
   await fill();
   let rejectNext = true;

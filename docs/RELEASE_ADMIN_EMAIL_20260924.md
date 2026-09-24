@@ -26,10 +26,28 @@ email validator now load on submission, behind the existing public adapter API.
 The byte/timing/CLS limits remain unchanged; form and performance checks must
 pass again before release.
 
+The emulator journey now distinguishes cold-offline preparation failure (no
+POST, editable preserved input) from an interrupted POST (unknown delivery,
+read-only draft, no retry invitation). Both scenarios retain the no-record
+assertion; the successful retry still exercises the real isolated API.
+This also exposed browser caching of a failed dynamic import. The deferred
+payload is now generated as one module (reusing the already-loaded contract),
+with a fresh attempt URL after import failure and reuse after success. Local
+Chromium emulator journeys prove same-page offline recovery, ambiguous POST
+protection and real saved-case Admin readback. Exact-SHA CI still verifies
+Chromium and WebKit before promotion.
+
 The read-only Vercel environment inventory at release preparation contains
 the existing admin notifier variables but neither `CUSTOMER_ACK_ENABLED` nor
 `CUSTOMER_ACK_REPLY_TO`. This release does not enable customer sends. Default
 Reply-To is `covermate@covermateinsurance.com` once separately enabled.
+
+Before the authorized production push, the owner added both variables and asked
+to continue. A later read-only Production check confirmed `CUSTOMER_ACK_ENABLED`
+is exactly `true` and `CUSTOMER_ACK_REPLY_TO` is
+`covermate@covermateinsurance.com`. The new deployment therefore enables new
+eligible acknowledgements. No agent-side environment mutation or real-email
+submission was performed; inbox delivery remains unverified.
 
 ## Gates And Evidence
 
