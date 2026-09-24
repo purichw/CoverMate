@@ -100,9 +100,16 @@ try {
   };
   const auditImages = async lang => {
     const owners = new Set(contract.cmsImageSlots(draft.config, lang).map(slot => slot.path));
-    const images = await page.locator('header img,main img,footer img,main [role="img"][style*="background-image"]').evaluateAll(nodes => nodes.map(el => ({ source: el.getAttribute('src'), owner: el.getAttribute('data-cms-image') })));
+    const images = await page.locator('header img,main img,footer img,main [role="img"][style*="background-image"]').evaluateAll(nodes => nodes.map(el => ({ source: el.getAttribute('src'), owner: el.getAttribute('data-cms-image'), fixedBrand:el.closest('[data-brand-asset]')?.getAttribute('data-brand-asset'), readOnly:!!el.closest('[data-noedit="true"]') })));
     assert.ok(images.length > 15);
-    for (const image of images) assert.ok(owners.has(image.owner), `Missing valid image owner: ${JSON.stringify(image)}`);
+    for (const image of images) {
+      if (image.fixedBrand === 'line-official') {
+        // Official marks are immutable UI assets, not editable CMS photography.
+        assert.equal(new URL(image.source,baseUrl).pathname,'/assets/brand/LINE_Brand_icon.png');
+        assert.equal(image.readOnly,true);
+        assert.equal(image.owner,null);
+      } else assert.ok(owners.has(image.owner), `Missing valid image owner: ${JSON.stringify(image)}`);
+    }
   };
 
   await page.goto(baseUrl + '/admin/edit');

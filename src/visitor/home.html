@@ -9,7 +9,7 @@
           <h1 data-content-path="{{ s.copy.title }}">{{ s.title }}</h1>
           <p class="hm-intro" data-content-path="{{ s.copy.body }}">{{ s.body }}</p>
           <div class="hm-actions">
-            <sc-if value="{{ hasLine }}"><a class="hm-button hm-primary" data-hero-line href="{{ lineUrl }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></sc-if>
+            <sc-if value="{{ hasLine }}"><a class="hm-button hm-primary" data-hero-line href="{{ lineUrl }}"><!-- COVERMATE_LINE_MARK --><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></sc-if>
             <sc-if value="{{ s.hasCta2 }}"><a class="hm-text-link" href="{{ s.cta2href }}"><span data-content-path="{{ s.copy.cta2 }}">{{ s.cta2 }}</span><span aria-hidden="true">↓</span></a></sc-if>
           </div>
           <sc-if value="{{ s.hasNote }}"><p class="hm-help" data-content-path="{{ s.copy.note }}">{{ s.note }}</p></sc-if>

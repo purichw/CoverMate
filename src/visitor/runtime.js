@@ -312,6 +312,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
 }) {
   state = {
     menuOpen: false,
+    lineContactOpen: false,
+    lineContactSpace: true,
     analyticsConsent: window.CoverMateAnalytics?.getConsent() || 'unknown',
     cookieSettingsOpen: false,
     compactHome: window.innerWidth < 768,
@@ -388,6 +390,17 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     window.addEventListener('covermate:analytics-consent', this._consentChange);
     this._consentChange();
     this._dockObserver = window.ResizeObserver ? new ResizeObserver(() => this.syncVisitorDock()) : null;
+    this._lineDismiss = event => {
+      if (!this.state.lineContactOpen) return;
+      if (event.type === 'keydown') {
+        if (event.key === 'Escape') { event.preventDefault(); this.setLineContact(false, true); }
+      } else if (!event.target.closest('[data-line-contact]')) this.setLineContact(false);
+    };
+    document.addEventListener('pointerdown', this._lineDismiss);
+    document.addEventListener('focusin', this._lineDismiss);
+    document.addEventListener('keydown', this._lineDismiss);
+    this._lineViewport = () => this.syncVisitorDock();
+    window.visualViewport?.addEventListener('resize', this._lineViewport);
 
     this._onScroll = () => {
       const y = window.scrollY || 0;
@@ -506,6 +519,10 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     this.clearInlineMedia();
     window.removeEventListener('covermate:analytics-consent', this._consentChange);
     this._dockObserver?.disconnect();
+    document.removeEventListener('pointerdown', this._lineDismiss);
+    document.removeEventListener('focusin', this._lineDismiss);
+    document.removeEventListener('keydown', this._lineDismiss);
+    window.visualViewport?.removeEventListener('resize', this._lineViewport);
     document.documentElement.style.removeProperty('--cm-dock-height');
     document.removeEventListener('keydown', this._homeKeydown);
     document.removeEventListener('click', this._homeAnchorClick);
@@ -553,11 +570,23 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       this._dockHeight = height;
       document.documentElement.style.setProperty('--cm-dock-height', height + 'px');
     }
+    // Give consent controls and the mobile keyboard priority over the contact bubble.
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const keyboardOpen = window.innerHeight - viewportHeight > 150;
+    const lineContactSpace = !keyboardOpen && viewportHeight - height >= 430;
+    if (lineContactSpace !== this.state.lineContactSpace) this.setState({ lineContactSpace, ...(!lineContactSpace ? { lineContactOpen:false } : {}) });
+  }
+
+  setLineContact(open, restoreFocus = false) {
+    this.setState({ lineContactOpen:open }, () => requestAnimationFrame(() => {
+      if (open) document.querySelector('[data-line-close]')?.focus({ preventScroll:true });
+      else if (restoreFocus) document.querySelector('[data-line-launcher]')?.focus({ preventScroll:true });
+    }));
   }
 
   openCookieSettings(event) {
     this._cookieReturnFocus = event.currentTarget;
-    this.setState({ cookieSettingsOpen: true }, () => requestAnimationFrame(() => document.getElementById('cm-cookie-title')?.focus({ preventScroll: true })));
+    this.setState({ cookieSettingsOpen: true, lineContactOpen:false }, () => requestAnimationFrame(() => document.getElementById('cm-cookie-title')?.focus({ preventScroll: true })));
   }
 
   closeCookieSettings(choice) {
@@ -577,7 +606,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       this._menuReturnFocus = event?.currentTarget || document.querySelector('header .hm-menu-button') || document.activeElement;
       this._menuOverflow = document.body.style.overflow;
     }
-    this.setState({ menuOpen: open }, () => requestAnimationFrame(() => {
+    this.setState({ menuOpen: open, lineContactOpen:false }, () => requestAnimationFrame(() => {
       document.body.style.overflow = open ? 'hidden' : (this._menuOverflow || '');
       document.querySelectorAll('header,main,footer').forEach(el => { el.inert = open; });
       if (open) document.querySelector('.hm-menu-panel button')?.focus();
@@ -2291,7 +2320,6 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       submissionRetryDisabled:submissionKind==='rate_limited' && submission.retryAt>Date.now(),
       submissionReference:submission.reference,
       submissionHours:submissionKind==='success'?t(site.contact.hours):'',
-      submissionLineIcon:assetURL(homeDesign.contactIconLine),
       submissionLineId:site.contact.lineId,
       submissionHasLineHelp:!!site.contact.lineUrl && !!site.contact.lineId,
       submissionShowServices:submissionKind==='success' && sectionHrefAvailable('#cover'),
@@ -2439,6 +2467,12 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       brandName: t(site.brand.name), brandFull: t(site.brand.fullName),
       brandRole: t(site.brand.role), brandCred: t(site.brand.credential),
       lineId: site.contact.lineId, lineUrl: site.contact.lineUrl,
+      officialLineIcon: assetURL('assets/brand/LINE_Brand_icon.png'),
+      showLineContact: hasLine && site.stickyBar && !S.menuOpen && !S.admin && !S.editMode && !S.preview && !S.cookieSettingsOpen && S.lineContactSpace,
+      lineContactOpen: S.lineContactOpen,
+      toggleLineContact: () => this.setLineContact(!this.state.lineContactOpen, this.state.lineContactOpen),
+      closeLineContact: () => this.setLineContact(false, true),
+      lineCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='LINE contact').map(field=>[field.path.split('.')[1],cmsText(field.path)])),
       hasLine: hasLine,
       hasPhone: !!site.contact.phone, hasEmail: !!site.contact.email,
       facebookName: site.contact.facebookName || '', facebookUrl: site.contact.facebookUrl || '', hasFacebook: !!(site.contact.facebookName && /^https:/.test(site.contact.facebookUrl || '')),

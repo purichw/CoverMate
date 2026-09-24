@@ -1,0 +1,25 @@
+<sc-if value="{{ showLineContact }}">
+  <aside class="cm-line-contact" data-line-contact data-noedit="true">
+    <sc-if value="{{ lineContactOpen }}">
+      <section id="cm-line-panel" class="cm-line-panel" aria-labelledby="cm-line-title">
+        <div class="cm-line-panel-header">
+          <div><strong>{{ brandName }}</strong><p>{{ lineCopy.intro }}</p></div>
+          <button type="button" class="cm-line-close" data-line-close aria-label="{{ homeCopy.closeLabel }}" title="{{ homeCopy.closeLabel }}" sc-camel-on-click="{{ closeLineContact }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button>
+        </div>
+        <div class="cm-line-panel-body">
+          <h2 id="cm-line-title">{{ lineCopy.title }}</h2>
+          <p>{{ lineCopy.body }}</p>
+          <sc-if value="{{ hours }}"><div class="cm-line-hours"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span>{{ hours }}</span></div></sc-if>
+          <a class="cm-line-action" data-line-action href="{{ lineUrl }}" target="_blank" rel="noopener noreferrer">
+            <!-- COVERMATE_LINE_MARK -->
+            <span>{{ lineCopy.action }}<sc-if value="{{ lineId }}"><small>{{ lineId }}</small></sc-if></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
+          </a>
+        </div>
+      </section>
+    </sc-if>
+    <button type="button" class="cm-line-launcher" data-line-launcher aria-label="{{ lineCopy.launcher }}" title="{{ lineCopy.launcher }}" aria-expanded="{{ lineContactOpen }}" aria-controls="cm-line-panel" sc-camel-on-click="{{ toggleLineContact }}">
+      <!-- COVERMATE_LINE_MARK -->
+    </button>
+  </aside>
+</sc-if>

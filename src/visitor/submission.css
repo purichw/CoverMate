@@ -31,8 +31,6 @@
 .cm-submission-divider { display:flex; align-items:center; gap:12px; margin:18px 0 16px; font-size:14px; line-height:1.6; color:#686359; }
 .cm-submission-line { display:flex; align-items:center; justify-content:center; gap:14px; min-height:52px; padding:10px 18px; width:100%; border-radius:12px; background:#197c30; color:#fff!important; text-decoration:none!important; font-size:16px; font-weight:700; line-height:1.5; }
 .cm-submission-line:hover { background:#126526; }
-.cm-submission-line-logo { background:#fff; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex:none; }
-.cm-submission-line-logo img { width:24px; height:24px; object-fit:contain; }
 .cm-submission-line > svg { width:20px; height:20px; }
 .cm-submission-optional { font-size:13px; color:#686359; line-height:1.6; margin:12px 0 0; }
 .cm-submission-actions { display:flex; gap:12px; margin-top:20px; }

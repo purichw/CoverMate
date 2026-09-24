@@ -30,6 +30,14 @@ function readText(url) {
   return fs.readFileSync(url, "utf8");
 }
 
+export function readContactStyleAssets() {
+  return ['line-contact', 'submission'].map(name => {
+    const css = transformSync(readText(new URL(`src/visitor/${name}.css`, ROOT)), { loader:'css', minifyWhitespace:true }).code;
+    const hash = createHash('sha256').update(css).digest('hex').slice(0,16);
+    return { name, css, file:new URL(`assets/visitor/${name}.css`, ROOT), link:`<link rel="stylesheet" href="/assets/visitor/${name}.css?v=${hash}">` };
+  });
+}
+
 export function readImageVersions(root = new URL("assets/", ROOT)) {
   const versions = {};
   function visit(directory, prefix) {
@@ -60,6 +68,7 @@ function assertSingleSlot(source, slot, label) {
 
 export function readVisitorSources() {
   const contract = readText(new URL('covermate-contract.js', ROOT));
+  const contactStyles = Object.fromEntries(readContactStyleAssets().map(asset => [asset.name, asset.link]));
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_BEGIN', 'covermate-contract.js');
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_END', 'covermate-contract.js');
   return {
@@ -68,13 +77,16 @@ export function readVisitorSources() {
       .replace('// COVERMATE_BOOT_SCRIPT', () => transformSync(readText(new URL('src/visitor/boot.js', ROOT)), { minify: true }).code),
     template: readText(VISITOR_SOURCE_PATHS.template)
       .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
-      .replace('/* COVERMATE_SUBMISSION_STYLES */', () => readText(new URL('src/visitor/submission.css', ROOT)))
+      .replace('<style>/* COVERMATE_SUBMISSION_STYLES */</style>', () => contactStyles.submission)
       .replace('<!-- COVERMATE_CALCULATOR_TEMPLATE -->', () => readText(new URL('src/visitor/calculator.html', ROOT)))
       .replace('/* COVERMATE_CALCULATOR_STYLES */', () => readText(new URL('src/visitor/calculator.css', ROOT)))
       .replace('<!-- COVERMATE_HOME_TEMPLATE -->', () => readText(new URL('src/visitor/home.html', ROOT)))
       .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
-      .replace('/* COVERMATE_HOME_STYLES */', () => readText(new URL('src/visitor/home.css', ROOT))),
+      .replace('/* COVERMATE_HOME_STYLES */', () => readText(new URL('src/visitor/home.css', ROOT)))
+      .replace('<!-- COVERMATE_LINE_CONTACT -->', () => readText(new URL('src/visitor/line-contact.html', ROOT)))
+      .replace('<style>/* COVERMATE_LINE_STYLES */</style>', () => contactStyles['line-contact'])
+      .replaceAll('<!-- COVERMATE_LINE_MARK -->', () => readText(new URL('src/visitor/line-mark.html', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
     runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
     adminLabels: readText(new URL('src/visitor/admin-labels.js', ROOT)),

@@ -66,7 +66,7 @@ empty strings remain empty, so clearing a remark cannot reactivate the old
 fallback. The existing `item.th.note` / `item.en.note` remains the separate class
 notes row; it is not a live fallback after migration.
 
-CMS v17 also owns the localized comparison labels and optional class tag.
+CMS v18 also owns the localized comparison labels and optional class tag.
 Existing published statuses, hidden rows and owner-written copy are preserved.
 No live Firestore write is performed by rendering or by migration in the
 browser; persistence still requires the existing Draft/Publish actions.

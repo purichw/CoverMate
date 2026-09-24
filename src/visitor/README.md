@@ -28,6 +28,9 @@ Source ownership:
   root `covermate-calculator.mjs`; contact intake uses `covermate-public.mjs`
   and `/api/leads`. Keep these contracts separate from CMS command extraction.
 - `boot.js` / `boot.css` own the first-paint loading shell.
+- `line-contact.html` / `line-contact.css` own the shared floating LINE disclosure;
+  `line-mark.html` supplies the unmodified official mark for contact buttons.
+  See [LINE contact](../../docs/LINE_CONTACT.md) for CMS and interaction behavior.
 
 The generator preserves the exported bundler serialization rules through
 `scripts/lib/bundler-template.mjs`. `npm run check:visitor-source` fails when
