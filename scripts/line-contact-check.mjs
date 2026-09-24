@@ -74,6 +74,27 @@ else {
       await ready();await closed();await geometry();
       if(await page.locator('[data-line-launcher]').isVisible()) {await open();await geometry();await page.keyboard.press('Escape');await closed();}
       if(await page.locator('[data-cookie-reject]').isVisible()) await page.locator('[data-cookie-reject]').click();
+      if(width<768) {
+        const dockLine=page.locator('[data-cm-sticky] a').last();
+        assert.equal(await page.locator('[data-line-contact]').count(),0);
+        assert.equal(await dockLine.isVisible(),true);
+        assert.equal(await dockLine.getAttribute('href'),state.config.contact.lineUrl);
+        await page.screenshot({path:`${out}/${route==='/'?'home':'motor'}-${width}-${lang}.png`});
+        await page.locator('header .hm-menu-button').click();
+        assert.equal(await page.locator('[data-line-contact]').count(),0);
+        await page.keyboard.press('Escape');
+        assert.equal(await dockLine.isVisible(),true);
+        await ready('&fixture=custom');
+        assert.match(await dockLine.getAttribute('href'),/@local-fixture$/);
+        const logo=dockLine.locator('img');
+        await logo.evaluate(img=>img.decode());
+        assert.match(await logo.getAttribute('src'),/LINE_Brand_icon\.png/);
+        assert.equal(await logo.evaluate(img=>img.naturalWidth>0 && getComputedStyle(img).filter==='none'),true);
+        await ready('&fixture=no-line');assert.equal(await page.locator('[data-cm-sticky] a[href*="line."]').count(),0);
+        await ready('&fixture=disabled');assert.equal(await page.locator('[data-cm-sticky]').count(),0);
+        report.checks.push(`${route} ${width}px ${lang}: no floating launcher/panel; bottom CTA, menu, official logo, CMS destination and disabled/missing URL preserved`);
+        await context.close();continue;
+      }
       await open();
       assert.equal(await page.locator('[data-line-action]').getAttribute('href'),state.config.contact.lineUrl);
       assert.equal(await page.locator('[data-line-action]').getAttribute('target'),'_blank');
@@ -94,10 +115,6 @@ else {
       await page.locator('#contact-name').fill('Local form remains');
       await open();await page.keyboard.press('Escape');
       assert.equal(await page.locator('#contact-name').inputValue(),'Local form remains');
-      if(width<768) {
-        await page.locator('header .hm-menu-button').click();assert.equal(await page.locator('[data-line-launcher]').count(),0);
-        await page.keyboard.press('Escape');await page.locator('[data-line-launcher]').waitFor();
-      }
       const logos = await page.locator('.cm-line-mark img,.cm-contact-line img,.cm-footer-line img').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({src:n.src,loaded:n.complete&&n.naturalWidth>0,width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height,filter:getComputedStyle(n).filter,transform:getComputedStyle(n).transform})));
       assert.ok(logos.length>=3);
       for(const logo of logos) { assert.ok(logo.loaded);assert.match(logo.src,/LINE_Brand_icon\.png/);assert.ok(logo.height >= (width<768?40:20));assert.equal(logo.width,logo.height);assert.equal(logo.filter,'none');assert.equal(logo.transform,'none'); }
@@ -109,7 +126,10 @@ else {
       assert.equal(await page.locator('#cm-line-title').innerText(),lang==='th'?'CMS custom title':'หัวข้อจาก CMS');
       await ready('&fixture=no-line');assert.equal(await page.locator('[data-line-launcher]').count(),0);
       await ready('&fixture=disabled');assert.equal(await page.locator('[data-line-launcher]').count(),0);
-      await ready();await page.setViewportSize({width,height:400});await page.waitForFunction(()=>!document.querySelector('[data-line-contact]'));
+      await ready();await open();
+      await page.setViewportSize({width:767,height});await page.waitForFunction(()=>!document.querySelector('[data-line-contact]'));
+      await page.setViewportSize({width:768,height});await page.locator('[data-line-launcher]').waitFor();await closed();
+      await page.setViewportSize({width,height:400});await page.waitForFunction(()=>!document.querySelector('[data-line-contact]'));
       report.checks.push(`${route} ${width}px ${lang}: click/close/Escape/outside, focus, CMS copy/destination/hours, language switch, dock clearance, fixed scroll, form preservation, logos, missing URL/disabled/short viewport`);
       await context.close();
     }

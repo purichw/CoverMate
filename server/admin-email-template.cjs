@@ -6,7 +6,7 @@ const FONT = "'Google Sans', 'Google Sans Thai', 'Noto Sans Thai', Tahoma, Arial
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const tableStyle = 'border-collapse:collapse;border-spacing:0;mso-table-lspace:0pt;mso-table-rspace:0pt;';
 const INTEREST_LABELS = Object.freeze({ motor: 'ประกันรถยนต์', life: 'ประกันชีวิต', health: 'ประกันสุขภาพ', accident: 'ประกันอุบัติเหตุ', savings: 'ประกันออมทรัพย์', unsure: 'ยังไม่แน่ใจ', other: 'อื่น ๆ' });
-const ENQUIRY_LABELS = Object.freeze({ quote: 'ขอใบเสนอราคา', compare: 'เปรียบเทียบแผนประกัน', general: 'สอบถามทั่วไป', review: 'ตรวจกรมธรรม์เดิม', claim: 'สอบถามเรื่องเคลม' });
+const ENQUIRY_LABELS = Object.freeze({ quote: 'ขอใบเสนอราคา / เปรียบเทียบแผน', assess: 'ประเมินความคุ้มครองที่เหมาะสม', compare: 'เปรียบเทียบแผนประกัน', general: 'คำถามทั่วไป / เรื่องอื่น ๆ', review: 'ตรวจ / ทบทวนกรมธรรม์ที่มีอยู่', renewal: 'ต่ออายุประกัน', service: 'บริการหลังการขาย / แก้ไขกรมธรรม์', claim: 'สอบถาม / ขอความช่วยเหลือเรื่องเคลม' });
 const inline = value => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f\s]+/g, ' ').trim() : '';
 const excerpt = (value, limit) => { const characters = Array.from(inline(value)); return characters.length > limit ? `${characters.slice(0, limit - 1).join('')}…` : characters.join(''); };
 const interestLabel = value => Object.prototype.hasOwnProperty.call(INTEREST_LABELS, value) ? INTEREST_LABELS[value] : excerpt(value, 120);

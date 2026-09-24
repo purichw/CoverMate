@@ -12,7 +12,7 @@
   var ALLOWED_HOSTS = ["covermateinsurance.com"];
   var OWNER_HASHES = { "#admin": true, "#edit": true, "#preview": true };
   var EVENT_DEBOUNCE_MS = 800;
-  var LEAD_QTYPES = { quote: true, compare: true, general: true, review: true, claim: true, unspecified: true };
+  var LEAD_QTYPES = { quote: true, assess: true, renewal: true, service: true, compare: true, general: true, review: true, claim: true, unspecified: true };
   var LEAD_COVERAGES = { life: true, health: true, motor: true, accident: true, savings: true, unsure: true, unspecified: true };
   var FORM_TYPES = { consultation: true, renewal_reminder: true };
   var EVENT_NAMES = {

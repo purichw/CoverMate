@@ -31,8 +31,8 @@ function readText(url) {
 }
 
 export function readVisitorStyleAssets() {
-  return ['home', 'line-contact', 'submission'].map(name => {
-    const css = transformSync(readText(new URL(`src/visitor/${name}.css`, ROOT)), { loader:'css', minifyWhitespace:true }).code;
+  return ['home', 'line-contact', 'submission', 'select'].map(name => {
+    const css = transformSync(readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT)), { loader:'css', minifyWhitespace:true }).code;
     const hash = createHash('sha256').update(css).digest('hex').slice(0,16);
     return { name, css, file:new URL(`assets/visitor/${name}.css`, ROOT), link:`<link rel="stylesheet" href="/assets/visitor/${name}.css?v=${hash}">` };
   });
@@ -40,7 +40,13 @@ export function readVisitorStyleAssets() {
 
 // Keep the narrow contact-assets API for existing tooling.
 export function readContactStyleAssets() {
-  return readVisitorStyleAssets().filter(asset => asset.name !== 'home');
+  return readVisitorStyleAssets().filter(asset => ['line-contact', 'submission'].includes(asset.name));
+}
+
+export function readSelectAsset() {
+  const code = transformSync(readText(new URL('src/shared/select.js', ROOT)), { minify:true, format:'esm', target:'es2022' }).code;
+  const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
+  return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
 export function readImageVersions(root = new URL("assets/", ROOT)) {
@@ -91,9 +97,10 @@ export function readVisitorSources() {
       .replace('<style>/* COVERMATE_HOME_STYLES */</style>', () => visitorStyles.home)
       .replace('<!-- COVERMATE_LINE_CONTACT -->', () => readText(new URL('src/visitor/line-contact.html', ROOT)))
       .replace('<style>/* COVERMATE_LINE_STYLES */</style>', () => visitorStyles['line-contact'])
+      .replace('<!-- COVERMATE_SELECT_STYLES -->', () => visitorStyles.select)
       .replaceAll('<!-- COVERMATE_LINE_MARK -->', () => readText(new URL('src/visitor/line-mark.html', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
-    runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n"),
+    runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n").replace('/assets/visitor/select.js',readSelectAsset().url),
     adminLabels: readText(new URL('src/visitor/admin-labels.js', ROOT)),
     cmsController: buildSync({
       entryPoints: [fileURLToPath(new URL('src/visitor/cms-controller.js', ROOT))],
