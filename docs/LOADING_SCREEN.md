@@ -30,6 +30,10 @@ unchanged. The bar is indeterminate: it does not claim a download percentage.
   external stylesheets, a styled layout pass and current font readiness before
   revealing the page. This prevents late Home CSS from exposing an unstyled
   frame. Replacement stylesheet nodes are checked again before reveal.
+  Initial hash navigation also awaits the shared page-ready promise, resolved
+  after this barrier removes the visibility guard. It measures the final section
+  position once and can focus the visible destination; a newer anchor request
+  still cancels an older one.
 - At four seconds the status acknowledges a slow load and motion stops. At ten
   seconds a retry button appears. Critical stylesheet, script or bundle errors
   immediately show a friendly error and the same retry action, which reloads the current URL.

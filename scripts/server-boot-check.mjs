@@ -32,6 +32,46 @@ function observeBoot() {
 }
 fs.mkdirSync('uat-results/server-boot', { recursive: true });
 try {
+  // Initial aliases must measure the final styled layout, even when the CSS
+  // arrives after the boot fallback. One scroll should land at the target;
+  // polling/repeated correction would interfere with later user navigation.
+  for (const [route, targetId] of [['/#motor', 'insurers'], ['/#life', 'cover']]) {
+    const page = await browser.newPage({ viewport: { width: 820, height: 1180 } });
+    await page.route('**/assets/visitor/home.css?*', async route => {
+      await new Promise(resolve => setTimeout(resolve, 1600));
+      await route.continue();
+    });
+    await page.addInitScript(() => {
+      window.initialAnchorScrolls = [];
+      const scrollTo = window.scrollTo;
+      window.initialAnchorMeasurements = [];
+      window.scrollTo = function(...args) {
+        const header = document.querySelector('header'), inner = header?.firstElementChild;
+        window.initialAnchorMeasurements.push({ booting: document.documentElement.hasAttribute('data-covermate-booting'), stylesReady: [...document.querySelectorAll('link[rel="stylesheet"]')].every(link => !!link.sheet), headerBottom: header?.getBoundingClientRect().bottom, padding: inner && getComputedStyle(inner).padding, animations: inner?.getAnimations().map(animation => ({ property: animation.transitionProperty, time: animation.currentTime, duration: animation.effect?.getComputedTiming().duration })) });
+        window.initialAnchorScrolls.push(args); return scrollTo.apply(this, args);
+      };
+    });
+    await page.goto(baseUrl + route);
+    await page.waitForFunction(() => document.documentElement.getAttribute('data-covermate-route') === 'home' && !document.documentElement.hasAttribute('data-covermate-booting'));
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.evaluate(async () => {
+      await Promise.all(document.querySelector('header').getAnimations({ subtree: true }).filter(animation => Number.isFinite(animation.effect?.getComputedTiming().endTime)).map(animation => animation.finished.catch(() => {})));
+    });
+    const anchor = await page.evaluate(targetId => {
+      const target = document.getElementById(targetId), rect = target.getBoundingClientRect();
+      const headerBottom = document.querySelector('header').getBoundingClientRect().bottom;
+      return { top: rect.top, bottom: rect.bottom, headerBottom, viewportHeight: innerHeight, padding: getComputedStyle(document.querySelector('header > div')).padding, gap: rect.top - headerBottom, activeId: document.activeElement?.id, scrolls: window.initialAnchorScrolls, measuredAtScroll: window.initialAnchorMeasurements, hash: location.hash };
+    }, targetId);
+    report.checks.push({ route, lang: 'th', width: 820, height: 1180, homeCssDelay: 1600, initialAnchor: anchor });
+    assert.ok(anchor.top >= anchor.headerBottom && anchor.top < anchor.viewportHeight * 0.82, `${route} delayed CSS: destination must land visibly below the header (top=${anchor.top}, header=${anchor.headerBottom})`);
+    assert.equal(anchor.activeId, targetId, 'Initial alias focuses the destination after its visibility guard is removed');
+    assert.equal(anchor.scrolls.length, 1, 'Initial alias issues one scroll after layout readiness');
+    assert.equal(anchor.scrolls[0][0].behavior, 'instant');
+    assert.equal(anchor.measuredAtScroll[0].booting, false, 'Initial scroll waits for its visibility guard to be removed');
+    assert.equal(anchor.measuredAtScroll[0].stylesReady, true, 'Initial scroll waits for the current stylesheets');
+    await page.close();
+  }
+  if (!process.argv.includes('--anchors-only')) {
   for (const route of ['/', '/motor']) for (const lang of ['th', 'en']) for (const width of [390, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
     if(route==='/' && lang==='th' && width===390) await page.route('**/assets/visitor/home.css?*',async r=>{
@@ -158,9 +198,12 @@ try {
   mode = 'valid';
   const ownerHtml = await fetch(baseUrl + '/admin/edit').then(r => r.text());
   assert.ok(!ownerHtml.includes('id="covermate-published-state"'), 'Owner routes never get a public seed');
+  }
   assert.deepEqual(report.errors, []);
   report.result = 'PASS';
-  console.log('PASS server boot: Home/Motor TH/EN mobile/desktop, delayed/failed stylesheet guard, stale-cache precedence, no duplicate read, unchanged CLS limit, later refresh, storage-denied/form preservation, missing/invalid/mismatched fallback and owner isolation.');
+  console.log(process.argv.includes('--anchors-only')
+    ? 'PASS initial anchors: delayed CSS on tablet, final visible destination/focus, one instant scroll after the stylesheet/visibility guard.'
+    : 'PASS server boot: initial anchors, Home/Motor TH/EN mobile/desktop, delayed/failed stylesheet guard, stale-cache precedence, no duplicate read, unchanged CLS limit, later refresh, storage-denied/form preservation, missing/invalid/mismatched fallback and owner isolation.');
 } finally {
   fs.writeFileSync('uat-results/server-boot/report.json', JSON.stringify(report, null, 2));
   await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
