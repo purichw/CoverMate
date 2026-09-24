@@ -176,7 +176,7 @@ export async function prepareContactLead(input = {}) {
   const payload = {
     name: cleanText(input.name, 120), contact: cleanText(input.contact, 160),
     topic: cleanText(input.topic, 2000), summary: cleanText(input.summary, 1200),
-    qtype: cleanLeadChoice(input.qtype, new Set(['', 'quote', 'compare', 'general', 'review', 'claim'])),
+    qtype: cleanLeadChoice(input.qtype, new Set(['', 'quote', 'assess', 'review', 'renewal', 'service', 'claim', 'general', 'compare'])),
     coverage: cleanLeadChoice(input.coverage, new Set(['', 'life', 'health', 'motor', 'accident', 'savings', 'unsure'])),
     language: input.language === 'en' ? 'en' : 'th', consent: input.consent === true,
     noticeVersion, consentKind: input.consentKind === 'renewal' ? 'renewal' : 'consultation',

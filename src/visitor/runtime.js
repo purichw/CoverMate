@@ -313,7 +313,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   state = {
     menuOpen: false,
     lineContactOpen: false,
-    lineContactSpace: true,
+    lineContactSpace: window.innerWidth >= 768,
     analyticsConsent: window.CoverMateAnalytics?.getConsent() || 'unknown',
     cookieSettingsOpen: false,
     compactHome: window.innerWidth < 768,
@@ -545,6 +545,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   sweep() {
+    window.CoverMateSelect?.refresh();
+    if (!this._selectLoader && [...document.querySelectorAll('select')].some(select => { const r=select.getBoundingClientRect(); return r.height && r.top < innerHeight + 600 && r.bottom > 0; })) this._selectLoader=import(location.origin+'/assets/visitor/select.js').catch(()=>{this._selectLoader=null;});
     this.syncInlineMedia();
     this.syncVisitorDock();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
@@ -570,10 +572,10 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       this._dockHeight = height;
       document.documentElement.style.setProperty('--cm-dock-height', height + 'px');
     }
-    // Give consent controls and the mobile keyboard priority over the contact bubble.
+    // Mobile uses the bottom LINE CTA; leave room for consent controls on larger screens.
     const viewportHeight = window.visualViewport?.height || window.innerHeight;
     const keyboardOpen = window.innerHeight - viewportHeight > 150;
-    const lineContactSpace = !keyboardOpen && viewportHeight - height >= 430;
+    const lineContactSpace = window.innerWidth >= 768 && !keyboardOpen && viewportHeight - height >= 430;
     if (lineContactSpace !== this.state.lineContactSpace) this.setState({ lineContactSpace, ...(!lineContactSpace ? { lineContactOpen:false } : {}) });
   }
 
@@ -2235,8 +2237,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     });
 
 
-    const f = S.form;
-    const QUERY = Object.fromEntries(['quote', 'compare', 'general', 'review', 'claim'].map(key => [key, cmsText('formOptions.query.' + key)]));
+    const f = S.form.qtype === 'compare' ? { ...S.form, qtype:'quote' } : S.form;
+    const QUERY = Object.fromEntries(['quote', 'assess', 'review', 'renewal', 'service', 'claim', 'general'].map(key => [key, cmsText('formOptions.query.' + key)]));
     const COVER = Object.fromEntries(['life', 'health', 'motor', 'accident', 'savings', 'unsure'].map(key => [key, cmsText('formOptions.coverage.' + key)]));
     const RENEW_KIND = Object.fromEntries(['motor', 'compulsory', 'health', 'life', 'accident'].map(key => [key, cmsGet(site, 'formOptions.renewal.' + key) || {}]));
     let summary = S.calculatorSnapshot && S.shareCalculator

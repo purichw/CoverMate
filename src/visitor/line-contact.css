@@ -33,4 +33,5 @@
   .cm-line-panel-body { padding:16px; }
   .cm-line-action { font-size:15px; gap:4px; }
 }
+@media (max-width:767px) { .cm-line-contact { display:none; } }
 @media print { .cm-line-contact { display:none; } }

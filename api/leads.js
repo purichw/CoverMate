@@ -92,7 +92,7 @@ function validateLead(body) {
   if (!result.name) result.name = 'Unnamed renewal enquiry';
   result.noticeVersion = body.noticeVersion;
   result.consentKind = body.consentKind;
-  for (const [key, values] of Object.entries({ qtype: ['', 'quote', 'compare', 'general', 'review', 'claim'], coverage: ['', 'life', 'health', 'motor', 'accident', 'savings', 'unsure'], language: ['th', 'en'] })) {
+  for (const [key, values] of Object.entries({ qtype: ['', 'quote', 'assess', 'review', 'renewal', 'service', 'claim', 'general', 'compare'], coverage: ['', 'life', 'health', 'motor', 'accident', 'savings', 'unsure'], language: ['th', 'en'] })) {
     if (!values.includes(body[key])) throw error(422, 'invalid_choice', `Invalid ${key}.`);
     result[key] = body[key];
   }

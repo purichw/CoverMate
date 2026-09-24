@@ -3,6 +3,7 @@ import fs from "node:fs";
 import {
   buildVisitorIndex,
   readVisitorStyleAssets,
+  readSelectAsset,
   readImageVersions,
   VISITOR_SOURCE_PATHS
 } from "./lib/visitor-source.mjs";
@@ -12,10 +13,16 @@ function main() {
   const assetFile = new URL('../server/asset-versions.json', import.meta.url);
   const assets = JSON.stringify(readImageVersions(), null, 2) + '\n';
   const styles = readVisitorStyleAssets();
+  const select = readSelectAsset();
+  const adminFile = new URL('../admin/index.html', import.meta.url);
+  const admin = fs.readFileSync(adminFile,'utf8');
+  const adminSlot = /<!-- COVERMATE_SELECT_ASSETS_START -->[\s\S]*?<!-- COVERMATE_SELECT_ASSETS_END -->/g;
+  if ([...admin.matchAll(adminSlot)].length !== 1) throw new Error('Admin shared select asset slot must exist exactly once.');
+  const nextAdmin = admin.replace(adminSlot,`<!-- COVERMATE_SELECT_ASSETS_START -->\n  ${styles.find(asset=>asset.name==='select').link}\n  <script type="module" src="${select.url}"></script>\n  <!-- COVERMATE_SELECT_ASSETS_END -->`);
   const checkOnly = process.argv.includes("--check");
   if (checkOnly) {
     const current = fs.readFileSync(VISITOR_SOURCE_PATHS.index, "utf8");
-    if (current !== next || !fs.existsSync(assetFile) || fs.readFileSync(assetFile, 'utf8') !== assets || styles.some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.css)) {
+    if (current !== next || admin !== nextAdmin || !fs.existsSync(assetFile) || fs.readFileSync(assetFile, 'utf8') !== assets || !fs.existsSync(select.file) || fs.readFileSync(select.file,'utf8') !== select.code || styles.some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.css)) {
       console.error("index.html is out of sync with src/visitor sources. Run npm run build:visitor.");
       process.exit(1);
     }
@@ -29,6 +36,8 @@ function main() {
     fs.mkdirSync(new URL('.',asset.file),{recursive:true});
     fs.writeFileSync(asset.file,asset.css);
   }
+  fs.writeFileSync(select.file,select.code);
+  if (admin !== nextAdmin) fs.writeFileSync(adminFile,nextAdmin);
   console.log("Generated index.html from src/visitor sources.");
 }
 

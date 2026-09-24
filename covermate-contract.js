@@ -431,7 +431,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 18;
+const CMS_CONTENT_VERSION = 19;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -770,11 +770,14 @@ const CMS_CONTENT_FIELDS = [
     ["coveragePrompt","coveragePrompt","— เลือกความคุ้มครอง —","— Select coverage —"],
     ["policyPrompt","policyPrompt","— ประกันประเภทไหน —","— Which policy —"],
     ["monthPrompt","monthPrompt","— หมดอายุเดือนไหน —","— Expires which month —"],
-    ["query.quote","query / quote","ขอใบเสนอราคา","Request a quote"],
-    ["query.compare","query / compare","เปรียบเทียบแผน","Compare plans"],
-    ["query.general","query / general","สอบถามทั่วไป","General question"],
-    ["query.review","query / review","ทบทวนกรมธรรม์เดิม","Review my existing policy"],
-    ["query.claim","query / claim","ช่วยเรื่องเคลม","Help with a claim"],
+    ["query.quote","query / quote","ขอใบเสนอราคา / เปรียบเทียบแผน","Request a quote / compare plans"],
+    ["query.assess","query / assess","ประเมินความคุ้มครองที่เหมาะสม","Assess suitable coverage"],
+    ["query.review","query / review","ตรวจ / ทบทวนกรมธรรม์ที่มีอยู่","Check / review an existing policy"],
+    ["query.renewal","query / renewal","ต่ออายุประกัน","Renew insurance"],
+    ["query.service","query / service","บริการหลังการขาย / แก้ไขกรมธรรม์","After-sales service / policy changes"],
+    ["query.claim","query / claim","สอบถาม / ขอความช่วยเหลือเรื่องเคลม","Claims questions / assistance"],
+    ["query.general","query / general","คำถามทั่วไป / เรื่องอื่น ๆ","General questions / other enquiries"],
+    ["query.compare","query / compare (legacy)","เปรียบเทียบแผน","Compare plans"],
     ["coverage.life","coverage / life","ประกันชีวิต","Life"],
     ["coverage.health","coverage / health","ประกันสุขภาพ","Health"],
     ["coverage.motor","coverage / motor","ประกันรถยนต์","Motor"],
@@ -982,6 +985,17 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Replace only previous defaults. Owner edits and intentional blanks survive.
+  if (previousVersion < 19) {
+    const oldTopics = {quote:['ขอใบเสนอราคา','Request a quote'],general:['สอบถามทั่วไป','General question'],review:['ทบทวนกรมธรรม์เดิม','Review my existing policy'],claim:['ช่วยเรื่องเคลม','Help with a claim']};
+    CMS_CONTENT_FIELDS.filter(field=>field.path.startsWith('formOptions.query.')).forEach(field=>{
+      ['th','en'].forEach((lang,index)=>{
+        const path=field.path+'.'+lang, value=cmsGet(next,path);
+        if(value===undefined || value===oldTopics[field.path.split('.').at(-1)]?.[index]) cmsSet(next,path,field.seed[lang]);
+        if(value===undefined && previousVersion<5) next.cmsLegacyCopy=[...new Set([...(next.cmsLegacyCopy||[]),path])];
+      });
+    });
+  }
   // Replace only the bundled legacy mark, never a custom upload or an intentional blank.
   if (previousVersion < 17) ['homeDesign.contactIconLine','footer.iconLine'].forEach(path => {
     if (cmsGet(next,path) === 'assets/brand/line-icon.svg') cmsSet(next,path,'assets/brand/LINE_Brand_icon.png');

@@ -691,6 +691,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 <style>/* COVERMATE_HOME_STYLES */</style>
 <style>/* COVERMATE_LINE_STYLES */</style>
+<!-- COVERMATE_SELECT_STYLES -->
 <style>/* COVERMATE_CALCULATOR_STYLES */</style>
 <style>/* COVERMATE_SUBMISSION_STYLES */</style>
 <sc-if value="{{ showHeader }}" hint-placeholder-val="{{ true }}">
@@ -1199,18 +1200,18 @@ textarea.input { min-height: 90px; resize: vertical; }
           <label style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.renewalPolicy"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalPolicy }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalPolicy }}</sc-if></span>
             <div style="position:relative;display:flex">
-              <sc-raw-select value="{{ rKind }}" sc-camel-on-change="{{ onRKind }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+              <span class="cm-select-shell"><sc-raw-select value="{{ rKind }}" sc-camel-on-change="{{ onRKind }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
                 <sc-for list="{{ rKindOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option></sc-for>
-              </sc-raw-select>
+              </sc-raw-select></span>
               <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
             </div>
           </label>
           <label style="display:flex;flex-direction:column;gap:5px">
             <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.renewalMonth"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.renewalMonth }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.renewalMonth }}</sc-if></span>
             <div style="position:relative;display:flex">
-              <sc-raw-select value="{{ rMonth }}" sc-camel-on-change="{{ onRMonth }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+              <span class="cm-select-shell"><sc-raw-select value="{{ rMonth }}" sc-camel-on-change="{{ onRMonth }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
                 <sc-for list="{{ rMonthOpts }}" as="o" hint-placeholder-count="13"><option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option></sc-for>
-              </sc-raw-select>
+              </sc-raw-select></span>
               <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
             </div>
           </label>
@@ -1469,11 +1470,11 @@ textarea.input { min-height: 90px; resize: vertical; }
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
               <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactTopic"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactTopic }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactTopic }}</sc-if></span>
               <div style="position:relative;display:flex">
-                <sc-raw-select name="qtype" value="{{ fQType }}" sc-camel-on-change="{{ onQType }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
-                  <sc-for list="{{ qtypeOpts }}" as="o" hint-placeholder-count="6">
+                <span class="cm-select-shell"><sc-raw-select name="qtype" value="{{ fQType }}" sc-camel-on-change="{{ onQType }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+                  <sc-for list="{{ qtypeOpts }}" as="o" hint-placeholder-count="8">
                     <option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option>
                   </sc-for>
-                </sc-raw-select>
+                </sc-raw-select></span>
                 <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
               </div>
             </label>
@@ -1482,11 +1483,11 @@ textarea.input { min-height: 90px; resize: vertical; }
             <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
               <span style="font-size:12.5px;font-weight:700;color:var(--color-neutral-700)" data-cms-copy="publicCopy.contactCoverage"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactCoverage }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactCoverage }}</sc-if></span>
               <div style="position:relative;display:flex">
-                <sc-raw-select name="coverage" value="{{ fCoverage }}" sc-camel-on-change="{{ onCoverage }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+                <span class="cm-select-shell"><sc-raw-select name="coverage" value="{{ fCoverage }}" sc-camel-on-change="{{ onCoverage }}" style="appearance:none;-webkit-appearance:none;font:inherit;font-size:15px;padding:13px 42px 13px 18px;width:100%;border-radius:999px;border:1.5px solid var(--color-neutral-300);background:var(--color-surface);color:var(--color-text);min-height:50px;cursor:pointer;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
                   <sc-for list="{{ coverageOpts }}" as="o" hint-placeholder-count="7">
                     <option value="{{ o.value }}" data-cms-copy="{{ o.cmsPath }}">{{ o.label }}</option>
                   </sc-for>
-                </sc-raw-select>
+                </sc-raw-select></span>
                 <svg sc-camel-view-box="0 0 24 24" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;pointer-events:none;fill:none;stroke:var(--color-neutral-600);stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="m6 9 6 6 6-6"></path></svg>
               </div>
             </label>
@@ -1914,7 +1915,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             </label>
           </sc-for>
           <sc-if value="{{ it.hasIcon }}">
-            <label class="om-cms-field"><span>ไอคอน</span><select aria-label="ไอคอนรายการ" value="{{ it.icon }}" sc-camel-on-change="{{ it.onIcon }}"><sc-for list="{{ it.iconOptions }}" as="option"><option value="{{ option.key }}">{{ option.label }}</option></sc-for></select></label>
+            <label class="om-cms-field"><span>ไอคอน</span><span class="cm-select-shell"><select aria-label="ไอคอนรายการ" value="{{ it.icon }}" sc-camel-on-change="{{ it.onIcon }}"><sc-for list="{{ it.iconOptions }}" as="option"><option value="{{ option.key }}">{{ option.label }}</option></sc-for></select></span></label>
           </sc-if>
           <sc-if value="{{ it.hasTone }}">
             <div role="group" aria-label="สีการ์ด" style="display:flex;gap:8px"><sc-for list="{{ it.toneOptions }}" as="tone"><button type="button" title="{{ tone.key }}" aria-label="{{ tone.key }}" aria-pressed="{{ tone.selected }}" sc-camel-on-click="{{ tone.choose }}" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--color-bg);background:{{ tone.color }};cursor:pointer"><sc-if value="{{ tone.selected }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:white;fill:none;stroke-width:2"><path d="m5 12 4 4 10-10"/></svg></sc-if></button></sc-for></div>
@@ -1997,7 +1998,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               </label>
             </sc-for>
             <sc-if value="{{ cd.showLogo }}" hint-placeholder-val="{{ false }}">
-              <label class="om-cms-field"><span>ประเภทใบอนุญาต</span><sc-raw-select data-admin-licence-role="{{ cd.id }}" value="{{ cd.licenceRole }}" sc-camel-on-change="{{ cd.onLicenceRole }}"><sc-for list="{{ cd.licenceRoleOptions }}" as="option"><option value="{{ option.value }}">{{ option.label }}</option></sc-for></sc-raw-select></label>
+              <label class="om-cms-field"><span>ประเภทใบอนุญาต</span><span class="cm-select-shell"><sc-raw-select data-admin-licence-role="{{ cd.id }}" value="{{ cd.licenceRole }}" sc-camel-on-change="{{ cd.onLicenceRole }}"><sc-for list="{{ cd.licenceRoleOptions }}" as="option"><option value="{{ option.value }}">{{ option.label }}</option></sc-for></sc-raw-select></span></label>
             <label style="display:flex;flex-direction:column;gap:4px">
               <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ที่อยู่โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">Path โลโก้</sc-if></span>
               <input value="{{ cd.logo }}" sc-camel-on-change="{{ cd.onLogo }}" style="font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);font-family:"Google Sans","Google Sans Thai","Noto Sans Thai",system-ui,sans-serif;transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">

@@ -30,7 +30,7 @@ const templates = Object.fromEntries(kinds.map(kind => [kind, renderAdminEmail(k
 const date = value => `${new Date(value).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false })} (เวลาไทย)`;
 const expectedUrl = kind => kind === 'test' ? adminUrl : kind === 'overdue_digest' ? `${adminUrl}?followUp=overdue` : `${adminUrl}?case=${input.caseId}`;
 const actionLabel = kind => kind === 'test' ? 'เปิด Admin' : kind === 'overdue_digest' ? 'ดูเคสเลยกำหนดใน Admin' : 'เปิดดูเคสใน Admin';
-const enquiryLabels = { quote: 'ขอใบเสนอราคา', compare: 'เปรียบเทียบแผนประกัน', general: 'สอบถามทั่วไป', review: 'ตรวจกรมธรรม์เดิม', claim: 'สอบถามเรื่องเคลม' };
+const enquiryLabels = { quote: 'ขอใบเสนอราคา / เปรียบเทียบแผน', assess: 'ประเมินความคุ้มครองที่เหมาะสม', compare: 'เปรียบเทียบแผนประกัน', general: 'คำถามทั่วไป / เรื่องอื่น ๆ', review: 'ตรวจ / ทบทวนกรมธรรม์ที่มีอยู่', renewal: 'ต่ออายุประกัน', service: 'บริการหลังการขาย / แก้ไขกรมธรรม์', claim: 'สอบถาม / ขอความช่วยเหลือเรื่องเคลม' };
 
 assert.equal(templates.new_case.subject, `CoverMate · มีเคสใหม่ ${input.caseNumber}`);
 assert.equal(templates.test.subject, '[ทดสอบ] CoverMate · การแจ้งเตือนเคสใหม่');
