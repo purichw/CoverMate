@@ -97,13 +97,19 @@ try {
     });
     const page = await context.newPage();
     page.setDefaultTimeout(20000);
-    const errors = [], failedAssets = [], badResponses = [], forbiddenWrites = [];
+    const errors = [], failedAssets = [], failedRequests = [], badResponses = [], forbiddenWrites = [];
+    const variant = { route, lang, width, passed: false, suppressedTelemetry: 0, errors, failedAssets, failedRequests, badResponses, forbiddenWrites };
+    // Keep diagnostics even if an early assertion aborts this variant.
+    report.variants.push(variant);
     let collect = true;
     const assetTypes = new Set(['image', 'font', 'stylesheet', 'script', 'media']);
-    page.on('pageerror', error => { if (collect) errors.push(error.message); });
-    page.on('console', message => { if (collect && message.type() === 'error') errors.push(message.text()); });
+    page.on('pageerror', error => { if (collect) errors.push({ type: 'pageerror', message: error.message, stack: error.stack }); });
+    page.on('console', message => { if (collect && message.type() === 'error') errors.push({ type: 'console', message: message.text(), location: message.location() }); });
     page.on('requestfailed', request => {
-      if (collect && assetTypes.has(request.resourceType())) failedAssets.push({ url: request.url(), error: request.failure()?.errorText });
+      if (!collect) return;
+      const failure = { url: request.url(), method: request.method(), resourceType: request.resourceType(), error: request.failure()?.errorText };
+      failedRequests.push(failure);
+      if (assetTypes.has(request.resourceType())) failedAssets.push(failure);
     });
     page.on('response', response => {
       if (collect && assetTypes.has(response.request().resourceType()) && response.status() >= 400) badResponses.push({ url: response.url(), status: response.status() });
@@ -114,6 +120,12 @@ try {
       delete headers['x-vercel-protection-bypass'];
       if (url.origin === origin) {
         Object.assign(headers, bypass);
+        if (request.method() === 'POST' && url.pathname === '/api/telemetry') {
+          // Production web-vitals sendBeacon runs automatically. A local success
+          // keeps this smoke read-only without manufacturing a console failure.
+          variant.suppressedTelemetry += 1;
+          return interception.fulfill({ status: 204, body: '' });
+        }
         if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()) && url.pathname.startsWith('/api/')) {
           forbiddenWrites.push({ method: request.method(), path: url.pathname });
           return interception.abort('blockedbyclient');
@@ -184,14 +196,14 @@ try {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'No horizontal page overflow');
       if (route === '/' && lang === 'th' || route === '/motor' && lang === 'en') {
         const file = path.join(out, `${route === '/' ? 'home' : 'motor'}-${lang}-${width}.png`);
-        await section.screenshot({ path: file, animations: 'disabled', style: 'header,[data-cm-sticky],[data-admin-preview-bar]{visibility:hidden!important}' });
+        await section.screenshot({ path: file, animations: 'disabled', style: 'header,[data-cm-sticky],[data-line-contact],[data-admin-preview-bar]{visibility:hidden!important}' });
         report.screenshots.push({ file, url: page.url(), viewport: page.viewportSize(), target: '[data-home-section="tiers"]', captureOnly: 'Fixed header/contact dock hidden in tall section crop; section layout unchanged', personallyInspected: false });
       }
       assert.deepEqual(errors, [], 'No browser runtime/console errors');
       assert.deepEqual(failedAssets, [], 'No deployed asset request failures');
       assert.deepEqual(badResponses, [], 'No failing deployed asset responses');
       assert.deepEqual(forbiddenWrites, [], 'No application API writes attempted');
-      report.variants.push({ route, lang, width, status: response.status(), classes: items.length, axes: heads.length, cardCount, publishedConfigSha256: hash(JSON.stringify(metadata.config)), media, errors, failedAssets, badResponses, checks: ['CMS readback', 'coverage and per-cell remarks', 'responsive layout', 'native accordion', 'no CMS controls', 'no overflow', 'deployed media'] });
+      Object.assign(variant, { passed: true, status: response.status(), classes: items.length, axes: heads.length, cardCount, publishedConfigSha256: hash(JSON.stringify(metadata.config)), media, checks: ['CMS readback', 'coverage and per-cell remarks', 'responsive layout', 'native accordion', 'no CMS controls', 'no overflow', 'deployed media'] });
     } finally {
       collect = false;
       await context.close();
@@ -203,7 +215,22 @@ try {
   report.errors.push(error.stack || error.message);
   throw error;
 } finally {
-  await browser?.close();
   report.finishedAt = new Date().toISOString();
   fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+  if (browser) {
+    let cleanupTimer;
+    const closed = await Promise.race([
+      browser.close().then(() => true),
+      new Promise(resolve => { cleanupTimer = setTimeout(() => resolve(false), 15000); })
+    ]);
+    clearTimeout(cleanupTimer);
+    if (!closed) {
+      report.cleanup = { completed: false, connected: browser.isConnected(), note: 'Browser close did not settle within 15 seconds; completed assertions were already saved.' };
+      fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+      console.warn(report.cleanup.note);
+      // A lingering disconnected Playwright transport must not keep this CLI alive.
+      // A still-connected browser is a cleanup failure, never a passing exit.
+      process.exit(report.passed && !report.cleanup.connected ? 0 : 1);
+    }
+  }
 }

@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-24
 
-## Motor comparison release candidate
+## Motor comparison release (2026-09-24)
 
 The motor comparison redesign and per-cell localized CMS remarks are prepared
 in `.tools/motor-comparison-20260924`, branch `codex/motor-comparison-20260924`.
@@ -25,6 +25,15 @@ are under `uat-results/motor-comparison-hosted-release-v3/` and
 is test-cell selection from hydrated editor IDs for legacy UAT drafts. Home CSS
 now uses a generated, versioned asset; schema factory compaction preserves all
 541 field descriptors byte-for-byte and unchanged performance budgets pass.
+
+Runtime `c4baec7` passed GitHub CI run `35962394101` and was assigned to the
+canonical production domain. Production verification passed the broad read-only
+release smoke plus all eight comparison variants with exact deployed contract
+and stylesheet hashes. Desktop/mobile screenshots were personally inspected;
+receipts are in `uat-results/release/` and
+`uat-results/motor-comparison-production/`. The public smoke locally acknowledges
+automatic telemetry without sending it, while blocking other API writes. Its
+final follow-up changes only verification tooling and this release note.
 
 ## System inbox email integration
 
