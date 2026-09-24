@@ -385,7 +385,10 @@ export const DEFAULT_CONTACT = {
 
 // COVERMATE_CMS_SCHEMA_BEGIN
 // Also embedded by the visitor generator so offline and remote reads agree.
-const CMS_CONTENT_VERSION = 16;
+const CMS_CONTENT_VERSION = 17;
+function localizedCmsFields(prefix,group,entries) {
+  return entries.map(([key,label,th,en])=>({path:prefix+'.'+key,label,group,localized:true,seed:{th,en}}));
+}
 const CMS_CONTENT_FIELDS = [
   {path:'advisor.fullName',label:'Full name (real advisor only)',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
   {path:'advisor.role',label:'Personal role',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
@@ -628,34 +631,47 @@ const CMS_CONTENT_FIELDS = [
   {path:'homeDesign.licenceTitle',label:'Licence section: heading',group:'Home licences',localized:true,seed:{th:'ใบอนุญาตและบทบาทการให้บริการ',en:'Our licences and advisory roles'}},
   {path:'homeDesign.licenceStatement',label:'Licence section: statement',group:'Home licences',localized:true,seed:{th:'มั่นใจได้ เพราะเราดำเนินการ\nอย่างถูกต้องและโปร่งใส',en:'Confidence through\nprofessional, transparent service'}},
   {path:'homeDesign.licenceBackground',label:'Licence section: background artwork',group:'Home licences',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
-  {path:'homeDesign.heroStatement',label:'Optional hero statement',group:'Home design',localized:true,seed:{th:'',en:''}},
-  {path:'homeDesign.aboutTeaser',label:'Optional about teaser',group:'Home design',localized:true,seed:{th:'',en:''}},
-  {path:'homeDesign.detailsLabel',label:'Read more',group:'Home design',localized:true,seed:{th:'อ่านเพิ่มเติม',en:'Read more'}},
-  {path:'homeDesign.comparisonLabel',label:'Full comparison',group:'Home design',localized:true,seed:{th:'เปรียบเทียบความคุ้มครองทุกชั้น',en:'Compare all cover levels'}},
-  {path:'homeDesign.motorLabel',label:'Motor page link',group:'Home design',localized:true,seed:{th:'ดูประกันรถยนต์ทั้งหมด',en:'Explore motor insurance'}},
-  {path:'homeDesign.menuLabel',label:'Navigation menu',group:'Home design',localized:true,seed:{th:'เมนู',en:'Menu'}},
-  {path:'homeDesign.closeLabel',label:'Close menu',group:'Home design',localized:true,seed:{th:'ปิดเมนู',en:'Close menu'}},
-  {path:'homeDesign.optionalLabel',label:'Optional form details',group:'Home design',localized:true,seed:{th:'รายละเอียดเพิ่มเติม (ไม่บังคับ)',en:'Additional details (optional)'}},
-  {path:'homeDesign.contactChannelsLabel',label:'Contact channels heading',group:'Home design',localized:true,seed:{th:'ช่องทางติดต่อและเวลาทำการ',en:'Contact details & hours'}},
-  {path:'homeDesign.contactFormHeading',label:'Form heading',group:'Home contact',localized:true,seed:{th:'ส่งคำถามถึงเรา',en:'Send us your question'}},
-  {path:'homeDesign.contactFormHelper',label:'Form introduction',group:'Home contact',localized:true,seed:{th:'ฝากข้อมูลไว้ แล้วเราจะติดต่อกลับตามช่องทางที่คุณระบุ',en:'Leave your details and we will reply through your chosen contact channel.'}},
-  {path:'homeDesign.contactLineLabel',label:'LINE label',group:'Home contact',localized:true,seed:{th:'พูดคุยกับเราได้ที่',en:'Chat with us on LINE'}},
-  {path:'homeDesign.contactFacebookHelper',label:'Facebook helper',group:'Home contact',localized:true,seed:{th:'ติดตามข่าวสารหรือส่งข้อความถึงเรา',en:'Follow our updates or send us a message'}},
-  {path:'homeDesign.contactHoursLabel',label:'Hours label',group:'Home contact',localized:true,seed:{th:'เวลาทำการ',en:'Business hours'}},
-  {path:'homeDesign.contactAreaLabel',label:'Service area label',group:'Home contact',localized:true,seed:{th:'พื้นที่ให้บริการ',en:'Service area'}},
-  {path:'homeDesign.contactReassurance',label:'Reassurance',group:'Home contact',localized:true,seed:{th:'สอบถามก่อนได้ ไม่จำเป็นต้องตัดสินใจทันที',en:'Ask us first. There is no need to decide right away.'}},
-  {path:'homeDesign.contactNamePlaceholder',label:'Name placeholder',group:'Home contact',localized:true,seed:{th:'เช่น ชื่อเล่นของคุณ',en:'For example, your preferred name'}},
-  {path:'homeDesign.contactContactPlaceholder',label:'Contact placeholder',group:'Home contact',localized:true,seed:{th:'เช่น LINE ID หรือเบอร์โทรของคุณ',en:'Your LINE ID or phone number'}},
-  {path:'homeDesign.contactDetailsPlaceholder',label:'Details placeholder',group:'Home contact',localized:true,seed:{th:'เล่าเรื่องที่อยากให้เราช่วยดูเพิ่มเติม',en:'Tell us what you would like help with'}},
+  ...localizedCmsFields("homeDesign","Home design",[
+    ["heroStatement","Optional hero statement","",""],
+    ["aboutTeaser","Optional about teaser","",""],
+    ["detailsLabel","Read more","อ่านเพิ่มเติม","Read more"],
+    ["comparisonLabel","Full comparison","เปรียบเทียบความคุ้มครองทุกชั้น","Compare all cover levels"],
+    ["motorLabel","Motor page link","ดูประกันรถยนต์ทั้งหมด","Explore motor insurance"],
+    ["menuLabel","Navigation menu","เมนู","Menu"],
+    ["closeLabel","Close menu","ปิดเมนู","Close menu"],
+    ["optionalLabel","Optional form details","รายละเอียดเพิ่มเติม (ไม่บังคับ)","Additional details (optional)"],
+    ["contactChannelsLabel","Contact channels heading","ช่องทางติดต่อและเวลาทำการ","Contact details & hours"]
+  ]),
+  ...localizedCmsFields("homeDesign","Home contact",[
+    ["contactFormHeading","Form heading","ส่งคำถามถึงเรา","Send us your question"],
+    ["contactFormHelper","Form introduction","ฝากข้อมูลไว้ แล้วเราจะติดต่อกลับตามช่องทางที่คุณระบุ","Leave your details and we will reply through your chosen contact channel."],
+    ["contactLineLabel","LINE label","พูดคุยกับเราได้ที่","Chat with us on LINE"],
+    ["contactFacebookHelper","Facebook helper","ติดตามข่าวสารหรือส่งข้อความถึงเรา","Follow our updates or send us a message"],
+    ["contactHoursLabel","Hours label","เวลาทำการ","Business hours"],
+    ["contactAreaLabel","Service area label","พื้นที่ให้บริการ","Service area"],
+    ["contactReassurance","Reassurance","สอบถามก่อนได้ ไม่จำเป็นต้องตัดสินใจทันที","Ask us first. There is no need to decide right away."],
+    ["contactNamePlaceholder","Name placeholder","เช่น ชื่อเล่นของคุณ","For example, your preferred name"],
+    ["contactContactPlaceholder","Contact placeholder","เช่น LINE ID หรือเบอร์โทรของคุณ","Your LINE ID or phone number"],
+    ["contactDetailsPlaceholder","Details placeholder","เล่าเรื่องที่อยากให้เราช่วยดูเพิ่มเติม","Tell us what you would like help with"]
+  ]),
   {path:'homeDesign.contactBackground',label:'Background artwork',group:'Home contact',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
-  ...['line','facebook','hours','area','reassurance','form'].map(key => ({path:'homeDesign.contactIcon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Home contact',media:true,seed:['line','facebook'].includes(key)?'assets/brand/'+key+'-icon.svg':''})),
-  {path:'footer.licenceHelper',label:'Licence introduction',group:'Footer design',localized:true,seed:{th:'ข้อมูลใบอนุญาตที่ตรวจสอบได้',en:'Verifiable licence information'}},
-  {path:'footer.navHelper',label:'Navigation introduction',group:'Footer design',localized:true,seed:{th:'ข้อมูลที่คุณอาจสนใจ',en:'Explore useful information'}},
-  {path:'footer.contactHelper',label:'Contact introduction',group:'Footer design',localized:true,seed:{th:'เราพร้อมดูแลคุณ',en:'We are here to help'}},
-  {path:'footer.statement',label:'Closing statement',group:'Footer design',localized:true,seed:{th:'ดูแล...ในทุกช่วงของชีวิต',en:'Here for every stage of life'}},
-  {path:'footer.categoryLine',label:'Closing brand line',group:'Footer design',localized:true,seed:{th:'LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER',en:'LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER'}},
+  ...['line','facebook','hours','area','reassurance','form'].map(key => ({path:'homeDesign.contactIcon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Home contact',media:true,seed:key==='line'?'assets/brand/LINE_Brand_icon.png':key==='facebook'?'assets/brand/facebook-icon.svg':''})),
+  ...localizedCmsFields("lineContact","LINE contact",[
+    ["launcher","Floating button label","ติดต่อ CoverMate ผ่าน LINE","Contact CoverMate on LINE"],
+    ["intro","Introduction","ยินดีให้คำปรึกษาเรื่องประกัน","Here to help with your insurance questions"],
+    ["title","Heading","มีเรื่องไหนให้ช่วยดูไหม?","What can we help you with?"],
+    ["body","Description","ถามเรื่องความคุ้มครอง หรือให้ช่วยดูกรมธรรม์เดิม พูดคุยกับเราผ่าน LINE ได้เลย","Ask about coverage or your existing policy. Continue the conversation with us on LINE."],
+    ["action","Contact button","คุยผ่าน LINE","Chat on LINE"]
+  ]),
+  ...localizedCmsFields("footer","Footer design",[
+    ["licenceHelper","Licence introduction","ข้อมูลใบอนุญาตที่ตรวจสอบได้","Verifiable licence information"],
+    ["navHelper","Navigation introduction","ข้อมูลที่คุณอาจสนใจ","Explore useful information"],
+    ["contactHelper","Contact introduction","เราพร้อมดูแลคุณ","We are here to help"],
+    ["statement","Closing statement","ดูแล...ในทุกช่วงของชีวิต","Here for every stage of life"],
+    ["categoryLine","Closing brand line","LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER","LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER"]
+  ]),
   {path:'footer.backgroundArt',label:'Background artwork',group:'Footer design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
-  ...['licence','nav','contact','line','facebook','hours'].map(key => ({path:'footer.icon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Footer design',media:true,seed:['line','facebook'].includes(key)?'assets/brand/'+key+'-icon.svg':''})),
+  ...['licence','nav','contact','line','facebook','hours'].map(key => ({path:'footer.icon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Footer design',media:true,seed:key==='line'?'assets/brand/LINE_Brand_icon.png':key==='facebook'?'assets/brand/facebook-icon.svg':''})),
   {path:'homeDesign.consentChanged',label:'Updated consent notice',group:'Form messages',localized:true,seed:{th:'ข้อความยินยอมมีการอัปเดต กรุณาอ่านและยืนยันใหม่ก่อนส่ง ข้อมูลที่กรอกยังอยู่',en:'The consent text has changed. Please read and confirm it again before sending. Your entries are still here.'}},
   {path:'homeDesign.formUnavailable',label:'Form unavailable notice',group:'Form messages',localized:true,seed:{th:'แบบฟอร์มนี้ปิดรับชั่วคราว ข้อมูลของคุณยังไม่ได้ถูกส่ง สามารถติดต่อผ่านช่องทางที่แสดงบนเว็บไซต์',en:'This form is temporarily unavailable. Your information has not been sent. Please use the contact channels shown on the site.'}},
   {path:'homeDesign.returnLabel',label:'Return to consultation',group:'Home design',localized:true,seed:{th:'กลับไปที่แบบฟอร์ม',en:'Return to the form'}},
@@ -666,13 +682,15 @@ const CMS_CONTENT_FIELDS = [
   {path:'homeDesign.feesClosingStatement',label:'Fees: closing statement',group:'Transparency design',localized:true,seed:{th:'ดูแลคุณ\nอย่างจริงใจ',en:'Here for you,\nwith care'}},
   {path:'homeDesign.privacyClosingStatement',label:'Privacy: closing statement',group:'Transparency design',localized:true,seed:{th:'เป็นส่วนตัว\nและใส่ใจ',en:'Private,\nand personal'}},
   ...['fees','privacy','transparencyNote'].map(key => ({path:'homeDesign.'+key+'Icon',label:key+' icon override',group:'Transparency design',media:true,seed:''})),
-  {path:'homeDesign.includeCalculator',label:'Explicit calculator sharing',group:'Home design',localized:true,seed:{th:'แนบผลประเมินนี้ในคำปรึกษา',en:'Include this estimate in my enquiry'}},
-  {path:'homeDesign.logoNotice',label:'Insurer logo note',group:'Home design',localized:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของแต่ละบริษัท',en:'Logos are trademarks of their respective owners.'}},
-  {path:'homeDesign.coveredLabel',label:'Matrix: covered',group:'Home design',localized:true,seed:{th:'คุ้มครอง',en:'Covered'}},
-  {path:'homeDesign.conditionalLabel',label:'Matrix: conditional',group:'Home design',localized:true,seed:{th:'มีเงื่อนไข',en:'Conditional'}},
-  {path:'homeDesign.notCoveredLabel',label:'Matrix: not covered',group:'Home design',localized:true,seed:{th:'ไม่คุ้มครอง',en:'Not covered'}},
-  {path:'homeDesign.offlineError',label:'Offline form message',group:'Home design',localized:true,seed:{th:'ขณะนี้ออฟไลน์ ข้อมูลที่กรอกยังอยู่ กรุณาเชื่อมต่อแล้วลองอีกครั้ง',en:'You are offline. Your entries are still here; reconnect and try again.'}},
-  {path:'homeDesign.uncertainError',label:'Unconfirmed submission',group:'Home design',localized:true,seed:{th:'ยังยืนยันการรับข้อมูลไม่ได้ ข้อมูลที่กรอกยังอยู่ กรุณาลองอีกครั้งหรือติดต่อทาง LINE',en:'We could not confirm receipt. Your entries are still here. Retry or contact us on LINE.'}},
+  ...localizedCmsFields("homeDesign","Home design",[
+    ["includeCalculator","Explicit calculator sharing","แนบผลประเมินนี้ในคำปรึกษา","Include this estimate in my enquiry"],
+    ["logoNotice","Insurer logo note","โลโก้เป็นเครื่องหมายการค้าของแต่ละบริษัท","Logos are trademarks of their respective owners."],
+    ["coveredLabel","Matrix: covered","คุ้มครอง","Covered"],
+    ["conditionalLabel","Matrix: conditional","มีเงื่อนไข","Conditional"],
+    ["notCoveredLabel","Matrix: not covered","ไม่คุ้มครอง","Not covered"],
+    ["offlineError","Offline form message","ขณะนี้ออฟไลน์ ข้อมูลที่กรอกยังอยู่ กรุณาเชื่อมต่อแล้วลองอีกครั้ง","You are offline. Your entries are still here; reconnect and try again."],
+    ["uncertainError","Unconfirmed submission","ยังยืนยันการรับข้อมูลไม่ได้ ข้อมูลที่กรอกยังอยู่ กรุณาลองอีกครั้งหรือติดต่อทาง LINE","We could not confirm receipt. Your entries are still here. Retry or contact us on LINE."]
+  ]),
   {"path":"publicCopy.consultationSummary","label":"Consultation summary","group":"Form messages","localized":true,"seed":{"th":"สนใจปรึกษาเรื่องประกัน — สถานการณ์: {{situation}} · รายได้ราว {{income}}/เดือน · ทุนชีวิตที่ควรมีประมาณ {{lifeNeed}}","en":"Hi — situation: {{situation}} · income about {{income}}/mo · suggested life cover around {{lifeNeed}}"}},
   {"path":"publicCopy.consultationIntro","label":"Consultation summary without calculator","group":"Form messages","localized":true,"seed":{"th":"สนใจปรึกษาเรื่องประกัน","en":"Hi — I would like to talk about cover."}},
   {"path":"publicCopy.summaryTopic","label":"Summary enquiry label","group":"Form messages","localized":true,"seed":{"th":"เรื่อง:","en":"Enquiry:"}},
@@ -892,6 +910,10 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Replace only the bundled legacy mark, never a custom upload or an intentional blank.
+  if (previousVersion < 17) ['homeDesign.contactIconLine','footer.iconLine'].forEach(path => {
+    if (cmsGet(next,path) === 'assets/brand/line-icon.svg') cmsSet(next,path,'assets/brand/LINE_Brand_icon.png');
+  });
   // Classify legacy relationship cards once; later copy/media edits keep this role.
   if (previousVersion < 11) (next.sections || []).filter(section => section.type === 'insurers').forEach(section => {
     (section.cards || []).forEach(card => {
@@ -916,7 +938,7 @@ function migrateCmsContent(config) {
   });
   // Seed only newly introduced presentation fields; intentional blanks stay blank.
   if (previousVersion >= 5) {
-    CMS_CONTENT_FIELDS.filter(field => (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+    CMS_CONTENT_FIELDS.filter(field => (previousVersion < 17 && field.group === 'LINE contact') || (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
       if (field.localized) ['th','en'].forEach(lang => {
         const path = field.path + '.' + lang;
         if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);

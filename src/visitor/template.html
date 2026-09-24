@@ -690,6 +690,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 </helmet>
 
 <style>/* COVERMATE_HOME_STYLES */</style>
+<style>/* COVERMATE_LINE_STYLES */</style>
 <style>/* COVERMATE_CALCULATOR_STYLES */</style>
 <style>/* COVERMATE_SUBMISSION_STYLES */</style>
 <sc-if value="{{ showHeader }}" hint-placeholder-val="{{ true }}">
@@ -715,8 +716,8 @@ textarea.input { min-height: 90px; resize: vertical; }
     </div>
 
     <sc-if value="{{ showHeaderCta }}" hint-placeholder-val="{{ true }}">
-      <a data-om="desk" href="{{ lineUrl }}" style="flex:0 0 auto;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-size:14px;font-weight:700;white-space:nowrap;transition:transform .2s ease, background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-1px)" style-active="transform:translateY(0)">
-        <svg sc-camel-view-box="0 0 24 24" style="width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+      <a data-om="desk" href="{{ lineUrl }}" style="flex:0 0 auto;align-items:center;gap:4px;padding:4px 20px 4px 8px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-size:14px;font-weight:700;white-space:nowrap;transition:background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
+        <!-- COVERMATE_LINE_MARK -->
         <span data-cms-copy="header.cta">{{ headerCta }}</span>
       </a>
     </sc-if>
@@ -724,7 +725,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   </div>
 </header>
 </sc-if>
-<sc-if value="{{ menuOpen }}"><div class="hm-menu" data-noedit sc-camel-on-click="{{ closeMenu }}"><div class="hm-menu-panel" role="dialog" aria-modal="true" aria-label="{{ homeCopy.menuLabel }}"><button class="hm-menu-button" type="button" aria-label="{{ homeCopy.closeLabel }}" sc-camel-on-click="{{ closeMenu }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button><nav><sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span></a></sc-for></nav><sc-if value="{{ hasLine }}"><a class="hm-button" href="{{ lineUrl }}"><span data-cms-copy="header.cta">{{ headerCta }}</span></a></sc-if></div></div></sc-if>
+<sc-if value="{{ menuOpen }}"><div class="hm-menu" data-noedit sc-camel-on-click="{{ closeMenu }}"><div class="hm-menu-panel" role="dialog" aria-modal="true" aria-label="{{ homeCopy.menuLabel }}"><button class="hm-menu-button" type="button" aria-label="{{ homeCopy.closeLabel }}" sc-camel-on-click="{{ closeMenu }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button><nav><sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span></a></sc-for></nav><sc-if value="{{ hasLine }}"><a class="hm-button" href="{{ lineUrl }}"><!-- COVERMATE_LINE_MARK --><span data-cms-copy="header.cta">{{ headerCta }}</span></a></sc-if></div></div></sc-if>
 
 <main id="top" style="display:block">
   <sc-if value="{{ publicNotice }}"><p class="hm-content-notice" role="status">{{ publicNotice }}</p></sc-if>
@@ -747,7 +748,7 @@ textarea.input { min-height: 90px; resize: vertical; }
               <h1 style="margin:0;max-width:13ch;font-size:clamp(34px,3.65vw,54px);line-height:1.14;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h1>
               <p style="margin:0;max-width:600px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
               <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:2px">
-                <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 30px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:900;font-size:18px;box-shadow:var(--shadow-md)"><span style="width:22px;height:22px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span></a></sc-if>
+                <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 30px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:900;font-size:18px;box-shadow:var(--shadow-md)"><!-- COVERMATE_LINE_MARK --><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span></a></sc-if>
                 <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
                   <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:0 28px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.34);color:var(--color-text);text-decoration:none;font-weight:900;font-size:17px;box-shadow:var(--shadow-xs)"><span data-content-path="{{ s.copy.cta2 }}">{{ s.cta2 }}</span><span style="font-size:25px;line-height:0;transform:translateY(-1px)">↓</span></a>
                 </sc-if>
@@ -825,7 +826,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             <h1 data-reveal="1" style="margin:0;max-width:14ch;font-size:clamp(36px,5vw,60px);line-height:1.2;font-weight:900;letter-spacing:0;white-space:pre-line;text-wrap:balance;color:var(--color-text)" data-cms-copy="{{ s.cmsTitle }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h1>
             <p data-reveal="2" style="margin:0;max-width:620px;font-size:clamp(15px,1.2vw,18px);line-height:1.68;color:var(--color-neutral-800);font-weight:500" data-cms-copy="{{ s.cmsBody }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
             <div data-reveal="3" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-              <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><span style="width:20px;height:20px;display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8v.5z"/></svg></span><span data-cms-copy="{{ s.cmsCta1 }}"><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span></span></a></sc-if>
+              <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:{{ A_action }};color:#fff;text-decoration:none;font-weight:800;box-shadow:var(--shadow-md)"><!-- COVERMATE_LINE_MARK --><span data-cms-copy="{{ s.cmsCta1 }}"><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span></span></a></sc-if>
               <sc-if value="{{ s.hasCta2 }}" hint-placeholder-val="{{ true }}">
                 <a href="{{ s.cta2href }}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:999px;border:2px solid rgba(36,26,22,.18);background:rgba(255,255,255,.3);color:var(--color-text);text-decoration:none;font-weight:800"><span data-cms-copy="{{ s.cmsCta2 }}"><span data-content-path="{{ s.copy.cta2 }}">{{ s.cta2 }}</span></span><span style="font-size:22px;line-height:0">↓</span></a>
               </sc-if>
@@ -1270,8 +1271,8 @@ textarea.input { min-height: 90px; resize: vertical; }
           </sc-for>
         </div>
         <div data-reveal="4" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4)">
-          <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 var(--space-6);border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease, transform .22s cubic-bezier(.22,.61,.36,1)" style-hover="background:{{ A_mid }};color:{{ A_on }};transform:translateY(-2px)" style-active="transform:translateY(0)">
-            <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+          <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 var(--space-6);border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;transition:background .22s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
+            <!-- COVERMATE_LINE_MARK -->
             <span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span>
           </a></sc-if>
           <div style="flex:1 1 300px;min-width:0;font-size:13.5px;line-height:1.6;color:{{ s.muted }};text-wrap:pretty" data-content-path="{{ s.copy.note }}"><span data-content-path="{{ s.copy.note }}">{{ s.note }}</span></div>
@@ -1410,7 +1411,7 @@ textarea.input { min-height: 90px; resize: vertical; }
                 <sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">{{ publicCopy.contactScan }}</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">{{ publicCopy.contactScan }}</sc-if>
               </div>
               <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="display:flex;align-items:center;gap:9px;color:{{ s.fg }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:clamp(18px,2vw,24px);line-height:1.2;word-break:break-all" style-hover="color:{{ A_light }}">
-                <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+                <!-- COVERMATE_LINE_MARK -->
                 {{ lineId }}
               </a></sc-if>
               <div style="font-size:12.5px;color:{{ s.muted }};line-height:1.5"><span data-cms-copy="contact.hours">{{ hours }}</span></div>
@@ -1658,13 +1659,15 @@ textarea.input { min-height: 90px; resize: vertical; }
     <svg sc-camel-view-box="0 0 24 24" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M13.83 19a17 17 0 0 1-8.83-8.83l2.4-1.7a1 1 0 0 0 .3-1.3L6.2 3.6a1 1 0 0 0-1.2-.5L2.5 4A2 2 0 0 0 1.2 6.3 20 20 0 0 0 17.7 22.8a2 2 0 0 0 2.3-1.3l.9-2.5a1 1 0 0 0-.5-1.2l-3.6-1.5a1 1 0 0 0-1.3.3z"></path></svg>
   </a></sc-if>
   <sc-if value="{{ hasLine }}"><a href="{{ lineUrl }}" style="flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:999px;background:{{ A_action }};color:{{ A_on }};font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',sans-serif;font-size:16px;box-shadow:var(--shadow-md);transition:background .2s ease" style-hover="background:{{ A_mid }};color:{{ A_on }}">
-    <svg sc-camel-view-box="0 0 24 24" style="width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+    <!-- COVERMATE_LINE_MARK -->
     <span data-cms-copy="header.cta">{{ headerCta }}</span>
   </a></sc-if>
 </div>
 </sc-if>
 </div>
 </sc-if>
+
+<!-- COVERMATE_LINE_CONTACT -->
 
 <!-- ══════════ ADMIN PORTAL ══════════ -->
 <sc-if value="{{ editMode }}" hint-placeholder-val="{{ false }}">
@@ -2064,7 +2067,7 @@ textarea.input { min-height: 90px; resize: vertical; }
         <button type="button" sc-camel-on-click="{{ tHeadCta }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swHeadCta }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swHeadCtaX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">
-        <span style="font-size:14px;font-weight:600;margin-right:auto">แถบติดต่อด้านล่างบนมือถือ</span>
+        <span style="font-size:14px;font-weight:600;margin-right:auto">แถบติดต่อบนมือถือและปุ่ม LINE ลอย</span>
         <button type="button" sc-camel-on-click="{{ tStickyBar }}" style="width:42px;height:24px;flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:3px;display:flex;background:{{ swStickyBar }};transition:background .25s ease"><span style="width:18px;height:18px;border-radius:999px;background:var(--color-neutral-100);transform:{{ swStickyBarX }};transition:transform .25s cubic-bezier(.22,.61,.36,1)"></span></button>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);padding:11px var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">

@@ -18,7 +18,7 @@
           <p class="cm-submission-intro"><sc-if value="{{ !submissionSuccess }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionIcon }}" as="d"><path d="{{ d }}"></path></sc-for></svg></sc-if><span data-cms-copy="{{ submissionIntroPath }}">{{ submissionIntro }}</span></p>
           <sc-if value="{{ !submissionSuccess }}"><p class="cm-submission-divider" data-cms-copy="contactSubmission.support">{{ submissionCopy.support }}</p></sc-if>
           <a class="cm-submission-line" href="{{ lineUrl }}" target="_blank" rel="noopener noreferrer">
-            <sc-if value="{{ submissionLineIcon }}"><span class="cm-submission-line-logo"><img sc-camel-src="{{ submissionLineIcon }}" alt="" width="28" height="28"></span></sc-if>
+            <!-- COVERMATE_LINE_MARK -->
             <span data-cms-copy="{{ submissionLinePath }}">{{ submissionLine }}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ submissionArrow }}" as="d"><path d="{{ d }}"></path></sc-for></svg>
           </a>
