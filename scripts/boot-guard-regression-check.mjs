@@ -65,6 +65,12 @@ async function main() {
 
       if (!remoteUrl) {
         const rootIndex = fileURLToPath(new URL("../index.html", import.meta.url));
+        // The static SEO fallback contains an absolute canonical favicon URL.
+        // Local boot coverage uses the same repository asset, independently of
+        // production bot challenges; remote-mode checks keep the real request.
+        await page.route(/^https:\/\/covermateinsurance\.com\/favicon\.svg(?:\?.*)?$/, route =>
+          route.fulfill({ status: 200, contentType: 'image/svg+xml', path: fileURLToPath(new URL('../favicon.svg', import.meta.url)) })
+        );
         await page.route(/\/motor(?:[?#].*)?$/, (route) =>
           route.fulfill({ status: 200, contentType: "text/html", path: rootIndex })
         );

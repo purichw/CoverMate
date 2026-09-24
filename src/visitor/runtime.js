@@ -1211,7 +1211,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         const reveal = window.__covermateReveal;
         if (reveal) {
           delete window.__covermateReveal;
-          (document.fonts ? document.fonts.ready : Promise.resolve()).then(reveal);
+          reveal();
         }
       });
       if (anchor && !owner && anchor.indexOf('-focus') < 0) this.scrollToAnchor(anchor, { smooth: false, waitForFonts: true });

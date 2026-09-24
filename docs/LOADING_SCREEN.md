@@ -26,10 +26,13 @@ unchanged. The bar is indeterminate: it does not claim a download percentage.
   response wait. The animation is not a measured download percentage.
 - Readiness does not depend on loading the logo or below-fold images. The same
   overlay node survives the outer-shell/document swap, retaining its state and
-  retry listener. The bounded font fallback reveals only a mounted page.
+  retry listener. Both the normal mount callback and fallback wait for current
+  external stylesheets, a styled layout pass and current font readiness before
+  revealing the page. This prevents late Home CSS from exposing an unstyled
+  frame. Replacement stylesheet nodes are checked again before reveal.
 - At four seconds the status acknowledges a slow load and motion stops. At ten
-  seconds a retry button appears. Critical script or bundle errors immediately
-  show a friendly error and the same retry action, which reloads the current URL.
+  seconds a retry button appears. Critical stylesheet, script or bundle errors
+  immediately show a friendly error and the same retry action, which reloads the current URL.
   If loading subsequently succeeds, the page still opens normally.
 - Reduced-motion users receive a static gold bar and immediate dismissal.
   Status uses a polite live region; retry is a native button with a visible
@@ -54,6 +57,12 @@ unchanged. The bar is indeterminate: it does not claim a download percentage.
   background refresh policy. It is independent of the loader's 300ms/4s/10s
   display/recovery timers. Refreshing mounted content still does not replay
   this screen; the CMS-controller extraction also leaves boot behavior intact.
+
+The 2026-09-24 comparison release externalizes Home CSS as a versioned asset.
+The shared readiness barrier in `shell.html` also covers that stylesheet;
+`runtime.js` requests reveal after mounting instead of capturing a potentially
+premature `document.fonts.ready` promise. Slow resources keep the existing
+loading/retry feedback; readiness does not use a fixed animation duration.
 
 ## Verification
 

@@ -4,7 +4,7 @@ Last updated: 2026-09-24
 
 ## Motor comparison release (2026-09-24)
 
-The motor comparison redesign and per-cell localized CMS remarks are prepared
+The motor comparison redesign and per-cell localized CMS remarks are integrated
 in `.tools/motor-comparison-20260924`, branch `codex/motor-comparison-20260924`.
 See [MOTOR_COMPARISON.md](MOTOR_COMPARISON.md) for source ownership, migration,
 editing behavior and regression commands. Home and Motor share the component;
@@ -21,8 +21,8 @@ restored and verified; the temporary allowlist and Auth user were disabled and
 tokens revoked. No production CMS content was written. The read-only preview
 smoke passed all eight Home/Motor, TH/EN, desktop/mobile variants. Local receipts
 are under `uat-results/motor-comparison-hosted-release-v3/` and
-`uat-results/motor-comparison-preview-release/`. The only follow-up code change
-is test-cell selection from hydrated editor IDs for legacy UAT drafts. Home CSS
+`uat-results/motor-comparison-preview-release/`. The hosted harness selects
+cells from hydrated editor IDs for legacy UAT drafts. Home CSS
 now uses a generated, versioned asset; schema factory compaction preserves all
 541 field descriptors byte-for-byte and unchanged performance budgets pass.
 
@@ -32,8 +32,15 @@ release smoke plus all eight comparison variants with exact deployed contract
 and stylesheet hashes. Desktop/mobile screenshots were personally inspected;
 receipts are in `uat-results/release/` and
 `uat-results/motor-comparison-production/`. The public smoke locally acknowledges
-automatic telemetry without sending it, while blocking other API writes. Its
-final follow-up changes only verification tooling and this release note.
+automatic telemetry without sending it, while blocking other API writes.
+
+A later CI run exposed a timing-dependent layout shift after Home CSS was
+externalized. A controlled published-response check reproduced it with delayed
+CSS. The release follow-up shares a stylesheet/layout/font readiness barrier
+between normal boot and its mount fallback, and retains existing retry feedback
+for failed or stalled resources. See [LOADING_SCREEN.md](LOADING_SCREEN.md) and
+the deterministic server-boot regressions; do not dismiss this failure as a
+flaky test or increase the CLS threshold.
 
 ## System inbox email integration
 

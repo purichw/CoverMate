@@ -67,17 +67,58 @@ document.addEventListener('DOMContentLoaded', async function() {
   const PUBLIC_REMOTE_TIMEOUT_MS = 1500;
   const OWNER_REMOTE_TIMEOUT_MS = 9000;
   let revealTimer = 0;
+  let revealPending = false;
+  const stylesheetResults = new WeakMap();
+  // The template is inserted dynamically and its stylesheet links are recreated
+  // when the app mounts. Remember early errors as well as links still loading.
+  document.addEventListener('error', function(event) {
+    if (event.target.matches && event.target.matches('link[rel="stylesheet"]')) stylesheetResults.set(event.target, Promise.resolve(false));
+  }, true);
+  function stylesheetReady(link) {
+    if (stylesheetResults.has(link)) return stylesheetResults.get(link);
+    if (link.sheet) return Promise.resolve(true);
+    const ready = new Promise(function(resolve) {
+      function finish(ok) {
+        link.removeEventListener('load', loaded);
+        link.removeEventListener('error', failed);
+        resolve(ok);
+      }
+      function loaded() { finish(true); }
+      function failed() { finish(false); }
+      link.addEventListener('load', loaded);
+      link.addEventListener('error', failed);
+    });
+    stylesheetResults.set(link, ready);
+    return ready;
+  }
+  async function waitForPageStyles() {
+    for (;;) {
+      const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+      if ((await Promise.all(links.map(stylesheetReady))).some(loaded => !loaded)) throw new Error('Page stylesheet failed to load');
+      await new Promise(requestAnimationFrame);
+      // Discover fonts from the fully styled, mounted page before reading ready.
+      // An earlier fonts.ready promise may have resolved before Home CSS arrived.
+      document.body.getBoundingClientRect();
+      if (document.fonts) await document.fonts.ready;
+      await new Promise(requestAnimationFrame);
+      const current = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+      if (current.length === links.length && current.every((link, index) => link === links[index])) return;
+    }
+  }
   function scheduleReveal(ms) {
     try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
     revealTimer = window.setTimeout(function() {
-      // A font deadline may reveal a mounted page, never an unpacked template.
+      // Recover a missing mount callback, while keeping the same style barrier.
       if (document.documentElement.hasAttribute('data-covermate-route') && document.querySelector('main h1')) revealCoverMate();
     }, ms);
   }
-  function revealCoverMate() {
+  async function revealCoverMate() {
+    if (revealPending) return;
+    revealPending = true;
     try { if (revealTimer) window.clearTimeout(revealTimer); } catch (err) {}
     revealTimer = 0;
     try {
+      await waitForPageStyles();
       const guard = document.getElementById(BOOT_GUARD_ID);
       if (guard) guard.remove();
       if (document.documentElement) document.documentElement.removeAttribute(BOOT_ATTR);
@@ -87,10 +128,12 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
       if (window.CoverMateBoot) window.CoverMateBoot.ready();
     } catch (err) {
-      /* Keep fallback reveal non-fatal. */
+      // Failed CSS must not expose a broken layout. The existing loader keeps
+      // its retry action; a slow request also retains the ten-second retry UI.
+      if (window.CoverMateBoot) window.CoverMateBoot.fail();
     }
   }
-  // The app releases the guard after installing its content and loading fonts.
+  // Both the app and fallback release the guard only after styles and fonts.
   window.__covermateReveal = revealCoverMate;
   scheduleReveal(FIRST_BOOT_REVEAL_MS);
   function installTemplateGuard(source) {
@@ -479,6 +522,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // createElement so they execute, awaiting onload for src scripts to
     // preserve ordering (React before ReactDOM before Babel before text/babel).
     const doc = new DOMParser().parseFromString(template, 'text/html');
+    doc.querySelectorAll('link[rel="stylesheet"]').forEach(stylesheetReady);
     doc.documentElement.setAttribute(BOOT_ATTR, 'true');
     scheduleReveal(SWAPPED_BOOT_REVEAL_MS);
     if (window.CoverMateBoot) window.CoverMateBoot.attach(doc);

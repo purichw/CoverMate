@@ -22,6 +22,9 @@ const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).
 const expectedCommit = argValue(args, '--commit');
 if (expectedCommit) assert.equal(commit, expectedCommit, 'Local checkout must match the requested release commit');
 const hash = value => createHash('sha256').update(value).digest('hex');
+const bootstrapSource = html => html.match(/<script id="covermate-bootstrap">([\s\S]*?)<\/script>/)?.[1];
+const expectedBootstrap = bootstrapSource(fs.readFileSync('index.html', 'utf8'));
+assert.ok(expectedBootstrap, 'Generated visitor contains its boot implementation');
 const contract = await importCoverMateContract();
 const stamp = Date.now().toString(36);
 const bypass = isProduction ? {} : vercelBypassHeaders();
@@ -89,6 +92,7 @@ async function inspectMedia(page) {
 try {
   await verifySource('covermate-contract.js');
   await verifySource('assets/visitor/home.css');
+  await verifySource('favicon.svg');
   browser = await launchChromium(loadPlaywright().chromium);
   for (const route of ['/', '/motor']) for (const lang of ['th', 'en']) for (const width of [1440, 390]) {
     const context = await browser.newContext({
@@ -136,6 +140,9 @@ try {
     try {
       const response = await page.goto(publicUrl(route, lang), { waitUntil: 'domcontentloaded' });
       assert.equal(response?.status(), 200, `${route} ${lang} ${width}: route status`);
+      const servedBootstrap = bootstrapSource(await response.text());
+      assert.equal(servedBootstrap, expectedBootstrap, 'Deployed boot implementation matches this release');
+      variant.bootstrapSha256 = hash(servedBootstrap);
       await page.waitForFunction(() => window.__covermateRemoteContent?.live === true && !document.documentElement.hasAttribute('data-covermate-booting'));
       const section = page.locator('[data-home-section="tiers"]');
       await section.waitFor();

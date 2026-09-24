@@ -22,6 +22,14 @@ const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true, o
 } });
 const browser = await launchChromium(loadPlaywright().chromium);
 const report = { checks: [], errors: [] };
+function observeBoot() {
+  window.bootCls = 0;
+  window.bootShifts = [];
+  new PerformanceObserver(list => { for (const e of list.getEntries()) if (!e.hadRecentInput) {
+    window.bootCls += e.value;
+    window.bootShifts.push({ time: e.startTime, value: e.value, sources: e.sources.map(s => ({ tag: s.node?.tagName, cls: s.node?.className, before: s.previousRect.toJSON(), after: s.currentRect.toJSON() })) });
+  } }).observe({ type: 'layout-shift', buffered: true });
+}
 fs.mkdirSync('uat-results/server-boot', { recursive: true });
 try {
   for (const route of ['/', '/motor']) for (const lang of ['th', 'en']) for (const width of [390, 1440]) {
@@ -33,10 +41,8 @@ try {
       await new Promise(resolve => setTimeout(resolve, 1800));
       await r.fulfill({ json: { fields: toFirestoreFields(state) } });
     });
+    await page.addInitScript(observeBoot);
     await page.addInitScript(() => {
-      window.bootCls = 0;
-      window.bootShifts = [];
-      new PerformanceObserver(list => { for (const e of list.getEntries()) if (!e.hadRecentInput) { window.bootCls += e.value; window.bootShifts.push({ time: e.startTime, value: e.value, sources: e.sources.map(s => ({ tag: s.node?.tagName, cls: s.node?.className, before: s.previousRect.toJSON(), after: s.currentRect.toJSON() })) }); } }).observe({ type: 'layout-shift', buffered: true });
       const stale = { sections: [], brand: { name: { th: 'STALE CACHE', en: 'STALE CACHE' } } };
       localStorage.setItem('purich-live-config-v3', JSON.stringify(stale));
     });
@@ -57,6 +63,54 @@ try {
       await page.evaluate(async () => { const m = await import('/covermate-public.mjs'); m.stopLiveContentSync(); await m.hydrateLocalContent(); });
       assert.equal(reads, 1);
     }
+    await page.close();
+  }
+  // Dynamic styles are not parser-blocking after the template-root swap. Exercise
+  // the real published-state handler with delays on both sides of its fallback.
+  for (const delay of [100, 300, 600, 1600]) {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.route('**/assets/visitor/home.css?*', async route => {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      await route.continue();
+    });
+    await page.addInitScript(observeBoot);
+    await page.addInitScript(() => {
+      window.bootStyleEvents = [];
+      document.addEventListener('load', event => {
+        if (event.target.matches?.('link[rel="stylesheet"]')) window.bootStyleEvents.push({ type: 'style-load', time: performance.now(), href: event.target.href });
+      }, true);
+      new MutationObserver(() => {
+        if (window.bootReveal || !document.documentElement?.hasAttribute('data-covermate-route') || document.documentElement.hasAttribute('data-covermate-booting')) return;
+        window.bootReveal = {
+          time: performance.now(), fonts: document.fonts.status,
+          styled: [...document.querySelectorAll('link[rel="stylesheet"]')].every(link => !!link.sheet)
+        };
+      }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-covermate-booting'] });
+    });
+    await page.goto(baseUrl);
+    await page.waitForFunction(() => window.__covermateRemoteContent?.source === 'server' && window.bootReveal);
+    await page.waitForTimeout(1400);
+    const data = await page.evaluate(() => ({ cls: window.bootCls, reveal: window.bootReveal, events: window.bootStyleEvents, shifts: window.bootShifts }));
+    report.checks.push({ route: '/', lang: 'th', width: 1440, homeCssDelay: delay, ...data });
+    assert.equal(data.reveal.styled, true, 'Every stylesheet is ready before revealing the published page');
+    assert.equal(data.reveal.fonts, 'loaded', 'Font readiness is checked after styles apply');
+    assert.ok(data.cls <= 0.1, `Home CSS delayed ${delay}ms: CLS ${data.cls}`);
+    await page.close();
+  }
+  {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    let failStyles = true;
+    await page.route('**/assets/visitor/home.css?*', route => failStyles ? route.abort('failed') : route.continue());
+    await page.goto(baseUrl);
+    await page.waitForSelector('#covermate-boot[data-error]');
+    assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-covermate-booting')), true, 'Failed critical CSS retains the loading guard');
+    assert.equal(await page.locator('#covermate-boot button').isVisible(), true, 'Failed critical CSS offers retry');
+    assert.equal(await page.locator('main').isVisible(), false, 'A stylesheet failure never exposes an unstyled page');
+    failStyles = false;
+    await page.locator('#covermate-boot button').click();
+    await page.waitForFunction(() => !document.documentElement.hasAttribute('data-covermate-booting'));
+    assert.equal(await page.locator('main h1').isVisible(), true, 'Retry recovers when the stylesheet becomes available');
+    report.checks.push({ homeCssFailure: true, guardRetained: true, retryVisible: true, retryRecovered: true });
     await page.close();
   }
   for (const blockedStorage of [false, true]) {
@@ -102,7 +156,7 @@ try {
   assert.ok(!ownerHtml.includes('id="covermate-published-state"'), 'Owner routes never get a public seed');
   assert.deepEqual(report.errors, []);
   report.result = 'PASS';
-  console.log('PASS server boot: Home/Motor TH/EN mobile/desktop, stale-cache precedence, no duplicate read, unchanged CLS limit, later refresh, storage-denied/form preservation, missing/invalid/mismatched fallback and owner isolation.');
+  console.log('PASS server boot: Home/Motor TH/EN mobile/desktop, delayed/failed stylesheet guard, stale-cache precedence, no duplicate read, unchanged CLS limit, later refresh, storage-denied/form preservation, missing/invalid/mismatched fallback and owner isolation.');
 } finally {
   fs.writeFileSync('uat-results/server-boot/report.json', JSON.stringify(report, null, 2));
   await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
