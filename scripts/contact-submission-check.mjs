@@ -86,8 +86,15 @@ let response={ok:true,status:200,headers:new Headers()},data=receipt,networkErro
 const scope={crypto,TextEncoder,URL,location:{origin:'https://example.test',pathname:'/'},cleanText,cleanLeadChoice,validContactEmail,sanitizeNeedsSnapshot:v=>v,DOMException,Date,setTimeout,clearTimeout,
   appCheckToken:async()=>{if(tokenError)throw tokenError;return 'fixture';},environment:{name:'uat'},
   fetchJSON:async()=>{posts++;if(networkError)throw networkError;return {response,data};}};
-const api=vm.runInNewContext(source.slice(source.indexOf('export async function prepareContactLead'),source.indexOf('export async function submitContactLead')).replace(/^export /gm,'')+'\n({prepareContactLead,sendContactLead})',scope);
+const payloadSource=fs.readFileSync('covermate-contact-payload.mjs','utf8').replace(/^import .*;\n/gm,'').replace(/^export /gm,'');
+const prepareContactPayload=vm.runInNewContext(payloadSource+'\nprepareContactPayload',scope);
+let payloadImports=0;
+scope.loadPayload=async()=>{payloadImports++;return {prepareContactPayload};};
+assert.doesNotMatch(source,/^import .*covermate-(?:submission|contact-payload)\.mjs/m);
+const api=vm.runInNewContext(source.slice(source.indexOf('export async function prepareContactLead'),source.indexOf('export async function submitContactLead')).replace("import('./covermate-contact-payload.mjs')",'loadPayload()').replace(/^export /gm,'')+'\n({prepareContactLead,sendContactLead})',scope);
+assert.equal(payloadImports,0,'Payload module is deferred until an enquiry is prepared');
 const request=await api.prepareContactLead(valid);assert.equal(JSON.parse(request.body).sourcePath,'/');assert.ok(Object.isFrozen(request));
+assert.equal(payloadImports,1);
 assert.equal('email' in JSON.parse(request.body),false,'Existing submissions keep their payload and fingerprint');
 assert.equal(JSON.parse((await api.prepareContactLead({...valid,email:' visitor@example.test '})).body).email,'visitor@example.test');
 await assert.rejects(api.prepareContactLead({...valid,email:'bad'}),error=>error.outcome==='invalid'&&error.fields.email==='emailInvalid');

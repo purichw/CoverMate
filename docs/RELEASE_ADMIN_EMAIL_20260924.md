@@ -20,6 +20,12 @@ fix introduces schema 20 presentation defaults, preserving owner strings/blanks
 and preventing schema 19 topic replacements from replaying. Local regression
 now explicitly starts from schema 19; no CMS state documents are written.
 
+The first exact-SHA CI run blocked production alias assignment because initial
+scripts exceeded the unchanged 350,000-byte budget. Payload preparation and its
+email validator now load on submission, behind the existing public adapter API.
+The byte/timing/CLS limits remain unchanged; form and performance checks must
+pass again before release.
+
 The read-only Vercel environment inventory at release preparation contains
 the existing admin notifier variables but neither `CUSTOMER_ACK_ENABLED` nor
 `CUSTOMER_ACK_REPLY_TO`. This release does not enable customer sends. Default

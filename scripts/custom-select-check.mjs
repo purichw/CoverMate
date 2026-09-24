@@ -23,7 +23,8 @@ for (const key of keys) assert.equal(typeof migrated.formOptions.query[key].en,'
 
 // Exercise the real client serializer and server validator without Firebase writes.
 const client = fs.readFileSync('covermate-public.mjs','utf8');
-const prepare = vm.runInNewContext(client.slice(client.indexOf('export async function prepareContactLead'),client.indexOf('export async function sendContactLead')).replace(/^export /gm,'')+'\nprepareContactLead', {crypto,TextEncoder,cleanText,cleanLeadChoice,URL,location:{origin:'https://example.test',pathname:'/'}});
+const payloadSource = fs.readFileSync('covermate-contact-payload.mjs','utf8').replace(/^import .*;\n/gm,'').replace(/^export /gm,'');
+const prepare = vm.runInNewContext(payloadSource+'\nprepareContactPayload', {crypto,TextEncoder,cleanText,cleanLeadChoice,URL,location:{origin:'https://example.test',pathname:'/'}});
 const api = fs.readFileSync('api/leads.js','utf8');
 const validate = vm.runInNewContext(api.slice(api.indexOf('function validateLead'))+'\nvalidateLead', {error:(status,code)=>Object.assign(new Error(code),{status,code})});
 for (const qtype of [...keys,'compare','']) {

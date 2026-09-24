@@ -23,6 +23,7 @@ const jsFiles = [
   "covermate-firebase.js",
   "covermate-firebase-config.mjs",
   "covermate-public.mjs",
+  "covermate-contact-payload.mjs",
   "covermate-roles.mjs",
   "src/telemetry.js",
   "covermate-analytics.js",
