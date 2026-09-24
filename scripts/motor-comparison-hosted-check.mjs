@@ -113,14 +113,10 @@ try {
   report.servedHtmlSha256 = createHash('sha256').update(html).digest('hex');
   originals = await db.getAll(...refs);
   assert.ok(originals.every(doc => doc.exists && doc.data()?.config), 'Both UAT live and draft must exist; this check does not seed or delete documents.');
+  // Raw legacy UAT documents may predate durable repeatable IDs. Validate that
+  // editable content exists, then select IDs from the hydrated editor below.
   const section = tiers(originals[1].data().config);
-  const head = section?.heads?.find(item => item.on !== false && item.id);
-  const tier = section?.items?.find(item => item.on !== false && item.id);
-  assert.ok(section && head && tier, 'UAT draft must contain an enabled class and coverage topic.');
-  const chosen = { sectionId: section.id, tierId: tier.id, headId: head.id };
-  const before = selectionOf(originals[1].data(), chosen);
-  const expectedStatus = before.status === 'y' ? 'p' : before.status === 'p' ? 'n' : 'y';
-  report.cell = { ...chosen, beforeStatus: before.status, testStatus: expectedStatus };
+  assert.ok(section?.heads?.some(item => item.on !== false) && section?.items?.some(item => item.on !== false), 'UAT draft must contain an enabled class and coverage topic.');
   const encrypted = encryptBackup({ projectId: PROJECT_ID, siteId: 'covermate-uat', capturedAt: new Date().toISOString(), documents: originals.map(doc => ({ path: doc.ref.path, exists: doc.exists, updateTime: doc.updateTime.toDate().toISOString(), data: doc.data() })) }, process.env.COVERMATE_BACKUP_KEY);
   const backupPath = path.join(output, 'original-uat-live-draft.enc');
   fs.writeFileSync(backupPath, encrypted, { mode: 0o600, flag: 'wx' });
@@ -147,7 +143,18 @@ try {
   await assertBrowserUat(admin);
   assert.ok((await db.getAll(...refs)).every((doc, index) => doc.updateTime.isEqual(originals[index].updateTime)), 'Another writer changed UAT state after backup; refusing to edit.');
   report.checks.push('Hosted server/browser use UAT; real Firebase auth and uatOnly owner verified; encrypted state backup complete');
-  const cell = () => admin.locator(`#home-tier-comparison .cm-tier-cell[data-tier-id="${tier.id}"][data-head-id="${head.id}"]:visible`).first();
+  const firstStatus = admin.locator('#home-tier-comparison .cm-tier-cell [data-tier-status]:visible').first();
+  await firstStatus.waitFor();
+  const selected = await firstStatus.evaluate(button => {
+    const cell = button.closest('.cm-tier-cell');
+    return { sectionId: cell.closest('section')?.id, tierId: cell.dataset.tierId, headId: cell.dataset.headId, status: cell.dataset.status };
+  });
+  const chosen = { sectionId: selected.sectionId || section.id, tierId: selected.tierId, headId: selected.headId };
+  Object.values(chosen).forEach(id => assert.match(id || '', /^[a-zA-Z0-9_-]+$/, 'Hydrated comparison cell must expose durable IDs.'));
+  assert.ok(['y', 'p', 'n'].includes(selected.status), 'Hydrated comparison cell must expose its status.');
+  const expectedStatus = selected.status === 'y' ? 'p' : selected.status === 'p' ? 'n' : 'y';
+  report.cell = { ...chosen, beforeStatus: selected.status, testStatus: expectedStatus, selection: 'Actual visible hydrated editor cell' };
+  const cell = () => admin.locator(`#home-tier-comparison .cm-tier-cell[data-tier-id="${chosen.tierId}"][data-head-id="${chosen.headId}"]:visible`).first();
   await cell().locator('[data-tier-status]').click();
   await poll(async () => { const doc = await refs[1].get(); return doc.data()?.updatedBy?.uid === uid && selectionOf(doc.data(), chosen).status === expectedStatus; }, 'Real UAT draft status write was not acknowledged.');
   await cell().locator('[data-tier-remark]').click();
@@ -195,9 +202,9 @@ try {
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
   assert.match(await page.locator('meta[name="robots"]').getAttribute('content'), /noindex/);
   assert.equal(await page.locator('#covermate-jsonld').count(), 0);
-  const axis = page.locator(`details.hm-tier-accordion[data-axis-id="${head.id}"]`);
+  const axis = page.locator(`details.hm-tier-accordion[data-axis-id="${chosen.headId}"]`);
   if (!await axis.evaluate(element => element.open)) { await axis.locator('summary').focus(); await page.keyboard.press('Enter'); }
-  const publicCell = axis.locator(`.cm-tier-cell[data-tier-id="${tier.id}"]`);
+  const publicCell = axis.locator(`.cm-tier-cell[data-tier-id="${chosen.tierId}"]`);
   assert.equal(await publicCell.getAttribute('data-status'), expectedStatus);
   assert.equal(await publicCell.locator('.cm-tier-remark').innerText(), marker);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);

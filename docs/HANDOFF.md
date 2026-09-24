@@ -14,6 +14,18 @@ and the original root checkout's unrelated local files. Production rollout does
 not publish the existing CMS Draft or migrate customer records. Verify exact-SHA
 CI, hosted UAT and the production alias before calling this candidate deployed.
 
+Hosted UAT passed on `covermate-blsgy6iof-purich-w.vercel.app` using the runtime
+from `df7c5f7`: real temporary UAT owner, cell status/remark Save and reload,
+Preview, Publish and a fresh mobile visitor. Both UAT state documents were
+restored and verified; the temporary allowlist and Auth user were disabled and
+tokens revoked. No production CMS content was written. The read-only preview
+smoke passed all eight Home/Motor, TH/EN, desktop/mobile variants. Local receipts
+are under `uat-results/motor-comparison-hosted-release-v3/` and
+`uat-results/motor-comparison-preview-release/`. The only follow-up code change
+is test-cell selection from hydrated editor IDs for legacy UAT drafts. Home CSS
+now uses a generated, versioned asset; schema factory compaction preserves all
+541 field descriptors byte-for-byte and unchanged performance budgets pass.
+
 ## System inbox email integration
 
 The current notification change builds on `edd8423`. Existing Production had all
