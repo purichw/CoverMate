@@ -15,6 +15,9 @@ implementation. Real inbox delivery remains a separate activation check.
 - `publicCopy.contactEmail`, `publicCopy.contactEmailHint` and
   `contactSubmission.emailInvalid` are editable through the existing TH/EN CMS.
   Existing owner values, including intentionally blank copy, are not overwritten.
+  CMS schema 20 seeds only missing translations for these new fields when
+  reading older content. It does not replay schema 19 topic-label replacements
+  or require a Production CMS write/Publish during deployment.
 - Only a new consultation with an explicit email field can create an
   acknowledgement. An email typed in the LINE/phone field is not enrolled.
   Renewals, historical cases and manually created cases do not trigger one.

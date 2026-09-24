@@ -15,6 +15,11 @@ Before release, canonical production points to deployment
 `https://covermate-c0heofwhd-purich-w.vercel.app`.
 This is the recovery checkpoint, not authorization to perform a rollback.
 
+Hosted Preview caught missing email labels on published schema 19. The follow-up
+fix introduces schema 20 presentation defaults, preserving owner strings/blanks
+and preventing schema 19 topic replacements from replaying. Local regression
+now explicitly starts from schema 19; no CMS state documents are written.
+
 The read-only Vercel environment inventory at release preparation contains
 the existing admin notifier variables but neither `CUSTOMER_ACK_ENABLED` nor
 `CUSTOMER_ACK_REPLY_TO`. This release does not enable customer sends. Default

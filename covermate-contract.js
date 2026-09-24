@@ -431,7 +431,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 19;
+const CMS_CONTENT_VERSION = 20;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -989,7 +989,7 @@ function migrateCmsContent(config) {
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
   const oldTopics = {quote:['ขอใบเสนอราคา','Request a quote'],general:['สอบถามทั่วไป','General question'],review:['ทบทวนกรมธรรม์เดิม','Review my existing policy'],claim:['ช่วยเรื่องเคลม','Help with a claim']};
-  for(const f of CMS_CONTENT_FIELDS) ['th','en'].forEach((lang,i)=>{
+  if (previousVersion < 19) for(const f of CMS_CONTENT_FIELDS) ['th','en'].forEach((lang,i)=>{
     const old=oldTopics[f.path.replace('formOptions.query.','')]?.[i], path=f.path+'.'+lang;
     if(old!==undefined && cmsGet(next,path)===old) cmsSet(next,path,f.seed[lang]);
   });
@@ -1021,7 +1021,7 @@ function migrateCmsContent(config) {
   });
   // Seed only newly introduced presentation fields; intentional blanks stay blank.
   if (previousVersion >= 5) {
-    CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('formOptions.query.') || (previousVersion < 18 && field.group === 'Motor comparison') || (previousVersion < 17 && field.group === 'LINE contact') || (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
+    CMS_CONTENT_FIELDS.filter(field => (previousVersion < 20 && ['publicCopy.contactEmail', 'publicCopy.contactEmailHint', 'contactSubmission.emailInvalid'].includes(field.path)) || field.path.startsWith('formOptions.query.') || (previousVersion < 18 && field.group === 'Motor comparison') || (previousVersion < 17 && field.group === 'LINE contact') || (previousVersion < 15 && field.group === 'Advisor profile') || (previousVersion < 14 && field.group === 'Contact submission') || field.group === 'Calculator design' || field.group === 'Error page' || field.group === 'Cookie consent' || field.group === 'Transparency design' || (previousVersion < 8 && field.group === 'Footer design') || (previousVersion < 7 && field.group === 'Home contact') || (previousVersion < 6 && field.group === 'Home licences')).forEach(field => {
       if (field.localized) ['th','en'].forEach(lang => {
         const path = field.path + '.' + lang;
         if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);

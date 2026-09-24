@@ -2,13 +2,24 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { ContactSubmission, contactFieldErrors, validContactEmail } from '../covermate-submission.mjs';
-import { cleanText, cleanLeadChoice, migrateCmsContent } from '../covermate-contract.js';
+import { cleanText, cleanLeadChoice, migrateCmsContent, CMS_CONTENT_VERSION } from '../covermate-contract.js';
 
 const valid = {name:'Local fixture',contact:'@fixture',topic:'A question',qtype:'quote',coverage:'motor',consent:true,language:'th',noticeText:'Fixture notice',sourcePath:'/?secret=private#talk'};
 const receipt = {accepted:true,reference:'CM-TEST-12345678'};
 const migrated=migrateCmsContent({cmsContentVersion:13,contactSubmission:{successTitle:{th:'',en:'Custom receipt'}}});
 assert.equal(migrated.contactSubmission.successTitle.th,'');assert.equal(migrated.contactSubmission.successTitle.en,'Custom receipt');
 assert.ok(migrated.contactSubmission.nameRequired.th);assert.equal(migrateCmsContent(migrated).contactSubmission.successTitle.th,'');
+const currentCms = { cmsContentVersion: 19, publicCopy: { contactEmail: { th: '', en: 'Owner email label' } }, formOptions: { query: { general: { th: 'สอบถามทั่วไป', en: 'General question' } } } };
+const emailCms = migrateCmsContent(currentCms);
+assert.equal(emailCms.cmsContentVersion, CMS_CONTENT_VERSION);
+assert.deepEqual(emailCms.publicCopy.contactEmail, currentCms.publicCopy.contactEmail);
+assert.deepEqual(emailCms.formOptions.query.general, currentCms.formOptions.query.general, 'New schema does not replay the previous topic migration');
+for (const lang of ['th', 'en']) {
+  assert.ok(emailCms.publicCopy.contactEmailHint[lang]);
+  assert.ok(emailCms.contactSubmission.emailInvalid[lang]);
+  assert.ok(migrateCmsContent({ cmsContentVersion: 19 }).publicCopy.contactEmail[lang]);
+}
+assert.deepEqual(migrateCmsContent(emailCms), emailCms, 'Email presentation migration is idempotent');
 const defer = () => {let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
 const tick = () => new Promise(resolve=>setImmediate(resolve));
 function harness(send, prepare=async input=>({body:JSON.stringify(input),key:'same-key'})) {

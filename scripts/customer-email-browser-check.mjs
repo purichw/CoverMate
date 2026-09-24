@@ -10,13 +10,21 @@ import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 const require = createRequire(import.meta.url);
 const { renderCustomerEmail } = require('../server/customer-email-template.cjs');
 const contract = await importCoverMateContract();
-const config = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js','utf8')+'\nJSON.stringify(DEFAULTS)'));
+const config = contract.sanitizeStateDoc({config:JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js','utf8')+'\nJSON.stringify(DEFAULTS)')),text:{}}).config;
 // Match the intended public contact surface; legacy source defaults are dark.
 config.sections.find(section=>section.id==='talk').bg='sage';
+// Reproduce published schema 19: these fields did not exist before this release.
+config.cmsContentVersion = 19;
 config.publicCopy ||= {};
+delete config.publicCopy.contactEmailHint;
+if (config.contactSubmission) delete config.contactSubmission.emailInvalid;
 config.publicCopy.contactEmail = { th:'อีเมลตอบรับ (ไม่บังคับ)', en:'Email for acknowledgement (optional)' };
 const state = contract.sanitizeStateDoc({config,text:{}},{repeatableIds:true});
 assert.deepEqual(state.config.publicCopy.contactEmail,config.publicCopy.contactEmail,'CMS owner copy survives migration');
+for (const lang of ['th', 'en']) {
+  assert.ok(state.config.publicCopy.contactEmailHint[lang]);
+  assert.ok(state.config.contactSubmission.emailInvalid[lang]);
+}
 const handler = createPageHandler({readPublished:async()=>state});
 const serve=process.argv.includes('--serve');
 const {server,baseUrl} = await startStaticServer({onRequest:async(req,res)=>{
