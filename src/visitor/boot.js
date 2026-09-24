@@ -14,6 +14,8 @@
     waiting: 'ยังโหลดไม่เสร็จ ลองโหลดหน้าเว็บอีกครั้งได้', error: 'โหลดหน้าเว็บไม่สำเร็จ กรุณาลองอีกครั้ง', retry: 'ลองอีกครั้ง'
   };
   let pending = true;
+  let resolveReady;
+  const whenReady = new Promise(resolve => { resolveReady = resolve; });
   const timers = [];
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const show = () => { if (pending) surface.setAttribute('data-visible', ''); };
@@ -50,6 +52,7 @@
   }, 10000);
   window.CoverMateBoot = {
     get pending() { return pending; },
+    whenReady,
     fail,
     // Move the same element and listeners synchronously across the bundler swap.
     attach(doc) { doc.head.appendChild(style.cloneNode(true)); doc.body.prepend(surface); },
@@ -64,6 +67,7 @@
       if (focused) { const main = document.querySelector('main'); if (main) { main.tabIndex = -1; main.focus({ preventScroll: true }); } }
       if (!surface.hasAttribute('data-visible') || matchMedia('(prefers-reduced-motion: reduce)').matches) surface.remove();
       else { surface.setAttribute('data-leaving', ''); setTimeout(() => surface.remove(), 180); }
+      resolveReady();
     }
   };
 })();

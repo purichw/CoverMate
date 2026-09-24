@@ -157,6 +157,23 @@ try {
     report.checks.push({ homeCssFailure: true, guardRetained: true, retryVisible: true, retryRecovered: true });
     await page.close();
   }
+  // Initial aliases must use styled geometry, including the tablet layout.
+  for (const delay of [0, 1600]) for (const [hash, id] of [['motor', 'insurers'], ['life', 'cover']]) {
+    const page = await browser.newPage({ viewport: { width: 820, height: 1180 } });
+    if (delay) await page.route('**/assets/visitor/home.css?*', async route => {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      await route.continue();
+    });
+    await page.goto(baseUrl + '/#' + hash);
+    await page.waitForFunction(() => !document.documentElement.hasAttribute('data-covermate-booting'));
+    await page.waitForFunction(targetId => {
+      const rect = document.getElementById(targetId)?.getBoundingClientRect();
+      const headerBottom = document.querySelector('header').getBoundingClientRect().bottom;
+      return rect && rect.top >= headerBottom && rect.top < innerHeight * .82;
+    }, id);
+    report.checks.push({ hash, width: 820, homeCssDelay: delay, styledAnchor: true });
+    await page.close();
+  }
   for (const blockedStorage of [false, true]) {
     let requests = 0;
     const context = await browser.newContext();

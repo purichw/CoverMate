@@ -1121,7 +1121,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       window.scrollTo({ top, behavior: smooth && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'instant' });
     };
     const schedule = () => { if (this._anchorRequest === request) this._anchorRaf = requestAnimationFrame(aimAnchor); };
-    if (waitForFonts && document.fonts) document.fonts.ready.then(schedule);
+    const ready = waitForFonts && (window.CoverMateBoot?.whenReady || document.fonts?.ready);
+    if (ready) ready.then(schedule);
     else schedule();
   }
 

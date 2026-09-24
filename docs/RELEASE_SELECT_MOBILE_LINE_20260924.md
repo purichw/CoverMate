@@ -40,6 +40,12 @@ or unrelated authenticated Admin operations are performed. Full existing CI
 and emulator coverage runs on GitHub; do not bypass or weaken a failing gate.
 Final SHA, preview URL and production confirmation are reported after completion.
 
+The release gate also exposed initial hash links scrolling against pre-CSS
+geometry on tablets. Initial anchor navigation now waits for the same boot-ready
+promise as the styled page reveal. Server-boot checks cover `#motor` and `#life`
+at 820px with immediate and 1600ms-delayed Home CSS; the scroll assertions and
+performance limits are unchanged.
+
 ## Recovery
 
 Before this release the canonical production alias pointed to
