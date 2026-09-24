@@ -35,6 +35,7 @@ const commands = [
   ["npm", ["run", "check:text-editor"]],
   ["npm", ["run", "check:boot"]],
   ["npm", ["run", "check:loading"]],
+  ["npm", ["run", "check:admin-loading"]],
   ["node", ["scripts/server-boot-check.mjs"]],
   ["npm", ["run", "check:live-content"]],
   ["npm", ["run", "check:analytics"]],
@@ -48,6 +49,7 @@ const commands = [
   ["npm", ["run", "check:ops"]],
   ["npm", ["run", "check:case-links"]],
   ["npm", ["run", "check:admin-email-template"]],
+  ["npm", ["run", "check:customer-email:browser"]],
   ["npm", ["run", "check:performance"]],
   ["git", ["diff", "--check"]]
 ];

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { readBootSurface } from './lib/boot-surface.mjs';
 
 import {
   buildVisitorIndex,
@@ -18,7 +19,16 @@ function main() {
   const admin = fs.readFileSync(adminFile,'utf8');
   const adminSlot = /<!-- COVERMATE_SELECT_ASSETS_START -->[\s\S]*?<!-- COVERMATE_SELECT_ASSETS_END -->/g;
   if ([...admin.matchAll(adminSlot)].length !== 1) throw new Error('Admin shared select asset slot must exist exactly once.');
-  const nextAdmin = admin.replace(adminSlot,`<!-- COVERMATE_SELECT_ASSETS_START -->\n  ${styles.find(asset=>asset.name==='select').link}\n  <script type="module" src="${select.url}"></script>\n  <!-- COVERMATE_SELECT_ASSETS_END -->`);
+  let nextAdmin = admin.replace(adminSlot,`<!-- COVERMATE_SELECT_ASSETS_START -->\n  ${styles.find(asset=>asset.name==='select').link}\n  <script type="module" src="${select.url}"></script>\n  <!-- COVERMATE_SELECT_ASSETS_END -->`);
+  const boot = readBootSurface({ loadingTh: 'กำลังตรวจสอบสิทธิ์และเตรียมหน้า Admin', loadingEn: 'Verifying access and preparing Admin' });
+  for (const [slot, content] of Object.entries({
+    STYLE: `<style id="covermate-boot-style">${boot.css}</style>`,
+    SURFACE: `${boot.html}<script>${boot.script}</script>`
+  })) {
+    const pattern = new RegExp(`<!-- COVERMATE_BOOT_${slot}_START -->[\\s\\S]*?<!-- COVERMATE_BOOT_${slot}_END -->`, 'g');
+    if ([...nextAdmin.matchAll(pattern)].length !== 1) throw new Error(`Admin boot ${slot} slot must exist exactly once.`);
+    nextAdmin = nextAdmin.replace(pattern, () => `<!-- COVERMATE_BOOT_${slot}_START -->\n${content}\n  <!-- COVERMATE_BOOT_${slot}_END -->`);
+  }
   const checkOnly = process.argv.includes("--check");
   if (checkOnly) {
     const current = fs.readFileSync(VISITOR_SOURCE_PATHS.index, "utf8");

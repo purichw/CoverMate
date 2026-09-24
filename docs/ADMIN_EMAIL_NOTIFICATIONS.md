@@ -1,5 +1,10 @@
 # System inbox email alerts
 
+Optional customer acknowledgements reuse this transport and outbox, behind a
+separate disabled-by-default switch. They have a different recipient and a
+minimal public-only template; see [customer acknowledgements](CUSTOMER_ACKNOWLEDGEMENTS.md).
+This does not change the system inbox destination described below.
+
 The public form queues an alert to the configured CoverMate inbox after the case
 commits. Scheduled follow-up alerts and daily overdue digests go to this same
 system inbox. Per-owner email addresses/preferences and LINE sending remain
@@ -11,7 +16,7 @@ Server-only Vercel Production variables:
 
 - `RESEND_API_KEY`: key permitted to send from the verified sender domain.
 - `ADMIN_NOTIFICATION_FROM`: `CoverMate <notifications@notify.covermateinsurance.com>`.
-- `ADMIN_NOTIFICATION_EMAIL`: `covermate@proton.me`.
+- `ADMIN_NOTIFICATION_EMAIL`: `covermate@covermateinsurance.com`.
 - `ADMIN_NOTIFICATION_CRON_SECRET`: at least 32 characters; only the dedicated
   worker caller receives it, never the Resend key or Firebase credentials.
 - `ADMIN_NOTIFICATION_SCHEDULER_ENABLED`: `true` after configuring the worker.
@@ -19,6 +24,21 @@ Server-only Vercel Production variables:
 Environment changes require a new deployment. Configuration presence is not
 delivery evidence. The key and arbitrary provider responses never reach the
 browser or logs. Recipient and sender never come from form input.
+
+### Inbox migration, 2026-09-24
+
+The owner reported updating `ADMIN_NOTIFICATION_EMAIL` to the Zoho mailbox
+above and redeploying. Scope is operational/customer email only: do not change
+Google sign-in, Firebase UID/allowlist, service-account ownership or recovery
+accounts. Actual receipt in the new inbox still needs verification with the
+Admin notification test action; a provider acceptance message alone is not
+proof of inbox delivery.
+
+New, not-yet-attempted alerts use the current environment recipient. Existing
+jobs with a frozen payload keep their original destination on retry. Preserve
+those payloads and idempotency keys; do not bulk-rewrite the outbox to migrate it.
+Changing the system inbox does not enable customer acknowledgements, which have
+their own feature switch and release requirements.
 
 ## Contract and limits
 

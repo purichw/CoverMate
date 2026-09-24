@@ -26,7 +26,7 @@
   if (!image.hasAttribute('data-published') && en) image.src = '/assets/brand/covermate-advisory-logo-en.png';
   if (!image.getAttribute('src') || !image.complete || !image.naturalWidth) noImage();
   surface.lang = en ? 'en' : 'th';
-  status.textContent = copy.loading;
+  status.textContent = (en ? surface.dataset.loadingEn : surface.dataset.loadingTh) || copy.loading;
   retry.textContent = copy.retry;
   retry.addEventListener('click', () => location.reload());
   const fail = () => {

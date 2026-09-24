@@ -479,6 +479,7 @@ const CMS_CONTENT_FIELDS = [
     ['unavailable','ช่องทางติดต่อออนไลน์ยังไม่พร้อม กรุณาลองใหม่ภายหลัง','Online contact is currently unavailable. Please try again later.'],
     ['nameRequired','กรุณากรอกชื่อที่ให้เรียก','Please enter your name.'],
     ['contactRequired','กรุณากรอก LINE ID หรือเบอร์โทร','Please enter your LINE ID or phone number.'],
+    ['emailInvalid','กรุณาตรวจสอบรูปแบบอีเมล หรือเว้นว่างหากไม่ต้องการรับอีเมล','Please enter a valid email, or leave this field blank.'],
     ['consentRequired','กรุณายืนยันความยินยอมก่อนส่งคำขอ','Please confirm your consent before submitting.'],
     ['consentChanged','ข้อความความยินยอมมีการเปลี่ยนแปลง กรุณาอ่านและยืนยันใหม่','The consent notice has changed. Please read it and confirm again.'],
     ['topicTooLong','กรุณาระบุรายละเอียดไม่เกิน 500 ตัวอักษร','Please keep your message within 500 characters.'],
@@ -835,6 +836,8 @@ const CMS_CONTENT_FIELDS = [
     ["contactTitle","Title","สอบถามหรือขอใบเสนอราคา","Ask a question or request a quotation"],
     ["contactName","Name","ชื่อที่ให้เรียก","What should I call you"],
     ["contactContact","Contact","LINE ID หรือเบอร์โทร","LINE ID or phone"],
+    ["contactEmail","Email","อีเมล (ไม่บังคับ)","Email (optional)"],
+    ["contactEmailHint","Email purpose","สำหรับรับอีเมลตอบรับคำขอและติดต่อเรื่องที่คุณสอบถาม ไม่ใช่การสมัครรับข่าวสาร","For a request acknowledgement and replies about your enquiry, not a newsletter subscription."],
     ["contactTopic","Topic","เรื่องที่ต้องการสอบถาม","Type of enquiry"],
     ["contactCoverage","Coverage","ความคุ้มครองที่สนใจ","Coverage of interest"],
     ["contactDetails","Details","รายละเอียดเพิ่มเติม (ถ้ามี)","Anything else? (optional)"]

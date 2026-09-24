@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { ContactSubmission, contactFieldErrors } from '../covermate-submission.mjs';
+import { ContactSubmission, contactFieldErrors, validContactEmail } from '../covermate-submission.mjs';
 import { cleanText, cleanLeadChoice, migrateCmsContent } from '../covermate-contract.js';
 
 const valid = {name:'Local fixture',contact:'@fixture',topic:'A question',qtype:'quote',coverage:'motor',consent:true,language:'th',noticeText:'Fixture notice',sourcePath:'/?secret=private#talk'};
@@ -18,6 +18,9 @@ function harness(send, prepare=async input=>({body:JSON.stringify(input),key:'sa
 }
 assert.deepEqual(contactFieldErrors({}),{name:'nameRequired',contact:'contactRequired',consent:'consentRequired'});
 assert.deepEqual(contactFieldErrors(valid),{});
+for (const email of ['visitor@example.test', ' visitor+tag@example.test ', "o'connor@example.test"]) assert.equal(validContactEmail(email), true);
+for (const email of ['bad', 'a@b', 'a..b@example.test', 'a,b@example.test', 'a@example.test@', 'a@example.test\r\nBcc:spam@example.test', 'x'.repeat(65)+'@example.test', 'a@-domain.test', 'a@example.test,other@example.test']) assert.equal(contactFieldErrors({...valid,email}).email,'emailInvalid');
+assert.deepEqual(contactFieldErrors({...valid,email:' '}),{});
 assert.equal(contactFieldErrors({...valid,topic:'x'.repeat(501)}).topic,'topicTooLong');
 {
   const hold=defer(),h=harness(()=>hold.promise),input={...valid};
@@ -69,13 +72,16 @@ for(const value of [null,{}, {accepted:true,reference:''}, {id:'a'.repeat(64)}])
 // Exercise the shipped adapter without App Check, Firebase or external networking.
 const source=fs.readFileSync('covermate-public.mjs','utf8');
 let response={ok:true,status:200,headers:new Headers()},data=receipt,networkError,tokenError,posts=0;
-const scope={crypto,TextEncoder,URL,location:{origin:'https://example.test',pathname:'/'},cleanText,cleanLeadChoice,sanitizeNeedsSnapshot:v=>v,DOMException,Date,setTimeout,clearTimeout,
+const scope={crypto,TextEncoder,URL,location:{origin:'https://example.test',pathname:'/'},cleanText,cleanLeadChoice,validContactEmail,sanitizeNeedsSnapshot:v=>v,DOMException,Date,setTimeout,clearTimeout,
   appCheckToken:async()=>{if(tokenError)throw tokenError;return 'fixture';},environment:{name:'uat'},
   fetchJSON:async()=>{posts++;if(networkError)throw networkError;return {response,data};}};
 const api=vm.runInNewContext(source.slice(source.indexOf('export async function prepareContactLead'),source.indexOf('export async function submitContactLead')).replace(/^export /gm,'')+'\n({prepareContactLead,sendContactLead})',scope);
 const request=await api.prepareContactLead(valid);assert.equal(JSON.parse(request.body).sourcePath,'/');assert.ok(Object.isFrozen(request));
+assert.equal('email' in JSON.parse(request.body),false,'Existing submissions keep their payload and fingerprint');
+assert.equal(JSON.parse((await api.prepareContactLead({...valid,email:' visitor@example.test '})).body).email,'visitor@example.test');
+await assert.rejects(api.prepareContactLead({...valid,email:'bad'}),error=>error.outcome==='invalid'&&error.fields.email==='emailInvalid');
 assert.equal((await api.sendContactLead(request)).reference,receipt.reference);
-for(const [status,body,outcome] of [[200,{},'unknown'],[200,{id:'a'.repeat(64)},'unknown'],[500,{error:'internal_error'},'unknown'],[409,{error:'idempotency_conflict'},'unknown'],[503,{error:'not_configured'},'failure'],[403,{error:'invalid_app_check'},'failure'],[422,{error:'consent_changed'},'invalid'],[429,{error:'rate_limited'},'rate_limited'],[502,null,'unknown']]) {
+for(const [status,body,outcome] of [[200,{},'unknown'],[200,{id:'a'.repeat(64)},'unknown'],[500,{error:'internal_error'},'unknown'],[409,{error:'idempotency_conflict'},'unknown'],[503,{error:'not_configured'},'failure'],[403,{error:'invalid_app_check'},'failure'],[422,{error:'consent_changed'},'invalid'],[422,{error:'invalid_email'},'invalid'],[429,{error:'rate_limited'},'rate_limited'],[502,null,'unknown']]) {
   response={ok:status===200,status,headers:new Headers({'Retry-After':'60'})};data=body;
   await assert.rejects(api.sendContactLead(request),error=>error.outcome===outcome);
 }

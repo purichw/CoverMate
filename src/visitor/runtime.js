@@ -351,7 +351,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     tab: 'sections',
     sel: 'hero',
     situation: null,
-    form: { name: '', contact: '', topic: '', qtype: '', coverage: '', consent: false },
+    form: { name: '', contact: '', email: '', topic: '', qtype: '', coverage: '', consent: false },
     renew: { kind: '', month: '', contact: '', consent: false },
     renewSent: false,
     renewSubmitting: false,
@@ -1368,7 +1368,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
           try { window.CoverMateAnalytics?.trackEvent?.(outcome.kind === 'success' ? 'quote_submit_success' : 'quote_submit_error', { form_type:'consultation', ...(outcome.kind === 'success' ? this._contactAnalytics : {}) }); } catch (_) { /* Analytics must not change a persisted outcome. */ }
         }
         if (outcome.kind === 'success') Object.assign(patch, {
-          form: { name:'', contact:'', topic:'', qtype:'', coverage:'', consent:false },
+          form: { name:'', contact:'', email:'', topic:'', qtype:'', coverage:'', consent:false },
           calculatorSnapshot:null, calculatorAttachmentText:'', shareCalculator:false
         });
         if (outcome.fields?.consent === 'consentChanged') {
@@ -2327,7 +2327,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       submissionHasLineHelp:!!site.contact.lineUrl && !!site.contact.lineId,
       submissionShowServices:submissionKind==='success' && sectionHrefAvailable('#cover'),
       submissionViewing:!!submission.viewing,
-      submissionDraft:[['publicCopy.contactName',f.name],['publicCopy.contactContact',f.contact],['publicCopy.contactTopic',QUERY[f.qtype]||''],['publicCopy.contactCoverage',COVER[f.coverage]||''],['publicCopy.contactDetails',f.topic],['homeDesign.includeCalculator',S.shareCalculator?S.calculatorAttachmentText:'']].filter(([,value])=>value).map(([path,value])=>({label:cmsText(path),value})),
+      submissionDraft:[['publicCopy.contactName',f.name],['publicCopy.contactContact',f.contact],['publicCopy.contactEmail',f.email],['publicCopy.contactTopic',QUERY[f.qtype]||''],['publicCopy.contactCoverage',COVER[f.coverage]||''],['publicCopy.contactDetails',f.topic],['homeDesign.includeCalculator',S.shareCalculator?S.calculatorAttachmentText:'']].filter(([,value])=>value).map(([path,value])=>({label:cmsText(path),value})),
       submissionAnnounce:submissionCopy[S.contactAnnouncement] || '',
       submissionIcon:submissionKind==='success'?ICONS.check:submissionPending?[...ICONS.chat,'M8 11h.01M12 11h.01M16 11h.01']:[ICONS.clock[0],'M12 8v4','M12 16h.01'],
       submissionClock:ICONS.clock,submissionArrow:ICONS.arrow,submissionRetryIcon:ICONS.refresh,submissionLock:ICONS.lock,
@@ -2337,6 +2337,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       onSubmissionNew:()=>this.contactAction(()=>this.getContactFlow().startNew()),
       contactNameError:enhancedContact?submissionCopy[submission.fields.name]||'':'',
       contactContactError:enhancedContact?submissionCopy[submission.fields.contact]||'':'',
+      contactEmailError:enhancedContact?submissionCopy[submission.fields.email]||'':'',
       contactTopicError:enhancedContact?submissionCopy[submission.fields.topic]||'':'',
       contactConsentError:enhancedContact?submissionCopy[submission.fields.consent]||'':'',
       contactFormError:enhancedContact?submissionCopy[submission.fields.form]||'':'',
@@ -2537,7 +2538,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       referenceSource:cleanHttpsUrl(roomRef.sourceUrl,''),hasReferenceSource:!!cleanHttpsUrl(roomRef.sourceUrl,''),referenceNote:t(roomRef.note),referenceNotePath:'sections.@'+fitSectionRaw.id+'.calculator.health.selectedRoomReference.note.'+lk,
       recs: sit ? (sit.recs || []).map((r, i) => ({ key: 'r' + i, n: String(i + 1), title: th ? r.th : r.en, why: th ? r.wth : r.wen, titlePath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.recs.'+i+'.'+lk, whyPath:'sections.@'+fitSectionRaw.id+'.calculator.situations.'+activeSituationKey+'.recs.'+i+'.w'+lk })) : [],
 
-      fName: f.name, fContact: f.contact, fTopic: f.topic, summary: summary,
+      fName: f.name, fContact: f.contact, fEmail: f.email || '', fTopic: f.topic, summary: summary,
       fQType: f.qtype, fCoverage: f.coverage, fConsent: !!f.consent,
       contactCoverageOpen: !sharedDesign || !!f.coverage,
       contactInvalid:enhancedContact?!!submission.fields.contact:!!S.leadError && !String(f.contact || '').trim(),
@@ -2550,6 +2551,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       onCoverage:e=>this.updateContactField('coverage',e.target.value),
       onName:e=>this.updateContactField('name',e.target.value),
       onContact:e=>this.updateContactField('contact',e.target.value),
+      onContactEmail:e=>this.updateContactField('email',e.target.value),
       onTopic:e=>this.updateContactField('topic',e.target.value),
       onConsent:e=>this.updateContactField('consent',!!e.target.checked),
       leadPending: S.leadSubmitting,

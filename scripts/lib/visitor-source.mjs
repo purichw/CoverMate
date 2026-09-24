@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { buildSync, transformSync } from "esbuild";
 import { createSeoModel, renderSeoHead } from "../../covermate-seo.mjs";
 import { sanitizeStateDoc } from "../../covermate-contract.js";
+import { readBootSurface } from './boot-surface.mjs';
 
 import {
   BUNDLER_TEMPLATE_OPEN,
@@ -78,14 +79,16 @@ function assertSingleSlot(source, slot, label) {
 }
 
 export function readVisitorSources() {
+  const boot = readBootSurface();
   const contract = readText(new URL('covermate-contract.js', ROOT));
   const visitorStyles = Object.fromEntries(readVisitorStyleAssets().map(asset => [asset.name, asset.link]));
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_BEGIN', 'covermate-contract.js');
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_END', 'covermate-contract.js');
   return {
     shell: readText(VISITOR_SOURCE_PATHS.shell)
-      .replace('/* COVERMATE_BOOT_STYLES */', () => transformSync(readText(new URL('src/visitor/boot.css', ROOT)), { loader: 'css', minify: true }).code)
-      .replace('// COVERMATE_BOOT_SCRIPT', () => transformSync(readText(new URL('src/visitor/boot.js', ROOT)), { minify: true }).code),
+      .replace('<!-- COVERMATE_BOOT_SURFACE -->', () => boot.html)
+      .replace('/* COVERMATE_BOOT_STYLES */', () => boot.css)
+      .replace('// COVERMATE_BOOT_SCRIPT', () => boot.script),
     template: readText(VISITOR_SOURCE_PATHS.template)
       .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
       .replace('<style>/* COVERMATE_SUBMISSION_STYLES */</style>', () => visitorStyles.submission)

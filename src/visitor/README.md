@@ -28,10 +28,17 @@ Source ownership:
   own their visitor UI. Calculation and validated attachment contracts live in
   root `covermate-calculator.mjs`; contact intake uses `covermate-public.mjs`
   and `/api/leads`. Keep these contracts separate from CMS command extraction.
-- `boot.js` / `boot.css` own the first-paint loading shell.
-- `line-contact.html` / `line-contact.css` own the shared floating LINE disclosure;
+- `boot.js` / `boot.css` and `../shared/boot.html` own the shared first-paint
+  loading surface for Visitor and `/admin`. `scripts/lib/boot-surface.mjs`
+  inlines these into both entry points through `build:visitor`; do not edit
+  the generated Admin boot slots. See [Admin loading](../../docs/ADMIN_LOADING.md).
+- `line-contact.html` / `line-contact.css` own the shared floating LINE disclosure
+  from 768px; narrower screens retain the existing bottom CTA only.
   `line-mark.html` supplies the unmodified official mark for contact buttons.
   See [LINE contact](../../docs/LINE_CONTACT.md) for CMS and interaction behavior.
+- `../shared/select.js` / `select.css` own the shared custom single-select UI for
+  visitor/CMS/Admin. Native selects retain state/validation and no-JS fallback;
+  see [dropdowns](../../docs/CUSTOM_SELECT.md) for the stable wrapper contract.
 
 The generator preserves the exported bundler serialization rules through
 `scripts/lib/bundler-template.mjs`. `npm run check:visitor-source` fails when
@@ -44,6 +51,8 @@ carry a hash of each stylesheet; the source check verifies these files as well
 as `index.html`. CSS, defaults, and runtime code are compacted only in generated
 output. Public refresh timing is shared through root
 `covermate-freshness.mjs`; its extraction does not change cache/poll intervals.
+The same build emits `assets/visitor/select.js` and `select.css`, refreshing
+versioned references in the visitor and the marked `admin/index.html` asset block.
 
 See [architecture](../../docs/ARCHITECTURE.md),
 [Draft history](../../docs/CMS_EDITOR_HISTORY.md),

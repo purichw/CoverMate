@@ -30,12 +30,29 @@ well as the visitor; do not edit that generated block by hand.
 
 ## Contact topics
 
-The seven current IDs are `quote`, `assess`, `review`, `renewal`, `service`,
-`claim`, `general`. `quote` now includes plan comparison. Legacy `compare` is
-still accepted by intake/analytics and labelled in historic Admin/email records.
+The current order and default translations are owned by `covermate-contract.js`.
+Admin Content's `Form choices` group edits `formOptions.query.<id>.th` and `.en`;
+the prompt is `formOptions.topicPrompt` (TH: `— เลือกหัวข้อ —`,
+EN: `— Select a topic —`). Published owner copy takes precedence over defaults.
+
+| ID | Thai default | English default |
+| --- | --- | --- |
+| `quote` | ขอใบเสนอราคา / เปรียบเทียบแผน | Request a quote / compare plans |
+| `assess` | ประเมินความคุ้มครองที่เหมาะสม | Assess suitable coverage |
+| `review` | ตรวจ / ทบทวนกรมธรรม์ที่มีอยู่ | Check / review an existing policy |
+| `renewal` | ต่ออายุประกัน | Renew insurance |
+| `service` | บริการหลังการขาย / แก้ไขกรมธรรม์ | After-sales service / policy changes |
+| `claim` | สอบถาม / ขอความช่วยเหลือเรื่องเคลม | Claims questions / assistance |
+| `general` | คำถามทั่วไป / เรื่องอื่น ๆ | General questions / other enquiries |
+
+`quote` includes plan comparison. Legacy `compare` is not an eighth visible
+choice, but is still accepted by intake/analytics and labelled in historic
+Admin/email records.
 CMS version 19 updates previous default labels and seeds new translations;
 owner-authored labels and intentional blanks are retained. No live CMS writes
 or customer-record rewrites are required.
+
+## Verification
 
 `node scripts/custom-select-check.mjs` checks the exact topic order, CMS migration,
 client/server enums, public keyboard/pointer flows, language changes, error/edit
@@ -46,3 +63,7 @@ no-focus-stealing case. `--admin-only` runs that focused regression.
 `--serve` starts a read-only
 preview (contact submission disabled). `BROWSER=webkit` chooses another installed
 Playwright engine. Screenshots/reports are in `uat-results/custom-select/`.
+
+See [the September 24 release](RELEASE_SELECT_MOBILE_LINE_20260924.md) for the
+exact deployed SHA, CI and hosted evidence; local fixtures alone do not prove
+production behavior.

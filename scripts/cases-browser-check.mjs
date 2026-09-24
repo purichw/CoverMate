@@ -60,7 +60,7 @@ try {
         if (req.method() === 'POST') { notices.filter(n => path[1] === 'read-all' || n.id === path[1]).forEach(n => n.readAt = now); result = { ok: true }; }
         else result = { items: notices.filter(n => url.searchParams.get('unread') !== 'true' || !n.readAt && !n.resolvedAt), unreadCount: notices.filter(n => !n.readAt && !n.resolvedAt).length, nextCursor: null };
       } else if (path[0] === 'notification-preferences') result = fixtures.preferences[0] || fixtures.preferences;
-      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, intakeEmailAvailable, intakeEmailRecipient: intakeEmailAvailable ? 'covermate@proton.me' : null, followUpEmailAvailable, overdueDigestAvailable, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable, schedulerCadenceMinutes: schedulerAvailable ? 5 : null, lineAvailable: false };
+      else if (path[0] === 'notification-capabilities') result = { inAppAvailable: true, emailAvailable: false, intakeEmailAvailable, intakeEmailRecipient: intakeEmailAvailable ? 'covermate@covermateinsurance.com' : null, followUpEmailAvailable, overdueDigestAvailable, verifiedEmailLabel: 'ow•••@example.test', schedulerAvailable, schedulerCadenceMinutes: schedulerAvailable ? 5 : null, lineAvailable: false };
       else if (path[0] === 'notification-test-email') {
         testEmailRequests.push({ method: req.method(), key: req.headers()['idempotency-key'], body: req.postDataJSON() });
         if (testEmailGate) await testEmailGate;
@@ -86,7 +86,7 @@ try {
     intakeEmailAvailable = true;
     await page.getByRole('button', { name: 'กลับไปที่การแจ้งเตือน', exact: true }).click();
     await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
-    await page.getByText('covermate@proton.me', { exact: true }).waitFor();
+    await page.getByText('covermate@covermateinsurance.com', { exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isEnabled(), true);
     assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'System inbox configuration does not enable personal preferences.');
     assert.equal(await page.getByText('ยังไม่ได้ตั้งค่าการส่งอีเมล', { exact: true }).count(), 0);

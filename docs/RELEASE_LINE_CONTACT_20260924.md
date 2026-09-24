@@ -1,5 +1,11 @@
 # LINE Contact Release
 
+Historical initial release scope. The later
+[dropdown and mobile LINE release](RELEASE_SELECT_MOBILE_LINE_20260924.md)
+records the verified production checkpoint and supersedes the initial mobile
+floating behavior. Current behavior is maintained in [LINE_CONTACT.md](LINE_CONTACT.md).
+The recovery target below belongs to this earlier release, not the latest one.
+
 Scope: only this task's shared floating LINE contact, official logo assets,
 CMS copy/seeds and directly related verification/documentation. Based on
 `8703eb6`; preserves the previously shipped visitor, admin and email work.

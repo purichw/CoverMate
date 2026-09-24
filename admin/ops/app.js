@@ -110,16 +110,12 @@ const dataMode = document.getElementById("dataMode");
 const newLeadButton = document.getElementById("newLeadButton");
 const toastRoot = document.getElementById("toastRoot");
 
-init();
+init().catch(() => window.CoverMateBoot?.fail());
 
 async function init() {
   clearOwnerMarker();
-  try {
-    state.session = await requireVerifiedAdminSession({ redirectTo: ADMIN_LOGIN_PATH });
-    if (!state.session) return;
-  } finally {
-    document.body.dataset.boot = "ready";
-  }
+  state.session = await requireVerifiedAdminSession({ redirectTo: ADMIN_LOGIN_PATH });
+  if (!state.session) return;
 
   state.sessionRole = normalizeRole(state.session.role);
   state.role = state.sessionRole;
@@ -134,6 +130,8 @@ async function init() {
   applySessionChrome();
   bindEvents();
   render();
+  document.body.dataset.boot = "ready";
+  window.CoverMateBoot?.ready();
   await loadAllData();
 }
 

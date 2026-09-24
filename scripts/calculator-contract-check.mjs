@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import * as model from '../covermate-calculator.mjs';
+import { validContactEmail } from '../covermate-submission.mjs';
 import { buildVisitorRuntime } from './lib/visitor-source.mjs';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 
@@ -78,15 +79,15 @@ const fakeRequire=name=>{
   if(name==='../server/firebase.cjs')return {serverApp:()=>({}),serverDb:()=>db,isEmulator:()=>true};
   if(name==='../server/enquiry-privacy.cjs')return {verifyReceipt:async()=>({noticeVersion:'calculator-test-only'})};
   if(name==='../server/cases-service.cjs')return {websiteRecord:()=>({caseNumber:'CM-CALCULATOR-TEST'}),stageWebsiteCreate(){}};
-  if(name==='../server/admin-notification.cjs')return Object.fromEntries(['stage','dispatch'].map(method=>[method,(...args)=>{
+  if(name==='../server/admin-notification.cjs')return { stageCustomer: (...args)=>notification.stageCustomer(...args), dispatchCustomer: (...args)=>notification.dispatchCustomer(...args), ...Object.fromEntries(['stage','dispatch'].map(method=>[method,(...args)=>{
     const environment=args.at(-1);assert.equal(environment.isUat,true);
     notificationCalls.push(method);
     assert.equal(notification[method](...args),undefined,'UAT intake suppresses production email work');
-  }]));
+  }])) };
   if(name==='../server/http.cjs')return {readBody:async req=>req.body,json:(_res,status,body)=>({status,body}),error:(status,code,message)=>Object.assign(new Error(message),{status,code}),reportFailure:()=>assert.fail('Unexpected server error')};
   throw new Error('Unexpected dependency '+name);
 };
-const scope={require:fakeRequire,module:{exports:{}},process:{env:{}},testImport:async name=>name.includes('calculator')?model:{resolveCoverMateEnvironment:()=>({isUat:true,name:'uat',leadCollection:'local-only'})}};
+const scope={require:fakeRequire,module:{exports:{}},process:{env:{}},testImport:async name=>name.includes('calculator')?model:name.includes('submission')?{validContactEmail}:{resolveCoverMateEnvironment:()=>({isUat:true,name:'uat',leadCollection:'local-only'})}};
 vm.runInNewContext(fs.readFileSync('api/leads.js','utf8').replaceAll('await import(','await testImport('),scope);
 const snapshot=model.createNeedsSnapshot('life',{...model.needsInitialInputs('life'),monthlyNeed:50000,otherMonthlyIncome:20000,yearsToSupport:10,existingLifeCover:0},{},'th');
 const base={consent:true,consentKind:'consultation',noticeVersion:'calculator-test-only',name:'Local test',contact:'@test',topic:'',summary:'Local only',sourcePath:'/',qtype:'',coverage:'',language:'th'};
