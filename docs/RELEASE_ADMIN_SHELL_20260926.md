@@ -33,5 +33,19 @@ of the Vercel production CI gate.
 
 ## Deployment Status
 
-Release preparation only. Record actual CI and deployment results after they
-complete; this document alone is not evidence that the candidate is live.
+- Code commit `0e3313b5026230bc8cdcc83f4c46e0bd9f0a0246` is pushed to the
+  isolated branch. `main` and the production alias are not changed.
+- Git preview `dpl_9LE83YGuxsCHQvrk9VVF61yvjxvn` is Ready at
+  `https://covermate-p7d0csbfd-purich-w.vercel.app` (Vercel access required).
+  Read-only smoke passed: all seven changed Admin runtime files match local
+  SHA-256 hashes; signed-out entry redirects to Login at 1440px and 390px.
+  Evidence: `uat-results/admin-shell-release/preview.json`.
+- GitHub CI run `36177782442` failed before starting any job steps. Check
+  `108212498904` reports failed account payments or a spending-limit issue.
+  This is a platform billing blocker, not a test pass or a code-test failure.
+- Production is held. No forced promotion, gate bypass, real sign-in,
+  protected data reads, email sends or data writes were performed.
+- Resume after the account owner resolves GitHub Billing: run the existing CI
+  on the final branch SHA, require success, then fast-forward `main` without
+  overwriting concurrent changes. Let the production gate complete and verify
+  canonical served assets and alias/source SHA before claiming deployment.
