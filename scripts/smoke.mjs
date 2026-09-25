@@ -1454,7 +1454,7 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && expectedAuthRedirect) {
       const parsed = new URL(url);
       if (parsed.origin === baseOrigin &&
-          (["/admin/ops/app.js", "/admin/home.css"].includes(parsed.pathname) ||
+          (["/admin/ops/app.js", "/admin/home.css", "/admin/shell.css", "/admin/shell.js", "/assets/visitor/select.js", "/assets/visitor/select.css"].includes(parsed.pathname) ||
            (request.resourceType() === "font" && /^\/assets\/fonts\/[^/]+\.woff2$/.test(parsed.pathname)))) {
         authRedirectAborts.push({ request, redirect: expectedAuthRedirect, navigation: requestNavigation.get(request) });
         return;
@@ -2157,8 +2157,19 @@ for (const [name, width, height] of viewports) {
   if (/Manage your site|Edit the words|Arrange & customise|Unpacking/.test(adminState.text)) {
     failures.push(`${name} /admin: legacy launcher copy is visible`);
   }
-  if (!adminState.text.includes("ดูเว็บไซต์") || !adminState.text.includes("ออกจากระบบ")) {
-    failures.push(`${name} /admin: supporting Public site or Log out action is missing`);
+  if (!(await page.locator('[data-public-site]:visible').isVisible())) {
+    failures.push(`${name} /admin: supporting Public site action is missing`);
+  }
+  const mobileMenu = page.locator('.case-menu-trigger');
+  const hasMobileMenu = await mobileMenu.isVisible();
+  if (hasMobileMenu) await mobileMenu.click();
+  const navigationLogout = page.locator(`${hasMobileMenu ? '.admin-mobile-account' : '.sidebar'} [data-action="logout"]`);
+  if (!(await navigationLogout.isVisible())) {
+    failures.push(`${name} /admin: Log out action is not reachable through the shared navigation`);
+  }
+  if (hasMobileMenu) {
+    await page.keyboard.press('Escape');
+    await page.locator('.case-panel').waitFor({ state: 'detached' });
   }
   if (adminState.text.includes("[object Object]")) {
     failures.push(`${name} /admin: rendered object placeholder text`);
@@ -2769,7 +2780,9 @@ for (const [name, width, height] of viewports) {
 
   await page.goto(adminUrl, { waitUntil: "load", timeout: 30000 });
   await waitForBodyText(page, /Admin Portal/);
-  await page.getByRole("button", { name: "ออกจากระบบ" }).first().click();
+  const mobileSignOut = await page.locator('.case-menu-trigger').isVisible();
+  if (mobileSignOut) await page.locator('.case-menu-trigger').click();
+  await page.locator(`${mobileSignOut ? '.admin-mobile-account' : '.sidebar'} [data-action="logout"]`).click();
   await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);

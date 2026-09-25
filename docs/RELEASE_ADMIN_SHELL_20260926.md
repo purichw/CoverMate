@@ -49,3 +49,23 @@ of the Vercel production CI gate.
   on the final branch SHA, require success, then fast-forward `main` without
   overwriting concurrent changes. Let the production gate complete and verify
   canonical served assets and alias/source SHA before claiming deployment.
+
+## Owner-Authorized Release Exception
+
+The owner changed the repository to public and explicitly authorized deployment
+without waiting for GitHub CI if it remained blocked, retaining the commits.
+The retry `36178509068` now ran normally: shared Shell, Home, Cases, loading,
+contracts, forms, performance and CMS builder checks passed. Its final combined
+smoke still expected the old always-visible mobile logout and reported canceled
+assets during a verified sign-out redirect; emulator E2E did not run afterward.
+
+`scripts/smoke.mjs` now opens the shared mobile menu to verify reachable logout,
+uses that actual navigation action to sign out, and recognizes the new shell and
+shared select assets only within the existing verified-redirect cancellation
+check. No runtime, auth, backend or permanent gate setting changes were needed.
+The full local combined smoke passed at desktop/tablet/mobile after this fix.
+
+The authorized exception applies only to this release. A production build must
+use Production configuration, not promote an artifact built with UAT settings.
+Record its alias/source and exact-byte readback separately; do not label pending
+or failed CI as passed. The normal project CI gate remains installed.
