@@ -64,8 +64,6 @@
       --shadow: 0 16px 36px rgba(88, 68, 39, 0.08);
       --radius: 22px;
       --radius-sm: 14px;
-      --sidebar-w: 292px;
-      --topbar-h: 86px;
       --font: "Google Sans", "Google Sans Thai", "Noto Sans Thai", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -109,92 +107,6 @@
       color: inherit;
     }
 
-    .app {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: var(--sidebar-w) 1fr;
-    }
-
-    .sidebar {
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 22px 18px;
-      overflow-y: auto;
-      color: #f6efe5;
-      background: var(--sidebar);
-    }
-
-    .brand {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 0 10px 6px;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .brand-logo-plate {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: min(230px, 100%);
-      padding: 5px 8px;
-      border-radius: 14px;
-      background: #f6efe5;
-      box-shadow: inset 0 0 0 1px rgba(46, 43, 37, 0.08);
-    }
-
-    .brand-logo {
-      display: block;
-      width: 100%;
-      height: auto;
-      object-fit: contain;
-    }
-
-    .brand-sub {
-      display: block;
-      color: #e8a06b;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .2em;
-    }
-
-    .nav {
-      display: grid;
-      gap: 4px;
-    }
-
-    .nav-button {
-      width: 100%;
-      min-height: 42px;
-      display: grid;
-      grid-template-columns: 28px 1fr auto;
-      gap: 8px;
-      align-items: center;
-      border: 0;
-      border-radius: 999px;
-      padding: 8px 12px;
-      color: var(--sidebar-muted);
-      background: transparent;
-      text-align: left;
-      font-weight: 800;
-    }
-
-    .nav-button:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.07);
-    }
-
-    .nav-button.active {
-      color: #fff;
-      background: var(--accent);
-    }
-
     .nav-icon,
     .round-icon {
       display: inline-flex;
@@ -233,12 +145,6 @@
       color: var(--accent-strong);
     }
 
-    .sidebar-footer {
-      margin-top: auto;
-      padding-top: 18px;
-      border-top: 1px solid rgba(255, 255, 255, 0.13);
-    }
-
     .eyebrow {
       margin: 0 0 8px;
       color: #a99f8f;
@@ -246,27 +152,6 @@
       font-weight: 900;
       letter-spacing: .22em;
       text-transform: uppercase;
-    }
-
-    .role-select,
-    .module-select {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 999px;
-      padding: 0 14px;
-      color: #fff;
-      background: #474137;
-      font-weight: 800;
-    }
-
-    .user {
-      display: grid;
-      grid-template-columns: 42px 1fr;
-      gap: 10px;
-      align-items: center;
-      margin-top: 16px;
-      color: #fff;
     }
 
     .avatar {
@@ -279,76 +164,6 @@
       color: #fff;
       font-size: 15px;
       font-weight: 900;
-    }
-
-    .user strong {
-      display: block;
-      font-size: 15px;
-    }
-
-    .user span span {
-      display: block;
-      color: #a99f8f;
-      font-size: 12px;
-    }
-
-    .logout {
-      min-height: 44px;
-      margin-top: 12px;
-      border: 0;
-      border-radius: 999px;
-      padding: 0 12px;
-      color: var(--sidebar-muted);
-      background: transparent;
-      font-weight: 800;
-    }
-
-    .logout:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.07);
-    }
-
-    .workspace {
-      min-width: 0;
-      display: grid;
-      grid-template-rows: var(--topbar-h) 1fr;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: grid;
-      grid-template-columns: minmax(280px, 1fr) auto auto;
-      gap: 14px;
-      align-items: center;
-      padding: 17px 32px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(251, 247, 240, 0.93);
-      backdrop-filter: blur(18px);
-    }
-
-    .search {
-      position: relative;
-    }
-
-    .search span {
-      position: absolute;
-      left: 18px;
-      top: 50%;
-      color: var(--muted);
-      transform: translateY(-50%);
-    }
-
-    .search input {
-      width: 100%;
-      min-height: 50px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 0 18px 0 48px;
-      color: var(--text);
-      background: var(--surface-soft);
-      outline: none;
     }
 
     .pill,
@@ -446,9 +261,6 @@
       color: #914917;
     }
 
-    .mobilebar {
-      display: none;
-    }
 
     .screen {
       width: min(100%, 1600px);
@@ -1121,56 +933,6 @@
     }
 
     @media (max-width: 1039px) {
-      :root {
-        --topbar-h: auto;
-      }
-
-      .app {
-        display: block;
-      }
-
-      .sidebar {
-        display: none;
-      }
-
-      .mobilebar {
-        position: sticky;
-        top: 0;
-        z-index: 30;
-        display: grid;
-        grid-template-columns: 1fr minmax(180px, 45%);
-        gap: 12px;
-        align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--line);
-        background: var(--sidebar);
-        color: #fff;
-      }
-
-      .mobilebar .brand {
-        padding: 0;
-      }
-
-      .mobilebar .brand-logo-plate {
-        width: min(174px, 56vw);
-        padding: 4px 6px;
-      }
-
-      .workspace {
-        display: block;
-      }
-
-      .topbar {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 14px 16px;
-      }
-
-      .topbar .primary-button,
-      .topbar .pill {
-        width: 100%;
-      }
-
       .screen {
         padding: 28px 16px 56px;
       }
@@ -1243,15 +1005,6 @@
       }
     }
     @media (max-width: 600px) {
-      body:not([data-module="operations"]) .mobilebar {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      }
-
-      body:not([data-module="operations"]) .mobilebar .brand-logo-plate {
-        width: 100%;
-        max-width: 174px;
-      }
-
       .rail-row {
         grid-template-columns: 1fr;
         gap: 6px;
@@ -1260,6 +1013,7 @@
   </style>
   <link rel="stylesheet" href="/admin/ops/cases.css" />
   <link rel="stylesheet" href="/admin/home.css" />
+  <link rel="stylesheet" href="/admin/shell.css" />
   <!-- COVERMATE_SELECT_ASSETS_START -->
   <link rel="stylesheet" href="/assets/visitor/select.css?v=ea1340d2d363457d">
   <script type="module" src="/assets/visitor/select.js?v=68269a483b06c79a"></script>
@@ -1293,19 +1047,8 @@
         <span class="brand-sub">ADMIN PORTAL</span>
       </a>
       <nav class="nav" id="sideNav"></nav>
-      <div class="home-sidebar-note" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 22v-8m0 3C5 17 3 13 3 8c6 0 9 3 9 9Zm0-3c0-7 4-11 10-11 0 7-3 11-10 11Z"/></svg>
-        <p>ช่วยให้เรื่องประกัน<br>เป็นเรื่องที่เข้าใจได้</p>
-        <span></span><small>ดูแลด้วยความเข้าใจ<br>ให้คำแนะนำอย่างมั่นใจ</small>
-      </div>
       <div class="sidebar-footer">
         <p class="eyebrow">เข้าสู่ระบบด้วยสิทธิ์</p>
-        <select class="role-select" id="roleSelect" aria-label="Preview สิทธิ์การใช้งาน">
-          <option value="owner">เจ้าของ / Admin</option>
-          <option value="advisor">ที่ปรึกษา</option>
-          <option value="ops">ทีมงาน</option>
-          <option value="readonly">ดูอย่างเดียว</option>
-        </select>
         <div class="user">
           <span class="avatar" id="userAvatar">CM</span>
           <span>
@@ -1322,7 +1065,6 @@
         <span class="brand-logo-plate"><img class="brand-logo" src="/assets/brand/covermate-advisory-logo-en.png?v=20260913-mate-gold" alt="CoverMate Insurance Advisory"></span>
         <span class="brand-sub">ADMIN</span>
       </a>
-      <select class="module-select" id="mobileModuleSelect" aria-label="เลือกเมนู Admin"></select>
       <a class="home-public-link home-mobile-public" href="/" target="_blank" rel="noopener noreferrer" aria-label="ดูเว็บไซต์ (เปิดแท็บใหม่)" data-public-site><span>ดูเว็บไซต์</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6m0-6L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/></svg></a>
     </div>
 
@@ -1332,10 +1074,9 @@
           <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></span>
           <input id="globalSearch" type="search" autocomplete="off" aria-label="ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส" placeholder="ค้นหาชื่อ เบอร์โทร LINE หรือเลขเคส" />
         </label>
-        <span class="pill warn" id="dataMode"><span class="dot"></span>กำลังเชื่อมต่อ</span>
-        <button class="primary-button" type="button" id="newLeadButton" data-action="open-new-lead">+ เพิ่มเคส</button>
         <a class="home-public-link home-desktop-public" href="/" target="_blank" rel="noopener noreferrer" data-public-site>ดูเว็บไซต์<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6m0-6L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/></svg></a>
       </header>
+      <span class="pill warn admin-data-status" id="dataMode" role="status"><span class="dot"></span>กำลังเชื่อมต่อ</span>
       <section class="screen" id="screen" aria-live="polite"></section>
     </main>
   </div>

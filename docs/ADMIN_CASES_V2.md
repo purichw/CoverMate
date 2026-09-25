@@ -10,9 +10,9 @@ evidence below remains scoped to its original checks.
 
 One Cases workspace replaces the visible Operations dashboard/leads/tasks/audit tabs. Preserve the actual CoverMate logo and Google Sans / Google Sans Thai, cream canvas, dark sidebar, orange primary action, muted status surfaces and compact table/detail composition. No role switching, exports, bulk actions, fake Live badge, assignment, pipeline or LINE integration in Cases.
 
-- 1200–1599 px: 220 px sidebar, five-column table, 440 px overlay editor.
+- 1040–1599 px: shared 256 px sidebar, five-column table, 440 px overlay editor.
 - 1600 px and wider: dock the 440 px editor; the list retains over 680 px.
-- 768–1199 px: compact app bar/menu and table; overlay editor.
+- 768–1039 px: shared compact app bar/menu and table; overlay editor.
 - 320–767 px: menu drawer, 2×2 metrics, case cards and one-column full-screen editor. Internal scrolling, sticky Save/Cancel, safe-area padding and VisualViewport keyboard accommodation.
 - Notification preferences and case details occupy a single panel at a time. Modal panels trap focus; wide docked details allow the list to stay interactive. Unsaved drafts survive resizing, errors and version conflicts.
 
@@ -29,7 +29,7 @@ visit must not affect a later visit.
 
 | Surface | Owner |
 |---|---|
-| Admin shell and legacy route compatibility | `admin/index.html`, `admin/ops/app.js` |
+| Admin shell and legacy route compatibility | `admin/index.html`, `admin/shell.css`, `admin/shell.js`, `admin/ops/app.js` |
 | Cases UI, drafts, filters, detail, notifications | `admin/ops/cases.js`, `admin/ops/cases.css` |
 | Validation, status transitions, dates, filters, legacy projection | `server/cases-contract.cjs` |
 | Cases/notification endpoint routing and verified-owner gate | `server/cases-handler.cjs` |

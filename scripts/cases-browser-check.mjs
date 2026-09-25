@@ -221,7 +221,7 @@ try {
   await page.getByRole('button', { name: 'เปิดเมนู Admin' }).click(); await page.locator('[data-case-action="navigate"][data-module="operations"]').click();
   await page.screenshot({ path: `${output}/mobile-list-390.png`, fullPage: true, animations: 'disabled' });
   assert.ok((await page.locator('.case-card').first().boundingBox()).y < 844, 'First case remains visible on first screen.');
-  await page.locator('.case-mobile-bell').click();
+  await page.locator('.case-top-bell').click();
   await page.locator('.case-notification').first().waitFor();
   assert.equal(await page.locator('.case-notification strong').first().textContent(), 'มีเคสใหม่จากเว็บไซต์');
   assert.match(await page.locator('.case-notification p').first().textContent(), /CM-2026-001 · พร้อมให้ตรวจสอบ/);

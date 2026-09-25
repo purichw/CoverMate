@@ -815,6 +815,11 @@ Required elements:
 
 - Single shared admin shell; sidebar changes views client-side without a full
   document reload.
+- The September 26 local consolidation uses `admin/shell.css` and `admin/shell.js`
+  for all five modules: one 256px desktop sidebar, logo, active navigation,
+  verified-account footer, topbar and mobile drawer at widths below 1040px.
+  Role Preview belongs in Settings, not the signed-in account footer.
+  See `ADMIN_SHELL.md` for ownership and verification; this is not deployment evidence.
 - OIC verify link.
 - H1: `Admin Portal`.
 - Four primary cards:

@@ -15,6 +15,7 @@ const commands = [
   ["npm", ["run", "check:errors"]],
   ["npm", ["run", "check:editor-history"]],
   ["npm", ["run", "check:admin-home"]],
+  ["node", ["scripts/admin-shell-browser-check.mjs"]],
   ["npm", ["run", "check:bundles"]],
   ["npm", ["run", "check:seo"]],
   ["npm", ["run", "check:contracts"]],

@@ -1,7 +1,8 @@
 # Admin Home: reference-led dashboard
 
 Implemented locally on 2026-09-23; source ownership reviewed on 2026-09-24.
-Scope is `/admin#home` and its Home shell variant. The implementation evidence
+Scope is `/admin#home`. The September 26 local shell consolidation supersedes
+the original Home-only chrome; see [ADMIN_SHELL.md](ADMIN_SHELL.md). The implementation evidence
 below does not establish deployment; `HANDOFF.md` and the release records own
 current release status. The source refactor changes no Home design or authorization.
 
@@ -17,8 +18,9 @@ Preview and Publish retained.
 
 | Owner | Responsibility |
 | --- | --- |
-| `admin/index.html` | Existing authenticated shell and Home-only public-site links/sidebar note |
-| `admin/home.css` | Home composition and `body[data-module="home"]` shell variant |
+| `admin/index.html` | Authenticated shell markup and shared public-site links |
+| `admin/shell.css`, `admin/shell.js` | Shared chrome and navigation for all five modules |
+| `admin/home.css` | Home workspace composition only, no shell overrides |
 | `admin/home-view.js` | Escaped, presentation-only Home markup |
 | `admin/ops/app.js` | Verified session, Home read lifecycle, navigation and existing CMS destinations |
 | `admin/ops/cases.js` | Shared Cases menu/notification overlays, guarded list configuration |
@@ -58,7 +60,7 @@ always uses open cases. Home search and “ดูทั้งหมด” use al
 ## Responsive composition
 
 - Wide desktop: 256px sidebar, four module columns, then paired utility panels.
-- Intermediate desktop: 220px sidebar, two module columns, stacked utilities.
+- Intermediate desktop: the same 256px sidebar, two module columns, stacked utilities.
 - At 1039px and below: mobile header and hamburger, full-width search, connection
   badge above the heading, two module columns, stacked utilities and account footer.
 - At phone widths: welcome quote moves beneath the greeting. Cards retain readable

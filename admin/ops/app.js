@@ -1,6 +1,7 @@
 import { ADMIN_LOGIN_PATH, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
 import { createCasesWorkspace } from "/admin/ops/cases.js";
 import { homeView } from "/admin/home-view.js";
+import { ADMIN_MODULES as MODULES, adminNavigation } from "/admin/shell.js";
 import {
   adminPortalRouteStateFromLocation,
   adminPortalUrl,
@@ -42,14 +43,6 @@ const TASK_FILTERS = [
   ["upcoming", "กำลังจะถึง"],
   ["overdue", "เลยกำหนด"],
   ["completed", "เสร็จแล้ว"]
-];
-
-const MODULES = [
-  { id: "home", label: "หน้าแรก", icon: "home" },
-  { id: "operations", label: "งานลูกค้า", icon: "users", count: () => leadCounts().needsContact },
-  { id: "content", label: "จัดการเว็บไซต์", icon: "edit" },
-  { id: "analytics", label: "Analytics", icon: "chart" },
-  { id: "settings", label: "ตั้งค่า", icon: "settings" }
 ];
 
 const OPERATIONS_TABS = [
@@ -102,12 +95,9 @@ let casesWorkspace;
 
 const screen = document.getElementById("screen");
 const sideNav = document.getElementById("sideNav");
-const roleSelect = document.getElementById("roleSelect");
-const mobileModuleSelect = document.getElementById("mobileModuleSelect");
 const globalSearch = document.getElementById("globalSearch");
 const modalRoot = document.getElementById("modalRoot");
 const dataMode = document.getElementById("dataMode");
-const newLeadButton = document.getElementById("newLeadButton");
 const toastRoot = document.getElementById("toastRoot");
 
 init().catch(() => window.CoverMateBoot?.fail());
@@ -119,17 +109,20 @@ async function init() {
 
   state.sessionRole = normalizeRole(state.session.role);
   state.role = state.sessionRole;
-  casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule, getCurrentModule: () => state.module });
+  casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
+    renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }), sessionRoleLabel: displayRole(state.sessionRole) });
   const bell = document.createElement('button');
   bell.type = 'button'; bell.className = 'case-button case-icon-button case-top-bell'; bell.dataset.caseAction = 'notifications'; bell.setAttribute('aria-label', 'การแจ้งเตือน');
   bell.addEventListener('click', () => casesWorkspace.openNotifications());
   document.querySelector('.topbar').append(bell);
   const menu = document.createElement('button'); menu.type = 'button'; menu.className = 'case-button case-icon-button case-menu-trigger'; menu.setAttribute('aria-label', 'เปิดเมนู Admin');
   menu.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>';
+  menu.setAttribute('aria-haspopup', 'dialog'); menu.setAttribute('aria-expanded', 'false');
   menu.addEventListener('click', () => casesWorkspace.openNavigation()); document.querySelector('.mobilebar').append(menu);
   applySessionChrome();
   bindEvents();
   render();
+  if (!['home', 'operations'].includes(state.module)) casesWorkspace.refreshNotifications();
   document.body.dataset.boot = "ready";
   window.CoverMateBoot?.ready();
   await loadAllData();
@@ -147,11 +140,11 @@ function bindEvents() {
   document.addEventListener("click", handleClick);
   document.addEventListener("submit", handleSubmit);
   document.addEventListener("keydown", handleKeydown);
-  roleSelect.addEventListener("change", () => {
-    state.role = roleSelect.value;
+  document.addEventListener("change", (event) => {
+    if (event.target.id !== 'roleSelect') return;
+    state.role = event.target.value;
     render();
   });
-  mobileModuleSelect.addEventListener("change", () => setModule(mobileModuleSelect.value));
   globalSearch.addEventListener("input", () => {
     if (state.module === 'operations') { casesWorkspace.setSearch(globalSearch.value); return; }
     state.query = globalSearch.value.trim().toLowerCase();
@@ -420,26 +413,8 @@ function render() {
 function renderChrome() {
   document.body.dataset.module = state.module;
   globalSearch.placeholder = ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาข้อมูล';
-  const sidebarLogo = document.querySelector('.sidebar .brand-logo');
-  sidebarLogo.src = state.module === 'home' ? '/assets/brand/covermate-footer-logo-en.png?v=20260913-mate-gold' : '/assets/brand/covermate-advisory-logo-en.png?v=20260913-mate-gold';
-  sideNav.innerHTML = MODULES.map((item) => {
-    const count = 0;
-    const navBadge = count
-      ? `<span class="badge">${count}</span>`
-      : "";
-    return `
-      <button class="nav-button ${item.id === state.module ? "active" : ""}" type="button" data-action="module" data-module="${item.id}" ${item.id === state.module ? 'aria-current="page"' : ""}>
-        <span class="nav-icon" aria-hidden="true">${iconSvg(item.icon)}</span>
-        <span>${escapeHTML(item.label)}</span>
-        ${navBadge}
-      </button>
-    `;
-  }).join("");
-  mobileModuleSelect.innerHTML = MODULES.map((item) => `<option value="${item.id}" ${item.id === state.module ? "selected" : ""}>${escapeHTML(item.label)}</option>`).join("");
-  roleSelect.value = state.role;
-  newLeadButton.hidden = state.module !== "operations";
-  newLeadButton.disabled = !canWrite() || Boolean(state.pending);
-  newLeadButton.title = canWrite() ? "สร้างเคสลูกค้าใหม่" : "สิทธิ์นี้ไม่สามารถสร้างเคสได้";
+  sideNav.innerHTML = adminNavigation(state.module, iconSvg);
+  dataMode.hidden = ['home', 'operations'].includes(state.module);
 }
 
 function renderTopStatus() {
@@ -451,7 +426,7 @@ function renderTopStatus() {
     : errorCount
       ? `การเชื่อมต่อมีปัญหา ${errorCount} รายการ`
       : `เชื่อมต่อข้อมูลแล้ว · ${leadCount} เคส`;
-  dataMode.className = `pill${errorCount ? " error" : loading ? " warn" : ""}`;
+  dataMode.className = `pill admin-data-status${errorCount ? " error" : loading ? " warn" : ""}`;
   dataMode.innerHTML = `<span class="dot"></span>${escapeHTML(text)}`;
 }
 
@@ -827,6 +802,11 @@ function settingsRoles() {
     <section class="panel">
       <h2>บทบาทและสิทธิ์</h2>
       <p class="lede" style="font-size:16px;margin-bottom:20px;">ตัวเลือกบทบาทใช้ Preview ว่าแต่ละสิทธิ์เข้าถึงอะไรได้บ้าง ระบบยังตรวจสอบสิทธิ์จริงทุกครั้งที่ทำรายการ</p>
+      <label class="admin-role-preview">Preview สิทธิ์การใช้งาน
+        <select id="roleSelect" aria-label="Preview สิทธิ์การใช้งาน">
+          ${['owner', 'advisor', 'ops', 'readonly'].map(role => `<option value="${role}" ${state.role === role ? 'selected' : ''}>${displayRole(role)}</option>`).join('')}
+        </select>
+      </label>
       <div class="table-shell permission-table">
         <table>
           <thead><tr><th>การทำงาน</th><th>เจ้าของ</th><th>ที่ปรึกษา</th><th>ทีมงาน</th><th>ดูอย่างเดียว</th></tr></thead>
