@@ -36,6 +36,7 @@ const commands = [
   ["npm", ["run", "check:text-editor"]],
   ["npm", ["run", "check:boot"]],
   ["npm", ["run", "check:loading"]],
+  ["node", ["scripts/runtime-error-check.mjs"]],
   ["npm", ["run", "check:admin-loading"]],
   ["node", ["scripts/server-boot-check.mjs"]],
   ["npm", ["run", "check:live-content"]],
