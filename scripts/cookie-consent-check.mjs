@@ -21,9 +21,9 @@ if(process.argv.includes('--serve')) {
   const out='uat-results/cookie-consent';fs.mkdirSync(out,{recursive:true});
   const report={engine,source:fixture || 'Embedded CMS defaults',checks:[],errors:[]};
   try {
-    const cases=engine==='chromium'?[[1440,900,'th','/'],[820,1180,'th','/'],[390,844,'th','/'],[320,700,'en','/motor']]:[[390,844,'th','/']];
+    const cases=engine==='chromium'?[[1440,900,'th','/'],[820,1180,'th','/'],[390,844,'th','/'],[320,700,'en','/motor']]:[[390,844,'th','/'],[320,700,'en','/motor']];
     for(const [width,height,lang,path] of cases) {
-      const context=await browser.newContext({viewport:{width,height},reducedMotion:'reduce'});
+      const context=await browser.newContext({viewport:{width,height},hasTouch:width<1200,isMobile:width<768,reducedMotion:'reduce'});
       let tagRequests=0;
       // Browser sees the production origin; every request stays inside this isolated fixture.
       await context.route('**/*',async r=>{
@@ -44,6 +44,7 @@ if(process.argv.includes('--serve')) {
         throw error;
       });
       const banner=page.locator('.cm-cookie-banner');await banner.waitFor({state:'visible'});
+      assert.equal(await page.locator('.cm-visitor-dock').evaluate(el=>getComputedStyle(el).position),width<1200?'fixed':'sticky');
       assert.equal(tagRequests,0);
       const geometry=await page.evaluate(()=>{
         const banner=document.querySelector('.cm-cookie-banner').getBoundingClientRect();
@@ -63,12 +64,63 @@ if(process.argv.includes('--serve')) {
       await banner.locator('summary').click();
       await page.locator('[data-cookie-reject]').click();
       await banner.waitFor({state:'detached'});
+      if(width<768) {
+        const dock=page.locator('.cm-visitor-dock'),sticky=page.locator('[data-cm-sticky]');
+        const line=sticky.locator('a[href]').last();
+        assert.equal(await line.getAttribute('href'),state.config.contact.lineUrl,'CMS LINE destination is unchanged');
+        const geometry=()=>page.evaluate(()=>{
+          const dock=document.querySelector('.cm-visitor-dock'),r=dock.getBoundingClientRect();
+          return {position:getComputedStyle(dock).position,bottom:r.bottom,top:r.top,height:r.height,viewport:innerHeight,
+            reserved:parseFloat(getComputedStyle(document.body,'::after').height),
+            footerBottom:document.querySelector('.cm-footer-bottom').getBoundingClientRect().bottom,
+            overflow:document.documentElement.scrollWidth>innerWidth};
+        });
+        for(const size of [{width:375,height:667},{width:390,height:680},{width:390,height:844},{width:430,height:932},{width:844,height:390}]) {
+          await page.setViewportSize(size);
+          for(const position of ['middle','bottom']) {
+            await page.evaluate(position=>scrollTo({top:document.body.scrollHeight*(position==='middle'?.6:1),behavior:'instant'}),position);
+            await page.waitForTimeout(150);
+            const g=await geometry();
+            assert.equal(g.position,'fixed','Mobile dock is viewport anchored, not document sticky');
+            assert.ok(Math.abs(g.bottom-g.viewport)<=1,'Dock stays at the bottom after scroll/resize');
+            assert.ok(Math.abs(g.reserved-g.height)<=1,'Footer space follows the measured dock height');
+            assert.equal(g.overflow,false);
+            if(position==='bottom')assert.ok(g.footerBottom<=g.top+1,'Footer remains fully scrollable above the dock');
+            report.checks.push({path,lang,viewport:size,position,dock:g});
+          }
+        }
+        await page.setViewportSize({width,height});
+        // Emulate a larger safe-area contribution; headless WebKit has no iOS browser chrome.
+        const paddingBottom=await sticky.evaluate(el=>el.style.paddingBottom);
+        await sticky.evaluate(el=>el.style.paddingBottom='44px');
+        await page.waitForTimeout(150);
+        const g=await geometry();assert.ok(Math.abs(g.reserved-g.height)<=1);
+        await sticky.evaluate((el,padding)=>el.style.paddingBottom=padding,paddingBottom);
+        await page.locator('#contact-name').fill('Preserved while resizing');
+        await page.setViewportSize({width,height:420});
+        await page.locator('#contact-name').scrollIntoViewIfNeeded();
+        assert.equal(await page.locator('#contact-name').inputValue(),'Preserved while resizing');
+        assert.ok(await sticky.isVisible(),'Input focus does not remove the contact bar');
+        await page.setViewportSize({width,height});
+        await page.locator('#contact-name').blur();
+        await page.locator('header .hm-menu-button').click();
+        assert.equal(await dock.count(),0,'Navigation hides the underlying dock');
+        assert.equal(await page.evaluate(()=>getComputedStyle(document.body,'::after').content),'none','Hidden dock leaves no spacer');
+        await page.locator('.hm-menu-panel > button').click();
+        await dock.waitFor({state:'visible'});
+        await page.waitForFunction(()=>Math.abs(parseFloat(getComputedStyle(document.body,'::after').height)-document.querySelector('.cm-visitor-dock').getBoundingClientRect().height)<=1);
+        await page.evaluate(()=>scrollTo({top:document.body.scrollHeight,behavior:'instant'}));
+        await page.waitForFunction(()=>document.querySelector('.cm-footer-bottom').getBoundingClientRect().bottom<=document.querySelector('.cm-visitor-dock').getBoundingClientRect().top+1);
+        await page.screenshot({path:`${out}/${engine}-${width}-dock-footer.png`});
+      }
       await page.reload();await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));
       assert.equal(await banner.count(),0,'Choice persists after refresh');
       assert.equal(tagRequests,0);
       await page.locator('[data-cookie-settings]').click();
       await page.waitForFunction(()=>document.activeElement?.id==='cm-cookie-title');
       await page.keyboard.press('Escape');await banner.waitFor({state:'detached'});
+      // Focus returns in requestAnimationFrame after the banner has unmounted.
+      await page.waitForFunction(()=>document.querySelector('[data-cookie-settings]')===document.activeElement);
       assert.equal(await page.locator('[data-cookie-settings]').evaluate(el=>el===document.activeElement),true,'Close restores focus');
       await page.locator('[data-cookie-settings]').click();
       await page.locator('[data-cookie-accept]').click();
