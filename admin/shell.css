@@ -39,8 +39,6 @@
 .mobilebar,.home-mobile-public,.case-menu-trigger { display:none; }
 .admin-data-status { align-self:flex-end;margin:12px 28px 0;font-size:12px;min-height:32px; }
 .admin-data-status[hidden] { display:none; }
-.admin-role-preview { display:grid;gap:8px;width:min(300px,100%);margin-bottom:20px;font-size:14px;font-weight:600; }
-.admin-role-preview select { width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text); }
 .case-mobile-navigation { display:grid;gap:6px;margin-bottom:24px; }
 .case-mobile-navigation .nav-button { color:var(--admin-shell-ink); }
 .case-mobile-navigation .nav-button:hover { background:#f1e3d1; }

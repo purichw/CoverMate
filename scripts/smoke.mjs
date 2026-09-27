@@ -2168,12 +2168,12 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin: single-shell live system status copy is missing`);
   }
   const launcherLabels = adminState.moduleCards.map(card => card.title);
-  const expectedLauncherLabels = ["งานลูกค้า", "จัดการเว็บไซต์", "Analytics", "ตั้งค่า"];
+  const expectedLauncherLabels = ["งานลูกค้า", "จัดการเว็บไซต์", "Analytics"];
   if (JSON.stringify(launcherLabels) !== JSON.stringify(expectedLauncherLabels)) {
     failures.push(`${name} /admin: expected module labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
   }
-  if (adminState.moduleCards.length !== 4) {
-    failures.push(`${name} /admin: expected 4 primary module cards, got ${adminState.moduleCards.length}`);
+  if (adminState.moduleCards.length !== 3) {
+    failures.push(`${name} /admin: expected 3 primary module cards, got ${adminState.moduleCards.length}`);
   }
   if (!adminState.moduleCards.some((card) => card.kind === "operations" && card.tag === "button" && card.action === "module" && card.module === "operations")) {
     failures.push(`${name} /admin: Operations card is not a same-shell module action`);
@@ -2184,8 +2184,8 @@ for (const [name, width, height] of viewports) {
   if (!adminState.moduleCards.some((card) => card.kind === "analytics" && card.tag === "button" && card.action === "module" && card.module === "analytics")) {
     failures.push(`${name} /admin: Analytics card is not a same-shell module action`);
   }
-  if (!adminState.moduleCards.some((card) => card.kind === "settings" && card.tag === "button" && card.action === "module" && card.module === "settings")) {
-    failures.push(`${name} /admin: Settings card is not a same-shell module action`);
+  if (adminState.moduleCards.some((card) => card.kind === "settings") || await page.locator('#sideNav [data-module="settings"]').count()) {
+    failures.push(`${name} /admin: removed Settings module remains in Home or shared navigation`);
   }
   if (/Manage your site|Edit the words|Arrange & customise|Unpacking/.test(adminState.text)) {
     failures.push(`${name} /admin: legacy launcher copy is visible`);

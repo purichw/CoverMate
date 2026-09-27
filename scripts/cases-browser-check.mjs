@@ -78,8 +78,8 @@ try {
     await page.getByText('ยังไม่พร้อมส่งอีเมลแจ้งเคสใหม่ของระบบ', { exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isDisabled(), true);
     assert.equal(testEmailRequests.length, 0, 'Unconfigured email does not dispatch a test.');
-    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2);
-    await page.getByText('ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้', { exact: true }).waitFor();
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 0);
+    assert.equal(await page.getByRole('heading', { name: 'อีเมลส่วนตัวของผู้ใช้', exact: true }).count(), 0);
     await page.getByText('อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
     await page.getByText('อีเมลสรุปเคสเลยกำหนดรายวันยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
 
@@ -88,7 +88,7 @@ try {
     await page.getByRole('button', { name: 'ตั้งค่าการแจ้งเตือน', exact: true }).click();
     await page.getByText('covermate@covermateinsurance.com', { exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'ส่งอีเมลทดสอบ' }).isEnabled(), true);
-    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'System inbox configuration does not enable personal preferences.');
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 0, 'System inbox configuration does not reveal unsupported personal preferences.');
     assert.equal(await page.getByText('ยังไม่ได้ตั้งค่าการส่งอีเมล', { exact: true }).count(), 0);
     await page.getByText('อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน', { exact: true }).waitFor();
 
@@ -103,7 +103,7 @@ try {
     await page.getByText('นัดติดตามถึงกำหนด: ส่งอีเมลเมื่อเคสนั้นเปิดแจ้งเตือนนัดติดตามไว้', { exact: true }).waitFor();
     await page.getByText(/เป้าหมายเวลา 09:00 น. ตามเวลาไทย/).waitFor();
     await page.getByText(/ระบบตรวจสอบทุก 5 นาที และลองส่งใหม่อัตโนมัติ/).waitFor();
-    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 2, 'Ready scheduled delivery still leaves personal preferences unavailable.');
+    assert.equal(await page.locator('.case-panel input[type="checkbox"]:disabled').count(), 0, 'Ready scheduled delivery does not reveal unsupported personal preferences.');
 
     let releaseTestEmail;
     testEmailGate = new Promise(resolve => { releaseTestEmail = resolve; });
@@ -137,7 +137,7 @@ try {
     await page.locator('[data-case-action="notifications"]:visible').first().click();
     await checkEmailPreferences();
     assert.deepEqual(errors, []);
-    console.log('Notification browser checks passed: configured/unconfigured system inbox, disabled personal preferences, pending/error/success feedback, stable retry key, fresh explicit test key, accessibility and no real email.');
+    console.log('Notification browser checks passed: configured/unconfigured system inbox, no unsupported personal preferences, pending/error/success feedback, stable retry key, fresh explicit test key, accessibility and no real email.');
   } else {
   const metricValues = () => {
     const summary = C.summary(records, now);

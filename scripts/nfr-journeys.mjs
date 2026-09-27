@@ -120,13 +120,13 @@ try {
   await admin.locator('[data-action=module][data-module=operations]').first().click();
   await admin.getByText(fixture, { exact: true }).first().waitFor();
   report.adminReadback = true;
-  for (const module of ['settings', 'content', 'home']) {
+  for (const module of ['analytics', 'content', 'home']) {
     await admin.locator(`[data-action=module][data-module=${module}]`).first().click();
     assert.equal(await admin.evaluate(() => performance.timeOrigin), timeOrigin);
   }
   report.sameDocumentTabs = true;
   if (process.argv.includes('--cases-only')) {
-    console.log('Cases intake journey passed: real public form retry, persisted receipt, authenticated Admin readback and Home/Settings/Content navigation.');
+    console.log('Cases intake journey passed: real public form retry, persisted receipt, authenticated Admin readback and Home/Analytics/Content navigation.');
     await owner.close(); await visitorContext.close();
   } else {
   await admin.goto(baseUrl + '/admin/content' + suffix);

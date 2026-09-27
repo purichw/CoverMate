@@ -1,6 +1,6 @@
 # CoverMate Admin/CMS Rebuild Decisions
 
-Last updated: 2026-09-24
+Last updated: 2026-09-28
 
 This is the authoritative decision record for the current Admin/CMS product.
 It records owner-approved behavior that future implementation and design work
@@ -27,7 +27,7 @@ selector does not switch Admin language. See `ADMIN_LANGUAGE.md`.
 
 | Topic | Decision | Implementation note |
 | --- | --- | --- |
-| Admin Portal Home | `/admin` is now the unified private gateway for `Operations`, `Website content`, `Analytics`, and `Settings`. | Updated after Operations became API-backed. The old three-card "Manage your site" launcher is retired. |
+| Admin Portal Home | `/admin` has five navigation entries: Home, Operations, Website content, Articles, and Analytics. Home has three destination cards: Operations, Website content, and Analytics. | Settings and Role Preview are removed; legacy `#settings` links return to Home. The original three-card "Manage your site" CMS launcher remains retired. |
 | Operations portal | One Cases workspace inside the shared Admin Portal shell replaces the visible Dashboard/Leads/Tasks/Audit tabs. | `/admin/ops/` and old tab links remain compatibility entries into Cases. Existing documents/tasks/audit are preserved; canonical Cases endpoints require a verified owner. See `ADMIN_CASES_V2.md` for API/module ownership. |
 | Public exit | `Public site` / `View live site` opens a clean public route in a new tab. | Legacy incoming `/?view=public` may still be consumed/cleaned for compatibility, but new UI must not generate it. |
 | Public owner bar | Rejected on clean visitor `/`. | Signed-in admin session is permission state only. |
@@ -46,7 +46,48 @@ selector does not switch Admin language. See `ADMIN_LANGUAGE.md`.
 | Real business data | Existing licence/OIC details, provider identity, brand media and legal/credential copy belong to Admin/CMS. Preserve real values when migrating. | Shared licence fields drive all placements; never force an old value back after an owner edit or fabricate claims. |
 | Missing optional content | Blank contacts/images stay blank and hide on visitor pages. | No example phone/email, AIA image substitution, position-based insurer logo or empty-list refill. |
 
-## Phase Plan
+## September 28: Remove Visible Admin Stubs
+
+The owner requested removal of all visible stub, deferred, and no-op Admin
+affordances. This records the local candidate decision, not deployment evidence.
+
+- Earlier removals: Settings and Role Preview, plus the unsupported personal-email
+  notification block. Backend roles and working notification settings remain.
+- Current cleanup: remove Analytics tabs that displayed identical content, the
+  disabled Reviews inventory entry, and the unverified CMS connectivity badge.
+  Website content no longer displays lead connection status or requests unrelated
+  Leads/Tasks/Audit data. Global search on Website content and Analytics explicitly
+  searches Cases on Enter; it does not imply filtering those pages.
+- The CMS, Cases, and Articles audit retains implemented editing, persistence,
+  publication, notification, and navigation capabilities. Real pending, permission,
+  error, empty, and missing-configuration states are not stubs and remain visible
+  where needed to explain available actions.
+- Existing `owner`, `advisor`, `ops`, and `readonly` backend infrastructure stays.
+  Unused planned Operations API responses also remain for compatibility, with no
+  Portal UI consumers; they are not evidence of implemented product features.
+
+Reintroduce a removed feature only when its real handler/service, data and
+permission contract, and relevant tests exist. Do not show a future feature as a
+disabled promise or simulate success with demo data.
+
+The subsequent Analytics redesign replaces legacy stage counters with the six
+canonical current case statuses and adds real local date filters, distinct views,
+intake trends, service/source distributions and factual follow-up insights. It
+uses the existing latest-200 lead projection, with an explicit sample limit;
+closed/completed cases are never labeled issued policies. The separate GA4 report
+remains available. See [ANALYTICS_DESIGN_HANDOFF.md](ANALYTICS_DESIGN_HANDOFF.md)
+for supported data, formulas, mockup adaptations and unavailable capabilities.
+
+Local verification: shared-shell checks cover the five modules at six viewport
+widths, legacy Settings links, absence of retired controls, Content's lack of
+unrelated lead requests, working Enter-to-Cases search, error navigation and
+read-only restrictions. Content/Analytics text contrast was tightened using the
+existing darker muted color; both workspaces and shared navigation pass scoped
+axe checks. Generated bundle parity, JavaScript syntax and whitespace checks
+also pass. Evidence uses synthetic local records, with external requests and
+mutations blocked; no production or full CMS persistence retest is claimed.
+
+## Historical Phase Plan
 
 The phases below are historical context, not a requirement to redo completed
 work. September candidate/release status is maintained in `HANDOFF.md`.
@@ -59,8 +100,9 @@ contracts before CMS UI work.
 Phase 2 originally shipped `/admin` as a three-card CMS launcher. After the
 Operations backend was connected, `/admin` became the Admin Portal Home: a
 shared admin shell with primary modules for Operations, Website content,
-Analytics, and Settings. It remains a gateway, so records and mutations stay in
-their destination surfaces rather than being duplicated on the home screen.
+Analytics, and Settings. That module list is historical; the September 28
+decision above is current. Home remains a gateway, so records and mutations stay
+in their destination surfaces rather than being duplicated on the home screen.
 
 Phase 3 isolates `/#preview` as a private draft render with only the preview
 bar. Local implementation is complete as of 2026-08-10: preview requests
@@ -115,5 +157,5 @@ demo, not-wired, or browser-seeded records.
 - Do not commit, push, deploy, modify Firestore Rules, or add direct upload
   storage without explicit owner approval in the current task.
 - `/admin/ops/` must not ship browser-seeded operations data or local workflow
-  fallback. If the API cannot load a resource, the UI must show an API issue or
-  explicit not-wired/empty state rather than demo records.
+  fallback. Implemented resources show genuine loading, error, and empty states;
+  unimplemented resources remain absent from the Portal UI.

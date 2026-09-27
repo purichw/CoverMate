@@ -52,6 +52,12 @@ assert.equal(adminPortalUrl("operations", "dashboard"), "/admin#operations");
 assert.equal(adminPortalUrl("operations", "tasks"), "/admin#tasks");
 assert.equal(adminPortalUrl("content"), "/admin#content");
 assert.equal(adminPortalUrl("unknown"), "/admin");
+assert.equal(adminPortalUrl("settings"), "/admin");
+for (const path of ["/admin", "/admin/ops"]) {
+  assert.deepEqual(adminPortalRouteStateFromLocation(path, "#settings"), {
+    module: "home", operationsTab: "dashboard"
+  });
+}
 
 const config = {
   sections: [

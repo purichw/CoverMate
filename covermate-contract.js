@@ -34,7 +34,7 @@ export const OWNER_HASHES = new Set(Object.keys(ADMIN_OWNER_HASH_MAP));
 export const OWNER_PATHS = new Set(ADMIN_OWNER_PATHS);
 export const ROUTE_PAGE_HOME = "home";
 export const ROUTE_PAGE_MOTOR = "motor";
-export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics", "settings"]);
+export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics"]);
 export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
 
 export function normalizePath(path = "") {
@@ -107,6 +107,8 @@ export function adminPortalRouteStateFromLocation(path = "", hash = "") {
     operationsTab: "dashboard"
   };
   if (!hashKey) return base;
+  // Retired reference-only Settings URLs return to Home; authorization is server-owned.
+  if (hashKey === "settings") return { module: "home", operationsTab: "dashboard" };
   if (ADMIN_PORTAL_OPERATIONS_TABS.includes(hashKey)) {
     return { module: "operations", operationsTab: hashKey };
   }

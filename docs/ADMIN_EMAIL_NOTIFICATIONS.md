@@ -10,6 +10,11 @@ commits. Scheduled follow-up alerts and daily overdue digests go to this same
 system inbox. Per-owner email addresses/preferences and LINE sending remain
 unavailable; changing a status or note does not itself send an email.
 
+The owner requested removing the unsupported personal-email settings block on
+2026-09-28. Admin now shows only in-app and system-inbox notification settings.
+Reintroduce personal controls only when per-user delivery and preferences work;
+the existing API rejection of unsupported preferences remains unchanged.
+
 ## Configuration
 
 Server-only Vercel Production variables:

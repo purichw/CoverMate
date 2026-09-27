@@ -1,6 +1,8 @@
 import { ADMIN_LOGIN_PATH, adminRedirect, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
 import { createCasesWorkspace } from "/admin/ops/cases.js";
 import { homeView } from "/admin/home-view.js";
+import { analyticsView } from "/admin/analytics-view.js";
+import { deriveAnalytics } from "/admin/analytics-model.mjs";
 import { ADMIN_MODULES as MODULES, adminNavigation } from "/admin/shell.js";
 import { createArticlesWorkspace } from "/admin/articles/workspace.mjs";
 import { loadArticleCatalog, loadArticleForEditor, createCloudArticleRepository } from "/admin/articles/data.mjs";
@@ -77,9 +79,9 @@ const state = {
   loading: new Set(DATA_RESOURCES),
   errors: {},
   pending: "",
-  role: "none",
   sessionRole: "none",
   home: { loading: true, error: '', summary: null, items: [], checkedAt: null },
+  analytics: { loading: true, error: '', rows: [], checkedAt: null, days: 30, view: 'overview' },
   filters: {
     leadStatus: "all",
     leadInterest: "all",
@@ -88,9 +90,7 @@ const state = {
     policyType: "all",
     renewalWindow: "all",
     taskView: "all",
-    documentCategory: "all",
-    analyticsTab: "overview",
-    settingsTab: "roles"
+    documentCategory: "all"
   }
 };
 let casesWorkspace;
@@ -111,7 +111,6 @@ async function init() {
   if (!state.session) return;
 
   state.sessionRole = normalizeRole(state.session.role);
-  state.role = state.sessionRole;
   articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, repository:createCloudArticleRepository(), session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
   casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
     renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }), sessionRoleLabel: displayRole(state.sessionRole) });
@@ -125,6 +124,7 @@ async function init() {
   menu.addEventListener('click', () => casesWorkspace.openNavigation()); document.querySelector('.mobilebar').append(menu);
   applySessionChrome();
   bindEvents();
+  normalizeRetiredSettingsUrl();
   render();
   if (!['home', 'operations'].includes(state.module)) casesWorkspace.refreshNotifications();
   document.body.dataset.boot = "ready";
@@ -144,17 +144,19 @@ function bindEvents() {
   document.addEventListener("click", handleClick);
   document.addEventListener("submit", handleSubmit);
   document.addEventListener("keydown", handleKeydown);
-  document.addEventListener("change", (event) => {
-    if (event.target.id !== 'roleSelect') return;
-    state.role = event.target.value;
-    render();
+  document.addEventListener('change', event => {
+    if (!event.target.matches('[data-analytics-period]')) return;
+    const value = event.target.value;
+    if (!['7', '30', '90', 'all'].includes(value)) return;
+    state.analytics.days = value === 'all' ? 'all' : Number(value);
+    renderAnalytics();
+    screen.querySelector('[data-analytics-period]')?.focus({ preventScroll: true });
   });
   globalSearch.addEventListener("input", () => {
     if (state.module === 'articles') { articlesWorkspace.setSearch(globalSearch.value); return; }
     if (state.module === 'operations') { casesWorkspace.setSearch(globalSearch.value); return; }
     state.query = globalSearch.value.trim().toLowerCase();
     state.recordId = null;
-    if (state.module !== 'home') renderScreen();
   });
   globalSearch.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
@@ -167,11 +169,35 @@ function bindEvents() {
 }
 
 async function loadAllData() {
-  if (state.module === 'articles') { state.loading.clear(); return; }
-  if (state.module === 'operations') { state.loading.clear(); return; }
+  if (['articles', 'operations', 'content'].includes(state.module)) { state.loading.clear(); return; }
   if (state.module === 'home') { state.loading.clear(); return loadHomeData(); }
+  if (state.module === 'analytics') { state.loading.clear(); return loadAnalyticsData(); }
   await Promise.all(DATA_RESOURCES.map((resource) => loadResource(resource)));
   render();
+}
+
+let analyticsLoadGeneration = 0;
+async function loadAnalyticsData() {
+  const generation = ++analyticsLoadGeneration;
+  state.analytics.loading = true;
+  state.analytics.error = '';
+  if (state.module === 'analytics') renderAnalytics();
+  try {
+    const response = await apiFetch('leads?limit=200');
+    const rows = Array.isArray(response) ? response : response.rows;
+    if (!Array.isArray(rows)) throw new Error('โหลดรายงานไม่สำเร็จ กรุณาลองอีกครั้ง');
+    if (generation !== analyticsLoadGeneration) return;
+    state.analytics.rows = rows;
+    state.analytics.checkedAt = Date.now();
+  } catch (error) {
+    if (generation !== analyticsLoadGeneration) return;
+    state.analytics.error = error.message || 'โหลดรายงานไม่สำเร็จ กรุณาลองอีกครั้ง';
+  } finally {
+    if (generation === analyticsLoadGeneration) {
+      state.analytics.loading = false;
+      if (state.module === 'analytics') renderAnalytics();
+    }
+  }
 }
 
 let homeLoadGeneration = 0;
@@ -327,6 +353,13 @@ function handleClick(event) {
     if (action === 'home-cases') openHomeCases();
     if (action === 'home-follow-ups') openHomeCases({ followUp: 'due' });
     if (action === 'home-case') openHomeCases({ id: actionEl.dataset.id });
+    if (action === 'analytics-refresh' && !state.analytics.loading) loadAnalyticsData();
+    if (action === 'analytics-cases') openHomeCases();
+    if (action === 'analytics-view' && ['overview', 'status', 'services', 'sources'].includes(actionEl.dataset.value)) {
+      state.analytics.view = actionEl.dataset.value;
+      renderAnalytics();
+      screen.querySelector(`[data-action="analytics-view"][data-value="${state.analytics.view}"]`)?.focus({ preventScroll: true });
+    }
     if (action === "open-new-lead") openNewLeadModal();
     if (action === "close-modal") closeModal();
     if (action === "module") setModule(actionEl.dataset.module);
@@ -351,14 +384,6 @@ function handleClick(event) {
     }
     if (action === "complete-task") patchTask(actionEl.dataset.id, true);
     if (action === "reopen-task") patchTask(actionEl.dataset.id, false);
-    if (action === "settings-tab") {
-      state.filters.settingsTab = actionEl.dataset.value;
-      renderScreen();
-    }
-    if (action === "analytics-tab") {
-      state.filters.analyticsTab = actionEl.dataset.value;
-      renderScreen();
-    }
     if (action === "policy-filter") {
       state.filters[actionEl.dataset.filter] = actionEl.dataset.value;
       renderScreen();
@@ -400,6 +425,15 @@ function handleSubmit(event) {
 }
 
 function handleKeydown(event) {
+  const analyticsTab = event.target.closest('[role="tab"][data-action="analytics-view"]');
+  if (analyticsTab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    event.preventDefault();
+    const tabs = [...screen.querySelectorAll('[role="tab"][data-action="analytics-view"]')];
+    const index = tabs.indexOf(analyticsTab);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    tabs[next]?.click();
+    return;
+  }
   const row = event.target.closest("[data-open-lead]");
   if (row && (event.key === "Enter" || event.key === " ")) {
     event.preventDefault();
@@ -418,9 +452,9 @@ function render() {
 
 function renderChrome() {
   document.body.dataset.module = state.module;
-  globalSearch.placeholder = state.module === 'articles' ? 'ค้นหาชื่อบทความ...' : ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาข้อมูล';
+  globalSearch.placeholder = state.module === 'articles' ? 'ค้นหาชื่อบทความ...' : ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาเคส แล้วกด Enter';
   sideNav.innerHTML = adminNavigation(state.module, iconSvg);
-  dataMode.hidden = ['home', 'operations', 'articles'].includes(state.module);
+  dataMode.hidden = true;
 }
 
 function renderTopStatus() {
@@ -446,7 +480,6 @@ function renderScreen() {
   }
   if (state.module === "content") return renderContent();
   if (state.module === "analytics") return renderAnalytics();
-  if (state.module === "settings") return renderSettings();
   return renderHome();
 }
 
@@ -720,9 +753,9 @@ function renderAudit() {
 }
 
 function renderContent() {
-  const editDisabled = state.role === "readonly";
+  const editDisabled = state.sessionRole === "readonly";
   screen.innerHTML = `
-    ${pageHead("จัดการเว็บไซต์", "แก้ไขข้อความและส่วนต่าง ๆ ของเว็บไซต์ พร้อม Preview และ Publish ผ่าน CMS", connectionPill("เชื่อมต่อ CMS แล้ว"))}
+    ${pageHead("จัดการเว็บไซต์", "แก้ไขข้อความและส่วนต่าง ๆ ของเว็บไซต์ พร้อม Preview และ Publish ผ่าน CMS")}
     <div class="notice" style="margin-bottom:18px;">
       <strong>เครื่องมือจัดการเว็บไซต์</strong>
       <div>เริ่มจากคลิกแก้ไขข้อความบนหน้าเว็บ เมนูเครื่องมือจะเปิดแผงเครื่องมือลำดับและการแสดงผล ตั้งค่าแบรนด์ ท้ายเว็บ พร้อม Preview และ Publish</div>
@@ -744,142 +777,22 @@ function renderContent() {
         ["ลำดับ การแสดงผล และสีของแต่ละส่วน", status("แก้ไขได้", "editable")],
         ["Layout ระยะห่าง และองค์ประกอบ", status("แก้ไขผ่านโค้ด", "code-owned")],
         ["เลขใบอนุญาตและข้อความตัวแทน/นายหน้า", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")],
-        ["การเปิดเผยค่าตอบแทนและข้อกำหนดเรื่องตัวอย่างการเคลม", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")],
-        ["รีวิวลูกค้า", status("ปิดอยู่", "off")]
+        ["การเปิดเผยค่าตอบแทนและข้อกำหนดเรื่องตัวอย่างการเคลม", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")]
       ], true)}
     </section>
   `;
 }
 
 function renderAnalytics() {
-  const counts = leadCounts();
-  const known = rowsFor("leads").length;
-  const tab = state.filters.analyticsTab;
-  screen.innerHTML = `
-    ${pageHead("Analytics", "สถิติการทำงานจากข้อมูลเคสลูกค้าใน CoverMate", connectionPill("ข้อมูลจากระบบ CoverMate"))}
-    ${errorNotice()}
-    <div class="filterbar">
-      <div class="filter-row">
-        ${["overview", "conversion-funnel", "services", "leads"].map((value) => `
-          <button class="chip ${tab === value ? "active" : ""}" type="button" data-action="analytics-tab" data-value="${value}">${({ overview: "ภาพรวม", "conversion-funnel": "ลำดับความคืบหน้า", services: "ประเภทบริการ", leads: "เคสลูกค้า" })[value]}</button>
-        `).join("")}
-      </div>
-    </div>
-    <div class="grid four">
-      ${analyticMetric("เคสทั้งหมด", known, "เคสที่บันทึกไว้ใน CoverMate")}
-      ${analyticMetric("ติดต่อแล้ว", counts.contacted, "เคสที่ผ่านขั้นตอนรับเรื่องใหม่แล้ว")}
-      ${analyticMetric("ให้คำปรึกษา", counts.consultation, "เคสที่เข้าสู่ขั้นตอนให้คำปรึกษา")}
-      ${analyticMetric("เสนอราคา", counts.quoted, "เคสที่เข้าสู่ขั้นตอนเสนอราคา")}
-      ${analyticMetric("ออกกรมธรรม์แล้ว", counts.converted, "เคสที่ยืนยันการออกกรมธรรม์แล้ว")}
-    </div>
-    <section class="panel" style="margin-top:18px;">
-      <h2>จากเคสลูกค้าสู่กรมธรรม์</h2>
-      <div class="progress-list">
-        ${pipelineRow("เคสทั้งหมด", known, 100)}
-        ${pipelineRow("ติดต่อแล้ว", counts.contacted, percent(counts.contacted, known))}
-        ${pipelineRow("ให้คำปรึกษา", counts.consultation, percent(counts.consultation, known))}
-        ${pipelineRow("เสนอราคา", counts.quoted, percent(counts.quoted, known))}
-        ${pipelineRow("ออกกรมธรรม์แล้ว", counts.converted, percent(counts.converted, known), true)}
-      </div>
-    </section>
-  `;
-}
-
-function renderSettings() {
-  const tab = state.filters.settingsTab;
-  const tabs = [
-    ["roles", "บทบาทและสิทธิ์"],
-    ["statuses", "สถานะเคส"],
-    ["consent", "PDPA และความยินยอม"],
-    ["audit", "ประวัติการทำงาน"]
-  ];
-  screen.innerHTML = `
-    ${pageHead("ตั้งค่า", "บทบาท สถานะ การคุ้มครองข้อมูล และประวัติการทำงาน", connectionPill("ข้อมูลอ้างอิง · ระบบตรวจสอบสิทธิ์จริง"))}
-    <div class="tabs">
-      ${tabs.map(([value, label]) => `<button class="chip ${tab === value ? "active" : ""}" type="button" data-action="settings-tab" data-value="${value}">${escapeHTML(label)}</button>`).join("")}
-    </div>
-    ${tab === "roles" ? settingsRoles() : ""}
-    ${tab === "statuses" ? settingsStatuses() : ""}
-    ${tab === "consent" ? settingsConsent() : ""}
-    ${tab === "audit" ? settingsAudit() : ""}
-  `;
-}
-
-function settingsRoles() {
-  return `
-    <section class="panel">
-      <h2>บทบาทและสิทธิ์</h2>
-      <p class="lede" style="font-size:16px;margin-bottom:20px;">ตัวเลือกบทบาทใช้ Preview ว่าแต่ละสิทธิ์เข้าถึงอะไรได้บ้าง ระบบยังตรวจสอบสิทธิ์จริงทุกครั้งที่ทำรายการ</p>
-      <label class="admin-role-preview">Preview สิทธิ์การใช้งาน
-        <select id="roleSelect" aria-label="Preview สิทธิ์การใช้งาน">
-          ${['owner', 'advisor', 'ops', 'readonly'].map(role => `<option value="${role}" ${state.role === role ? 'selected' : ''}>${displayRole(role)}</option>`).join('')}
-        </select>
-      </label>
-      <div class="table-shell permission-table">
-        <table>
-          <thead><tr><th>การทำงาน</th><th>เจ้าของ</th><th>ที่ปรึกษา</th><th>ทีมงาน</th><th>ดูอย่างเดียว</th></tr></thead>
-          <tbody>
-            ${[
-              ["ดูเคสและข้อมูลลูกค้า", 1, 1, 1, 1],
-              ["สร้างและแก้ไขข้อมูล", 1, 1, 1, 0],
-              ["เปลี่ยนสถานะเคสหรือกรมธรรม์", 1, 1, 1, 0],
-              ["ดูเอกสารยืนยันตัวตน", 1, 1, 0, 0],
-              ["จัดการหรือถอนความยินยอม", 1, 0, 0, 0],
-              ["Export ข้อมูลลูกค้า", 1, 0, 0, 0],
-              ["ลบข้อมูล", 1, 0, 0, 0],
-              ["จัดการผู้ใช้และบทบาท", 1, 0, 0, 0],
-              ["แก้ไขเนื้อหาเว็บไซต์", 1, 0, 0, 0],
-              ["แก้ไขข้อความตามข้อกำหนด", 0, 0, 0, 0]
-            ].map((row) => `<tr>${row.map((cell, index) => index ? `<td data-label="${["เจ้าของ", "ที่ปรึกษา", "ทีมงาน", "ดูอย่างเดียว"][index - 1]}">${cell ? "<span class=\"yes\">✓</span>" : "<span class=\"no\">-</span>"}</td>` : `<td data-label="การทำงาน"><strong>${escapeHTML(cell)}</strong></td>`).join("")}</tr>`).join("")}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
-
-function settingsStatuses() {
-  return `
-    <section class="panel">
-      <h2>สถานะเคส</h2>
-      ${simpleTable(["สถานะ", "ความหมาย", "สถานะถัดไปที่เลือกได้"], STATUS_OPTIONS.filter(([id]) => id !== "all").map(([id, label]) => [
-        status(label, id),
-        statusMeaning(id),
-        nextStatuses(id).map(([value, name]) => name).join(", ")
-      ]), true)}
-    </section>
-  `;
-}
-
-function settingsConsent() {
-  return `
-    <section class="panel">
-      <h2>PDPA และความยินยอม</h2>
-      <div class="notice">ระบบเพิ่มบันทึกความยินยอมโดยเก็บประวัติเดิมไว้ การถอนความยินยอมจะบันทึกเป็นเหตุการณ์ใหม่ พร้อมผู้ดำเนินการ ที่มา วัตถุประสงค์ และเวลา</div>
-      ${simpleTable(["เหตุการณ์", "ข้อมูลที่จัดเก็บ"], [
-        ["ยินยอมผ่านฟอร์มเว็บไซต์", "รหัสเคส วัตถุประสงค์ หน้าที่ส่งฟอร์ม วันเวลา และภาษา"],
-        ["บันทึกความยินยอมเอง", "รหัสลูกค้า วัตถุประสงค์ ผู้บันทึก วันเวลา และหลักฐาน"],
-        ["ถอนความยินยอม", "รหัสลูกค้า รหัสความยินยอมเดิม ผู้บันทึก วันเวลา และเหตุผล"]
-      ], true)}
-    </section>
-  `;
-}
-
-function settingsAudit() {
-  const rows = rowsFor("audit").slice(0, 50);
-  return `
-    <section class="panel">
-      <h2>ประวัติการทำงาน</h2>
-      ${errorNotice("audit")}
-      ${rows.length ? simpleTable(["วันเวลา", "ผู้ดำเนินการ", "ประเภท", "รายการที่เกี่ยวข้อง", "การเปลี่ยนแปลง"], rows.map((row) => [
-        formatDateTime(row.at),
-        row.actorName || row.actorId || "",
-        systemLabel(row.kind),
-        auditSubject(row.subject || row.recordId),
-        [row.from, row.to].filter(Boolean).map(systemLabel).join(" → ") || systemLabel(row.action)
-      ]), false) : emptyBlock("ยังไม่มีประวัติการทำงาน")}
-    </section>
-  `;
+  const active = document.activeElement;
+  const restoreRefresh = active?.dataset.action === 'analytics-refresh';
+  const restorePeriod = !!active?.closest('.analytics-period');
+  const restoreTab = active?.getAttribute('role') === 'tab' ? active.dataset.value : '';
+  const { rows, ...viewState } = state.analytics;
+  screen.innerHTML = analyticsView({ ...viewState, model: deriveAnalytics(rows, { days: viewState.days, now: viewState.checkedAt || Date.now() }), icon: iconSvg, trafficPath: adminRedirect('/admin/analytics') });
+  if (restoreRefresh) screen.querySelector('[data-action="analytics-refresh"]')?.focus({ preventScroll: true });
+  else if (restorePeriod) screen.querySelector('[data-analytics-period]')?.focus({ preventScroll: true });
+  else if (restoreTab) screen.querySelector(`[role="tab"][data-value="${restoreTab}"]`)?.focus({ preventScroll: true });
 }
 
 function openNewLeadModal() {
@@ -1048,6 +961,7 @@ async function setModule(moduleId, options = {}) {
   writeRoute(options);
   render();
   if (moduleId === 'home') loadHomeData();
+  else if (moduleId === 'analytics') loadAnalyticsData();
   else if (moduleId !== 'operations' && !state.data.leads.length && !state.loading.size) loadAllData();
 }
 
@@ -1144,16 +1058,6 @@ function metric(label, value, copy, cta, moduleId) {
       <span class="value">${escapeHTML(String(value))}</span>
       <p>${escapeHTML(copy)}</p>
       <button type="button" data-action="module" data-module="${escapeHTML(moduleId)}">${escapeHTML(cta)} -></button>
-    </section>
-  `;
-}
-
-function analyticMetric(label, value, copy) {
-  return `
-    <section class="card">
-      <span class="field-label">${escapeHTML(label)}</span>
-      <strong style="display:block;font-size:34px;line-height:1.1;margin:10px 0;">${escapeHTML(String(value))}</strong>
-      <p class="note">${escapeHTML(copy)}</p>
     </section>
   `;
 }
@@ -1278,7 +1182,7 @@ function derivedLeadTimeline(lead) {
 }
 
 function canWrite() {
-  return state.sessionRole !== "readonly" && state.role !== "readonly";
+  return state.sessionRole !== "readonly";
 }
 
 function isOperationsTab(value) {
@@ -1295,6 +1199,7 @@ async function syncRouteFromLocation() {
   const next = routeStateFromLocation();
   if (next.module !== 'articles' && articlesWorkspace?.active && !articlesWorkspace.canLeave()) {writeRoute({replace:true});return;}
   if (next.module === state.module && next.operationsTab === state.operationsTab) {
+    normalizeRetiredSettingsUrl();
     if (next.module === 'operations') await casesWorkspace?.syncLocation();
     return;
   }
@@ -1302,8 +1207,15 @@ async function syncRouteFromLocation() {
   state.module = next.module;
   state.operationsTab = next.operationsTab;
   state.recordId = null;
+  normalizeRetiredSettingsUrl();
   render();
   if (next.module === 'home') loadHomeData();
+  if (next.module === 'analytics') loadAnalyticsData();
+}
+
+function normalizeRetiredSettingsUrl() {
+  const hashKey = decodeURIComponent(location.hash.replace(/^#/, '')).trim().split(/[?&]/)[0];
+  if (hashKey === 'settings') writeRoute({ replace: true });
 }
 
 function routeUrl() {
@@ -1496,22 +1408,6 @@ function dateInput(value) {
 
 function percent(value, total) {
   return total > 0 ? value / total * 100 : 0;
-}
-
-function statusMeaning(value) {
-  const meanings = {
-    new: "รับเรื่องแล้ว แต่ยังไม่ได้ติดต่อกลับ",
-    contacting: "กำลังติดต่อกลับครั้งแรก",
-    contacted: "ลูกค้าตอบกลับหรือได้พูดคุยกับ CoverMate แล้ว",
-    consultation: "นัดหมายหรือให้คำปรึกษาแล้ว",
-    quotation: "กำลังเตรียมหรือส่งข้อเสนอเปรียบเทียบ",
-    considering: "ลูกค้ากำลังตัดสินใจหลังได้รับตัวเลือก",
-    converted: "มีข้อมูลกรมธรรม์แล้ว",
-    later: "ลูกค้าขอให้ติดตามอีกครั้งในภายหลัง",
-    notinterested: "ลูกค้ายังไม่สนใจในขณะนี้",
-    lost: "ปิดเคสโดยไม่ได้ออกกรมธรรม์"
-  };
-  return meanings[value] || "";
 }
 
 function nextStatuses(value) {

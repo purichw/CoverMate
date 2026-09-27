@@ -4,8 +4,7 @@ export const ADMIN_MODULES = [
   { id: 'operations', label: 'งานลูกค้า', icon: 'users' },
   { id: 'content', label: 'จัดการเว็บไซต์', icon: 'edit' },
   { id: 'articles', label: 'บทความ', icon: 'file' },
-  { id: 'analytics', label: 'Analytics', icon: 'chart' },
-  { id: 'settings', label: 'ตั้งค่า', icon: 'settings' }
+  { id: 'analytics', label: 'Analytics', icon: 'chart' }
 ];
 
 export function adminNavigation(current, icon, { mobile = false } = {}) {

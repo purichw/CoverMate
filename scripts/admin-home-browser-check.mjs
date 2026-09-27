@@ -148,7 +148,7 @@ try {
   holdRequests = new Promise(resolve => { releaseRequests = resolve; });
   await page.goto(baseUrl + '/admin#home');
   await waitForHomeState('loading');
-  assert.equal(await page.locator('[data-admin-home-card]').count(), 4);
+  assert.deepEqual(await page.locator('[data-admin-home-card]').evaluateAll(cards => cards.map(card => card.dataset.adminHomeCard)), ['operations', 'content', 'analytics']);
   report.checks.push('Pending API requests expose the Home loading state.');
   holdRequests = null;
   releaseRequests();
@@ -200,7 +200,7 @@ try {
   report.checks.push('Whole-page screenshots captured at 1448, 390 and 690 pixels; no document overflow at 320, 390, 690, 1024 or 1448 pixels.');
 
   const preservedFocusTargets = [
-    ...['operations', 'content', 'analytics', 'settings'].map(moduleId => `[data-admin-home-card="${moduleId}"]`),
+    ...['operations', 'content', 'analytics'].map(moduleId => `[data-admin-home-card="${moduleId}"]`),
     `.home-quick-grid a[href="${ownerPathForMode('preview')}"]`
   ];
   for (const selector of preservedFocusTargets) {
@@ -214,15 +214,15 @@ try {
     await waitForHomeState('ready');
     assert.equal(await page.locator(selector).evaluate(element => element === document.activeElement), true, `An asynchronous Home refresh preserves exact focus: ${selector}`);
   }
-  report.checks.push('Held Home fetches preserve keyboard focus on each of the four distinct module cards and the CMS Preview anchor when the result renders.');
+  report.checks.push('Held Home fetches preserve keyboard focus on each of the three distinct module cards and the CMS Preview anchor when the result renders.');
 
-  for (const moduleId of ['operations', 'content', 'analytics', 'settings']) {
+  for (const moduleId of ['operations', 'content', 'analytics']) {
     await page.locator(`[data-admin-home-card="${moduleId}"]`).click();
     await page.waitForFunction(id => document.body.dataset.module === id, moduleId);
     if (moduleId === 'operations') await page.locator('.cases-screen .case-list').waitFor();
     await openHome();
   }
-  report.checks.push('All four module cards navigate to their real Admin module.');
+  report.checks.push('All three module cards navigate to their real Admin module.');
 
   await page.locator('[data-admin-home-card="operations"]').click();
   await page.waitForFunction(() => document.body.dataset.module === 'operations');
@@ -326,7 +326,7 @@ try {
 
   scenario = 'empty';
   await openHome();
-  assert.equal(await page.locator('[data-admin-home-card]').count(), 4);
+  assert.deepEqual(await page.locator('[data-admin-home-card]').evaluateAll(cards => cards.map(card => card.dataset.adminHomeCard)), ['operations', 'content', 'analytics']);
   await capture('home-empty-390.png', 390, 844);
   report.checks.push('Successful empty API responses produce an explicit empty Home state without hiding navigation.');
 

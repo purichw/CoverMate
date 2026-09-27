@@ -6,6 +6,12 @@ Current module map and request-lifecycle contract reviewed on 2026-09-24.
 `HANDOFF.md` and release records own the exact deployed revision; the local
 evidence below remains scoped to its original checks.
 
+Navigation update, 2026-09-28: Settings and Role Preview are removed from the
+Admin UI for the current single-owner workflow. Desktop/mobile navigation and
+Home omit Settings; Home has three primary cards and legacy `#settings` links
+return to Home. The notification bell still opens **ตั้งค่าการแจ้งเตือน**.
+No Cases API, stored data or authorization contract changes with this removal.
+
 ## Design and scope
 
 One Cases workspace replaces the visible Operations dashboard/leads/tasks/audit tabs. Preserve the actual CoverMate logo and Google Sans / Google Sans Thai, cream canvas, dark sidebar, orange primary action, muted status surfaces and compact table/detail composition. No role switching, exports, bulk actions, fake Live badge, assignment, pipeline or LINE integration in Cases.
@@ -73,6 +79,13 @@ Authenticated routes under `/api/ops`:
 
 Every endpoint reuses the existing Firebase ID-token verification, active admin allowlist and UAT-only protection. New Cases operations require the normalized owner role. Browser role/localStorage state is not authorization. Firestore Rules deny direct modification of canonical documents and deny all direct access to new activities, mutation records, notifications and preferences; the service performs authorized transactions through the existing Admin SDK credentials.
 
+The backend retains `owner`, `advisor`, `ops` and `readonly` normalization and
+existing aliases for future work. Legacy Operations permissions remain separate;
+these roles do not all gain access to the current owner-only Cases and
+notification APIs. CMS/media/article management also retains its owner gate.
+Removing the Settings page does not remove these checks, change allowlist
+records or provide a complete multi-admin workflow.
+
 Each meaningful save creates one `caseActivities` entry and increments version. No-op saves do neither. Idempotency records are per actor/request under the case; identical retries return the original persisted result. Conflicting payloads return 409. Expected-version conflicts preserve the UI draft and offer saved-version comparison/reload. Contact changes are full validated objects. Original submission and privacy receipt cannot be patched.
 
 Closing records a server closedAt, clears the schedule, increments its revision only if it changed, and resolves outstanding notifications. Closed outcome changes retain closedAt. Reopening requires explicit `reopen:true`, clears closedAt and does not restore old reminders. Schedule revisions change only when due time/reminder setting/clearing changes. Past unchanged schedules permit other edits; turning a past reminder on requires a future date.
@@ -119,12 +132,20 @@ fallback data.
 - `node scripts/cases-contract-check.mjs`: fixed-clock metrics; search/cursor binding; state transitions; no-op/conflicts; reminder revisions; legacy preservation.
 - `node scripts/cases-browser-check.mjs`: actual Admin UI with isolated API fixtures; immediate search with a delayed global summary, out-of-order full refresh and leave/return; desktop/tablet/mobile; draft failure/conflict/reload/save; manual create; focus; menu; unavailable email; overflow; axe checks of list/editor.
 - `node scripts/ops-service-boundary-check.mjs`: isolated API/service boundaries,
-  dispatch and permission behavior. `node scripts/test-fixtures-check.mjs` checks
+  dispatch and permission behavior, including owner-only Cases, legacy read-only
+  write denial, owner aliases, inactive/unknown roles and UAT isolation.
+  `node scripts/test-fixtures-check.mjs` checks
   fixture isolation and namespace references; both belong to `check:refactor`.
 - `node scripts/cases-api-check.mjs` inside Auth+Firestore emulators: actual endpoints/transactions/rules; authorization; durable public receipt/activity/intent; idempotency; concurrent writes; deduped reminders; resolution/read ownership; canonical write denial; legacy retention.
-- `node scripts/nfr-journeys.mjs --cases-only` inside emulators: actual website form, failed-network retry, persisted case and authenticated Admin readback; existing Home/Settings/Content navigation.
+- `node scripts/nfr-journeys.mjs --cases-only` inside emulators: actual website form, failed-network retry, persisted case and authenticated Admin readback; retained Home/Analytics/Content navigation.
 - Calculator endpoint adapter, public request deadline checks, generated visitor parity and whitespace checks are scoped regression checks.
 
-Screenshots: `uat-results/cases-v2/` at 320, 390, 768, 1024, 1440 and 1680 px. Browser automation simulates viewport changes; a physical iOS/Android keyboard has not been tested. No production mutation, push or deployment was performed for this work. The original Cases acceptance excluded external email. The later system-inbox integration has separate tests and delivery limits in `ADMIN_EMAIL_NOTIFICATIONS.md`; scheduled reminder delivery remains unavailable.
+Historical Cases implementation evidence: screenshots in `uat-results/cases-v2/`
+at 320, 390, 768, 1024, 1440 and 1680 px. Browser automation simulated viewport
+changes; a physical iOS/Android keyboard was not tested. That implementation pass
+performed no production mutation, push or deployment and excluded external email.
+The later system-inbox integration has separate tests and delivery limits in
+`ADMIN_EMAIL_NOTIFICATIONS.md`. These original results do not verify or establish
+deployment of the September 28 Settings removal.
 
 The compatibility adapter currently reads the full small owner dataset before filtering/aggregating, so metrics are complete rather than silently capped at the former 200 records. At larger scale, add maintained aggregates and indexed search/pagination before increasing polling frequency; this release does not claim constant-cost Firestore reads.
