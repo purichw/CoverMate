@@ -49,6 +49,15 @@ change. CI still exercises the real isolated emulator contracts. Final remote
 IDs and terminal results belong in the release receipt under ignored
 `uat-results/analytics-release/` and the release response.
 
+The first remote run (`36344431254`, commit `fefb72c`) passed the targeted suites
+but exposed four stale public-copy assertions in the final smoke test. The
+September 27 copy update (`85175c7`) had already changed the motor hero and the
+collapsed renewal/fees headings. A read-only rendered check confirmed all three
+sections and the renewal form remain present. The follow-up accepts those exact
+current Thai/English phrases while retaining the earlier supported copy and all
+route, visibility, interaction and network checks. No visitor runtime or content
+is changed by this test correction. The complete remote gate must pass again.
+
 ## Recovery
 
 Before this release the canonical alias pointed to
