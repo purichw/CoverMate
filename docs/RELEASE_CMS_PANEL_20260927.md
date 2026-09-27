@@ -31,6 +31,7 @@ are inconclusive and do not satisfy these checks for the final merged build.
 | Models/contracts | `npm run check:admin-structure`, `npm run check:refactor`, editor-history model and reset-contract scripts | Passed |
 | Panel browser | `npm run check:editor-panel`; desktop/mobile screenshots, canonical Draft reload, TH/EN, history, confirmations, Preview, hidden Footer, Escape/focus | Passed on `c618fb9` |
 | Existing editor flows | `npm run check:admin-structure:browser` and `npm run check:editor-history`, serially | Passed on `c618fb9` |
+| Builder and text editing | `smoke:admin-builder`, `check:text-editor:browser`, linked-text and FAQ browser suites | Passed |
 | Hosted UAT | Real Firebase Draft autosave/reload through `--panel`; exact served runtime/styles; desktop/mobile evidence; complete cleanup | Passed on `007f9bb` Preview |
 | Remote release | Exact pushed SHA/CI, deployed artifact identity, public/Admin route smoke | Pending |
 
@@ -58,6 +59,13 @@ looked for the retired tab label; only its locator was changed to the current
 `โครงสร้างหน้า` label. Remaining legacy panel harnesses now use the panel's stable
 DOM identity and current control locations, without changing their behavior
 assertions. These test/documentation updates do not change the UAT-tested runtime.
+
+The broader text-editor harness also passed after selecting licence cards through
+their existing `licences` presentation row while preserving all assertions on
+canonical `insurers.cards`. Its FAQ Add locator now uses the stable command
+attribute. This does not change either editor's runtime behavior. Final production
+confirmation is the exact-SHA CI plus the read-only canonical-host report under
+`uat-results/editor-panel-release/`, not merely Vercel's build-ready status.
 
 ## Hosted UAT procedure and safety
 

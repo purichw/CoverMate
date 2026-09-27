@@ -234,7 +234,7 @@ async function verifyItemControls(page, baseUrl) {
   assert.equal(current.items.length, before.items.length, "Restoring an item duplicated it");
   assert.equal(current.items[0].on, true, "Item restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ เพิ่มคำถาม", exact: true }).click();
+  await page.locator('[data-admin-add-faq]').click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -254,7 +254,9 @@ async function verifyItemControls(page, baseUrl) {
 }
 
 async function verifyCardControls(page) {
-  await selectSection(page, "insurers");
+  // The fixed licence band edits the existing insurers.cards owner. The
+  // insurers row itself now owns only the company-logo section's content.
+  await selectSection(page, "licences");
   const before = await sectionState(page, "insurers");
   assert.ok(before?.cards?.length, "Insurer repeatable cards missing");
   const firstId = before.cards[0].id;
@@ -272,7 +274,7 @@ async function verifyCardControls(page) {
   assert.equal(current.cards.length, before.cards.length, "Restoring a card duplicated it");
   assert.equal(current.cards[0].on, true, "Card restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ เพิ่มการ์ดบริษัทประกัน", exact: true }).click();
+  await page.getByRole("button", { name: "+ เพิ่มการ์ดใบอนุญาต", exact: true }).click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
