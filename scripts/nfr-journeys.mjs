@@ -136,7 +136,9 @@ try {
   await admin.locator('[contenteditable=true][data-ek]').first().waitFor();
   await admin.locator('label[for=covermate-owner-tools-toggle]').click();
   await admin.getByRole('button', { name: 'แผงเครื่องมือ', exact: true }).click();
-  await admin.getByTitle('ปิดแผงเครื่องมือ').click();
+  const editorPanel = admin.locator('[data-editor-panel]');
+  await editorPanel.getByRole('button', { name: 'ปิดแผง Admin', exact: true }).click();
+  await editorPanel.waitFor({ state: 'hidden' });
   assert.equal(new URL(admin.url()).pathname, '/admin/edit');
   report.panelClose = true;
   await admin.locator('label[for=covermate-owner-tools-toggle]').click();

@@ -54,6 +54,17 @@ Replacing text in one operation (select-all then sequential typing for the typin
 case) passed the complete Undo/Redo/Reset browser suite. No application history
 behavior, timeout, performance budget or assertion was relaxed.
 
+The subsequent integrated `7a4fa0f` passed the entire CoverMate CI gate, including
+the unchanged performance budgets. Emulator Auth/Rules/API and Chromium/WebKit
+Publish checks also passed, but the remaining journey harness used a removed
+close-button title. Its follow-up selects the current panel-scoped accessible
+button, waits for the panel to close and retains the route assertion. No auth,
+Rules, data, UI behavior or test coverage is bypassed; exact-SHA CI is still
+required before production promotion.
+The complete local emulator suite passed after this fix using the project's
+Java 21 and Playwright browsers, including the remaining intake, email and
+article publication journeys. Providers were faked; production was untouched.
+
 Recovery is a new reviewed revert commit of this release's changes through the
 same CI gate; do not reset shared branches or replace newer CMS data. No data
 migration or environment-variable change is required.
