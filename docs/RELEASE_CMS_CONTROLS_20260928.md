@@ -44,8 +44,8 @@ integration. Existing layout CSS is now emitted as versioned `layout.css` at
 the same cascade position. Source rules are unchanged; no budget is increased.
 Hosted asset proof includes both new lazy editor modules and the layout sheet.
 
-Hosted UAT passed on `f269fb63006cddcd6e4dcf8bbc876f63d7ad61b1` at
-`https://covermate-1hfjaoe2n-purich-w.vercel.app`. The real Contact panel edits
+Hosted UAT passed again on `e7faefe41e4ffd51f3ea1ffd3278b05af7b0468b` at
+`https://covermate-dswog844q-purich-w.vercel.app`. The real Contact panel edits
 autosaved to the isolated UAT Draft, survived reload and updated the page.
 Desktop/mobile screenshots were inspected. The original Draft was restored,
 the temporary allowlist entry deactivated, and its Auth identity disabled with
@@ -61,6 +61,13 @@ UI controls for tests.
 The comparison loop found a real Preview-label collision between the owner dock
 and section thumbnail heading. Their binding names are now distinct. The real
 Preview click and isolated Publish/readback assertions guard this regression.
+
+The Phase 6 static guard now checks the shared Brand renderer and its canonical
+field registrations. FAQ browser coverage opens collapsed records through real
+summary clicks before editing or deleting. Add/delete, cancel, Undo/Redo,
+TH/EN persistence, Preview, empty collection and mobile assertions all remain;
+the updated FAQ suite passes without modifying Live. These final changes affect
+test harnesses and this record only, not the runtime verified in hosted UAT.
 
 ## Release Record
 

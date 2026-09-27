@@ -48,17 +48,24 @@ for (const pattern of [
 }
 
 for (const pattern of [
-  /data-admin-media-control="advisor-logo"/,
-  /data-admin-logo-path="true"/,
-  /data-admin-logo-alt="true"/,
-  /data-admin-credential="true"/,
-  /data-admin-legal="true"/,
+  /data-brand-field="\{\{\s*field\.path\s*\}\}"/,
+  /data-cms-field="\{\{\s*field\.path\s*\}\}"/,
+  /sc-camel-on-click="\{\{\s*field\.editImage\s*\}\}"/,
   /data-admin-seo-title="true"/,
   /data-admin-seo-description="true"/,
   /data-admin-seo-guard="true"/
 ]) {
   assert.equal(pattern.test(template), true, `required Phase 6 admin control exists: ${pattern}`);
 }
+
+// The shared Brand renderer replaces one-off attributes; retain owner wiring checks.
+const sourceRuntime = fs.readFileSync(new URL('../src/visitor/runtime.js', import.meta.url), 'utf8');
+for (const pattern of [
+  /brandField\('brand\.advisorLogo',[^\n]*\{media:true\}/,
+  /brandField\('brand\.advisorLogoAlt',/,
+  /brandLocal\('brand\.credential',/,
+  /brandLocal\('footer\.legal',/
+]) assert.match(sourceRuntime, pattern, 'Canonical Brand control is registered');
 
 for (const pattern of [
   /data-admin-canonical/i,

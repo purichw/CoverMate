@@ -94,6 +94,15 @@ try {
   `}));
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
+  const reveal = async locator => {
+    await locator.waitFor({state:'attached'});
+    const groups = locator.locator('xpath=ancestor::details');
+    for (let i = 0; i < await groups.count(); i++) {
+      const group = groups.nth(i);
+      if (!await group.evaluate(el => el.open)) await group.locator(':scope > summary').click();
+    }
+    await locator.waitFor();
+  };
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(baseUrl+'/#guides');
   await page.locator('#faq').waitFor();
@@ -143,24 +152,29 @@ try {
   for (const [lang,name] of [['th','Thai'],['en','English']]) {
     await adminLanguage(name);
     const answer = row.locator('textarea');
+    await reveal(answer);
     await answer.fill('Saved FAQ answer '+lang);
     await answer.press('Tab');
     const addedRow = page.locator(`[data-admin-repeatable-id="${addedId}"]`);
+    await reveal(addedRow.locator('[data-admin-copy-key="q"]'));
     await addedRow.locator('[data-admin-copy-key="q"]').fill('New FAQ question '+lang);
     await addedRow.locator('[data-admin-copy-key="q"]').press('Tab');
     await addedRow.locator('[data-admin-copy-key="a"]').fill('New FAQ answer '+lang);
     await addedRow.locator('[data-admin-copy-key="a"]').press('Tab');
   }
-  await row.scrollIntoViewIfNeeded();
+  await reveal(row.locator('textarea'));
   await row.getByRole('button',{name:'เลื่อนรายการขึ้น',exact:true}).click();
+  await reveal(row.locator('textarea'));
   await row.getByRole('button',{name:'ซ่อน',exact:true}).click();
   assert.equal(await page.locator(`#faq [data-content-id="${moved.id}"]`).count(),0);
+  await reveal(row.locator('textarea'));
   await row.getByRole('button',{name:'แสดงอีกครั้ง',exact:true}).click();
   assert.equal(await page.locator('#faq details').count(),visibleCount + 1);
   const deletedId = section.items.find(item => item.sourceGuideId && item.id !== moved.id).id;
   const beforeDeleteIds = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows => rows.map(row => row.dataset.adminRepeatableId));
   const deletedRow = page.locator(`[data-admin-repeatable-id="${deletedId}"]`);
   const deleteDialog = page.getByRole('dialog', {name:'ลบคำถามนี้ไหม?'});
+  await reveal(deletedRow.locator('textarea'));
   await deletedRow.getByRole('button', {name:'ลบคำถาม',exact:true}).click();
   await deleteDialog.getByRole('button', {name:'ยกเลิก',exact:true}).click();
   assert.equal(await deletedRow.count(), 1, 'Cancel keeps the question');
@@ -176,12 +190,14 @@ try {
   await page.locator('[data-editor-redo]:visible').first().click();
   await deletedRow.waitFor({state:'detached'});
   await page.setViewportSize({width:390,height:844});
+  await reveal(row.locator('textarea'));
   await row.getByRole('button', {name:'ลบคำถาม',exact:true}).click();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), 'Mobile delete confirmation fits');
   await page.screenshot({path:path.join(out,'admin-faq-delete-mobile.png')});
   await deleteDialog.getByRole('button', {name:'ยกเลิก',exact:true}).click();
   await page.setViewportSize({width:1440,height:1000});
   await adminLanguage('Thai');
+  await reveal(row.locator('textarea'));
   await page.locator('.om-faq-actions').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));
   await page.screenshot({path:path.join(out,'admin-faq-controls.png')});
   await row.scrollIntoViewIfNeeded();
@@ -221,6 +237,7 @@ try {
   const ids = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows=>rows.map(row=>row.dataset.adminRepeatableId));
   for (const id of ids) {
     const target = page.locator(`[data-admin-repeatable-id="${id}"]`);
+    await reveal(target.locator('textarea'));
     await target.getByRole('button',{name:'ลบคำถาม',exact:true}).click();
     await deleteDialog.getByRole('button',{name:'ลบคำถาม',exact:true}).click();
     await target.waitFor({state:'detached'});
