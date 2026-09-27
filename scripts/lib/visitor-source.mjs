@@ -20,6 +20,7 @@ export const VISITOR_ASSET_VERSIONS_SLOT = "/* COVERMATE_ASSET_VERSIONS */ {}";
 const ROOT = new URL("../../", import.meta.url);
 const DESIGN_SYSTEM_STYLE = /<style>(\/\* Organic[^]*?)<\/style>/;
 const EDITOR_TOOLS_STYLE = /<style id="covermate-owner-dock-ui">([\s\S]*?)<\/style>/;
+const LAYOUT_STYLE = /<style id="covermate-layout">([\s\S]*?)<\/style>/;
 
 export const VISITOR_SOURCE_PATHS = Object.freeze({
   index: new URL("index.html", ROOT),
@@ -37,10 +38,12 @@ export function readVisitorStyleAssets() {
   const template = readText(VISITOR_SOURCE_PATHS.template);
   const designSystem = template.match(DESIGN_SYSTEM_STYLE)?.[1];
   const editorTools = template.match(EDITOR_TOOLS_STYLE)?.[1];
+  const layout = template.match(LAYOUT_STYLE)?.[1];
   if (!designSystem) throw new Error('Visitor design-system stylesheet is missing.');
   if (!editorTools) throw new Error('Editor tools stylesheet is missing.');
-  return ['organic', 'home', 'articles-index', 'article-detail', 'line-contact', 'calculator', 'submission', 'select', 'editor-tools', 'editor-panel'].map(name => {
-    const source = name === 'organic' ? designSystem : name === 'editor-tools' ? editorTools : readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT));
+  if (!layout) throw new Error('Visitor layout stylesheet is missing.');
+  return ['organic', 'layout', 'home', 'articles-index', 'article-detail', 'line-contact', 'calculator', 'submission', 'select', 'editor-tools', 'editor-panel'].map(name => {
+    const source = name === 'organic' ? designSystem : name === 'layout' ? layout : name === 'editor-tools' ? editorTools : readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT));
     const css = transformSync(source, { loader:'css', minifyWhitespace:true }).code;
     const hash = createHash('sha256').update(css).digest('hex').slice(0,16);
     return { name, css, file:new URL(`assets/visitor/${name}.css`, ROOT), link:`<link rel="stylesheet" href="/assets/visitor/${name}.css?v=${hash}">` };
@@ -143,6 +146,7 @@ export function readVisitorSources() {
     template: readText(VISITOR_SOURCE_PATHS.template)
       .replace(DESIGN_SYSTEM_STYLE, () => visitorStyles.organic)
       .replace(EDITOR_TOOLS_STYLE, () => visitorStyles['editor-tools'])
+      .replace(LAYOUT_STYLE, () => visitorStyles.layout)
       .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
       .replace('<style>/* COVERMATE_SUBMISSION_STYLES */</style>', () => visitorStyles.submission)
       .replace('<!-- COVERMATE_CALCULATOR_TEMPLATE -->', () => readText(new URL('src/visitor/calculator.html', ROOT)))

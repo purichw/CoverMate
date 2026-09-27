@@ -51,7 +51,16 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
   async function select(id){
     await openPanel();
     await panel().getByRole('button',{name:'เนื้อหา',exact:true}).click();
-    await panel().locator('[data-editor-content-section]').selectOption(id);
+    if(page.viewportSize().width>1000) await panel().locator(`[data-content-row="${id}"] button`).click();
+    else {
+      await panel().getByRole('combobox',{name:'เลือกส่วนที่แก้ไขเนื้อหา'}).and(page.locator('button')).click();
+      const name=await panel().locator(`[data-editor-content-section] option[value="${id}"]`).innerText();
+      await page.getByRole('option',{name,exact:true}).click();
+    }
+  }
+  async function reveal(locator){
+    const ancestors=locator.locator('xpath=ancestor::details');
+    for(let i=0;i<await ancestors.count();i++)if(!await ancestors.nth(i).evaluate(el=>el.open))await ancestors.nth(i).locator(':scope>summary').click();
   }
   async function closePanel(){if(await panel().isVisible())await panel().locator('[data-admin-panel-close]').click();}
   async function editInline(path,text){
@@ -61,6 +70,7 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
     assert.ok(!Object.hasOwn(readDraft().text,'cms:'+path),'No stale override after blur');
   }
   async function editPanel(locator,path,text){
+    await reveal(locator);
     await locator.fill(text);await locator.press('Tab');
     await poll(()=>value(path)===text,'Panel commits canonical '+path);
     await poll(async()=>await inline(path).textContent()===text,'Panel updates public canvas '+path);
@@ -93,8 +103,7 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
   await inline(comparison).waitFor();
   await editInline(comparison,'หัวข้อตารางทดสอบ');
   await select('tiers');
-  await panel().locator('[data-admin-content-shortcut="Motor comparison"]').click();
-  const comparisonField=panel().locator(`[data-cms-field="${comparison}"]`);
+  const comparisonField=panel().locator(`[data-cms-owner="${comparison}"]`).locator('input,textarea');
   assert.equal(await comparisonField.inputValue(),'หัวข้อตารางทดสอบ');
   await editPanel(comparisonField,comparison,'แก้หัวข้อจาก panel');
   await editPanel(comparisonField,comparison,originalComparison);
@@ -111,6 +120,7 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
   const unit='calculatorDesign.baht.th',originalUnit=value(unit);
   await editInline(unit,'บาททดสอบ');
   await select('fit');
+  await reveal(panel().locator('[data-admin-content-shortcut="Calculator design"]'));
   await panel().locator('[data-admin-content-shortcut="Calculator design"]').click();
   const unitField=panel().locator(`[data-cms-field="${unit}"]`);
   assert.equal(await unitField.inputValue(),'บาททดสอบ');
@@ -144,6 +154,7 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
   await poll(()=>savedTier().st[0]===nextStatus,'Inline coverage status saves');
   await select('tiers');
   const panelCell=panel().locator(cell);
+  await reveal(panelCell);
   for(let i=0;i<2;i++)await panelCell.locator('[data-tier-status]').click();
   await poll(()=>savedTier().st[0]===initialStatus,'Panel cycles same coverage owner back');
   await panelCell.locator('[data-tier-remark]').click();
@@ -176,6 +187,7 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
   await select('insurers');
   for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
     await page.setViewportSize(viewport);await assertFit('Parity '+viewport.width);
+    await reveal(panel().locator(`[data-cms-owner="${insurerPath}"]`));
     await panel().locator(`[data-cms-owner="${insurerPath}"]`).scrollIntoViewIfNeeded();
     await shot('parity-'+viewport.width+'.png','Canonical insurer field in Content panel');
   }

@@ -1,5 +1,9 @@
 # Visitor Bundle Sources
 
+The existing `covermate-layout` style block in `template.html` is emitted as
+content-versioned `assets/visitor/layout.css` in its original cascade position.
+Edit source rules, not generated assets; the HTML performance budget is unchanged.
+
 Version history uses `editor-versions.html` and `editor-version-detail.html`,
 with canonical comparisons and version actions in lazy `editor-versions.js`.
 The CMS controller loads this module on demand; its existing persistence API

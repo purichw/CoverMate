@@ -31,6 +31,19 @@ browser flows, the exact-SHA GitHub verify check (including emulators), hosted
 UAT persistence where credentials permit, and canonical-host readback. Earlier
 September 27 panel UAT is baseline evidence, not proof of the redesigned tabs.
 
+Integration preserves upstream `22268ca` and its new Analytics workspace. Its
+six KPI cards use the same centered primitive; the Admin E2E now tests that
+actual workspace. History and parity harnesses open real nested disclosures
+and current canonical fields instead of removed controls. The original full
+local run stopped on a retired locator, not a failed product assertion.
+Local version-history cleanup hung with system Chrome; the matching existing
+Playwright Chromium build completes the suite without changing assertions.
+
+The generated shell exceeded the unchanged 910,000-byte raw HTML budget after
+integration. Existing layout CSS is now emitted as versioned `layout.css` at
+the same cascade position. Source rules are unchanged; no budget is increased.
+Hosted asset proof includes both new lazy editor modules and the layout sheet.
+
 ## Release Record
 
 - Final candidate, CI, Preview and production readback: pending.
