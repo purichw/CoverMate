@@ -149,8 +149,7 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.locator('[data-field=title]').inputValue(),'บทความใหม่');await save(page);
     assert.equal(await page.locator('.ae-primary:visible:not(:disabled)').count(),0,'No fake publishing action');
     assert.equal(server.requests.length,0,'No backend writes');assert.deepEqual(report.errors,[]);
-    const state=JSON.parse(fs.readFileSync('uat-results/home-articles/published-baseline.json','utf8'));
-    const reader=await startArticleDetailPreview({state,feed:{available:true,items:[fixture]},details:{items:[fixture]}});
+    const reader=await startArticleDetailPreview({feed:{available:true,items:[fixture]},details:{items:[fixture]}});
     try{
       const readerContext=await browser.newContext({viewport:{width:390,height:900}});
       await readerContext.route('**/*',route=>new URL(route.request().url()).origin===reader.baseUrl?route.continue():route.abort());

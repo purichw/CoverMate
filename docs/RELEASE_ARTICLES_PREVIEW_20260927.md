@@ -53,6 +53,17 @@ and final production alias readback must be recorded after push. Do not infer
 success from a queued deployment. Full Auth/Rules/email emulator coverage is
 delegated to CI; no production customer/CMS writes are part of this release.
 
+Initial Preview `e4cf6b8` reached READY and its eleven changed assets matched
+local hashes. Read-only Home/Motor/index and signed-out Admin checks passed;
+the unavailable article state and missing-detail 404 were confirmed, not treated
+as completed publishing. Home/index mobile screenshots were visually inspected.
+Production remained on `a53e5b5`.
+
+CI run `36313920494` exposed a test-only dependency on an ignored local report
+(`published-baseline.json`). The Editor-to-reader test now uses the existing
+preview helper's source-owned defaults and keeps every renderer/behavior
+assertion. The corrective commit requires a fresh exact-SHA CI run.
+
 ## Recovery
 
 Production baseline before this candidate: `a53e5b5f34faedd364b7f25c2853a83b58249990`.
