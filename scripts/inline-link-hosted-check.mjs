@@ -187,19 +187,40 @@ try {
     report.committedAssetProof[file] = sha(served);
   }
   if (panelMode) {
-    // The panel runtime/styles ship inside the generated template, while SSR
-    // changes its SEO/seed. Compare the unchanged code blocks before any write.
+    // SSR changes SEO/seed. Prove the unchanged embedded runtime and versioned
+    // external stylesheets before any write.
     const committed = execFileSync('git',['show',expectedCommit + ':index.html'],{cwd:root,encoding:'utf8'});
+    const styleFiles = ['assets/visitor/editor-panel.css','assets/visitor/editor-tools.css'];
     const blocks = source => {
       const template = extractBundlerTemplate(source);
       const runtime = [...template.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(match=>match[1]).filter(code=>code.includes('editorPanelExpanded'));
-      const styles = [...template.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(match=>match[1]).filter(css=>css.includes('.cm-editor-panel'));
       assert.equal(runtime.length,1,'Expected one generated panel runtime block.');
-      assert.equal(styles.length,1,'Expected one generated panel style block.');
-      return {runtimeSha256:sha(runtime[0]),stylesSha256:sha(styles[0])};
+      const links = [...template.matchAll(/<link\b[^>]*>/gi)].map(match=>({
+        rel:match[0].match(/\brel=["']([^"']+)["']/i)?.[1],
+        href:match[0].match(/\bhref=["']([^"']+)["']/i)?.[1]
+      })).filter(link=>link.rel === 'stylesheet' && link.href);
+      const styleLinks = {};
+      for (const file of styleFiles) {
+        const matches = links.filter(link=>new URL(link.href,url.origin).pathname === '/' + file);
+        assert.equal(matches.length,1,'Expected one external editor stylesheet link: ' + file);
+        const assetUrl = new URL(matches[0].href,url.origin);
+        assert.equal(assetUrl.origin,url.origin,'Editor stylesheets must be same-origin.');
+        assert.match(assetUrl.searchParams.get('v') || '',/^[a-f0-9]{16}$/,'Editor stylesheet must be versioned: ' + file);
+        styleLinks[file] = assetUrl.pathname + assetUrl.search;
+      }
+      return {runtimeSha256:sha(runtime[0]),styleLinks};
     };
     report.committedPanelProof = blocks(html);
-    assert.deepEqual(report.committedPanelProof,blocks(committed),'Hosted panel runtime/styles differ from the requested commit.');
+    assert.deepEqual(report.committedPanelProof,blocks(committed),'Hosted panel runtime/stylesheet links differ from the requested commit.');
+    for (const file of styleFiles) {
+      const res = await fetch(new URL(report.committedPanelProof.styleLinks[file],url.origin), {headers:vercelBypassHeaders(),redirect:'manual',signal:AbortSignal.timeout(30000)});
+      assert.equal(res.status,200,'Editor stylesheet unavailable: ' + file);
+      const served = Buffer.from(await res.arrayBuffer());
+      const committedCss = execFileSync('git',['show',expectedCommit + ':' + file],{cwd:root});
+      assert.equal(sha(served),sha(committedCss),'Hosted editor stylesheet differs from the requested commit: ' + file);
+      assert.equal(new URL(report.committedPanelProof.styleLinks[file],url.origin).searchParams.get('v'),sha(committedCss).slice(0,16),'Editor stylesheet URL version differs from committed content: ' + file);
+      report.committedAssetProof[file] = sha(served);
+    }
   }
   originals = await db.getAll(liveRef, draftRef);
   assert.ok(originals.every(doc => doc.exists && doc.data()?.config), 'Both existing UAT states are required; this smoke does not seed state.');

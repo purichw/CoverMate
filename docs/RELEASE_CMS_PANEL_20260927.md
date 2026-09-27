@@ -3,6 +3,15 @@
 Status: **verification in progress**. Production deployment and final checks are
 pending. Do not treat this record as a release-success claim.
 
+CI run `36333911345` for `00f06f7` passed the preceding component/contract suites
+but stopped at the performance gate: raw shell HTML was 929,564 bytes against
+the unchanged 910,000-byte limit. The build now emits editor-panel and existing
+editor-tools CSS as versioned external assets. Their CSS is byte-equivalent to
+the prior inline rules, and the embedded editor runtime is unchanged. Local
+performance passes at 906,174 bytes for Home (230,960 bytes gzip), with zero CLS
+in all four Home/Motor desktop/mobile checks. Full CI and production verification
+must pass on the follow-up commit; the budget is not increased.
+
 ## Scope and checkpoints
 
 The user authorized pushing and deploying this chat's work. The change adds a

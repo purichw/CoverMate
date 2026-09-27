@@ -51,6 +51,13 @@ Owners: `src/visitor/editor-panel.css`, `template.html`, `runtime.js` and
 `cms-controller.js`. Build with `npm run build:visitor`; never hand-edit the
 generated `index.html`.
 
+The build emits versioned `assets/visitor/editor-panel.css` and
+`assets/visitor/editor-tools.css` stylesheet links in the same cascade positions.
+Panel rules remain owned by `editor-panel.css`; existing tool/dock rules remain
+in the template's `covermate-owner-dock-ui` block. Do not edit generated assets.
+Keeping these rules outside the serialized HTML preserves the visitor shell
+budget without changing the rules or editor runtime.
+
 `node scripts/editor-panel-browser-check.mjs` exercises the real browser UI
 against a synthetic owner and in-memory Draft. It blocks external writes and
 does not Publish. `--serve` exposes the same fixture for local visual review.

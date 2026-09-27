@@ -79,7 +79,7 @@ if (process.argv.includes('--serve')) {
 } else {
   const output = path.resolve(process.env.EDITOR_PANEL_SCREENSHOT_DIR || 'uat-results/editor-panel');
   fs.mkdirSync(output, { recursive:true });
-  const owners = ['src/visitor/runtime.js','src/visitor/template.html','src/visitor/home.css','src/visitor/editor-panel.css','src/visitor/cms-controller.js','covermate-contract.js','index.html','assets/visitor/home.css','scripts/editor-panel-browser-check.mjs'];
+  const owners = ['src/visitor/runtime.js','src/visitor/template.html','src/visitor/home.css','src/visitor/editor-panel.css','src/visitor/cms-controller.js','covermate-contract.js','index.html','assets/visitor/home.css','assets/visitor/editor-tools.css','assets/visitor/editor-panel.css','scripts/editor-panel-browser-check.mjs'];
   const hashes = () => Object.fromEntries(owners.map(file => [file,createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
   const report = { passed:false, startedAt:new Date().toISOString(), sourceHashes:hashes(), checks:[], screenshots:[], geometry:[], errors:[], blockedRequests:[], fixture:{environment:'Local static server; synthetic owner; memory-only Draft',productionWrites:0,publishEnabled:false} };
   const browser = await launchChromium(loadPlaywright().chromium);
