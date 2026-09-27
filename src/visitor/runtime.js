@@ -470,8 +470,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     this._routeChange = () => {
       if (this._routeLocation === location.href) return;
       const lang = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th';
-      if (lang !== this.state.lang) this.setLanguage(lang);
       this.applyMode();
+      if (lang !== this.state.lang) this.setLanguage(lang);
     };
     this._remoteRoute = (event) => {
       if (event.detail && event.detail.publicLive) this.applyLiveContent();
@@ -559,6 +559,15 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   sweep() {
+    if (this.state.admin && document.querySelector('[data-editor-preview]')) {
+      this._editorPreviewLoader ||= import(location.origin + '/assets/visitor/editor-preview.js').catch(() => null);
+      this._editorPreviewLoader.then(module => {
+        const host = document.querySelector('[data-editor-preview]');
+        if (!host) return;
+        if (module) module.syncSectionPreview(host, this.editorOutlineTarget(host.dataset.editorPreview));
+        else host.textContent = 'โหลดตัวอย่างไม่ได้ กรุณาเปิด Preview เต็มหน้า';
+      });
+    }
     window.CoverMateSelect?.refresh();
     if (!this._selectLoader && [...document.querySelectorAll('select')].some(select => { const r=select.getBoundingClientRect(); return r.height && r.top < innerHeight + 600 && r.bottom > 0; })) this._selectLoader=import(location.origin+'/assets/visitor/select.js').catch(()=>{this._selectLoader=null;});
     this.syncInlineMedia();
@@ -576,9 +585,30 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     }
   }
 
-  editorOutlineTarget(id = this.state.sel) {
+  editorOutlineTarget(id = this.state.tab === 'brand' ? (this.state.brandPreview || 'header') : this.state.sel) {
     if (!/^[a-zA-Z0-9_-]+$/.test(id || '')) return null;
-    return document.querySelector(id === 'footer' ? '.cm-editor-stage footer.cm-footer' : 'main [id="' + id + '"]');
+    return document.querySelector(id === 'header' ? '.cm-editor-stage header' : id === 'footer' ? '.cm-editor-stage footer.cm-footer' : 'main [id="' + id + '"]');
+  }
+
+  inspectBrandLocation(id) {
+    this.setState({brandPreview:id}, () => requestAnimationFrame(() => {
+      this.syncOutlineHighlight();
+      const target = this.editorOutlineTarget(id);
+      if (!target || window.matchMedia('(max-width: 1000px)').matches) return;
+      const header = document.querySelector('.cm-editor-stage header');
+      const offset = id !== 'header' && header && getComputedStyle(header).position === 'sticky' ? header.getBoundingClientRect().height : 0;
+      window.scrollTo({top:Math.max(0,window.scrollY + target.getBoundingClientRect().top - offset - 20),behavior:'instant'});
+    }));
+  }
+
+  openBrandGroup(key) {
+    this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{
+      const group=[...document.querySelectorAll('[data-cms-group]')].find(node=>node.dataset.cmsGroup===key);
+      if (!group) return;
+      for (let node=group;node;node=node.parentElement) if (node.tagName==='DETAILS') node.open=true;
+      group.scrollIntoView({block:'start'});
+      group.querySelector('summary')?.focus({preventScroll:true});
+    }));
   }
 
   syncOutlineHighlight() {
@@ -615,6 +645,17 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         window.scrollTo({ top:Math.max(0,target.getBoundingClientRect().top + window.pageYOffset - headerBottom - 24), behavior:'instant' });
       } else if (visible) this.setState({ outlineNotice:'ส่วนนี้ยังไม่แสดงในหน้าตัวอย่าง ตรวจสอบการตั้งค่าเนื้อหาที่เกี่ยวข้อง' });
       document.querySelector('[data-editor-inspector] h2,[data-editor-inspector] h3')?.focus({preventScroll:true});
+    }));
+  }
+
+  selectContentSection(id) {
+    const active = document.activeElement;
+    if (active?.closest?.('[data-editor-panel]') && /^(INPUT|TEXTAREA)$/.test(active.tagName)) active.blur();
+    this.setState({sel:id,tab:'content'}, () => requestAnimationFrame(() => {
+      const detail = document.querySelector('[data-content-detail]');
+      if (detail) detail.scrollTop = 0;
+      this.syncOutlineHighlight();
+      document.querySelector('[data-editor-content-title]')?.focus({preventScroll:true});
     }));
   }
 
@@ -1137,10 +1178,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const contract = window.CoverMateContract || {};
     if (typeof contract.ownerModeFromPath === 'function') return contract.ownerModeFromPath(path);
     const clean = String(path || '').replace(/\/+$/, '') || '/';
-    if (clean === '/admin/content') return 'admin';
-    if (clean === '/admin/edit') return 'edit';
-    if (clean === '/admin/preview') return 'preview';
-    return '';
+    return ({'/admin/content':'admin','/admin/edit':'edit','/admin/preview':'preview'})[clean] || '';
   }
 
   isMotorPagePath(path) {
@@ -1188,15 +1226,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   ownerPathForMode(mode, page) {
-    const contract = window.CoverMateContract || {};
-    if (typeof contract.ownerPathForMode === 'function') return contract.ownerPathForMode(mode, page);
-    let path = '/admin';
-    if (mode === 'admin') path = '/admin/content';
-    else if (mode === 'edit') path = '/admin/edit';
-    else if (mode === 'preview') path = '/admin/preview';
-    const routePage = page === 'motor' ? 'motor' : 'home';
-    if (routePage === 'motor' && mode && path !== '/admin') path += '?page=motor';
-    return path;
+    return window.CoverMateContract.ownerPathForMode(mode, page, location.search);
   }
 
   goOwnerRoute(mode, options) {
@@ -1276,13 +1306,18 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     }
     const h = window.location.hash;
     this._routeLocation = window.location.href;
-    const admin = pathMode === 'admin' || h === '#admin';
+    const admin = pathMode === 'admin' || h === '#admin' || (pathMode === 'edit' && this.state.editMode && this.state.admin);
     const editMode = pathMode === 'edit' || h === '#edit';
     const preview = pathMode === 'preview' || h === '#preview';
     const owner = admin || editMode || preview;
     if (owner && !this.hasSession()) { window.location.replace('/admin/login'); return; }
     const anchor = owner ? '' : this.anchorFromHash(h, routePage);
     const currentOwner = this.state.admin || this.state.editMode || this.state.preview;
+    const switchedPage = owner && routePage !== this.state.routePage;
+    if (switchedPage && currentOwner && !this.state.preview) {
+      document.activeElement?.blur();
+      this.persistDraft();
+    }
     const samePublicPage = routePage === this.state.routePage && this.state.motor === (routePage === 'motor' || h === '#motor-focus') && this.state.life === (h === '#life-focus');
     if (!['articles','article'].includes(routePage) && this._modeApplied && !publicView && !owner && !currentOwner && samePublicPage && !anchor.includes('-focus')) {
       this.scrollToAnchor(anchor || 'top');
@@ -1327,7 +1362,9 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (e) {}
     }
     if (!editMode) this.disableEdit();
-    this.setState({ site: src.config, routePage: routePage, articleSearchDraft:null, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
+    const pageSelection = switchedPage ? { sel:window.CoverMateContract.CMS_EDITABLE_PAGES.find(page=>page.id===routePage)?.section, outlineQuery:'', outlineNotice:'', mobileInspector:false } : {};
+    this.setState({ ...pageSelection, site: src.config, routePage: routePage, articleSearchDraft:null, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
+      if (switchedPage) document.querySelector('[data-admin-panel-scroll]')?.scrollTo(0, 0);
       this.syncSeo();
       requestAnimationFrame(() => {
         this.applyText();
@@ -1427,12 +1464,13 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   cmsCopyPath(el) {
-    const semantic = el.closest('[data-content-path]')?.getAttribute('data-content-path');
-    if (semantic && isSemanticCopyPath(this.state.site, semantic)) return semantic;
-    const anchor = el.closest('[data-cms-copy]');
-    const path = anchor && anchor.getAttribute('data-cms-copy');
-    if (path && isSemanticCopyPath(this.state.site, path)) return path;
-    return path && (CMS_CONTENT_FIELDS.some(field => field.localized && field.path === path) || isSemanticCopyPath(this.state.site, path + '.' + this.state.lang)) ? path + '.' + this.state.lang : '';
+    const valid = path => isSemanticCopyPath(this.state.site, path) || CMS_CONTENT_FIELDS.some(field => field.localized && path === field.path + '.' + this.state.lang);
+    for (const attr of ['data-content-path','data-cms-copy']) {
+      const path = el.closest('[' + attr + ']')?.getAttribute(attr);
+      if (path && valid(path)) return path;
+      if (path && valid(path + '.' + this.state.lang)) return path + '.' + this.state.lang;
+    }
+    return '';
   }
 
 
@@ -1604,6 +1642,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       const saved = cmsGet(site, path) || '';
       const edits = S.cmsEdits || {};
       return {
+        path,
         value: Object.prototype.hasOwnProperty.call(edits, path) ? edits[path] : saved,
         change: (e) => this.setState({ cmsEdits: { ...(this.state.cmsEdits || {}), [path]: e.target.value } }),
         commit: (e) => {
@@ -1626,12 +1665,12 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     };
     const cmsGroups = [...new Set(CMS_CONTENT_FIELDS.map(field => field.group))].map(group => ({
       key: group, label: cmsAdminLabel(group),
-      fields: CMS_CONTENT_FIELDS.filter(field => field.group === group).map(field => {
+      fields: CMS_CONTENT_FIELDS.filter(field => field.group === group && field.path !== 'brand.media.mark').map(field => {
         const path = field.path + (field.localized ? '.' + lk : '');
         const value = cmsGet(site, path) || '';
-        return { key: path, path: path, label: cmsAdminLabel(field.label), value: value,
+        return { key: path, path: path, label: cmsAdminLabel(field.label), inputLabel:field.media ? 'Path รูปภาพ / HTTPS URL' : cmsAdminLabel(field.label), big:!field.media, maxLength:10000, value: value,
           hasImage: !!(field.media && value), image: field.media ? assetURL(value) : '',
-          isMedia:!!field.media, editImage:()=>this.editMedia(path),
+          isMedia:!!field.media, editImage:()=>this.editMedia(path), clearImage:()=>cmsInput(path,field).commit({target:{value:''}}),
           ...cmsInput(path, field)
         };
       })
@@ -1985,13 +2024,15 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       key:prefix+'-'+field.key,inputKey:field.key,id:'calculator-input-'+field.key,helpId:'calculator-help-'+field.key,
       describedBy:'calculator-help-'+field.key+' calculator-message-'+field.key,messageId:'calculator-message-'+field.key,
       label:calcCopy[field.key],labelPath:'calculatorDesign.'+field.key,help:calcCopy[field.key+'Help']||calcCopy.paHelp,helpPath:'calculatorDesign.'+(calcCopy[field.key+'Help']?field.key+'Help':'paHelp'),
-      paths:ICONS[field.icon] || ICONS.users,unit:calcCopy[field.unit],required:!!field.required,placeholder:field.example?.toLocaleString('en-US'),
+      paths:ICONS[field.icon] || ICONS.users,unit:calcCopy[field.unit],unitPath:'calculatorDesign.'+field.unit,required:!!field.required,placeholder:field.example?.toLocaleString('en-US'),
       image:assetURL(site.calculatorDesign?.[field.key+'Icon'] || ''),imagePath:'calculatorDesign.'+field.key+'Icon',
       value:raw[field.key]==='unknown' && !field.choices?'':raw[field.key],numeric:!field.choices,select:!!field.choices,invalid:assessment.invalid.includes(field.key),
       inputMode:field.text?'text':'numeric',unknownAllowed:!!field.unknown,unknown:raw[field.key]==='unknown',
       unknownLabel:field.unit==='years'?calcCopy.notSureValue:calcCopy.notSure,
+      unknownPath:'calculatorDesign.'+(field.unit==='years'?'notSureValue':'notSure'),
       toggleUnknown:e=>change(field.key,e.target.checked?'unknown':''),
       message:assessment.invalid.includes(field.key)?calcCopy.invalidV2:assessment.warnings.includes(field.key)?calcCopy.warning:'',
+      messagePath:assessment.invalid.includes(field.key)?'calculatorDesign.invalidV2':assessment.warnings.includes(field.key)?'calculatorDesign.warning':'',
       options:(field.choices || []).map(value=>({value,label:value==='published'?referenceLabel:value===''?calcCopy.choose:calcCopy[value]})),
       change:e=>change(field.key,e.target.value),blur:e=>change(field.key,e.target.value,true)
     });
@@ -2031,12 +2072,13 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     };
     const profileFields=NEEDS_PROFILE_FIELDS.filter(field=>!field.when||Object.entries(field.when).every(([key,values])=>values.includes(S.calculatorProfile[key]))).map(field=>fieldView(field,S.calculatorProfile,{invalid:planningInvalid?[planningInvalidField]:[],warnings:[]},updateProfile,'profile'));
     const paFields=planningProfile.paInterest==='yes'?needsFields('pa',S.calculatorPa).map(field=>fieldView(field,S.calculatorPa,paResult,updatePa,'pa')):[];
+    const calcStatusKey = calcPending?'pending':!calcReady?'completePrompt':calcResult.calculationStatus==='partial'?'partialNote':'';
     const calculatorView = {
       calcCopy,calculatorStyle:'--calc-action:'+A.action+';--calc-art:'+(site.calculatorDesign?.background?'url("'+assetURL(site.calculatorDesign.background)+'")':'none'),
       calculatorPhoto:assetURL(site.calculatorDesign?.photo || ''),calculatorTabId:'calculator-tab-'+calcMode,
       calculatorReferenceName:calcReference.name+' · '+calcReference.lastChecked,calculatorReferenceSource:calcReference.sourceUrl,
       calculatorHealth:calcMode === 'health',calculatorRows:calcRows,calculatorReady:calcReady,calculatorPending:calcPending,calculatorIncomplete:!calcReady,calculatorShowBreakdown:calcDraft.ready && calcResult.ready,
-      calculatorStatus:calcPending?calcCopy.pending:!calcReady?calcCopy.completePrompt:calcResult.calculationStatus==='partial'?calcCopy.partialNote:'',
+      calculatorStatus:calcCopy[calcStatusKey] || '',calculatorStatusPath:calcStatusKey?'calculatorDesign.'+calcStatusKey:'',
       calculatorFieldsView:S.calculatorPlanning?[...profileFields,...paFields]:calcFields.filter(field=>!field.advanced || S.calculatorDetails[calcMode]),
       calculatorNumeric:calcMode!=='health' && calcResult.shortfall!==null,calculatorShowReference:calcMode==='health'&&calcRaw.roomReference==='published',
       calculatorNotes:calcResult.notes.map(key=>({key,text:calcCopy[key],path:'calculatorDesign.'+key})),
@@ -2096,10 +2138,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       sharedDesign && licencePair ? [{...licencePair, id:'licences', kind:'licences', fixed:true}] : [],
       [{id:'footer',kind:'footer',fixed:true,s:{type:'footer',on:site.footer.show}}]
     );
-    const openAdminGroup = key => this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{
-      const group = [...document.querySelectorAll('[data-cms-group]')].find(node => node.dataset.cmsGroup === key);
-      if (group) { group.open = true; group.scrollIntoView({block:'start'}); group.querySelector('summary')?.focus({preventScroll:true}); }
-    }));
+    const openAdminGroup = key => this.openBrandGroup(key);
     const fallbackAdminPair = adminSectionPairs.find(pair => pair.s.type !== 'hero') || adminSectionPairs[0] || null;
     const selectedAdminPair = adminSectionPairs.find(pair => pair.id === S.sel) || fallbackAdminPair;
     const activeAdminSel = selectedAdminPair ? selectedAdminPair.id : S.sel;
@@ -2163,7 +2202,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         first: pair.fixed || adminOrder === 0, last: pair.fixed || adminOrder === orderedAdminPairs.length - 1,
         toggle: () => { if (isLicence) return; if (isFooter) this.upd(draft=>{draft.footer.show=!draft.footer.show;}); else updatePair(pair, section => { section.on = section.on === false; }); },
         up: () => moveAdminPair(pair, -1), down: () => moveAdminPair(pair, 1),
-        inspect: () => this.inspectOutlineSection(pair.id, visible),
+        openContent: () => this.selectContentSection(pair.id),
+        inspect: () => s.type === 'hero' ? this.setState({sel:pair.id,tab:'content'}) : this.inspectOutlineSection(pair.id, visible),
         pick: () => s.type === 'contact' ? this.inspectOutlineSection(pair.id, visible) : isFooter ? openAdminGroup('Footer design') : this.setState({ sel: pair.id, tab: 'content' },()=>requestAnimationFrame(()=>{
           const panel=document.querySelector('[data-admin-panel-scroll]');if(panel) panel.scrollTop=0;
         })),
@@ -2177,6 +2217,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const editingLicences = selectedAdminPair?.kind === 'licences';
     const sch = cur ? editingLicences ? {...SCHEMA.insurers,fields:isMotor?[]:['body'],item:null,card:SCHEMA.insurers.card,addCardLabel:'licence card'}
       : cur.type === 'insurers' && sharedDesign ? {...SCHEMA.insurers,fields:['kicker','title',...(cur.cta1href&&!/^\/motor(?:[#?]|$)/.test(cur.cta1href)?['cta1']:[])],card:null}
+      : sharedDesign && ['fees','pdpa'].includes(cur.type) ? {...SCHEMA[cur.type],fields:SCHEMA[cur.type].fields.filter(key=>key!=='kicker')}
+      : cur.type === 'fit' ? {...SCHEMA.fit,fields:['kicker','title','body']}
       : cur.id === 'cover' && isHome ? {...SCHEMA.products,fields:[]} : SCHEMA[cur.type] : null;
     const curPath = selectedAdminPair?.source === 'motorPage' ? 'motorPage.' + selectedAdminPair.motorKey : 'sections.@' + cur?.id;
     const selectedOutline = secList.find(row => row.id === activeAdminSel) || null;
@@ -2237,7 +2279,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const contactOptionFields = isContactInspector ? CMS_CONTENT_FIELDS.filter(field => field.path === 'formOptions.topicPrompt' || field.path === 'formOptions.coveragePrompt' || /^formOptions\.(query|coverage)\./.test(field.path) && field.path !== 'formOptions.query.compare').map(field => contactLocalized(field.path,cmsAdminLabel(field.label))) : [];
     const editLinks = cur && !editingLicences ? (cur.type === 'hero' ? ['cta2href','claimHref'] : ['cta1href'].filter(key => Object.prototype.hasOwnProperty.call(cur,key) && !/^\/motor(?:[#?]|$)/.test(cur[key]))).map(key => {
       const localKey = key === 'claimHref' && cur[lk]?.claimHref !== undefined ? lk + '.' + key : key;
-      return {key, label:key === 'claimHref' ? 'ปลายทางลิงก์ช่วยเหลือเคลม' : key === 'cta2href' ? 'ปลายทางปุ่มรอง' : 'ปลายทางปุ่มหลัก', ...cmsInput(curPath + '.' + localKey,{nav:true})};
+      return {key,path:curPath+'.'+localKey, label:key === 'claimHref' ? 'ปลายทางลิงก์ช่วยเหลือเคลม' : key === 'cta2href' ? 'ปลายทางปุ่มรอง' : 'ปลายทางปุ่มหลัก', ...cmsInput(curPath + '.' + localKey,{nav:true})};
     }) : [];
     const calculatorFields = [];
     if (cur?.type === 'fit') {
@@ -2253,20 +2295,9 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
           }
         });
       };
-      add('datasetVersion','เวอร์ชันชุดข้อมูล');
-      add('sourcePackage','ชุดแหล่งอ้างอิง');
-      for(const [key,label] of [['hospitalName.'+lk,'ชื่อโรงพยาบาล'],['roomType.'+lk,'ประเภทห้อง'],['note.'+lk,'หมายเหตุแหล่งอ้างอิง'],['lastChecked','ตรวจสอบล่าสุด (YYYY-MM-DD)'],['confidenceLevel','ระดับความเชื่อมั่น']]) add('health.selectedRoomReference.'+key,label);
+      for(const [key,label] of [['hospitalName.'+lk,'ชื่อโรงพยาบาล'],['roomType.'+lk,'ประเภทห้อง'],['lastChecked','ตรวจสอบล่าสุด (YYYY-MM-DD)'],['confidenceLevel','ระดับความเชื่อมั่น']]) add('health.selectedRoomReference.'+key,label);
       add('health.selectedRoomReference.sourceUrl','URL แหล่งอ้างอิง','url');
       add('health.selectedRoomReference.totalFixedDaily','ค่าใช้จ่ายอ้างอิงต่อวัน','number');
-      for(const [id,situation] of Object.entries(cur.calculator?.situations || {})) {
-        if (!/^[\w-]+$/.test(id)) continue;
-        add('situations.'+id+'.'+lk,id+' / หัวข้อ');
-        add('situations.'+id+'.icon',id+' / ไอคอน');
-        (situation.recs || []).forEach((_rec,index)=>{
-          add('situations.'+id+'.recs.'+index+'.'+lk,id+' / คำแนะนำ '+(index+1));
-          add('situations.'+id+'.recs.'+index+'.w'+lk,id+' / คำอธิบาย '+(index+1));
-        });
-      }
     }
     const emptyCatalog={version:NEEDS_CATALOG_VERSION,products:[]};
     const storedCatalog=cur?.calculator?.productCatalog || emptyCatalog;
@@ -2308,17 +2339,24 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       }))
     };
     const editFields = (cur && sch) ? sch.fields.map(f => ({
-      key: f, label: FIELD_LABEL[f].th, value: (cur[lk] && cur[lk][f]) || '',
+      key: f, path:curPath+'.'+lk+'.'+f, label: FIELD_LABEL[f].th, value: (cur[lk] && cur[lk][f]) || '',
       big: !!MULTILINE[f], small: !MULTILINE[f],
       onInput: (e) => { const v = e.target.value; selectedSectionUpdater(section => { section[lk] = section[lk] || {}; section[lk][f] = v; }); }
     })) : [];
+    const editingHero = cur?.type === 'hero';
+    const heroPreviewWidth = S.heroPreviewWidth || (S.compactHome ? 390 : 1280);
+    const heroFieldGroups = editingHero ? [
+      {key:'main',label:'เนื้อหาหลัก',open:true,fields:editFields.filter(f=>['kicker','title','body','cta1','cta2'].includes(f.key))},
+      {key:'support',label:'ข้อความเสริมและการช่วยเหลือ',open:false,fields:[...editFields.filter(f=>['note','claimText','claimLinkText'].includes(f.key)),...(sharedDesign ? [{key:'heroStatement',path:'homeDesign.heroStatement.'+lk,label:'ข้อความข้างหัวข้อ',value:t(homeDesign.heroStatement),big:true,small:false,onInput:e=>this.upd(config=>setCmsCopy(config,'homeDesign.heroStatement.'+lk,e.target.value))}] : [])]},
+      {key:'links',label:'ปลายทางปุ่มและลิงก์',open:false,fields:[...editLinks.map(f=>({...f,small:true,big:false,onInput:f.change})),{key:'lineUrl',label:'ลิงก์ LINE',small:true,big:false,hint:'ใช้ร่วมกันทั้งเว็บไซต์',...(()=>{const field=cmsInput('contact.lineUrl',{url:true});return {...field,onInput:field.change};})()}]}
+    ] : [];
     if (cur?.id === 'cover' && isHome) editFields.push({
-      key:'ui.coverageLabel',label:'หัวข้อความคุ้มครอง',value:cmsText('ui.coverageLabel'),big:false,small:true,
+      key:'ui.coverageLabel',path:'ui.coverageLabel.'+lk,label:'หัวข้อความคุ้มครอง',value:cmsText('ui.coverageLabel'),big:false,small:true,
       onInput:e=>this.upd(config=>setCmsCopy(config,'ui.coverageLabel.'+lk,e.target.value))
     });
-    const contentGroups = editingLicences ? ['Advisor profile','Home licences','Licences']
+    const contentGroups = selectedAdminPair?.kind === 'footer' ? ['Footer design','Navigation'] : editingLicences ? ['Advisor profile','Home licences','Licences']
       : ({hero:['Advisor profile','Home design','Navigation'],motor:['Home design','Navigation'],cover:['Page composition'],
-          tiers:['Page composition','Motor comparison'],fit:['Calculator design'],talk:['Advisor profile','Home contact','Contact submission','Consultation form labels','Form choices'],
+          tiers:['Page composition'],fit:['Calculator design'],talk:['Advisor profile','Home contact','Contact submission','Consultation form labels','Form choices'],
           fees:['Transparency design'],privacy:['Transparency design','Cookie consent']})[cur?.id] || [];
     const contentShortcuts = contentGroups.filter(key=>!['Contact submission','Advisor profile'].includes(key)||isHome).map(key=>({
       key,label:cmsAdminLabel(key),
@@ -2330,6 +2368,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       return {
         key: itemId || (cur.id + '-i' + ii), id: itemId, n: String(ii + 1),
         rowLabel: (cur.type === 'faq' ? 'คำถาม ' : 'รายการ ') + (ii + 1),
+        title: it[lk]?.q || it[lk]?.title || it[lk]?.label || 'รายการ ' + (ii + 1), open:ii===0,
         canDeleteFaq: cur.type === 'faq', deleteFaq: () => this.requestDeleteFaq(cur.id, itemId),
         hidden: hidden,
         rowOpacity: hidden ? '.62' : '1',
@@ -2339,12 +2378,13 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         visibilityLabel: hidden ? 'แสดงอีกครั้ง' : 'ซ่อน',
         upOpacity: ii === 0 ? '.42' : '1', downOpacity: ii === cur.items.length - 1 ? '.42' : '1',
         fields: sch.item.map(f => ({
+          path:curPath+'.items.@'+itemId+'.'+lk+'.'+f,
           key: f, label: ((cur.type === 'tiers' && f === 'label' ? L('ชื่อชั้นประกัน','Insurance class') : cur.type === 'tiers' && f === 'note' ? L('หมายเหตุท้ายตารางของชั้นนี้','Class notes') : cur.type === 'tiers' && f === 'value' ? L('เหมาะกับใคร','Suitable for') : cur.type === 'faq' && f === 'label' ? L('หมวด (ไม่บังคับ)', 'Topic (optional)') : cur.type === 'faq' && f === 'meta' ? L('เวลาอ่าน (ไม่บังคับ)', 'Reading time (optional)') : FIELD_LABEL[f]).th), value: (it[lk] && it[lk][f]) || '',
           big: !!MULTILINE[f], small: !MULTILINE[f],
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][f] = v; }); }
         })),
         hasCells: !!(cur.type === 'tiers'),
-        hasIcon: ['trust','products','review','steps','claim','renew','fees','pdpa'].includes(cur.type),
+        hasIcon: ['trust','products','review','steps','claim','renew','fees','pdpa'].includes(cur.type) && !(sharedDesign && cur.type==='steps'),
         icon: it.icon || 'check',
         iconOptions: Object.keys(ICONS).map(key => ({key,label:({coins:'เหรียญ',handCoins:'รับเงิน',ban:'ข้อยกเว้น',chart:'กราฟ',settings:'ตั้งค่า',user:'ผู้ใช้',heartOutline:'หัวใจ',shieldCheck:'โล่พร้อมเครื่องหมายถูก',shield:'โล่',pulse:'ชีพจร',heart:'สุขภาพ',umbrella:'ร่ม',annuity:'แนวโน้มเติบโต',car:'รถยนต์',check:'เครื่องหมายถูก',zap:'สายฟ้า',compare:'เปรียบเทียบ',chat:'แชต',users:'กลุ่มคน',sprout:'จรวด',briefcase:'กระเป๋างาน',clock:'นาฬิกา',phone:'โทรศัพท์',mail:'อีเมล',pin:'ตำแหน่ง',star:'ดาว',refresh:'รีเฟรช',arrow:'ลูกศร',down:'ลูกศรลง',seal:'ตรารับรอง',alert:'แจ้งเตือน',camera:'กล้อง',bell:'กระดิ่ง',file:'เอกสาร',lock:'ล็อก',quote:'คำพูด'})[key] || key})),
         onIcon: e => { const value=e.target.value; if (ICONS[value]) updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].icon=value;}); },
@@ -2387,7 +2427,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       const headId = (hd && hd.id) || '';
       const hidden = !!(hd && hd.on === false);
       return {
-        key: headId || (cur.id + '-eh' + hi), id: headId, value: t(hd), hidden: hidden,
+        key: headId || (cur.id + '-eh' + hi), path:curPath+'.heads.@'+headId+'.'+lk, id: headId, value: t(hd), hidden: hidden,
         stateLabel: hidden ? 'ซ่อนอยู่' : 'แสดงอยู่',
         stateBg: hidden ? 'var(--color-neutral-200)' : 'var(--color-accent-2-200)',
         stateFg: hidden ? 'var(--color-neutral-700)' : 'var(--color-accent-2-800)',
@@ -2419,6 +2459,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       const hidden = !!(cd && cd.on === false);
       return {
         key: cardId || (cur.id + '-card' + ci), id: cardId, n: String(ci + 1), showLogo: showLogo,
+        title:cd[lk]?.title || 'การ์ด ' + (ci + 1), open:ci===0,
         licenceRole:cd.licenceRole || '',
         licenceRoleOptions:[{value:'',label:'อื่น ๆ (เฉพาะหน้าแรก)'},{value:'life',label:'ตัวแทนประกันชีวิต (เฉพาะหน้าแรก)'},{value:'broker',label:'นายหน้าประกันรถ (หน้าแรก + ประกันรถ)'}],
         onLicenceRole:e => { if (!['','life','broker'].includes(e.target.value)) return; updatePairRepeatable(selectedAdminPair,'cards',cardId,ci,(_section,list,idx)=>{ if(list[idx]) list[idx].licenceRole=e.target.value; }); },
@@ -2439,6 +2480,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         duplicate: () => this.duplicateRepeatable(cur.id, 'cards', cardId, ci),
         toggleVisible: () => hidden ? this.restoreRepeatable(cur.id, 'cards', cardId, ci) : this.removeRepeatable(cur.id, 'cards', cardId, ci),
         fields: cardKeys.map(k => ({
+          path:curPath+'.cards.@'+cardId+'.'+lk+'.'+k,
           key: k, label: (CARD_LBL[k] || FIELD_LABEL[k] || L(k, k)).th, value: (cd[lk] && cd[lk][k]) || '',
           big: k === 'body', small: k !== 'body',
           onInput: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { const o = list[idx]; if (!o) return; o[lk] = o[lk] || {}; o[lk][k] = v; }); }
@@ -2446,6 +2488,53 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       };
     });
 
+
+    const ownedCopyFields = (group) => (cmsGroups.find(entry=>entry.key===group)?.fields || []).filter(field=>!field.isMedia).map(field=>({...field,big:true,small:false,onInput:field.change}));
+    const footerFields = selectedAdminPair?.kind === 'footer' ? [...CMS_CONTENT_FIELDS.filter(field=>field.localized && field.path.startsWith('footer.')), {path:'footer.tagline',label:'ข้อความแนะนำใน Footer'}, {path:'footer.legal',label:'ข้อความลิขสิทธิ์'}].map(field=>{
+      const path=field.path+'.'+lk,input=cmsInput(path,field);
+      return {key:path,path,label:cmsAdminLabel(field.label),big:true,small:false,...input,onInput:input.change};
+    }) : [];
+    const contentFieldGroups = isContactInspector ? [] : [
+      {key:'main',label:'ข้อความหลัก',open:true,fields:[...editFields.filter(field=>!['note','cta1','cta2'].includes(field.key)),...footerFields]},
+      {key:'comparison',label:'หัวตารางและข้อความประกอบ',open:true,fields:cur?.type==='tiers' && sharedDesign ? ownedCopyFields('Motor comparison') : []},
+      {key:'notes',label:'ข้อความกำกับ / หมายเหตุ',open:false,fields:editFields.filter(field=>field.key==='note')},
+      {key:'links',label:'ปุ่มและลิงก์',open:false,fields:[...editFields.filter(field=>['cta1','cta2'].includes(field.key)),...editLinks.map(field=>({...field,small:true,big:false,onInput:field.change}))]}
+    ].filter(group=>group.fields.length);
+    const contactEditorGroups = isContactInspector ? [
+      {key:'main',label:'ข้อความหลัก',open:true,fields:contactTitleFields.filter(field=>!field.path.startsWith('advisor.'))},
+      {key:'advisor',label:'ผู้ให้คำปรึกษา',fields:contactTitleFields.filter(field=>field.path.startsWith('advisor.'))},
+      ...contactChannels.map(channel=>({...channel,channelKey:channel.key,key:'channel-'+channel.key,label:'ช่องทางติดต่อ · '+channel.label})),
+      {key:'form',label:'แบบฟอร์มติดต่อ',fields:contactFormFields},
+      {key:'consent',label:'ข้อความยินยอม (Consent)',fields:contactConsentFields},
+      {key:'options',label:'หัวข้อและตัวเลือกในแบบฟอร์ม',fields:contactOptionFields},
+      {key:'display',label:'ปุ่มและการแสดงผล',fields:contactDisplayFields}
+    ].filter(group=>group.fields.length) : [];
+
+    // Brand forms share the same canonical paths and validation as inline copy.
+    const brandField = (base,label,options={}) => {
+      const definition = {...CMS_CONTENT_FIELDS.find(field=>field.path===base),...options};
+      const path = base + (definition.localized ? '.'+lk : '');
+      const input = cmsInput(path,definition), value = cmsGet(site,path) || '';
+      return {...input,key:path,label,inputLabel:definition.media?'Path รูปภาพ / HTTPS URL':label,big:!!definition.big,maxLength:base==='brand.initial'?2:10000,
+        isMedia:!!definition.media,hasImage:!!value,image:definition.media?assetURL(value):'',
+        editImage:()=>this.editMedia(path),clearImage:()=>input.commit({target:{value:''}})};
+    };
+    const brandLocal = (path,label,big=false)=>brandField(path,label,{localized:true,big});
+    const registeredGroup = key=>cmsGroups.find(group=>group.key===key);
+    const brandHero = isMotor ? 'motor' : 'hero';
+    const brandLocations = [{id:'header',label:'ส่วนหัวเว็บไซต์'},...secList.filter(section=>[brandHero,insurerSection?.id,'talk'].includes(section.id)).map(section=>({id:section.id,label:section.name})),{id:'footer',label:'ส่วนท้ายเว็บไซต์'}];
+    const brandPreviewId = brandLocations.some(location=>location.id===S.brandPreview) ? S.brandPreview : 'header';
+    const brandLink = (id,label)=>({label,open:()=>this.selectContentSection(id)});
+    const brandToggles = [['header.show','ส่วนหัวเว็บไซต์'],['header.sticky','ตรึงส่วนหัวเมื่อเลื่อนหน้า'],['header.showNav','เมนูเว็บไซต์'],['header.showCta','ปุ่ม LINE บนส่วนหัว'],['footer.show','ส่วนท้ายเว็บไซต์'],['stickyBar','ปุ่ม LINE ลอย / แถบติดต่อบนมือถือ']].map(([path,label])=>({key:path,label,scope:'ทุกหน้า',checked:!!cmsGet(site,path),change:e=>this.upd(config=>cmsSet(config,path,e.target.checked))}));
+    secList.filter(section=>section.canToggle && [insurerSection?.id,'talk'].includes(section.id)).forEach(section=>brandToggles.push({key:section.id,label:section.name,scope:section.scope,checked:section.on,change:section.toggle}));
+    const brandEditorGroups = [
+      {key:'identity',label:'ข้อมูลแบรนด์หลัก',preview:'header',fields:[brandField('brand.media.headerLogo','โลโก้ส่วนหัวเว็บไซต์'),brandLocal('brand.name','ชื่อแบรนด์'),brandLocal('brand.fullName','ชื่อเต็ม'),brandLocal('brand.role','คำอธิบายแบรนด์ (Alt text)')],subgroups:[{...registeredGroup('Brand images'),fields:registeredGroup('Brand images').fields.filter(field=>field.path!=='brand.media.headerLogo.'+lk)}]},
+      {key:'credentials',label:'ใบอนุญาตและผู้ให้คำปรึกษา',preview:brandHero,fields:[brandField('brand.advisorLogo','โลโก้ผู้ให้คำปรึกษา',{media:true}),brandField('brand.advisorLogoAlt','คำอธิบายโลโก้'),brandLocal('brand.credential','บทบาทและการให้บริการ',true)],subgroups:[registeredGroup('Licences'),registeredGroup('Advisor profile'),registeredGroup('Home licences')],links:insurerSection?[brandLink(insurerSection.id,'โลโก้บริษัทและการ์ดใบอนุญาต')]:[]},
+      {key:'contact',label:'ช่องทางติดต่อ',preview:'talk',fields:[brandField('contact.lineId','LINE ID'),brandField('contact.lineUrl','ลิงก์ LINE',{url:true}),brandLocal('header.cta','ข้อความปุ่ม LINE บนส่วนหัว'),brandField('contact.facebookName','ชื่อ Facebook'),brandField('contact.facebookUrl','ลิงก์ Facebook',{url:true}),brandField('contact.phone','เบอร์โทรศัพท์'),brandField('contact.email','อีเมล',{email:true})],links:[brandLink('talk','ข้อความและแบบฟอร์มติดต่อ')]},
+      {key:'hours',label:'เวลาทำการและพื้นที่บริการ',preview:'talk',fields:[brandLocal('contact.hours','เวลาทำการ',true),brandLocal('contact.area','พื้นที่บริการ / สถานที่นัดหมาย',true)]},
+      {key:'display',label:'จุดแสดงผลบนเว็บไซต์',preview:'footer',fields:[],toggles:brandToggles,layout:true,subgroups:[{key:'Footer copy',label:'ข้อความส่วนท้ายเว็บไซต์',fields:[brandLocal('footer.tagline','ข้อความแนะนำใน Footer',true),brandLocal('footer.legal','ข้อความกฎหมายและการเปิดเผยข้อมูล',true)]},registeredGroup('Footer design')],links:[brandLink('footer','เนื้อหา Footer ทั้งหมด')]}
+    ].map((group,index)=>({...group,number:index+1,open:index===0,inspect:()=>this.inspectBrandLocation(group.preview)}));
+    const brandOtherGroups = cmsGroups.filter(group=>!['Brand images','Licences','Advisor profile','Home licences','Footer design'].includes(group.key));
 
     const f = S.form.qtype === 'compare' ? { ...S.form, qtype:'quote' } : S.form;
     const QUERY = Object.fromEntries(['quote', 'assess', 'review', 'renewal', 'service', 'claim', 'general'].map(key => [key, cmsText('formOptions.query.' + key)]));
@@ -2513,16 +2602,6 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const _liveSig = this.sig(_live.config, _live.text);
     const dirty = this.sig(site, this.textOv) !== _liveSig;
     const ownerSession = this.hasSession();
-    const _hist = this.loadHist();
-    const histList = _hist.map((hh, i) => ({
-      key: String(hh.id), num: String(_hist.length - i),
-      when: this.relTime(hh.ts, true), stamp: this.absTime(hh.ts),
-      isLive: this.sig(hh.config, hh.text) === _liveSig,
-      notLive: this.sig(hh.config, hh.text) !== _liveSig,
-      restored: !!hh.restoredFrom,
-      restoreNote: hh.restoredFrom ? ('กู้คืนจาก ' + this.absTime(hh.restoredFrom)) : '',
-      restore: () => this.restoreVersion(hh.id)
-    }));
 
     return {
       enhancedContact,
@@ -2584,6 +2663,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       enBg: !th ? A.action : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
       callLabel: cmsText('ui.callLabel'),
       cmsGroups: cmsGroups,
+      brandEditorGroups,brandOtherGroups,brandLocations,brandPreviewId,
+      chooseBrandLocation:e=>this.inspectBrandLocation(e.target.value),
       homeTierChoices: ((site.sections || []).find(section => section.id === 'tiers')?.items || []).map(item => ({
         key:item.id, label:t({[lk]:item[lk]?.label}), checked:(homeDesign.featuredTierIds || []).includes(item.id),
         toggle: e => this.upd(config => { const list = new Set(config.homeDesign.featuredTierIds || []); if (e.target.checked) list.add(item.id); else list.delete(item.id); config.homeDesign.featuredTierIds = [...list]; })
@@ -2613,7 +2694,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       credentialInput: cmsInput('brand.credential.' + lk, {}),
       legalInput: cmsInput('footer.legal.' + lk, {}),
       advisorLogoInput: cmsInput('brand.advisorLogo', { media: true }),
-      imageSlots:cmsImageSlots(site,lk).map(slot=>({...slot,label:cmsAdminMediaLabel(slot),image:assetURL(slot.value),hasImage:!!slot.value,edit:()=>this.editMedia(slot.path)})),
+      imageSlots:cmsImageSlots(site,lk).filter(slot=>slot.path!=='brand.media.mark').map(slot=>({...slot,label:cmsAdminMediaLabel(slot),image:assetURL(slot.value),hasImage:!!slot.value,edit:()=>this.editMedia(slot.path)})),
       editAdvisorImage:()=>this.editMedia('brand.advisorLogo'),
       lineUrlInput: cmsInput('contact.lineUrl', { url: true }),
       facebookUrlInput: cmsInput('contact.facebookUrl', { url: true }),
@@ -2962,9 +3043,26 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       editorAnnouncement: S.editorAnnouncement || '',
       showEditorHistoryNotice: !!(S.admin || S.editMode),
       adminBusy: String(!!S.remoteBusy),
+      editorPages: window.CoverMateContract?.CMS_EDITABLE_PAGES || [],
+      editorPageBusy: !!(S.remoteBusy || S.confirmAction || S.tierRemarkEditor),
+      selectEditorPage: event => {
+        const page = event.target.value;
+        if (S.remoteBusy || S.confirmAction || S.tierRemarkEditor || !window.CoverMateContract.CMS_EDITABLE_PAGES.some(entry=>entry.id===page)) { event.target.value=routePage; return; }
+        if (page !== routePage) this.goOwnerRoute(S.editMode ? 'edit' : 'admin', {page});
+      },
       savedFlash: S.savedFlash, pubFlash: S.pubFlash,
       requestSaveDraft: () => this.requestSaveDraft(),
-      openPreview: () => { this.persistDraft(); const previewPath = this.ownerPathForMode('preview', routePage); try { const popup = window.open(previewPath, '_blank', 'noopener,noreferrer'); if (popup) { try { popup.opener = null; } catch (e) {} return; } } catch (e) {} this.goOwnerRoute('preview', { page: routePage }); },
+      openPreview: () => {
+        this.persistDraft();
+        const previewPath = this.ownerPathForMode('preview', routePage);
+        try {
+          // noopener makes window.open return null even when the tab opened.
+          // Sever the blank tab's opener before navigating; only fall back if blocked.
+          const popup = window.open('about:blank', '_blank');
+          if (popup) { popup.opener = null; popup.location.replace(previewPath); return; }
+        } catch (e) {}
+        this.goOwnerRoute('preview', { page: routePage });
+      },
       requestPublish: () => this.requestPublish(),
       gotoAdmin: () => { this.goOwnerRoute('admin'); },
       showAdminConfirm: !!S.confirmAction,
@@ -2994,9 +3092,9 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       toastUndoLabel: S.toast?.undoKind === 'publish' ? 'ย้อน Publish · เปลี่ยนเว็บจริง' : 'Undo',
       undoActionToast: () => this.undoActionToast(),
       dismissToast: () => this.dismissToast(),
-      histList: histList, hasHist: histList.length > 0,
+      ...(S.tab === 'versions' ? this.versionHistoryView() : {showVersionDetail:false}),
       tabVersions: S.tab === 'versions',
-      goVersions: () => this.setState({ tab: 'versions' }),
+      goVersions: () => this.openVersionsTab(),
       tabVerBg: S.tab === 'versions' ? A.action : 'transparent', tabVerFg: S.tab === 'versions' ? A.on : 'var(--color-neutral-700)',
       closeAdmin: () => this.closeEditorPanel(),
       editMode: S.editMode,
@@ -3018,6 +3116,16 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       onOutlineQuery:event => this.setState({outlineQuery:event.target.value}),
       clearOutlineQuery:() => this.setState({outlineQuery:''}, () => requestAnimationFrame(() => document.querySelector('[data-outline-search]')?.focus({preventScroll:true}))),
       selectedOutline,
+      editingHero,heroWorkspace:S.tab==='content',heroFieldGroups,heroPreviewWidth,
+      previewSection:S.tab==='brand'?brandPreviewId:activeAdminSel,
+      previewLabel:S.tab==='brand'?brandLocations.find(location=>location.id===brandPreviewId)?.label:secList.find(row=>row.id===activeAdminSel)?.name || '',
+      contentFieldGroups,contactEditorGroups,hasItemEditor:!!sch?.item,
+      contentItemsLabel:cur?.type==='tiers' ? 'ประเภทประกัน (คอลัมน์)' : cur?.type==='faq' ? 'รายการคำถาม' : 'รายการในส่วนนี้',
+      heroPreviewModes:[['Desktop',1280,'M3 3h18v13H3zM8 21h8M12 16v5'],['Tablet',768,'M5 2h14v20H5zM11 18h2'],['Mobile',390,'M7 2h10v20H7zM11 18h2']].map(([label,width,path])=>({label,width,path,selected:heroPreviewWidth===width,choose:()=>this.setState({heroPreviewWidth:width})})),
+      heroHasArtwork:sharedDesign,editHeroArtwork:()=>this.editMedia('homeDesign.botanicalIllustration'),
+      heroBackgrounds:['bg','surface','sage','dark'].map((key,index)=>({key,label:['พื้นหลังหลัก','พื้นหลังรอง','เขียวอ่อน','เข้ม'][index],color:['var(--color-bg)','var(--color-surface)','var(--color-accent-2-200)','var(--color-neutral-900)'][index],selected:cur?.bg===key,choose:()=>selectedSectionUpdater(section=>{section.bg=key;})})),
+      contentSections:secList,
+      selectContentSection:event=>this.selectContentSection(event.target.value),
       outlineNotice:selectedOutline && !selectedOutline.on ? 'ส่วนนี้ซ่อนอยู่ในหน้าตัวอย่าง ข้อมูลยังอยู่และแก้ไขได้' + (selectedOutline.dependency ? ' · ' + selectedOutline.dependency : '') : (S.outlineNotice || ''),
       showContactInspector:isContactInspector,
       contactTitleFields,
@@ -3038,8 +3146,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       contentDependency:editingLicences ? (isMotor ? 'หน้านี้แสดงเฉพาะใบอนุญาตนายหน้าประกันรถ ใบอนุญาตประเภทอื่นยังอยู่ในหน้าแรก ' : '') + 'การแสดงส่วนนี้ขึ้นอยู่กับส่วนโลโก้บริษัทประกันรถ และซ่อนหรือแสดงการ์ดแต่ละใบได้ที่นี่' : '',
       editFields: editFields, editItems: editItems, editLinks: editLinks,
       hasCalculatorFields:calculatorFields.length>0,calculatorFields,...calculatorDataView,
-      goMedia:()=>this.setState({tab:'brand'},()=>requestAnimationFrame(()=>{const group=document.querySelector('[data-cms-group="Images & crop"]');if(group){group.open=true;group.scrollIntoView({block:'start'});}})),
-      editHeads: editHeads, hasHeads: editHeads.length > 0,
+      goMedia:()=>this.openBrandGroup('Images & crop'),
+      editHeads: editHeads, hasHeads:cur?.type==='tiers',
       addHead: () => selectedSectionUpdater(c => {
         c.heads = c.heads || [];
         const item = { on: true, th: 'ความคุ้มครองใหม่', en: 'New coverage' };
@@ -3047,7 +3155,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         c.heads.push(item);
         (c.items || []).forEach(o => { o.st = Array.isArray(o.st) ? o.st : []; o.st.push('n'); });
       }),
-      editCards: editCards, hasCards: editCards.length > 0,
+      editCards: editCards, hasCards:!!sch?.card,
       canAddCard: !!(cur && sch && sch.card), addCardLabel: cmsAdminItemLabel((cur && sch && sch.addCardLabel) || 'card'),
       addCard: () => selectedSectionUpdater(c => {
         const keys = (SCHEMA[c.type] && SCHEMA[c.type].card) || [];

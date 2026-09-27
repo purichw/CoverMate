@@ -120,10 +120,11 @@ export function withCmsController(Base, {
         }
         return;
       }
+      if (this.state.versionOpen) { this._versions?.versionKeydown(this, event); return; }
       // This panel is non-modal: Escape closes it only while focus is inside.
       // Media dialogs and native selects retain their own dismissal behavior.
       if (event.key === 'Escape' && this.state.admin && !this.state.remoteBusy && !event.isComposing &&
-          event.target.closest?.('[data-editor-panel]') && !event.target.closest?.('select') &&
+          event.target.closest?.('[data-editor-panel]') && !event.target.closest?.('select,[role="combobox"][aria-expanded="true"]') &&
           !document.querySelector('[role="dialog"][data-media-editor]')) {
         event.preventDefault();
         this.closeEditorPanel();
@@ -289,6 +290,7 @@ export function withCmsController(Base, {
       if (action.kind === 'save') this.saveDraftConfirmed(action.undoSnapshot);
       else if (action.kind === 'publish') this.publishConfirmed(action.undoSnapshot);
       else if (action.kind === 'reset') this.resetDraftConfirmed();
+      else if (action.kind === 'restore-version') this.restoreVersionConfirmed(action);
       else if (action.kind === 'delete-faq') this.deleteFaqConfirmed(action);
     }
 
@@ -415,33 +417,41 @@ export function withCmsController(Base, {
       }
     }
 
-    async restoreVersion(id) {
-      if (this.state.remoteBusy) return;
-      const e = this.loadHist().find(h => h.id === id); if (!e) return;
-      const cfg = this.normalizeConfig(e.config, { repeatableIds: true }), txt = clone(e.text || {});
-      this.setState({ remoteBusy: true, remoteError: '' });
+    restoreVersion(id) { return this._versions?.requestVersionRestore(this, id); }
+
+    restoreVersionConfirmed(action) { return this._versions.restoreVersionConfirmed(this, action); }
+
+    refreshVersionHistory() {
+      return this._versions ? this._versions.refreshVersionHistory(this, HIST_CAP, K_HIST) : this.openVersionsTab();
+    }
+
+    closeVersionDetails() {
+      this.setState({ versionOpen:false });
+      requestAnimationFrame(() => this._versionReturnFocus?.isConnected && this._versionReturnFocus.focus({preventScroll:true}));
+    }
+
+    async openVersionsTab() {
+      this.setState({ tab:'versions', versionsBusy:true, versionsError:'' });
       try {
-        this.invalidateDraftQueue();
-        const cm = await this.firebase();
-        if (!cm || !cm.publishSiteState) throw new Error('เชื่อมต่อระบบจัดการเนื้อหาไม่ได้ กรุณาลองใหม่');
-        const version = await cm.publishSiteState(cfg, txt, { restoredFrom: e.ts || e.id });
-        this.textOv = clone(txt);
-        this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
-        this.writeJSON(K_LIVE, cfg); this.writeJSON(K_LIVE_TEXT, txt);
-        const hist = this.loadHist();
-        if (!hist.some(h => h.id === version.id)) hist.unshift({ id: version.id, ts: version.ts || Date.now(), restoredFrom: e.ts || e.id, config: cfg, text: txt });
-        while (hist.length > HIST_CAP) hist.pop();
-        this.writeJSON(K_HIST, hist);
-        this._lastSaved = Date.now();
-        this.recordEditorHistory({ config: cfg, text: txt }, { label: 'กู้คืนเวอร์ชันที่ Publish' });
-        this.setState({ site: cfg, lastPublished: Date.now(), remoteBusy: false, remoteAction: '', remoteError: '' }, () => requestAnimationFrame(() => this.applyText()));
-      } catch (err) {
-        this.textOv = clone(txt);
-        this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
-        this.noteRemoteError('กู้คืนไม่สำเร็จ', err);
-        this.recordEditorHistory({ config: cfg, text: txt }, { label: 'โหลดเวอร์ชันลง Draft' });
-        this.setState({ site: cfg }, () => requestAnimationFrame(() => this.applyText()));
+        if (!this._versions) {
+          const url = new URL('/assets/visitor/editor-versions.js', window.location.origin);
+          if (this._versionModuleRetry) url.searchParams.set('retry', this._versionModuleRetry);
+          this._versions = await import(url.href);
+        }
+        this.setState({ versionsBusy:false });
+        await this.refreshVersionHistory();
+      } catch (error) {
+        this._versionModuleRetry = (this._versionModuleRetry || 0) + 1;
+        this.setState({ versionsBusy:false, versionsError:this.errorMessage(error) });
       }
+    }
+
+    versionHistoryView() {
+      if (this._versions) return this._versions.buildVersionHistoryView(this);
+      return { versionsReady:false, versionsBusy:!!this.state.versionsBusy, versionsFailed:!!this.state.versionsError,
+        versionsError:this.state.versionsError || '', refreshVersions:()=>this.openVersionsTab(),
+        versionsRows:[], versionsFilters:[], showVersionDetail:false, versionDraftStatus:'Draft',
+        versionLiveStamp:'กำลังเตรียมประวัติ', versionDifferences:[] };
     }
 
     saveText() {
@@ -471,6 +481,7 @@ export function withCmsController(Base, {
     saveInlineText(el, commit) {
       if (this._applyingHistory || this.state.remoteBusy) return;
       const path = this.cmsCopyPath(el);
+      if (!path) return;
       if (!this.textOv) this.textOv = this.loadText();
       if (path) {
         this.textOv['cms:' + path] = el.textContent || '';
@@ -479,10 +490,6 @@ export function withCmsController(Base, {
           delete this.textOv['cms:' + path];
           this.save(site);
         } else this.saveText();
-      } else {
-        if (!this.textOv) this.textOv = this.loadText();
-        this.textOv[el.getAttribute('data-ek')] = el.textContent || '';
-        this.saveText();
       }
       this.markEditableEmpty(el);
     }
@@ -501,9 +508,15 @@ export function withCmsController(Base, {
     enableEdit() {
       this.syncInlineMedia();
       const self = this;
-      this.eachEditable((el, key) => {
+      this.eachEditable(el => {
         const path = this.cmsCopyPath(el);
-        el.setAttribute('data-ek', path ? 'cms:' + path : key);
+        // Legacy positional overrides remain readable, but new edits require a CMS owner.
+        if (!path) {
+          el.removeAttribute('contenteditable');
+          el.classList.remove('om-editable');
+          return;
+        }
+        el.setAttribute('data-ek', 'cms:' + path);
         if (el.getAttribute('contenteditable') !== 'true') {
           el.setAttribute('contenteditable', 'true');
           el.setAttribute('spellcheck', 'false');
@@ -674,6 +687,7 @@ export function withCmsController(Base, {
       requestAnimationFrame(() => {
         const row = [...document.querySelectorAll('[data-admin-repeatable-id]')].find(el => el.dataset.adminRepeatableId === itemId);
         const target = row?.querySelector('[data-admin-copy-key="q"]') || document.querySelector('[data-admin-add-faq]');
+        for (let node=row; node; node=node.parentElement) if (node.tagName==='DETAILS') node.open=true;
         target?.focus({ preventScroll: true });
         target?.scrollIntoView({ block: 'center', behavior: 'instant' });
       });

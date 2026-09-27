@@ -23,6 +23,11 @@ well as the visitor; do not edit that generated block by hand.
   changes. DOM/option changes, reset and resize are observed. Visitor's existing
   render sweep also refreshes controlled values, localization and layout.
 - Multiple-select/listbox controls are intentionally not converted.
+- Selected values and option labels are centered. Trigger insets are symmetric,
+  reserving at least 32px on both sides for the chevron; menu options reserve
+  36px on both sides for the selected checkmark. Single-select native fallbacks use
+  centered text where supported by the browser. Form labels and text inputs keep
+  their existing alignment.
 - Screens that replace their form asynchronously must preserve the currently
   focused control on every render. Operations captures the active filter before
   replacing its loading/completed list, refreshes its shared dropdown, and
@@ -67,8 +72,10 @@ Playwright engine. Screenshots/reports are in `uat-results/custom-select/`.
 `node scripts/select-spacing-check.mjs` checks rendered control insets on the
 articles index (TH/EN, 320/390/1440px), CMS list, Editor, contact, calculator,
 and renewal controls. The article sort owns its native select styling, including
-12px left padding; the shared trigger mirrors that geometry. It also exercises
-sort selection and Escape. Local fixture evidence is in
+12px left padding; the shared trigger balances its insets to center the value.
+It also exercises sort selection and Escape. `--center-only` scopes the check to
+desktop/mobile Articles and CMS controls, including the Cases status dropdown.
+Local fixture evidence is in
 `uat-results/select-spacing/`; this does not certify production publication.
 
 See [the September 24 release](RELEASE_SELECT_MOBILE_LINE_20260924.md) for the

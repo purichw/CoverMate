@@ -1,5 +1,20 @@
 # Visitor Bundle Sources
 
+Version history uses `editor-versions.html` and `editor-version-detail.html`,
+with canonical comparisons and version actions in lazy `editor-versions.js`.
+The CMS controller loads this module on demand; its existing persistence API
+loads the real Publish history and restores snapshots only to Draft, with
+confirmation and Undo. No automatic/manual Draft-save history is fabricated.
+Run `npm run check:editor-versions`; see `docs/CMS_EDITOR_PANEL.md` and
+`docs/CMS_EDITOR_HISTORY.md` for the data and restore contract.
+
+The Brand/contact tab is composed in `editor-brand.html`, with reusable buffered
+CMS media/field markup in `editor-cms-field.html` and `editor-cms-input.html`.
+`editor-brand-location.html` supplies the shared location picker; live snapshots
+reuse `editor-preview.html`. All values/actions resolve through `runtime.js`
+and the existing CMS/media controller. Run `npm run check:editor-brand` for the
+isolated real-UI checks; see `docs/CMS_EDITOR_PANEL.md` for field ownership.
+
 `index.html` is the generated deployable visitor/owner-mode artifact, not proof
 that current workspace changes are live. Edit the files in
 this folder first, then run:
@@ -12,17 +27,39 @@ Source ownership:
 
 - `shell.html` is the outer static shell around the exported visitor bundle.
 - `template.html` is the embedded `__bundler/template` HTML with a runtime slot.
-- `editor-panel.css` owns the Admin Editor side panel and mobile bottom sheet.
-  The generator embeds it in `index.html`. Page Outline and the contextual
-  Contact inspector share existing CMS owners; the Content, Brand/Contact,
-  Theme/Data and Version History tool bodies retain their existing behavior.
+- `editor-panel.css` owns the Admin Editor side panel, mobile bottom sheet and
+  full-width Content workspace. The generator emits a versioned stylesheet.
+  Page Outline and the contextual Contact inspector share existing CMS owners;
+  Hero editing opens Content. Brand/Contact, Theme/Data and Version History retain
+  their existing behavior.
   See [Editor panel](../../docs/CMS_EDITOR_PANEL.md).
+- `editor-field.html` / `editor-language.html` are shared build fragments for
+  generic Content, Outline, repeatable fields and Hero. `editor-hero.html` composes
+  Hero field groups without introducing new data owners.
+- `editor-content.html` composes the page-ordered section navigator and grouped
+  fields. `editor-contact.html` is shared by Structure and Content;
+  `editor-preview.html` gives every section the same inert snapshot controls.
+  `node scripts/editor-panel-browser-check.mjs --content` verifies the real
+  section/table/FAQ/contact/Footer editing flows and responsive layout.
+- `editor-page.html` shares the Home/Motor picker between the panel and inline
+  Tools menu. Its options and owner URLs use `CMS_EDITABLE_PAGES` in the contract.
+  `check:editor-pages` verifies switching, Draft isolation, language, history
+  navigation, reload and selected-page Preview. New pages need a real renderer
+  and canonical CMS projection before they can be registered.
+- `editor-preview.js` is emitted as a lazy, content-versioned module. It snapshots
+  the actual Visitor section into an inert, script-free responsive iframe in the
+  Content workspace. It strips owner-only controls and preserves form visuals
+  without executable forms. Full Draft Preview remains the interactive surface.
 - `home.html` and `home.css` are the compact Home projection while Motor stays
   shared. The generator composes the markup into `template.html` and emits
   minified `assets/visitor/home.css` with a content-versioned stylesheet link.
 - `defaults.js` is the default CMS/site config injected into the runtime.
 - `runtime.js` owns rendering, route/mode state, normalized CMS projections,
   hydration, and DOM bindings in the injected `text/x-dc` runtime.
+  Inline text requires a canonical CMS owner shared with the panel, whether the
+  marker uses a stable-ID section path or a registered localized field. New
+  positional text overrides are not allowed; legacy reads remain supported.
+  `check:editor-parity` inventories Home/Motor TH/EN and exercises both entry points.
 - `cms-controller.js` composes owner commands through `withCmsController`:
   draft-save scheduling, Save/Publish/Reset, shortcuts, media, and history.
   FAQ collection commands add a bilingual row and focus its question field,

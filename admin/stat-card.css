@@ -1,0 +1,15 @@
+/* Shared internal alignment only; each feature owns data, actions and card skin. */
+.cm-stat-card {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  text-align:center;
+}
+.cm-stat-card > * { min-width:0; max-width:100%; }
+.cm-stat-card .label { justify-content:center; }
+.cm-stat-card.article-stat { row-gap:8px; }
+.cm-stat-card .article-stat-icon { order:0; }
+.cm-stat-card dd { order:1; }
+.cm-stat-card .article-stat-label { order:2; }

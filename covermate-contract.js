@@ -34,6 +34,10 @@ export const OWNER_HASHES = new Set(Object.keys(ADMIN_OWNER_HASH_MAP));
 export const OWNER_PATHS = new Set(ADMIN_OWNER_PATHS);
 export const ROUTE_PAGE_HOME = "home";
 export const ROUTE_PAGE_MOTOR = "motor";
+export const CMS_EDITABLE_PAGES = Object.freeze([
+  Object.freeze({ id: ROUTE_PAGE_HOME, label: 'หน้าแรก', path: PUBLIC_HOME_PATH, section: 'hero' }),
+  Object.freeze({ id: ROUTE_PAGE_MOTOR, label: 'ประกันรถยนต์', path: PUBLIC_MOTOR_PATH, section: 'motor' })
+]);
 export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics", "settings"]);
 export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
 
@@ -59,12 +63,17 @@ export function ownerModeFromPath(path = "") {
   return ADMIN_OWNER_ROUTE_MAP[normalizePath(path)] || "";
 }
 
-export function ownerPathForMode(mode = "", page = "home") {
+export function ownerPathForMode(mode = "", page = "home", search = "") {
   const entry = Object.entries(ADMIN_OWNER_ROUTE_MAP).find(([, value]) => value === mode);
   if (!entry) return "";
-  return normalizeRoutePage(page) === ROUTE_PAGE_MOTOR
-    ? `${entry[0]}?${ADMIN_OWNER_PAGE_QUERY}=motor`
-    : entry[0];
+  const id = normalizeRoutePage(page);
+  const params = new URLSearchParams();
+  const context = new URLSearchParams(search);
+  if (id !== ROUTE_PAGE_HOME) params.set(ADMIN_OWNER_PAGE_QUERY, id);
+  for (const [key, value] of [['lang', 'en'], ['cm_env', 'uat'], ['cm_emulator', '1']]) {
+    if (context.get(key) === value) params.set(key, value);
+  }
+  return entry[0] + (params.size ? '?' + params : '');
 }
 
 export function ownerModeFromHash(hash = "") {
@@ -72,17 +81,18 @@ export function ownerModeFromHash(hash = "") {
 }
 
 export function normalizeRoutePage(page = ROUTE_PAGE_HOME) {
-  return page === ROUTE_PAGE_MOTOR ? ROUTE_PAGE_MOTOR : ROUTE_PAGE_HOME;
+  return CMS_EDITABLE_PAGES.find(entry => entry.id === page)?.id || ROUTE_PAGE_HOME;
 }
 
 export function publicPathForRoutePage(page = ROUTE_PAGE_HOME) {
   if (page === 'articles') return PUBLIC_ARTICLES_PATH;
-  return normalizeRoutePage(page) === ROUTE_PAGE_MOTOR ? PUBLIC_MOTOR_PATH : PUBLIC_HOME_PATH;
+  return CMS_EDITABLE_PAGES.find(entry => entry.id === page)?.path || PUBLIC_HOME_PATH;
 }
 
 export function routePageFromLocationParts(path = "", search = "") {
   const clean = normalizePath(path);
-  if (clean === PUBLIC_MOTOR_PATH) return ROUTE_PAGE_MOTOR;
+  const editablePage = CMS_EDITABLE_PAGES.find(entry => entry.path === clean);
+  if (editablePage) return editablePage.id;
   if (clean === PUBLIC_ARTICLES_PATH) return 'articles';
   if (/^\/articles\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clean)) return 'article';
   if (!ownerModeFromPath(clean)) return ROUTE_PAGE_HOME;
@@ -1880,6 +1890,7 @@ const contract = {
   OWNER_PATHS,
   ROUTE_PAGE_HOME,
   ROUTE_PAGE_MOTOR,
+  CMS_EDITABLE_PAGES,
   ADMIN_PORTAL_MODULES,
   ADMIN_PORTAL_OPERATIONS_TABS,
   normalizePath,

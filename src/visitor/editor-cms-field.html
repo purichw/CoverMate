@@ -1,0 +1,5 @@
+<div class="cm-brand-field" data-brand-field="{{ field.path }}" data-media="{{ field.isMedia }}">
+  <sc-if value="{{ field.isMedia }}"><div class="cm-brand-media"><div class="cm-brand-media-preview"><sc-if value="{{ field.hasImage }}"><img sc-camel-src="{{ field.image }}" alt="{{ field.label }}" width="150" height="64"></sc-if><sc-if value="{{ !field.hasImage }}"><span>ไม่มีรูปภาพ</span></sc-if></div><div><strong>{{ field.label }}</strong><div class="cm-editor-record-actions"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ field.editImage }}">เปลี่ยนรูป</button><button type="button" class="cm-editor-button" disabled="{{ !field.hasImage }}" sc-camel-on-click="{{ field.clearImage }}">นำรูปออก</button></div></div></div></sc-if>
+  <sc-if value="{{ field.isMedia }}"><details class="cm-editor-disclosure"><summary>ที่อยู่รูปภาพ<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div><!-- COVERMATE_EDITOR_CMS_INPUT --></div></details></sc-if>
+  <sc-if value="{{ !field.isMedia }}"><!-- COVERMATE_EDITOR_CMS_INPUT --></sc-if>
+</div>

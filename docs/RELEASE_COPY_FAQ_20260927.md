@@ -25,6 +25,20 @@ or update customer records. Existing published content remains authoritative.
 Use the field-level conflict checks in [the copy audit](COPY_VOICE_AUDIT_20260927.md)
 for a separately authorized copy publication, never an old whole-state import.
 
+### Authorized CMS publication, 2026-09-28
+
+The user subsequently explicitly requested that the reviewed copy be written to
+CMS, not hard-coded. `scripts/release-copy-voice.mjs` applied the original reviewed
+proposal to fresh Live and Draft snapshots independently, with field conflict
+checks, atomic update-time preconditions, a backup and a CMS version record.
+No unrelated Draft changes were published. Live revision is now 12, Draft 68;
+version `copy-voice-1790533189491` records this copy-only maintenance publication.
+Read-back verified both resulting states and unchanged out-of-scope config/text.
+Fresh public Home/Motor TH/EN navigations matched all 342 reviewed copy entries
+and the rendered Hero headings. Evidence lives under `uat-results/copy-release/`.
+See [the audit](COPY_VOICE_AUDIT_20260927.md) for scope and recovery evidence.
+This data publication does not deploy the separate Hero editor redesign.
+
 ## Verification
 
 Before integration, focused FAQ browser tests passed Add/focus, TH/EN edits,

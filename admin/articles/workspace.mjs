@@ -110,7 +110,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
     root.querySelector('.article-local-error').textContent = localError;
     root.querySelector('.article-summary').innerHTML = [
       ['all', 'บทความทั้งหมด', 'file'], ['published', 'เผยแพร่แล้ว', 'checkCircle'], ['draft', 'ฉบับร่าง', 'file'], ['scheduled', 'ตั้งเวลาเผยแพร่', 'clock']
-    ].map(([key, title, glyph]) => `<div class="article-stat" data-stat="${key}"><dt><span class="article-stat-icon" aria-hidden="true">${icon(glyph)}</span><span class="article-stat-label">${key === 'scheduled' ? '<span>ตั้งเวลา</span><wbr><span>เผยแพร่</span>' : title}</span></dt><dd>${s.phase === 'ready' ? view.counts[key] : '<span aria-label="ยังไม่มีข้อมูล">-</span>'}</dd></div>`).join('');
+    ].map(([key, title, glyph]) => `<div class="article-stat cm-stat-card" data-stat="${key}"><dt><span class="article-stat-icon" aria-hidden="true">${icon(glyph)}</span><span class="article-stat-label">${key === 'scheduled' ? '<span>ตั้งเวลา</span><wbr><span>เผยแพร่</span>' : title}</span></dt><dd>${s.phase === 'ready' ? view.counts[key] : '<span aria-label="ยังไม่มีข้อมูล">-</span>'}</dd></div>`).join('');
     root.querySelectorAll('.article-toolbar input,.article-toolbar select').forEach(el => { el.disabled = s.phase !== 'ready'; });
     root.querySelector('[data-article-action="reload"]').disabled = s.phase === 'loading';
     root.querySelector('[data-article-action="reset"]').disabled = !Object.keys(defaults).some(key=>key!=='page'&&s[key]!==defaults[key]);

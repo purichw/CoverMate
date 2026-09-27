@@ -1,0 +1,31 @@
+<div class="cm-versions" data-versions-workspace>
+  <div class="cm-versions-heading"><h3>ประวัติเวอร์ชัน</h3><button type="button" class="cm-editor-icon-button" title="โหลดประวัติใหม่" aria-label="โหลดประวัติใหม่" disabled="{{ versionsBusy }}" sc-camel-on-click="{{ refreshVersions }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7"></path></svg></button></div>
+  <sc-if value="{{ versionsReady }}">
+  <div class="cm-versions-overview">
+    <section><span class="cm-version-symbol"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"></path></svg></span><div><h4>ฉบับร่างปัจจุบัน</h4><strong>Draft</strong><p>{{ versionDraftStatus }}</p></div></section>
+    <section><span class="cm-version-symbol"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a17 17 0 0 1 0 20 17 17 0 0 1 0-20"></path></svg></span><div><h4>เวอร์ชันที่เผยแพร่</h4><strong>Live</strong><p>{{ versionLiveStamp }}</p></div></section>
+  </div>
+  <p class="cm-versions-scope">ประวัติ Publish ล่าสุด 20 รายการ · ครอบคลุมทั้งเว็บ</p>
+  <div class="cm-versions-filters" role="group" aria-label="กรองประวัติเวอร์ชัน"><sc-for list="{{ versionsFilters }}" as="filter"><button type="button" aria-pressed="{{ filter.active }}" sc-camel-on-click="{{ filter.choose }}">{{ filter.label }} <span>{{ filter.count }}</span></button></sc-for></div>
+  <div class="cm-versions-tools">
+    <label class="cm-editor-search"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"></circle><path d="m16 16 5 5"></path></svg><input type="search" aria-label="ค้นหาประวัติเวอร์ชัน" placeholder="ค้นหาเวอร์ชัน ผู้บันทึก หรือส่วนที่แก้ไข" value="{{ versionsQuery }}" sc-camel-on-input="{{ onVersionsQuery }}"></label>
+    <label class="cm-editor-field"><span>เรียงตาม</span><select aria-label="เรียงประวัติเวอร์ชัน" value="{{ versionsSort }}" sc-camel-on-change="{{ onVersionsSort }}"><option value="newest">ล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option></select></label>
+  </div>
+  </sc-if>
+  <sc-if value="{{ versionsBusy }}"><p class="cm-version-notice" role="status">กำลังโหลดประวัติเวอร์ชัน…</p></sc-if>
+  <sc-if value="{{ versionsFailed }}"><div class="cm-version-notice cm-version-notice--error" role="alert"><strong>โหลดประวัติไม่สำเร็จ</strong><p>{{ versionsError }} รายการที่มีอยู่อาจไม่ใช่ข้อมูลล่าสุด</p><button type="button" class="cm-editor-button" sc-camel-on-click="{{ refreshVersions }}">ลองใหม่</button></div></sc-if>
+  <sc-if value="{{ versionsEmpty }}"><div class="cm-version-empty"><h4>ยังไม่มีประวัติการเผยแพร่</h4><p>เวอร์ชันจะถูกบันทึกเมื่อ Publish เว็บไซต์</p></div></sc-if>
+  <sc-if value="{{ versionsNoMatch }}"><div class="cm-version-empty"><h4>ไม่พบเวอร์ชันที่ตรงกัน</h4><button type="button" class="cm-editor-button" sc-camel-on-click="{{ clearVersionsFilters }}">ล้างตัวกรอง</button></div></sc-if>
+  <sc-if value="{{ versionsHasRows }}">
+    <div class="cm-versions-list" role="list" aria-label="รายการประวัติเวอร์ชัน">
+      <div class="cm-version-columns" aria-hidden="true"><span>เวอร์ชัน / วันที่</span><span>ผู้บันทึก / ส่วนที่เปลี่ยน</span><span>การจัดการ</span></div>
+      <sc-for list="{{ versionsRows }}" as="v"><article class="cm-version-row" role="listitem" data-version-id="{{ v.id }}" data-selected="{{ v.selected }}">
+        <div class="cm-version-identity"><strong title="{{ v.id }}">#{{ v.shortId }}</strong><span class="cm-version-badge" data-live="{{ v.isLive }}">{{ v.status }}</span><time>{{ v.stamp }}</time></div>
+        <div class="cm-version-description"><p>{{ v.summary }}</p><span>{{ v.actor }}</span></div>
+        <button type="button" class="cm-editor-button" sc-camel-on-click="{{ v.open }}">ดูรายละเอียด<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></button>
+      </article></sc-for>
+    </div>
+    <div class="cm-versions-pagination"><span>{{ versionsRange }}</span><sc-if value="{{ versionsHasPages }}"><div><button type="button" class="cm-editor-icon-button" aria-label="เวอร์ชันหน้าก่อน" title="เวอร์ชันหน้าก่อน" disabled="{{ versionsPrevDisabled }}" sc-camel-on-click="{{ versionsPrev }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button><button type="button" class="cm-editor-icon-button" aria-label="เวอร์ชันหน้าถัดไป" title="เวอร์ชันหน้าถัดไป" disabled="{{ versionsNextDisabled }}" sc-camel-on-click="{{ versionsNext }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></button></div></sc-if></div>
+  </sc-if>
+  <p class="cm-version-notice">การกู้คืนจะเปลี่ยนเฉพาะ Draft เว็บจริงยังคงเดิมจนกด Publish</p>
+</div>

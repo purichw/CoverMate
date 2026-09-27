@@ -46,7 +46,7 @@ const sandbox = {
 };
 
 vm.runInNewContext(
-  `${runtime}\nresult = { Component, DEFAULTS, ensureRepeatableIds, validRepeatableId, isSemanticCopyPath };`,
+  `${runtime}\nresult = { Component, DEFAULTS, CMS_CONTENT_FIELDS, ensureRepeatableIds, validRepeatableId, isSemanticCopyPath };`,
   sandbox
 );
 
@@ -100,6 +100,12 @@ const contactCopyElement = path => ({
 });
 for (const lang of ["th", "en"]) {
   contactApp.state.lang = lang;
+  for (const field of sandbox.result.CMS_CONTENT_FIELDS.filter(field=>field.localized)) {
+    for (const attr of ['data-content-path','data-cms-copy']) for (const input of [field.path,field.path+'.'+lang]) {
+      const element={closest:selector=>selector==='['+attr+']'?{getAttribute:()=>input}:null};
+      assert.equal(contactApp.cmsCopyPath(element),field.path+'.'+lang,`${attr} resolves registered field ${input}`);
+    }
+  }
   for (const path of scalarContactPaths) {
     assert.equal(isSemanticCopyPath(contactApp.state.site, path), true, `${path} must be canonical scalar copy`);
     assert.equal(contactApp.cmsCopyPath(contactCopyElement(path)), path, `${lang} must edit the same scalar ${path}`);
@@ -111,6 +117,9 @@ for (const lang of ["th", "en"]) {
     assert.equal(contactApp.cmsCopyPath(contactCopyElement(path)), "", `arbitrary config path ${path} must not become editable copy`);
   }
 }
+const unchangedText=JSON.stringify(contactApp.textOv || {});
+contactApp.saveInlineText({closest:()=>null,textContent:'+',getAttribute:()=> 'review:8:th'},true);
+assert.equal(JSON.stringify(contactApp.textOv || {}),unchangedText,'Unowned glyphs cannot create positional overrides');
 contactApp.textOv = {
   "cms:contact.lineId": "@edited-line",
   "cms:contact.facebookName": "Edited Facebook name",

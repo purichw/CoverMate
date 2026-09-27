@@ -1139,7 +1139,7 @@ function errorNotice(resource) {
 
 function metric(label, value, copy, cta, moduleId) {
   return `
-    <section class="card metric">
+    <section class="card metric cm-stat-card">
       <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
       <span class="value">${escapeHTML(String(value))}</span>
       <p>${escapeHTML(copy)}</p>
@@ -1150,7 +1150,7 @@ function metric(label, value, copy, cta, moduleId) {
 
 function analyticMetric(label, value, copy) {
   return `
-    <section class="card">
+    <section class="card cm-stat-card">
       <span class="field-label">${escapeHTML(label)}</span>
       <strong style="display:block;font-size:34px;line-height:1.1;margin:10px 0;">${escapeHTML(String(value))}</strong>
       <p class="note">${escapeHTML(copy)}</p>

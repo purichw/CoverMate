@@ -181,7 +181,7 @@ function sync(control) {
     else if (button.getAttribute(name) !== value) button.setAttribute(name, value);
   }
   // Preserve each existing control's geometry/theme, including compact Admin and
-  // calculator controls. Only the menu and interaction states are standardized.
+  // calculator controls. Symmetric insets keep the value centered beside the arrow.
   const style = getComputedStyle(select);
   shell.hidden = select.hidden || style.display === 'none';
   if (select.getClientRects().length) {
@@ -191,8 +191,9 @@ function sync(control) {
       button.style.font = style.font;
       button.style.color = style.color;
       button.style.borderRadius = style.borderRadius;
-      button.style.paddingLeft = style.paddingLeft;
-      button.style.paddingRight = '36px';
+      const inset = Math.max(32, parseFloat(style.paddingLeft) || 0) + 'px';
+      button.style.paddingLeft = inset;
+      button.style.paddingRight = inset;
     }
   }
   shell.classList.toggle('cm-select-disabled', button.disabled);

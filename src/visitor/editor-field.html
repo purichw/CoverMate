@@ -1,0 +1,6 @@
+<label class="cm-editor-field" data-field-key="{{ f.key }}" data-cms-owner="{{ f.path }}">
+  <span>{{ f.label }}</span>
+  <sc-if value="{{ f.small }}"><input data-admin-copy-key="{{ f.key }}" value="{{ f.value }}" sc-camel-on-change="{{ f.onInput }}" sc-camel-on-blur="{{ f.commit }}"></sc-if>
+  <sc-if value="{{ f.big }}"><textarea rows="3" data-admin-copy-key="{{ f.key }}" value="{{ f.value }}" sc-camel-on-change="{{ f.onInput }}" sc-camel-on-blur="{{ f.commit }}"></textarea></sc-if>
+  <sc-if value="{{ f.hint }}"><small>{{ f.hint }}</small></sc-if>
+</label>
