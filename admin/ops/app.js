@@ -1,7 +1,9 @@
-import { ADMIN_LOGIN_PATH, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
+import { ADMIN_LOGIN_PATH, adminRedirect, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
 import { createCasesWorkspace } from "/admin/ops/cases.js";
 import { homeView } from "/admin/home-view.js";
 import { ADMIN_MODULES as MODULES, adminNavigation } from "/admin/shell.js";
+import { createArticlesWorkspace } from "/admin/articles/workspace.mjs";
+import { loadArticleCatalog, loadArticleForEditor } from "/admin/articles/data.mjs";
 import {
   adminPortalRouteStateFromLocation,
   adminPortalUrl,
@@ -92,6 +94,7 @@ const state = {
   }
 };
 let casesWorkspace;
+let articlesWorkspace;
 
 const screen = document.getElementById("screen");
 const sideNav = document.getElementById("sideNav");
@@ -109,6 +112,7 @@ async function init() {
 
   state.sessionRole = normalizeRole(state.session.role);
   state.role = state.sessionRole;
+  articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
   casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
     renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }), sessionRoleLabel: displayRole(state.sessionRole) });
   const bell = document.createElement('button');
@@ -146,6 +150,7 @@ function bindEvents() {
     render();
   });
   globalSearch.addEventListener("input", () => {
+    if (state.module === 'articles') { articlesWorkspace.setSearch(globalSearch.value); return; }
     if (state.module === 'operations') { casesWorkspace.setSearch(globalSearch.value); return; }
     state.query = globalSearch.value.trim().toLowerCase();
     state.recordId = null;
@@ -154,7 +159,7 @@ function bindEvents() {
   globalSearch.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    if (state.module === 'operations') return;
+    if (['operations', 'articles'].includes(state.module)) return;
     openHomeCases({ search: globalSearch.value });
   });
   window.addEventListener("hashchange", syncRouteFromLocation);
@@ -162,6 +167,7 @@ function bindEvents() {
 }
 
 async function loadAllData() {
+  if (state.module === 'articles') { state.loading.clear(); return; }
   if (state.module === 'operations') { state.loading.clear(); return; }
   if (state.module === 'home') { state.loading.clear(); return loadHomeData(); }
   await Promise.all(DATA_RESOURCES.map((resource) => loadResource(resource)));
@@ -316,7 +322,7 @@ function handleClick(event) {
   if (actionEl) {
     if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
-    if (action === "logout") signOutAdmin();
+    if (action === "logout") {if(articlesWorkspace?.active && !articlesWorkspace.canLeave())return;signOutAdmin();}
     if (action === 'home-refresh' && !state.home.loading) loadHomeData();
     if (action === 'home-cases') openHomeCases();
     if (action === 'home-follow-ups') openHomeCases({ followUp: 'due' });
@@ -412,9 +418,9 @@ function render() {
 
 function renderChrome() {
   document.body.dataset.module = state.module;
-  globalSearch.placeholder = ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาข้อมูล';
+  globalSearch.placeholder = state.module === 'articles' ? 'ค้นหาชื่อบทความ...' : ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาข้อมูล';
   sideNav.innerHTML = adminNavigation(state.module, iconSvg);
-  dataMode.hidden = ['home', 'operations'].includes(state.module);
+  dataMode.hidden = ['home', 'operations', 'articles'].includes(state.module);
 }
 
 function renderTopStatus() {
@@ -432,6 +438,8 @@ function renderTopStatus() {
 
 function renderScreen() {
   if (!screen) return;
+  if (state.module === 'articles') return articlesWorkspace?.mount();
+  if (articlesWorkspace?.active) { articlesWorkspace.leave(); globalSearch.value = state.query; }
   if (state.module === "home") return renderHome();
   if (state.module === "operations") {
     return casesWorkspace?.mount();
@@ -1033,6 +1041,7 @@ async function setModule(moduleId, options = {}) {
     return;
   }
   if (!MODULES.some((item) => item.id === moduleId)) return;
+  if (moduleId !== 'articles' && articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
   if (moduleId !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) return;
   state.module = moduleId;
   state.recordId = null;
@@ -1044,6 +1053,7 @@ async function setModule(moduleId, options = {}) {
 
 function setOperationsTab(tabId, options = {}) {
   if (!isOperationsTab(tabId)) return;
+  if (articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
   state.module = "operations";
   state.operationsTab = tabId;
   state.recordId = null;
@@ -1283,6 +1293,7 @@ function routeStateFromLocation() {
 
 async function syncRouteFromLocation() {
   const next = routeStateFromLocation();
+  if (next.module !== 'articles' && articlesWorkspace?.active && !articlesWorkspace.canLeave()) {writeRoute({replace:true});return;}
   if (next.module === state.module && next.operationsTab === state.operationsTab) {
     if (next.module === 'operations') await casesWorkspace?.syncLocation();
     return;

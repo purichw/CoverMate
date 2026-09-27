@@ -1,0 +1,49 @@
+<sc-if value="{{ isArticles }}">
+<div class="ar-index" data-noedit>
+  <section class="ar-intro" aria-labelledby="articles-title">
+    <sc-if value="{{ articleHero }}"><img class="ar-hero-art" sc-camel-src="{{ articleHero }}" alt="" width="1920" height="640" fetchpriority="high"></sc-if>
+    <div class="hm-wrap">
+      <p class="ar-eyebrow" data-cms-copy="articlesPage.eyebrow">{{ articleCopy.eyebrow }}</p>
+      <h1 id="articles-title" data-cms-copy="articlesPage.title">{{ articleCopy.title }}</h1>
+      <p class="ar-intro-copy" data-cms-copy="articlesPage.intro">{{ articleCopy.intro }}</p>
+    </div>
+  </section>
+  <div class="ar-filter-band">
+    <div class="hm-wrap">
+      <form class="ar-search" role="search" sc-camel-on-submit="{{ articleSearch }}">
+        <label for="articles-search" class="ar-sr-only">{{ articleCopy.search }}</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg>
+        <input id="articles-search" name="q" type="search" maxlength="200" value="{{ articleSearchValue }}" sc-camel-on-change="{{ articleSearchChange }}" placeholder="{{ articleCopy.searchHint }}" autocomplete="off">
+        <button type="submit">{{ articleCopy.search }}</button>
+      </form>
+      <nav class="ar-categories" aria-label="{{ articleCopy.categories }}">
+        <sc-for list="{{ articleCategories }}" as="category"><a class="{{ category.className }}" href="{{ category.href }}" aria-current="{{ category.selected }}" sc-camel-on-click="{{ category.click }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ category.paths }}" as="d"><path d="{{ d }}"/></sc-for></svg><span>{{ category.label }}</span></a></sc-for>
+      </nav>
+    </div>
+  </div>
+  <div class="hm-wrap ar-body">
+    <sc-if value="{{ articleIndex.sample }}"><p class="ar-sample">{{ articleSampleLabel }}</p></sc-if>
+    <sc-if value="{{ articleIndex.hasFeatured }}"><section class="ar-featured" aria-label="{{ articleCopy.featured }}">
+      <p class="ar-featured-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>{{ articleCopy.featured }}</p>
+      <sc-for list="{{ articleFeatured }}" as="article"><!-- COVERMATE_ARTICLE_CARD --></sc-for>
+    </section></sc-if>
+    <section aria-labelledby="articles-results">
+      <div class="ar-results-heading">
+        <div><h2 id="articles-results" tabindex="-1">{{ articleResultsTitle }}</h2><p class="ar-count" role="status" aria-live="polite" aria-atomic="true">{{ articleIndex.count }}</p></div>
+        <label class="ar-sort"><span>{{ articleCopy.sort }}</span><span class="cm-select-shell"><sc-raw-select aria-label="{{ articleCopy.sort }}" value="{{ articleIndex.sort }}" sc-camel-on-change="{{ articleSort }}"><option value="latest">{{ articleCopy.latestSort }}</option><option value="oldest">{{ articleCopy.oldestSort }}</option><option value="title">{{ articleCopy.titleSort }}</option></sc-raw-select></span></label>
+      </div>
+      <sc-if value="{{ articleIndex.filtered }}"><a class="ar-clear" href="{{ articleIndex.clearHref }}" sc-camel-on-click="{{ articleClear }}">{{ articleCopy.clear }}</a></sc-if>
+      <sc-if value="{{ articleIndex.unavailable }}"><div class="ar-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg><h3>{{ articleCopy.unavailable }}</h3><button type="button" class="ar-outline" sc-camel-on-click="{{ articleReload }}">{{ articleCopy.retry }}</button></div></sc-if>
+      <sc-if value="{{ articleIndex.empty }}"><div class="ar-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg><h3>{{ articleEmptyTitle }}</h3></div></sc-if>
+      <ul class="ar-grid"><sc-for list="{{ articleIndex.items }}" as="article"><li class="{{ article.className }}"><article><!-- COVERMATE_ARTICLE_CARD --></article></li></sc-for></ul>
+      <sc-if value="{{ articleIndex.hasPages }}"><nav class="ar-pagination" aria-label="{{ articleCopy.pagination }}">
+        <sc-if value="{{ articleIndex.hasPrevious }}"><a class="ar-page" href="{{ articleIndex.previousHref }}" aria-label="{{ articleCopy.previous }}" sc-camel-on-click="{{ articlePrevious }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></a></sc-if>
+        <sc-for list="{{ articleIndex.pagination }}" as="page"><sc-if value="{{ page.gap }}"><span aria-hidden="true">...</span></sc-if><sc-if value="{{ !page.gap }}"><a class="{{ page.className }}" href="{{ page.href }}" aria-current="{{ page.current }}" sc-camel-on-click="{{ page.click }}">{{ page.value }}</a></sc-if></sc-for>
+        <sc-if value="{{ articleIndex.hasNext }}"><a class="ar-page" href="{{ articleIndex.nextHref }}" aria-label="{{ articleCopy.next }}" sc-camel-on-click="{{ articleNext }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></a></sc-if>
+      </nav></sc-if>
+      <sc-if value="{{ articleIndex.hasNext }}"><a class="ar-outline ar-load-more" href="{{ articleIndex.nextHref }}" sc-camel-on-click="{{ articleMore }}"><span>{{ articleCopy.more }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a></sc-if>
+    </section>
+  </div>
+  <!-- COVERMATE_ARTICLE_CTA -->
+</div>
+</sc-if>

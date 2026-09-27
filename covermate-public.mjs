@@ -1,4 +1,4 @@
-import { cacheSiteState, validStateDoc, sanitizeStateDoc, isAdminNamespacePath, isOwnerHash, LIVE_CONFIG_KEY, LIVE_TEXT_KEY } from './covermate-contract.js';
+import { cacheSiteState, validStateDoc, sanitizeStateDoc, isAdminNamespacePath, isOwnerHash, LIVE_CONFIG_KEY, LIVE_TEXT_KEY } from './assets/visitor/contract.js';
 import { resolveCoverMateEnvironment } from './covermate-environment.mjs';
 import { publicFirestoreRoot, emulatorEnabled, firebaseConfig, FIREBASE_VERSION } from './covermate-firebase-config.mjs';
 import { LIVE_REFRESH_INTERVAL_MS, liveRefreshDelay } from './covermate-freshness.mjs';

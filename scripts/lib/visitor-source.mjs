@@ -18,6 +18,7 @@ export const VISITOR_DEFAULTS_SLOT = "// COVERMATE_DEFAULTS_SOURCE";
 export const VISITOR_ASSET_VERSIONS_SLOT = "/* COVERMATE_ASSET_VERSIONS */ {}";
 
 const ROOT = new URL("../../", import.meta.url);
+const DESIGN_SYSTEM_STYLE = /<style>(\/\* Organic[^]*?)<\/style>/;
 
 export const VISITOR_SOURCE_PATHS = Object.freeze({
   index: new URL("index.html", ROOT),
@@ -32,8 +33,11 @@ function readText(url) {
 }
 
 export function readVisitorStyleAssets() {
-  return ['home', 'line-contact', 'submission', 'select'].map(name => {
-    const css = transformSync(readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT)), { loader:'css', minifyWhitespace:true }).code;
+  const designSystem = readText(VISITOR_SOURCE_PATHS.template).match(DESIGN_SYSTEM_STYLE)?.[1];
+  if (!designSystem) throw new Error('Visitor design-system stylesheet is missing.');
+  return ['organic', 'home', 'articles-index', 'article-detail', 'line-contact', 'calculator', 'submission', 'select'].map(name => {
+    const source = name === 'organic' ? designSystem : readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT));
+    const css = transformSync(source, { loader:'css', minifyWhitespace:true }).code;
     const hash = createHash('sha256').update(css).digest('hex').slice(0,16);
     return { name, css, file:new URL(`assets/visitor/${name}.css`, ROOT), link:`<link rel="stylesheet" href="/assets/visitor/${name}.css?v=${hash}">` };
   });
@@ -50,6 +54,13 @@ export function readSelectAsset() {
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
+export function readPublicContractAsset() {
+  const code = transformSync(readText(new URL('covermate-contract.js', ROOT)), {
+    minify: true, format: 'esm', target: 'es2022', charset: 'utf8'
+  }).code;
+  return { code, file: new URL('assets/visitor/contract.js', ROOT) };
+}
+
 export function readContactPayloadAsset() {
   const file = new URL('assets/visitor/contact-payload.js', ROOT);
   const code = buildSync({
@@ -61,6 +72,17 @@ export function readContactPayloadAsset() {
     external: [fileURLToPath(new URL('covermate-contract.js', ROOT))]
   }).outputFiles[0].text;
   return { code, file };
+}
+
+function readArticleReaderRuntime() {
+  const helpers = ['articleDetailSlug', 'readArticleDetail', 'articleShareUrl', 'articleSaved', 'toggleSavedArticle'];
+  // Bundle only browser entry points; full publication projection stays server-side.
+  const code = buildSync({
+    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
+    bundle: true, write: false, treeShaking: true, minify: true, format: 'iife',
+    globalName: 'CoverMateArticleReader', target: 'es2022', charset: 'utf8'
+  }).outputFiles[0].text;
+  return code + `\nconst {registerArticleDocument,${helpers.join(',')}} = CoverMateArticleReader;`;
 }
 
 export function readImageVersions(root = new URL("assets/", ROOT)) {
@@ -103,14 +125,22 @@ export function readVisitorSources() {
       .replace('/* COVERMATE_BOOT_STYLES */', () => boot.css)
       .replace('// COVERMATE_BOOT_SCRIPT', () => boot.script),
     template: readText(VISITOR_SOURCE_PATHS.template)
+      .replace(DESIGN_SYSTEM_STYLE, () => visitorStyles.organic)
       .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
       .replace('<style>/* COVERMATE_SUBMISSION_STYLES */</style>', () => visitorStyles.submission)
       .replace('<!-- COVERMATE_CALCULATOR_TEMPLATE -->', () => readText(new URL('src/visitor/calculator.html', ROOT)))
-      .replace('/* COVERMATE_CALCULATOR_STYLES */', () => readText(new URL('src/visitor/calculator.css', ROOT)))
+      .replace('<style>/* COVERMATE_CALCULATOR_STYLES */</style>', () => visitorStyles.calculator)
       .replace('<!-- COVERMATE_HOME_TEMPLATE -->', () => readText(new URL('src/visitor/home.html', ROOT)))
+      .replace('<!-- COVERMATE_HOME_ARTICLES_TEMPLATE -->', () => readText(new URL('src/visitor/home-articles.html', ROOT)))
+      .replace('<!-- COVERMATE_ARTICLES_INDEX_TEMPLATE -->', () => readText(new URL('src/visitor/articles-index.html', ROOT)))
+      .replace('<!-- COVERMATE_ARTICLE_DETAIL_TEMPLATE -->', () => readText(new URL('src/visitor/article-detail.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_ARTICLE_CTA -->', () => readText(new URL('src/visitor/article-cta.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_ARTICLE_CARD -->', () => readText(new URL('src/visitor/article-card.html', ROOT)))
       .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
       .replace('<style>/* COVERMATE_HOME_STYLES */</style>', () => visitorStyles.home)
+      .replace('<style>/* COVERMATE_ARTICLES_INDEX_STYLES */</style>', () => visitorStyles['articles-index'])
+      .replace('<style>/* COVERMATE_ARTICLE_DETAIL_STYLES */</style>', () => visitorStyles['article-detail'])
       .replace('<!-- COVERMATE_LINE_CONTACT -->', () => readText(new URL('src/visitor/line-contact.html', ROOT)))
       .replace('<style>/* COVERMATE_LINE_STYLES */</style>', () => visitorStyles['line-contact'])
       .replace('<!-- COVERMATE_SELECT_STYLES -->', () => visitorStyles.select)
@@ -126,6 +156,9 @@ export function readVisitorSources() {
     calculatorSource: readText(new URL('covermate-calculator.mjs', ROOT)).replace(/^export /gm, ''),
     recommendationSource: readText(new URL('covermate-recommendations.mjs', ROOT)).replace(/^export /gm, ''),
     submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),
+    homeArticlesSource: readText(new URL('src/visitor/home-articles.mjs', ROOT)).replace(/^export /gm, ''),
+    articlesIndexSource: readText(new URL('src/visitor/articles-index.mjs', ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, ''),
+    articleDetailSource: readArticleReaderRuntime(),
     cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],
     seoSource: readText(new URL('covermate-seo.mjs', ROOT)).split('\nexport function renderSeoHead')[0].replace(/^export /gm, ''),
     imageVersions: readImageVersions()
@@ -144,6 +177,9 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
     .replace('// COVERMATE_CALCULATOR_SOURCE', () => sources.calculatorSource)
     .replace('// COVERMATE_RECOMMENDATION_SOURCE', () => sources.recommendationSource)
     .replace('// COVERMATE_SUBMISSION_SOURCE', () => sources.submissionSource)
+    .replace('// COVERMATE_HOME_ARTICLES_SOURCE', () => sources.homeArticlesSource)
+    .replace('// COVERMATE_ARTICLES_INDEX_SOURCE', () => sources.articlesIndexSource)
+    .replace('// COVERMATE_ARTICLE_DETAIL_SOURCE', () => sources.articleDetailSource)
     .replace('// COVERMATE_SEO_SOURCE', () => sources.seoSource)
     .replace(VISITOR_ASSET_VERSIONS_SLOT, () => JSON.stringify(sources.imageVersions || readImageVersions()));
 }

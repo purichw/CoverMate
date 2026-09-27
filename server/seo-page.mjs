@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import { createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
 import { resolveCoverMateEnvironment, isVercelPreviewHost } from '../covermate-environment.mjs';
-import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy } from '../covermate-contract.js';
+import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy, cmsMedia } from '../covermate-contract.js';
+import {articleDetailSlug,projectArticleDetail} from '../src/visitor/article-detail.mjs';
 import { extractBundlerTemplate, replaceBundlerTemplate } from './bundler-template.mjs';
 import { renderErrorPage } from './error-page.mjs';
 import { PUBLISHED_READER_TTL_MS, PUBLIC_HTML_CACHE_CONTROL } from '../covermate-freshness.mjs';
@@ -41,6 +42,10 @@ export function renderPublicPage(html, config, options) {
       .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
     rendered = rendered.replace('</head>', `<script id="covermate-published-state" type="application/json">${snapshot}</script>\n</head>`);
   }
+  if (options?.article && !options.privatePage) {
+    const json=JSON.stringify(options.article).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
+    rendered=replaceBundlerTemplate(rendered,extractBundlerTemplate(rendered).replace('</head>',`<script id="covermate-article-detail" type="application/json">${json}</script></head>`));
+  }
   return rendered;
 }
 
@@ -79,7 +84,7 @@ export function createPublishedReader({ fetcher = fetch, now = Date.now, timeout
   };
 }
 
-export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
+export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readArticle = async () => null, readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
   // The same legacy motor defaults as the visitor, used only for absent fields.
   const source = fs.readFileSync(new URL('../src/visitor/defaults.js', import.meta.url), 'utf8');
   const motorDefaults = JSON.parse(source.slice(source.indexOf('{'), source.lastIndexOf('}') + 1)).motorPage;
@@ -99,20 +104,29 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
     const url = new URL(req.url, 'https://covermateinsurance.com');
     const route = url.pathname === '/api/page' ? url.searchParams.get('route') : url.pathname;
     const owner = ['/admin/content', '/admin/edit', '/admin/preview'].includes(route);
-    if (!['/', '/motor'].includes(route) && !owner) {
+    const articleSlug=articleDetailSlug(route);
+    if (!['/', '/motor', '/articles'].includes(route) && !articleSlug && !owner) {
       sendError(404); return;
     }
     const environment = resolveCoverMateEnvironment({ headers: req.headers, url: req.url });
     const noindex = owner || environment.isUat || isVercelPreviewHost(environment.host);
-    if (noindex) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    if (noindex || route === '/articles' || articleSlug) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     let loadedConfig, rendering = false;
     try {
       const published = owner ? null : await readPublished(environment.siteId);
       const state = published && (validStateDoc(published) ? published : { config: published, text: {} });
       loadedConfig = state?.config;
+      let article=null;
+      if(articleSlug) {
+        const payload=await readArticle(environment.siteId,articleSlug);
+        article=projectArticleDetail(payload,{slug:articleSlug,lang:url.searchParams.get('lang')==='en'?'en':'th',mediaUrl:value=>{
+          const safe=cmsMedia(value);return safe ? versionedAsset(/^(https?:|\/)/i.test(safe)?safe:'/'+safe) : '';
+        }});
+        if(!article.available) {sendError(404,loadedConfig);return;}
+      }
       rendering = true;
-      const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, publishedState: state, siteId: environment.siteId });
-      if (!noindex) res.setHeader('Cache-Control', PUBLIC_HTML_CACHE_CONTROL);
+      const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, article, publishedState: state, siteId: environment.siteId });
+      if (!noindex && !articleSlug) res.setHeader('Cache-Control', PUBLIC_HTML_CACHE_CONTROL);
       res.statusCode = 200;
       res.end(req.method === 'HEAD' ? '' : html);
     } catch {

@@ -1,7 +1,10 @@
 // Shared by the initial HTTP response and CMS-driven client metadata.
-export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, assetPath = value => value } = {}) {
+export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, article = null, assetPath = value => value } = {}) {
   const root = 'https://covermateinsurance.com';
-  path = path === '/motor' ? '/motor' : '/';
+  const isArticle = /^\/articles\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(path);
+  path = isArticle ? path.replace(/\/$/,'') : ['/motor','/articles'].includes(path) ? path : '/';
+  // Do not index this route until its publication backend is connected.
+  noindex = noindex || path === '/articles' || isArticle;
   lang = lang === 'en' ? 'en' : 'th';
   const clean = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
   const localized = value => clean(typeof value === 'string' ? value : value?.[lang]);
@@ -20,7 +23,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     return Object.fromEntries([...new Set([...Object.keys(defaults || {}), ...Object.keys(value)])].map(key => [key, merge(defaults?.[key], value[key])]));
   };
   const motor = merge(motorDefaults, site.motorPage) || {};
-  const pageSeo = path === '/motor' ? motor.seo || {} : seo;
+  const pageSeo = isArticle ? {title:article?.seoTitle || article?.title || (lang==='en'?'Article unavailable':'ไม่พบบทความ'),description:article?.seoDescription || article?.excerpt || ''} : path === '/articles' ? {title:site.articlesPage?.title || {th:'บทความจาก CoverMate',en:'CoverMate articles'},description:site.articlesPage?.intro} : path === '/motor' ? motor.seo || {} : seo;
   const media = site.brand?.media || {};
   const brand = localized(site.brand?.name) || 'CoverMate';
   const service = path === '/motor' ? 'motor' : 'home';
@@ -30,7 +33,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
   const description = privatePage ? 'Private CoverMate owner tools.' : localized(pageSeo.description) || clean(hero?.[lang]?.body);
   const base = root + path;
   const canonical = base + (lang === 'en' ? '?lang=en' : '');
-  const image = url(seo.image), imageAlt = localized(seo.imageAlt);
+  const image = url(isArticle ? article?.image : seo.image), imageAlt = isArticle ? clean(article?.imageAlt) : localized(seo.imageAlt);
   const language = lang === 'th' ? 'th-TH' : 'en';
   const area = localized(seo.areaServed);
   const expertise = typeof seo.knowsAbout === 'string' ? seo.knowsAbout.split('\n').map(clean).filter(Boolean) : [];
@@ -67,7 +70,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
       'twitter:title': title, 'twitter:description': description, 'twitter:image': image, 'twitter:image:alt': image ? imageAlt : ''
     },
     properties: {
-      'og:type': 'website', 'og:site_name': brand, 'og:locale': lang === 'th' ? 'th_TH' : 'en_US', 'og:locale:alternate': lang === 'th' ? 'en_US' : 'th_TH',
+      'og:type': isArticle ? 'article' : 'website', 'og:site_name': brand, 'og:locale': lang === 'th' ? 'th_TH' : 'en_US', 'og:locale:alternate': lang === 'th' ? 'en_US' : 'th_TH',
       'og:url': canonical, 'og:title': title, 'og:description': description,
       'og:image': image, 'og:image:secure_url': image.startsWith('https:') ? image : '', 'og:image:alt': image ? imageAlt : ''
     },

@@ -15,7 +15,7 @@ fs.mkdirSync(output, { recursive: true });
 const sources = ['admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/ops/cases.css', 'admin/ops/cases.js', 'admin/ops/app.js'];
 const hashes = () => Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
 const report = { passed: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), sourceHashes: hashes(), environment: 'Local fixtures only; synthetic identity and records; all external requests and writes blocked', checks: [], screenshots: [], geometry: [], errors: [], mutations: [] };
-const modules = ['home', 'operations', 'content', 'analytics', 'settings'];
+const modules = ['home', 'operations', 'content', 'articles', 'analytics', 'settings'];
 const fixtures = createCasesFixture();
 const legacy = createLegacyOpsState();
 const { server, baseUrl } = await startStaticServer();
@@ -91,7 +91,7 @@ try {
         await page.locator('.case-mobile-navigation').waitFor();
         assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
         assert.equal(await page.locator('.case-mobile-navigation [aria-current="page"]').getAttribute('data-module'), module);
-        assert.equal(await page.locator('.case-mobile-navigation .nav-button').count(), 5);
+        assert.equal(await page.locator('.case-mobile-navigation .nav-button').count(), modules.length);
         assert.match(await page.locator('.admin-mobile-account').innerText(), /เจ้าของ \/ Admin/);
         assert.equal(await page.locator('.admin-mobile-account [data-action="logout"]').isVisible(), true);
         if (width === 390 && module === 'content') await capture('mobile-navigation-390');
@@ -101,7 +101,7 @@ try {
         assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
       }
     }
-    report.checks.push(`All five modules: same chrome, correct active menu, assets, controls, no horizontal overflow at ${width}px.`);
+    report.checks.push(`All ${modules.length} modules: same chrome, correct active menu, assets, controls, no horizontal overflow at ${width}px.`);
   }
 
   await page.setViewportSize({ width: 1448, height: 1086 });

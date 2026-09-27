@@ -1,0 +1,4 @@
+<sc-if value="{{ hasLine }}"><section class="ar-consult" aria-labelledby="article-consult-title"><div class="hm-wrap">
+  <div><h2 id="article-consult-title" data-cms-copy="articlesPage.ctaTitle">{{ articleCopy.ctaTitle }}</h2><p data-cms-copy="articlesPage.ctaBody">{{ articleCopy.ctaBody }}</p></div>
+  <a class="hm-button ar-line" href="{{ lineUrl }}"><!-- COVERMATE_LINE_MARK --><span data-cms-copy="articlesPage.ctaLabel">{{ articleCopy.ctaLabel }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></a>
+</div></section></sc-if>

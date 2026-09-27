@@ -1,0 +1,125 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {projectArticleIndex,articleIndexAddress} from '../src/visitor/articles-index.mjs';
+import {projectHomeArticles} from '../src/visitor/home-articles.mjs';
+import {articleIndexFixture} from './fixtures/home-articles/index-feed.mjs';
+import {startArticlesIndexPreview} from './articles-index-preview.mjs';
+import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {cmsMedia,migrateCmsContent,routePageFromLocationParts,publicPathForRoutePage} from '../covermate-contract.js';
+import {createSeoModel} from '../covermate-seo.mjs';
+
+const options={now:Date.parse('2026-09-27'),mediaUrl:cmsMedia};
+const feed=structuredClone(articleIndexFixture);
+const view=(value=feed,search='',lang='th')=>projectArticleIndex(value,{...options,search,lang});
+assert.equal(view().total,12);assert.equal(view().items.length,8);assert.equal(view().pages,2);
+assert.equal(view().featured.key,projectHomeArticles(feed,options).items[0].key);
+assert.equal(view(feed,'?category=motor').total,4);assert.equal(view(feed,'?category=motor').featured,null);
+assert.equal(view(feed,'?q=สัมภาระ').total,1);
+assert.equal(view(feed,'?q=baggage','en').total,1);
+assert.equal(view(feed,'?category=unknown').total,0);
+assert.equal(view(feed,'?page=100000').page,2);assert.equal(view(feed,'?page=-1').page,1);
+assert.equal(view(feed,'?sort=oldest').items[0].key,'sample-motor');
+assert.equal(view(null).unavailable,true);assert.equal(view({...feed,items:[]}).empty,true);
+assert.equal(articleIndexAddress('?lang=en&cm_env=uat&page=2',{q:'hello world',page:null}),'/articles?lang=en&cm_env=uat&q=hello+world');
+for(const mutate of [item=>item.status='draft',item=>item.status='scheduled',item=>item.translations.th.publishedAt='2099-01-01',item=>delete item.translations.th,item=>item.slug='../secret']) {
+  const item=structuredClone(feed.items[0]);mutate(item);assert.equal(view({...feed,items:[item]}).total,0);
+}
+const bad=structuredClone(feed);bad.items[0].image.src='javascript:alert(1)';assert.equal(view(bad).featured.image,'');
+const original={cmsContentVersion:21,articlesPage:{title:{th:'Owner title',en:''},heroImage:''}};
+const migrated=migrateCmsContent(original);assert.equal(migrated.cmsContentVersion,23);assert.deepEqual(migrated.articlesPage.title,original.articlesPage.title);assert.equal(migrated.articlesPage.heroImage,'');
+assert.deepEqual(migrateCmsContent(migrated),migrated);
+assert.equal(routePageFromLocationParts('/articles/'),'articles');assert.equal(publicPathForRoutePage('articles'),'/articles');
+assert.equal(routePageFromLocationParts('/admin/edit','?page=articles'),'home','Articles do not opt into the Home editor');
+const seo=createSeoModel(migrated,{path:'/articles',lang:'en'});assert.equal(seo.canonical,'https://covermateinsurance.com/articles?lang=en');assert.match(seo.meta.robots,/noindex/);
+console.log('PASS index projection, publication safety, search/sort/pagination, route and additive CMS migration.');
+
+if(process.argv.includes('--browser')) {
+  const fixture=process.argv.find(arg=>arg.startsWith('--fixture='))?.slice(10);
+  const state=fixture?JSON.parse(fs.readFileSync(fixture,'utf8')):undefined;
+  const server=await startArticlesIndexPreview({state});
+  const engine=process.env.BROWSER||'chromium',pw=loadPlaywright();
+  const browser=engine==='chromium'?await launchChromium(pw.chromium):await pw[engine].launch();
+  const out='uat-results/articles-index';fs.mkdirSync(out,{recursive:true});
+  const report={engine,url:server.baseUrl+'/articles',source:fixture||'CMS defaults',data:'local fixture, sample-labelled, submissions blocked',errors:[],checks:[]};
+  try {
+    const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+    await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.fulfill({status:403,body:'Preview blocks remote traffic'}));
+    const newPage=async()=>{const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push(error.message));return page;};
+    let page=await newPage();
+    const ready=async(path='/articles')=>{
+      const response=await page.goto(server.baseUrl+path);assert.equal(response.status(),200);
+      await page.locator('.ar-index').waitFor();
+      await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));
+      await page.evaluate(()=>document.fonts.ready);
+      if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();
+    };
+    const fit=async()=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal page overflow');
+    for(const [width,lang] of process.argv.includes('--interactions-only')?[]:[[1440,'th'],[820,'th'],[390,'th'],[320,'en']]) {
+      await page.setViewportSize({width,height:1000});await ready('/articles'+(lang==='en'?'?lang=en':''));await fit();
+      assert.equal(await page.locator('.ar-grid .ar-item:visible').count(),8);
+      assert.equal(await page.locator('.ar-featured').count(),1);
+      assert.equal(await page.locator('h1').count(),1);
+      assert.ok((await page.locator('#articles-results').textContent()).trim());
+      assert.match(await page.locator('.ar-sample').textContent(),/ตัวอย่าง|Sample/);
+      assert.equal(await page.locator('#talk').count(),0);
+      assert.equal(await page.locator('header > div > a').first().getAttribute('href'),lang==='en'?'/?lang=en':'/');
+      assert.match(await page.locator('link[rel=canonical]').getAttribute('href'),/\/articles/);
+      assert.match(await page.locator('meta[name=robots]').getAttribute('content'),/noindex/);
+      await page.locator('.ar-sort .cm-select-trigger').waitFor();
+      await page.locator('.ar-consult').scrollIntoViewIfNeeded();
+      await page.waitForFunction(()=>[...document.querySelectorAll('.ar-media img')].every(img=>img.complete&&img.naturalWidth));
+      await page.evaluate(()=>scrollTo(0,0));
+      await page.screenshot({path:`${out}/${engine}-${width}-${lang}.png`,fullPage:true});
+      report.checks.push({width,lang,cards:8,noOverflow:true});
+    }
+    if(process.argv.includes('--snapshots-only')) { fs.writeFileSync(`${out}/${engine}-report.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report)); }
+    else {
+      await page.setViewportSize({width:1440,height:1000});await ready();
+      await page.locator('.ar-pagination a').filter({hasText:/^2$/}).click();
+      assert.match(page.url(),/page=2/);assert.equal(await page.locator('.ar-item:visible').count(),3);
+      await page.reload();await page.locator('.ar-item:visible').first().waitFor();assert.equal(await page.locator('.ar-item:visible').count(),3);
+      await page.goBack();await page.waitForURL(server.baseUrl+'/articles');assert.equal(await page.locator('.ar-item:visible').count(),8);
+      await page.locator('.ar-category').filter({hasText:'ประกันสุขภาพ'}).click();assert.match(page.url(),/category=health/);
+      assert.equal(await page.locator('.ar-item:visible').count(),4);assert.equal(await page.locator('.ar-featured').count(),0);
+      await page.locator('#articles-search').fill('not-found');await page.locator('#articles-search').press('Enter');
+      await page.locator('.ar-empty').waitFor();assert.equal(await page.locator('.ar-item').count(),0);
+      assert.equal(await page.locator('#articles-search').inputValue(),'not-found');
+      await page.locator('.ar-clear').click();assert.equal(await page.locator('.ar-item:visible').count(),8);
+      await page.locator('.ar-sort .cm-select-trigger').click();await page.getByRole('option',{name:'เรื่องเก่าสุด',exact:true}).click();
+      assert.match(page.url(),/sort=oldest/);assert.equal(await page.locator('.ar-grid h3').first().textContent(),feed.items[0].translations.th.title);
+      await page.locator('[data-language-switch=en]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');
+      assert.match(await page.locator('.ar-grid a').first().getAttribute('href'),/lang=en/);
+      assert.equal(await page.locator('.ar-grid h3').first().textContent(),feed.items[0].translations.en.title);
+      if(process.argv.includes('--isolate-mobile')) {
+        await page.close();page=await newPage();
+        report.limitations=['Desktop and mobile flow groups use separate pages. Continuous WebKit run crashes during the desktop-to-mobile navigation; cause unresolved, not a full Safari pass.'];
+      }
+      await page.setViewportSize({width:390,height:844});await ready();
+      await page.locator('.ar-load-more').click();assert.match(page.url(),/page=2/);assert.equal(await page.locator('.ar-item:visible').count(),11);
+      assert.equal(await page.locator('.ar-load-more').count(),0);
+      assert.ok(await page.locator('.ar-grid .ar-card-link').nth(8).evaluate(el=>el===document.activeElement),'Load more focus moves to first added card');
+      await page.reload();await page.locator('.ar-index').waitFor();assert.equal(await page.locator('.ar-item:visible').count(),11);
+      report.checks.push('Pagination, load-more focus, search, clear, custom sort, language switch, reload and Back');
+      server.setFeed({available:true,items:[]});await ready();await page.locator('.ar-empty').waitFor();assert.equal(await page.locator('.ar-item').count(),0);
+      server.setFeed(null);await ready();assert.equal(await page.locator('.ar-empty button').count(),1);
+      const escaped=structuredClone(feed);escaped.items[0].translations.th.title='<img src=x onerror=alert(1)>';escaped.items[0].image.src='assets/missing-article.jpg';
+      server.setFeed(escaped);await ready();assert.equal(await page.locator('.ar-featured h3').textContent(),escaped.items[0].translations.th.title);assert.equal(await page.locator('.ar-featured h3 img').count(),0);
+      await page.waitForFunction(()=>document.querySelector('.ar-featured img')?.hasAttribute('data-failed'));
+      report.checks.push('Empty, unavailable, missing image fallback and escaped content');
+      server.setFeed(feed);await page.goto(server.baseUrl+'/');await page.locator('#articles').waitFor();assert.equal(await page.locator('.hm-article-card').count(),3);
+      await page.locator('.hm-articles-all').click();await page.locator('.ar-index').waitFor();assert.equal(new URL(page.url()).pathname,'/articles');
+      await page.locator('header > div > a').first().click();await page.locator('#talk').waitFor();assert.equal(new URL(page.url()).pathname,'/');
+      await page.goto(server.baseUrl+'/motor');await page.locator('#tiers').waitFor();assert.equal(await page.locator('.ar-index').count(),0);
+      assert.equal((await page.request.get(server.baseUrl+'/articles/motor-cover-types')).status(),501);
+      assert.equal((await page.request.get(server.baseUrl+'/api/page?route=/unknown')).status(),403);
+      report.checks.push('Home → index → Home and Motor smoke, detail route remains explicitly pending');
+      assert.deepEqual(report.errors,[]);
+      fs.writeFileSync(`${out}/${engine}-report.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+    }
+  } catch(error) {
+    report.failure=error.stack||String(error);
+    fs.writeFileSync(`${out}/${engine}-report.json`,JSON.stringify(report,null,2));
+    console.error('Browser errors:',report.errors);throw error;
+  }
+  finally {await browser.close();await new Promise(resolve=>server.server.close(resolve));}
+}

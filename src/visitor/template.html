@@ -75,6 +75,7 @@
 }
 </style>
 <link rel="stylesheet" href="/assets/fonts/covermate-fonts.css">
+<link rel="stylesheet" href="/assets/article-document.css">
 </head>
 <body>
 <x-dc>
@@ -690,6 +691,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 </helmet>
 
 <style>/* COVERMATE_HOME_STYLES */</style>
+<style>/* COVERMATE_ARTICLES_INDEX_STYLES */</style>
+<style>/* COVERMATE_ARTICLE_DETAIL_STYLES */</style>
 <style>/* COVERMATE_LINE_STYLES */</style>
 <!-- COVERMATE_SELECT_STYLES -->
 <style>/* COVERMATE_CALCULATOR_STYLES */</style>
@@ -697,7 +700,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 <sc-if value="{{ showHeader }}" hint-placeholder-val="{{ true }}">
 <header style="position:{{ headerPos }};top:0;z-index:40;background:{{ headerBg }};backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);box-shadow:{{ headerShadow }};transition:box-shadow .35s ease, background .35s ease">
   <div style="max-width:var(--wrap);margin:0 auto;padding:{{ headerPad }} clamp(12px,3.8vw,var(--gut));display:flex;align-items:center;gap:clamp(8px,2.4vw,var(--space-4));transition:padding .35s cubic-bezier(.22,.61,.36,1)">
-    <a href="#top" style="display:flex;align-items:center;gap:var(--space-2);min-width:0;margin-right:auto;color:var(--color-text)" style-hover="color:var(--color-text)">
+    <a href="{{ headerHomeHref }}" style="display:flex;align-items:center;gap:var(--space-2);min-width:0;margin-right:auto;color:var(--color-text)" style-hover="color:var(--color-text)">
       <span style="display:inline-flex;align-items:center;min-width:0;max-width:min(56vw,310px)">
         <sc-if value="{{ hasHeaderLogo }}"><img data-cms-image="{{ headerLogoPath }}" sc-camel-src="{{ brandWordmarkLogo }}" alt="{{ brandLogoAlt }}" style="width:clamp(184px,22vw,292px);height:auto;max-height:82px;object-fit:contain;object-position:left center;display:block;transform:{{ markScale }};transition:transform .35s cubic-bezier(.22,.61,.36,1)"></sc-if>
       </span>
@@ -729,9 +732,12 @@ textarea.input { min-height: 90px; resize: vertical; }
 <sc-if value="{{ menuOpen }}"><div class="hm-menu" data-noedit sc-camel-on-click="{{ closeMenu }}"><div class="hm-menu-panel" role="dialog" aria-modal="true" aria-label="{{ homeCopy.menuLabel }}"><button class="hm-menu-button" type="button" aria-label="{{ homeCopy.closeLabel }}" sc-camel-on-click="{{ closeMenu }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button><nav><sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span></a></sc-for></nav><sc-if value="{{ hasLine }}"><a class="hm-button" href="{{ lineUrl }}"><!-- COVERMATE_LINE_MARK --><span data-cms-copy="header.cta">{{ headerCta }}</span></a></sc-if></div></div></sc-if>
 
 <main id="top" style="display:block">
+<!-- COVERMATE_ARTICLES_INDEX_TEMPLATE -->
+<!-- COVERMATE_ARTICLE_DETAIL_TEMPLATE -->
   <sc-if value="{{ publicNotice }}"><p class="hm-content-notice" role="status">{{ publicNotice }}</p></sc-if>
 <sc-for list="{{ sectionGroups }}" as="group"><div class="{{ group.className }}" style="{{ group.style }}">
 <sc-for list="{{ group.sections }}" as="s" hint-placeholder-count="4">
+<!-- COVERMATE_HOME_ARTICLES_TEMPLATE -->
 <!-- COVERMATE_HOME_TEMPLATE -->
 
   <!-- ─── HERO ─── -->
@@ -1612,7 +1618,7 @@ textarea.input { min-height: 90px; resize: vertical; }
         <div class="cm-footer-heading"><span class="{{ footerIcons.nav.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.nav.image }}"><img sc-camel-src="{{ footerIcons.nav.image }}" alt="" data-cms-image="{{ footerIcons.nav.path }}"></sc-if><sc-if value="{{ !footerIcons.nav.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.nav.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.navHeading">{{ footerNavHeading }}</h3><p data-cms-copy="footer.navHelper">{{ footerCopy.navHelper }}</p></div></div>
         <div class="cm-footer-links">
           <sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-for>
-          <sc-if value="{{ showFooterPrivacyNav }}"><a href="#privacy"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ showFooterPrivacyNav }}"><a href="{{ footerPrivacyHref }}"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
         </div>
       </nav>
       <div class="cm-footer-contact">
