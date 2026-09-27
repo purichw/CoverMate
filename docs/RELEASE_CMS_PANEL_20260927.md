@@ -12,6 +12,20 @@ performance passes at 906,174 bytes for Home (230,960 bytes gzip), with zero CLS
 in all four Home/Motor desktop/mobile checks. Full CI and production verification
 must pass on the follow-up commit; the budget is not increased.
 
+CI run `36334853644` for `7a4fa0f` passed the complete `check:ci` suite,
+including performance and all public smoke viewports. The emulator stage passed
+Rules, API, notification/scheduler and real Publish journeys in Chromium/WebKit,
+then stopped on an obsolete panel-close title in `nfr-journeys.mjs`. Main's
+`b7ab7ca` fixes that locator using the current accessible button within the panel
+and verifies the panel becomes hidden. The final exact-SHA CI remains required
+before promotion.
+
+The complete local emulator suite subsequently passed with `b7ab7ca`'s journey
+locator, including the remaining intake/customer-email/article API checks and
+article browser journeys in Chromium/WebKit. Log:
+`uat-results/editor-panel-release/emulator-final.log`. These use isolated demo
+emulators and injected email providers, not production data or messages.
+
 ## Scope and checkpoints
 
 The user authorized pushing and deploying this chat's work. The change adds a
@@ -41,7 +55,8 @@ are inconclusive and do not satisfy these checks for the final merged build.
 | Panel browser | `npm run check:editor-panel`; desktop/mobile screenshots, canonical Draft reload, TH/EN, history, confirmations, Preview, hidden Footer, Escape/focus | Passed on `c618fb9` |
 | Existing editor flows | `npm run check:admin-structure:browser` and `npm run check:editor-history`, serially | Passed on `c618fb9` |
 | Builder and text editing | `smoke:admin-builder`, `check:text-editor:browser`, linked-text and FAQ browser suites | Passed |
-| Hosted UAT | Real Firebase Draft autosave/reload through `--panel`; exact served runtime/styles; desktop/mobile evidence; complete cleanup | Passed on `007f9bb` Preview |
+| Hosted UAT | Real Firebase Draft autosave/reload through `--panel`; exact served runtime/styles; desktop/mobile evidence; complete cleanup | Passed on `7a4fa0f` Preview after external CSS extraction |
+| Full emulator suite | Rules, APIs, notifications, Publish, navigation/accessibility, intake and article journeys | Passed locally with `b7ab7ca` |
 | Remote release | Exact pushed SHA/CI, deployed artifact identity, public/Admin route smoke | Pending |
 
 Local panel evidence is written to `uat-results/editor-panel/`. Match its source
@@ -62,6 +77,13 @@ LINE URL and UAT Live, verified Draft restoration, deactivated allowlist and
 disabled/revoked temporary Auth. No cleanup remains. Desktop/mobile screenshots
 were personally inspected. The existing UAT Draft's brown Contact theme is
 preserved, not a new public design or a production content change.
+
+Final runtime receipt: `7a4fa0fa8e3e99fbd47e540e390130b0b151984f` at
+`https://covermate-qg9ni4swd-purich-w.vercel.app`, recorded in
+`uat-results/editor-panel-hosted-final/report.json`. It additionally verifies
+both versioned external editor stylesheets and repeats real Draft persistence,
+desktop/mobile inspection and complete cleanup. Follow-up test/documentation-only
+commits can reuse this receipt after proving their application artifacts unchanged.
 
 Linked-text and FAQ browser checks also passed. The FAQ harness initially
 looked for the retired tab label; only its locator was changed to the current
