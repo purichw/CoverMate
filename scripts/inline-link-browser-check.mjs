@@ -98,9 +98,14 @@ try {
   }
   async function noNavigationClick(target, options = {}) {
     const before = { url: page.url(), destinations: report.destinations.length, pages: context.pages().length, navigations: report.navigationAttempts.length };
-    await target.scrollIntoViewIfNeeded();
+    await target.evaluate(el => el.scrollIntoView({ block:'center', inline:'nearest', behavior:'instant' }));
+    await frame();
     const hit = await target.evaluate(el => {
-      const box = el.getBoundingClientRect(), x = box.x + box.width / 2, y = box.y + box.height / 2;
+      // Inline copy can wrap: its bounding-box midpoint may fall in the gap
+      // between line boxes. Use an actual line box, without bypassing hit tests.
+      const box = [...el.getClientRects()].find(rect => rect.width > 0 && rect.height > 0);
+      if (!box) throw new Error('Editable copy has no visible line box');
+      const x = box.x + box.width / 2, y = box.y + box.height / 2;
       const actual = document.elementFromPoint(x, y);
       return { x, y, owner:el.getAttribute('data-ek'), tag:el.tagName, hitTag:actual?.tagName, hitOwner:actual?.getAttribute('data-ek'), hitHref:actual?.closest('a')?.getAttribute('href'), inside:el === actual || el.contains(actual) };
     });
@@ -115,7 +120,7 @@ try {
     assert.equal(report.destinations.length, before.destinations, 'Editable click must not request its URL');
     assert.equal(context.pages().length, before.pages, 'Editable click must not open another tab');
     assert.equal(report.navigationAttempts.length, before.navigations, 'Editable click must not attempt a navigation, even if its destination is blocked');
-    assert.equal(hit.inside, true, 'The editable leaf receives pointer hit-testing, not an overlapping link surface');
+    assert.equal(hit.inside, true, 'The editable leaf receives pointer hit-testing, not an overlapping link surface: ' + JSON.stringify(hit));
   }
   async function editAndSave(target, value, expectedPath) {
     const beforeSaves = saves;
