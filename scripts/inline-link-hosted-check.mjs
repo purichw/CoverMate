@@ -10,11 +10,15 @@ import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 import { encryptBackup, backupChecksum } from './lib/encrypted-backup.mjs';
 import { argValue, resolveUatUrl, vercelBypassHeaders, PROJECT_ID } from './lib/uat-env.mjs';
 import { isProductionHost } from '../covermate-environment.mjs';
+import { extractBundlerTemplate } from '../server/bundler-template.mjs';
 
 // Opt-in, real hosted Draft smoke. Never reads env files, seeds content,
 // publishes, submits leads or sends messages. The existing local harness covers
 // the broader click matrix; this checks real Firebase persistence and reload.
+// --panel uses the same two canonical owners through the new side panel, then
+// verifies its mobile selection/layout. Without it, the inline flow is unchanged.
 const argv = process.argv.slice(2);
+const panelMode = argv.includes('--panel');
 assert.ok(argv.includes('--write-uat'), 'Requires explicit --write-uat.');
 assert.ok(argValue(argv, '--url'), 'Requires explicit --url=<CoverMate deployment preview>.');
 const expectedCommit = argValue(argv, '--commit');
@@ -38,6 +42,7 @@ assert.ok(output.startsWith(path.join(root, 'uat-results') + path.sep), 'Output 
 fs.mkdirSync(output, { recursive: true });
 const reportPath = path.join(output, 'report.json');
 const report = { passed:false, checksPassed:false, startedAt:new Date().toISOString(), target:url.origin, expectedCommit,
+  mode:panelMode ? 'panel' : 'inline',
   uid, siteId:'covermate-uat', productionContentWrites:0, liveWrites:0, leadSubmissions:0, emails:0,
   checks:[], artifacts:[], pageErrors:[], blockedRequests:[], navigationAttempts:[],
   cleanup:{ restore:null, allowlistDeactivated:false, authDisabled:false, required:[] } };
@@ -122,6 +127,49 @@ async function editCopy(selector, value, owner, readValue) {
   await assertLiveUnchanged();
 }
 
+const panel = () => page.locator('aside[data-editor-panel]');
+const panelField = owner => panel().locator(`[data-contact-field="${owner}"]`);
+async function readyPanel() {
+  await panel().waitFor({timeout:60000});
+  await panel().locator('[data-outline-select="talk"]').waitFor();
+  await assertUat();
+}
+async function selectContact() {
+  await panel().locator('[data-outline-select="talk"]').click();
+  await panel().locator('[data-editor-inspector]').waitFor();
+  await page.waitForFunction(() => document.querySelector('main #talk')?.getAttribute('data-editor-selected') === 'true');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+async function revealPanelField(owner) {
+  for (let depth=0;depth<5;depth++) {
+    const closed = panel().locator('details:not([open])').filter({has:page.locator(`[data-contact-field="${owner}"]`)}).first();
+    if (!await closed.count()) break;
+    await closed.locator(':scope > summary').click();
+  }
+  await panelField(owner).waitFor();
+}
+async function editPanelField(owner, value, readValue) {
+  await revealPanelField(owner);
+  const field = panelField(owner);
+  assert.equal(await field.getAttribute('data-contact-field'), owner, 'Panel input must have its canonical owner.');
+  const before = {url:page.url(),tabs:page.context().pages().length,navigations:report.navigationAttempts.length};
+  await field.fill(value);
+  await field.press('Tab');
+  await poll(async () => {
+    const doc = await draftRef.get();
+    return doc.data()?.updatedBy?.uid === uid && readValue(doc.data()?.config) === value;
+  }, 'Real panel Draft autosave did not persist ' + owner);
+  assert.equal(page.url(), before.url, 'Panel editing must not navigate.');
+  assert.equal(page.context().pages().length, before.tabs, 'Panel editing must not open a tab.');
+  assert.equal(report.navigationAttempts.length, before.navigations, 'Panel editing must not attempt navigation.');
+  await assertLiveUnchanged();
+}
+async function capturePanel(name) {
+  const screenshot = path.join(output,name);
+  await page.screenshot({path:screenshot,animations:'disabled'});
+  report.artifacts.push({path:screenshot,route:page.url(),viewport:page.viewportSize(),state:'Hosted UAT owner; Contact selected; real Draft data'});
+}
+
 try {
   const response = await fetch(target('/'), {headers:vercelBypassHeaders(),redirect:'manual',signal:AbortSignal.timeout(30000)});
   assert.equal(response.status, 200, 'Preview must be available before writes.');
@@ -137,6 +185,21 @@ try {
     const committed = execFileSync('git', ['show', expectedCommit + ':' + file], {cwd:root});
     assert.equal(sha(served), sha(committed), 'Preview asset differs from the requested commit: ' + file);
     report.committedAssetProof[file] = sha(served);
+  }
+  if (panelMode) {
+    // The panel runtime/styles ship inside the generated template, while SSR
+    // changes its SEO/seed. Compare the unchanged code blocks before any write.
+    const committed = execFileSync('git',['show',expectedCommit + ':index.html'],{cwd:root,encoding:'utf8'});
+    const blocks = source => {
+      const template = extractBundlerTemplate(source);
+      const runtime = [...template.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(match=>match[1]).filter(code=>code.includes('editorPanelExpanded'));
+      const styles = [...template.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(match=>match[1]).filter(css=>css.includes('.cm-editor-panel'));
+      assert.equal(runtime.length,1,'Expected one generated panel runtime block.');
+      assert.equal(styles.length,1,'Expected one generated panel style block.');
+      return {runtimeSha256:sha(runtime[0]),stylesSha256:sha(styles[0])};
+    };
+    report.committedPanelProof = blocks(html);
+    assert.deepEqual(report.committedPanelProof,blocks(committed),'Hosted panel runtime/styles differ from the requested commit.');
   }
   originals = await db.getAll(liveRef, draftRef);
   assert.ok(originals.every(doc => doc.exists && doc.data()?.config), 'Both existing UAT states are required; this smoke does not seed state.');
@@ -178,22 +241,56 @@ try {
     const result = await window.CoverMateFirebase.syncSessionFromCurrentUser();
     if (!result.ok || result.admin.uatOnly !== true || result.admin.role !== 'owner') throw new Error('Temporary UAT owner failed real role checks.');
   }, token);
-  await page.goto(target('/admin/edit'), {waitUntil:'domcontentloaded'});await ready();
+  await page.goto(target(panelMode ? '/admin/content' : '/admin/edit'), {waitUntil:'domcontentloaded'});
+  if (panelMode) await readyPanel(); else await ready();
   assert.ok((await db.getAll(liveRef,draftRef)).every((doc,index)=>doc.updateTime.isEqual(originals[index].updateTime)), 'UAT changed after backup; refusing to edit.');
   report.checks.push('Committed assets and UAT environment verified; encrypted backup and temporary uatOnly owner ready');
-  await editCopy(helperSelector, helperMarker, 'homeDesign.contactLineLabel.th', config => config?.homeDesign?.contactLineLabel?.th);
-  await editCopy(lineSelector, marker, 'contact.lineId', config => config?.contact?.lineId);
+  if (panelMode) {
+    await selectContact();
+    await editPanelField('homeDesign.contactLineLabel.th',helperMarker,config=>config?.homeDesign?.contactLineLabel?.th);
+    await editPanelField('contact.lineId',marker,config=>config?.contact?.lineId);
+  } else {
+    await editCopy(helperSelector, helperMarker, 'homeDesign.contactLineLabel.th', config => config?.homeDesign?.contactLineLabel?.th);
+    await editCopy(lineSelector, marker, 'contact.lineId', config => config?.contact?.lineId);
+  }
   const edited = await draftRef.get();
   assert.equal(edited.data().config.contact.lineUrl, originals[1].data().config.contact.lineUrl, 'Display-name editing must preserve LINE destination.');
-  await page.reload({waitUntil:'domcontentloaded'});await ready();
-  await poll(async () => await editable(lineSelector).textContent() === marker && await editable(helperSelector).textContent() === helperMarker, 'Reload did not restore both canonical edits.');
-  await editable(lineSelector).scrollIntoViewIfNeeded();
-  const screenshot = path.join(output, 'hosted-inline-contact.png');
-  await page.screenshot({path:screenshot,animations:'disabled'});
-  report.artifacts.push({path:screenshot,route:page.url(),viewport:page.viewportSize()});
+  await page.reload({waitUntil:'domcontentloaded'});
+  if (panelMode) {
+    await readyPanel();await selectContact();
+    assert.equal(await panelField('contact.lineId').inputValue(),marker,'Reload restores canonical LINE input in panel.');
+    assert.equal(await panelField('homeDesign.contactLineLabel.th').inputValue(),helperMarker,'Reload restores canonical helper input in panel.');
+    await poll(async () => await page.locator(lineSelector).textContent() === marker && await page.locator(helperSelector).textContent() === helperMarker,'Reloaded page must reflect both panel edits.');
+    await panel().locator('[data-editor-inspector]').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));
+    await capturePanel('hosted-panel-contact-desktop.png');
+    await page.setViewportSize({width:390,height:844});
+    await panel().locator('[data-editor-pane="outline"]').click();
+    await selectContact();
+    assert.equal(await panel().getAttribute('data-editor-mobile-view'),'details','Mobile selection opens Contact details.');
+    const geometry = await panel().evaluate(el => {
+      const rect = el.getBoundingClientRect();
+      const scroll = el.querySelector('[data-admin-panel-scroll]');
+      const scrollRect = scroll.getBoundingClientRect();
+      const heading = el.querySelector('[data-admin-inspector-title]').getBoundingClientRect();
+      return {x:rect.x,y:rect.y,width:rect.width,height:rect.height,viewportWidth:innerWidth,viewportHeight:innerHeight,pageWidth:document.documentElement.scrollWidth,panelWidth:el.scrollWidth,panelClientWidth:el.clientWidth,scrollTop:scroll.scrollTop,scrollHeight:scroll.scrollHeight,clientHeight:scroll.clientHeight,headingTop:heading.top,headingBottom:heading.bottom,scrollAreaTop:scrollRect.top,scrollAreaBottom:scrollRect.bottom};
+    });
+    assert.ok(geometry.pageWidth<=geometry.viewportWidth+1 && geometry.panelWidth<=geometry.panelClientWidth+1,'Hosted mobile panel must not overflow horizontally.');
+    assert.ok(geometry.x>=-1 && geometry.y>=-1 && geometry.x+geometry.width<=geometry.viewportWidth+1 && geometry.y+geometry.height<=geometry.viewportHeight+1,'Hosted mobile panel must fit viewport.');
+    assert.ok(geometry.headingTop>=geometry.scrollAreaTop-1 && geometry.headingBottom<=geometry.scrollAreaBottom,'Mobile Contact selection reveals inspector heading.');
+    report.mobilePanelGeometry = geometry;
+    await capturePanel('hosted-panel-contact-mobile.png');
+    report.checks.push('Hosted panel canonical Contact fields autosave real UAT Draft and survive reload; page reflects edits; mobile selection, heading visibility and viewport fit verified');
+  } else {
+    await ready();
+    await poll(async () => await editable(lineSelector).textContent() === marker && await editable(helperSelector).textContent() === helperMarker, 'Reload did not restore both canonical edits.');
+    await editable(lineSelector).scrollIntoViewIfNeeded();
+    const screenshot = path.join(output, 'hosted-inline-contact.png');
+    await page.screenshot({path:screenshot,animations:'disabled'});
+    report.artifacts.push({path:screenshot,route:page.url(),viewport:page.viewportSize()});
+  }
   await assertLiveUnchanged();
   assert.deepEqual(report.pageErrors, [], 'Hosted page errors must be absent.');
-  report.checks.push('LINE helper and display name accept actual pointer clicks, autosave canonical Draft values and survive reload; URL and Live unchanged');
+  report.checks.push(panelMode ? 'Panel input edits preserve the existing LINE destination and Live; no Publish or visitor submission performed' : 'LINE helper and display name accept actual pointer clicks, autosave canonical Draft values and survive reload; URL and Live unchanged');
   report.checksPassed = true;
 } catch (error) {
   errors.push(errorInfo(error));
@@ -242,6 +339,6 @@ try {
   report.errors=errors;report.finishedAt=new Date().toISOString();
   report.passed=report.checksPassed && errors.length === 0 && report.cleanup.required.length === 0 && report.cleanup.allowlistDeactivated && report.cleanup.authDisabled && report.liveUnchanged;
   fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n',{mode:0o600});
-  console.log(`${report.passed ? 'PASS' : 'ATTENTION'} hosted UAT inline links. Report: ${reportPath}`);
+  console.log(`${report.passed ? 'PASS' : 'ATTENTION'} hosted UAT ${panelMode ? 'editor panel' : 'inline links'}. Report: ${reportPath}`);
   if(!report.passed) process.exitCode=1;
 }
