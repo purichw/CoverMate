@@ -14,6 +14,11 @@ export function versionedAsset(value) {
   const key = '/' + value.replace(/^\//, '');
   return assetVersions[key] ? key + '?v=' + assetVersions[key] : value;
 }
+async function articleReadWithinDeadline(read) {
+  let timer;
+  try{return await Promise.race([Promise.resolve().then(read),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Article read deadline exceeded')),5000);})]);}
+  finally{clearTimeout(timer);}
+}
 export function renderPublicPage(html, config, options) {
   const model = createSeoModel(config, { assetPath: versionedAsset, ...options });
   const head = renderSeoHead(model);
@@ -45,6 +50,10 @@ export function renderPublicPage(html, config, options) {
   if (options?.article && !options.privatePage) {
     const json=JSON.stringify(options.article).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
     rendered=replaceBundlerTemplate(rendered,extractBundlerTemplate(rendered).replace('</head>',`<script id="covermate-article-detail" type="application/json">${json}</script></head>`));
+  }
+  if(options?.articleFeed && !options.privatePage) {
+    const json=JSON.stringify(options.articleFeed).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
+    rendered=replaceBundlerTemplate(rendered,extractBundlerTemplate(rendered).replace('</head>',`<script id="covermate-article-feed" type="application/json">${json}</script></head>`));
   }
   return rendered;
 }
@@ -84,7 +93,7 @@ export function createPublishedReader({ fetcher = fetch, now = Date.now, timeout
   };
 }
 
-export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readArticle = async () => null, readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
+export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readArticle = async () => null, readArticles = null, readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
   // The same legacy motor defaults as the visitor, used only for absent fields.
   const source = fs.readFileSync(new URL('../src/visitor/defaults.js', import.meta.url), 'utf8');
   const motorDefaults = JSON.parse(source.slice(source.indexOf('{'), source.lastIndexOf('}') + 1)).motorPage;
@@ -110,23 +119,29 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
     }
     const environment = resolveCoverMateEnvironment({ headers: req.headers, url: req.url });
     const noindex = owner || environment.isUat || isVercelPreviewHost(environment.host);
-    if (noindex || route === '/articles' || articleSlug) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    if (noindex || !readArticles && (route === '/articles' || articleSlug)) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     let loadedConfig, rendering = false;
     try {
       const published = owner ? null : await readPublished(environment.siteId);
       const state = published && (validStateDoc(published) ? published : { config: published, text: {} });
       loadedConfig = state?.config;
+      let articleFeed=null;
+      if(!owner&&readArticles) {
+        try{articleFeed=await articleReadWithinDeadline(()=>readArticles(environment.siteId));}
+        catch(error){if(route==='/articles'||articleSlug)throw error;articleFeed={available:false,settings:{enabled:false,showHome:false,showNavigation:false},items:[]};}
+        if((route==='/articles'||articleSlug)&&articleFeed.settings?.enabled!==true){sendError(404,loadedConfig);return;}
+      }
       let article=null;
       if(articleSlug) {
-        const payload=await readArticle(environment.siteId,articleSlug);
+        const payload=await articleReadWithinDeadline(()=>readArticle(environment.siteId,articleSlug));
         article=projectArticleDetail(payload,{slug:articleSlug,lang:url.searchParams.get('lang')==='en'?'en':'th',mediaUrl:value=>{
           const safe=cmsMedia(value);return safe ? versionedAsset(/^(https?:|\/)/i.test(safe)?safe:'/'+safe) : '';
         }});
         if(!article.available) {sendError(404,loadedConfig);return;}
       }
       rendering = true;
-      const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, article, publishedState: state, siteId: environment.siteId });
-      if (!noindex && !articleSlug) res.setHeader('Cache-Control', PUBLIC_HTML_CACHE_CONTROL);
+      const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, article, articleFeed, publishedState: state, siteId: environment.siteId });
+      if (!noindex && !articleSlug && !readArticles) res.setHeader('Cache-Control', PUBLIC_HTML_CACHE_CONTROL);
       res.statusCode = 200;
       res.end(req.method === 'HEAD' ? '' : html);
     } catch {

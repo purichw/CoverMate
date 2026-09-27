@@ -3,7 +3,7 @@ import { createCasesWorkspace } from "/admin/ops/cases.js";
 import { homeView } from "/admin/home-view.js";
 import { ADMIN_MODULES as MODULES, adminNavigation } from "/admin/shell.js";
 import { createArticlesWorkspace } from "/admin/articles/workspace.mjs";
-import { loadArticleCatalog, loadArticleForEditor } from "/admin/articles/data.mjs";
+import { loadArticleCatalog, loadArticleForEditor, createCloudArticleRepository } from "/admin/articles/data.mjs";
 import {
   adminPortalRouteStateFromLocation,
   adminPortalUrl,
@@ -112,7 +112,7 @@ async function init() {
 
   state.sessionRole = normalizeRole(state.session.role);
   state.role = state.sessionRole;
-  articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
+  articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, repository:createCloudArticleRepository(), session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
   casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
     renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }), sessionRoleLabel: displayRole(state.sessionRole) });
   const bell = document.createElement('button');

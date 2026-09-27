@@ -1,10 +1,9 @@
 // Shared by the initial HTTP response and CMS-driven client metadata.
-export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, article = null, assetPath = value => value } = {}) {
+export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, article = null, articleFeed = null, assetPath = value => value } = {}) {
   const root = 'https://covermateinsurance.com';
   const isArticle = /^\/articles\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(path);
   path = isArticle ? path.replace(/\/$/,'') : ['/motor','/articles'].includes(path) ? path : '/';
-  // Do not index this route until its publication backend is connected.
-  noindex = noindex || path === '/articles' || isArticle;
+  noindex = noindex || ((path === '/articles' || isArticle) && articleFeed?.settings?.enabled!==true);
   lang = lang === 'en' ? 'en' : 'th';
   const clean = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
   const localized = value => clean(typeof value === 'string' ? value : value?.[lang]);
@@ -62,6 +61,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     { '@type': 'WebPage', '@id': canonical + '#webpage', url: canonical, name: title, description, inLanguage: language, isPartOf: { '@id': websiteId }, about: { '@id': orgId }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}) }
   ];
   if (serviceName) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
+  if(isArticle&&article?.available)graph.push({'@type':'Article','@id':canonical+'#article',headline:title,description,inLanguage:language,mainEntityOfPage:canonical,publisher:{'@id':orgId},datePublished:article.datetime,...(image?{image}:{}),...(article.author?{author:{'@type':article.author===brand?'Organization':'Person',name:article.author}}:{})});
   return {
     title, language, canonical,
     meta: {
@@ -75,7 +75,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
       'og:image': image, 'og:image:secure_url': image.startsWith('https:') ? image : '', 'og:image:alt': image ? imageAlt : ''
     },
     icons: { icon: url(media.favicon), 'apple-touch-icon': url(media.mark) },
-    alternates: noindex ? {} : { 'th-TH': base, en: base + '?lang=en', 'x-default': base },
+    alternates: noindex ? {} : isArticle ? Object.fromEntries((article?.languages||[lang]).map(l=>[l==='th'?'th-TH':'en',base+(l==='en'?'?lang=en':'')])) : { 'th-TH': base, en: base + '?lang=en', 'x-default': base },
     graph: noindex ? null : { '@context': 'https://schema.org', '@graph': graph }
   };
 }

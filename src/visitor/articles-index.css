@@ -51,6 +51,7 @@ html[data-covermate-route] .ar-search input { flex:1; width:0; min-height:36px; 
 .ar-sort { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ar-muted); flex:none; max-width:50%; }
 .ar-sort > span:first-child { white-space:nowrap; }
 .ar-sort .cm-select-shell { min-width:156px; max-width:100%; }
+.ar-sort select { width:100%; min-height:44px; padding:10px 40px 10px 12px; border:1px solid #d8dfd1; border-radius:8px; background:#fffefa; color:var(--color-text); font:inherit; line-height:1.5; }
 .ar-clear { display:inline-flex; align-items:center; min-height:44px; margin:-10px 0 12px; color:var(--color-accent-700); font-size:14px; text-decoration:underline!important; text-underline-offset:4px; }
 .ar-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:20px; list-style:none; padding:0; margin:0; }
 .ar-item { min-width:0; border:1px solid #e2dfd5; border-radius:8px; background:#fffefa; }

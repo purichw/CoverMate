@@ -1,4 +1,4 @@
-import {projectPublishedArticles} from './home-articles.mjs';
+import {projectPublishedArticles,articlePublicHref} from './home-articles.mjs';
 import {renderArticleDocument,articleDocumentText} from '../../article-document.mjs';
 
 export function articleDetailSlug(path = '') {
@@ -42,7 +42,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
   const published = new Date(summary.publishedAt);
   const date = new Intl.DateTimeFormat(lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
   const updated = Date.parse(copy.updatedAt);
-  return {...summary,available:true,sample:payload.sample===true,blocks,sources,
+  return {...summary,available:true,sample:payload.sample===true,blocks,sources,languages:Object.keys(item.translations),
     richDocument:rich ? JSON.stringify(rich.document) : '',
     seoTitle:text(copy.seoTitle),seoDescription:text(copy.seoDescription),
     toc:rich ? rich.toc : blocks.filter(block=>block.heading).map(block=>({key:block.id,id:block.id,label:block.text,href:'#'+block.id,className:block.h3?'ad-toc-sub':''})),
@@ -51,7 +51,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
     date:date.format(published),datetime:published.toISOString(),
     updated: Number.isFinite(updated) && updated>summary.publishedAt && updated<=(now ?? Date.now()) ? date.format(updated) : '',
     reading:summary.readingMinutes ? (lang==='en'?summary.readingMinutes+' min read':'อ่าน '+summary.readingMinutes+' นาที') : '',
-    categoryHref:'/articles?category='+encodeURIComponent(summary.categoryId)+(lang==='en'?'&lang=en':'')};
+    categoryHref:articlePublicHref('/articles?category='+encodeURIComponent(summary.categoryId),lang)};
 }
 
 export function articleShareUrl(location) {

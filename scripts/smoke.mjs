@@ -1451,19 +1451,21 @@ for (const [name, width, height] of viewports) {
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
     if (Date.now() - navigationStarted < 2500 && isBenignNavigationAbort(url, failureText)) return;
+    // A prior public document can still cancel its font as an Admin redirect
+    // starts. Classify by the request's document before attributing it to auth.
+    if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && requestNavigation.get(request) < navigationId) {
+      const parsed = new URL(url);
+      if (parsed.origin === baseOrigin && ['font', 'stylesheet', 'image'].includes(request.resourceType()) && /^\/assets\/(fonts|brand)\/[^/]+\.(woff2|css|png|webp|svg|jpe?g)$/.test(parsed.pathname)) {
+        navigationAssetAborts.push({ path: parsed.pathname, fromNavigation: requestNavigation.get(request), toNavigation: navigationId });
+        return;
+      }
+    }
     if (failureText === "net::ERR_ABORTED" && expectedAuthRedirect) {
       const parsed = new URL(url);
       if (parsed.origin === baseOrigin &&
           (["/admin/ops/app.js", "/admin/home.css", "/admin/shell.css", "/admin/shell.js", "/assets/visitor/select.js", "/assets/visitor/select.css"].includes(parsed.pathname) ||
            (request.resourceType() === "font" && /^\/assets\/fonts\/[^/]+\.woff2$/.test(parsed.pathname)))) {
         authRedirectAborts.push({ request, redirect: expectedAuthRedirect, navigation: requestNavigation.get(request) });
-        return;
-      }
-    }
-    if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && requestNavigation.get(request) < navigationId) {
-      const parsed = new URL(url);
-      if (parsed.origin === baseOrigin && ['font', 'stylesheet', 'image'].includes(request.resourceType()) && /^\/assets\/(fonts|brand)\/[^/]+\.(woff2|css|png|webp|svg|jpe?g)$/.test(parsed.pathname)) {
-        navigationAssetAborts.push({ path: parsed.pathname, fromNavigation: requestNavigation.get(request), toNavigation: navigationId });
         return;
       }
     }

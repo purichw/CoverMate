@@ -1,9 +1,23 @@
-// The article repository and its server-side authorization are a later stage.
-// No fixture, localStorage seed, or query-string auth bypass belongs here.
-export async function loadArticleCatalog() {
-  return { available: false };
+export function createCloudArticleRepository({request}={}) {
+  const call=request||async function(action,body,id) {
+    const {appendEnvironmentSearch}=await import('/covermate-environment.mjs');
+    if(!window.CoverMateFirebase)await import('/covermate-firebase.js');
+    const cm=window.CoverMateFirebase;
+    const user=cm.auth?.currentUser || await cm.waitForAuth();
+    if(!user)throw Object.assign(Error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง'),{status:401});
+    const path='/api/articles?action='+action+(id?'&id='+encodeURIComponent(id):'');
+    const url=appendEnvironmentSearch(path,cm.environment);
+    const response=await fetch(url,{method:body?'POST':'GET',cache:'no-store',signal:AbortSignal.timeout(20000),headers:{Authorization:'Bearer '+await user.getIdToken(),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+    const result=await response.json();
+    if(!response.ok)throw Object.assign(Error(result.message||'โหลดข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง'),{status:response.status});
+    return result;
+  };
+  return {cloud:true,catalog:()=>call('catalog'),get:id=>call('read',null,id),
+    save:(article,expectedRevision)=>call('save',{article,expectedRevision}),
+    publish:(id,expectedRevision,languages)=>call('publish',{id,expectedRevision,languages}),
+    unpublish:(id,expectedRevision)=>call('unpublish',{id,expectedRevision}),
+    settings:(settings,expectedRevision)=>call('settings',{settings,expectedRevision})};
 }
-
-// Full article read is intentionally unavailable until the authorized API exists.
-// Never open an existing article using only its list summary as the body.
-export async function loadArticleForEditor() { return null; }
+const repository=createCloudArticleRepository();
+export const loadArticleCatalog=()=>repository.catalog();
+export const loadArticleForEditor=id=>repository.get(id);

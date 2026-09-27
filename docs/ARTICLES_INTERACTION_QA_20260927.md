@@ -1,5 +1,11 @@
 # Articles Interaction QA - 2026-09-27
 
+This records the earlier fixture/local-draft pass. For the subsequent connected
+server publication and visibility pass, see
+[Articles Publishing](ARTICLES_PUBLISHING.md). Its new Chromium/WebKit journey
+passed against real Auth/API/Firestore emulators; it does not retroactively
+turn the older fixture-only findings below into integration evidence.
+
 Scope: the Articles work in this chat. These checks use real rendered controls,
 typing, navigation, downloads and IndexedDB. Article catalogs and Admin identity
 are isolated fixtures unless explicitly identified as production adapters.

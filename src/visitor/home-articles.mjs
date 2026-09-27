@@ -1,5 +1,13 @@
 // Read-only publication summaries, separate from the Home CMS document.
-// The server will emit this payload once article routes are available.
+// Only the server's live projection may populate the public feed.
+export function articlePublicHref(path,lang='th') {
+  const url=new URL(path,'https://covermateinsurance.com');
+  if(lang==='en')url.searchParams.set('lang','en');
+  const current=new URLSearchParams(globalThis.location?.search||'');
+  if(current.get('cm_env')==='uat')url.searchParams.set('cm_env','uat');
+  if(current.get('cm_emulator')==='1')url.searchParams.set('cm_emulator','1');
+  return url.pathname+url.search+url.hash;
+}
 export function readHomeArticleFeed(root) {
   try {
     const node = root.querySelector('#covermate-article-feed');
@@ -8,9 +16,8 @@ export function readHomeArticleFeed(root) {
 }
 
 export function projectPublishedArticles(feed, {lang = 'th', now = Date.now(), mediaUrl = () => ''} = {}) {
-  if (feed?.available !== true || !Array.isArray(feed.items)) return [];
+  if (feed?.available !== true || feed.settings?.enabled===false || !Array.isArray(feed.items)) return [];
   const locale = lang === 'en' ? 'en' : 'th';
-  const suffix = locale === 'en' ? '?lang=en' : '';
   const text = value => typeof value === 'string' ? value.trim() : '';
   const featured = Array.isArray(feed.featuredIds) ? feed.featuredIds : [];
   const ids = new Set(), slugs = new Set();
@@ -29,17 +36,16 @@ export function projectPublishedArticles(feed, {lang = 'th', now = Date.now(), m
       readingMinutes:Number.isSafeInteger(copy.readingMinutes) && copy.readingMinutes > 0 ? copy.readingMinutes : null,
       category:text(copy.category), image:mediaUrl(item.image?.src), imageAlt:text(copy.imageAlt),
       imageStyle:'object-position:' + position(item.image?.x) + '% ' + position(item.image?.y) + '%',
-      href:'/articles/' + slug + suffix, titleId:'home-article-' + slug,
+      href:articlePublicHref('/articles/'+slug,locale), titleId:'home-article-' + slug,
       rank:featured.includes(id) ? featured.indexOf(id) : item.featured===true ? featured.length : Number.MAX_SAFE_INTEGER}];
   }).sort((a,b) => a.rank - b.rank || b.publishedAt - a.publishedAt || a.key.localeCompare(b.key));
   return items;
 }
 
 export function projectHomeArticles(feed, options = {}) {
-  if (feed?.available !== true || !Array.isArray(feed.items)) return {visible:false, items:[], indexHref:''};
-  const suffix = options.lang === 'en' ? '?lang=en' : '';
+  if (feed?.available !== true || feed.settings?.showHome===false || !Array.isArray(feed.items)) return {visible:false, items:[], indexHref:''};
   const items = projectPublishedArticles(feed, options).slice(0,3);
-  return {visible:items.length > 0, items, indexHref:'/articles' + suffix};
+  return {visible:items.length > 0, items, indexHref:articlePublicHref('/articles',options.lang)};
 }
 
 export function homeArticleInsertionIndex(sections) {

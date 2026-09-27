@@ -64,6 +64,13 @@ no-focus-stealing case. `--admin-only` runs that focused regression.
 preview (contact submission disabled). `BROWSER=webkit` chooses another installed
 Playwright engine. Screenshots/reports are in `uat-results/custom-select/`.
 
+`node scripts/select-spacing-check.mjs` checks rendered control insets on the
+articles index (TH/EN, 320/390/1440px), CMS list, Editor, contact, calculator,
+and renewal controls. The article sort owns its native select styling, including
+12px left padding; the shared trigger mirrors that geometry. It also exercises
+sort selection and Escape. Local fixture evidence is in
+`uat-results/select-spacing/`; this does not certify production publication.
+
 See [the September 24 release](RELEASE_SELECT_MOBILE_LINE_20260924.md) for the
 exact deployed SHA, CI and hosted evidence; local fixtures alone do not prove
 production behavior.

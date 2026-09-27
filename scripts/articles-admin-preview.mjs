@@ -24,7 +24,7 @@ export async function startArticlesAdminPreview() {
         return send('text/html', html.replace('<head>', '<head>' + seed));
       }
       if (url.pathname === '/covermate-firebase.js') return send('text/javascript', firebaseMock);
-      if (url.pathname === '/admin/articles/data.mjs') return send('text/javascript', `export async function loadArticleCatalog(){const response=await fetch('/__preview/articles');if(!response.ok){const error=new Error('Preview failure');error.status=response.status;throw error;}return response.json();} export async function loadArticleForEditor(id){return (await (await fetch('/__preview/article/'+encodeURIComponent(id))).json());}`);
+      if (url.pathname === '/admin/articles/data.mjs') return send('text/javascript', `export const createCloudArticleRepository=()=>null; export async function loadArticleCatalog(){const response=await fetch('/__preview/articles');if(!response.ok){const error=new Error('Preview failure');error.status=response.status;throw error;}return response.json();} export async function loadArticleForEditor(id){return (await (await fetch('/__preview/article/'+encodeURIComponent(id))).json());}`);
       if(url.pathname.startsWith('/__preview/article/')) return send('application/json',JSON.stringify(editorArticleFixture(catalog.items.find(item=>item.id===decodeURIComponent(url.pathname.split('/').at(-1))))));
       if (url.pathname === '/__preview/articles') {
         const response = JSON.stringify(catalog), status = failure;

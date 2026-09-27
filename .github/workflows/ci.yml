@@ -47,5 +47,7 @@ jobs:
         if: always()
         with:
           name: nfr-evidence
-          path: uat-results/nfr/
+          path: |
+            uat-results/nfr/
+            uat-results/articles-cloud/
           retention-days: 7

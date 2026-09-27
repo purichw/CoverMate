@@ -19,6 +19,7 @@ const commands = [
   ["node", ["scripts/admin-shell-browser-check.mjs"]],
   ["node", ["scripts/home-articles-check.mjs", "--browser"]],
   ["node", ["scripts/articles-index-check.mjs", "--browser"]],
+  ["node", ["scripts/select-spacing-check.mjs"]],
   ["node", ["scripts/articles-admin-check.mjs", "--browser"]],
   ["node", ["scripts/article-detail-check.mjs", "--browser"]],
   ["node", ["scripts/article-editor-check.mjs", "--browser"]],

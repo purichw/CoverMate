@@ -1,5 +1,10 @@
 # Articles / CMS Parity Audit
 
+Historical pre-integration findings below. The server repository, publication
+API, visibility switches and real emulator/browser verification now supersede
+the local-only status: see [Articles Publishing](ARTICLES_PUBLISHING.md).
+The audit script now runs the actual API and optional real browser journeys.
+
 Date: 2026-09-27. Scope: Home articles, public index/detail, Admin list and
 Article Editor in this working checkout. **Result: NOT ready for end-to-end
 publishing.** The UI and shared rich-text renderer exist; production article

@@ -773,7 +773,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const uat = previewHost || (!productionHost && queryUat) || document.documentElement.dataset.covermateEnvironment === 'uat' || window.__covermateRemoteContent?.environment === 'uat';
     const model = createSeoModel(site, {
       path: this.state.routePage === 'article' ? window.location.pathname : this.state.routePage === 'articles' ? '/articles' : this.state.routePage === 'motor' ? '/motor' : '/',
-      article:this.state.articleDetail,
+      article:this.state.articleDetail,articleFeed:this.state.articleFeed,
       lang: this.state.lang, privatePage: owner, noindex: owner || uat, motorDefaults: DEFAULTS.motorPage, assetPath: assetURL
     });
     document.documentElement.lang = model.language;
@@ -1099,11 +1099,14 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
 
   localizedPublicHref(value) {
     if (value === '#insurers' && this.state.routePage !== 'motor') return '#motor';
-    if (!/^\/(?:motor|articles)?(?:[?#]|$)/.test(value || '')) return value;
+    if (!/^\/(?:motor|articles(?:\/[^?#]*)?)?(?:[?#]|$)/.test(value || '')) return value;
     const url = new URL(value, window.location.origin);
     if (url.pathname === '/' && url.hash === '#insurers') url.hash = '#motor';
     if (this.state.lang === 'en') url.searchParams.set('lang', 'en');
     else url.searchParams.delete('lang');
+    const context=new URLSearchParams(window.location.search);
+    if(context.get('cm_env')==='uat')url.searchParams.set('cm_env','uat');
+    if(context.get('cm_emulator')==='1')url.searchParams.set('cm_emulator','1');
     return url.pathname + url.search + url.hash;
   }
 
@@ -2348,6 +2351,18 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       return items;
     }, []);
     const showTalkAnchor = sectionHrefAvailable('#talk');
+    const articleFlags=S.articleFeed?.settings;
+    if(articleFlags) {
+      const isArticlesLink=item=>{
+        try{const url=new URL(item.href,window.location.href);return url.origin===window.location.origin&&(/^\/articles(?:\/|$)/.test(url.pathname)||url.hash==='#articles');}
+        catch{return false;}
+      };
+      for(const list of [publicNavItems,motorNavItems]) {
+        const existing=list.find(isArticlesLink);
+        for(let i=list.length-1;i>=0;i--)if(isArticlesLink(list[i]))list.splice(i,1);
+        if(articleFlags.enabled&&articleFlags.showNavigation)list.push({key:'articles',label:th?'บทความ':'Articles',...existing,href:this.localizedPublicHref('/articles')});
+      }
+    }
     const showPrivacyAnchor = sectionHrefAvailable('#privacy');
     const enhancedContact = isHome;
     const submission = S.contactSubmission;

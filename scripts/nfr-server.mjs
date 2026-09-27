@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import { startStaticServer } from './lib/static-server.mjs';
 const require = createRequire(import.meta.url);
-export async function startNfrServer() {
+export async function startNfrServer({pageHandler}={}) {
   const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
   const globalHeaders = config.headers.find(item => item.source === '/(.*)' && !item.has && !item.missing);
   const headers = Object.fromEntries(globalHeaders.headers.map(item => [item.key, item.value]));
@@ -11,8 +11,9 @@ export async function startNfrServer() {
   if (process.env.COVERMATE_TEST_MODE === 'emulator') headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace('frame-src ', 'frame-src http://127.0.0.1:9098 ');
   return startStaticServer({ ownerRoutesToRoot: true, headers, onRequest: async (req, res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
+    if(pageHandler&&(['/','/motor','/articles'].includes(pathname)||pathname.startsWith('/articles/'))){await pageHandler(req,res);return true;}
     const name = pathname.startsWith('/api/ops') ? 'ops' : pathname.slice(5);
-    if (!pathname.startsWith('/api/') || !['leads', 'ops', 'analytics', 'telemetry'].includes(name)) return false;
+    if (!pathname.startsWith('/api/') || !['leads', 'ops', 'analytics', 'telemetry', 'articles', 'article-sitemap'].includes(name)) return false;
     await require(`../api/${name}.js`)(req, res);
     return true;
   } });

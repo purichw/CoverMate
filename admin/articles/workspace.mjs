@@ -1,5 +1,6 @@
 import { ARTICLE_STATUS, ARTICLE_SORT, normalizeArticleCatalog, articleListView, articlePageNumbers } from './model.mjs';
-import {createDraftRepository} from './drafts.mjs';
+import {createDraftRepository,parseDraftBackup} from './drafts.mjs';
+import {canEditContent} from '/covermate-roles.mjs';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const format = (value, options) => value ? new Intl.DateTimeFormat('th-TH-u-ca-gregory', { timeZone: 'Asia/Bangkok', ...options }).format(value) : 'ยังไม่มีข้อมูล';
@@ -17,15 +18,21 @@ const glyphs = {
   left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
 };
-const editorReason = 'แก้ไขเป็นฉบับร่างบนเครื่อง การเผยแพร่ยังไม่เปิดใช้งาน';
-
-export function createArticlesWorkspace({ root, load, loadArticle, session, icon: sharedIcon, searchInput, loginUrl }) {
+export function createArticlesWorkspace({ root, load, loadArticle, repository:cloudRepository, session, icon: sharedIcon, searchInput, loginUrl }) {
   const defaults={query:'',category:'',status:'',pinned:'',author:'',dateFrom:'',dateTo:'',sort:'updated',page:1};
   const s = { active: false, loaded: false, phase: 'loading', catalog: null,...defaults };
   let generation = 0, dialog, dialogOpener;
   let editor, opening = false, localError = '';
-  const editable = session?.role !== 'readonly' && Boolean(session?.uid);
-  const repository = editable ? createDraftRepository({uid:session.uid,environment:new URLSearchParams(location.search).get('cm_env') || 'production'}) : null;
+  const editable = canEditContent(session?.role) && Boolean(session?.uid);
+  const repository = cloudRepository || (editable ? createDraftRepository({uid:session.uid,environment:new URLSearchParams(location.search).get('cm_env') || 'production'}) : null);
+  const cloud=repository?.cloud===true;
+  const legacyRepository=cloud&&editable?createDraftRepository({uid:session.uid,environment:new URLSearchParams(location.search).get('cm_env')||'production'}):null;
+  let recoverable=[];
+  const editorReason=cloud?'บันทึกร่างแยกจากฉบับเผยแพร่':'แก้ไขเป็นฉบับร่างบนเครื่อง การเผยแพร่ยังไม่เปิดใช้งาน';
+  let visibility,proposedVisibility,settingsBusy=false;
+  const settingsChanged=()=>proposedVisibility&&['enabled','showHome','showNavigation'].some(key=>proposedVisibility[key]!==visibility?.[key]);
+  const leaveSettings=()=>!settingsBusy&&(!settingsChanged()||window.confirm('ยังไม่ได้บันทึกการแสดงบทความ ออกจากหน้านี้โดยไม่บันทึก?'));
+  window.addEventListener('beforeunload',event=>{if(s.active&&(settingsBusy||settingsChanged())){event.preventDefault();event.returnValue='';}});
   const icon = name => glyphs[name] ? `<svg viewBox="0 0 24 24" aria-hidden="true">${glyphs[name]}</svg>` : sharedIcon(name);
   const button = (action, label, extra = '', cls = '') => `<button type="button" class="article-button ${cls}" data-article-action="${action}" ${extra}>${label}</button>`;
   const statusBadge = item => `<span class="article-status" data-status="${item.status}">${icon(item.status === 'scheduled' ? 'clock' : item.status === 'published' ? 'checkCircle' : 'file')}${ARTICLE_STATUS[item.status]}</span>`;
@@ -40,7 +47,9 @@ export function createArticlesWorkspace({ root, load, loadArticle, session, icon
         <button class="article-button article-create" type="button" data-article-action="create" ${editable?'':'disabled'} aria-describedby="articleEditorNotice">${icon('plus')}สร้างบทความใหม่</button>
       </header>
       <dl class="article-summary" aria-label="สรุปบทความทั้งหมด"></dl>
-      <div class="article-notice" id="articleEditorNotice">${icon('info')}<div><strong>ฉบับร่างเก็บบนเบราว์เซอร์นี้เท่านั้น</strong><p>ยังไม่เชื่อมระบบเผยแพร่และตั้งเวลา ร่างบนเครื่องไม่เปลี่ยนบทความบนเว็บไซต์</p><p class="article-local-error" role="status"></p></div></div>
+      <div class="article-notice" id="articleEditorNotice">${icon('info')}<div><strong>${cloud?'คลังบทความ CoverMate':'ฉบับร่างเก็บบนเบราว์เซอร์นี้เท่านั้น'}</strong><p>${cloud?'ฉบับร่างไม่เปลี่ยนหน้าเว็บจนกว่าจะยืนยันเผยแพร่':'ยังไม่เชื่อมระบบเผยแพร่และตั้งเวลา ร่างบนเครื่องไม่เปลี่ยนบทความบนเว็บไซต์'}</p><p class="article-local-error" role="status"></p></div></div>
+      ${cloud?'<details class="article-visibility"><summary>การแสดงบทความบนเว็บไซต์</summary><form data-article-settings><div class="article-visibility-fields"></div><button class="article-button" type="submit">บันทึกการแสดงผล</button><p data-settings-status role="status" aria-live="polite"></p></form></details>':''}
+      <div class="article-recovery" hidden></div>
       <p class="article-sample" hidden>ข้อมูลตัวอย่างสำหรับตรวจดีไซน์เท่านั้น ไม่ใช่บทความที่เผยแพร่จริง</p>
       <form class="article-toolbar" role="search" aria-label="ค้นหาและกรองบทความ">
         <label class="article-search"><span class="article-sr">ค้นหาบทความ</span>${icon('search')}<input name="query" type="search" placeholder="ค้นหาชื่อบทความ..." value="${esc(s.query)}" autocomplete="off"></label>
@@ -51,7 +60,16 @@ export function createArticlesWorkspace({ root, load, loadArticle, session, icon
       <div class="article-results" aria-busy="true"></div>
     </div>`;
     filters();
+    renderVisibility();
     results();
+  }
+
+  function renderVisibility() {
+    const form=root.querySelector('[data-article-settings]');if(!form)return;
+    const flags=proposedVisibility||visibility||{enabled:false,showHome:true,showNavigation:true};
+    const disabled=!visibility||s.phase!=='ready'||!editable||settingsBusy;
+    form.querySelector('.article-visibility-fields').innerHTML=[['enabled','เปิดระบบบทความ'],['showHome','แสดงบทความบน Home'],['showNavigation','แสดงเมนูบทความ']].map(([key,label])=>`<label><span>${label}</span><input type="checkbox" role="switch" name="${key}" ${flags[key]?'checked':''} ${disabled||key!=='enabled'&&!flags.enabled?'disabled':''}></label>`).join('');
+    form.querySelector('button').disabled=disabled;
   }
 
   function filters() {
@@ -117,15 +135,19 @@ export function createArticlesWorkspace({ root, load, loadArticle, session, icon
   }
 
   async function reload() {
+    if(!leaveSettings())return;
+    proposedVisibility=null;
     const request = ++generation;
-    s.phase = 'loading'; results();
+    s.phase = 'loading'; renderVisibility(); results();
     try {
       const payload = await load();
+      if(legacyRepository)try{recoverable=(await legacyRepository.all()).filter(item=>!payload.items?.some(saved=>saved.id==='recovered-'+item.id));}catch(error){localError=error.message;}
       let locals = [];
-      try { locals = await repository?.all() || []; localError = ''; } catch(error) {localError = error.message;}
+      try { locals = await repository?.all?.() || []; localError = ''; } catch(error) {localError = error.message;}
       const catalog = normalizeArticleCatalog(locals.length ? {...payload,available:true,complete:true,items:[...(payload.items || []).filter(item=>!locals.some(local=>local.id===item.id)),...locals]} : payload);
       if (request !== generation) return;
       s.catalog = catalog; s.loaded = true;
+      visibility=payload.settings||null;
       s.phase = catalog.available ? 'ready' : 'unavailable';
       if (s.category && !catalog.categories.some(([id]) => id === s.category)) s.category = '';
     } catch (error) {
@@ -133,7 +155,12 @@ export function createArticlesWorkspace({ root, load, loadArticle, session, icon
       s.catalog = null; s.loaded = false;
       s.phase = error.status === 403 ? 'forbidden' : error.status === 401 ? 'unauthorized' : 'error';
     }
-    if (s.active) { filters(); results(); }
+    if (s.active) {
+      filters(); renderVisibility(); results();
+      const recovery=root.querySelector('.article-recovery');
+      recovery.hidden=!recoverable.length;
+      recovery.innerHTML=recoverable.length?`<h2>ฉบับร่างเดิมบนเบราว์เซอร์นี้</h2>${recoverable.map(item=>`<p>${esc(item.translations?.th?.title||item.translations?.en?.title||'ฉบับร่างไม่มีชื่อ')} ${button('recover','นำเข้าคลังเป็นฉบับร่าง',`data-id="${esc(item.id)}"`)}</p>`).join('')}`:'';
+    }
   }
 
   function closeDialog() {
@@ -171,19 +198,45 @@ export function createArticlesWorkspace({ root, load, loadArticle, session, icon
 
   function hideBrokenImage(event) { if (event.target.matches('.article-thumbnail img')) event.target.remove(); }
   root.addEventListener('error', hideBrokenImage, true);
-  root.addEventListener('submit', event => { if (s.active && event.target.matches('.article-toolbar')) event.preventDefault(); });
+  root.addEventListener('submit', async event => {
+    if(s.active && event.target.matches('.article-toolbar'))event.preventDefault();
+    if(!s.active||!event.target.matches('[data-article-settings]'))return;
+    event.preventDefault();if(!editable||settingsBusy||!visibility)return;
+    const form=event.target,values=Object.fromEntries(['enabled','showHome','showNavigation'].map(key=>[key,form.elements[key].checked]));
+    if(visibility.enabled&&!values.enabled&&!window.confirm('ปิดหน้าบทความทั้งหมดบนเว็บไซต์? เนื้อหาและฉบับร่างยังเก็บไว้ใน CMS'))return;
+    settingsBusy=true;form.querySelectorAll('input,button').forEach(el=>el.disabled=true);
+    const status=form.querySelector('[data-settings-status]');status.textContent='กำลังบันทึก...';
+    try {visibility=await repository.settings(values,visibility.revision);proposedVisibility=null;status.textContent='บันทึกแล้ว'+(visibility.enabled?'':' · ปิดหน้าบทความทั้งหมดแล้ว');}
+    catch(error){status.textContent=error.message;}
+    finally {settingsBusy=false;renderVisibility();}
+  });
   root.addEventListener('input', event => { if (s.active && event.target.name === 'query') setSearch(event.target.value); });
   root.addEventListener('change', event => {
+    if(event.target.closest('[data-article-settings]')) {
+      const form=event.target.form;
+      proposedVisibility=Object.fromEntries(['enabled','showHome','showNavigation'].map(key=>[key,form.elements[key].checked]));
+      for(const key of ['showHome','showNavigation'])form.elements[key].disabled=!form.elements.enabled.checked;
+      form.querySelector('[data-settings-status]').textContent=settingsChanged()?'ยังไม่ได้บันทึก':'';
+      return;
+    }
     if (!s.active || !['category', 'status', 'sort','pinned','author','dateFrom','dateTo'].includes(event.target.name)) return;
     s[event.target.name] = event.target.value; s.page = 1; results();
     if(event.target.name==='dateFrom')root.querySelector('[name=dateTo]').min=s.dateFrom;
     if(event.target.name==='dateTo')root.querySelector('[name=dateFrom]').max=s.dateTo;
   });
-  root.addEventListener('click', event => {
+  root.addEventListener('click', async event => {
     if (!s.active) return;
     const target = event.target.closest('[data-article-action]');
     if (!target) return;
     const action = target.dataset.articleAction;
+    if(action==='recover') {
+      const source=recoverable.find(item=>item.id===target.dataset.id);
+      if(!source||!editable||!window.confirm('นำร่างนี้เข้าคลังกลาง? ยังไม่เผยแพร่ และเก็บร่างเดิมบนเครื่องไว้'))return;
+      target.disabled=true;
+      try {const copy=parseDraftBackup(JSON.stringify(source));copy.id='recovered-'+source.id;await repository.save(copy,0);await reload();}
+      catch(error){localError=error.message;results();target.disabled=false;}
+      return;
+    }
     if(action==='create' || action==='edit') {openEditor(target.dataset.id);return;}
     if (action === 'reload') reload();
     if (action === 'reset') {
@@ -220,17 +273,18 @@ export function createArticlesWorkspace({ root, load, loadArticle, session, icon
   }
   return {
     get active() { return s.active; }, setSearch,
-    canLeave() { return !opening && (!editor || editor.canLeave()); },
+    canLeave() { return !opening && leaveSettings() && (!editor || editor.canLeave()); },
     mount() {
       if (s.active && (editor || opening || root.querySelector('.articles-workspace'))) return;
       s.active = true; searchInput.value = s.query; shell();
       if (!s.loaded) reload();
     },
-    leave() { s.active = false; closeDialog(); editor?.destroy();editor=null;searchInput.disabled=false; }
+    leave() { s.active = false; proposedVisibility=null;closeDialog(); editor?.destroy();editor=null;searchInput.disabled=false; }
   };
 
   async function openEditor(id) {
-    if(!editable || opening)return;
+    if(!editable || opening || !leaveSettings())return;
+    proposedVisibility=null;
     opening=true;localError='กำลังเปิด Editor...';results();
     try {
       const source=id ? await repository.get(id) || await loadArticle?.(id) : null;
