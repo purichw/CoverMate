@@ -119,7 +119,7 @@ try {
   const openPanel = async () => {
     await page.locator('label[for="covermate-owner-tools-toggle"]').click();
     await page.getByRole('button',{name:'แผงเครื่องมือ',exact:true}).click();
-    await page.getByRole('button',{name:'ส่วนต่าง ๆ',exact:true}).click();
+    await page.getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();
   };
   await openPanel();
   await page.locator('[data-admin-section-edit="faq"]').waitFor();

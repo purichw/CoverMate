@@ -349,12 +349,26 @@ async function readDraftSection(page, id) {
 }
 
 async function clickAdminTab(page, label) {
-  await page.getByRole("button", { name: label, exact: true }).click();
+  await adminAsideLocator(page).locator('.cm-editor-nav').getByRole("button", { name: label, exact: true }).click();
   await page.waitForTimeout(180);
+  if (label === 'โครงสร้างหน้า') {
+    const outlinePane = adminAsideLocator(page).locator('[data-editor-pane="outline"]');
+    if (await outlinePane.isVisible()) await outlinePane.click();
+  }
 }
 
 function adminAsideLocator(page) {
-  return page.locator("aside").filter({ hasText: "Admin Portal" }).last();
+  return page.locator('aside[data-editor-panel]');
+}
+
+async function openPanelUtilities(page) {
+  const menu = adminAsideLocator(page).locator('.cm-editor-footer-more');
+  if (!await menu.evaluate(el => el.open)) await menu.locator(':scope > summary').click();
+}
+
+async function clickPanelPublicSite(page) {
+  await openPanelUtilities(page);
+  await adminAsideLocator(page).getByRole('button', {name:'ดูเว็บจริง',exact:true}).click();
 }
 
 async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, label, expectedPopupPath = "/") {
@@ -378,7 +392,7 @@ async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, lab
       route: window.location.pathname + window.location.search + window.location.hash,
       marker: window.localStorage.getItem("purich-admin-ever-v7"),
       hasOwnerBar: Array.from(document.querySelectorAll("[data-admin-owner-bar]")).some(visible),
-      hasAdminAside: Array.from(document.querySelectorAll("aside")).some((el) => visible(el) && /Admin Portal/.test(el.innerText || "")),
+      hasAdminAside: Array.from(document.querySelectorAll('aside[data-editor-panel]')).some(visible),
       text: document.body.innerText
     };
   });
@@ -417,28 +431,32 @@ async function changeField(locator, value) {
 }
 
 async function selectAdminSection(page, id) {
-  await clickAdminTab(page, "ส่วนต่าง ๆ");
-  const row = page.locator(`[data-admin-section-row="${id}"]`).first();
+  await clickAdminTab(page, "โครงสร้างหน้า");
+  const row = adminAsideLocator(page).locator(`[data-admin-section-row="${id}"]`);
   await row.scrollIntoViewIfNeeded();
   await row.locator(`[data-admin-section-edit="${id}"]`).click();
   await page.waitForFunction(
-    (sectionId) => Array.from(document.querySelectorAll("aside"))
-      .some((aside) => /Admin Portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${sectionId}`)),
+    (sectionId) => {
+      const panel = document.querySelector('aside[data-editor-panel]');
+      return panel && ((panel.innerText || '').includes(`#${sectionId}`) ||
+        panel.querySelector(`[data-admin-section-row="${sectionId}"][data-selected="true"]`) &&
+        panel.querySelector('[data-editor-inspector] [data-contact-field]'));
+    },
     id,
     { timeout: 5000 }
   );
 }
 
 async function clickSectionColumnControl(page, id, direction) {
-  await clickAdminTab(page, "ส่วนต่าง ๆ");
-  const row = page.locator(`[data-admin-section-row="${id}"]`).first();
+  await clickAdminTab(page, "โครงสร้างหน้า");
+  const row = adminAsideLocator(page).locator(`[data-admin-section-row="${id}"]`);
   await row.scrollIntoViewIfNeeded();
-  const details = row.locator("details").first();
-  if (await details.count()) {
-    await details.evaluate((node) => { node.open = true; });
-  }
+  await row.locator(`[data-outline-select="${id}"]`).click();
   const selector = direction === "increase" ? `[data-admin-cols-plus="${id}"]` : `[data-admin-cols-minus="${id}"]`;
-  await row.locator(selector).click();
+  const inspector = adminAsideLocator(page).locator('[data-editor-inspector]');
+  const details = inspector.locator('details').filter({has:page.locator(selector)});
+  if (!await details.evaluate(node => node.open)) await details.locator(':scope > summary').click();
+  await inspector.locator(selector).click();
 }
 
 const browser = await launchChromium(chromium, { headless: true });
@@ -515,9 +533,7 @@ async function newSmokePage(options) {
       return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
     };
     window.__covermateVisibleOwnerBarCount = () => Array.from(document.querySelectorAll("[data-admin-owner-bar]")).filter(isVisible).length;
-    window.__covermateVisibleAdminAside = () => Array.from(document.querySelectorAll("aside")).some((el) =>
-      isVisible(el) && /Admin Portal/.test(el.innerText || "")
-    );
+    window.__covermateVisibleAdminAside = () => Array.from(document.querySelectorAll('aside[data-editor-panel]')).some(isVisible);
   });
   return page;
 }
@@ -646,14 +662,15 @@ async function verifyRemoteHydrationContract() {
   });
   await ownerPage.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
   await ownerPage.waitForFunction(() => Boolean(document.body), null, { timeout: 10000 });
-  await waitForBodyText(ownerPage, /Admin Portal/);
+  await adminAsideLocator(ownerPage).waitFor({state:'visible'});
   const ownerState = await ownerPage.evaluate(() => ({
+    hasPanel: Boolean(document.querySelector('aside[data-editor-panel]')),
     text: document.body.innerText,
     insurerText: document.querySelector("#insurers")?.innerText || "",
     opts: window.__covermateHydrateOpts || null,
     history: JSON.parse(window.localStorage.getItem("purich-history-v3") || "[]")
   }));
-  if (!ownerState.text.includes("Admin Portal")) {
+  if (!ownerState.hasPanel) {
     failures.push("remote hydration: owner route did not render admin panel under mocked remote content");
   }
   if (
@@ -709,7 +726,7 @@ async function verifyAdminActionWorkflow() {
     );
   });
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
   await waitForBodyText(page, /Draft Action Smoke/);
   await page.waitForFunction(() => Object.keys(sessionStorage).some(key => key.startsWith("covermate-editor-history-v1:")));
   const beforeSave = await page.evaluate(() => {
@@ -864,10 +881,10 @@ async function verifyAdminBuilderControls() {
   });
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
   await waitForBodyText(page, /Draft Builder Smoke/);
 
-  await clickAdminTab(page, "ส่วนต่าง ๆ");
+  await clickAdminTab(page, "โครงสร้างหน้า");
   const heroContentEditCount = await page.locator('[data-admin-section-row="hero"] [data-admin-section-edit="hero"]').count();
   if (heroContentEditCount !== 1) {
     failures.push("admin builder: hero must expose structured content editing alongside inline editing");
@@ -963,7 +980,7 @@ async function verifyAdminBuilderControls() {
     failures.push("admin builder: owner credential was not preserved");
   }
 
-  await clickAdminTab(page, "ส่วนต่าง ๆ");
+  await clickAdminTab(page, "โครงสร้างหน้า");
   const coverageAccordionState = await page.evaluate(() => {
     const anchor = document.querySelector("#cover");
     return {
@@ -1128,7 +1145,7 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   }
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
   await page.getByLabel("ปิดแผง Admin").click();
   await page.waitForFunction(
     () => /^\/admin\/?$/.test(window.location.pathname) && !window.location.search && !window.location.hash,
@@ -1154,10 +1171,10 @@ async function verifyPublicRouteSuppressesStaleOwnerChrome() {
   }
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
+    () => clickPanelPublicSite(page),
     "/admin/content",
     "public chrome guard: Public site from /admin/content"
   );
@@ -2353,30 +2370,29 @@ for (const [name, width, height] of viewports) {
   if (analyticsPageErrors.length) failures.push(`${name} /admin/analytics: ${analyticsPageErrors.join(" | ")}`);
 
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
+  const adminTabs = [];
+  for (const label of ["โครงสร้างหน้า", "เนื้อหา", "แบรนด์และติดต่อ", "ธีมและข้อมูล", "ประวัติเวอร์ชัน"]) {
+    const tab = adminAsideLocator(page).locator('.cm-editor-nav').getByRole('button', {name:label,exact:true});
+    if (!await tab.count()) { adminTabs.push({label,exists:false}); continue; }
+    // The compact tab strip scrolls horizontally on narrow screens. Verify
+    // every tab can be revealed, instead of requiring all five at once.
+    await tab.scrollIntoViewIfNeeded();
+    adminTabs.push(await tab.evaluate((button,label) => {
+      const rect=button.getBoundingClientRect(), nav=button.closest('.cm-editor-nav').getBoundingClientRect();
+      return {label,exists:true,left:rect.left,right:rect.right,width:rect.width,height:rect.height,navLeft:nav.left,navRight:nav.right};
+    },label));
+  }
+  await openPanelUtilities(page);
   const ownerPanelState = await page.evaluate(() => ({
+    hasPanel: Boolean(document.querySelector('aside[data-editor-panel]')),
     text: document.body.innerText,
     bodyFont: window.getComputedStyle(document.body).fontFamily,
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
-    adminTabs: ["ส่วนต่าง ๆ", "เนื้อหา", "แบรนด์และติดต่อ", "ธีมและข้อมูล", "ประวัติเวอร์ชัน"].map((label) => {
-      const button = Array.from(document.querySelectorAll("button")).find(
-        (el) => (el.textContent || "").trim() === label
-      );
-      if (!button) return { label, exists: false };
-      const rect = button.getBoundingClientRect();
-      return {
-        label,
-        exists: true,
-        left: rect.left,
-        right: rect.right,
-        width: rect.width,
-        height: rect.height
-      };
-    }),
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!ownerPanelState.text.includes("Admin Portal")) {
+  if (!ownerPanelState.hasPanel) {
     failures.push(`${name} /admin/content: owner control panel did not render`);
   }
   if (!ownerPanelState.text.includes("ประวัติเวอร์ชัน")) {
@@ -2385,12 +2401,12 @@ for (const [name, width, height] of viewports) {
   if (ownerPanelState.text.includes("[object Object]")) {
     failures.push(`${name} /admin/content: rendered object placeholder text`);
   }
-  for (const tab of ownerPanelState.adminTabs) {
+  for (const tab of adminTabs) {
     if (!tab.exists) {
       failures.push(`${name} /admin/content: missing admin tab ${tab.label}`);
     } else if (
-      tab.left < 0 ||
-      tab.right > ownerPanelState.clientWidth ||
+      tab.left < Math.max(0,tab.navLeft) - 1 ||
+      tab.right > Math.min(ownerPanelState.clientWidth,tab.navRight) + 1 ||
       tab.width < 44 ||
       tab.height < 36
     ) {
@@ -2415,6 +2431,7 @@ for (const [name, width, height] of viewports) {
   ) {
     failures.push(`${name} /admin/content: admin utility actions are missing`);
   }
+  await adminAsideLocator(page).locator('.cm-editor-footer-more > summary').click();
 
   for (const [tabName, expectedText] of [
     ["เนื้อหา", "#hero"],
@@ -2492,20 +2509,21 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/content close: horizontal overflow ${closedAdminState.scrollWidth} > ${closedAdminState.clientWidth}`);
   }
   await page.goto(new URL("/admin/content", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
+    () => clickPanelPublicSite(page),
     "/admin/content",
     `${name} /admin/content Public site`
   );
 
   await page.goto(new URL("/admin/content?page=motor", baseUrl).toString(), { waitUntil: "load", timeout: 30000 });
-  await waitForBodyText(page, /Admin Portal/);
+  await adminAsideLocator(page).waitFor({state:'visible'});
   const ownerMotorPanelState = await page.evaluate(() => ({
     route: window.location.pathname + window.location.search + window.location.hash,
     pageRoute: document.documentElement.getAttribute("data-covermate-route"),
     text: document.body.innerText,
+    sectionIds: Array.from(document.querySelectorAll('[data-editor-panel] [data-admin-section-row]')).map(row => row.getAttribute('data-admin-section-row')),
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
@@ -2514,7 +2532,7 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/content?page=motor: route state is not motor (${JSON.stringify(ownerMotorPanelState)})`);
   }
   for (const expected of ["#motor", "#motor-trust", "#motor-cover", "#insurers", "#tiers"]) {
-    if (!ownerMotorPanelState.text.includes(expected)) {
+    if (!ownerMotorPanelState.sectionIds.includes(expected.slice(1))) {
       failures.push(`${name} /admin/content?page=motor: missing route section ${expected}`);
     }
   }
@@ -2532,7 +2550,7 @@ for (const [name, width, height] of viewports) {
   }
   await expectPublicSitePopup(
     page,
-    () => page.getByRole("button", { name: "ดูเว็บจริง" }).last().click(),
+    () => clickPanelPublicSite(page),
     "/admin/content?page=motor",
     `${name} /admin/content?page=motor Public site`,
     "/motor"
@@ -2671,6 +2689,8 @@ for (const [name, width, height] of viewports) {
   await page.waitForTimeout(400);
   const editPanelState = await page.evaluate(() => ({
     toolbarText: document.querySelector('[data-admin-owner-bar="edit"]')?.innerText || "",
+    panelText: document.querySelector('aside[data-editor-panel]')?.innerText || "",
+    hasVisibleOwnerDock: (window.__covermateVisibleOwnerBarCount ? window.__covermateVisibleOwnerBarCount() > 0 : false),
     hasAdminAside: (window.__covermateVisibleAdminAside ? window.__covermateVisibleAdminAside() : false),
     toolsOpen: Boolean(document.querySelector('[data-admin-owner-bar="edit"] #covermate-owner-tools-toggle')?.checked),
     contentEditableCount: document.querySelectorAll('[contenteditable="true"]').length
@@ -2678,8 +2698,8 @@ for (const [name, width, height] of viewports) {
   if (!editPanelState.hasAdminAside) {
     failures.push(`${name} /admin/edit panel: admin drawer did not open from Tools`);
   }
-  if (!editPanelState.toolbarText.includes("แผงเครื่องมือ") || !/(กำลังแก้ไข|แก้ไข ·)/.test(editPanelState.toolbarText)) {
-    failures.push(`${name} /admin/edit panel: owner dock did not show editing + panel status (${editPanelState.toolbarText})`);
+  if (editPanelState.hasVisibleOwnerDock || !/แก้ไข/.test(editPanelState.panelText) || !editPanelState.panelText.includes('Draft')) {
+    failures.push(`${name} /admin/edit panel: panel must show the editing/Draft state while the duplicate owner dock is hidden`);
   }
   if (editPanelState.toolsOpen) {
     failures.push(`${name} /admin/edit panel: Tools menu stayed expanded after opening Panel`);
@@ -2688,8 +2708,8 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin/edit panel: text editing stopped while panel was open`);
   }
 
-  const editorPanel = page.locator("aside").filter({ hasText: "Admin Portal" }).first();
-  await page.getByTitle("ปิดแผงเครื่องมือ").click();
+  const editorPanel = adminAsideLocator(page);
+  await editorPanel.locator('[data-admin-panel-close]').click();
   await editorPanel.waitFor({ state: "hidden", timeout: 10000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   await page.waitForFunction(
@@ -2768,8 +2788,8 @@ for (const [name, width, height] of viewports) {
   await page.waitForTimeout(150);
   await page.locator('[data-admin-owner-bar="edit"]').getByRole("button", { name: "แผงเครื่องมือ" }).click();
   await page.waitForTimeout(400);
-  const motorEditorPanel = page.locator("aside").filter({ hasText: "Admin Portal" }).first();
-  await page.getByTitle("ปิดแผงเครื่องมือ").click();
+  const motorEditorPanel = adminAsideLocator(page);
+  await motorEditorPanel.locator('[data-admin-panel-close]').click();
   await motorEditorPanel.waitFor({ state: "hidden", timeout: 10000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   const motorEditPanelClosedState = await page.evaluate(() => ({

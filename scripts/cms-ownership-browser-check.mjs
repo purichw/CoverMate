@@ -97,7 +97,7 @@ try {
   await openGroup('Life focus');
   await edit('lifeFocus.title.en', 'Owner life headline');
   await page.locator('[data-cms-field="lifeFocus.title.en"]').scrollIntoViewIfNeeded();
-  await page.locator('aside').filter({ hasText: 'Admin Portal' }).screenshot({ path: path.join(output, 'admin-copy-controls.png'), timeout: 60000 });
+  await page.locator('aside[data-editor-panel]').screenshot({ path: path.join(output, 'admin-copy-controls.png'), timeout: 60000 });
   await openGroup('Licences');
   await edit('licences.life.label.en', 'Licensed life adviser');
   await openGroup('Home licences');

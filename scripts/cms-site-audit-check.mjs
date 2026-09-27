@@ -140,7 +140,7 @@ try {
   page.on('pageerror',error=>report.errors.push(error.message));
   const shot=async name=>{await page.screenshot({path:path.join(output,name)});report.screenshots.push({file:name,url:page.url(),viewport:page.viewportSize(),fullPage:false,scrollY:await page.evaluate(()=>scrollY)});};
   const panel=async()=>{await page.locator('label[for="covermate-owner-tools-toggle"]').click();await page.getByRole('button',{name:'แผงเครื่องมือ',exact:true}).click();};
-  const select=async id=>{await page.getByRole('button',{name:'ส่วนต่าง ๆ',exact:true}).click();await page.locator(`[data-admin-section-edit="${id}"]`).click();};
+  const select=async id=>{await page.locator('[data-editor-panel] .cm-editor-nav').getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();await page.locator(`[data-admin-section-edit="${id}"]`).click();};
   const language=async name=>{await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();await page.getByRole('button',{name:name === 'Thai' ? 'แก้ไขเนื้อหาภาษาไทย' : 'แก้ไขเนื้อหาภาษาอังกฤษ',exact:true}).click();await page.getByRole('button',{name:'เนื้อหา',exact:true}).click();};
   const edit=async(locator,value)=>{await locator.fill(value);await locator.press('Tab');};
   const save=async()=>{

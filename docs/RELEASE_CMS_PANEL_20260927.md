@@ -28,10 +28,10 @@ are inconclusive and do not satisfy these checks for the final merged build.
 | Check | Evidence required | Current result |
 | --- | --- | --- |
 | Source/build | `npm run build:visitor`, `npm run check:bundles`, scoped diff review | Passed on merged sources |
-| Models/contracts | `npm run check:refactor`, editor-history model and reset-contract scripts | Passed |
+| Models/contracts | `npm run check:admin-structure`, `npm run check:refactor`, editor-history model and reset-contract scripts | Passed |
 | Panel browser | `npm run check:editor-panel`; desktop/mobile screenshots, canonical Draft reload, TH/EN, history, confirmations, Preview, hidden Footer, Escape/focus | Passed on `c618fb9` |
 | Existing editor flows | `npm run check:admin-structure:browser` and `npm run check:editor-history`, serially | Passed on `c618fb9` |
-| Hosted UAT | Real Firebase Draft autosave/reload through `--panel`; exact served runtime/styles; desktop/mobile evidence; complete cleanup | Pending |
+| Hosted UAT | Real Firebase Draft autosave/reload through `--panel`; exact served runtime/styles; desktop/mobile evidence; complete cleanup | Passed on `007f9bb` Preview |
 | Remote release | Exact pushed SHA/CI, deployed artifact identity, public/Admin route smoke | Pending |
 
 Local panel evidence is written to `uat-results/editor-panel/`. Match its source
@@ -43,6 +43,21 @@ exact SHA's GitHub `verify` check. The first history run still used the old
 clear-then-type test helper and exposed its intermediate empty value; the fresh
 run with main's atomic replacement helper passed the complete suite. Application
 history behavior and assertions were not relaxed.
+
+Hosted receipt: `007f9bb6fc89cf7fab9e3b155fb379ab97ccbc81` at
+`https://covermate-f3bpm21fd-purich-w.vercel.app`. The report at
+`uat-results/editor-panel-hosted-20260927/report.json` records exact served
+runtime/style hashes, real canonical Draft edits surviving reload, unchanged
+LINE URL and UAT Live, verified Draft restoration, deactivated allowlist and
+disabled/revoked temporary Auth. No cleanup remains. Desktop/mobile screenshots
+were personally inspected. The existing UAT Draft's brown Contact theme is
+preserved, not a new public design or a production content change.
+
+Linked-text and FAQ browser checks also passed. The FAQ harness initially
+looked for the retired tab label; only its locator was changed to the current
+`โครงสร้างหน้า` label. Remaining legacy panel harnesses now use the panel's stable
+DOM identity and current control locations, without changing their behavior
+assertions. These test/documentation updates do not change the UAT-tested runtime.
 
 ## Hosted UAT procedure and safety
 

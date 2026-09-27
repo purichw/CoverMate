@@ -60,12 +60,8 @@ function findDraftSection(sectionId) {
   return (config.sections || []).find((section) => section && section.id === sectionId) || null;
 }
 
-async function waitForText(page, pattern) {
-  await page.waitForFunction(
-    ({ source, flags }) => new RegExp(source, flags).test(document.body.innerText || ""),
-    { source: pattern.source, flags: pattern.flags },
-    { timeout: 30000 }
-  );
+async function waitForPanel(page) {
+  await page.locator('aside[data-editor-panel]').waitFor({ state: "visible", timeout: 30000 });
 }
 
 async function newPage(browser, baseUrl) {
@@ -85,17 +81,18 @@ async function newPage(browser, baseUrl) {
 }
 
 async function selectSection(page, sectionId) {
-  await page.getByRole("button", { name: "ส่วนต่าง ๆ", exact: true }).click();
-  const row = page.locator(`[data-admin-section-row="${sectionId}"]`).first();
+  const panel = page.locator('aside[data-editor-panel]');
+  await panel.locator('.cm-editor-nav').getByRole("button", { name: "โครงสร้างหน้า", exact: true }).click();
+  const row = panel.locator(`[data-admin-section-row="${sectionId}"]`).first();
   await row.scrollIntoViewIfNeeded();
   await row.locator(`[data-admin-section-edit="${sectionId}"]`).click();
+  await panel.locator('.cm-editor-nav').getByRole("button", { name: "เนื้อหา", exact: true }).click();
   await page.waitForFunction(
-    (id) => Array.from(document.querySelectorAll("aside"))
-      .some((aside) => /Admin Portal/.test(aside.innerText || "") && (aside.innerText || "").includes(`#${id}`)),
+    (id) => Array.from(document.querySelectorAll('aside[data-editor-panel]'))
+      .some((aside) => (aside.innerText || "").includes(`#${id}`)),
     sectionId,
     { timeout: 10000 }
   );
-  await page.getByRole("button", { name: "เนื้อหา", exact: true }).click();
 }
 
 async function clickVisibility(locator, label) {
@@ -217,7 +214,7 @@ async function verifyInlineEmptyPersistence(page, baseUrl) {
 
 async function verifyItemControls(page, baseUrl) {
   await page.goto(`${baseUrl}/admin/content`, { waitUntil: "load", timeout: 30000 });
-  await waitForText(page, /Admin Portal/);
+  await waitForPanel(page);
   await selectSection(page, "faq");
 
   const before = await sectionState(page, "faq");
@@ -334,7 +331,7 @@ async function verifyHeadControls(page) {
 }
 
 async function hideSectionFromBuilder(page, sectionId) {
-  await page.getByRole("button", { name: "ส่วนต่าง ๆ", exact: true }).click();
+  await page.locator('[data-editor-panel] .cm-editor-nav').getByRole("button", { name: "โครงสร้างหน้า", exact: true }).click();
   const row = page.locator(`[data-admin-section-row="${sectionId}"]`).first();
   await row.scrollIntoViewIfNeeded();
   const status = row.getByText("ซ่อนอยู่", { exact: true });
@@ -346,7 +343,7 @@ async function hideSectionFromBuilder(page, sectionId) {
 
 async function verifyHiddenSectionTargetLinks(page, baseUrl) {
   await page.goto(`${baseUrl}/admin/content`, { waitUntil: "load", timeout: 30000 });
-  await waitForText(page, /Admin Portal/);
+  await waitForPanel(page);
   for (const sectionId of ["fit", "claim", "privacy", "talk"]) {
     await hideSectionFromBuilder(page, sectionId);
   }
@@ -388,10 +385,10 @@ async function verifyClosePanelStaysInEditor(page, baseUrl) {
 
   await page.locator('label[for="covermate-owner-tools-toggle"]').click();
   await page.getByRole("button", { name: "แผงเครื่องมือ", exact: true }).click();
-  const panel = page.locator("aside").filter({ hasText: "Admin Portal" }).first();
+  const panel = page.locator('aside[data-editor-panel]');
   await panel.waitFor({ state: "visible", timeout: 15000 });
 
-  await page.getByTitle("ปิดแผงเครื่องมือ").click();
+  await panel.getByRole("button", { name: "ปิดแผง Admin", exact: true }).click();
   await panel.waitFor({ state: "hidden", timeout: 10000 });
   await page.locator('[data-admin-owner-bar="edit"]').waitFor({ state: "visible", timeout: 15000 });
   await page.locator('[contenteditable="true"][data-ek]').first().waitFor({ state: "visible", timeout: 15000 });
@@ -401,9 +398,9 @@ async function verifyClosePanelStaysInEditor(page, baseUrl) {
     path: window.location.pathname,
     ownerDockVisible: !!document.querySelector('[data-admin-owner-bar="edit"]'),
     editableCount: document.querySelectorAll('[contenteditable="true"][data-ek]').length,
-    adminPanelVisible: Array.from(document.querySelectorAll("aside")).some((aside) => {
+    adminPanelVisible: Array.from(document.querySelectorAll('aside[data-editor-panel]')).some((aside) => {
       const style = window.getComputedStyle(aside);
-      return /Admin Portal/.test(aside.innerText || "") && style.display !== "none" && style.visibility !== "hidden" && aside.getBoundingClientRect().width > 0;
+      return style.display !== "none" && style.visibility !== "hidden" && aside.getBoundingClientRect().width > 0;
     })
   }));
   assert.equal(state.path, "/admin/edit", "Closing the panel from editor did not stay on /admin/edit");

@@ -223,7 +223,7 @@ try {
   pass('A01','Open Panel, edit Home field, close returns to same editor URL.');
   await page.locator('label[for="covermate-owner-tools-toggle"]').click();
   await page.getByRole('button',{name:'แผงเครื่องมือ',exact:true}).click();
-  await page.getByRole('button',{name:'ส่วนต่าง ๆ',exact:true}).click();
+  await page.locator('[data-editor-panel] .cm-editor-nav').getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();
   await page.locator('[data-admin-section-edit="tiers"]').click();
   const tierId=fixture.state.config.homeDesign.featuredTierIds[0];
   const tierRow=page.locator('[data-admin-repeatable-id="'+tierId+'"]');
