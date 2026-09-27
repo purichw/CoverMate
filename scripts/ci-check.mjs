@@ -22,6 +22,7 @@ const commands = [
   ["node", ["scripts/articles-admin-check.mjs", "--browser"]],
   ["node", ["scripts/article-detail-check.mjs", "--browser"]],
   ["node", ["scripts/article-editor-check.mjs", "--browser"]],
+  ["node", ["scripts/article-editor-tools-check.mjs"]],
   ["npm", ["run", "check:bundles"]],
   ["npm", ["run", "check:seo"]],
   ["npm", ["run", "check:contracts"]],

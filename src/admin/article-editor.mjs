@@ -58,7 +58,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     <p class="ae-feedback" role="status" aria-live="polite"></p>
     <div class="ae-grid"><section class="ae-writing" aria-labelledby="aeContentTitle"><div class="ae-writing-head"><h2 id="aeContentTitle">เนื้อหาบทความ</h2><div class="ae-language" role="group" aria-label="ภาษาเนื้อหา"><button type="button" data-lang="th" aria-pressed="true">TH</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
       <div class="ae-title-fields">${field('title','ชื่อบทความ',locale().title,'textarea','rows="2" maxlength="240"')}${field('excerpt','คำโปรยสำหรับการ์ดบทความ',locale().excerpt,'textarea','maxlength="600"')}</div>
-      <div class="ae-toolbar" role="group" aria-label="จัดรูปแบบเนื้อหา"><div class="ae-format-row"><label class="ae-format-select"><span class="article-sr">รูปแบบย่อหน้า</span><select data-format="block" aria-label="รูปแบบย่อหน้า"><option value="paragraph">ย่อหน้า</option><option value="h2">หัวข้อ H2</option><option value="h3">หัวข้อ H3</option></select></label>${formatTools.map(args=>tool(...args)).join('')}</div>
+      <div class="ae-toolbar" role="group" aria-label="จัดรูปแบบเนื้อหา"><div class="ae-format-row"><label class="ae-format-select"><span class="article-sr">รูปแบบย่อหน้า</span><select data-format="block" aria-label="รูปแบบย่อหน้า"><option value="mixed" disabled>หลายรูปแบบ</option><option value="paragraph">ย่อหน้า</option><option value="h2">หัวข้อ H2</option><option value="h3">หัวข้อ H3</option></select></label>${formatTools.map(args=>tool(...args)).join('')}</div>
       <div class="ae-block-row">${[['summary','FileText','Summary'],['keypoints','Lightbulb','Key points'],['note','Info','หมายเหตุ'],['warning','TriangleAlert','ข้อควรระวัง']].map(([kind,name,label])=>`<button type="button" class="ae-block" data-ae="callout" data-kind="${kind}">${icon(name)}${label}</button>`).join('')}<button type="button" class="ae-text-button" data-ae="unwrap">นำกรอบออก</button></div></div>
       <div class="ae-editor-host" data-editor-lang="th"></div><div class="ae-editor-host" data-editor-lang="en" hidden></div>
       <div class="ae-writing-footer"><span data-save-state></span><span class="ae-count"></span></div>
@@ -69,7 +69,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   function createEditor(key){
     if(editors[key])return editors[key];
     const editor=new Editor({element:root.querySelector(`[data-editor-lang="${key}"]`),extensions:articleExtensions(),content:draft.translations[key].document,
-      editorProps:{attributes:{class:'cm-article-prose',role:'textbox','aria-label':key==='th'?'เนื้อหาบทความภาษาไทย':'Article body in English','aria-multiline':'true',lang:key},handleClickOn(view,pos,node,nodePos,event){if(node.type.name==='video'){event.preventDefault();return true;}return false;}},
+      editorProps:{attributes:{class:'cm-article-prose',role:'textbox','aria-label':key==='th'?'เนื้อหาบทความภาษาไทย':'Article body in English','aria-multiline':'true',lang:key},handleDOMEvents:{click(view,event){if(event.target.closest('a.article-video'))event.preventDefault();return false;}}},
       onUpdate:()=>{dirty();updateToolbar();},onSelectionUpdate:()=>updateToolbar(),onTransaction:()=>{if(editors[key])updateToolbar();}
     });
     editors[key]=editor;return editor;
@@ -83,7 +83,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     root.querySelector('[data-ae="unwrap"]').disabled=!editor.isActive('callout')&&!editor.isActive('blockquote');
     for(const align of ['left','center','right','justify'])root.querySelector(`[data-ae="${align}"]`).setAttribute('aria-pressed',String(editor.isActive({textAlign:align})));
     const select=root.querySelector('[data-format="block"]');
-    select.value=editor.isActive('heading',{level:2})?'h2':editor.isActive('heading',{level:3})?'h3':'paragraph';
+    select.value=editor.isActive('heading',{level:2})?'h2':editor.isActive('heading',{level:3})?'h3':editor.isActive('paragraph')?'paragraph':'mixed';
     window.CoverMateSelect?.refresh();
   }
   createEditor('th');createEditor('en');syncDocuments();saved=JSON.stringify(draft);dirty();updateToolbar();
@@ -215,7 +215,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     dirty();
   }
   function change(event){
-    if(event.target.dataset.format==='block'){const value=event.target.value;if(value==='paragraph')active().chain().focus().setParagraph().run();else active().chain().focus().setHeading({level:value==='h2'?2:3}).run();}
+    if(event.target.dataset.format==='block'){const value=event.target.value;if(value==='paragraph')active().chain().focus().setParagraph().run();else if(value==='h2'||value==='h3')active().chain().focus().setHeading({level:value==='h2'?2:3}).run();}
     if(event.target.matches('select[data-field],input[type=checkbox]'))input(event);
   }
   async function click(event){
