@@ -38,6 +38,10 @@ manual workflow dispatches.
 
 ## Project Documents
 
+- [`docs/COPY_VOICE_AUDIT_20260927.md`](docs/COPY_VOICE_AUDIT_20260927.md) -
+  public TH/EN voice direction, reviewed copy, local preview and guarded CMS update
+- [`docs/CMS_CONTENT_OWNERSHIP.md`](docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing) -
+  content ownership and FAQ add/delete/hide, bilingual Draft and Undo behavior
 - [`docs/ADMIN_CASES_V2.md`](docs/ADMIN_CASES_V2.md) - owner-only Cases,
   explicit Save, follow-ups, conflict recovery and legacy compatibility
 - [`docs/ADMIN_HOME_DESIGN.md`](docs/ADMIN_HOME_DESIGN.md) and

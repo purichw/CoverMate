@@ -1,6 +1,45 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-24
+Last updated: 2026-09-27
+
+## Current Release Candidate: Copy Voice And FAQ Controls
+
+This checkpoint belongs to `.tools/admin-shell-consistency-20260926`, branch
+`codex/mobile-line-dock-20260927`, originally based on `54380c5`. The owner has
+authorized commit, push and production deployment of this chat's work. Integrate
+current `origin/main` before release, preserving its existing changes. Exact-SHA
+CI and production verification remain release gates; authorization is not proof
+of deployment. See [the release record](RELEASE_COPY_FAQ_20260927.md). No production
+CMS write is included. The dated receipts below are historical evidence, not a
+fresh check of the current production alias.
+
+- Public TH/EN copy now uses plain, helpful language rather than repeated
+  slogans. FAQ titles are ordinary customer questions. Source defaults, CMS
+  seeds and generated output are updated; the reviewed CMS copy proposal is
+  still local. See [copy voice and evidence](COPY_VOICE_AUDIT_20260927.md).
+- Code deployment does not update existing published CMS copy. Apply the saved
+  field-level proposal to freshly read state, stop on changed/missing copy
+  owners or inline overrides, and preserve unrelated draft work. Do not import
+  the old whole-site `copy-draft.json` over a newer draft or publish unrelated
+  edits. CMS publication needs its own explicit scope and authorization.
+- FAQ now has Add before the question list, focus on the new question, and a
+  confirmed Delete for both languages. Hide remains separate. Undo/Redo restores
+  the deleted stable ID, content and position. An empty FAQ remains empty after
+  reload; archived Guides must not repopulate it. See
+  [FAQ ownership and commands](CMS_CONTENT_OWNERSHIP.md#faq-collection-editing).
+- FAQ verification passed in the isolated local browser harness: add/focus,
+  TH/EN edits, cancel/delete, Undo/Redo, Save/reload, Preview, empty collection
+  and mobile controls. Also passed `check:cms`, `check:ids`,
+  `node scripts/editor-history-model-check.mjs`, `check:visitor-source` and
+  `git diff --check`. This is not real-device, hosted persistence or Publish
+  evidence. Screenshots are in `uat-results/faq-consolidation/`.
+- Copy-specific evidence and the broader checks run for that earlier copy pass
+  are recorded in the copy audit, not claimed as rerun by the FAQ/docs pass.
+  The read-only copy preview blocks Admin and submissions; it is not a CMS test
+  server. Ports and process IDs are temporary, so use the documented launcher.
+- Project docs and the two versioned/installed CoverMate skills are updated
+  together. Keep generic skills and the primary checkout's unrelated work
+  untouched. Future work must recheck branch/status and release authorization.
 
 ## Admin Loading And Customer Acknowledgements
 

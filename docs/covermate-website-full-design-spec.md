@@ -1,6 +1,6 @@
 # CoverMate Website Current Product Spec
 
-Last updated: 2026-09-24
+Last updated: 2026-09-27
 
 ## Current Authority And Release State
 
@@ -13,6 +13,24 @@ editor Undo/Redo/Reset affect Draft, while the separate Publish rollback changes
 Live. The dated candidate and snapshot notes below retain their original evidence
 scope; they are not current deployment claims. `HANDOFF.md` and release records
 own exact-SHA CI and hosted status.
+
+Public voice follows the owner's September 27 direction: a helpful companion,
+not a marketer. Use plain, warm, serious Thai/English that answers the reader's
+question. Keep slogans occasional rather than repeating punchlines across
+sections; do not turn "companion" into another slogan. FAQ headings should be
+questions an ordinary customer would actually ask, with direct answers and
+necessary conditions. [COPY_VOICE_AUDIT_20260927.md](COPY_VOICE_AUDIT_20260927.md)
+owns the reviewed examples, sources and local proposal workflow. Copywriting
+does not authorize new coverage promises or rewriting licence/consent facts.
+Source/default updates are not publication of existing Firestore copy.
+
+Articles source now includes `/articles`, `/articles/:slug`, and the owner-only
+`/admin#articles` list/editor. [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md)
+owns central persistence, draft/live publication, locale/date rules and the
+independent master/Home/navigation switches. Public routes depend on those
+switches and due published translations, not merely the presence of source
+files. Earlier four-module Admin and two-public-page inventories below predate
+Articles; do not use them to remove the module or reopen local-only publishing.
 
 The September 23 Home contact submission candidate follows the owner's state
 mockup plus dedicated behavior spec. [CONTACT_SUBMISSION.md](CONTACT_SUBMISSION.md)
@@ -689,12 +707,22 @@ Structure:
 
 ### FAQ
 
-Purpose: answer objections and reduce uncertainty.
+Purpose: answer ordinary customer questions clearly, without sales punchlines.
 
 Structure:
 
-- One-column accordion rows on desktop or balanced two-column layout only if text stays readable.
+- Use the current compact shared Home/Motor accordion layout; preserve readable
+  TH/EN wrapping and equal collapsed peers rather than restoring historical columns.
 - Keep icons/affordances aligned right.
+- CMS owns question, answer and optional category/reading time in both languages.
+  Optional metadata may be blank; do not add reading-time labels to short answers
+  merely because the legacy Guides items had them.
+- Add appears before the question list and focuses the new row. Delete names
+  the question in a confirmation, removes both languages from Draft and supports
+  editor Undo/Redo. Hide is separate and retains the content. Empty lists stay
+  empty after reload; archived Guides are recovery data, not fallback questions.
+- See [CMS ownership](CMS_CONTENT_OWNERSHIP.md#faq-collection-editing) for command
+  owners and local regression coverage. Current rollout status belongs in HANDOFF.
 
 ### Fee Transparency
 

@@ -85,7 +85,7 @@ if(process.argv.includes('--browser')) {
       await page.locator('.ar-empty').waitFor();assert.equal(await page.locator('.ar-item').count(),0);
       assert.equal(await page.locator('#articles-search').inputValue(),'not-found');
       await page.locator('.ar-clear').click();assert.equal(await page.locator('.ar-item:visible').count(),8);
-      await page.locator('.ar-sort .cm-select-trigger').click();await page.getByRole('option',{name:'เรื่องเก่าสุด',exact:true}).click();
+      await page.locator('.ar-sort .cm-select-trigger').click();await page.getByRole('option',{name:'เก่าสุดก่อน',exact:true}).click();
       assert.match(page.url(),/sort=oldest/);assert.equal(await page.locator('.ar-grid h3').first().textContent(),feed.items[0].translations.th.title);
       await page.locator('[data-language-switch=en]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');
       assert.match(await page.locator('.ar-grid a').first().getAttribute('href'),/lang=en/);

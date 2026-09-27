@@ -35,8 +35,8 @@ try {
     await page.evaluate(()=>document.fonts.ready);await measure('Articles TH',12);
     await page.locator('#articles-results').evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+scrollY-115));
     if(width===390)await page.screenshot({path:out+'/after-390.png'});
-    await trigger.click();await page.getByRole('option',{name:'เรื่องเก่าสุด',exact:true}).click();
-    assert.match(page.url(),/sort=oldest/);assert.equal(await trigger.textContent(),'เรื่องเก่าสุด');
+    await trigger.click();await page.getByRole('option',{name:'เก่าสุดก่อน',exact:true}).click();
+    assert.match(page.url(),/sort=oldest/);assert.equal(await trigger.textContent(),'เก่าสุดก่อน');
     await trigger.click();await page.keyboard.press('Escape');assert.equal(await trigger.getAttribute('aria-expanded'),'false');
     await page.locator('[data-language-switch=en]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');
     await measure('Articles EN',12);

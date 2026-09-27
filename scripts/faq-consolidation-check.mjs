@@ -106,7 +106,7 @@ try {
     assert.equal(await item.locator('summary > span').first().innerText(),moved[lang].q);
     await item.locator('summary').click();
     assert.equal(await item.locator('[data-content-path$=".a"]').innerText(),moved[lang].a);
-    assert.equal(await item.locator('.hm-faq-meta').innerText(),moved[lang].label+'\n'+moved[lang].meta);
+    assert.equal(await item.locator('.hm-faq-meta').innerText(),[moved[lang].label,moved[lang].meta].filter(Boolean).join('\n'));
     await item.locator('summary').click();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     if (lang === 'th') {
@@ -125,6 +125,14 @@ try {
   await page.locator('[data-admin-section-edit="faq"]').waitFor();
   assert.equal(await page.locator('[data-admin-section-edit="guides"]').count(),0);
   await page.locator('[data-admin-section-edit="faq"]').click();
+  const originalIds = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows => rows.map(row => row.dataset.adminRepeatableId));
+  await page.getByRole('button', {name:/เพิ่มคำถาม/}).first().click();
+  const addedIds = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows => rows.map(row => row.dataset.adminRepeatableId));
+  assert.equal(addedIds.length, originalIds.length + 1, 'Add question creates a new editable row');
+  assert.equal(new Set(addedIds).size, addedIds.length, 'Added FAQ has a unique stable ID');
+  const addedId = addedIds.find(id => !originalIds.includes(id));
+  await page.waitForFunction(id => document.activeElement?.closest('[data-admin-repeatable-id]')?.dataset.adminRepeatableId === id && document.activeElement?.dataset.adminCopyKey === 'q', addedId);
+  console.log('PASS FAQ add button creates an editable row:', addedId);
   const row = page.locator(`[data-admin-repeatable-id="${moved.id}"]`);
   assert.equal(await row.locator('input,textarea').count(),4);
   const adminLanguage = async name => {
@@ -137,17 +145,50 @@ try {
     const answer = row.locator('textarea');
     await answer.fill('Saved FAQ answer '+lang);
     await answer.press('Tab');
+    const addedRow = page.locator(`[data-admin-repeatable-id="${addedId}"]`);
+    await addedRow.locator('[data-admin-copy-key="q"]').fill('New FAQ question '+lang);
+    await addedRow.locator('[data-admin-copy-key="q"]').press('Tab');
+    await addedRow.locator('[data-admin-copy-key="a"]').fill('New FAQ answer '+lang);
+    await addedRow.locator('[data-admin-copy-key="a"]').press('Tab');
   }
   await row.scrollIntoViewIfNeeded();
   await row.getByRole('button',{name:'เลื่อนรายการขึ้น',exact:true}).click();
   await row.getByRole('button',{name:'ซ่อน',exact:true}).click();
   assert.equal(await page.locator(`#faq [data-content-id="${moved.id}"]`).count(),0);
   await row.getByRole('button',{name:'แสดงอีกครั้ง',exact:true}).click();
-  assert.equal(await page.locator('#faq details').count(),visibleCount);
+  assert.equal(await page.locator('#faq details').count(),visibleCount + 1);
+  const deletedId = section.items.find(item => item.sourceGuideId && item.id !== moved.id).id;
+  const beforeDeleteIds = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows => rows.map(row => row.dataset.adminRepeatableId));
+  const deletedRow = page.locator(`[data-admin-repeatable-id="${deletedId}"]`);
+  const deleteDialog = page.getByRole('dialog', {name:'ลบคำถามนี้ไหม?'});
+  await deletedRow.getByRole('button', {name:'ลบคำถาม',exact:true}).click();
+  await deleteDialog.getByRole('button', {name:'ยกเลิก',exact:true}).click();
+  assert.equal(await deletedRow.count(), 1, 'Cancel keeps the question');
+  await deletedRow.getByRole('button', {name:'ลบคำถาม',exact:true}).click();
+  await deleteDialog.getByRole('button', {name:'ลบคำถาม',exact:true}).click();
+  await deletedRow.waitFor({state:'detached'});
+  assert.equal(await page.locator(`#faq [data-content-id="${deletedId}"]`).count(), 0);
+  await page.locator('[data-editor-undo]:visible').first().click();
+  await deletedRow.waitFor();
+  const undoIds = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows => rows.map(row => row.dataset.adminRepeatableId));
+  assert.deepEqual(undoIds, beforeDeleteIds, 'Undo restores stable ID and original position');
+  assert.equal(await deletedRow.locator('[data-admin-copy-key="a"]').inputValue(), section.items.find(item=>item.id===deletedId).en.a, 'Undo restores the answer');
+  await page.locator('[data-editor-redo]:visible').first().click();
+  await deletedRow.waitFor({state:'detached'});
+  await page.setViewportSize({width:390,height:844});
+  await row.getByRole('button', {name:'ลบคำถาม',exact:true}).click();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), 'Mobile delete confirmation fits');
+  await page.screenshot({path:path.join(out,'admin-faq-delete-mobile.png')});
+  await deleteDialog.getByRole('button', {name:'ยกเลิก',exact:true}).click();
+  await page.setViewportSize({width:1440,height:1000});
+  await adminLanguage('Thai');
+  await page.locator('.om-faq-actions').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));
+  await page.screenshot({path:path.join(out,'admin-faq-controls.png')});
   await row.scrollIntoViewIfNeeded();
   await page.screenshot({path:path.join(out,'admin-faq-editor.png')});
   const saved = page.waitForResponse(response => response.url().endsWith('/__faq-state') && response.request().method() === 'POST');
   await page.getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.getByRole('dialog', {name:'Save draft นี้ไหม?'}).getByRole('button', {name:'Save draft',exact:true}).click();
   await saved;
   assert.ok(saves>0);
   await page.reload();
@@ -159,13 +200,50 @@ try {
   const persisted = draft.config.sections.find(s=>s.id==='faq').items.find(i=>i.id===moved.id);
   assert.equal(persisted.th.a,'Saved FAQ answer th');
   assert.equal(persisted.en.a,'Saved FAQ answer en');
+  const persistedFaq = draft.config.sections.find(s=>s.id==='faq').items;
+  const added = persistedFaq.find(item=>item.id===addedId);
+  assert.equal(added.th.q, 'New FAQ question th');
+  assert.equal(added.en.a, 'New FAQ answer en');
+  assert.equal(persistedFaq.some(item=>item.id===deletedId), false, 'Deleted migrated question stays deleted after save/reload');
   assert.equal(live.config.sections.find(s=>s.id==='faq').items.find(i=>i.id===moved.id).en.a,moved.en.a,'Draft does not change live');
   await page.goto(baseUrl+'/admin/preview');
   const previewItem = page.locator(`#faq [data-content-id="${moved.id}"]`);
   await previewItem.locator('summary').click();
   assert.match(await previewItem.innerText(),/Saved FAQ answer/);
+  assert.equal(await page.locator(`#faq [data-content-id="${deletedId}"]`).count(), 0);
+  assert.equal(await page.locator(`#faq [data-content-id="${addedId}"]`).count(), 1);
+  assert.deepEqual(live, fixture, 'All add/delete edits leave published state untouched');
+
+  // Exercise the empty collection through the same confirmed UI commands.
+  await page.goto(baseUrl+'/admin/edit');
+  await openPanel();
+  await page.locator('[data-admin-section-edit="faq"]').click();
+  const ids = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows=>rows.map(row=>row.dataset.adminRepeatableId));
+  for (const id of ids) {
+    const target = page.locator(`[data-admin-repeatable-id="${id}"]`);
+    await target.getByRole('button',{name:'ลบคำถาม',exact:true}).click();
+    await deleteDialog.getByRole('button',{name:'ลบคำถาม',exact:true}).click();
+    await target.waitFor({state:'detached'});
+  }
+  await page.getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.getByRole('dialog',{name:'Save draft นี้ไหม?'}).getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.getByRole('dialog',{name:'Save draft นี้ไหม?'}).waitFor({state:'detached'});
+  assert.deepEqual(draft.config.sections.find(s=>s.id==='faq').items, []);
+  await page.reload();
+  await openPanel();
+  await page.locator('[data-admin-section-edit="faq"]').click();
+  assert.equal(await page.locator('[data-admin-repeatable-id]').count(), 0, 'Empty FAQ stays empty after reload');
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'เพิ่มคำถาม',exact:true}).click();
+  assert.equal(await page.locator('[data-admin-repeatable-id]').count(), 1, 'Mobile can add the first question to an empty FAQ');
+  await page.waitForFunction(()=>document.activeElement?.dataset.adminCopyKey === 'q');
+  await page.locator('[data-admin-copy-key="q"]').fill('คำถามทดสอบในเครื่อง');
+  await page.locator('[data-admin-copy-key="q"]').press('Tab');
+  await page.locator('.om-faq-actions').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.screenshot({path:path.join(out,'admin-faq-controls-mobile.png')});
   assert.deepEqual(errors,[]);
-  console.log('PASS local browser: merged FAQ, legacy anchor, TH/EN answers/metadata, Admin owner fields, saved draft reload and preview; no publish.');
+  console.log('PASS local browser: FAQ add/focus, TH/EN edits, delete/cancel/Undo/Redo, saved reload/preview, empty FAQ and mobile controls; published state unchanged.');
 } finally {
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

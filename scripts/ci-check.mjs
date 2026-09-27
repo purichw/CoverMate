@@ -55,6 +55,8 @@ const commands = [
   ["npm", ["run", "check:analytics-api"]],
   ["npm", ["run", "check:phase6"]],
   ["npm", ["run", "check:cms"]],
+  ["npm", ["run", "check:faq"]],
+  ["node", ["scripts/copy-voice-check.mjs"]],
   ["npm", ["run", "check:cms:site"]],
   ["npm", ["run", "check:media"]],
   ["npm", ["run", "check:media:inline"]],

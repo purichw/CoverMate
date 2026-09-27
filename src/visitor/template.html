@@ -35,6 +35,12 @@
 .om-cms-group{border-top:1px solid var(--color-neutral-300);padding:10px 0}
 .om-cms-group>summary{padding:8px 0;font-size:14px;font-weight:800;cursor:pointer}
 .om-cms-fields{display:flex;flex-direction:column;gap:16px;padding:12px 0}
+.om-faq-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 0;border-top:1px solid var(--color-neutral-300);font-size:13px}
+.om-faq-add,.om-faq-delete{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid var(--color-neutral-300);border-radius:6px;background:var(--color-bg);color:var(--color-text);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.om-faq-add{padding:8px 12px;color:var(--color-accent-800)}.om-faq-delete{width:44px;flex:0 0 auto;color:var(--color-accent-800)}
+.om-faq-add:hover,.om-faq-delete:hover{background:var(--color-accent-200)}
+.om-faq-add:focus-visible,.om-faq-delete:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
+.om-faq-add svg,.om-faq-delete svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .om-cms-image{display:block;width:auto;max-width:100%;height:64px;object-fit:contain;object-position:left}
 .om-media-row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--color-neutral-300);padding:10px 0;min-width:0}
 .om-media-row>div{flex:1;min-width:0;overflow-wrap:anywhere}.om-media-row strong{font-size:13px}.om-media-row small{display:block;color:var(--color-neutral-700);font-size:12px}
@@ -1885,16 +1891,23 @@ textarea.input { min-height: 90px; resize: vertical; }
           <sc-for list="{{ calculatorReviewRows }}" as="record"><div class="om-cms-field"><strong>{{ record.title }}</strong><span>{{ record.status }}</span><span>{{ record.issues }}</span><button type="button" data-needs-approve="{{ record.id }}" disabled="{{ record.disabled }}" sc-camel-on-click="{{ record.approve }}">Approve reviewed record</button></div></sc-for>
         </div></details>
       </sc-if>
+      <sc-if value="{{ editingFaq }}">
+        <div class="om-faq-actions">
+          <strong>คำถามทั้งหมด ({{ faqCount }})</strong>
+          <button type="button" class="om-faq-add" data-admin-add-faq sc-camel-on-click="{{ addFaq }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>เพิ่มคำถาม</button>
+        </div>
+      </sc-if>
       <sc-for list="{{ editItems }}" as="it" hint-placeholder-count="3">
         <div data-admin-repeatable-id="{{ it.id }}" style="display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:var(--color-surface);opacity:{{ it.rowOpacity }}">
           <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap">
-            <span style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-right:auto">รายการ {{ it.n }}</span>
+            <span style="font-size:11.5px;font-weight:700;letter-spacing:0;color:var(--color-neutral-700);margin-right:auto">{{ it.rowLabel }}</span>
             <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ it.stateBg }};color:{{ it.stateFg }}">{{ it.stateLabel }}</span>
             <span style="display:flex;align-items:center;gap:6px">
               <button type="button" sc-camel-on-click="{{ it.up }}" aria-label="เลื่อนรายการขึ้น" title="เลื่อนรายการขึ้น" style="width:28px;height:28px;opacity:{{ it.upOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ it.down }}" aria-label="เลื่อนรายการลง" title="เลื่อนรายการลง" style="width:28px;height:28px;opacity:{{ it.downOpacity }};flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ it.duplicate }}" aria-label="ทำสำเนารายการ" title="ทำสำเนารายการ" style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;border-radius:999px;background:var(--color-bg);color:var(--color-neutral-800);transition:background .2s ease,color .2s ease" style-hover="background:{{ A_base }};color:var(--color-bg)"><svg sc-camel-view-box="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ it.toggleVisible }}" style="border:0;cursor:pointer;font:inherit;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;background:var(--color-bg);color:var(--color-accent-800);transition:background .2s ease" style-hover="background:var(--color-accent-200)">{{ it.visibilityLabel }}</button>
+              <sc-if value="{{ it.canDeleteFaq }}"><button type="button" class="om-faq-delete" sc-camel-on-click="{{ it.deleteFaq }}" aria-label="ลบคำถาม" title="ลบคำถาม"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></sc-if>
             </span>
           </div>
           <sc-for list="{{ it.fields }}" as="f" hint-placeholder-count="2">

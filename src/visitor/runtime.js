@@ -2329,6 +2329,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       const hidden = !!(it && it.on === false);
       return {
         key: itemId || (cur.id + '-i' + ii), id: itemId, n: String(ii + 1),
+        rowLabel: (cur.type === 'faq' ? 'คำถาม ' : 'รายการ ') + (ii + 1),
+        canDeleteFaq: cur.type === 'faq', deleteFaq: () => this.requestDeleteFaq(cur.id, itemId),
         hidden: hidden,
         rowOpacity: hidden ? '.62' : '1',
         stateLabel: hidden ? 'ซ่อนอยู่' : 'แสดงอยู่',
@@ -3056,7 +3058,9 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         item.id = createRepeatableId(c, 'cards', usedRepeatableIds(c, 'cards'));
         c.cards.push(item);
       }),
-      canAddItem: !!(cur && sch && sch.item), addLabel: cmsAdminItemLabel((cur && sch && sch.addLabel) || 'item'),
+      editingFaq: cur?.type === 'faq', faqCount: cur?.type === 'faq' ? (cur.items || []).length : 0,
+      addFaq: () => this.addFaqQuestion(cur?.id),
+      canAddItem: !!(cur && sch && sch.item && cur.type !== 'faq'), addLabel: cmsAdminItemLabel((cur && sch && sch.addLabel) || 'item'),
       addItem: () => selectedSectionUpdater(c => {
         const keys = (SCHEMA[c.type] && SCHEMA[c.type].item) || []; const blank = {}; keys.forEach(k => { blank[k] = ''; });
         c.items = c.items || [];

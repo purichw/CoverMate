@@ -289,6 +289,7 @@ export function withCmsController(Base, {
       if (action.kind === 'save') this.saveDraftConfirmed(action.undoSnapshot);
       else if (action.kind === 'publish') this.publishConfirmed(action.undoSnapshot);
       else if (action.kind === 'reset') this.resetDraftConfirmed();
+      else if (action.kind === 'delete-faq') this.deleteFaqConfirmed(action);
     }
 
     async writeDraftSnapshot(snapshot) {
@@ -667,6 +668,61 @@ export function withCmsController(Base, {
         if (!Array.isArray(list) || i < 0) return;
         if (list[i] && typeof list[i] === 'object') list[i].on = false;
       });
+    }
+
+    focusFaqQuestion(itemId) {
+      requestAnimationFrame(() => {
+        const row = [...document.querySelectorAll('[data-admin-repeatable-id]')].find(el => el.dataset.adminRepeatableId === itemId);
+        const target = row?.querySelector('[data-admin-copy-key="q"]') || document.querySelector('[data-admin-add-faq]');
+        target?.focus({ preventScroll: true });
+        target?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      });
+    }
+
+    addFaqQuestion(sectionId) {
+      if (!this.hasSession() || !(this.state.admin || this.state.editMode) || this.state.preview || this.state.remoteBusy || this._applyingHistory) return;
+      const section = this.findConfigSectionById(this.state.site, sectionId);
+      if (section?.type !== 'faq') return;
+      const id = createRepeatableId(section, 'items', usedRepeatableIds(section, 'items'));
+      this._editorGesture = null;
+      this._editorHistory?.breakGroup();
+      this.upd(config => {
+        const faq = this.findConfigSectionById(config, sectionId);
+        faq.items = faq.items || [];
+        faq.items.push({ id, on: true, th: { q: '', a: '', label: '', meta: '' }, en: { q: '', a: '', label: '', meta: '' } });
+      });
+      this.setState({ editorAnnouncement: 'เพิ่มคำถามใน Draft แล้ว' });
+      this.focusFaqQuestion(id);
+    }
+
+    requestDeleteFaq(sectionId, itemId) {
+      if (!this.hasSession() || !(this.state.admin || this.state.editMode) || this.state.preview || this.state.remoteBusy || this._applyingHistory) return;
+      const section = this.findConfigSectionById(this.state.site, sectionId);
+      const item = section?.type === 'faq' && section.items?.find(entry => entry.id === itemId);
+      if (!item) return;
+      const question = item[this.state.lang]?.q || item.th?.q || item.en?.q || 'คำถามที่ยังไม่ได้ใส่ข้อความ';
+      this.setState({ confirmAction: {
+        kind: 'delete-faq', sectionId, itemId, kicker: 'ลบคำถามจาก Draft', title: 'ลบคำถามนี้ไหม?',
+        body: '“' + question + '” จะถูกลบพร้อมคำตอบทั้งภาษาไทยและอังกฤษ เว็บจริงยังไม่เปลี่ยนจนกว่าจะ Publish และใช้ Undo คืนคำถามได้',
+        actionLabel: 'ลบคำถาม'
+      } }, () => this.focusAdminConfirm());
+    }
+
+    deleteFaqConfirmed(action) {
+      if (!this.hasSession() || !(this.state.admin || this.state.editMode) || this.state.preview || this.state.remoteBusy || this._applyingHistory) return;
+      const section = this.findConfigSectionById(this.state.site, action.sectionId);
+      const index = section?.type === 'faq' ? section.items?.findIndex(item => item.id === action.itemId) : -1;
+      if (!(index >= 0)) { this.finishAdminConfirm(); return; }
+      const nextId = (section.items[index + 1] || section.items[index - 1])?.id;
+      this._editorGesture = null;
+      this._editorHistory?.breakGroup();
+      this.upd(config => {
+        const faq = this.findConfigSectionById(config, action.sectionId);
+        faq.items = faq.items.filter(item => item.id !== action.itemId);
+      });
+      this.finishAdminConfirm();
+      this.setState({ editorAnnouncement: 'ลบคำถามจาก Draft แล้ว ใช้ Undo คืนคำถามได้' });
+      this.focusFaqQuestion(nextId);
     }
 
     restoreRepeatable(sectionId, key, itemId, fallbackIndex) {

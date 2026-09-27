@@ -3,7 +3,7 @@
 Purpose: make the static CoverMate visitor/admin site easy to navigate, verify,
 and safely edit in later sessions.
 
-Last updated: 2026-09-24. This is a source map; [HANDOFF.md](docs/HANDOFF.md)
+Last updated: 2026-09-27. This is a source map; [HANDOFF.md](docs/HANDOFF.md)
 and [REFACTOR_20260924.md](docs/REFACTOR_20260924.md) distinguish production,
 hosted UAT and local verification. A file or route in this map is not deployment evidence.
 
@@ -65,6 +65,9 @@ as a visual reference. See [HOME_REDESIGN.md](docs/HOME_REDESIGN.md).
 - Needs Calculator contract check: `npm run check:needs`
 - Shared dropdown regression: `node scripts/custom-select-check.mjs`
 - Responsive LINE contact regression: `node scripts/line-contact-check.mjs`
+- FAQ collection lifecycle and local CMS browser check: `npm run check:faq`
+- Public copy source/seed parity: `node scripts/copy-voice-check.mjs`; reviewed
+  CMS proposal/preview workflow: [copy voice audit](docs/COPY_VOICE_AUDIT_20260927.md)
 - Refactor boundaries, isolated fixtures and freshness policy: `npm run check:refactor`
 - Cases model/UI: `npm run check:ops`; real Auth/Firestore/API checks: `npm run check:emulators`
 - UAT namespace contract check: `npm run check:uat`
@@ -95,6 +98,8 @@ Detailed project documents:
 - [`docs/ADMIN_CASES_V2.md`](docs/ADMIN_CASES_V2.md)
 - [`docs/ADMIN_LANGUAGE.md`](docs/ADMIN_LANGUAGE.md)
 - [`docs/CMS_EDITOR_HISTORY.md`](docs/CMS_EDITOR_HISTORY.md)
+- [`docs/COPY_VOICE_AUDIT_20260927.md`](docs/COPY_VOICE_AUDIT_20260927.md)
+- [`docs/ARTICLES_PUBLISHING.md`](docs/ARTICLES_PUBLISHING.md)
 - [`docs/CONTACT_SUBMISSION.md`](docs/CONTACT_SUBMISSION.md)
 - [`docs/CUSTOMER_ACKNOWLEDGEMENTS.md`](docs/CUSTOMER_ACKNOWLEDGEMENTS.md)
 - [`docs/ADMIN_LOADING.md`](docs/ADMIN_LOADING.md)
@@ -188,6 +193,9 @@ Detailed project documents:
 | `scripts/uat-e2e-smoke.mjs` | Hosted UAT smoke against `COVERMATE_UAT_URL`. It verifies the browser resolves to UAT, submits one public fake lead, reads it back from `contactLeadsUat` when credentials are available, and optionally checks private admin APIs with a Firebase admin ID token. |
 | `scripts/apply-visitor-copy-update.mjs` | Guarded legacy one-off copy migration. It embeds a past public-copy brief and exits unless `--allow-legacy-copy-update` is passed; do not use it as product source of truth without reconciling current docs, live CMS, and production behavior first. |
 | `scripts/export-copy-inventory.mjs` | Exports visitor-visible Thai/English copy to `docs/content/` for external copy review. Admin/private UI copy is excluded unless explicitly requested with a future flag. |
+| `scripts/lib/copy-voice-20260927.mjs`, `scripts/prepare-copy-voice-20260927.mjs` | Reviewed public-copy deck and local field-level proposal/apply helpers. Preserve stable IDs and old-value/inline-override guards; no remote writes. Read the voice audit before reuse. |
+| `scripts/copy-voice-preview.mjs`, `scripts/copy-voice-check.mjs`, `scripts/copy-voice-browser-check.mjs` | Read-only public preview, source/seed and proposal checks, and Home/Motor TH/EN browser checks. Preview blocks Admin and submissions, not a CMS environment. |
+| `scripts/faq-consolidation-check.mjs` | FAQ/Guides migration and isolated real-browser add/focus, edit, hide/reorder, confirmed delete, Undo/Redo, Draft reload/Preview and empty/mobile collection checks. No production writes or Publish. |
 | `vercel.json` | Vercel settings, clean URLs, `/api/ops/:path*` rewrite, long-lived cache headers for `/assets/*`, and security headers. |
 | `.image-slots.state.json` | Empty file kept to satisfy the exported image-slot runtime request. |
 | `.gitignore` | Ignores `.vercel/` local project config. |
