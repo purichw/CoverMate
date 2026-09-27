@@ -59,3 +59,10 @@ cross-device synchronization still need implementation; see
 CI run `36314181333` passed for `70928e2`. It covers the prior candidate, not the
 two subsequent Editor repairs. Those require a new exact-SHA CI result.
 Production remains on the previous deployment; this is Preview-only evidence.
+
+CI run `36315511839` passed all five original article suites and the tools
+interactions through table editing. It exposed a test timing race: the invalid
+JSON-import assertion read status before asynchronous `File.text()` completed.
+The test now waits for the actual import error before asserting preservation;
+no validation assertion or runtime behavior was removed. The repaired test
+requires a new exact-SHA run.

@@ -164,6 +164,7 @@ try {
   assert.equal(draft.slug,'qa-toolbar');assert.equal(draft.authorName,'QA author');assert.equal(draft.categoryId,'health');
   assert.equal(draft.featured,true);assert.equal(draft.pinned,true);assert.equal(draft.translations.th.seoTitle,'SEO QA');
   await page.locator('.ae-import-file').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{"schemaVersion":999}')});
+  await page.locator('.ae-feedback').filter({hasText:'ไฟล์นี้ไม่ใช่ฉบับร่าง Article Editor'}).waitFor();
   assert.equal(await page.locator('.ae-feedback').getAttribute('data-error'),'true');
   assert.equal(await field('title').inputValue(),'Toolbar interaction QA');
   await page.reload();await page.locator('[data-article-state=ready]').waitFor();
