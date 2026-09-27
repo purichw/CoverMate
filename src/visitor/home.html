@@ -30,14 +30,13 @@
             <!-- COVERMATE_PROOF_CREDENTIALS -->
           </sc-if>
           <sc-if value="{{ notHome }}">
-          <details class="hm-proof-details" open="{{ homeWideDetails }}">
-          <summary class="hm-proof-heading">
+          <div class="hm-proof-details">
+          <div class="hm-proof-heading">
             <sc-if value="{{ heroProof.logo }}"><img data-cms-image="{{ heroProof.logoPath }}" sc-camel-src="{{ heroProof.logo }}" alt="{{ heroProof.logoAlt }}" width="56" height="56"></sc-if>
             <div><span class="hm-help" data-cms-copy="ui.advisorLabel">{{ s.heroAdvisorEyebrow }}</span><strong data-cms-copy="brand.fullName">{{ brandFull }}</strong><p data-content-path="{{ heroProof.credentialPath }}">{{ heroProof.credential }}</p></div>
-            <span class="hm-plus" aria-hidden="true">+</span>
-          </summary>
+          </div>
           <!-- COVERMATE_PROOF_CREDENTIALS -->
-          </details>
+          </div>
           </sc-if>
         </aside></sc-if>
       </div>

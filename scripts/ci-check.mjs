@@ -42,6 +42,7 @@ const commands = [
   ["npm", ["run", "check:motor-design", "--", "--contract-only"]],
   ["npm", ["run", "check:motor-comparison"]],
   ["npm", ["run", "check:text-editor"]],
+  ["npm", ["run", "check:inline-links"]],
   ["npm", ["run", "check:boot"]],
   ["npm", ["run", "check:loading"]],
   ["node", ["scripts/runtime-error-check.mjs"]],

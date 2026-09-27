@@ -123,6 +123,16 @@ No binary data is stored in CMS documents.
 
 ## Editing and persistence owners
 
+Linked contact copy (2026-09-27): `contact.lineId`, `contact.facebookName`,
+`contact.phone` and `contact.email` are scalar values shared by TH/EN and by
+Contact/Footer. Inline editing writes these canonical fields; social display
+names do not change `lineUrl` or `facebookUrl`. Localized hours/helpers keep
+their language-specific owners. Edit mode disables the Contact card's stretched
+link hit area and cancels normal/middle activation on editable leaves. Preview
+and visitor links keep normal navigation. `npm run check:inline-links` exercises
+real pointer clicks, isolated Draft saves/reloads and visitor/Preview navigation;
+it never writes production or Live content.
+
 - `src/visitor/runtime.js` owns rendered view models, route/language state,
   normalization and DOM projection. `src/visitor/cms-controller.js` supplies
   the existing editor commands, inline/media editing, Draft autosave and

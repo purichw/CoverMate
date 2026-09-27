@@ -15,7 +15,7 @@ Home advisor identity is a three-placement addition, not another section redesig
 intro copy. Home's existing Hero card stays open, with a 56x70px portrait next
 to the name when both are present. Licence/Contact only reuse the name, never
 the image. `proof-credentials.html` is the shared unchanged credentials/hours
-partial for the permanent Home card and the existing Motor disclosure.
+partial for the permanent Home and Motor cards; neither card can be collapsed.
 At the September 23 review the real CMS had no personal identity, so that preview
 retained CoverMate. Read current Live/Draft before making new content assumptions.
 See [CMS ownership](CMS_CONTENT_OWNERSHIP.md) for blank/language behavior.

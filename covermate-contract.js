@@ -1229,7 +1229,8 @@ function isSemanticCopyPath(config, path) {
   const shared = /^(?:(?:brand\.(?:name|fullName|role|credential)|contact\.(?:hours|area)|footer\.(?:tagline|legal)|header\.cta)\.(?:th|en)|(?:header|motorPage)\.nav\.\d+\.label\.(?:th|en)|homeDesign\.taskLinks\.@[\w-]+\.label\.(?:th|en))$/;
   const calculator = /^sections\.@[\w-]+\.calculator\.(?:situations\.[\w-]+\.(?:(?:th|en)|recs\.\d+\.(?:th|en|wth|wen))|health\.selectedRoomReference\.(?:hospitalName|roomType|note)\.(?:th|en))$/;
   const tierRemark = /^sections\.@[\w-]+\.items\.@[\w-]+\.cellRemarks\.[\w-]+\.(?:th|en)$/;
-  return (section.test(path) || shared.test(path) || calculator.test(path) || tierRemark.test(path)) && typeof cmsGet(config, path) === 'string';
+  const contact = /^contact\.(?:lineId|facebookName|phone|email)$/;
+  return (section.test(path) || shared.test(path) || calculator.test(path) || tierRemark.test(path) || contact.test(path)) && typeof cmsGet(config, path) === 'string';
 }
 
 function adoptLegacyGuideCopy(next, text) {
