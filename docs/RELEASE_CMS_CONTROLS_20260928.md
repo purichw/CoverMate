@@ -50,8 +50,8 @@ autosaved to the isolated UAT Draft, survived reload and updated the page.
 Desktop/mobile screenshots were inspected. The original Draft was restored,
 the temporary allowlist entry deactivated, and its Auth identity disabled with
 refresh tokens revoked. Cleanup has no outstanding items. No Live or production
-content was written. Subsequent harness-only changes preserve those runtime
-asset hashes; final hosted readback still needs to match the released SHA.
+content was written. The later thumbnail fix below changes runtime assets, so
+this is baseline evidence; final hosted readback must match the released SHA.
 
 Legacy comparison, builder and CMS audit harnesses now follow nested disclosures
 and canonical Brand fields. They retain their original persistence, validation,
@@ -66,8 +66,14 @@ The Phase 6 static guard now checks the shared Brand renderer and its canonical
 field registrations. FAQ browser coverage opens collapsed records through real
 summary clicks before editing or deleting. Add/delete, cancel, Undo/Redo,
 TH/EN persistence, Preview, empty collection and mobile assertions all remain;
-the updated FAQ suite passes without modifying Live. These final changes affect
-test harnesses and this record only, not the runtime verified in hosted UAT.
+the updated FAQ suite passes without modifying Live.
+
+The full smoke also exposed canceled image requests while cloning the selected
+section into its inert thumbnail. `Document.importNode` now clones directly into
+the iframe document, avoiding transient image requests in the editor document
+followed by cross-document adoption. Smoke retains network-failure checks and
+verifies all thumbnail images decode before changing tabs. Tab assertions now
+target the current Content and Brand headings.
 
 ## Release Record
 

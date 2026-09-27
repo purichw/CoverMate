@@ -1554,7 +1554,7 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && (url.startsWith("blob:") || url.includes("/admin/login"))) {
       return;
     }
-    failedRequests.push(`${url} :: ${failureText} (request navigation ${requestNavigation.get(request)}, current ${navigationId}, page ${page.url()})`);
+    failedRequests.push(`${url} :: ${failureText} (request navigation ${requestNavigation.get(request)}, current ${navigationId}, page ${page.url()}, frame ${request.frame().url()}, detached ${request.frame().isDetached()}, type ${request.resourceType()})`);
   });
   page.on("response", (response) => {
     const url = response.url();
@@ -2459,13 +2459,22 @@ for (const [name, width, height] of viewports) {
   await adminAsideLocator(page).locator('.cm-editor-footer-more > summary').click();
 
   for (const [tabName, expectedText] of [
-    ["เนื้อหา", "#hero"],
-    ["แบรนด์และติดต่อ", "ข้อความใบอนุญาต"],
+    ["เนื้อหา", "แก้ไข : Hero"],
+    ["แบรนด์และติดต่อ", "แบรนด์และข้อมูลติดต่อ"],
     ["ธีมและข้อมูล", "SEO"],
     ["ประวัติเวอร์ชัน", "ประวัติ Publish ล่าสุด 20 รายการ"]
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
+    if (['เนื้อหา', 'แบรนด์และติดต่อ'].includes(tabName)) {
+      // The live thumbnail owns a disposable iframe. Verify its images before
+      // switching tabs, which intentionally removes that document.
+      await page.locator('[data-editor-preview][data-preview-ready]').waitFor({state:'attached'});
+      await page.waitForFunction(() => {
+        const doc = document.querySelector('[data-editor-preview] iframe')?.contentDocument;
+        return doc?.body.firstElementChild && [...doc.images].every(image => image.complete && image.naturalWidth > 0);
+      });
+    }
     const tabState = await page.evaluate(() => ({
       text: document.body.innerText,
       scrollWidth: document.documentElement.scrollWidth,

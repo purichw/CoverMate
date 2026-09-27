@@ -46,7 +46,9 @@ export function syncSectionPreview(host, source) {
   }
   const markup = source.outerHTML;
   if (state.markup !== markup) {
-    const clone = source.cloneNode(true);
+    // Clone into the destination document to avoid starting image requests in
+    // the editor and canceling them when the subtree is adopted by the iframe.
+    const clone = doc.importNode(source, true);
     clone.classList.remove('cm-editor-selected-section');
     clone.querySelectorAll('script,iframe,object,embed').forEach(node=>node.remove());
     clone.querySelectorAll('.cm-tier-add-remark').forEach(node=>node.parentElement.remove());
