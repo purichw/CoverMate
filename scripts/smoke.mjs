@@ -1412,6 +1412,7 @@ for (const [name, width, height] of viewports) {
   let navigationId = 0;
   const requestNavigation = new WeakMap();
   const navigationAssetAborts = [];
+  const completedFontRequests = new Set();
   let expectedAuthRedirect = null;
   const authRedirectAborts = [];
   page.on("framenavigated", (frame) => {
@@ -1423,7 +1424,7 @@ for (const [name, width, height] of viewports) {
   async function visitSignedOutAdmin(url) {
     const redirect = {
       sourcePath: new URL(url).pathname.replace(/\/+$/, ""),
-      sourceCommits: new Set(), loginCommit: null, verified: false
+      sourceCommits: new Set(), loginCommit: null, verified: false, fontsVerified: false
     };
     expectedAuthRedirect = redirect;
     try {
@@ -1432,6 +1433,14 @@ for (const [name, width, height] of viewports) {
       if (/\/admin\/login\/?$/.test(page.url())) {
         await page.getByRole("button", { name: "เข้าสู่ระบบด้วย Google" }).waitFor({ state: "visible", timeout: 10000 });
         redirect.verified = true;
+        redirect.fontsVerified = await page.evaluate(async () => {
+          await document.fonts.ready;
+          const family = getComputedStyle(document.body).fontFamily.split(',')[0].replace(/["']/g, '').trim();
+          return document.fonts.check(`16px "${family}"`, 'เข้าสู่ระบบ') &&
+            [...document.fonts].some(font => font.family.replace(/["']/g, '') === family && font.status === 'loaded') &&
+            ![...document.fonts].some(font => font.status === 'error');
+        });
+        if (!redirect.fontsVerified) failures.push(`${name} ${redirect.sourcePath}: redirected login font failed to load`);
       }
     } finally {
       expectedAuthRedirect = null;
@@ -1443,6 +1452,11 @@ for (const [name, width, height] of viewports) {
       navigationId++;
     }
     requestNavigation.set(request, navigationId);
+  });
+  page.on('requestfinished', request => {
+    if (request.resourceType() === 'font' && new URL(request.url()).origin === baseOrigin) {
+      completedFontRequests.add(`${requestNavigation.get(request)}:${request.url()}`);
+    }
   });
 
   page.on("requestfailed", (request) => {
@@ -2793,8 +2807,13 @@ for (const [name, width, height] of viewports) {
   for (const { request, redirect, navigation } of authRedirectAborts) {
     if (redirect.verified && redirect.sourceCommits.has(navigation) && redirect.loginCommit > navigation) {
       navigationAssetAborts.push({ path: new URL(request.url()).pathname, fromNavigation: navigation, toNavigation: redirect.loginCommit, reason: "verified signed-out Admin redirect" });
+    } else if (redirect.verified && redirect.fontsVerified && navigation === redirect.loginCommit &&
+        request.resourceType() === 'font' && completedFontRequests.has(`${navigation}:${request.url()}`)) {
+      // The login bundler replaces its document element. Accept its canceled
+      // font only after the same URL finished in that document and the face loaded.
+      navigationAssetAborts.push({ path: new URL(request.url()).pathname, fromNavigation: navigation, toNavigation: navigation, reason: "verified login font replacement" });
     } else {
-      failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified auth redirect, request navigation ${navigation})`);
+      failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified auth redirect, request navigation ${navigation}, source ${redirect.sourcePath}, source commits ${[...redirect.sourceCommits]}, login ${redirect.loginCommit}, fonts ${redirect.fontsVerified})`);
     }
   }
   if (navigationAssetAborts.length) console.log(`${name}: confirmed prior-document asset cancellations ${JSON.stringify(navigationAssetAborts)}`);

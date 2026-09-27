@@ -118,3 +118,7 @@ public page was attributed to the subsequent signed-out Admin redirect. Smoke
 now classifies already-recorded prior-document cancellations first, retaining
 the existing origin, asset-type, document-generation and timing restrictions.
 Current-document failures and the verified auth-redirect checks remain enforced.
+The login bundler can also replace its DOM and cancel/reload the same font within
+one document. Smoke requires the same font URL to finish in that login document
+and the actual Thai font face to be loaded before accepting that cancellation.
+It waits for font readiness before leaving login; a broken font still fails.
