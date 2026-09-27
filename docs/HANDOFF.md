@@ -2,6 +2,19 @@
 
 Last updated: 2026-09-27
 
+## CMS Editor Panel Release
+
+The owner authorized push/deploy of the side-panel redesign from
+`.tools/motor-comparison-20260924`. The candidate includes current main through
+`4e3adea`; unrelated root-checkout work remains untouched. Desktop uses a side
+panel and mobile uses a bottom sheet. Page Outline reflects the actual page,
+and Contact edits use existing canonical CMS owners. The other four tool bodies
+retain their existing functionality, including the newly integrated FAQ controls.
+See [panel contracts](CMS_EDITOR_PANEL.md) and
+[release verification](RELEASE_CMS_PANEL_20260927.md). Code release does not
+Publish CMS content. Deployment status must be verified from the exact Git SHA,
+CI and canonical-host alias; the entries below are historical checkpoints.
+
 ## Current Release Candidate: Copy Voice And FAQ Controls
 
 This checkpoint belongs to `.tools/admin-shell-consistency-20260926`, branch

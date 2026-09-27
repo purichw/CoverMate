@@ -1,7 +1,8 @@
 # Admin Editor panel
 
-Local implementation candidate, 2026-09-27. This document does not confirm a
-production deployment.
+Implementation and operating contract, 2026-09-27. Release verification is in
+progress; current results belong in [the release record](RELEASE_CMS_PANEL_20260927.md).
+This document does not confirm a production deployment.
 
 ## Layout and navigation
 
@@ -20,6 +21,10 @@ licence and footer bands. Search only filters the outline. Selecting a section
 highlights and scrolls to its rendered page element. Hidden or unavailable
 sections remain accessible in the outline. Existing move, visibility, background
 and column controls retain their original data owners and restrictions.
+Footer selection targets the public footer only. A hidden public footer must
+never select the editor's action bar. Mobile pane changes reset the panel's
+scroll position. On `/admin/edit`, Escape commits the active text field before
+closing the panel and restores focus to the owner Tools toggle.
 
 ## Contact inspector ownership
 
@@ -53,14 +58,20 @@ Screenshots and provenance are written under `uat-results/editor-panel/`.
 Production Firebase authorization, delivery and Publish are outside this
 isolated design check.
 
-The final panel browser run passed, including canonical Draft reload, TH/EN,
-history, confirmation cancellation, Preview, mobile reorder/scroll and
-Escape commit/focus restoration. Source/build consistency and the targeted
-structure/refactor model checks also passed. Broader legacy browser runs were
-inconclusive during heavy workstation load: the structure suite timed out on
-Motor boot, and the history suite split a continuous-typing group. Do not count
-those broader suites as passed; rerun them serially before release. This change
-has not been pushed or deployed.
+For real persistence, `scripts/inline-link-hosted-check.mjs --panel` runs against
+an explicit CoverMate deployment preview and `sites/covermate-uat`. It requires
+`--write-uat`, `--url`, the exact committed `--commit`, and process-supplied
+server credentials plus an encryption key. It edits only the canonical LINE
+display name and helper in UAT Draft, checks reload and mobile layout, and
+verifies UAT Live is unchanged. Cleanup restores only this run's Draft changes,
+preserves another writer's changes, deactivates its temporary owner allowlist,
+and disables its temporary Auth account. No CMS Publish, lead submission or
+notification send is part of this check.
+
+Run browser suites serially. Earlier structure/history checks were inconclusive
+under workstation load; those runs are not release evidence. The final merged
+candidate needs fresh targeted results and hosted UAT cleanup evidence recorded
+in the release record before promotion.
 
 Related contracts: [content ownership](CMS_CONTENT_OWNERSHIP.md),
 [Draft history](CMS_EDITOR_HISTORY.md), [source ownership](../src/visitor/README.md).
