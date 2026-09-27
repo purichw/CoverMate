@@ -3,3 +3,4 @@ Allow: /
 Disallow: /api/
 
 Sitemap: https://covermateinsurance.com/sitemap.xml
+Sitemap: https://covermateinsurance.com/api/article-sitemap

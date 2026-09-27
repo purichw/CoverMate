@@ -15,8 +15,9 @@ export const ADMIN_ANALYTICS_PATH = "/admin/analytics";
 export const ADMIN_PUBLIC_EXIT_PATH = "/";
 export const PUBLIC_HOME_PATH = "/";
 export const PUBLIC_MOTOR_PATH = "/motor";
+export const PUBLIC_ARTICLES_PATH = "/articles";
 export const ADMIN_OWNER_PAGE_QUERY = "page";
-export const PUBLIC_ROUTE_PATHS = new Set([PUBLIC_HOME_PATH, PUBLIC_MOTOR_PATH]);
+export const PUBLIC_ROUTE_PATHS = new Set([PUBLIC_HOME_PATH, PUBLIC_MOTOR_PATH, PUBLIC_ARTICLES_PATH]);
 export const ADMIN_OWNER_ROUTE_MAP = Object.freeze({
   "/admin/content": "admin",
   "/admin/edit": "edit",
@@ -33,7 +34,7 @@ export const OWNER_HASHES = new Set(Object.keys(ADMIN_OWNER_HASH_MAP));
 export const OWNER_PATHS = new Set(ADMIN_OWNER_PATHS);
 export const ROUTE_PAGE_HOME = "home";
 export const ROUTE_PAGE_MOTOR = "motor";
-export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "analytics", "settings"]);
+export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics", "settings"]);
 export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
 
 export function normalizePath(path = "") {
@@ -75,12 +76,15 @@ export function normalizeRoutePage(page = ROUTE_PAGE_HOME) {
 }
 
 export function publicPathForRoutePage(page = ROUTE_PAGE_HOME) {
+  if (page === 'articles') return PUBLIC_ARTICLES_PATH;
   return normalizeRoutePage(page) === ROUTE_PAGE_MOTOR ? PUBLIC_MOTOR_PATH : PUBLIC_HOME_PATH;
 }
 
 export function routePageFromLocationParts(path = "", search = "") {
   const clean = normalizePath(path);
   if (clean === PUBLIC_MOTOR_PATH) return ROUTE_PAGE_MOTOR;
+  if (clean === PUBLIC_ARTICLES_PATH) return 'articles';
+  if (/^\/articles\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clean)) return 'article';
   if (!ownerModeFromPath(clean)) return ROUTE_PAGE_HOME;
   try {
     const params = new URLSearchParams(String(search || ""));
@@ -431,7 +435,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 20;
+const CMS_CONTENT_VERSION = 23;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -678,6 +682,66 @@ const CMS_CONTENT_FIELDS = [
   {path:'publicCopy.tierBestLabel',label:'Comparison: suitability heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เหมาะกับใคร',en:'Best for'}},
   {path:'publicCopy.storyEventLabel',label:'Story: event heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เกิดอะไรขึ้น',en:'What happened'}},
   {path:'publicCopy.storyActionLabel',label:'Story: response heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เราทำอะไร',en:'What we do'}},
+  ...localizedCmsFields('homeDesign','Home articles',[
+    ['articlesEyebrow','Articles eyebrow','บทความจาก CoverMate','From CoverMate'],
+    ['articlesTitle','Articles title','เรื่องประกัน อ่านให้เข้าใจก่อนตัดสินใจ','Understand insurance before you decide'],
+    ['articlesIntro','Articles intro','รวมความรู้และข้อควรรู้เรื่องประกัน เพื่อช่วยให้คุณพิจารณาความคุ้มครองได้อย่างเข้าใจ','Practical insurance guides to help you understand your cover and consider your options.'],
+    ['articlesAll','Articles all','ดูบทความทั้งหมด','View all articles'],
+    ['articlesRead','Articles read','อ่านบทความ','Read article']
+  ]),
+  ...localizedCmsFields('articlesPage','Articles index',[
+    ['eyebrow','Articles page: eyebrow','บทความจาก CoverMate','From CoverMate'],
+    ['title','Articles page: heading','ความรู้เรื่องประกัน\nอ่านง่าย ใช้ได้จริง','Insurance knowledge\nfor everyday decisions'],
+    ['intro','Articles page: introduction','รวมความรู้และข้อควรรู้เรื่องประกัน เพื่อช่วยให้คุณเลือกความคุ้มครองและวางแผนได้อย่างเข้าใจ','Practical insurance guides to help you understand your cover and make informed decisions.'],
+    ['search','Articles page: search','ค้นหาบทความ','Search articles'],
+    ['searchHint','Articles page: search placeholder','ค้นหาบทความ เช่น ประกันรถยนต์ สุขภาพ เคลม','Search motor insurance, health, claims...'],
+    ['all','Articles page: all categories','ทั้งหมด','All topics'],
+    ['categories','Articles page: categories label','หมวดหมู่บทความ','Article categories'],
+    ['sort','Articles page: sort label','เรียงตาม','Sort by'],
+    ['latestSort','Articles page: newest first','เรื่องล่าสุด','Newest first'],
+    ['oldestSort','Articles page: oldest first','เรื่องเก่าสุด','Oldest first'],
+    ['titleSort','Articles page: title sort','ชื่อบทความ','Article title'],
+    ['featured','Articles page: featured label','บทความแนะนำ','Featured article'],
+    ['latest','Articles page: results heading','บทความล่าสุด','Latest articles'],
+    ['results','Articles page: filtered heading','ผลการค้นหา','Search results'],
+    ['clear','Articles page: clear filters','ล้างตัวกรอง','Clear filters'],
+    ['empty','Articles page: empty','ยังไม่มีบทความในภาษานี้','No articles in this language yet'],
+    ['noResults','Articles page: no results','ไม่พบบทความที่ตรงกับการค้นหา','No articles match your search'],
+    ['unavailable','Articles page: unavailable','ยังไม่สามารถแสดงบทความได้ในขณะนี้','Articles are unavailable right now'],
+    ['retry','Articles page: retry','ลองอีกครั้ง','Try again'],
+    ['more','Articles page: load more','โหลดบทความเพิ่มเติม','Load more articles'],
+    ['pagination','Articles page: pagination label','หน้าบทความ','Article pages'],
+    ['previous','Articles page: previous page','หน้าก่อน','Previous page'],
+    ['next','Articles page: next page','หน้าถัดไป','Next page'],
+    ['ctaTitle','Articles page: consultation heading','ยังไม่แน่ใจว่าควรเริ่มจากความคุ้มครองไหน?','Not sure where to start with your cover?'],
+    ['ctaBody','Articles page: consultation body','คุยกับ CoverMate เพื่อช่วยทำความเข้าใจทางเลือกที่เหมาะกับคุณ โดยไม่มีค่าใช้จ่าย','Talk to CoverMate about your options, with no consultation fee.'],
+    ['ctaLabel','Articles page: consultation action','ปรึกษาผ่าน LINE','Talk to us on LINE']
+  ]),
+  {path:'articlesPage.heroImage',label:'Articles page: hero artwork',group:'Articles index',media:true,seed:'assets/brand/articles-reading-v1.webp'},
+  ...localizedCmsFields('articleDetail','Article reader',[
+    ['home','Article: home','หน้าหลัก','Home'],
+    ['all','Article: all articles','บทความทั้งหมด','All articles'],
+    ['breadcrumb','Article: breadcrumb','เส้นทางนำทาง','Breadcrumb'],
+    ['toc','Article: contents','สารบัญในบทความ','In this article'],
+    ['takeaways','Article: takeaways','สรุปประเด็นสำคัญ','Key takeaways'],
+    ['related','Article: related','บทความที่เกี่ยวข้อง','Related articles'],
+    ['updated','Article: updated','อัปเดตล่าสุด','Updated'],
+    ['sources','Article: sources','แหล่งข้อมูล','Sources'],
+    ['save','Article: save','บันทึก','Save'],
+    ['saved','Article: saved','บันทึกแล้ว','Saved'],
+    ['saveHint','Article: save hint','บันทึกบทความในอุปกรณ์นี้','Save this article on this device'],
+    ['savedMessage','Article: saved message','บันทึกในอุปกรณ์นี้แล้ว','Saved on this device'],
+    ['removedMessage','Article: removed message','นำออกจากรายการที่บันทึกแล้ว','Removed from saved articles'],
+    ['saveError','Article: save error','เบราว์เซอร์ไม่อนุญาตให้บันทึก กรุณาบุ๊กมาร์กหน้านี้แทน','Storage is unavailable. Bookmark this page instead.'],
+    ['share','Article: share','แชร์บทความ','Share article'],
+    ['lineShare','Article: share LINE','แชร์ผ่าน LINE','Share on LINE'],
+    ['facebookShare','Article: share Facebook','แชร์ผ่าน Facebook','Share on Facebook'],
+    ['copy','Article: copy link','คัดลอกลิงก์','Copy link'],
+    ['copied','Article: copied','คัดลอกลิงก์แล้ว','Link copied'],
+    ['manualCopy','Article: manual copy','คัดลอกลิงก์จากช่องนี้','Copy the address below'],
+    ['unavailable','Article: unavailable','ไม่พบบทความในภาษานี้','Article not available in this language'],
+    ['note','Article: sidebar note','เรื่องประกัน\nเริ่มจากความเข้าใจ\nก่อนตัดสินใจ','Understand your cover.\nThen choose with confidence.']
+  ]),
   {path:'homeDesign.botanicalIllustration',label:'Hero background artwork',group:'Home design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   {path:'homeDesign.licenceEyebrow',label:'Licence section: eyebrow',group:'Home licences',localized:true,seed:{th:'ABOUT COVERMATE',en:'ABOUT COVERMATE'}},
   {path:'homeDesign.licenceTitle',label:'Licence section: heading',group:'Home licences',localized:true,seed:{th:'ใบอนุญาตและบทบาทการให้บริการ',en:'Our licences and advisory roles'}},
@@ -988,6 +1052,21 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  if (previousVersion < 23) CMS_CONTENT_FIELDS.filter(field => field.group === 'Article reader').forEach(field => {
+    ['th','en'].forEach(lang=>{const path=field.path+'.'+lang;if(cmsGet(next,path)===undefined)cmsSet(next,path,field.seed[lang]);});
+  });
+  if (previousVersion < 22) CMS_CONTENT_FIELDS.filter(field => field.group === 'Articles index').forEach(field => {
+    (field.localized ? ['th','en'] : ['']).forEach(lang => {
+      const path = field.path + (lang ? '.'+lang : '');
+      if (cmsGet(next,path) === undefined) cmsSet(next,path,lang ? field.seed[lang] : field.seed);
+    });
+  });
+  if (previousVersion < 21) CMS_CONTENT_FIELDS.filter(field => field.group === 'Home articles').forEach(field => {
+    ['th','en'].forEach(lang => {
+      const path = field.path + '.' + lang;
+      if (cmsGet(next, path) === undefined) cmsSet(next, path, field.seed[lang]);
+    });
+  });
   const oldTopics = {quote:['ขอใบเสนอราคา','Request a quote'],general:['สอบถามทั่วไป','General question'],review:['ทบทวนกรมธรรม์เดิม','Review my existing policy'],claim:['ช่วยเรื่องเคลม','Help with a claim']};
   if (previousVersion < 19) for(const f of CMS_CONTENT_FIELDS) ['th','en'].forEach((lang,i)=>{
     const old=oldTopics[f.path.replace('formOptions.query.','')]?.[i], path=f.path+'.'+lang;

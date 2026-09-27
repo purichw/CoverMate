@@ -45,6 +45,10 @@ const L = (th, en) => ({ th: th, en: en });
 // COVERMATE_CMS_SCHEMA_SOURCE
 // COVERMATE_ADMIN_LABELS_SOURCE
 // COVERMATE_SEO_SOURCE
+// COVERMATE_HOME_ARTICLES_SOURCE
+// COVERMATE_ARTICLES_INDEX_SOURCE
+// COVERMATE_ARTICLE_DETAIL_SOURCE
+registerArticleDocument();
 const SCHEMA = {
   hero: { fields: ['kicker', 'title', 'body', 'cta1', 'cta2', 'note', 'claimText', 'claimLinkText'], item: null, cols: false },
   trust: { fields: [], item: ['label'], cols: true, addLabel: 'chip' },
@@ -311,6 +315,10 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsSet, cmsMedia, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
 }) {
   state = {
+    articleFeed: readHomeArticleFeed(document),
+    articleSearchDraft: null,
+    articleDetail:readArticleDetail(document),
+    detailFeedback:'',detailCopyFeedback:'',detailManualCopy:false,
     menuOpen: false,
     lineContactOpen: false,
     lineContactSpace: window.innerWidth >= 768,
@@ -550,7 +558,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     this.syncInlineMedia();
     this.syncVisitorDock();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
-    document.querySelectorAll('.hm-advisor-photo').forEach(img => { if (img.complete) img.toggleAttribute('data-failed', !img.naturalWidth); });
+    document.querySelectorAll('.hm-advisor-photo,.hm-article-media img').forEach(img => { if (img.complete) img.toggleAttribute('data-failed', !img.naturalWidth); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
     if (!nodes.length) return;
     const h = window.innerHeight || 800;
@@ -625,6 +633,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const address = new URL(window.location.href);
     if (lang === 'en') address.searchParams.set('lang', 'en');
     else address.searchParams.delete('lang');
+    if(this.state.routePage==='article') {window.location.assign(address.href);return;}
     window.history.replaceState(window.history.state, '', address.pathname + address.search + address.hash);
     this._routeLocation = window.location.href;
     this.setState({ lang: lang === 'en' ? 'en' : 'th' }, () => {
@@ -634,6 +643,34 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         if (this.state.editMode) this.enableEdit();
       });
     });
+  }
+
+  navigateArticles(href, event, more = false) {
+    if (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey) return;
+    event?.preventDefault();
+    const previousCount = document.querySelectorAll('.ar-grid .ar-item').length;
+    window.history.pushState(null, '', href);
+    this._routeLocation = window.location.href;
+    this.setState({articleNavigation:Date.now(),articleSearchDraft:null}, () => requestAnimationFrame(() => {
+      const target = more ? document.querySelectorAll('.ar-grid .ar-card-link')[previousCount] : document.getElementById('articles-results');
+      target?.focus({preventScroll:more});
+      if (!more) this.scrollToAnchor('articles-results', {smooth:false});
+    }));
+  }
+
+  async shareArticle(copyOnly, copy) {
+    const url=articleShareUrl(window.location);
+    if(copyOnly) {
+      try {await navigator.clipboard.writeText(url);this.setState({detailCopyFeedback:copy.copied,detailManualCopy:false});}
+      catch {this.setState({detailCopyFeedback:'',detailManualCopy:true},()=>document.querySelector('.ad-copy-fallback input')?.focus());}
+      return;
+    }
+    if(navigator.share) {
+      try {await navigator.share({title:this.state.articleDetail?.title || 'CoverMate',url});return;}
+      catch(error) {if(error?.name==='AbortError')return;}
+    }
+    const target=document.getElementById('article-share');
+    target?.focus({preventScroll:true});this.scrollToAnchor('article-share',{smooth:false});
   }
 
   companyLogoCount(config) {
@@ -735,7 +772,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const queryUat = ['uat', 'staging', 'preview'].includes(new URLSearchParams(window.location.search).get('cm_env'));
     const uat = previewHost || (!productionHost && queryUat) || document.documentElement.dataset.covermateEnvironment === 'uat' || window.__covermateRemoteContent?.environment === 'uat';
     const model = createSeoModel(site, {
-      path: this.state.routePage === 'motor' ? '/motor' : '/',
+      path: this.state.routePage === 'article' ? window.location.pathname : this.state.routePage === 'articles' ? '/articles' : this.state.routePage === 'motor' ? '/motor' : '/',
+      article:this.state.articleDetail,articleFeed:this.state.articleFeed,
       lang: this.state.lang, privatePage: owner, noindex: owner || uat, motorDefaults: DEFAULTS.motorPage, assetPath: assetURL
     });
     document.documentElement.lang = model.language;
@@ -1042,6 +1080,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     }
     const clean = String(path || '').replace(/\/+$/, '') || '/';
     if (clean === '/motor') return 'motor';
+    if (clean === '/articles') return 'articles';
+    if (articleDetailSlug(clean)) return 'article';
     if (this.ownerModeFromPath(clean)) {
       try {
         const params = new URLSearchParams(search || '');
@@ -1059,11 +1099,14 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
 
   localizedPublicHref(value) {
     if (value === '#insurers' && this.state.routePage !== 'motor') return '#motor';
-    if (!/^\/(?:motor)?(?:[?#]|$)/.test(value || '')) return value;
+    if (!/^\/(?:motor|articles(?:\/[^?#]*)?)?(?:[?#]|$)/.test(value || '')) return value;
     const url = new URL(value, window.location.origin);
     if (url.pathname === '/' && url.hash === '#insurers') url.hash = '#motor';
     if (this.state.lang === 'en') url.searchParams.set('lang', 'en');
     else url.searchParams.delete('lang');
+    const context=new URLSearchParams(window.location.search);
+    if(context.get('cm_env')==='uat')url.searchParams.set('cm_env','uat');
+    if(context.get('cm_emulator')==='1')url.searchParams.set('cm_emulator','1');
     return url.pathname + url.search + url.hash;
   }
 
@@ -1164,7 +1207,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const anchor = owner ? '' : this.anchorFromHash(h, routePage);
     const currentOwner = this.state.admin || this.state.editMode || this.state.preview;
     const samePublicPage = routePage === this.state.routePage && this.state.motor === (routePage === 'motor' || h === '#motor-focus') && this.state.life === (h === '#life-focus');
-    if (this._modeApplied && !publicView && !owner && !currentOwner && samePublicPage && !anchor.includes('-focus')) {
+    if (!['articles','article'].includes(routePage) && this._modeApplied && !publicView && !owner && !currentOwner && samePublicPage && !anchor.includes('-focus')) {
       this.scrollToAnchor(anchor || 'top');
       return;
     }
@@ -1207,7 +1250,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (e) {}
     }
     if (!editMode) this.disableEdit();
-    this.setState({ site: src.config, routePage: routePage, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
+    this.setState({ site: src.config, routePage: routePage, articleSearchDraft:null, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
       this.syncSeo();
       requestAnimationFrame(() => {
         this.applyText();
@@ -1517,11 +1560,13 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       })
     }));
 
-    const routePage = S.routePage === 'motor' ? 'motor' : 'home';
+    const routePage = ['motor','articles','article'].includes(S.routePage) ? S.routePage : 'home';
     const motorPageConfig = this.getMotorPage(site);
     const isHome = routePage === 'home' && !S.motor && !S.life;
     const isMotor = routePage === 'motor' || S.motor;
-    const sharedDesign = isHome || isMotor;
+    const isArticles = routePage === 'articles';
+    const isArticleDetail = routePage === 'article', isArticleRoute = isArticles || isArticleDetail;
+    const sharedDesign = isHome || isMotor || isArticleRoute;
     const homeAdvisor = {
       name:isHome ? cmsText('advisor.fullName') : '', role:cmsText('advisor.role'),
       photo:assetURL(cmsMedia(site.advisor?.photo || '')), photoAlt:cmsText('advisor.photoAlt') || cmsText('advisor.fullName'),
@@ -1788,6 +1833,33 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       if (sectionView.isHomeLayout) Object.keys(sectionView).filter(key => /^is[A-Z]/.test(key) && key !== 'isHomeLayout').forEach(key => { sectionView[key] = false; });
       return sectionView;
     });
+
+    const homeArticles = projectHomeArticles(isHome ? S.articleFeed : null, {lang:lk, mediaUrl:value => assetURL(cmsMedia(value))});
+    const displaySections = isArticleRoute ? [] : sections.slice();
+    if (homeArticles.visible) displaySections.splice(homeArticleInsertionIndex(sections), 0, {id:'articles', key:'articles', homeArticles:true});
+    const articleIndex = projectArticleIndex(isArticles ? S.articleFeed : null, {search:window.location.search,lang:lk,mediaUrl:value=>assetURL(cmsMedia(value))});
+    const articleCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Articles index' && field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
+    const articleAddress = changes => articleIndexAddress(window.location.search,{page:null,...changes});
+    const articleCategories = [{key:'',label:articleCopy.all},...articleIndex.categories].map(category=>{
+      const href=articleAddress({category:category.key});
+      return {...category,href,selected:category.key===articleIndex.category?'true':'false',className:category.key===articleIndex.category?'ar-category is-current':'ar-category',
+        paths:ICONS[({motor:'car',health:'pulse',life:'heart',finance:'coins',claim:'file',travel:'plane'})[category.key]] || ICONS.file,
+        click:event=>this.navigateArticles(href,event)};
+    });
+    articleIndex.pagination = articleIndex.pagination.map(item=>({...item,click:event=>this.navigateArticles(item.href,event)}));
+    const detailCopy=Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Article reader'&&field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
+    const articleDetail={...(S.articleDetail || {available:false,blocks:[],toc:[],takeaways:[],sources:[]})};
+    articleDetail.toc=(articleDetail.toc||[]).map(entry=>({...entry,click:event=>{
+      if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+      event.preventDefault();history.pushState(null,'',entry.href);
+      this._routeLocation=location.href;this.scrollToAnchor(entry.id,{smooth:false});
+      document.getElementById(entry.id)?.focus({preventScroll:true});
+    }}));
+    const relatedItems=projectPublishedArticles(isArticleDetail?S.articleFeed:null,{lang:lk,mediaUrl:value=>assetURL(cmsMedia(value))}).filter(item=>item.key!==articleDetail.key)
+      .sort((a,b)=>Number(b.categoryId===articleDetail.categoryId)-Number(a.categoryId===articleDetail.categoryId)||b.publishedAt-a.publishedAt).slice(0,4).map(item=>articleCardSummary(item,lk));
+    let detailSaved=false;
+    try {detailSaved=articleSaved(localStorage,articleDetail.slug);}catch{}
+    const detailShareAddress=articleShareUrl(window.location);
 
     const fitSectionRaw = (site.sections || []).find(x => x && x.type === 'fit') || {};
     const fitCalculator = this.mergeDeepDefaults(DEFAULT_NEEDS_CALCULATOR, fitSectionRaw.calculator);
@@ -2280,6 +2352,18 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       return items;
     }, []);
     const showTalkAnchor = sectionHrefAvailable('#talk');
+    const articleFlags=S.articleFeed?.settings;
+    if(articleFlags) {
+      const isArticlesLink=item=>{
+        try{const url=new URL(item.href,window.location.href);return url.origin===window.location.origin&&(/^\/articles(?:\/|$)/.test(url.pathname)||url.hash==='#articles');}
+        catch{return false;}
+      };
+      for(const list of [publicNavItems,motorNavItems]) {
+        const existing=list.find(isArticlesLink);
+        for(let i=list.length-1;i>=0;i--)if(isArticlesLink(list[i]))list.splice(i,1);
+        if(articleFlags.enabled&&articleFlags.showNavigation)list.push({key:'articles',label:th?'บทความ':'Articles',...existing,href:this.localizedPublicHref('/articles')});
+      }
+    }
     const showPrivacyAnchor = sectionHrefAvailable('#privacy');
     const enhancedContact = isHome;
     const submission = S.contactSubmission;
@@ -2345,7 +2429,9 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       contactMultipleErrors:enhancedContact && Object.keys(submission.fields).filter(key=>key!=='form').length>1,
       contactErrorLinks:enhancedContact?Object.entries(submission.fields).filter(([key])=>key!=='form').map(([key,value])=>({href:'#contact-'+key,label:submissionCopy[value],focus:event=>{event.preventDefault();document.getElementById('contact-'+key)?.focus();}})):[],
       th: th, en: !th,
-      isHome: isHome, notHome: !isHome, homeRoute: isHome ? 'home' : 'motor',
+      isHome: isHome, notHome: !isHome, isArticles, isArticleDetail, homeRoute:routePage,
+      headerHomeHref:isArticleRoute?this.localizedPublicHref('/'):'#top',
+      footerPrivacyHref:isArticleRoute?this.localizedPublicHref('/#privacy'):'#privacy',
       homeAdvisor,
       sharedDesign:sharedDesign, legacyDesign:!sharedDesign, heroProof:heroProof,
       ...calculatorView,
@@ -2451,9 +2537,36 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         });
       })(),
       sections: sections,
-      homeLicenceSections: sharedDesign ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
+      homeArticles, articleArrowPaths:ICONS.arrow, articleFilePaths:ICONS.file,
+      articleIndex, articleCopy, articleCategories,
+      articleDetail,detailCopy,detailRelated:relatedItems,detailHasRelated:relatedItems.length>0,
+      homeHref:this.localizedPublicHref('/'),articlesHref:this.localizedPublicHref('/articles'),
+      detailHasTakeaways:!!articleDetail.takeaways?.length,detailHasSources:!!articleDetail.sources?.length,
+      detailHasToc:!!articleDetail.toc?.length,detailTocOpen:!S.compactHome,
+      detailClockPaths:ICONS.clock,detailQuotePaths:ICONS.quote,detailCheckPaths:ICONS.check,
+      detailSaved,detailSaveLabel:detailSaved?detailCopy.saved:detailCopy.save,
+      detailFeedback:S.detailFeedback,detailCopyFeedback:S.detailCopyFeedback,detailManualCopy:S.detailManualCopy,
+      detailSave:()=>{try {const saved=toggleSavedArticle(localStorage,articleDetail.slug);this.setState({detailFeedback:saved?detailCopy.savedMessage:detailCopy.removedMessage});}catch{this.setState({detailFeedback:detailCopy.saveError});}},
+      detailShare:()=>this.shareArticle(false,detailCopy),detailCopyLink:()=>this.shareArticle(true,detailCopy),detailSelectLink:event=>event.target.select(),
+      detailShareAddress,detailLineShare:'https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(detailShareAddress),
+      detailFacebookShare:'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(detailShareAddress),
+      articleResultsTitle:articleIndex.filtered?articleCopy.results:articleCopy.latest,
+      articleEmptyTitle:articleIndex.filtered?articleCopy.noResults:articleCopy.empty,
+      articleSampleLabel:th?'พรีวิวการออกแบบ · บทความตัวอย่าง ยังไม่เผยแพร่จริง':'Design preview · Sample articles, not published content',
+      articleHero:assetURL(cmsMedia(site.articlesPage?.heroImage)),
+      articleFeatured:articleIndex.featured?[articleIndex.featured]:[],
+      articleSearch:event=>{event.preventDefault();this.navigateArticles(articleAddress({q:new FormData(event.target).get('q')}));},
+      articleSearchValue:S.articleSearchDraft ?? articleIndex.query,
+      articleSearchChange:event=>this.setState({articleSearchDraft:event.target.value}),
+      articleSort:event=>this.navigateArticles(articleAddress({sort:event.target.value})),
+      articleClear:event=>this.navigateArticles(articleIndex.clearHref,event),
+      articlePrevious:event=>this.navigateArticles(articleIndex.previousHref,event),
+      articleNext:event=>this.navigateArticles(articleIndex.nextHref,event),
+      articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,true),
+      articleReload:()=>window.location.reload(),
+      homeLicenceSections: sharedDesign && !isArticleRoute ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
       licenceFilePaths: ICONS.file,
-      sectionGroups: sections.reduce((groups, section) => {
+      sectionGroups: displaySections.reduce((groups, section) => {
         const cluster = isHome && ['about','review','how'].includes(section.id);
         const last = groups[groups.length - 1];
         if (cluster && last && last.cluster) last.sections.push(section);
@@ -2492,7 +2605,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       headerBg: S.scrolled ? 'color-mix(in srgb, var(--color-bg) 88%, transparent)' : 'var(--color-bg)',
       markScale: S.scrolled ? 'scale(.88)' : 'none',
       showNav: H.show && H.showNav, showHeaderCta: H.showCta && hasLine && !!t(H.cta), headerCta: t(H.cta),
-      navItems: routePage === 'motor' ? motorNavItems : publicNavItems,
+      navItems: routePage === 'motor' ? motorNavItems : isArticleRoute ? publicNavItems.map(item=>({...item,href:item.href.startsWith('#')?this.localizedPublicHref('/'+item.href):item.href})) : publicNavItems,
       showTalkAnchor: showTalkAnchor,
       showPrivacyAnchor: showPrivacyAnchor,
       showFooterPrivacyNav: showPrivacyAnchor,

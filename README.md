@@ -1,5 +1,8 @@
 # CoverMate
 
+Articles CMS publication and visibility controls:
+[`docs/ARTICLES_PUBLISHING.md`](docs/ARTICLES_PUBLISHING.md).
+
 CoverMate visitor and admin surfaces for Vercel, with Firebase Auth/Firestore
 and serverless APIs. Primary domain: `https://covermateinsurance.com`.
 

@@ -1,5 +1,9 @@
 # CoverMate SEO
 
+Articles publication adds an independent visibility gate, published-locale
+metadata and the dynamic `/api/article-sitemap` advertised by `robots.txt`.
+See [Articles Publishing](ARTICLES_PUBLISHING.md) for the current contract.
+
 Last updated: 2026-09-24. See `HANDOFF.md` for current source, authorization and
 preview/production evidence. This document describes the maintained SEO contract.
 

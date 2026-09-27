@@ -1,0 +1,34 @@
+<sc-if value="{{ s.homeArticles }}">
+  <section id="articles" class="hm-band hm-articles" data-home-section="articles" aria-labelledby="home-articles-title">
+    <div class="hm-wrap">
+      <div class="hm-heading hm-articles-heading">
+        <div class="hm-section-copy">
+          <sc-if value="{{ homeCopy.articlesEyebrow }}"><p class="hm-eyebrow" data-cms-copy="homeDesign.articlesEyebrow">{{ homeCopy.articlesEyebrow }}</p></sc-if>
+          <h2 id="home-articles-title" data-cms-copy="homeDesign.articlesTitle">{{ homeCopy.articlesTitle }}</h2>
+          <sc-if value="{{ homeCopy.articlesIntro }}"><p data-cms-copy="homeDesign.articlesIntro">{{ homeCopy.articlesIntro }}</p></sc-if>
+        </div>
+        <a class="hm-articles-all" href="{{ homeArticles.indexHref }}"><span data-cms-copy="homeDesign.articlesAll">{{ homeCopy.articlesAll }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></a>
+      </div>
+      <ul class="hm-article-grid">
+        <sc-for list="{{ homeArticles.items }}" as="article">
+          <li>
+            <article class="hm-article-card">
+              <a class="hm-article-link" href="{{ article.href }}" aria-labelledby="{{ article.titleId }}">
+                <div class="hm-article-media">
+                  <svg class="hm-article-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
+                  <sc-if value="{{ article.image }}"><img sc-camel-src="{{ article.image }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="360" loading="lazy" decoding="async"></sc-if>
+                </div>
+                <div class="hm-article-copy">
+                  <sc-if value="{{ article.category }}"><span class="hm-article-category">{{ article.category }}</span></sc-if>
+                  <h3 id="{{ article.titleId }}">{{ article.title }}</h3>
+                  <sc-if value="{{ article.excerpt }}"><p class="hm-article-excerpt">{{ article.excerpt }}</p></sc-if>
+                  <span class="hm-article-read"><span data-cms-copy="homeDesign.articlesRead">{{ homeCopy.articlesRead }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></span>
+                </div>
+              </a>
+            </article>
+          </li>
+        </sc-for>
+      </ul>
+    </div>
+  </section>
+</sc-if>

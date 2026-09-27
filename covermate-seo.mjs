@@ -1,7 +1,9 @@
 // Shared by the initial HTTP response and CMS-driven client metadata.
-export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, assetPath = value => value } = {}) {
+export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, article = null, articleFeed = null, assetPath = value => value } = {}) {
   const root = 'https://covermateinsurance.com';
-  path = path === '/motor' ? '/motor' : '/';
+  const isArticle = /^\/articles\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(path);
+  path = isArticle ? path.replace(/\/$/,'') : ['/motor','/articles'].includes(path) ? path : '/';
+  noindex = noindex || ((path === '/articles' || isArticle) && articleFeed?.settings?.enabled!==true);
   lang = lang === 'en' ? 'en' : 'th';
   const clean = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
   const localized = value => clean(typeof value === 'string' ? value : value?.[lang]);
@@ -20,7 +22,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     return Object.fromEntries([...new Set([...Object.keys(defaults || {}), ...Object.keys(value)])].map(key => [key, merge(defaults?.[key], value[key])]));
   };
   const motor = merge(motorDefaults, site.motorPage) || {};
-  const pageSeo = path === '/motor' ? motor.seo || {} : seo;
+  const pageSeo = isArticle ? {title:article?.seoTitle || article?.title || (lang==='en'?'Article unavailable':'ไม่พบบทความ'),description:article?.seoDescription || article?.excerpt || ''} : path === '/articles' ? {title:site.articlesPage?.title || {th:'บทความจาก CoverMate',en:'CoverMate articles'},description:site.articlesPage?.intro} : path === '/motor' ? motor.seo || {} : seo;
   const media = site.brand?.media || {};
   const brand = localized(site.brand?.name) || 'CoverMate';
   const service = path === '/motor' ? 'motor' : 'home';
@@ -30,7 +32,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
   const description = privatePage ? 'Private CoverMate owner tools.' : localized(pageSeo.description) || clean(hero?.[lang]?.body);
   const base = root + path;
   const canonical = base + (lang === 'en' ? '?lang=en' : '');
-  const image = url(seo.image), imageAlt = localized(seo.imageAlt);
+  const image = url(isArticle ? article?.image : seo.image), imageAlt = isArticle ? clean(article?.imageAlt) : localized(seo.imageAlt);
   const language = lang === 'th' ? 'th-TH' : 'en';
   const area = localized(seo.areaServed);
   const expertise = typeof seo.knowsAbout === 'string' ? seo.knowsAbout.split('\n').map(clean).filter(Boolean) : [];
@@ -59,6 +61,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     { '@type': 'WebPage', '@id': canonical + '#webpage', url: canonical, name: title, description, inLanguage: language, isPartOf: { '@id': websiteId }, about: { '@id': orgId }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}) }
   ];
   if (serviceName) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
+  if(isArticle&&article?.available)graph.push({'@type':'Article','@id':canonical+'#article',headline:title,description,inLanguage:language,mainEntityOfPage:canonical,publisher:{'@id':orgId},datePublished:article.datetime,...(image?{image}:{}),...(article.author?{author:{'@type':article.author===brand?'Organization':'Person',name:article.author}}:{})});
   return {
     title, language, canonical,
     meta: {
@@ -67,12 +70,12 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
       'twitter:title': title, 'twitter:description': description, 'twitter:image': image, 'twitter:image:alt': image ? imageAlt : ''
     },
     properties: {
-      'og:type': 'website', 'og:site_name': brand, 'og:locale': lang === 'th' ? 'th_TH' : 'en_US', 'og:locale:alternate': lang === 'th' ? 'en_US' : 'th_TH',
+      'og:type': isArticle ? 'article' : 'website', 'og:site_name': brand, 'og:locale': lang === 'th' ? 'th_TH' : 'en_US', 'og:locale:alternate': lang === 'th' ? 'en_US' : 'th_TH',
       'og:url': canonical, 'og:title': title, 'og:description': description,
       'og:image': image, 'og:image:secure_url': image.startsWith('https:') ? image : '', 'og:image:alt': image ? imageAlt : ''
     },
     icons: { icon: url(media.favicon), 'apple-touch-icon': url(media.mark) },
-    alternates: noindex ? {} : { 'th-TH': base, en: base + '?lang=en', 'x-default': base },
+    alternates: noindex ? {} : isArticle ? Object.fromEntries((article?.languages||[lang]).map(l=>[l==='th'?'th-TH':'en',base+(l==='en'?'?lang=en':'')])) : { 'th-TH': base, en: base + '?lang=en', 'x-default': base },
     graph: noindex ? null : { '@context': 'https://schema.org', '@graph': graph }
   };
 }
