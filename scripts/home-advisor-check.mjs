@@ -53,6 +53,9 @@ console.log('PASS advisor schema v15, missing-only migration, blank identity, la
 
 if(process.argv.includes('--browser')||process.argv.includes('--serve')) {
   process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.resolve('.tools/playwright-browsers');
+  // The first editor save also normalizes defaults such as repeatable `on`.
+  // Compare unrelated fields against that baseline, while keeping Live raw.
+  const normalizedLiveConfig=JSON.parse(JSON.stringify(app.normalizeConfig(live.config,{repeatableIds:true})));
   let draft=structuredClone(live),saves=0;
   const liveBefore=JSON.stringify(live);
   const firebaseFixture=`
@@ -111,7 +114,7 @@ if(process.argv.includes('--browser')||process.argv.includes('--serve')) {
         await page.setViewportSize({width,height:1000});await fit();
         await page.locator('[data-home-section="hero"]').screenshot({path:`${out}/home-fallback-${width}.png`});
       }
-      checks.push('Actual published data has no person: CoverMate fallback, permanent Hero, original Contact copy');
+      checks.push('Fixture without advisor identity: CoverMate fallback, permanent Hero, original Contact copy');
 
       await page.setViewportSize({width:1440,height:1000});await page.goto(baseUrl+'/admin/content');
       await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();
@@ -128,7 +131,7 @@ if(process.argv.includes('--browser')||process.argv.includes('--serve')) {
       await page.getByRole('button',{name:'แก้ไขเนื้อหาภาษาอังกฤษ',exact:true}).click();
       assert.equal(await page.locator('[data-cms-field="advisor.fullName.en"]').inputValue(),'CMS_TEST_NAME_EN');
       assert.equal(JSON.stringify(live),liveBefore,'No live mutation/publish');
-      for(const key of ['brand','contact','licences','sections','footer','motorPage'])assert.deepEqual(draft.config[key],live.config[key],key+' unchanged by advisor edit');
+      for(const key of ['brand','contact','licences','sections','footer','motorPage'])assert.deepEqual(draft.config[key],normalizedLiveConfig[key],key+' unchanged by advisor edit');
       checks.push('Admin TH/EN fields + image, draft save/reload, canonical ownership and no live writes');
 
       for(const [width,lang] of [[1440,'th'],[820,'en'],[390,'th'],[320,'en']]){
