@@ -68,10 +68,19 @@ export class ContactSubmission {
   dispose() { this.active = null; this.onChange = () => {}; this.timers.forEach(id => this.cancel(id)); this.timers.clear(); }
 }
 
+export function validContactEmail(value) {
+  if (typeof value !== 'string' || value.length > 254 || /[\r\n]/.test(value)) return false;
+  const [local, domain, extra] = value.trim().split('@');
+  return extra === undefined && !!local && local.length <= 64 && !local.startsWith('.') && !local.endsWith('.') && !local.includes('..') &&
+    /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local) && !!domain &&
+    /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(domain);
+}
+
 export function contactFieldErrors(input) {
   const fields = {};
   if (!String(input.name || '').trim()) fields.name = 'nameRequired';
   if (!String(input.contact || '').trim()) fields.contact = 'contactRequired';
+  if (String(input.email || '').trim() && !validContactEmail(input.email)) fields.email = 'emailInvalid';
   if (String(input.topic || '').length > 500) fields.topic = 'topicTooLong';
   if (input.consent !== true) fields.consent = 'consentRequired';
   return fields;

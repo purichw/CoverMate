@@ -63,6 +63,8 @@ as a visual reference. See [HOME_REDESIGN.md](docs/HOME_REDESIGN.md).
 - Local static server: `python3 -m http.server 4177`
 - Local bundle/source check: `npm run check:bundles`
 - Needs Calculator contract check: `npm run check:needs`
+- Shared dropdown regression: `node scripts/custom-select-check.mjs`
+- Responsive LINE contact regression: `node scripts/line-contact-check.mjs`
 - Refactor boundaries, isolated fixtures and freshness policy: `npm run check:refactor`
 - Cases model/UI: `npm run check:ops`; real Auth/Firestore/API checks: `npm run check:emulators`
 - UAT namespace contract check: `npm run check:uat`
@@ -94,6 +96,12 @@ Detailed project documents:
 - [`docs/ADMIN_LANGUAGE.md`](docs/ADMIN_LANGUAGE.md)
 - [`docs/CMS_EDITOR_HISTORY.md`](docs/CMS_EDITOR_HISTORY.md)
 - [`docs/CONTACT_SUBMISSION.md`](docs/CONTACT_SUBMISSION.md)
+- [`docs/CUSTOMER_ACKNOWLEDGEMENTS.md`](docs/CUSTOMER_ACKNOWLEDGEMENTS.md)
+- [`docs/ADMIN_LOADING.md`](docs/ADMIN_LOADING.md)
+- [`docs/CUSTOM_SELECT.md`](docs/CUSTOM_SELECT.md)
+- [`docs/LINE_CONTACT.md`](docs/LINE_CONTACT.md)
+- [`docs/LOADING_SCREEN.md`](docs/LOADING_SCREEN.md)
+- [`docs/RELEASE_SELECT_MOBILE_LINE_20260924.md`](docs/RELEASE_SELECT_MOBILE_LINE_20260924.md)
 - [`docs/REFACTOR_20260924.md`](docs/REFACTOR_20260924.md)
 - [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)
 - [`docs/NEEDS_CALCULATOR.md`](docs/NEEDS_CALCULATOR.md)
@@ -125,6 +133,8 @@ Detailed project documents:
 | `src/visitor/cms-controller.js` | CMS commands, 700ms draft scheduling, explicit save/publish/reset, history integration and media actions. The host retains rendering and state; Firebase persistence stays in its adapter. |
 | `src/visitor/editor-history.js` | Bounded, tab-scoped Draft snapshot history; distinct from published version history and the post-Publish rollback. |
 | `src/visitor/admin-labels.js` | Thai Admin display dictionary; separate from the TH/EN website-content selector. |
+| `src/shared/select.js`, `select.css` | Shared single-select enhancement for visitor/CMS/Admin; native select owns form values and validation. `build:visitor` emits versioned `assets/visitor/select.*` and updates the marked Admin asset block. |
+| `src/visitor/line-contact.html`, `line-contact.css`, `line-mark.html` | Shared LINE disclosure at 768px and wider plus official mark for contact buttons. Mobile below 768px retains the bottom CTA only; runtime owns visibility and measured dock clearance. |
 | `covermate-calculator.mjs`, `covermate-recommendations.mjs` | Shared calculator formulas/validated attachments and deterministic product eligibility, catalog approval, and fit. |
 | `api/leads.js`, `server/enquiry-privacy.cjs` | Public App Check/idempotent intake, published consent receipt verification, calculator validation, and atomic lead/Cases creation. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |

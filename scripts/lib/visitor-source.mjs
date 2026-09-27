@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { buildSync, transformSync } from "esbuild";
 import { createSeoModel, renderSeoHead } from "../../covermate-seo.mjs";
 import { sanitizeStateDoc } from "../../covermate-contract.js";
+import { readBootSurface } from './boot-surface.mjs';
 
 import {
   BUNDLER_TEMPLATE_OPEN,
@@ -49,6 +50,19 @@ export function readSelectAsset() {
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
+export function readContactPayloadAsset() {
+  const file = new URL('assets/visitor/contact-payload.js', ROOT);
+  const code = buildSync({
+    entryPoints: [fileURLToPath(new URL('covermate-contact-payload.mjs', ROOT))],
+    outfile: fileURLToPath(file), bundle: true, write: false, minify: true,
+    format: 'esm', target: 'es2022', charset: 'utf8',
+    // Already loaded by the public adapter; keep every other dependency in one
+    // retryable module so failed nested imports cannot poison browser recovery.
+    external: [fileURLToPath(new URL('covermate-contract.js', ROOT))]
+  }).outputFiles[0].text;
+  return { code, file };
+}
+
 export function readImageVersions(root = new URL("assets/", ROOT)) {
   const versions = {};
   function visit(directory, prefix) {
@@ -78,14 +92,16 @@ function assertSingleSlot(source, slot, label) {
 }
 
 export function readVisitorSources() {
+  const boot = readBootSurface();
   const contract = readText(new URL('covermate-contract.js', ROOT));
   const visitorStyles = Object.fromEntries(readVisitorStyleAssets().map(asset => [asset.name, asset.link]));
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_BEGIN', 'covermate-contract.js');
   assertSingleSlot(contract, '// COVERMATE_CMS_SCHEMA_END', 'covermate-contract.js');
   return {
     shell: readText(VISITOR_SOURCE_PATHS.shell)
-      .replace('/* COVERMATE_BOOT_STYLES */', () => transformSync(readText(new URL('src/visitor/boot.css', ROOT)), { loader: 'css', minify: true }).code)
-      .replace('// COVERMATE_BOOT_SCRIPT', () => transformSync(readText(new URL('src/visitor/boot.js', ROOT)), { minify: true }).code),
+      .replace('<!-- COVERMATE_BOOT_SURFACE -->', () => boot.html)
+      .replace('/* COVERMATE_BOOT_STYLES */', () => boot.css)
+      .replace('// COVERMATE_BOOT_SCRIPT', () => boot.script),
     template: readText(VISITOR_SOURCE_PATHS.template)
       .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
       .replace('<style>/* COVERMATE_SUBMISSION_STYLES */</style>', () => visitorStyles.submission)

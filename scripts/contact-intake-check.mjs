@@ -26,6 +26,16 @@ try {
   assert.equal((await db.doc('caseEmailOutbox/'+id).get()).exists,false,'UAT/emulator intake remains accepted without creating an email send');
   assert.equal((await doc.ref.collection('caseActivities').get()).size,1,'One creation activity after repeated attempts');
   assert.equal((await db.collection('contactLeadsUat').where('contact','==','@fixture').get()).size,1);
+  for (const email of ['bad', ['visitor@example.test'], 'a..b@example.test', 'a@example.test\r\nBcc:other@example.test']) assert.equal((await post({...payload,email},crypto.randomUUID())).status,422);
+  const emailKey=crypto.randomUUID(),emailPayload={...payload,contact:'@email-fixture',email:' visitor@example.test '};
+  const emailResponse=await post(emailPayload,emailKey);assert.equal(emailResponse.status,200);
+  assert.deepEqual(await post(emailPayload,emailKey),emailResponse);
+  const emailId=createHash('sha256').update('uat:'+emailKey).digest('hex');
+  const emailDoc=(await db.doc('contactLeadsUat/'+emailId).get()).data();
+  assert.equal(emailDoc.email,'visitor@example.test');assert.equal(emailDoc.caseRecord.contact.email,'visitor@example.test');
+  assert.equal(emailDoc.caseRecord.contact.lineId,'@email-fixture');
+  assert.equal((await db.doc('caseEmailOutbox/customer-'+emailId).get()).exists,false,'UAT never queues customer emails');
+  assert.equal((await post({...emailPayload,email:'other@example.test'},emailKey)).status,409);
   assert.equal((await post({...payload,topic:'Different payload'})).status,409);
   assert.equal((await post({...payload,consent:false},crypto.randomUUID())).status,422);
   assert.equal((await post({...payload,noticeVersion:'outdated'},crypto.randomUUID())).status,409);

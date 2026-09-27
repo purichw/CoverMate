@@ -52,7 +52,8 @@ function details(rows) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${tableStyle}width:100%;background-color:${BRAND.background};border-radius:16px;"><tr><td align="left" style="padding:20px;text-align:left;">${rows.map(([label, value, emphasis = false], index) => `<p style="margin:0 0 4px;color:${BRAND.muted};font-size:13px;line-height:22px;">${escape(label)}</p><p style="margin:0 0 ${index === rows.length - 1 ? '0' : '12px'};color:${BRAND.ink};font-size:${emphasis ? '17px' : '16px'};line-height:28px;font-weight:${emphasis ? '700' : '400'};word-break:break-word;overflow-wrap:anywhere;">${escape(value)}</p>`).join('')}</td></tr></table>`;
 }
 
-function action(label, url) {
+function action(label, url, iconUrl = '') {
+  if (iconUrl) return `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="${tableStyle}margin:24px auto 16px;"><tr><td align="center" bgcolor="${BRAND.action}" style="padding:12px 10px;background-color:${BRAND.action};border-radius:8px;"><a href="${escape(url)}" style="display:inline-block;color:#ffffff;font-family:${FONT};font-size:15px;font-weight:700;line-height:27px;text-decoration:none;"><img src="${escape(safeLogo(iconUrl))}" width="40" height="40" alt="" style="display:inline-block;width:40px;height:40px;margin:0 10px 0 0;border:0;vertical-align:middle;"><span style="display:inline-block;vertical-align:middle;">${escape(label)}</span></a></td></tr></table>`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${tableStyle}width:100%;"><tr><td align="center" style="padding:24px 0 16px;text-align:center;"><table role="presentation" align="center" cellpadding="0" cellspacing="0" style="${tableStyle}margin:0 auto;"><tr><td align="center" bgcolor="${BRAND.action}" style="background-color:${BRAND.action};border-radius:999px;"><a href="${escape(url)}" style="display:inline-block;border:1px solid ${BRAND.action};border-radius:999px;padding:14px 24px;color:#ffffff;font-family:${FONT};font-size:16px;font-weight:700;line-height:24px;text-align:center;text-decoration:none;mso-padding-alt:0;"><!--[if mso]><i style="mso-font-width:150%;mso-text-raise:20pt;" hidden>&emsp;</i><![endif]--><span style="mso-text-raise:10pt;">${escape(label)}</span><!--[if mso]><i style="mso-font-width:150%;" hidden>&emsp;&#8203;</i><![endif]--></a></td></tr></table></td></tr></table>`;
 }
 
@@ -61,9 +62,9 @@ function digestList(items) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${tableStyle}width:100%;margin-top:16px;">${items.map((item, index) => `<tr><td align="left" style="padding:16px 4px;text-align:left;${index ? `border-top:1px solid ${BRAND.divider};` : ''}"><p style="margin:0 0 6px;font-size:16px;line-height:26px;font-weight:700;"><a href="${escape(item.url)}" style="color:${BRAND.action};text-decoration:underline;word-break:break-word;overflow-wrap:anywhere;">${escape(item.number || 'เปิดดูเคส')}</a></p>${item.rows.map(([label, value]) => `<p style="margin:0 0 4px;font-size:14px;line-height:24px;color:${BRAND.ink};word-break:break-word;overflow-wrap:anywhere;"><span style="color:${BRAND.muted};">${escape(label)}:</span> ${escape(value)}</p>`).join('')}</td></tr>`).join('')}</table>`;
 }
 
-function frame({ subject, preheader, logoUrl, eyebrow, heading, intro, detailRows, caseItems = [], actionLabel, actionUrl = ADMIN_URL, note }) {
+function frame({ subject, preheader, logoUrl, eyebrow, heading, intro, detailRows, caseItems = [], actionLabel, actionUrl = ADMIN_URL, note, language = 'th', actionIconUrl = '', fallbackLabel = 'หากเปิดปุ่มไม่ได้ ใช้ลิงก์นี้:', footerLabel = 'CoverMate · การแจ้งเตือนสำหรับเจ้าของเว็บไซต์' }) {
   return `<!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escape(subject)}</title></head>
+<html lang="${language === 'en' ? 'en' : 'th'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escape(subject)}</title></head>
 <body style="margin:0;padding:0;width:100%;background-color:${BRAND.background};color:${BRAND.ink};font-family:${FONT};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">${escape(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BRAND.background}" style="${tableStyle}width:100%;background-color:${BRAND.background};"><tr><td align="center" style="padding:24px 16px;">
@@ -76,12 +77,12 @@ ${header(logoUrl)}
 <p style="margin:0 0 24px;font-size:16px;line-height:28px;color:${BRAND.muted};text-align:center;">${escape(intro)}</p>
 ${details(detailRows)}
 ${digestList(caseItems)}
-${action(actionLabel, actionUrl)}
+${action(actionLabel, actionUrl, actionIconUrl)}
 <p style="margin:0 0 24px;font-size:14px;line-height:24px;color:${BRAND.muted};text-align:center;">${escape(note)}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${tableStyle}width:100%;"><tr><td align="center" style="padding:20px 0 0;border-top:1px solid ${BRAND.divider};text-align:center;">
-<p style="margin:0 0 8px;font-size:13px;line-height:22px;color:${BRAND.muted};">หากเปิดปุ่มไม่ได้ ใช้ลิงก์นี้:</p>
+<p style="margin:0 0 8px;font-size:13px;line-height:22px;color:${BRAND.muted};">${escape(fallbackLabel)}</p>
 <a href="${escape(actionUrl)}" style="font-size:13px;line-height:22px;color:${BRAND.action};word-break:break-all;overflow-wrap:anywhere;text-decoration:underline;">${escape(actionUrl)}</a>
-<p style="margin:20px 0 0;font-size:12px;line-height:20px;color:${BRAND.muted};">CoverMate · การแจ้งเตือนสำหรับเจ้าของเว็บไซต์</p>
+<p style="margin:20px 0 0;font-size:12px;line-height:20px;color:${BRAND.muted};">${escape(footerLabel)}</p>
 </td></tr></table>
 </td></tr></table>
 <!--[if mso]></td></tr></table><![endif]-->
@@ -136,4 +137,4 @@ function renderAdminEmail(input = {}) {
   return { subject: content.subject, text, html: frame({ ...content, logoUrl }) };
 }
 
-module.exports = { renderAdminEmail };
+module.exports = { renderAdminEmail, renderEmailFrame: frame };

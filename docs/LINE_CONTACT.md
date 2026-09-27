@@ -1,11 +1,13 @@
 # Shared LINE Contact
 
-Local implementation, not a deployment record.
+Current behavior and source ownership. Deployment evidence is recorded
+separately in [the September 24 release](RELEASE_SELECT_MOBILE_LINE_20260924.md).
 
 ## Ownership
 
-- `src/visitor/line-contact.html` and `.css`: one floating contact disclosure on
-  Home and Motor. `runtime.js` owns state, dismissal, focus and dock measurement.
+- `src/visitor/line-contact.html` and `.css`: shared floating contact disclosure
+  on Home and Motor at widths of at least 768px. `runtime.js` owns state,
+  dismissal, focus and dock measurement.
 - `src/visitor/line-mark.html`: shared official brand mark, composed by
   `scripts/lib/visitor-source.mjs` into header/menu, heroes, contact CTAs,
   mobile dock, submission states and the floating control.
@@ -30,9 +32,16 @@ Local implementation, not a deployment record.
   `ปุ่ม LINE ลอย`). Existing intentional blanks are preserved.
 - Existing `stickyBar` toggle controls persistent contact affordances: mobile
   dock plus floating LINE. Its Admin label now identifies both surfaces.
+- Below 768px, both the floating launcher and its panel are hidden. The existing
+  bottom LINE CTA remains; no second mobile chat button is added. Resizing an
+  open panel below the breakpoint closes it, so returning to 768px or wider
+  does not reopen it automatically. CSS also enforces the mobile exclusion.
+- At 768px and wider, the floating control remains subject to the visibility
+  conditions below. A tablet may also retain the existing bottom CTA; the
+  floating panel clears the measured dock rather than covering it.
 - Hidden if LINE URL is absent, in owner/edit/preview mode, while menu or cookie
-  settings is open, or when usable viewport space is under 430px (including
-  mobile keyboard/expanded consent). Existing inline contact links remain.
+  settings is open, while the keyboard is detected, or when usable viewport
+  space after the dock is under 430px. Existing inline contact links remain.
 - Fixed at the right edge above the measured visitor dock and safe area.
   No new form, consent, destination or analytics logic. Existing delegated
   analytics counts an outgoing LINE link, not opening this disclosure.
@@ -49,9 +58,10 @@ npm run check:contact:browser -- --visual
 npm run check:analytics
 ```
 
-The dedicated browser test covers Home/Motor, TH/EN, 320/390/1440px, fixed
-scroll position, dock clearance, keyboard dismissal/focus, preservation of
-form entries, CMS copy/hours/destination and disabled/missing-link states.
+The dedicated browser test covers Home/Motor, TH/EN, mobile absence at
+320/390px, desktop behavior at 1440px and closing across the 767/768px boundary.
+It also covers fixed scroll position, dock clearance, keyboard dismissal/focus,
+preservation of form entries, CMS copy/hours/destination and disabled/missing-link states.
 It blocks external traffic and disables lead/admin writes. Screenshots and
 the result report go to `uat-results/line-contact/`.
 

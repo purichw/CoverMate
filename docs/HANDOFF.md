@@ -2,6 +2,52 @@
 
 Last updated: 2026-09-24
 
+## Admin Loading And Customer Acknowledgements
+
+The owner authorized releasing both changes on September 24. The current
+candidate uses `.tools/line-contact-release-20260924`; check Git/Vercel for its
+exact deployed SHA rather than interpreting implementation as activation.
+
+- `/admin` reuses the Visitor boot surface with verified-session readiness,
+  slow/error/retry states and unchanged fail-closed authorization. See
+  [ADMIN_LOADING.md](ADMIN_LOADING.md).
+- Home/Motor share an optional email field and production-only customer
+  acknowledgement queue, behind `CUSTOMER_ACK_ENABLED=true`. No secrets,
+  provider settings or account logins are changed by this code release. See
+  [CUSTOMER_ACKNOWLEDGEMENTS.md](CUSTOMER_ACKNOWLEDGEMENTS.md).
+- The owner separately migrated the operations inbox to
+  `covermate@covermateinsurance.com`. Frozen retries retain their original
+  recipient. Real delivery and Zoho Reply-To still require an owner-inbox test.
+- CI now includes Admin loading and customer-email browser checks plus isolated
+  emulator intake/outbox checks. No production CMS/customer writes or real
+  email sends are part of release smoke verification.
+
+## Production Checkpoint: Dropdowns And Mobile LINE
+
+At 14:45 Bangkok on September 24, production was verified at
+`c07320d03ca60c6ef25afeafedde3218ccb922f1`, deployment
+`dpl_BQ3BntgPjmgqn8qZsD8c7yqYPhzb`. Exact-SHA GitHub CI run `35970002758`
+and the read-only canonical-host smoke passed. See
+[the release record](RELEASE_SELECT_MOBILE_LINE_20260924.md) for URLs, coverage,
+local evidence and limitations. Earlier checkpoints below retain their dated
+scope and are not the latest production declaration.
+
+- Shared custom dropdowns cover visitor/CMS/Admin single-select controls;
+  native state and validation remain authoritative. Seven localized contact
+  topics use CMS schema 19, preserving owner copy and legacy `compare` data.
+  See [CUSTOM_SELECT.md](CUSTOM_SELECT.md).
+- Below 768px, LINE uses the existing bottom CTA only; floating launcher/panel
+  remain available from 768px subject to existing visibility rules. Official
+  marks and CMS destinations remain unchanged. See [LINE_CONTACT.md](LINE_CONTACT.md).
+- Integration preserves upstream motor comparison and delayed Admin filter
+  focus fixes. Styled boot readiness also gates initial anchor scrolling;
+  performance budgets and CI gates were not relaxed.
+- Release source: `.tools/line-contact-release-20260924`, branch
+  `codex/line-contact-release-20260924`. The original checkout's unrelated work
+  is untouched. Check status before editing; this note does not authorize a
+  future push/deploy or CMS Publish. No production CMS/customer writes were
+  made by this release pass.
+
 ## Motor comparison release (2026-09-24)
 
 The motor comparison redesign and per-cell localized CMS remarks are integrated
@@ -55,7 +101,7 @@ revision-bound follow-up reminders and a 09:00 Bangkok overdue digest. Personal
 email remains disabled. Deployment/cron activation must be verified separately
 from emulator tests; scheduler readiness uses the real heartbeat.
 
-## Current source and documentation checkpoint
+## Earlier Refactor Source And Documentation Checkpoint
 
 - Integration checkout: `.tools/refactor-docs-20260924`, branch
   `codex/refactor-docs-20260924`. The original root checkout retains its local

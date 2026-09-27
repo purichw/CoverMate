@@ -19,7 +19,7 @@ const fixtures = createCasesFixture();
 const output = path.resolve(process.env.ADMIN_HOME_SCREENSHOT_DIR || 'uat-results/admin-home');
 fs.mkdirSync(output, { recursive: true });
 const sourceFiles = [
-  'admin/index.html', 'admin/home.css', 'admin/home-view.js', 'admin/ops/app.js',
+  'admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/home-view.js', 'admin/ops/app.js',
   'admin/ops/cases.js', 'admin/ops/cases.css', 'covermate-contract.js',
   'assets/fonts/covermate-fonts.css', 'assets/brand/covermate-advisory-logo-en.png',
   'assets/brand/admin-landscape-v1.webp', 'scripts/admin-home-browser-check.mjs',

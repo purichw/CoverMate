@@ -1,4 +1,4 @@
-import { cacheSiteState, validStateDoc, sanitizeStateDoc, cleanText, cleanLeadChoice, isAdminNamespacePath, isOwnerHash, LIVE_CONFIG_KEY, LIVE_TEXT_KEY } from './covermate-contract.js';
+import { cacheSiteState, validStateDoc, sanitizeStateDoc, isAdminNamespacePath, isOwnerHash, LIVE_CONFIG_KEY, LIVE_TEXT_KEY } from './covermate-contract.js';
 import { resolveCoverMateEnvironment } from './covermate-environment.mjs';
 import { publicFirestoreRoot, emulatorEnabled, firebaseConfig, FIREBASE_VERSION } from './covermate-firebase-config.mjs';
 import { LIVE_REFRESH_INTERVAL_MS, liveRefreshDelay } from './covermate-freshness.mjs';
@@ -169,24 +169,10 @@ async function appCheckToken() {
   return (await check.getToken(instance)).token;
 }
 
+let payloadModule, payloadAttempt = 0;
 export async function prepareContactLead(input = {}) {
-  if (String(input.topic || '').length > 500) throw new Error('Please keep your message within 500 characters.');
-  const noticeDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(input.noticeText || '')));
-  const noticeVersion = 'contact-' + [...new Uint8Array(noticeDigest)].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 24);
-  const payload = {
-    name: cleanText(input.name, 120), contact: cleanText(input.contact, 160),
-    topic: cleanText(input.topic, 2000), summary: cleanText(input.summary, 1200),
-    qtype: cleanLeadChoice(input.qtype, new Set(['', 'quote', 'assess', 'review', 'renewal', 'service', 'claim', 'general', 'compare'])),
-    coverage: cleanLeadChoice(input.coverage, new Set(['', 'life', 'health', 'motor', 'accident', 'savings', 'unsure'])),
-    language: input.language === 'en' ? 'en' : 'th', consent: input.consent === true,
-    noticeVersion, consentKind: input.consentKind === 'renewal' ? 'renewal' : 'consultation',
-    sourcePath: new URL(input.sourcePath || location.pathname, location.origin).pathname
-  };
-  if (input.calculator) {
-    const { sanitizeNeedsSnapshot } = await import('./covermate-calculator.mjs');
-    payload.calculator = sanitizeNeedsSnapshot(input.calculator);
-  }
-  return Object.freeze({ body: JSON.stringify(payload), key: crypto.randomUUID() });
+  const { prepareContactPayload } = await (payloadModule ||= import('./assets/visitor/contact-payload.js?try=' + payloadAttempt++).catch(error => { payloadModule = null; throw error; }));
+  return prepareContactPayload(input);
 }
 
 export async function sendContactLead(request) {
@@ -205,7 +191,7 @@ export async function sendContactLead(request) {
     }, 15000));
   } catch (error) { throw Object.assign(error, { outcome: 'unknown', dispatched: true }); }
   if (!response.ok) {
-    const fieldCodes = { name_required: { name: 'nameRequired' }, contact_required: { contact: 'contactRequired' }, consent_required: { consent: 'consentRequired' }, consent_changed: { consent: 'consentChanged' } };
+    const fieldCodes = { name_required: { name: 'nameRequired' }, contact_required: { contact: 'contactRequired' }, invalid_email: { email: 'emailInvalid' }, consent_required: { consent: 'consentRequired' }, consent_changed: { consent: 'consentChanged' } };
     const code = result?.error;
     const fields = fieldCodes[code];
     const rejected = ['app_check_required', 'invalid_app_check', 'not_configured', 'invalid_body', 'invalid_request_id', 'unknown_field', 'invalid_calculator', 'invalid_consent_kind'];

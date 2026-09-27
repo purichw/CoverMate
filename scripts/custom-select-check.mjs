@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import AxeBuilder from '@axe-core/playwright';
-import { migrateCmsContent, sanitizeStateDoc, cleanText, cleanLeadChoice } from '../covermate-contract.js';
+import { migrateCmsContent, sanitizeStateDoc, cleanText, cleanLeadChoice, CMS_CONTENT_VERSION } from '../covermate-contract.js';
 import { startStaticServer } from './lib/static-server.mjs';
 import { createPageHandler } from '../server/seo-page.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
@@ -18,12 +18,13 @@ assert.equal(migrated.formOptions.query.quote.th, labels[0]);
 assert.deepEqual(migrated.formOptions.query.review, {th:'ของเจ้าของ',en:''});
 assert.deepEqual(migrateCmsContent(migrated),migrated);
 assert.equal(legacy.cmsContentVersion,18);
-assert.equal(migrated.cmsContentVersion,19);
+assert.equal(migrated.cmsContentVersion,CMS_CONTENT_VERSION);
 for (const key of keys) assert.equal(typeof migrated.formOptions.query[key].en,'string');
 
 // Exercise the real client serializer and server validator without Firebase writes.
 const client = fs.readFileSync('covermate-public.mjs','utf8');
-const prepare = vm.runInNewContext(client.slice(client.indexOf('export async function prepareContactLead'),client.indexOf('export async function sendContactLead')).replace(/^export /gm,'')+'\nprepareContactLead', {crypto,TextEncoder,cleanText,cleanLeadChoice,URL,location:{origin:'https://example.test',pathname:'/'}});
+const payloadSource = fs.readFileSync('covermate-contact-payload.mjs','utf8').replace(/^import .*;\n/gm,'').replace(/^export /gm,'');
+const prepare = vm.runInNewContext(payloadSource+'\nprepareContactPayload', {crypto,TextEncoder,cleanText,cleanLeadChoice,URL,location:{origin:'https://example.test',pathname:'/'}});
 const api = fs.readFileSync('api/leads.js','utf8');
 const validate = vm.runInNewContext(api.slice(api.indexOf('function validateLead'))+'\nvalidateLead', {error:(status,code)=>Object.assign(new Error(code),{status,code})});
 for (const qtype of [...keys,'compare','']) {

@@ -22,7 +22,9 @@ const keyFor = req => {
 };
 const activity = (record, actorId, now, type, fields, before = null, id = randomUUID()) => ({ id, caseId: record.id, createdAt: now, actorId, type, fieldsChanged: fields, statusBefore: before, statusAfter: record.status, noteSnapshot: fields.includes('workingNote') ? record.workingNote : null });
 function websiteRecord(id, lead, receipt, now) {
-  return C.createCase({ contact: C.parseContact(lead.name, lead.contact), interestType: C.INTERESTS.includes(lead.coverage) ? lead.coverage : 'other', enquiryTopic: lead.qtype || lead.coverage || 'Website enquiry' }, {
+  const contact = C.parseContact(lead.name, lead.contact);
+  if (lead.email) contact.email = lead.email;
+  return C.createCase({ contact, interestType: C.INTERESTS.includes(lead.coverage) ? lead.coverage : 'other', enquiryTopic: lead.qtype || lead.coverage || 'Website enquiry' }, {
     id, now, source: 'website', privacyReceipt: receipt,
     originalSubmission: { name: lead.name, contactInput: lead.contact, enquiryTopic: lead.qtype || lead.coverage || 'Website enquiry', message: lead.topic }
   });

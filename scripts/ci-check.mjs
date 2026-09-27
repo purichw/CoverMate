@@ -15,6 +15,7 @@ const commands = [
   ["npm", ["run", "check:errors"]],
   ["npm", ["run", "check:editor-history"]],
   ["npm", ["run", "check:admin-home"]],
+  ["node", ["scripts/admin-shell-browser-check.mjs"]],
   ["npm", ["run", "check:bundles"]],
   ["npm", ["run", "check:seo"]],
   ["npm", ["run", "check:contracts"]],
@@ -36,6 +37,8 @@ const commands = [
   ["npm", ["run", "check:inline-links"]],
   ["npm", ["run", "check:boot"]],
   ["npm", ["run", "check:loading"]],
+  ["node", ["scripts/runtime-error-check.mjs"]],
+  ["npm", ["run", "check:admin-loading"]],
   ["node", ["scripts/server-boot-check.mjs"]],
   ["npm", ["run", "check:live-content"]],
   ["npm", ["run", "check:analytics"]],
@@ -49,6 +52,7 @@ const commands = [
   ["npm", ["run", "check:ops"]],
   ["npm", ["run", "check:case-links"]],
   ["npm", ["run", "check:admin-email-template"]],
+  ["npm", ["run", "check:customer-email:browser"]],
   ["npm", ["run", "check:performance"]],
   ["git", ["diff", "--check"]]
 ];

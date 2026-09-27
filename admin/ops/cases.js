@@ -20,7 +20,7 @@ const notificationBody = n => {
     .replace(/ is ready to review\.$/, n.type === 'follow_up_due' ? ' · ถึงกำหนดติดตามแล้ว' : ' · พร้อมให้ตรวจสอบ');
 };
 
-export function createCasesWorkspace({ root, api, session, searchInput, navigate, getCurrentModule = () => 'operations' }) {
+export function createCasesWorkspace({ root, api, session, searchInput, navigate, renderNavigation, sessionRoleLabel }) {
   const s = { active: false, rows: [], summary: null, list: null, loading: true, error: '', summaryError: '', scope: 'open', status: '', followUp: 'any', closedMonth: false, search: '', sort: '', cursor: '', pages: [], panel: null, record: null, draft: null, activities: [], activityOffset: null, legacy: null, saving: false, errorSave: '', conflict: null, notifications: [], unreadCount: 0, notificationError: '', unreadOnly: false, notificationCursor: null, preferences: null, capabilities: null, expandedFilters: false, generation: 0 };
   const overlay = document.createElement('div'); overlay.className = 'case-overlay'; document.body.append(overlay);
   let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, testEmailKey, testEmailSending = false, testEmailMessage = '', testEmailFailed = false, panelGeneration = 0, summaryGeneration = 0;
@@ -62,6 +62,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   }
   const dockQuery = matchMedia('(min-width:1600px)');
   function syncModalMode() {
+    document.querySelector('.case-menu-trigger')?.setAttribute('aria-expanded', String(s.panel === 'navigation'));
     const docked = dockQuery.matches && ['detail', 'new'].includes(s.panel);
     document.querySelector('.app').inert = Boolean(s.panel) && !docked;
     overlay.querySelector('.case-panel')?.setAttribute('aria-modal', String(!docked));
@@ -126,7 +127,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       : null;
     const activeCount = Number(s.followUp !== 'any') + Number(s.closedMonth);
     root.classList.add('cases-screen');
-    root.innerHTML = `<div class="case-page-head"><div><h1>เคสลูกค้า</h1><p>รวมเคสและงานติดตามลูกค้า</p></div><div class="case-head-actions">${btn('notifications', icon('bell'), 'aria-label="การแจ้งเตือน"', 'case-icon-button case-mobile-bell')}${btn('new', '+ เพิ่มเคส', '', 'case-primary')}</div></div>
+    root.innerHTML = `<div class="case-page-head"><div><h1>เคสลูกค้า</h1><p>รวมเคสและงานติดตามลูกค้า</p></div><div class="case-head-actions">${btn('new', '+ เพิ่มเคส', '', 'case-primary')}</div></div>
       ${summaryCards()}<div class="case-filterbar"><div class="case-scopes" role="group" aria-label="ขอบเขตเคส">${['open', 'all', 'closed'].map(scope => btn('scope', `${title(scope)}${s.summary ? ` <span>(${s.summary[scope === 'all' ? 'total' : scope]})</span>` : ''}`, `data-scope="${scope}" aria-pressed="${s.scope === scope}"`, s.scope === scope ? 'selected' : '')).join('')}</div>
       <label class="case-sr-only" for="caseStatusFilter">สถานะ</label><select id="caseStatusFilter" data-case-filter="status"><option value="">ทุกสถานะ</option>${Object.entries(STATUS).filter(([value]) => s.scope === 'all' || closed(value) === (s.scope === 'closed')).map(([value, label]) => `<option value="${value}" ${s.status === value ? 'selected' : ''}>${label}</option>`).join('')}</select>
       ${btn('filters', `${icon('filter')}<span>ตัวกรอง${activeCount ? ` (${activeCount})` : ''}</span>`, `aria-expanded="${s.expandedFilters}"`)}${btn('retry', icon('refresh'), 'aria-label="รีเฟรชเคส"', 'case-icon-button')}</div>
@@ -182,7 +183,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   }
   function renderPanel() {
     if (!s.panel) return;
-    if (s.panel === 'navigation') return panelShell('Admin Portal', `<nav class="case-mobile-navigation" aria-label="เมนู Admin">${[['home', 'หน้าแรก'], ['operations', 'งานลูกค้า'], ['content', 'จัดการเว็บไซต์'], ['analytics', 'Analytics'], ['settings', 'ตั้งค่า']].map(([id, label]) => btn('navigate', label, `data-module="${id}" ${id === getCurrentModule() ? 'aria-current="page"' : ''}`)).join('')}</nav><p class="case-muted">${esc(session.name || session.email)} · ยืนยันสิทธิ์เจ้าของแล้ว</p>`);
+    if (s.panel === 'navigation') return panelShell('Admin Portal', `<nav class="case-mobile-navigation" aria-label="เมนู Admin">${renderNavigation()}</nav><div class="admin-mobile-account"><strong>${esc(session.name || session.email)}</strong><small>${esc(sessionRoleLabel)} · ยืนยันสิทธิ์แล้ว</small><button class="logout" type="button" data-action="logout">ออกจากระบบ</button></div>`);
     if (s.panel === 'loading') return panelShell('กำลังโหลดเคส…', '<div class="case-skeleton"><div></div><div></div></div>');
     if (s.panel === 'error') return panelShell('เปิดเคสไม่ได้', `<p role="alert">${esc(s.errorSave)}</p>${btn('close', 'ปิด')}`);
     if (s.panel === 'notifications') return renderNotifications();
@@ -282,7 +283,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     return new Promise(resolve => { guardResolve = resolve; });
   }
   function resolveGuard(discard) { const resolve = guardResolve; guardResolve = null; overlay.querySelector('.case-discard')?.remove(); overlay.querySelectorAll('.case-panel > *').forEach(n => { n.inert = false; }); if (discard) { s.draft = null; s.reopening = false; } resolve?.(discard); if (!discard) overlay.querySelector('.case-panel')?.focus(); }
-  async function closePanel({ preserveLocation = false } = {}) { if (!(await guard())) return; panelGeneration++; s.panel = null; s.draft = null; s.record = null; s.reopening = false; if (!preserveLocation) { linkedCaseId = null; writeCaseLocation(); } overlay.innerHTML = ''; overlay.classList.remove('is-open'); document.body.classList.remove('case-modal-open', 'case-detail-open'); document.querySelector('.app').inert = false; updateSelected(); if (returnFocus?.isConnected) returnFocus.focus(); else root.querySelector('button')?.focus(); }
+  async function closePanel({ preserveLocation = false } = {}) { if (!(await guard())) return; panelGeneration++; s.panel = null; document.querySelector('.case-menu-trigger')?.setAttribute('aria-expanded', 'false'); s.draft = null; s.record = null; s.reopening = false; if (!preserveLocation) { linkedCaseId = null; writeCaseLocation(); } overlay.innerHTML = ''; overlay.classList.remove('is-open'); document.body.classList.remove('case-modal-open', 'case-detail-open'); document.querySelector('.app').inert = false; updateSelected(); if (returnFocus?.isConnected) returnFocus.focus(); else root.querySelector('button')?.focus(); }
   async function openNotifications() {
     if (!(await guard())) return;
     s.draft = null; s.record = null; s.panel = 'notifications'; s.notificationCursor = null; s.notifications = []; s.notificationLoading = true; s.notificationError = ''; returnFocus = document.activeElement; renderPanel(); updateSelected();

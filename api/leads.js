@@ -24,7 +24,8 @@ module.exports = async function leadsApi(req, res) {
     const key = String(req.headers['idempotency-key'] || '');
     if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(key)) throw error(422, 'invalid_request_id', 'A request ID is required.');
     const body = await readBody(req);
-    const lead = validateLead(body);
+    const { validContactEmail } = await import('../covermate-submission.mjs');
+    const lead = validateLead(body, validContactEmail);
     if (body.calculator !== undefined) {
       const { sanitizeNeedsSnapshot } = await import('../covermate-calculator.mjs');
       try { lead.calculator = sanitizeNeedsSnapshot(body.calculator); }
@@ -42,6 +43,7 @@ module.exports = async function leadsApi(req, res) {
     if (previous.exists) {
       if (previous.data().requestFingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request ID was already used.');
       adminEmail.dispatch(db, ref.id, env);
+      adminEmail.dispatchCustomer(db, ref.id, env);
       return json(res, 200, { accepted: true, reference: previous.data().caseRecord?.caseNumber || `CM-${ref.id.slice(0, 10).toUpperCase()}` });
     }
     const now = Date.now();
@@ -61,12 +63,14 @@ module.exports = async function leadsApi(req, res) {
       const minuteCount = limits.minute === minute ? limits.minuteCount : 0;
       const dayCount = limits.day === day ? limits.dayCount : 0;
       if (minuteCount >= 5 || dayCount >= 30) throw error(429, 'rate_limited', 'Please wait before sending another enquiry.');
+      await adminEmail.stageCustomer(tx, db, record, env, lead, secret);
       tx.set(limitRef, { minute, day, minuteCount: minuteCount + 1, dayCount: dayCount + 1, expiresAt: Timestamp.fromMillis(now + 2 * 86400000) });
       tx.create(ref, { ...lead, status: 'new', read: false, caseRecord: record, caseIntakeNotification: true, requestFingerprint: fingerprint, consentVersion: receipt.noticeVersion, retentionReviewAt: Timestamp.fromMillis(now + 365 * 86400000), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       stageWebsiteCreate(tx, ref, record);
       adminEmail.stage(tx, db, record, env);
     });
     adminEmail.dispatch(db, ref.id, env);
+    adminEmail.dispatchCustomer(db, ref.id, env);
     return json(res, 200, { accepted: true, reference: record.caseNumber });
   } catch (err) {
     const status = Number(err.status || 500);
@@ -76,13 +80,17 @@ module.exports = async function leadsApi(req, res) {
   }
 };
 
-function validateLead(body) {
+function validateLead(body, validContactEmail) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw error(422, 'invalid_body', 'Invalid enquiry.');
   if (body.consent !== true) throw error(422, 'consent_required', 'Consent is required.');
-  const allowed = ['name', 'contact', 'topic', 'summary', 'sourcePath', 'qtype', 'coverage', 'language', 'consent', 'noticeVersion', 'consentKind', 'calculator'];
+  const allowed = ['name', 'contact', 'email', 'topic', 'summary', 'sourcePath', 'qtype', 'coverage', 'language', 'consent', 'noticeVersion', 'consentKind', 'calculator'];
   if (Object.keys(body).some(key => !allowed.includes(key))) throw error(422, 'unknown_field', 'Unknown enquiry field.');
   if (!['consultation', 'renewal'].includes(body.consentKind)) throw error(422, 'invalid_consent_kind', 'Invalid consent notice.');
   const result = { consent: true };
+  if (body.email !== undefined) {
+    if (typeof body.email !== 'string' || body.email.length > 254 || /[\r\n]/.test(body.email) || (body.email.trim() && !validContactEmail(body.email))) throw error(422, 'invalid_email', 'Enter a valid email address.');
+    if (body.email.trim()) result.email = body.email.trim();
+  }
   for (const [key, max] of Object.entries({ name: 120, contact: 160, topic: 500, summary: 1200, sourcePath: 220 })) {
     if (typeof body[key] !== 'string' || body[key].length > max) throw error(422, 'invalid_field', `Invalid ${key}.`);
     result[key] = body[key].trim();

@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "check:customer-email:browser": "node scripts/customer-email-browser-check.mjs",
+    "check:customer-email": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/customer-email-check.mjs\"",
     "check:admin-email": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/admin-notification-check.mjs\"",
     "check:email-scheduler": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/admin-email-scheduler-check.mjs\"",
     "check:case-links": "node scripts/case-links-browser-check.mjs",
@@ -41,6 +43,7 @@
     "check:calculator-design": "node scripts/calculator-design-check.mjs",
     "check:boot": "node scripts/boot-guard-regression-check.mjs",
     "check:loading": "node scripts/loading-screen-check.mjs",
+    "check:admin-loading": "node scripts/admin-loading-check.mjs",
     "check:browsers": "node scripts/browser-compatibility-check.mjs",
     "check:public-request": "node scripts/public-request-check.mjs",
     "check:contact": "node scripts/contact-submission-check.mjs",
