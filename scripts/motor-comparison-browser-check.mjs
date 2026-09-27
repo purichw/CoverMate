@@ -188,6 +188,15 @@ try {
   const page = await context.newPage(); page.setDefaultTimeout(15000); page.on('pageerror', error => report.errors.push(error.message));
   const localSnapshot = () => page.evaluate(() => ({ config: JSON.parse(localStorage.getItem('purich-draft-config-v3') || '{}'), text: JSON.parse(localStorage.getItem('purich-draft-text-v3') || '{}') }));
   const dataItem = async id => tiers((await localSnapshot()).config).items.find(item => item.id === id);
+  async function reveal(locator) {
+    await locator.waitFor({ state: 'attached' });
+    const ancestors = locator.locator('xpath=ancestor::details');
+    for (let index = 0; index < await ancestors.count(); index++) {
+      const group = ancestors.nth(index);
+      if (!await group.evaluate(element => element.open)) await group.locator(':scope > summary').click();
+    }
+    await locator.waitFor();
+  }
   const tools = async (open = true) => {
     const toggle = page.locator('#covermate-owner-tools-toggle');
     if (await toggle.count() && await toggle.isChecked() !== open) await page.locator('label[for="covermate-owner-tools-toggle"]').click();
@@ -289,7 +298,8 @@ try {
   await save(); await page.goto(baseUrl + '/admin/content');
   await page.locator('[data-admin-section-edit="tiers"]').click();
   const beforeOrder = structuredClone(tiers((await localSnapshot()).config));
-  await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('button', { name: 'เลื่อนหัวข้อขึ้น', exact: true }).waitFor();
+  await page.locator('[data-content-group="heads"] > summary').click();
+  await reveal(page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('button', { name: 'เลื่อนหัวข้อขึ้น', exact: true }));
   await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('button', { name: 'เลื่อนหัวข้อลง', exact: true }).click();
   let changed = tiers((await localSnapshot()).config);
   assert.equal(changed.heads[1].id, head.id);
@@ -309,14 +319,17 @@ try {
   }
   await page.locator(`[data-admin-repeatable-head-id="${copiedHead.id}"]`).getByRole('button', { name: 'แสดงหรือซ่อนหัวข้อ', exact: true }).click();
   const itemRow = page.locator(`[data-admin-repeatable-id="${first.id}"]`);
+  await reveal(itemRow.getByRole('button', { name: 'เลื่อนรายการลง', exact: true, includeHidden: true }));
   await itemRow.getByRole('button', { name: 'เลื่อนรายการลง', exact: true }).click();
   changed = tiers((await localSnapshot()).config); assert.equal(changed.items[1].id, first.id);
+  await reveal(itemRow.getByRole('button', { name: 'ทำสำเนารายการ', exact: true, includeHidden: true }));
   await itemRow.getByRole('button', { name: 'ทำสำเนารายการ', exact: true }).click();
   changed = tiers((await localSnapshot()).config);
   const duplicate = changed.items.find(item => !beforeOrder.items.some(old => old.id === item.id));
   assert.ok(duplicate?.id && duplicate.id !== first.id);
   assert.deepEqual(duplicate.cellRemarks, changed.items.find(item => item.id === first.id).cellRemarks, 'Duplicating a tier copies its independent remarks');
-  await page.locator(`[data-admin-repeatable-id="${duplicate.id}"]`).getByRole('button', { name: 'ซ่อน', exact: true }).click();
+  const duplicateHide = page.locator(`[data-admin-repeatable-id="${duplicate.id}"]`).getByRole('button', { name: 'ซ่อน', exact: true, includeHidden: true });
+  await reveal(duplicateHide); await duplicateHide.click();
   changed = tiers((await localSnapshot()).config); assert.equal(changed.items.find(item => item.id === duplicate.id).on, false);
   report.checks.push('Actual Tools controls reorder/hide/restore/duplicate axes and reorder/duplicate/hide tiers without changing status/remark associations');
   await save();
@@ -331,7 +344,8 @@ try {
   assert.deepEqual(live, baseline, 'Preview leaves Published unchanged');
   await capture(preview, 'motor-draft-preview-1440.png', { data: 'Synthetic owner edits; not published to production' });
   await preview.close(); currentPage = page;
-  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await tools();
+  await page.getByRole('button', { name: /^Publish(?:\s|$)/ }).filter({ visible: true }).click();
   await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
   await page.locator('[data-admin-confirm]').waitFor({ state: 'detached' });
   await poll(() => report.writes.some(write => write.action === 'publish'), 'Publish reaches only in-memory service');

@@ -142,7 +142,16 @@ try {
   const panel=async()=>{await page.locator('label[for="covermate-owner-tools-toggle"]').click();await page.getByRole('button',{name:'แผงเครื่องมือ',exact:true}).click();};
   const select=async id=>{await page.locator('[data-editor-panel] .cm-editor-nav').getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();await page.locator(`[data-admin-section-edit="${id}"]`).click();};
   const language=async name=>{await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();await page.getByRole('button',{name:name === 'Thai' ? 'แก้ไขเนื้อหาภาษาไทย' : 'แก้ไขเนื้อหาภาษาอังกฤษ',exact:true}).click();await page.getByRole('button',{name:'เนื้อหา',exact:true}).click();};
-  const edit=async(locator,value)=>{await locator.fill(value);await locator.press('Tab');};
+  const reveal=async locator=>{
+    await locator.waitFor({state:'attached'});
+    const ancestors=locator.locator('xpath=ancestor::details');
+    for(let index=0;index<await ancestors.count();index++){
+      const group=ancestors.nth(index);
+      if(!await group.evaluate(element=>element.open))await group.locator(':scope > summary').click();
+    }
+    await locator.waitFor();
+  };
+  const edit=async(locator,value)=>{await reveal(locator);await locator.fill(value);await locator.press('Tab');};
   const save=async()=>{
     await page.getByRole('button',{name:'Save draft',exact:true}).click();
     const confirm=page.locator('[data-admin-confirm]');await confirm.waitFor();
@@ -157,7 +166,8 @@ try {
     await language(name);
     await edit(reviewRow.locator('[data-admin-copy-key="title"]'),'Audit review '+lang);
     await edit(reviewRow.locator('[data-admin-copy-key="body"]'),'Audit explanation '+lang);
-    await reviewRow.getByRole('combobox',{name:'ไอคอนรายการ'}).selectOption('shield');
+    await reviewRow.getByRole('combobox',{name:'ไอคอนรายการ'}).click();
+    await page.getByRole('option',{name:'โล่',exact:true}).click();
     assert.equal(await page.locator(`#review [data-content-id="${reviewId}"] h3`).innerText(),'Audit review '+lang);
   }
   await reviewRow.scrollIntoViewIfNeeded(); await shot('admin-review-owner.png');
@@ -168,21 +178,22 @@ try {
   assert.equal(await page.locator('#hero h1').innerText(),'Audit home headline');
   await select('insurers');
   const hiddenId=draft.config.sections.find(s=>s.id==='insurers').items[0].id;
+  await reveal(page.locator(`[data-admin-repeatable-id="${hiddenId}"]`).getByRole('button',{name:'ซ่อน',exact:true,includeHidden:true}));
   await page.locator(`[data-admin-repeatable-id="${hiddenId}"]`).getByRole('button',{name:'ซ่อน',exact:true}).click();
-  await edit(page.locator('[data-admin-section-link="cta1href"]'),'');
+  await edit(page.locator('[data-admin-copy-key="cta1href"]'),'');
   await save();
   await page.reload(); await panel(); await select('review'); await language('English');
   assert.equal(await reviewRow.locator('[data-admin-copy-key="title"]').inputValue(),'Audit review en');
   await select('fit');
   await page.locator('[data-cms-group="Calculator data"] > summary').click();
   await edit(page.locator('[data-calculator-field$="hospitalName.en"]'),'CMS hospital reference');
-  await edit(page.locator('[data-calculator-field$="situations.start.en"]'),'CMS first situation');
+  await edit(page.locator('[data-calculator-field$="roomType.en"]'),'CMS room reference');
   await edit(page.locator('[data-calculator-field$="totalFixedDaily"]'),'9900');
   await save();
   assert.equal(draft.config.sections.find(s=>s.id==='fit').calculator.health.selectedRoomReference.totalFixedDaily,9900);
-  assert.equal(draft.config.sections.find(s=>s.id==='fit').calculator.situations.start.en,'CMS first situation');
+  assert.equal(draft.config.sections.find(s=>s.id==='fit').calculator.health.selectedRoomReference.roomType.en,'CMS room reference');
   await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();
-  await page.locator('[data-cms-group="Images & crop"] > summary').click();
+  await reveal(page.locator('[data-cms-group="Images & crop"] > summary'));
   const iconPath='sections.@review.items.@'+reviewId+'.iconImage';
   const imageSource=path.resolve('assets/brand/covermate-mark.png');
   const openCrop=async slot=>{await page.locator(`[data-media-slot="${slot}"]`).getByRole('button',{name:'แก้ไขรูป',exact:true}).click();await page.getByRole('dialog',{name:'แก้ไขรูปภาพ',exact:true}).waitFor();};
@@ -211,7 +222,7 @@ try {
   await applyImage();await save();
   const faviconURL=draft.config.brand.media.favicon;
   await page.setViewportSize({width:1440,height:1000});
-  await page.reload();await panel();await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();await page.getByRole('button',{name:'แก้ไขเนื้อหาภาษาอังกฤษ',exact:true}).click();await page.locator('[data-cms-group="Images & crop"] > summary').click();
+  await page.reload();await panel();await page.getByRole('button',{name:'แบรนด์และติดต่อ',exact:true}).click();await page.getByRole('button',{name:'แก้ไขเนื้อหาภาษาอังกฤษ',exact:true}).click();await reveal(page.locator('[data-cms-group="Images & crop"] > summary'));
   assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),faviconURL);
   assert.equal(contract.cmsGet(draft.config,iconPath),iconURL);
   await openCrop(iconPath);await page.locator('.cm-media-dialog .cropper-container').waitFor();await page.getByRole('button',{name:'ยกเลิก',exact:true}).last().click();
@@ -230,13 +241,13 @@ try {
   await panel();await select('motor');
   assert.equal(await page.locator('[data-admin-copy-key="title"]').inputValue(),'Motor inline owner');
   await edit(page.locator('[data-admin-copy-key="title"]'),'Latest Admin motor headline');
-  await edit(page.locator('[data-admin-section-link="cta2href"]'),'#faq');
+  await edit(page.locator('[data-admin-copy-key="cta2href"]'),'#faq');
   await save(); await shot('admin-motor-owner.png');
   await page.goto(baseUrl+'/admin/preview?page=motor');
   await page.locator('#motor').waitFor();
   await page.locator('[data-language-switch="en"]').first().click();
   assert.equal(await page.locator('#motor h1').innerText(),'Latest Admin motor headline');
-  assert.equal(await page.locator('#insurers span[role="img"]').count(),draft.config.sections.find(s=>s.id==='insurers').items.filter(i=>i.on!==false).length+2);
+  assert.deepEqual(await page.locator('#insurers .hm-logo-tile').evaluateAll(nodes=>nodes.map(node=>node.dataset.contentId)),draft.config.sections.find(s=>s.id==='insurers').items.filter(i=>i.on!==false).map(item=>item.id));
   report.checks.push('Motor inline -> Admin -> saved draft -> Motor preview; same hidden insurer data');
   for (const route of ['/','/motor']) for (const lang of ['th','en']) {
     await page.setViewportSize({width:390,height:844});

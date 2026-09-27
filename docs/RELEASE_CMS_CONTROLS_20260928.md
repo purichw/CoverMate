@@ -44,6 +44,24 @@ integration. Existing layout CSS is now emitted as versioned `layout.css` at
 the same cascade position. Source rules are unchanged; no budget is increased.
 Hosted asset proof includes both new lazy editor modules and the layout sheet.
 
+Hosted UAT passed on `f269fb63006cddcd6e4dcf8bbc876f63d7ad61b1` at
+`https://covermate-1hfjaoe2n-purich-w.vercel.app`. The real Contact panel edits
+autosaved to the isolated UAT Draft, survived reload and updated the page.
+Desktop/mobile screenshots were inspected. The original Draft was restored,
+the temporary allowlist entry deactivated, and its Auth identity disabled with
+refresh tokens revoked. Cleanup has no outstanding items. No Live or production
+content was written. Subsequent harness-only changes preserve those runtime
+asset hashes; final hosted readback still needs to match the released SHA.
+
+Legacy comparison, builder and CMS audit harnesses now follow nested disclosures
+and canonical Brand fields. They retain their original persistence, validation,
+local-only Publish and data-association assertions rather than restoring obsolete
+UI controls for tests.
+
+The comparison loop found a real Preview-label collision between the owner dock
+and section thumbnail heading. Their binding names are now distinct. The real
+Preview click and isolated Publish/readback assertions guard this regression.
+
 ## Release Record
 
 - Final candidate, CI, Preview and production readback: pending.

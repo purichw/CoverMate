@@ -3118,7 +3118,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       selectedOutline,
       editingHero,heroWorkspace:S.tab==='content',heroFieldGroups,heroPreviewWidth,
       previewSection:S.tab==='brand'?brandPreviewId:activeAdminSel,
-      previewLabel:S.tab==='brand'?brandLocations.find(location=>location.id===brandPreviewId)?.label:secList.find(row=>row.id===activeAdminSel)?.name || '',
+      sectionPreviewLabel:S.tab==='brand'?brandLocations.find(location=>location.id===brandPreviewId)?.label:secList.find(row=>row.id===activeAdminSel)?.name || '',
       contentFieldGroups,contactEditorGroups,hasItemEditor:!!sch?.item,
       contentItemsLabel:cur?.type==='tiers' ? 'ประเภทประกัน (คอลัมน์)' : cur?.type==='faq' ? 'รายการคำถาม' : 'รายการในส่วนนี้',
       heroPreviewModes:[['Desktop',1280,'M3 3h18v13H3zM8 21h8M12 16v5'],['Tablet',768,'M5 2h14v20H5zM11 18h2'],['Mobile',390,'M7 2h10v20H7zM11 18h2']].map(([label,width,path])=>({label,width,path,selected:heroPreviewWidth===width,choose:()=>this.setState({heroPreviewWidth:width})})),

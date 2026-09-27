@@ -417,8 +417,29 @@ async function expectPublicSitePopup(page, clickAction, expectedCurrentPath, lab
   return { popupState, currentState };
 }
 
+async function revealControl(locator) {
+  try { await locator.waitFor({ state: 'attached' }); }
+  catch (error) {
+    fs.mkdirSync('uat-results/smoke', { recursive: true });
+    fs.writeFileSync('uat-results/smoke/missing-control.json', JSON.stringify({
+      locator: String(locator), url: locator.page().url(),
+      panel: await locator.page().locator('aside[data-editor-panel]').innerText(),
+      html: await locator.page().locator('aside[data-editor-panel]').innerHTML()
+    }, null, 2));
+    await locator.page().screenshot({ path: 'uat-results/smoke/missing-control.png' });
+    throw error;
+  }
+  const ancestors = locator.locator('xpath=ancestor::details');
+  for (let index = 0; index < await ancestors.count(); index++) {
+    const group = ancestors.nth(index);
+    if (!await group.evaluate(element => element.open)) await group.locator(':scope > summary').click();
+  }
+  await locator.waitFor();
+}
+
 async function changeField(locator, value) {
   const field = locator.first();
+  await revealControl(field);
   await field.scrollIntoViewIfNeeded();
   await field.click();
   await field.fill(value);
@@ -440,7 +461,8 @@ async function selectAdminSection(page, id) {
       const panel = document.querySelector('aside[data-editor-panel]');
       return panel && ((panel.innerText || '').includes(`#${sectionId}`) ||
         panel.querySelector(`[data-admin-section-row="${sectionId}"][data-selected="true"]`) &&
-        panel.querySelector('[data-editor-inspector] [data-contact-field]'));
+        panel.querySelector('[data-editor-inspector] [data-contact-field]') ||
+        panel.querySelector(`[data-content-row="${sectionId}"][data-selected="true"]`));
     },
     id,
     { timeout: 5000 }
@@ -901,9 +923,9 @@ async function verifyAdminBuilderControls() {
     failures.push(`admin builder: legacy binary upload controls are still rendered (${legacyUploadControls})`);
   }
   const complianceControlState = await page.evaluate(() => ({
-    credentialInputs: document.querySelectorAll('[data-admin-credential="true"]').length,
-    footerLegalInputs: document.querySelectorAll('[data-admin-legal="true"]').length,
-    mediaControls: document.querySelectorAll('[data-admin-media-control="advisor-logo"]').length,
+    credentialInputs: document.querySelectorAll('[data-cms-field="brand.credential.th"]').length,
+    footerLegalInputs: document.querySelectorAll('[data-cms-field="footer.legal.th"]').length,
+    mediaControls: document.querySelectorAll('[data-brand-field="brand.advisorLogo"][data-media="true"]').length,
     seoGuards: document.querySelectorAll('[data-admin-seo-guard="true"]').length
   }));
   if (complianceControlState.credentialInputs !== 1 || complianceControlState.footerLegalInputs !== 1) {
@@ -913,7 +935,7 @@ async function verifyAdminBuilderControls() {
     failures.push("admin builder: advisor media metadata control is missing");
   }
 
-  await changeField(page.locator('[data-admin-logo-path="true"]'), "data:image/svg+xml,bad");
+  await changeField(page.locator('[data-cms-field="brand.advisorLogo"]'), "data:image/svg+xml,bad");
   await waitForBodyText(page, /ที่อยู่รูปภาพไม่ถูกต้อง/);
   const rejectedLogoState = await page.evaluate(() => {
     const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -928,17 +950,16 @@ async function verifyAdminBuilderControls() {
   if (!/ที่อยู่รูปภาพไม่ถูกต้อง/.test(rejectedLogoState.toast)) {
     failures.push("admin builder: invalid media path toast is missing");
   }
-  await changeField(page.locator('[data-admin-logo-path="true"]'), "assets/logos/srikrung-logo.png");
-  await changeField(page.locator('[data-admin-logo-alt="true"]'), "Srikrung broker logo");
-  await changeField(adminAside.locator("label").filter({ hasText: "ลิงก์ LINE" }).locator("input"), "http://bad.example");
+  await changeField(page.locator('[data-cms-field="brand.advisorLogo"]'), "assets/logos/srikrung-logo.png");
+  await changeField(page.locator('[data-cms-field="brand.advisorLogoAlt"]'), "Srikrung broker logo");
+  await changeField(page.locator('[data-cms-field="contact.lineUrl"]'), "http://bad.example");
   await waitForBodyText(page, /ลิงก์ติดต่อไม่ถูกต้อง/);
-  await changeField(adminAside.locator("label").filter({ hasText: "ลิงก์ LINE" }).locator("input"), "https://line.me/ti/p/~covermate-smoke");
-  await changeField(adminAside.locator("label").filter({ hasText: "อีเมล" }).locator("input"), "not-an-email");
+  await changeField(page.locator('[data-cms-field="contact.lineUrl"]'), "https://line.me/ti/p/~covermate-smoke");
+  await changeField(page.locator('[data-cms-field="contact.email"]'), "not-an-email");
   await waitForBodyText(page, /อีเมลไม่ถูกต้อง/);
-  await changeField(adminAside.locator("label").filter({ hasText: "อีเมล" }).locator("input"), "owner@covermate.example");
-  await changeField(page.locator('[data-admin-credential="true"]'), "Owner-managed credential");
-  await changeField(page.locator('[data-admin-legal="true"]'), "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}");
-  await page.locator('[data-cms-group="Licences"] summary').click();
+  await changeField(page.locator('[data-cms-field="contact.email"]'), "owner@covermate.example");
+  await changeField(page.locator('[data-cms-field="brand.credential.th"]'), "Owner-managed credential");
+  await changeField(page.locator('[data-cms-field="footer.legal.th"]'), "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}");
   await changeField(page.locator('[data-cms-field="licences.life.number"]'), "9000000001");
   await clickAdminTab(page, "ธีมและข้อมูล");
   await changeField(page.locator('[data-admin-seo-title="true"]'), "CoverMate smoke SEO title");
@@ -1015,7 +1036,9 @@ async function verifyAdminBuilderControls() {
   await selectAdminSection(page, "licences");
   const insurersBefore = await readDraftSection(page, "insurers");
   const insurerCardCountBefore = (insurersBefore?.cards || []).length;
-  await adminAsideLocator(page).getByRole('button', { name: '+ เพิ่มการ์ดใบอนุญาต', exact: true }).click();
+  const addLicenceCard = adminAsideLocator(page).locator('button').filter({ hasText: /^\+ เพิ่มการ์ดใบอนุญาต$/ });
+  await revealControl(addLicenceCard);
+  await addLicenceCard.click();
   await page.waitForFunction(
     ({ id, expected }) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -1030,6 +1053,7 @@ async function verifyAdminBuilderControls() {
   const tiersBefore = await readDraftSection(page, "tiers");
   const tierHeadCountBefore = (tiersBefore?.heads || []).length;
   const tierItemCountBefore = (tiersBefore?.items || []).length;
+  await revealControl(adminAsideLocator(page).locator('button').filter({ hasText: /^\+ เพิ่มหัวข้อความคุ้มครอง$/ }));
   await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มหัวข้อความคุ้มครอง$/ }).click();
   await page.waitForFunction(
     ({ id, expected }) => {
@@ -1042,6 +1066,7 @@ async function verifyAdminBuilderControls() {
     { timeout: 5000 }
   ).catch(() => failures.push("admin builder: + Add column did not sync coverage cells across all tier rows"));
 
+  await revealControl(adminAsideLocator(page).locator('button').filter({ hasText: /^\+ เพิ่มชั้นประกัน$/ }));
   await adminAsideLocator(page).locator("button").filter({ hasText: /^\+ เพิ่มชั้นประกัน$/ }).click();
   await page.waitForFunction(
     ({ id, expectedItems, expectedHeads }) => {
