@@ -38,6 +38,22 @@ Auth/Rules/API/Publish E2E, must pass on the deployment's exact SHA before the
 production alias can move. Verify the live Vercel gate configuration and the
 resulting canonical-host deployment and public smoke. No force promotion.
 
+Integration evidence: FAQ and linked-text browser checks, CMS ownership, stable
+IDs, copy proposal preservation/conflicts, source generation and contracts passed.
+Home/Motor copy checks passed all eight TH/EN desktop/mobile combinations. The
+`ae747f6` Preview served byte-identical contract/style files and passed the FAQ
+browser harness with synthetic auth and in-memory Draft/Live, without hosted CMS
+writes. The following commits change test expectations/helpers only, not that
+runtime. Exact final-SHA CI and canonical-host verification are still required.
+
+The first remote run stopped on obsolete article-sort labels in two test files;
+the revised tests retain URL, order and geometry assertions. A local history run
+also exposed an artificial empty-input step in its replacement helper: clearing
+and filling as separate commands can exceed the one-second grouping window.
+Replacing text in one operation (select-all then sequential typing for the typing
+case) passed the complete Undo/Redo/Reset browser suite. No application history
+behavior, timeout, performance budget or assertion was relaxed.
+
 Recovery is a new reviewed revert commit of this release's changes through the
 same CI gate; do not reset shared branches or replace newer CMS data. No data
 migration or environment-variable change is required.

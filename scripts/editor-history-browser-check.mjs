@@ -132,9 +132,11 @@ try {
   const hero = () => page.locator('#hero h1[contenteditable="true"], #hero h1 [contenteditable="true"]').first();
   async function typeHero(value, sequential = false) {
     await tools(false);
-    await hero().fill('');
-    if (sequential) await hero().pressSequentially(value, { delay: 12 });
-    else if (value) await hero().fill(value);
+    if (sequential) {
+      await hero().focus();
+      await hero().press('ControlOrMeta+A');
+      await hero().pressSequentially(value, { delay: 12 });
+    } else await hero().fill(value);
     await hero().press('Tab');
     await expectHero(value);
   }
