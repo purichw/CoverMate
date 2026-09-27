@@ -33,6 +33,7 @@ try {
     await page.waitForFunction(id => document.body.dataset.boot === 'ready' && document.body.dataset.module === id,module);
     if(module==='operations') await page.locator('.case-list[aria-busy="false"]').waitFor();
     if(module==='articles') await page.locator('[data-article-state="ready"]').waitFor();
+    if(module==='analytics') await page.locator('.admin-analytics[data-analytics-state="ready"],.admin-analytics[data-analytics-state="empty"]').waitFor();
     await page.evaluate(()=>document.fonts.ready);
   }
   async function capture(file,selector) {
@@ -59,7 +60,7 @@ try {
       }
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),module+' viewport fits');
       measures.push({width,module,cards});
-      if(width!==320) await capture(`${module}-${width}.png`,module==='operations'?'.case-metrics':module==='articles'?'.article-summary':'.grid.four');
+      if(width!==320) await capture(`${module}-${width}.png`,module==='operations'?'.case-metrics':module==='articles'?'.article-summary':'.analytics-kpis');
       if(module==='operations') {await page.locator('[data-metric="new"]').click();await page.waitForFunction(()=>document.querySelector('#caseStatusFilter')?.value==='new');}
     }
   }

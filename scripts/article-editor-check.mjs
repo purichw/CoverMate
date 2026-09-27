@@ -114,7 +114,7 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.locator('[data-field=publishedAt]').inputValue(),'2026-09-15T10:30','Bangkok date survives a non-Thai device zone');
     await page.locator('[data-lang=en]').click();assert.equal(await page.locator('[data-field=title]').inputValue(),'Draft in English');await page.locator('[data-lang=th]').click();
     await page.locator('[data-field=title]').fill('ยังไม่บันทึก');page.once('dialog',d=>d.dismiss());await page.locator('[data-ae=back]').click();assert.ok(await page.locator('.ae-workspace').count());
-    page.once('dialog',d=>d.dismiss());await page.locator('#sideNav [data-module=settings]').click();assert.ok(await page.locator('.ae-workspace').count());
+    page.once('dialog',d=>d.dismiss());await page.locator('#sideNav [data-module=analytics]').click();assert.ok(await page.locator('.ae-workspace').count());
     await save(page);report.checks.push('Persist/reload, preserved languages, Back and sidebar unsaved warning');
     for(const width of [820,390,320]) {
       await page.setViewportSize({width,height:900});await page.evaluate(()=>scrollTo(0,0));await fit();

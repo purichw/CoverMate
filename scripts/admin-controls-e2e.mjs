@@ -152,7 +152,7 @@ try {
 
     mark('Analytics stat cards and return to Cases');
     await navigate('analytics');await page.locator('.cm-stat-card').first().waitFor();
-    assert.equal(await page.locator('.cm-stat-card').count(),5);
+    assert.equal(await page.locator('.cm-stat-card').count(),6);
     assert.ok(await page.locator('.cm-stat-card').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).textAlign==='center')));
     await navigate('operations');await waitCases();
     assert.equal(await page.locator('[data-case-filter="sort"]').count(),1);

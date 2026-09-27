@@ -314,8 +314,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
         <p>${c.followUpEmailAvailable && scheduled ? 'นัดติดตามถึงกำหนด: ส่งอีเมลเมื่อเคสนั้นเปิดแจ้งเตือนนัดติดตามไว้' : 'อีเมลนัดติดตามอัตโนมัติยังไม่พร้อมใช้งาน'}</p>
         <p>${c.overdueDigestAvailable && scheduled ? 'สรุปเคสเลยกำหนด: ส่งวันละ 1 ครั้ง เป้าหมายเวลา 09:00 น. ตามเวลาไทย เฉพาะเคสที่ยังไม่ปิด เปิดแจ้งเตือน และเลยวันนัดติดตามแล้ว' : 'อีเมลสรุปเคสเลยกำหนดรายวันยังไม่พร้อมใช้งาน'}</p>
         <small>${scheduled ? `ระบบตรวจสอบ${cadence} และลองส่งใหม่อัตโนมัติเมื่อส่งไม่สำเร็จ การส่งอาจล่าช้าจากเวลานัดหมายหรือเวลา 09:00 น.` : 'ระบบส่งตามเวลาอัตโนมัติยังไม่พร้อม การแจ้งเตือนภายในจะตรวจสอบเมื่อเปิด Admin'}</small>
-        ${btn('test-email', testEmailSending ? 'กำลังส่งอีเมลทดสอบ…' : 'ส่งอีเมลทดสอบ', !c.intakeEmailAvailable || testEmailSending ? 'disabled' : '')}<p id="caseTestEmailStatus" role="${testEmailFailed ? 'alert' : 'status'}">${esc(testEmailMessage)}</p></section>
-      <section class="case-section"><h3>อีเมลส่วนตัวของผู้ใช้</h3><p>${c.verifiedEmailLabel ? esc(c.verifiedEmailLabel) : 'ยังไม่มีอีเมลส่วนตัวที่ยืนยันแล้ว'}</p><label class="case-checkbox"><input type="checkbox" disabled>แจ้งเคสใหม่ไปยังอีเมลส่วนตัว</label><label class="case-checkbox"><input type="checkbox" disabled>แจ้งนัดติดตามไปยังอีเมลส่วนตัว</label><p class="case-muted">ยังไม่รองรับการตั้งค่าอีเมลแยกตามผู้ใช้</p></section>`, btn('notifications', 'กลับไปที่การแจ้งเตือน'));
+        ${btn('test-email', testEmailSending ? 'กำลังส่งอีเมลทดสอบ…' : 'ส่งอีเมลทดสอบ', !c.intakeEmailAvailable || testEmailSending ? 'disabled' : '')}<p id="caseTestEmailStatus" role="${testEmailFailed ? 'alert' : 'status'}">${esc(testEmailMessage)}</p></section>`, btn('notifications', 'กลับไปที่การแจ้งเตือน'));
   }
   function updateTestEmailStatus() {
     if (s.panel !== 'preferences') return;

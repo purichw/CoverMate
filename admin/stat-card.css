@@ -13,3 +13,5 @@
 .cm-stat-card .article-stat-icon { order:0; }
 .cm-stat-card dd { order:1; }
 .cm-stat-card .article-stat-label { order:2; }
+.cm-stat-card.analytics-kpi { padding-block:16px; }
+.cm-stat-card .analytics-kpi-head { flex-direction:column;justify-content:center; }

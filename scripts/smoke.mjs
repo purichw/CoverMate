@@ -1969,7 +1969,7 @@ for (const [name, width, height] of viewports) {
           failures.push(`${name} ${route}: missing focused motor section #${id}`);
         }
       }
-      if (!/เบี้ยรถคันเดิม|One car, every insurer compared/.test(state.h1Text)) {
+      if (!/เบี้ยรถคันเดิม|ให้เราช่วยเทียบ\s*ประกันรถของคุณ|One car, every insurer compared|Compare insurance\s*for your car/i.test(state.h1Text)) {
         failures.push(`${name} ${route}: focused motor hero did not render`);
       }
       if (state.sectionIds.includes("hero") || state.sectionIds.includes("cover")) {
@@ -1982,7 +1982,7 @@ for (const [name, width, height] of viewports) {
           failures.push(`${name} ${route}: missing dedicated motor section #${id}`);
         }
       }
-      if (!/เบี้ยรถคันเดิม|ประกันรถยนต์|One car|Motor/i.test(state.h1Text)) {
+      if (!/เบี้ยรถคันเดิม|ประกันรถยนต์|ให้เราช่วยเทียบ\s*ประกันรถของคุณ|One car|Motor|Compare insurance\s*for your car/i.test(state.h1Text)) {
         failures.push(`${name} ${route}: dedicated motor hero did not render (${state.h1Text})`);
       }
       if (state.sectionIds.includes("hero") || state.sectionIds.includes("cover")) {
@@ -2037,10 +2037,10 @@ for (const [name, width, height] of viewports) {
     if (mainVisitorRoutes.has(route) && state.sectionIds.includes("claim") && !/เกิดอุบัติเหตุ|Claim help/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: claim help section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !/ไม่ต้อง(?:จำ|กังวลเรื่อง)วันหมดอายุ|ช่วยเตือนล่วงหน้า|renewal dates|keep track/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !/ไม่ต้อง(?:จำ|กังวลเรื่อง)วันหมดอายุ|ช่วยเตือนล่วงหน้า|ให้ช่วยเตือนวันต่ออายุประกันไหม|renewal dates|keep track|Would you like a renewal reminder/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: renewal reminder section is missing`);
     }
-    if (mainVisitorRoutes.has(route) && !state.disabledSectionIds.includes("fees") && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|ค่าตอบแทนในการให้บริการ|How CoverMate is compensated|service compensation|commission comes from/i.test(state.bodyText)) {
+    if (mainVisitorRoutes.has(route) && !state.disabledSectionIds.includes("fees") && !/เราได้ค่าตอบแทน|ค่าตอบแทนของเรา|ค่าตอบแทนในการให้บริการ|ค่าปรึกษาและค่าตอบแทน|How CoverMate is compensated|service compensation|commission comes from|Advice fees and commission/i.test(state.bodyText)) {
       failures.push(`${name} ${route}: fee transparency section is missing`);
     }
     if (mainVisitorRoutes.has(route) && !state.disabledSectionIds.includes("privacy") && !/ข้อมูลที่คุณส่ง(?:มา|ให้เรา)|ถูกใช้(?:ทำ|อย่าง)ไร|What happens to|data you send|privacy/i.test(state.bodyText)) {
@@ -2168,12 +2168,12 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin: single-shell live system status copy is missing`);
   }
   const launcherLabels = adminState.moduleCards.map(card => card.title);
-  const expectedLauncherLabels = ["งานลูกค้า", "จัดการเว็บไซต์", "Analytics", "ตั้งค่า"];
+  const expectedLauncherLabels = ["งานลูกค้า", "จัดการเว็บไซต์", "Analytics"];
   if (JSON.stringify(launcherLabels) !== JSON.stringify(expectedLauncherLabels)) {
     failures.push(`${name} /admin: expected module labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
   }
-  if (adminState.moduleCards.length !== 4) {
-    failures.push(`${name} /admin: expected 4 primary module cards, got ${adminState.moduleCards.length}`);
+  if (adminState.moduleCards.length !== 3) {
+    failures.push(`${name} /admin: expected 3 primary module cards, got ${adminState.moduleCards.length}`);
   }
   if (!adminState.moduleCards.some((card) => card.kind === "operations" && card.tag === "button" && card.action === "module" && card.module === "operations")) {
     failures.push(`${name} /admin: Operations card is not a same-shell module action`);
@@ -2184,8 +2184,8 @@ for (const [name, width, height] of viewports) {
   if (!adminState.moduleCards.some((card) => card.kind === "analytics" && card.tag === "button" && card.action === "module" && card.module === "analytics")) {
     failures.push(`${name} /admin: Analytics card is not a same-shell module action`);
   }
-  if (!adminState.moduleCards.some((card) => card.kind === "settings" && card.tag === "button" && card.action === "module" && card.module === "settings")) {
-    failures.push(`${name} /admin: Settings card is not a same-shell module action`);
+  if (adminState.moduleCards.some((card) => card.kind === "settings") || await page.locator('#sideNav [data-module="settings"]').count()) {
+    failures.push(`${name} /admin: removed Settings module remains in Home or shared navigation`);
   }
   if (/Manage your site|Edit the words|Arrange & customise|Unpacking/.test(adminState.text)) {
     failures.push(`${name} /admin: legacy launcher copy is visible`);

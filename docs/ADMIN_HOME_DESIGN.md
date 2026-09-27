@@ -1,16 +1,18 @@
 # Admin Home: reference-led dashboard
 
-Implemented locally on 2026-09-23; source ownership reviewed on 2026-09-24.
+Originally implemented locally on 2026-09-23; source ownership reviewed on
+2026-09-24. The 2026-09-28 single-owner navigation update removes Settings and
+reduces the primary Home cards to three.
 Scope is `/admin#home`. The September 26 local shell consolidation supersedes
 the original Home-only chrome; see [ADMIN_SHELL.md](ADMIN_SHELL.md). The implementation evidence
 below does not establish deployment; `HANDOFF.md` and the release records own
-current release status. The source refactor changes no Home design or authorization.
+current release status. The Settings removal changes navigation, not authorization.
 
 ## Direction and ownership
 
 The user's desktop and mobile Admin Portal mockups are the visual authority.
 Preserve their warm cream surfaces, dark olive-brown sidebar, restrained orange
-actions, sage status treatments, four equal module cards, welcome band, compact
+actions, sage status treatments, equal module cards, welcome band, compact
 utility panels and quiet mountain imagery. Keep CoverMate's approved shield-heart
 logo artwork and existing Google Sans / Google Sans Thai fonts. Controls use
 natural Thai, with established terms such as Admin Portal, CMS, Analytics,
@@ -19,7 +21,7 @@ Preview and Publish retained.
 | Owner | Responsibility |
 | --- | --- |
 | `admin/index.html` | Authenticated shell markup and shared public-site links |
-| `admin/shell.css`, `admin/shell.js` | Shared chrome and navigation for all five modules |
+| `admin/shell.css`, `admin/shell.js` | Shared chrome and navigation for retained modules |
 | `admin/home.css` | Home workspace composition only, no shell overrides |
 | `admin/home-view.js` | Escaped, presentation-only Home markup |
 | `admin/ops/app.js` | Verified session, Home read lifecycle, navigation and existing CMS destinations |
@@ -33,9 +35,13 @@ always uses open cases. Home search and “ดูทั้งหมด” use al
 
 ## Product translations from the mockup
 
-- The four module cards navigate to existing Operations, website tools, Analytics
-  and Settings modules. CMS shortcuts use `ownerPathForMode` without inventing
-  alternative editor routes.
+- The three primary module cards navigate to Operations, website tools and
+  Analytics. The user removed Settings from Home, desktop navigation and the
+  mobile menu on September 28. Legacy `#settings` links return to Home; Role
+  Preview is removed. CMS shortcuts retain `ownerPathForMode` destinations.
+- Backend role infrastructure remains in place. Current Cases and notification
+  APIs still require the verified owner role; this UI simplification neither
+  changes authorization nor introduces a complete multi-admin workflow.
 - Home reads `cases/summary` and `cases?scope=all&sort=newest&limit=3` through the
   existing authenticated Operations API. It does not use the capped legacy
   `leads` row count as the canonical case count.
@@ -54,15 +60,17 @@ always uses open cases. Home search and “ดูทั้งหมด” use al
   ready, empty and error states all preserve navigation.
 - The notification bell uses the existing notifications endpoint. The mobile
   menu reflects the current module rather than always highlighting Operations.
+  The bell → **ตั้งค่าการแจ้งเตือน** remains the entry point for notification
+  settings and the system-inbox test-email action.
 - “View all actions” is omitted because the four supported actions are already
   visible and no separate action directory exists.
 
 ## Responsive composition
 
-- Wide desktop: 256px sidebar, four module columns, then paired utility panels.
-- Intermediate desktop: the same 256px sidebar, two module columns, stacked utilities.
+- Wide desktop: 256px sidebar, three primary module cards, then paired utility panels.
+- Intermediate desktop: the same 256px sidebar, responsive card wrapping and stacked utilities.
 - At 1039px and below: mobile header and hamburger, full-width search, connection
-  badge above the heading, two module columns, stacked utilities and account footer.
+  badge above the heading, responsive module cards, stacked utilities and account footer.
 - At phone widths: welcome quote moves beneath the greeting. Cards retain readable
   text and natural wrapping; decorative artwork never controls card height.
 - The recent-case section remains available on mobile even though omitted from
@@ -111,9 +119,12 @@ exact keyboard focus across asynchronous refresh, reload-and-Back to Home,
 notification-to-case draft retention, loading/empty/error/retry, local image
 decoding, Axe checks and overflow at
 320/390/690/1024/1448px. Source SHA-256 hashes and screenshot provenance are saved
-in `uat-results/admin-home/report.json`. Existing Cases browser checks also pass
-after the shared integration change, including draft retention, save failure,
-conflict and responsive detail panels.
+in `uat-results/admin-home/report.json`. The original Home/shared-shell integration
+also passed the existing Cases checks for draft retention, save failure,
+conflict and responsive detail panels. This is historical implementation
+evidence, not verification of the September 28 Settings removal. Current checks
+must also cover three primary cards, absent Settings/Role Preview entry points,
+the legacy Settings fallback and retained bell access.
 
 Local command:
 

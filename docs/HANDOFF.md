@@ -1,6 +1,21 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
+
+## Admin Cleanup and Analytics Release
+
+The owner authorized push/deploy of this chat's changes only, from
+`.tools/motor-comparison-20260924`, based on `fb26788` (matching main before
+release). Settings/Role Preview, unsupported personal-email options, and visible
+Admin stubs are removed; backend role enforcement remains unchanged. Analytics
+now uses current case statuses, real period/view controls, intake trends and
+service/source distributions, with the existing 200-record read limit disclosed.
+See [capabilities and design handoff](ANALYTICS_DESIGN_HANDOFF.md) and
+[release scope/evidence](RELEASE_ADMIN_ANALYTICS_20260928.md). No production CMS
+Publish, customer mutation, email send, Rules or credential change is included.
+The primary checkout's unrelated work is excluded. Final deployment must be
+identified by the exact commit, passing GitHub `verify`, canonical-domain alias,
+and read-only deployed-source checks; source completion alone is not deployment.
 
 ## CMS Editor Panel Release
 

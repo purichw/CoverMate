@@ -38,7 +38,7 @@ export const CMS_EDITABLE_PAGES = Object.freeze([
   Object.freeze({ id: ROUTE_PAGE_HOME, label: 'หน้าแรก', path: PUBLIC_HOME_PATH, section: 'hero' }),
   Object.freeze({ id: ROUTE_PAGE_MOTOR, label: 'ประกันรถยนต์', path: PUBLIC_MOTOR_PATH, section: 'motor' })
 ]);
-export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics", "settings"]);
+export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics"]);
 export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
 
 export function normalizePath(path = "") {
@@ -117,6 +117,8 @@ export function adminPortalRouteStateFromLocation(path = "", hash = "") {
     operationsTab: "dashboard"
   };
   if (!hashKey) return base;
+  // Retired reference-only Settings URLs return to Home; authorization is server-owned.
+  if (hashKey === "settings") return { module: "home", operationsTab: "dashboard" };
   if (ADMIN_PORTAL_OPERATIONS_TABS.includes(hashKey)) {
     return { module: "operations", operationsTab: hashKey };
   }

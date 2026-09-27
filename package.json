@@ -69,6 +69,7 @@
     "check:editor-content": "node scripts/editor-panel-browser-check.mjs --content",
     "check:editor-brand": "node scripts/editor-panel-browser-check.mjs --brand",
     "check:editor-versions": "node scripts/cms-controller-check.mjs && node scripts/editor-panel-browser-check.mjs --versions",
+    "check:admin-controls": "node scripts/stat-card-browser-check.mjs && node scripts/cases-filterbar-check.mjs && node scripts/admin-controls-e2e.mjs",
     "check:cms:browser": "node scripts/cms-ownership-browser-check.mjs",
     "check:cms:site": "node scripts/cms-site-audit-check.mjs",
     "check:motor-design": "node scripts/motor-shared-design-check.mjs",
@@ -84,7 +85,8 @@
     "smoke:admin-builder": "COVERMATE_SMOKE_SUITE=admin-builder node scripts/smoke.mjs",
     "smoke": "node scripts/smoke.mjs",
     "check:editor-history": "node scripts/editor-history-model-check.mjs && node scripts/editor-reset-contract-check.mjs && node scripts/editor-history-browser-check.mjs",
-    "check:admin-home": "node scripts/admin-home-browser-check.mjs"
+    "check:admin-home": "node scripts/admin-home-browser-check.mjs",
+    "check:admin-analytics": "node scripts/admin-analytics-model-check.mjs && node scripts/admin-analytics-browser-check.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

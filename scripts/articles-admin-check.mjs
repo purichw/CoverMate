@@ -74,7 +74,7 @@ if (process.argv.includes('--browser')) {
       if (width === 1440 || width === 390) await capture(String(width));
       if (width < 1040) {
         await page.getByRole('button', { name: 'เปิดเมนู Admin' }).click();
-        assert.equal(await page.locator('.case-mobile-navigation .nav-button').count(), 6);
+        assert.deepEqual(await page.locator('.case-mobile-navigation .nav-button').evaluateAll(buttons => buttons.map(button => button.dataset.module)), ['home', 'operations', 'content', 'articles', 'analytics']);
         assert.equal(await page.locator('.case-mobile-navigation [aria-current="page"]').getAttribute('data-module'), 'articles');
         await page.keyboard.press('Escape');await page.locator('.case-panel').waitFor({ state: 'detached' });
       }
@@ -82,12 +82,12 @@ if (process.argv.includes('--browser')) {
     }
     await page.setViewportSize({ width: 1440, height: 1000 });await go();
     const shell = await page.locator('.sidebar').boundingBox();
-    for (const module of ['home', 'operations', 'content', 'analytics', 'settings', 'articles']) {
+    for (const module of ['home', 'operations', 'content', 'analytics', 'articles']) {
       await page.locator(`#sideNav [data-module="${module}"]`).click();
       await page.waitForFunction(value => document.body.dataset.module === value, module);
       assert.deepEqual(await page.locator('.sidebar').boundingBox(), shell, 'Shared sidebar geometry unchanged');
     }
-    await page.goBack();await page.waitForFunction(() => document.body.dataset.module === 'settings');
+    await page.goBack();await page.waitForFunction(() => document.body.dataset.module === 'analytics');
     await page.goForward();await page.locator('[data-article-state="ready"]').waitFor();
     if (engine === 'webkit') {
       // WebKit crashes on reload after this old-shell history flow even without

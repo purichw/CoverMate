@@ -29,8 +29,7 @@ export function homeView({ home, name, role, editPath, previewPath, icon }) {
   const modules = [
     ['operations', 'users', 'งานลูกค้า', 'orange', loading ? 'กำลังเชื่อมต่อ' : error ? 'รอเชื่อมต่อ' : `${summary?.open ?? 0} เคสที่ยังไม่ปิด`, 'ดูเคสจากเว็บไซต์ บันทึกข้อมูล และวางแผนติดตามลูกค้าในที่เดียว', 'เปิดงานลูกค้า'],
     ['content', 'edit', 'จัดการเว็บไซต์', 'sage', 'CMS เว็บไซต์', 'แก้ไขข้อความ รูปภาพ และส่วนต่าง ๆ บนเว็บไซต์ พร้อม Preview และ Publish', 'เปิดเครื่องมือเว็บไซต์'],
-    ['analytics', 'chart', 'Analytics', 'ink', 'ข้อมูล CoverMate', 'ดูรายงานการติดต่อ ความคืบหน้าของเคส และผลการให้คำปรึกษา', 'เปิด Analytics'],
-    ['settings', 'settings', 'ตั้งค่า', 'sage', 'สิทธิ์และการเข้าถึง', 'ดูบทบาท สิทธิ์การใช้งาน สถานะเคส ข้อกำหนด PDPA และประวัติการทำงาน', 'เปิดการตั้งค่า']
+    ['analytics', 'chart', 'Analytics', 'ink', 'ข้อมูล CoverMate', 'ดูรายงานการติดต่อ ความคืบหน้าของเคส และผลการให้คำปรึกษา', 'เปิด Analytics']
   ];
   const quick = (tag, attrs, glyphHTML, title, subtitle) => `<${tag} class="home-quick-item" ${attrs}><span class="home-quick-icon">${glyphHTML}</span><span><strong>${title}</strong><small>${subtitle}</small></span>${glyph('chevron')}</${tag}>`;
   const statusRow = (glyphHTML, title, value, kind = 'neutral') => `<div class="home-status-row"><span class="home-status-icon">${glyphHTML}</span><strong>${title}</strong><span class="home-status-value ${kind}"><i aria-hidden="true"></i>${value}</span></div>`;

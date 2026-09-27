@@ -12,15 +12,16 @@ import C from '../server/cases-contract.cjs';
 
 const output = path.resolve('uat-results/admin-shell');
 fs.mkdirSync(output, { recursive: true });
-const sources = ['admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/ops/cases.css', 'admin/ops/cases.js', 'admin/ops/app.js'];
+const sources = ['admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/home-view.js', 'admin/analytics-view.js', 'admin/analytics-model.mjs', 'admin/analytics.css', 'admin/ops/cases.css', 'admin/ops/cases.js', 'admin/ops/app.js', 'covermate-contract.js'];
 const hashes = () => Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
 const report = { passed: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), sourceHashes: hashes(), environment: 'Local fixtures only; synthetic identity and records; all external requests and writes blocked', checks: [], screenshots: [], geometry: [], errors: [], mutations: [] };
-const modules = ['home', 'operations', 'content', 'articles', 'analytics', 'settings'];
+const modules = ['home', 'operations', 'content', 'articles', 'analytics'];
 const fixtures = createCasesFixture();
 const legacy = createLegacyOpsState();
 const { server, baseUrl } = await startStaticServer();
 const browser = await launchChromium((await loadPlaywright()).chromium);
 let apiError = false;
+const reads = [];
 try {
   const context = await browser.newContext({ viewport: { width: 1448, height: 1086 }, locale: 'th-TH', timezoneId: 'Asia/Bangkok' });
   await context.addInitScript(() => {
@@ -35,6 +36,7 @@ try {
     if (req.method() !== 'GET') { report.mutations.push(req.url()); return route.abort(); }
     const url = new URL(req.url());
     const resource = url.pathname.replace('/api/ops/', '');
+    reads.push(resource);
     let data;
     if (resource === 'cases/summary') data = C.summary(fixtures.cases, fixtures.asOf);
     else if (resource === 'cases') data = C.listCases(fixtures.cases, url.searchParams, fixtures.asOf);
@@ -50,11 +52,11 @@ try {
     await page.evaluate(() => document.fonts.ready);
     if (module === 'home') await page.locator('.admin-home:not([data-home-state="loading"])').waitFor();
     if (module === 'operations') await page.locator('.case-list[aria-busy="false"]').waitFor();
-    if (['content', 'analytics', 'settings'].includes(module)) await page.locator('#dataMode:not(.warn)').waitFor();
+    if (module === 'analytics') await page.locator('.admin-analytics:not([data-analytics-state="loading"])').waitFor();
   }
   async function capture(name) {
     const file = path.join(output, name + '.png');
-    await page.screenshot({ path: file, animations: 'disabled' });
+    await page.screenshot({ path: file, animations: 'disabled', fullPage: /^(content|analytics)-/.test(name) });
     report.screenshots.push({ file, url: page.url(), viewport: page.viewportSize(), capturedAt: new Date().toISOString() });
   }
   async function geometry() {
@@ -67,6 +69,7 @@ try {
     await page.setViewportSize({ width, height: width > 1039 ? 1086 : 844 });
     let baseline;
     for (const module of modules) {
+      const readStart = reads.length;
       await page.goto(`${baseUrl}/admin?shell_qa=${width}-${module}#${module}`);
       await ready(module);
       await page.evaluate(() => scrollTo(0, 0));
@@ -77,6 +80,16 @@ try {
       if (!baseline) baseline = g;
       else assert.deepEqual(g, baseline, `Stable shell geometry and styles: ${width}/${module}`);
       assert.equal(await page.locator('#sideNav [aria-current="page"]').getAttribute('data-module'), module);
+      assert.deepEqual(await page.locator('#sideNav [data-module]').evaluateAll(nodes => nodes.map(node => node.dataset.module)), modules);
+      assert.equal(await page.locator('#roleSelect, [data-admin-home-card="settings"]').count(), 0);
+      assert.equal(await page.locator('[data-action="analytics-tab"]').count(), 0);
+      if (module === 'content') {
+        assert.equal(await page.locator('#dataMode').isVisible(), false);
+        assert.equal(await page.getByText('เชื่อมต่อ CMS แล้ว', { exact: true }).count(), 0);
+        assert.equal(await page.getByText('รีวิวลูกค้า', { exact: true }).count(), 0);
+        assert.equal(await page.locator('.module-card a').count(), 3);
+        assert.deepEqual(reads.slice(readStart).filter(resource => ['leads', 'tasks', 'audit'].includes(resource)), []);
+      }
       assert.equal(await page.locator('.case-top-bell').isVisible(), true);
       assert.equal(await page.locator('.sidebar').isVisible(), width >= 1040);
       assert.equal(await page.locator('.case-menu-trigger').isVisible(), width < 1040);
@@ -109,23 +122,44 @@ try {
   await ready('home');
   const axe = await new AxeBuilder({ page }).include('.sidebar').include('.topbar').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
   assert.deepEqual(axe.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
-  await page.locator('#sideNav [data-module="settings"]').click();
-  await ready('settings');
-  // Preview stays a UI-only restriction; account identity remains the verified session.
-  await page.locator('.admin-role-preview .cm-select-trigger').click();
-  await page.getByRole('option', { name: 'ดูอย่างเดียว', exact: true }).click();
-  await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'combobox');
+  const timeOrigin = await page.evaluate(() => performance.timeOrigin);
   assert.match(await page.locator('#userMeta').innerText(), /เจ้าของ \/ Admin/);
   await page.locator('#sideNav [data-module="content"]').click();
   await ready('content');
-  assert.equal(await page.locator('.module-card').filter({ has: page.getByRole('heading', { name: 'แก้ไขเนื้อหา', exact: true }) }).getByRole('button', { name: 'ดูอย่างเดียว' }).isDisabled(), true);
+  assert.equal(await page.locator('.module-card').filter({ has: page.getByRole('heading', { name: 'แก้ไขเนื้อหา', exact: true }) }).locator('a').count(), 1);
   await page.goBack();
-  await ready('settings');
-  assert.equal(await page.locator('#roleSelect').inputValue(), 'readonly');
+  await ready('home');
+  await page.goForward();
+  await ready('content');
+  await page.evaluate(() => { location.hash = 'settings'; });
+  await ready('home');
+  assert.equal(new URL(page.url()).hash, '');
+  assert.equal(await page.evaluate(() => performance.timeOrigin), timeOrigin);
   await page.reload();
-  await ready('settings');
-  assert.equal(await page.locator('#roleSelect').inputValue(), 'owner');
-  report.checks.push('Desktop navigation/history/reload; role Preview still restricts content editing without changing verified identity; shell axe checks pass.');
+  await ready('home');
+  for (const pathname of ['/admin', '/admin/ops']) {
+    await page.goto(baseUrl + pathname + '?cm_env=uat#settings');
+    await ready('home');
+    const url = new URL(page.url());
+    assert.equal(url.pathname, '/admin');
+    assert.equal(url.hash, '');
+    assert.equal(url.searchParams.get('cm_env'), 'uat');
+  }
+  report.checks.push('Desktop navigation/history/reload work without Settings or role Preview; legacy Settings hashes return to canonical Home and preserve UAT environment; shell axe checks pass.');
+
+  for (const module of ['content', 'analytics']) {
+    await page.locator(`#sideNav [data-module="${module}"]`).click();
+    await ready(module);
+    assert.equal(await page.locator('#globalSearch').getAttribute('placeholder'), 'ค้นหาเคส แล้วกด Enter');
+    const workspaceAxe = await new AxeBuilder({ page }).include('#screen').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    assert.deepEqual(workspaceAxe.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), []);
+    await page.locator('#globalSearch').fill('no-matching-stub-audit-case');
+    await page.locator('#globalSearch').press('Enter');
+    await ready('operations');
+    assert.equal(await page.locator('#globalSearch').inputValue(), 'no-matching-stub-audit-case');
+    assert.equal(await page.locator('[data-case-action="open"]').count(), 0);
+  }
+  report.checks.push('Content and Analytics case search reaches filtered Cases; retained CMS links work as navigation targets; no decorative Analytics tabs, unused Reviews entry or unsupported CMS health badge; changed screens pass axe.');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.case-menu-trigger').click();
@@ -143,21 +177,26 @@ try {
   report.checks.push('Mobile shared navigation changes modules; focus restored after closing notifications and navigation; menu axe checks pass.');
 
   apiError = true;
-  await page.goto(baseUrl + '/admin?shell_error=1#content');
-  await page.locator('#dataMode.error').waitFor();
+  await page.goto(baseUrl + '/admin?shell_error=1#analytics');
+  await page.locator('.admin-analytics[data-analytics-state="error"]').waitFor();
   await page.locator('.case-menu-trigger').click();
-  await page.locator('.case-mobile-navigation [data-module="settings"]').click();
-  await ready('settings');
-  report.checks.push('API failure preserves navigation and exposes the existing error status outside the fixed topbar.');
+  await page.locator('.case-mobile-navigation [data-module="content"]').click();
+  await ready('content');
+  assert.equal(await page.locator('#dataMode').isVisible(), false);
+  report.checks.push('Analytics API failure preserves navigation; Content retains real CMS destinations without claiming CMS connection health or displaying unrelated case-load status.');
   apiError = false;
   // Synthetic lower-privilege session; no real login or authorization bypass is installed.
   await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('covermate-admin-session')); s.role = 'readonly'; localStorage.setItem('covermate-admin-session', JSON.stringify(s)); });
   await page.reload();
-  await ready('settings');
+  await ready('content');
   assert.match(await page.locator('#userMeta').innerText(), /ดูอย่างเดียว/);
   await page.locator('.case-menu-trigger').click();
   assert.match(await page.locator('.admin-mobile-account').innerText(), /ดูอย่างเดียว/);
   assert.doesNotMatch(await page.locator('.admin-mobile-account').innerText(), /เจ้าของ/);
+  await page.locator('.case-mobile-navigation [data-module="content"]').click();
+  await ready('content');
+  assert.equal(await page.locator('.module-card').filter({ has: page.getByRole('heading', { name: 'แก้ไขเนื้อหา', exact: true }) }).getByRole('button', { name: 'ดูอย่างเดียว' }).isDisabled(), true);
+  await page.locator('.case-menu-trigger').click();
   await page.locator('.case-mobile-navigation [data-module="operations"]').click();
   await page.getByText('ส่วนนี้สำหรับเจ้าของที่ยืนยันสิทธิ์แล้ว').waitFor();
   assert.equal(await page.locator('[data-case-action="new"]').count(), 0);
