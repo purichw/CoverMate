@@ -62,6 +62,7 @@
     "check:cms": "node scripts/cms-ownership-check.mjs",
     "check:admin-structure": "node scripts/admin-structure-check.mjs",
     "check:admin-structure:browser": "node scripts/admin-structure-browser.mjs",
+    "check:editor-panel": "node scripts/editor-panel-browser-check.mjs",
     "check:cms:browser": "node scripts/cms-ownership-browser-check.mjs",
     "check:cms:site": "node scripts/cms-site-audit-check.mjs",
     "check:motor-design": "node scripts/motor-shared-design-check.mjs",

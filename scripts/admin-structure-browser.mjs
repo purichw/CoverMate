@@ -55,7 +55,7 @@ else {
     const page=await context.newPage();page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));
     const row=id=>page.locator(`[data-admin-section-row="${id}"]`);
     const ready=async route=>{await page.goto(baseUrl+route);await row('licences').waitFor();await page.evaluate(()=>document.fonts.ready);};
-    const sections=()=>page.getByRole('button',{name:'ส่วนต่าง ๆ',exact:true}).click();
+    const sections=()=>page.getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();
     const content=id=>page.locator(`[data-admin-section-edit="${id}"]`).click();
     const state=async()=>{await page.waitForFunction(()=>!!localStorage.getItem('purich-draft-config-v3'));return page.evaluate(()=>JSON.parse(localStorage.getItem('purich-draft-config-v3')));};
     const parity=async()=>{
@@ -108,7 +108,11 @@ else {
     assert.equal(await row('hero').getByRole('button',{name:'เลื่อนส่วนนี้ขึ้น',exact:true}).isDisabled(),true);
     assert.equal(await row('licences').getByRole('button',{name:/เลื่อนส่วนนี้/}).count(),0);
     assert.equal(await row('licences').getByRole('switch').count(),0);
-    assert.match(await row('insurers').innerText(),/#motor/);
+    // Technical anchors remain searchable without making every compact row
+    // carry implementation metadata.
+    await page.locator('[data-outline-search]').fill('#motor');
+    assert.equal(await row('insurers').isVisible(),true);
+    await page.locator('[data-outline-search]').fill('');
     const oldOrder=(await state()).sections.map(s=>s.id);
     await row('tiers').getByRole('button',{name:'เลื่อนส่วนนี้ขึ้น',exact:true}).click();await parity();
     assert.notDeepEqual((await state()).sections.map(s=>s.id),oldOrder);

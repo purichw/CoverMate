@@ -120,6 +120,15 @@ export function withCmsController(Base, {
         }
         return;
       }
+      // This panel is non-modal: Escape closes it only while focus is inside.
+      // Media dialogs and native selects retain their own dismissal behavior.
+      if (event.key === 'Escape' && this.state.admin && !this.state.remoteBusy && !event.isComposing &&
+          event.target.closest?.('[data-editor-panel]') && !event.target.closest?.('select') &&
+          !document.querySelector('[role="dialog"][data-media-editor]')) {
+        event.preventDefault();
+        this.closeEditorPanel();
+        return;
+      }
       if (this.state.remoteBusy || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return;
       const key = event.key.toLowerCase();
       if (key === 's') { event.preventDefault(); document.activeElement?.blur(); this.requestSaveDraft(); return; }

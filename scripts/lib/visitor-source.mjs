@@ -138,6 +138,7 @@ export function readVisitorSources() {
       .replaceAll('<!-- COVERMATE_ARTICLE_CARD -->', () => readText(new URL('src/visitor/article-card.html', ROOT)))
       .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
+      .replace('/* COVERMATE_EDITOR_PANEL_STYLES */', () => transformSync(readText(new URL('src/visitor/editor-panel.css', ROOT)), {loader:'css',minifyWhitespace:true}).code)
       .replace('<style>/* COVERMATE_HOME_STYLES */</style>', () => visitorStyles.home)
       .replace('<style>/* COVERMATE_ARTICLES_INDEX_STYLES */</style>', () => visitorStyles['articles-index'])
       .replace('<style>/* COVERMATE_ARTICLE_DETAIL_STYLES */</style>', () => visitorStyles['article-detail'])

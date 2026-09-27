@@ -358,6 +358,10 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     pubFlash: false,
     tab: 'sections',
     sel: 'hero',
+    outlineQuery: '',
+    outlineNotice: '',
+    mobileInspector: false,
+    editorPanelExpanded: false,
     situation: null,
     form: { name: '', contact: '', email: '', topic: '', qtype: '', coverage: '', consent: false },
     renew: { kind: '', month: '', contact: '', consent: false },
@@ -407,7 +411,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     document.addEventListener('pointerdown', this._lineDismiss);
     document.addEventListener('focusin', this._lineDismiss);
     document.addEventListener('keydown', this._lineDismiss);
-    this._lineViewport = () => this.syncVisitorDock();
+    this._lineViewport = () => { this.syncVisitorDock(); this.syncEditorPanelViewport(); };
     window.visualViewport?.addEventListener('resize', this._lineViewport);
 
     this._onScroll = () => {
@@ -532,6 +536,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     document.removeEventListener('keydown', this._lineDismiss);
     window.visualViewport?.removeEventListener('resize', this._lineViewport);
     document.documentElement.style.removeProperty('--cm-dock-height');
+    document.documentElement.style.removeProperty('--cm-editor-visible-height');
+    document.documentElement.style.removeProperty('--cm-editor-keyboard-offset');
     document.removeEventListener('keydown', this._homeKeydown);
     document.removeEventListener('click', this._homeAnchorClick);
     document.removeEventListener('toggle', this._homeToggle, true);
@@ -557,6 +563,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     if (!this._selectLoader && [...document.querySelectorAll('select')].some(select => { const r=select.getBoundingClientRect(); return r.height && r.top < innerHeight + 600 && r.bottom > 0; })) this._selectLoader=import(location.origin+'/assets/visitor/select.js').catch(()=>{this._selectLoader=null;});
     this.syncInlineMedia();
     this.syncVisitorDock();
+    this.syncEditorPanelViewport();
+    this.syncOutlineHighlight();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
     document.querySelectorAll('.hm-advisor-photo,.hm-article-media img').forEach(img => { if (img.complete) img.toggleAttribute('data-failed', !img.naturalWidth); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
@@ -566,6 +574,75 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       const r = nodes[i].getBoundingClientRect();
       if (r.top < h * 0.94 && r.bottom > 0) nodes[i].classList.add('om-in');
     }
+  }
+
+  editorOutlineTarget(id = this.state.sel) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(id || '')) return null;
+    return document.querySelector(id === 'footer' ? '.cm-editor-stage footer.cm-footer' : 'main [id="' + id + '"]');
+  }
+
+  syncOutlineHighlight() {
+    const target = this.state.admin && !this.state.preview ? this.editorOutlineTarget() : null;
+    document.querySelectorAll('[data-editor-selected]').forEach(node => {
+      if (node !== target) { node.removeAttribute('data-editor-selected'); node.classList.remove('cm-editor-selected-section'); }
+    });
+    if (target) { target.setAttribute('data-editor-selected', 'true'); target.classList.add('cm-editor-selected-section'); }
+  }
+
+  syncEditorPanelViewport() {
+    const style = document.documentElement?.style;
+    if (!this.state.admin) {
+      style?.removeProperty('--cm-editor-visible-height');
+      style?.removeProperty('--cm-editor-keyboard-offset');
+      return;
+    }
+    const viewport = window.visualViewport;
+    style?.setProperty('--cm-editor-visible-height', Math.round(viewport?.height || window.innerHeight) + 'px');
+    style?.setProperty('--cm-editor-keyboard-offset', Math.max(0, Math.round(window.innerHeight - (viewport?.height || window.innerHeight) - (viewport?.offsetTop || 0))) + 'px');
+  }
+
+  inspectOutlineSection(id, visible) {
+    this.setState({ sel:id, tab:'sections', mobileInspector:true, outlineNotice:'' }, () => requestAnimationFrame(() => {
+      if (window.matchMedia('(max-width: 1000px)').matches) {
+        const panel = document.querySelector('[data-admin-panel-scroll]');
+        if (panel) panel.scrollTop = 0;
+      }
+      this.syncOutlineHighlight();
+      const target = visible && this.editorOutlineTarget(id);
+      if (target && target.getClientRects().length) {
+        const header = document.querySelector('header');
+        const headerBottom = header && ['sticky','fixed'].includes(getComputedStyle(header).position) ? Math.max(0,header.getBoundingClientRect().bottom) : 0;
+        window.scrollTo({ top:Math.max(0,target.getBoundingClientRect().top + window.pageYOffset - headerBottom - 24), behavior:'instant' });
+      } else if (visible) this.setState({ outlineNotice:'ส่วนนี้ยังไม่แสดงในหน้าตัวอย่าง ตรวจสอบการตั้งค่าเนื้อหาที่เกี่ยวข้อง' });
+      document.querySelector('[data-editor-inspector] h2,[data-editor-inspector] h3')?.focus({preventScroll:true});
+    }));
+  }
+
+  closeEditorPanel() {
+    const active = document.activeElement;
+    if (active?.closest?.('[data-editor-panel]') && /^(INPUT|TEXTAREA)$/.test(active.tagName)) active.blur();
+    const toggle = document.getElementById?.('covermate-owner-tools-toggle');
+    if (toggle) toggle.checked = false;
+    if (this.state.editMode) {
+      this._ownerWorkspace = true;
+      this.writeJSON(K_ADMIN_EVER, 1);
+      this.setState({admin:false,adminEver:true,preview:false}, () => {
+        this.enableEdit();
+        this.syncOutlineHighlight();
+        this.syncEditorPanelViewport();
+        requestAnimationFrame(() => {
+          // The opener lives in a now-closed Tools popover. Restore to its
+          // persistent toggle, whose focus ring is drawn on the visible label.
+          const trigger = document.getElementById('covermate-owner-tools-toggle') || this._editorPanelReturnFocus;
+          trigger?.focus({preventScroll:true});
+        });
+      });
+      return;
+    }
+    this._ownerWorkspace = false;
+    try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (_) {}
+    this.disableEdit();
+    window.location.replace('/admin');
   }
 
   syncVisitorDock() {
@@ -2066,7 +2143,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       const visible = s.on !== false && (!isLicence || countVisible(routeCards(s)) > 0);
       const scope = isFooter ? 'ใช้ร่วมกันทุกหน้า' : pair.source === 'motorPage' ? 'เฉพาะหน้าประกันรถ' : motorPageConfig.sections.includes(pair.ownerId) ? 'ใช้ร่วมกับ' + (isMotor ? 'หน้าแรก' : 'ประกันรถยนต์') : 'เฉพาะหน้าแรก';
       return {
-        key: pair.id, id: pair.id, on: visible, sel: activeAdminSel === pair.id,
+        key: pair.id, id: pair.id, order:adminOrder + 1, on: visible, sel: activeAdminSel === pair.id,
         name: meta.title || (TYPE_LABEL[s.type]?.th || s.type), group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
         sub: isFooter ? 'Footer' : '#' + (pair.id === 'insurers' && isHome ? 'motor' : pair.id),
         summary: isFooter ? 'ส่วนท้ายหน้า' : isLicence ? countVisible(routeCards(s)) + (isMotor ? ' การ์ดนายหน้า' : ' การ์ดใบอนุญาต') : sectionSummary(s),
@@ -2086,7 +2163,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         first: pair.fixed || adminOrder === 0, last: pair.fixed || adminOrder === orderedAdminPairs.length - 1,
         toggle: () => { if (isLicence) return; if (isFooter) this.upd(draft=>{draft.footer.show=!draft.footer.show;}); else updatePair(pair, section => { section.on = section.on === false; }); },
         up: () => moveAdminPair(pair, -1), down: () => moveAdminPair(pair, 1),
-        pick: () => isFooter ? openAdminGroup('Footer design') : this.setState({ sel: pair.id, tab: 'content' },()=>requestAnimationFrame(()=>{
+        inspect: () => this.inspectOutlineSection(pair.id, visible),
+        pick: () => s.type === 'contact' ? this.inspectOutlineSection(pair.id, visible) : isFooter ? openAdminGroup('Footer design') : this.setState({ sel: pair.id, tab: 'content' },()=>requestAnimationFrame(()=>{
           const panel=document.querySelector('[data-admin-panel-scroll]');if(panel) panel.scrollTop=0;
         })),
         less: () => updatePair(pair, section => { section.cols = Math.max(1, (Number(section.cols) || 1) - 1); }),
@@ -2101,6 +2179,62 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       : cur.type === 'insurers' && sharedDesign ? {...SCHEMA.insurers,fields:['kicker','title',...(cur.cta1href&&!/^\/motor(?:[#?]|$)/.test(cur.cta1href)?['cta1']:[])],card:null}
       : cur.id === 'cover' && isHome ? {...SCHEMA.products,fields:[]} : SCHEMA[cur.type] : null;
     const curPath = selectedAdminPair?.source === 'motorPage' ? 'motorPage.' + selectedAdminPair.motorKey : 'sections.@' + cur?.id;
+    const selectedOutline = secList.find(row => row.id === activeAdminSel) || null;
+    const outlineQuery = String(S.outlineQuery || '');
+    const outlineNeedle = outlineQuery.trim().toLocaleLowerCase('th');
+    const outlineRows = secList.filter(row => !outlineNeedle || [row.name,row.group,row.role,row.sub,row.summary].some(value => String(value || '').toLocaleLowerCase('th').includes(outlineNeedle)));
+    const contactField = (path,label,options = {}) => ({
+      key:path,path,label,big:!!options.big,small:!options.big,hint:options.hint || '',
+      ...cmsInput(path,options)
+    });
+    const contactLocalized = (path,label,options) => contactField(path + '.' + lk,label,options);
+    const isContactInspector = cur?.type === 'contact';
+    const contactTitleFields = isContactInspector ? [
+      contactField(curPath + '.' + lk + '.kicker','ข้อความเหนือหัวข้อ'),
+      contactField(curPath + '.' + lk + '.title','หัวข้อส่วนติดต่อ',{big:true}),
+      ...(homeAdvisor.hasContactIntro && sharedDesign ? [
+        contactLocalized('advisor.contactBefore','ข้อความก่อนชื่อผู้ให้คำปรึกษา',{big:true,hint:'ข้อความแนะนำที่แสดงจริงในส่วนติดต่อ'}),
+        contactLocalized('advisor.fullName','ชื่อผู้ให้คำปรึกษา',{hint:'ใช้ร่วมกับข้อมูลผู้ให้คำปรึกษาที่แสดงในส่วนอื่นของหน้า'}),
+        contactLocalized('advisor.contactAfter','ข้อความหลังชื่อผู้ให้คำปรึกษา',{big:true})
+      ] : []),
+      contactField(curPath + '.' + lk + '.body',homeAdvisor.hasContactIntro && sharedDesign ? 'คำอธิบายสำรอง' : 'คำอธิบายส่วนติดต่อ',{
+        big:true,hint:homeAdvisor.hasContactIntro && sharedDesign ? 'ใช้เมื่อไม่มีข้อความแนะนำผู้ให้คำปรึกษาด้านบน ขณะนี้หน้าเว็บแสดงข้อความและชื่อผู้ให้คำปรึกษา' : ''
+      })
+    ] : [];
+    const channelRows = [
+      {key:'line',label:'LINE',paths:ICONS.chat,summary:site.contact.lineId,fields:[
+        contactLocalized('homeDesign.contactLineLabel','ข้อความนำ'),contactField('contact.lineId','LINE ID / ชื่อที่แสดง'),contactField('contact.lineUrl','ลิงก์ LINE',{url:true,hint:'ใช้ลิงก์ HTTPS สำหรับเปิด LINE'})]},
+      {key:'facebook',label:'Facebook',paths:ICONS.users,summary:site.contact.facebookName,fields:[
+        contactField('contact.facebookName','ชื่อ Facebook'),contactField('contact.facebookUrl','ลิงก์ Facebook',{url:true}),contactLocalized('homeDesign.contactFacebookHelper','ข้อความประกอบ',{big:true})]},
+      {key:'hours',label:'เวลาทำการ',paths:ICONS.clock,summary:t(site.contact.hours),fields:[
+        contactLocalized('homeDesign.contactHoursLabel','ชื่อหัวข้อ'),contactLocalized('contact.hours','เวลาทำการ',{big:true})]},
+      {key:'area',label:'พื้นที่บริการ',paths:ICONS.pin,summary:t(site.contact.area),fields:[
+        contactLocalized('homeDesign.contactAreaLabel','ชื่อหัวข้อ'),contactLocalized('contact.area','พื้นที่บริการ',{big:true})]}
+    ];
+    const contactChannels = isContactInspector ? channelRows.map(row => {
+      const iconPath = 'homeDesign.contactIcon' + row.key[0].toUpperCase() + row.key.slice(1);
+      const icon = assetURL(cmsGet(site,iconPath) || '');
+      return {...row,summary:row.summary || 'ยังไม่ได้ระบุ',icon,hasIcon:!!icon,iconPath,editIcon:()=>this.editMedia(iconPath)};
+    }) : [];
+    const contactFormFields = isContactInspector ? [
+      contactLocalized('homeDesign.contactFormHeading','หัวข้อฟอร์ม'),
+      contactLocalized('homeDesign.contactFormHelper','คำอธิบายฟอร์ม',{big:true}),
+      ...[['contactName','ชื่อช่องชื่อผู้ติดต่อ'],['contactContact','ชื่อช่อง LINE ID / เบอร์โทร'],['contactEmail','ชื่อช่องอีเมล'],['contactEmailHint','คำอธิบายการใช้อีเมล'],['contactTopic','ชื่อช่องเรื่องที่สอบถาม'],['contactCoverage','ชื่อหัวข้อความคุ้มครอง'],['contactDetails','ชื่อช่องรายละเอียดเพิ่มเติม']].map(([key,label]) => contactLocalized('publicCopy.' + key,label,{big:key === 'contactEmailHint'}))
+    ] : [];
+    const contactConsentFields = isContactInspector ? [
+      contactLocalized('ui.consultationConsent','ข้อความขอความยินยอม',{big:true,hint:'ข้อความที่แสดงข้างช่องยินยอมในฟอร์ม'}),
+      contactLocalized('publicCopy.contactPrivacy','ข้อความลิงก์ความเป็นส่วนตัว')
+    ] : [];
+    const contactDisplayFields = isContactInspector ? [
+      contactLocalized('publicCopy.contactSubmit','ข้อความปุ่มส่ง'),
+      contactField(curPath + '.' + lk + '.note','ข้อความติดต่อ LINE ใต้ฟอร์ม',{big:true,hint:'แสดงเป็นลิงก์ไป LINE เมื่อมีลิงก์ LINE'}),
+      contactLocalized('homeDesign.contactReassurance','ข้อความสร้างความมั่นใจ',{big:true}),
+      contactLocalized('homeDesign.contactChannelsLabel','หัวข้อช่องทางติดต่อ'),
+      ...[['contactNamePlaceholder','ตัวอย่างในช่องชื่อ'],['contactContactPlaceholder','ตัวอย่างในช่องช่องทางติดต่อ'],['contactDetailsPlaceholder','ตัวอย่างในช่องรายละเอียด']].map(([key,label]) => contactLocalized('homeDesign.' + key,label)),
+      contactField('contact.phone','เบอร์โทรติดต่อ',{hint:'ข้อมูลร่วมกับช่องทางติดต่อและ Footer'}),
+      contactField('contact.email','อีเมลติดต่อ',{email:true,hint:'ข้อมูลร่วมกับช่องทางติดต่อและ Footer'})
+    ] : [];
+    const contactOptionFields = isContactInspector ? CMS_CONTENT_FIELDS.filter(field => field.path === 'formOptions.topicPrompt' || field.path === 'formOptions.coveragePrompt' || /^formOptions\.(query|coverage)\./.test(field.path) && field.path !== 'formOptions.query.compare').map(field => contactLocalized(field.path,cmsAdminLabel(field.label))) : [];
     const editLinks = cur && !editingLicences ? (cur.type === 'hero' ? ['cta2href','claimHref'] : ['cta1href'].filter(key => Object.prototype.hasOwnProperty.call(cur,key) && !/^\/motor(?:[#?]|$)/.test(cur[key]))).map(key => {
       const localKey = key === 'claimHref' && cur[lk]?.claimHref !== undefined ? lk + '.' + key : key;
       return {key, label:key === 'claimHref' ? 'ปลายทางลิงก์ช่วยเหลือเคลม' : key === 'cta2href' ? 'ปลายทางปุ่มรอง' : 'ปลายทางปุ่มหลัก', ...cmsInput(curPath + '.' + localKey,{nav:true})};
@@ -2773,13 +2907,23 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       adminOpen: S.admin, adminClosed: !S.admin,
       ownerDockStatus: S.admin ? 'กำลังแก้ไขหน้าเว็บ · เปิดแผงเครื่องมือ' : 'กำลังแก้ไขหน้าเว็บ',
       ownerDockStatusCompact: S.admin ? 'แก้ไข · แผงเครื่องมือ' : 'กำลังแก้ไข',
-      openAdmin: () => {
+      openAdmin: (event) => {
+        this._editorPanelReturnFocus = event?.currentTarget || document.activeElement;
         const ownerToolsToggle = document.getElementById('covermate-owner-tools-toggle');
         if (ownerToolsToggle) ownerToolsToggle.checked = false;
         if (S.editMode) {
           this._ownerWorkspace = true;
           this.writeJSON(K_ADMIN_EVER, 1);
-          this.setState({ admin: true, adminEver: true, preview: false }, () => this.enableEdit());
+          this.setState({ admin: true, adminEver: true, preview: false }, () => {
+            this.enableEdit();
+            this.syncOutlineHighlight();
+            this.syncEditorPanelViewport();
+            requestAnimationFrame(() => {
+              const search = document.querySelector('[data-editor-panel] [data-outline-search]');
+              const target = search?.getClientRects().length ? search : document.querySelector('[data-admin-panel-close]');
+              target?.focus({preventScroll:true});
+            });
+          });
           return;
         }
         this.goOwnerRoute('admin');
@@ -2796,6 +2940,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       preview: S.preview,
       dirty: dirty, clean: !dirty,
       statusText: S.remoteError ? S.remoteError : (S.remoteBusy ? (S.remoteAction === 'publish' ? 'กำลัง Publish เว็บจริง...' : 'กำลังบันทึก Draft...') : (dirty ? 'มีการแก้ไขที่ยังไม่ Publish' : 'เรียบร้อย')),
+      editorSaveStatus: S.remoteError || (S.remoteBusy ? (S.remoteAction === 'publish' ? 'กำลัง Publish...' : S.remoteAction === 'reset' ? 'กำลัง Reset Draft...' : 'กำลังบันทึก Draft...') : Object.keys(S.cmsEdits || {}).length ? 'กำลังแก้ไข · ออกจากช่องเพื่อบันทึก Draft' : S.savedFlash ? 'บันทึก Draft แล้ว' : S.pubFlash ? 'Publish แล้ว' : dirty ? 'มีการแก้ไขใน Draft · ยังไม่ Publish' : 'ตรงกับเวอร์ชันที่ Publish'),
+      editorSaveTone: S.remoteError ? 'error' : S.remoteBusy ? 'busy' : Object.keys(S.cmsEdits || {}).length ? 'draft' : S.savedFlash || S.pubFlash ? 'saved' : dirty ? 'draft' : 'clean',
       statusDot: S.remoteError ? 'var(--color-accent-800)' : (dirty ? A.base : 'var(--color-accent-2)'),
       publishBg: (dirty && !S.remoteBusy) ? A.base : 'var(--color-neutral-300)',
       publishFg: (dirty && !S.remoteBusy) ? A.on : 'var(--color-neutral-600)',
@@ -2850,20 +2996,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       tabVersions: S.tab === 'versions',
       goVersions: () => this.setState({ tab: 'versions' }),
       tabVerBg: S.tab === 'versions' ? A.action : 'transparent', tabVerFg: S.tab === 'versions' ? A.on : 'var(--color-neutral-700)',
-      closeAdmin: () => {
-        const ownerToolsToggle = document.getElementById('covermate-owner-tools-toggle');
-        if (ownerToolsToggle) ownerToolsToggle.checked = false;
-        if (S.editMode) {
-          this._ownerWorkspace = true;
-          this.writeJSON(K_ADMIN_EVER, 1);
-          this.setState({ admin: false, adminEver: true, preview: false }, () => this.enableEdit());
-          return;
-        }
-        this._ownerWorkspace = false;
-        try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (err) {}
-        this.disableEdit();
-        window.location.replace('/admin');
-      },
+      closeAdmin: () => this.closeEditorPanel(),
       editMode: S.editMode,
       exitEdit: () => {
         this._ownerWorkspace = false;
@@ -2879,6 +3012,23 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       tabBraBg: S.tab === 'brand' ? A.action : 'transparent', tabBraFg: S.tab === 'brand' ? A.on : 'var(--color-neutral-700)',
       tabThmBg: S.tab === 'theme' ? A.action : 'transparent', tabThmFg: S.tab === 'theme' ? A.on : 'var(--color-neutral-700)',
       secList: secList,
+      outlineRows, outlineQuery, outlineEmpty:outlineRows.length === 0, outlineCount:outlineRows.length,
+      onOutlineQuery:event => this.setState({outlineQuery:event.target.value}),
+      clearOutlineQuery:() => this.setState({outlineQuery:''}, () => requestAnimationFrame(() => document.querySelector('[data-outline-search]')?.focus({preventScroll:true}))),
+      selectedOutline,
+      outlineNotice:selectedOutline && !selectedOutline.on ? 'ส่วนนี้ซ่อนอยู่ในหน้าตัวอย่าง ข้อมูลยังอยู่และแก้ไขได้' + (selectedOutline.dependency ? ' · ' + selectedOutline.dependency : '') : (S.outlineNotice || ''),
+      showContactInspector:isContactInspector,
+      contactTitleFields,
+      contactTitlePrimaryFields:contactTitleFields.filter(field => !field.path.startsWith('advisor.') && !(homeAdvisor.hasContactIntro && sharedDesign && field.path === curPath + '.' + lk + '.body')),
+      contactIntroFields:contactTitleFields.filter(field => field.path.startsWith('advisor.') || homeAdvisor.hasContactIntro && sharedDesign && field.path === curPath + '.' + lk + '.body'),
+      contactChannels,contactFormFields,contactFormPrimaryFields:contactFormFields.slice(0,2),contactFormLabelFields:contactFormFields.slice(2),
+      contactConsentFields,contactDisplayFields,contactOptionFields,
+      mobileInspector:!!S.mobileInspector,editorMobilePane:S.mobileInspector ? 'details' : 'outline',
+      showOutline:() => this.setState({mobileInspector:false}, () => requestAnimationFrame(() => { const panel=document.querySelector('[data-admin-panel-scroll]'); if(panel)panel.scrollTop=0; document.querySelector('[data-outline-search]')?.focus({preventScroll:true}); })),
+      showInspector:() => this.setState({mobileInspector:true}, () => requestAnimationFrame(() => { const panel=document.querySelector('[data-admin-panel-scroll]'); if(panel)panel.scrollTop=0; document.querySelector('[data-editor-inspector] h2,[data-editor-inspector] h3')?.focus({preventScroll:true}); })),
+      editorPanelExpanded:!!S.editorPanelExpanded,
+      expandEditorPanel:() => this.setState({editorPanelExpanded:!this.state.editorPanelExpanded}),
+      inspectorFullContent:() => selectedAdminPair?.kind === 'footer' ? openAdminGroup('Footer design') : this.setState({tab:'content',sel:activeAdminSel}, () => requestAnimationFrame(() => {const panel=document.querySelector('[data-admin-panel-scroll]');if(panel)panel.scrollTop=0;})),
       adminPageName:isMotor ? 'ประกันรถยนต์' : 'หน้าแรก',
       curName:secList.find(row=>row.id===activeAdminSel)?.name || '', curId:activeAdminSel,
       contentShortcuts,

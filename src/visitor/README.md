@@ -12,6 +12,11 @@ Source ownership:
 
 - `shell.html` is the outer static shell around the exported visitor bundle.
 - `template.html` is the embedded `__bundler/template` HTML with a runtime slot.
+- `editor-panel.css` owns the Admin Editor side panel and mobile bottom sheet.
+  The generator embeds it in `index.html`. Page Outline and the contextual
+  Contact inspector share existing CMS owners; the Content, Brand/Contact,
+  Theme/Data and Version History tool bodies retain their existing behavior.
+  See [Editor panel](../../docs/CMS_EDITOR_PANEL.md).
 - `home.html` and `home.css` are the compact Home projection while Motor stays
   shared. The generator composes the markup into `template.html` and emits
   minified `assets/visitor/home.css` with a content-versioned stylesheet link.

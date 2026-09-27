@@ -323,7 +323,7 @@ try {
   assert.equal(await page.locator(`[data-cms-field="${mediaField}"]`).inputValue(), replacement);
   report.checks.push('/admin/content exposes the same history. Real form-choice and media URL edits Undo/Redo correctly.');
 
-  await page.getByRole('button', { name: 'ส่วนต่าง ๆ', exact: true }).click();
+  await page.getByRole('button', { name: 'โครงสร้างหน้า', exact: true }).click();
   const orderBefore = (await localSnapshot()).config.sections.map(section => section.id);
   const moveButton = page.getByRole('button', { name: 'เลื่อนส่วนนี้ลง', exact: true }).filter({ visible: true }).first();
   await moveButton.click();
