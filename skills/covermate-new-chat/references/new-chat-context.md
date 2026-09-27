@@ -4,7 +4,9 @@ Use this as the pickup map for a fresh Codex chat. Prefer current on-disk files 
 
 ## Project
 
-- Repo: `/Users/point/CoverMate`
+- Primary repo: `/Users/point/CoverMate`. Use the active task checkout when one
+  is already selected. Resolve the repo paths below against that checkout; the
+  primary directory is not permission to switch or overwrite work elsewhere.
 - Production: `https://covermateinsurance.com` (old Vercel hostname is compatibility/history only)
 - GitHub: `https://github.com/purichw/CoverMate`
 - Vercel project: `covermate`
@@ -26,6 +28,9 @@ Always start with:
 Then choose by task:
 
 - Compact Home and reference fidelity: `docs/HOME_REDESIGN.md`, `src/visitor/home.html`, `src/visitor/home.css`; personally inspect desktop/mobile screenshots and preserve tablet touch behavior.
+- Public copy/FAQ wording: `docs/COPY_VOICE_AUDIT_20260927.md`, `scripts/lib/copy-voice-20260927.mjs`, `scripts/prepare-copy-voice-20260927.mjs`. Use ordinary customer questions and direct, helpful answers; keep research/proposals separate from implemented or published copy.
+- FAQ collection controls: `docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing`, `src/visitor/cms-controller.js`, `src/visitor/runtime.js`, `src/visitor/template.html`, `scripts/faq-consolidation-check.mjs`.
+- Articles list/editor/public pages and feature toggles: `docs/ARTICLES_PUBLISHING.md`. Central API persistence and explicit locale/date publication supersede historical browser-only drafts; master/Home/navigation flags are independent.
 - Image replacement/crop and CMS parity: `docs/CMS_MEDIA.md`, `docs/CMS_SITE_AUDIT.md`, `src/admin/media-editor.js`, `api/media.js`, `server/cloudinary.cjs`. Cloudinary Free is the selected backend; no Firebase Storage fallback. Read current billing/release status, never infer it from a source file.
 - Browser and domain release: `docs/BROWSER_COMPATIBILITY.md`, `docs/SEO.md`; real LINE testing is distinct from WebKit/Chromium emulation.
 
@@ -74,7 +79,7 @@ Use the current on-disk `SKILL.md` each time a skill is invoked.
 - `/` is the public home page. `/motor` is the dedicated motor-insurance campaign page inside the same CoverMate product. `/#motor` is only a legacy same-page alias to the home motor/insurer area.
 - `/admin/login`, `/admin`, `/admin/ops`, `/admin/analytics`, `/admin/content`, `/admin/edit`, `/admin/preview`, and owner hash modes are private admin routes/states and must stay `noindex`.
 - `/admin` is the Admin Portal Home and must remain reachable after sign-in.
-- The Admin Portal primary modules are `Operations`, `Website content`, `Analytics`, and `Settings`.
+- The shared Admin shell includes Home, Operations/Cases, Website content, Articles, Analytics and Settings with their existing role gates. Articles uses its own list/editor; public routes remain controlled by publication and visibility settings.
 - Website content has one main editor entry. Do not reintroduce a separate `Arrange & customise` launcher card; open the control panel from the editor via `Tools -> Panel`.
 - The control panel/shell must not leak into clean public routes.
 - Owner modes are `/#edit`, `/#admin`, `/#preview`, plus direct admin routes `/admin/content`, `/admin/edit`, and `/admin/preview`; clean public visitor routes must not show owner chrome even when an admin session exists.
@@ -84,6 +89,8 @@ Use the current on-disk `SKILL.md` each time a skill is invoked.
 - Save Draft flushes autosave without clearing editor history. Undo/Redo and Reset change Draft only. Reset transactionally reads the newest published state; a failed reset preserves work. The separate 30-second post-Publish undo changes Live and must remain distinct. Preserve advanced JSON buffers and native Undo in ordinary form controls.
 - Cases is the owner-only Operations workspace. The legacy Leads/Tasks/Audit endpoints remain for compatibility and historical records; do not restore them as visible tabs. Searching must not cancel pending global summary updates or replace newer filtered rows with stale responses.
 - Firestore live/draft data must prevail over hard-coded or local fallback content. Fallbacks may fill missing structure only; they must not override successful remote reads.
+- A copy-only release does not rewrite existing CMS content. Apply a reviewed field-level proposal against fresh state with old-value and inline-override guards, preserve unrelated draft edits, and stop on missing/changed owners. Never reset the whole site or regenerate the baseline simply to clear conflicts.
+- FAQ Add creates a bilingual stable-ID row and focuses its question. Delete confirms and removes both languages from Draft; Hide retains them. Undo/Redo restores the deleted ID/content/order, and an empty list must not be repopulated from archived Guides. Publish remains a separate authorized action.
 - Insurer-count copy follows the active `insurers.items` logo data. With the current active logo set, the count is `14`.
 - Aioi Bangkok Insurance uses `assets/ins/13-aioi.png` in the approved default set. Only the exact legacy v1 value is migrated once; never force an Admin-selected company/asset by slot number or name on every load.
 - All visible visitor and admin text uses the Google Sans family stack across Thai and English unless a heading/logo exception is an explicit design choice.
@@ -92,8 +99,11 @@ Use the current on-disk `SKILL.md` each time a skill is invoked.
 
 ## Current Admin/CMS Status
 
-- `/admin` is the shared Admin Portal Home with Operations, Website content,
-  Analytics, and Settings.
+- `/admin` is the shared Admin Portal Home with Operations/Cases, Website content,
+  Articles, Analytics, and Settings. `/admin#articles` is the owner-only article
+  list/editor. The public master flag controls `/articles` and
+  `/articles/:slug`; detail URLs additionally require an eligible published
+  translation.
 - `/admin/content?page=home|motor` opens the owner control panel for section
   order, visibility, structured content, brand/contact, theme/data, and
   versions.
@@ -122,7 +132,17 @@ COVERMATE_URL=http://127.0.0.1:<printed-port> npm run smoke
 COVERMATE_URL=https://covermateinsurance.com npm run smoke
 ```
 
-Use targeted checks first, then broaden based on risk. The key local release checks are:
+Use targeted checks first, then broaden based on risk.
+
+For FAQ controls, start with `npm run check:faq` (isolated local browser
+persistence; no production Publish), plus relevant CMS/ID/source checks.
+For public copy, use `node scripts/copy-voice-check.mjs` and the voice audit's
+preview/browser instructions. The copy preview blocks Admin and form/API writes;
+it cannot verify CMS. These are task-specific checks, not a required bundle for
+every follow-up. Documentation-only edits need diff/link checks and skill
+validation when skills change, not app rebuilds or browser/release suites.
+
+The key local release checks are:
 
 ```bash
 npm run check:bundles
@@ -211,7 +231,7 @@ Important constraints:
 - If a named skill is used, read its current on-disk SKILL.md first.
 - UI work needs snapshot evidence in the final handoff.
 - Release work must use $release-gate; deployed media/image changes should use $production-asset-smoke after deployment; rollback-like work must use $rollback-guardrail first.
-- Treat docs/ADMIN_CMS_REBUILD_DECISIONS.md as the current admin/CMS decision authority. `/admin` is the Admin Portal Home with Operations, Website content, Analytics, and Settings. Website content has one editor entry; open the panel from `Tools -> Panel`.
+- Treat current Admin/CMS contract docs as authoritative, including docs/ARTICLES_PUBLISHING.md for the later Articles module. `/admin` shares Home, Operations/Cases, Website content, Articles, Analytics and Settings. Website content has one editor entry; open the panel from `Tools -> Panel`. Articles keeps its separate editor.
 - `Public site` opens a clean public route in a new tab and must not move the current Admin tab. Do not generate `/?view=public`.
 - Firestore live/draft data must prevail over hard-coded and local fallback content.
 

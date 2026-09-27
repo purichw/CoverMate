@@ -20,6 +20,12 @@ Source ownership:
   hydration, and DOM bindings in the injected `text/x-dc` runtime.
 - `cms-controller.js` composes owner commands through `withCmsController`:
   draft-save scheduling, Save/Publish/Reset, shortcuts, media, and history.
+  FAQ collection commands add a bilingual row and focus its question field,
+  or delete a stable-ID question after confirmation. Deletion removes both
+  languages from Draft, is recoverable with editor Undo/Redo, and permits an
+  empty collection. Hide remains a separate reversible visibility action.
+  These commands do not publish; `check:faq` exercises their saved reload,
+  preview, empty-state and mobile flows using isolated local persistence.
 - `editor-history.js` owns bounded per-tab Draft Undo/Redo snapshots. Publish
   rollback and Firestore version history are separate recovery mechanisms.
 - `admin-labels.js` owns the Thai Admin display dictionary; TH/EN remains the

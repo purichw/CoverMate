@@ -1,6 +1,8 @@
 # CMS Content Ownership
 
-Updated: 2026-09-24. Code schema: version 16; release evidence is in RELEASE_VISITOR_20260924.md. Version 3 adds
+Updated: 2026-09-27. Current source schema: `CMS_CONTENT_VERSION = 23` in
+`covermate-contract.js`. The entries below retain their schema-history scope;
+consult [HANDOFF.md](HANDOFF.md) for source versus release status. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
 Version 4 consolidates the former Guides into FAQ. Admin FAQ owns the question,
 answer, optional topic and reading time in both languages. The old section is
@@ -141,6 +143,53 @@ without a post-save rollback toast; Publish's separate 30-second rollback
 changes Live. See [CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md) for history,
 uncommitted JSON buffers and failure recovery. The source refactor changes no
 schema, stored content, Publish behavior or cache duration.
+
+### FAQ Collection Editing
+
+Open Website content > editor > Tools > Panel > Sections > FAQ. Controls remain
+Thai while the selected TH/EN language determines which question/answer fields
+are edited. Home and Motor use the same `sections.@faq` collection.
+
+- `เพิ่มคำถาม` appears before the list, creates one stable-ID item with separate
+  blank `th`/`en` objects (`q`, `a`, `label`, `meta`), and focuses the new question.
+  Fill the required visitor copy before publishing; the command does not write
+  translations or publish a placeholder on the live site.
+- The trash button opens a confirmation naming the question. Confirming removes
+  the entire item, including both languages, from Draft. Cancel changes nothing.
+- `ซ่อน` sets `on:false` without deleting content. Show restores visibility.
+  Reordering, duplication and optional topic/reading-time fields remain available.
+- Editor Undo/Redo restores deletion as one action, including ID, content and
+  order. The controller uses `upd` to remove obsolete inline overrides as part
+  of the same draft change. Save flushes normal Draft persistence; only the
+  separate explicit Publish action changes what visitors see.
+- Deleting the last question is supported. Reload must retain `items:[]`, and
+  Add must still work. Never restore archived Guides or fallback questions over
+  an intentionally empty FAQ.
+
+Owners: `src/visitor/runtime.js` supplies row/add bindings,
+`src/visitor/template.html` renders controls, and
+`src/visitor/cms-controller.js` owns `addFaqQuestion`, `requestDeleteFaq`,
+`deleteFaqConfirmed` and focus recovery. The generic repeatable hide command
+is not a hard-delete operation; the new deletion command is FAQ-specific.
+
+`npm run check:faq` exercises migration plus actual local browser interactions,
+mocked Draft persistence/reload, Preview, Undo/Redo and mobile controls. Its
+production APIs and Publish are disabled. Combine it with `check:cms`,
+`check:ids` and `check:visitor-source` for changes to this collection. Local
+passes do not establish deployed code or successful production CMS publication.
+
+### Public Copy Changes
+
+Follow [the voice direction](COPY_VOICE_AUDIT_20260927.md): plain, warm,
+consultative Thai/English, real FAQ questions, few slogans and no invented
+coverage or service promises. Preserve IDs, visibility/order, deliberate blanks,
+licence/contact facts, consent and unrelated owner content.
+
+Fallback/default edits and existing Firestore content are separate changes.
+The reviewed copy deck and field-level proposal helper are documented in the
+voice audit. Apply a reviewed proposal to fresh data with old-value/inline-copy
+conflict checks; do not reset a whole draft or regenerate a baseline merely to
+bypass conflicts. Confirm the diff and publication scope before any remote write.
 
 ## Licence Synchronization
 

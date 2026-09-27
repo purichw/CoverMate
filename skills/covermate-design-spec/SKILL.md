@@ -15,7 +15,12 @@ For substantive design, implementation, or handoff work, read:
 
 - `references/current-design-spec.md`
 
-If the repository file exists at `/Users/point/CoverMate/docs/covermate-website-full-design-spec.md`, prefer that file as the newest source and use this bundled reference as a fallback snapshot. If they differ, the repository doc wins unless the user explicitly says otherwise.
+Prefer `docs/covermate-website-full-design-spec.md` in the active CoverMate
+checkout. The primary repository is `/Users/point/CoverMate`, but an already
+selected task checkout takes precedence. Use the bundled reference only as a
+fallback snapshot. The active repository doc wins unless the user says otherwise.
+Resolve primary-repository links in that snapshot against the active checkout
+when working in a task checkout; do not switch to older primary-checkout docs.
 
 For production snapshots, visual archives, release evidence, or design handoffs that need current screenshots, also read:
 
@@ -26,8 +31,8 @@ For production snapshots, visual archives, release evidence, or design handoffs 
 1. Establish the task surface: public home, dedicated `/motor` page, `/#motor` legacy alias, admin login, Admin Portal shell, owner edit mode, owner control panel, or admin analytics.
 2. Read the current design spec before changing design-sensitive behavior, copy, layout, nav, admin flows, analytics, SEO, or dynamic CMS assumptions.
 3. Reconcile any new screenshot/spec/reference against the current product decisions. The newest explicit user request wins, but preserve existing CoverMate decisions unless the user intentionally changes them.
-4. Preserve the two current public entry points: `/` is the full home page, and `/motor` is the dedicated motor-insurance campaign page in the same product. `/#motor` remains only a legacy home-page alias to `#insurers`.
-5. Preserve the Admin Portal after login as the unified private shell for `Operations`, `Website content`, `Analytics`, and `Settings`. Website content uses one editor entry; do not reintroduce a separate `Arrange & customise` launcher card.
+4. Preserve `/` and `/motor`, plus `/articles` and `/articles/:slug` subject to the master visibility/publication rules in `docs/ARTICLES_PUBLISHING.md`. `/#motor` remains only a legacy home-page alias to `#insurers`.
+5. Preserve the unified private Admin shell: Home, Operations/Cases, Website content, Articles, Analytics and Settings, with existing role gates. Website content uses one editor entry; Articles has its own editor. Do not reintroduce a separate `Arrange & customise` launcher card or local-only article publication.
 6. Preserve natural Thai Admin controls with conventional English terms such as `Save draft`, `Preview`, `Publish`, `Undo` and `Redo`; follow `docs/ADMIN_LANGUAGE.md`. Public TH/EN content switching must not translate Admin controls or overwrite the other content language.
 7. Preserve Google Sans family usage across Thai and English visitor/admin text.
 8. Treat Firestore live content as canonical. Local fallback/cache must not override successfully loaded live content.
@@ -49,6 +54,9 @@ For production snapshots, visual archives, release evidence, or design handoffs 
 - No `[object Object]` labels may appear in nav or UI.
 - `/#motor-focus` is legacy/unexposed compatibility only; `/motor` is the current dedicated motor page.
 - Home follows the approved compact redesign in `docs/HOME_REDESIGN.md`, with standalone editable Coverage and legacy Guides items consolidated into FAQ. Section availability is not a mandate to show every section. Preserve current CMS visibility, complete tier choices and truthful content. Read current live/draft data for order rather than restoring a historical list.
+- Public TH/EN voice is a helpful companion, not a marketer: plain, warm and serious about facts. FAQ headings should sound like questions ordinary customers ask; answer directly and keep necessary conditions. Limit punchlines to genuinely useful brand moments, without turning "companion" into a slogan. Follow `docs/COPY_VOICE_AUDIT_20260927.md`; preserve licence, consent and coverage facts.
+- FAQ collection ownership is `sections.@faq.items.@id.{th,en}.{q,a,label,meta}`. Add must be discoverable and focus the new question. Confirmed Delete removes both languages from Draft and is undoable; Hide is not deletion. Preserve stable IDs/order, intentional blanks and empty arrays, and never resurrect archived Guides. Read `docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing` for command owners and the local browser harness.
+- Existing Firestore copy is not updated by changing defaults or deploying code. Use reviewed field-level proposals with old-value/inline-override conflicts against fresh state, and preserve unrelated draft work. The read-only public copy preview is not a CMS test environment. Check `docs/HANDOFF.md` for candidate/publication status rather than storing a release assertion in this skill.
 - Every visitor content image has a CMS media owner and ratio-aware crop/fit flow; keep source/output URLs and draft/live semantics. Read `docs/CMS_MEDIA.md` for Cloudinary setup and limits. Never hard-code replacements around Admin or revive Firebase Storage.
 - Compare complete desktop/mobile composition, section density, optical logo size, equal collapsed peer cards and disclosure padding. Tablet should retain desktop-like composition with touch/mobile behavior. The owner requested roughly 3-4 viewports for this compact Home; measure actual comparable state, never force that by clipping content or shrinking text beyond readability.
 - Latest owner-approved references govern visual direction; production governs existing behavior/data until an authorized migration. Use `docs/HANDOFF.md` to distinguish candidate evidence from production.

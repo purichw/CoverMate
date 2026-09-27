@@ -26,8 +26,8 @@ const DEFAULTS = {
       "en": "CoverMate | AIA and Motor Insurance Advisory"
     },
     "description": {
-      "th": "ปรึกษาประกันชีวิตและสุขภาพผ่าน AIA และประกันรถยนต์จาก 14 บริษัทประกันภัย พร้อมคำแนะนำชัดเจนโดยไม่มีค่าใช้จ่าย",
-      "en": "Life and health insurance through AIA, plus motor insurance options from 14 insurers. Clear guidance at no consultation fee."
+      "th": "CoverMate ให้คำปรึกษาประกันชีวิตและสุขภาพ AIA พร้อมช่วยอ่านกรมธรรม์เดิมและเปรียบเทียบประกันรถยนต์ผ่านศรีกรุงโบรคเกอร์",
+      "en": "Advice on AIA life and health insurance, help reviewing existing policies, and car insurance comparisons through Srikrung Broker."
     }
   },
   "contact": {
@@ -44,7 +44,7 @@ const DEFAULTS = {
     },
     "area": {
       "th": "กรุงเทพฯ และปริมณฑล · นัดเจอหรือคุยออนไลน์ได้",
-      "en": "Bangkok & around · in person or online"
+      "en": "Bangkok and surrounding areas · in-person or online appointments"
     }
   },
   "header": {
@@ -120,23 +120,23 @@ const DEFAULTS = {
       "bg": "bg",
       "cols": 2,
       "th": {
-        "kicker": "ปรึกษาเบื้องต้นโดยไม่มีค่าใช้จ่าย · กรุงเทพฯ",
-        "title": "เรื่องความเสี่ยง\nไม่จำเป็นต้องจัดการเพียงลำพัง",
-        "body": "ประกันชีวิตและสุขภาพดำเนินการผ่าน AIA ส่วนประกันรถยนต์ เราเปรียบเทียบความคุ้มครองและเบี้ยประกันจากบริษัทประกันภัย 14 แห่ง เพื่อช่วยให้คุณเลือกความคุ้มครองที่เหมาะสม โดยไม่เสนอเกินความจำเป็น",
-        "cta1": "ติดต่อเราทาง LINE",
+        "kicker": "ปรึกษาเรื่องประกันกับ CoverMate",
+        "title": "มีคำถามเรื่องประกัน\nคุยกับเราได้",
+        "body": "ไม่แน่ใจว่าควรทำประกันแบบไหน หรืออยากรู้ว่ากรมธรรม์ที่มีคุ้มครองอะไรบ้าง เราช่วยอ่านและอธิบายให้ได้",
+        "cta1": "คุยทาง LINE",
         "cta2": "ประเมินความคุ้มครอง",
-        "note": "เราตอบกลับทุกข้อความด้วยตนเองภายในเวลาทำการ",
-        "claimText": "เกิดอุบัติเหตุอยู่ตอนนี้ โทร 1669 ก่อนเสมอ แล้วค่อยติดต่อเรา",
+        "note": "ปรึกษาได้โดยไม่มีค่าใช้จ่าย เราตอบกลับในเวลาทำการ",
+        "claimText": "หากมีผู้เจ็บป่วยฉุกเฉิน โทร 1669",
         "claimLinkText": "ดูขั้นตอนเมื่อเกิดเหตุ"
       },
       "en": {
-        "kicker": "Complimentary consultation · Bangkok",
-        "title": "You do not have to\nmanage risk alone",
-        "body": "For life and health insurance, we arrange cover through AIA. For motor insurance, we compare options from 14 insurers to help you choose suitable protection without unnecessary extras.",
-        "cta1": "Contact us on LINE",
+        "kicker": "Insurance advice from CoverMate",
+        "title": "Questions about insurance?\nWe're here to help.",
+        "body": "We can help you understand a policy you already have or compare options if you're considering a new one.",
+        "cta1": "Chat on LINE",
         "cta2": "Estimate your cover",
-        "note": "We respond personally to every message during business hours.",
-        "claimText": "In an accident right now, call 1669 first, then contact us",
+        "note": "Advice is free. We reply during business hours.",
+        "claimText": "For a medical emergency in Thailand, call 1669.",
         "claimLinkText": "See the accident guide"
       },
       "items": [],
@@ -155,10 +155,10 @@ const DEFAULTS = {
         {
           "icon": "check",
           "th": {
-            "label": "แนะนำตามความจำเป็น"
+            "label": "ปรึกษาได้โดยไม่มีค่าใช้จ่าย"
           },
           "en": {
-            "label": "Advice based on your needs"
+            "label": "No consultation fee"
           }
         },
         {
@@ -176,7 +176,7 @@ const DEFAULTS = {
             "label": "ติดต่อสะดวกทาง LINE"
           },
           "en": {
-            "label": "Easy to reach on LINE"
+            "label": "Chat with us on LINE"
           }
         },
         {
@@ -197,14 +197,14 @@ const DEFAULTS = {
       "bg": "surface",
       "cols": 3,
       "th": {
-        "kicker": "สิ่งที่เราดูแลให้ได้",
-        "title": "ความคุ้มครอง\nที่เราช่วยจัดให้ได้",
-        "body": "ประกันชีวิตและสุขภาพดำเนินการผ่าน AIA ส่วนประกันรถยนต์ให้บริการในฐานะนายหน้า หากคุณมีกรมธรรม์อยู่แล้ว เรายินดีช่วยตรวจสอบความคุ้มครองที่อาจซ้ำซ้อนหรือส่วนที่อาจยังขาด โดยไม่มีค่าใช้จ่าย"
+        "kicker": "ประเภทประกัน",
+        "title": "ประกันที่เราช่วยดูให้ได้",
+        "body": "เราเป็นตัวแทน AIA สำหรับประกันชีวิตและสุขภาพ ส่วนประกันรถยนต์ เราช่วยเปรียบเทียบแผนในฐานะนายหน้าผ่านศรีกรุงโบรคเกอร์"
       },
       "en": {
-        "kicker": "What we can arrange",
-        "title": "The cover we can\narrange",
-        "body": "Life and health insurance is arranged through AIA, while motor insurance is handled in a broker capacity. If you already have cover, we can review it for potential gaps or overlap at no charge."
+        "kicker": "Insurance options",
+        "title": "Insurance we can help with",
+        "body": "We are an AIA agent for life and health insurance. For car insurance, we compare options as a broker through Srikrung Broker."
       },
       "items": [
         {
@@ -213,17 +213,17 @@ const DEFAULTS = {
           "th": {
             "title": "ประกันชีวิต",
             "sub": "ตัวแทน AIA · ครอบครัว ออม เกษียณ",
-            "b1": "แบบตลอดชีพและชั่วระยะเวลา สำหรับผู้ที่มีคนพึ่งพารายได้ของคุณ",
-            "b2": "แบบสะสมทรัพย์และบำนาญสามารถใช้สิทธิลดหย่อนภาษีได้ตามเงื่อนไขที่กฎหมายกำหนด",
-            "b3": "โรคร้ายแรงจ่ายผลประโยชน์เป็นเงินก้อนเมื่อตรวจพบโรคที่อยู่ภายใต้ความคุ้มครอง",
+            "b1": "ช่วยดูทุนประกัน โดยคุยเรื่องรายได้ หนี้ และคนที่คุณต้องดูแล",
+            "b2": "อธิบายแบบตลอดชีพ ชั่วระยะเวลา สะสมทรัพย์ และบำนาญ ว่าแต่ละแบบต่างกันอย่างไร",
+            "b3": "ดูเบี้ย ระยะเวลาจ่าย และผลประโยชน์ของแผนที่สนใจให้เข้าใจก่อนสมัคร",
             "note": "ไม่รวมแบบประกันควบการลงทุน (ยูนิตลิงก์)"
           },
           "en": {
             "title": "Life",
             "sub": "AIA agent · family, savings, retirement",
-            "b1": "Whole-life and term cover for people whose family depends on their income.",
-            "b2": "Savings and annuity plans may qualify for tax deductions, subject to applicable rules.",
-            "b3": "Critical illness benefits pay a lump sum when a covered illness is diagnosed.",
+            "b1": "We help you consider how much cover you need, based on your income, debts and dependants.",
+            "b2": "We explain the differences between whole-life, term, savings and annuity policies.",
+            "b3": "We go through premiums, payment periods and benefits before you apply.",
             "note": "Unit-linked plans are not offered."
           }
         },
@@ -232,17 +232,17 @@ const DEFAULTS = {
           "tone": "sage",
           "th": {
             "title": "ประกันสุขภาพ",
-            "sub": "ตัวแทน AIA · เหมาจ่าย โรคร้ายแรง ชดเชย",
-            "b1": "แบบเหมาจ่ายด้วยวงเงินรวม ช่วยลดข้อจำกัดจากการกำหนดวงเงินย่อยในแต่ละรายการ",
-            "b2": "เลือกค่าห้องให้สอดคล้องกับโรงพยาบาลที่คุณมีแนวโน้มใช้จริง",
-            "b3": "ค่าชดเชยรายวันช่วยรองรับรายได้ที่อาจหายไประหว่างพักรักษาตัว"
+            "sub": "ตัวแทน AIA · ค่ารักษาและผลประโยชน์สุขภาพ",
+            "b1": "ช่วยดูวงเงินค่ารักษา ค่าห้อง และเงื่อนไขของแผนที่คุณสนใจ",
+            "b2": "เทียบกับโรงพยาบาลที่คุณใช้ งบประมาณ และสวัสดิการที่มีอยู่",
+            "b3": "อธิบายข้อยกเว้น ระยะรอคอย และค่าใช้จ่ายที่อาจต้องจ่ายเอง"
           },
           "en": {
             "title": "Health",
-            "sub": "AIA agent · lump-sum, CI, income",
-            "b1": "Aggregate-limit plans can reduce the restrictions created by item-by-item caps.",
-            "b2": "Room benefits should match the hospitals you are likely to use.",
-            "b3": "Daily cash benefits can help replace income while you are recovering."
+            "sub": "AIA agent · medical cover and benefits",
+            "b1": "We help you compare treatment limits, room benefits and policy terms.",
+            "b2": "We take into account your preferred hospital, budget and existing benefits.",
+            "b3": "We explain exclusions, waiting periods and costs you may need to pay yourself."
           }
         },
         {
@@ -250,17 +250,17 @@ const DEFAULTS = {
           "tone": "accent",
           "th": {
             "title": "โรคร้ายแรง",
-            "sub": "ตัวแทน AIA · จ่ายก้อนเมื่อตรวจเจอ",
-            "b1": "รับผลประโยชน์เป็นเงินก้อนเมื่อตรวจพบโรคที่อยู่ภายใต้ความคุ้มครอง โดยไม่ต้องใช้ใบเสร็จค่ารักษาในการเบิกผลประโยชน์",
-            "b2": "ความคุ้มครองครอบคลุมกลุ่มโรคสำคัญ เช่น มะเร็ง หลอดเลือดสมอง และหัวใจ ตามเงื่อนไขของแบบประกัน",
-            "b3": "ช่วยรองรับค่าใช้จ่ายหรือรายได้ที่อาจหายไประหว่างการรักษาและพักฟื้น"
+            "sub": "ตัวแทน AIA · เงินก้อนเมื่อเข้าเงื่อนไข",
+            "b1": "จ่ายเงินก้อนเมื่อเจ็บป่วยด้วยโรคและเข้าเงื่อนไขที่ระบุในกรมธรรม์",
+            "b2": "ช่วยดูว่าแผนคุ้มครองโรคอะไร ระยะไหน และมีข้อยกเว้นอะไรบ้าง",
+            "b3": "พิจารณาวงเงินร่วมกับค่ารักษาและค่าใช้จ่ายระหว่างพักฟื้น"
           },
           "en": {
             "title": "Critical illness",
-            "sub": "AIA agent · lump sum on diagnosis",
-            "b1": "A lump-sum benefit is paid when a covered illness is diagnosed, without requiring medical receipts for that benefit.",
-            "b2": "Cover can include major illness groups such as cancer, stroke and heart conditions, subject to plan terms.",
-            "b3": "It can help with expenses or lost income during treatment and recovery."
+            "sub": "AIA agent · lump-sum benefits",
+            "b1": "Pays a lump sum when an illness meets the conditions set out in the policy.",
+            "b2": "We explain which illnesses and stages are covered, and what is excluded.",
+            "b3": "We help you consider the benefit amount alongside treatment and recovery expenses."
           }
         },
         {
@@ -270,15 +270,15 @@ const DEFAULTS = {
             "title": "อุบัติเหตุส่วนบุคคล",
             "sub": "ตัวแทน AIA · คุ้มครอง 24 ชม.",
             "b1": "คุ้มครองอุบัติเหตุตลอด 24 ชั่วโมง ทั้งที่ทำงาน บนถนน หรือที่บ้าน",
-            "b2": "รองรับค่ารักษาจากอุบัติเหตุ ผลประโยชน์จากการบาดเจ็บ และทุพพลภาพถาวรตามเงื่อนไขกรมธรรม์",
-            "b3": "เบี้ยประกันโดยทั่วไปเข้าถึงได้ง่ายและขั้นตอนการสมัครไม่ซับซ้อน เหมาะสำหรับผู้ที่ต้องการเริ่มต้นความคุ้มครองอุบัติเหตุ"
+            "b2": "ช่วยเทียบวงเงินค่ารักษาและผลประโยชน์กรณีบาดเจ็บหรือทุพพลภาพตามเงื่อนไขของแต่ละแผน",
+            "b3": "ดูร่วมกับลักษณะงาน การเดินทาง และประกันที่มีอยู่แล้ว"
           },
           "en": {
             "title": "Personal accident",
             "sub": "AIA agent · 24-hour protection",
             "b1": "Accident cover applies around the clock, whether at work, on the road or at home.",
-            "b2": "It can support medical expenses, injury benefits and permanent disability benefits, subject to policy terms.",
-            "b3": "Premiums are generally accessible and the application process is straightforward for first accident cover."
+            "b2": "We compare medical limits and injury or disability benefits under each plan.",
+            "b3": "We consider your work, travel and any cover you already have."
           }
         },
         {
@@ -287,16 +287,16 @@ const DEFAULTS = {
           "th": {
             "title": "บำนาญ",
             "sub": "ตัวแทน AIA · รายได้ยามเกษียณ",
-            "b1": "เปลี่ยนเงินออมเป็นรายได้ประจำในวัยเกษียณตามรูปแบบและเงื่อนไขของแผน",
-            "b2": "สามารถใช้สิทธิลดหย่อนภาษีเพิ่มเติมได้ตามเพดานและเงื่อนไขของกรมสรรพากร",
-            "b3": "เริ่มวางแผนเร็วช่วยให้มีเวลาสะสมทุนและจัดระดับรายได้ในอนาคตได้เป็นระบบขึ้น"
+            "b1": "ช่วยดูเบี้ยที่ต้องจ่ายและเงินบำนาญที่จะได้รับตามแผน",
+            "b2": "ตรวจช่วงอายุที่เริ่มรับเงิน ระยะเวลารับเงิน และเงื่อนไขให้ครบ",
+            "b3": "พิจารณาร่วมกับเงินออม ภาระค่าใช้จ่าย และแผนเกษียณที่มีอยู่"
           },
           "en": {
             "title": "Annuity",
             "sub": "AIA agent · income for retirement",
-            "b1": "Turns savings into scheduled retirement income according to the plan structure.",
-            "b2": "May qualify for additional tax deductions, subject to Revenue Department limits and conditions.",
-            "b3": "Starting earlier gives more time to build capital and plan future income."
+            "b1": "We explain the premiums and retirement payments set out in the plan.",
+            "b2": "We go through when payments start, how long they last and the conditions that apply.",
+            "b3": "We consider the policy alongside your savings, expenses and existing retirement plans."
           }
         },
         {
@@ -305,16 +305,16 @@ const DEFAULTS = {
           "th": {
             "title": "ประกันรถยนต์",
             "sub": "ชั้น 1–3 · พ.ร.บ.",
-            "b1": "ในฐานะนายหน้า เราสามารถเปรียบเทียบข้อเสนอสำหรับรถคันเดียวกันจากบริษัทประกันภัย 14 แห่งในรอบเดียว",
-            "b2": "ครอบคลุมภาคสมัครใจชั้น 1–3 และ พ.ร.บ. พร้อมช่วยพิจารณาทุนประกันและค่าเสียหายส่วนแรกให้เหมาะกับการใช้รถ",
-            "b3": "ช่วยเตือนต่ออายุล่วงหน้าและจัดทำข้อมูลเปรียบเทียบใหม่ให้พิจารณาในแต่ละปี"
+            "b1": "ช่วยเปรียบเทียบเบี้ยและความคุ้มครองจากบริษัทที่รับประกันรถของคุณ ผ่านศรีกรุงโบรคเกอร์",
+            "b2": "อธิบายความต่างของแต่ละชั้น รวมถึงทุนประกัน ซ่อมห้างหรือซ่อมอู่ และค่าเสียหายส่วนแรก",
+            "b3": "สอบถามเรื่อง พ.ร.บ. การต่ออายุ หรือให้ช่วยประสานงานเคลมได้"
           },
           "en": {
-            "title": "Motor insurance",
+            "title": "Car insurance",
             "sub": "Class 1–3 · compulsory",
-            "b1": "As a broker, we can compare options for the same vehicle across 14 insurers in one review.",
-            "b2": "Voluntary Class 1–3 and compulsory cover can be reviewed with suitable sums insured and excess levels.",
-            "b3": "We help with renewal reminders and provide a fresh comparison each year."
+            "b1": "Through Srikrung Broker, we compare premiums and cover from insurers that can insure your car.",
+            "b2": "We explain each class, the sum insured, repair options and excess.",
+            "b3": "You can also ask about compulsory cover, renewals or help with a claim."
           }
         }
       ]
@@ -327,50 +327,50 @@ const DEFAULTS = {
       "cols": 3,
       "th": {
         "kicker": "ไม่มีค่าใช้จ่าย · ไม่ต้องย้ายบริษัท",
-        "title": "ส่งกรมธรรม์เดิมมา\nเราช่วยตรวจให้โดยไม่มีค่าใช้จ่าย",
-        "body": "ส่งภาพหน้าตารางกรมธรรม์ทาง LINE โดยไม่ต้องกรอกแบบฟอร์ม เราจะช่วยตรวจสอบว่าปัจจุบันมีความคุ้มครองอะไรอยู่ มีส่วนใดที่อาจยังขาดหรือซ้ำซ้อน และสรุปประเด็นสำคัญกลับให้เป็นภาษาที่เข้าใจง่าย",
+        "title": "มีประกันอยู่แล้ว\nให้เราช่วยอ่านได้",
+        "body": "ส่งหน้าตารางกรมธรรม์ทาง LINE แล้วบอกจุดที่สงสัย เราจะช่วยดูความคุ้มครอง วงเงิน และเงื่อนไขให้ โดยไม่จำเป็นต้องซื้อประกันเพิ่ม",
         "cta1": "ส่งกรมธรรม์ทาง LINE",
-        "note": "หากความคุ้มครองเดิมของคุณเหมาะสมอยู่แล้ว เราจะแจ้งให้ทราบอย่างตรงไปตรงมา และจะไม่แนะนำให้เปลี่ยนหรือยกเลิกกรมธรรม์เดิมโดยไม่มีเหตุผลที่เหมาะสม"
+        "note": "ก่อนเปลี่ยนหรือยกเลิกกรมธรรม์ ควรตรวจสิทธิและเงื่อนไขของทั้งฉบับเดิมและฉบับใหม่ให้ครบ"
       },
       "en": {
         "kicker": "No charge · no need to switch",
-        "title": "Send us your existing policy\nfor a complimentary review",
-        "body": "Send a clear photograph of the policy schedule on LINE. We will review your existing benefits, identify potential gaps or overlap, and return a concise summary in plain language.",
+        "title": "Already have insurance?\nWe can review it with you.",
+        "body": "Send your policy schedule on LINE and tell us what you'd like to check. We can explain the cover, limits and terms. You don't need to buy another policy.",
         "cta1": "Send your policy on LINE",
-        "note": "If your existing cover is already suitable, we will say so clearly. We will not recommend replacing a good policy without an appropriate reason."
+        "note": "Before changing or cancelling a policy, check the benefits and conditions of both the existing policy and any replacement."
       },
       "items": [
         {
           "icon": "camera",
           "th": {
-            "title": "ส่งอะไรมา",
-            "body": "หน้าตารางกรมธรรม์ที่แสดงทุนประกันและความคุ้มครอง ไม่ว่าจะเป็นรถ ชีวิต หรือสุขภาพ ถ่ายด้วยมือถือให้ชัดเจนก็เพียงพอ"
+            "title": "ต้องส่งอะไรบ้าง?",
+            "body": "เริ่มจากหน้าตารางที่แสดงทุนประกันและความคุ้มครอง ถ่ายให้เห็นข้อความชัด และปิดข้อมูลส่วนตัวที่ไม่จำเป็น เช่น เลขบัตรประชาชน ก่อนส่ง"
           },
           "en": {
-            "title": "What to send",
-            "body": "The schedule page showing sums insured and benefits for motor, life or health cover. A clear phone photograph is enough."
+            "title": "What should I send?",
+            "body": "Start with a clear photo of the schedule showing cover and benefit amounts. Hide unnecessary personal details, such as your ID card number, before sending it."
           }
         },
         {
           "icon": "file",
           "th": {
-            "title": "เราตรวจอะไรให้",
-            "body": "ทุนประกันสัมพันธ์กับภาระจริงหรือไม่ ค่าห้องเหมาะกับโรงพยาบาลที่คุณใช้หรือเปล่า มีความคุ้มครองซ้ำซ้อนตรงไหน และมีส่วนใดที่ยังอาจขาด"
+            "title": "ช่วยดูเรื่องไหนได้บ้าง?",
+            "body": "ดูวงเงิน ความคุ้มครองที่ซ้ำกัน และข้อจำกัดที่ควรรู้ โดยเทียบกับสิ่งที่คุณต้องการและสวัสดิการที่มีอยู่"
           },
           "en": {
-            "title": "What we review",
-            "body": "Whether sums insured match your obligations, whether room benefits fit the hospital you use, where policies may overlap, and where protection may still be missing."
+            "title": "What can you check?",
+            "body": "We review limits, overlapping benefits and restrictions, alongside your needs and any benefits you already have."
           }
         },
         {
           "icon": "chat",
           "th": {
-            "title": "ได้อะไรกลับ",
-            "body": "สรุปเป็นภาษาที่เข้าใจง่าย ว่าประเด็นใดควรพิจารณาก่อน เรื่องใดรอได้ และจุดใดที่ยังเหมาะสมอยู่แล้ว"
+            "title": "จะได้รับคำแนะนำแบบไหน?",
+            "body": "เราสรุปให้ว่ากรมธรรม์คุ้มครองอะไร มีข้อไหนควรตรวจเพิ่มเติม และตอบคำถามที่คุณสงสัย"
           },
           "en": {
-            "title": "What you receive",
-            "body": "A plain-language summary of what to consider first, what can wait, and what already appears suitable."
+            "title": "What will you explain?",
+            "body": "We summarise what the policy covers, flag anything that needs checking and answer your questions."
           }
         }
       ]
@@ -447,14 +447,14 @@ const DEFAULTS = {
       "th": {
         "kicker": "ประกันรถยนต์ · ในฐานะนายหน้า",
         "title": "ประกันรถยนต์\nเปรียบเทียบได้ 14 แห่ง",
-        "body": "สำหรับประกันรถยนต์ เราสามารถเปรียบเทียบข้อเสนอจากบริษัทประกันภัย 14 แห่ง เพื่อพิจารณาทางเลือกที่เหมาะสมกับคุณ ส่วนประกันชีวิตและสุขภาพดำเนินการผ่าน AIA",
-        "cta1": "ดูหน้าประกันรถยนต์โดยเฉพาะ"
+        "body": "เราเป็นตัวแทน AIA สำหรับประกันชีวิตและสุขภาพ และเป็นนายหน้าประกันรถยนต์ผ่านศรีกรุงโบรคเกอร์ กรมธรรม์ออกโดยบริษัทประกันที่คุณเลือก",
+        "cta1": "ดูประกันรถยนต์"
       },
       "en": {
         "kicker": "Motor insurance · as a broker",
         "title": "Motor insurance\ncompared across 14 insurers",
-        "body": "For motor insurance, we compare options from 14 insurers. Life and health insurance is arranged through AIA.",
-        "cta1": "Open the dedicated motor page"
+        "body": "We are an AIA agent for life and health insurance and a car insurance broker through Srikrung Broker. Your policy is issued by the insurer you choose.",
+        "cta1": "View car insurance"
       },
       "items": [
         {
@@ -593,12 +593,12 @@ const DEFAULTS = {
           "th": {
             "kicker": "ประกันชีวิต+สุขภาพ · ในฐานะตัวแทน",
             "title": "ตัวแทน AIA อย่างเป็นทางการ",
-            "body": "ใบอนุญาตตัวแทนประกันชีวิตเลขที่ 6401006221 · ประกันชีวิตและสุขภาพ เราดูแลในฐานะตัวแทน AIA โดยตรง กรมธรรม์ออกโดย AIA"
+            "body": "ใบอนุญาตตัวแทนประกันชีวิตเลขที่ {{lifeLicence}} · เราให้คำปรึกษาและดูแลการสมัครประกันชีวิตและสุขภาพของ AIA โดย AIA เป็นผู้ออกกรมธรรม์"
           },
           "en": {
             "kicker": "Life & health · as an agent",
             "title": "Official AIA agent",
-            "body": "Life agent licence No. 6401006221 · Life and health insurance is handled directly as an AIA agent. Policies are issued by AIA."
+            "body": "Life agent licence No. {{lifeLicence}}. We advise on AIA life and health insurance and help with applications. AIA issues the policy."
           }
         },
         {
@@ -609,12 +609,12 @@ const DEFAULTS = {
           "th": {
             "kicker": "ประกันรถยนต์ · ในฐานะนายหน้า",
             "title": "ศรีกรุงโบรคเกอร์ · Srikrung Broker",
-            "body": "ใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ ว00287/2534 · เราเสนอและจัดเบี้ยประกันรถยนต์ในฐานะนายหน้าภายใต้ศรีกรุงโบรคเกอร์ กรมธรรม์ออกโดยบริษัทประกันที่คุณเลือก"
+            "body": "ศรีกรุงโบรคเกอร์ ใบอนุญาตนายหน้าประกันวินาศภัยเลขที่ {{brokerLicence}} · เราช่วยเปรียบเทียบและจัดทำประกันรถยนต์ผ่านศรีกรุงโบรคเกอร์ โดยบริษัทประกันที่คุณเลือกเป็นผู้ออกกรมธรรม์"
           },
           "en": {
             "kicker": "Motor cover · as a broker",
             "title": "ศรีกรุงโบรคเกอร์ · Srikrung Broker",
-            "body": "Non-life broker licence No. ว00287/2534 · Motor insurance is proposed and placed in a broker capacity under Srikrung Broker. Policies are issued by the insurer you choose."
+            "body": "Srikrung Broker, non-life broker licence No. {{brokerLicence}}. We compare and arrange car insurance through Srikrung Broker. The insurer you choose issues the policy."
           }
         }
       ],
@@ -821,15 +821,15 @@ const DEFAULTS = {
       "cols": 1,
       "th": {
         "kicker": "ประกันรถยนต์ · เทียบชั้นความคุ้มครอง",
-        "title": "แต่ละชั้น\nต่างกันตรงไหน",
+        "title": "ประกันรถยนต์แต่ละชั้น\nต่างกันอย่างไร?",
         "body": "ตารางนี้ช่วยให้เห็นความแตกต่างโดยทั่วไปของประกันรถยนต์แต่ละชั้น โดยเฉพาะความคุ้มครองรถของผู้เอาประกัน ภัยธรรมชาติ และเงื่อนไขที่ต้องตรวจสอบก่อนเลือก",
-        "note": "ตารางนี้เป็นภาพรวมของความคุ้มครองทั่วไป วงเงิน เงื่อนไข และข้อยกเว้นแตกต่างกันตามกรมธรรม์ของแต่ละบริษัท ก่อนตัดสินใจ เราสามารถช่วยตรวจสอบเงื่อนไขจริงของแผนที่คุณสนใจได้โดยไม่มีค่าใช้จ่าย"
+        "note": "ตารางนี้เป็นข้อมูลสรุป วงเงินและข้อยกเว้นขึ้นอยู่กับกรมธรรม์ของแต่ละบริษัท หากไม่แน่ใจว่าข้อไหนหมายถึงอะไร ถามเราได้"
       },
       "en": {
         "kicker": "Motor insurance · comparing the classes",
-        "title": "What actually differs\nbetween the classes",
+        "title": "How do the car insurance\nclasses compare?",
         "body": "This table shows the general differences between motor insurance classes, especially cover for your own vehicle, natural disasters and conditions to review before choosing.",
-        "note": "This table is a general overview. Limits, conditions and exclusions vary by insurer and policy. We can review the actual policy wording with you before you decide, at no charge."
+        "note": "This is a summary. Limits and exclusions depend on the policy and insurer. Ask us if anything is unclear."
       },
       "heads": [
         {
@@ -865,12 +865,14 @@ const DEFAULTS = {
           "th": {
             "label": "ชั้น 1",
             "note": "",
-            "value": "เหมาะสำหรับรถใหม่ หรือผู้ขับขี่ที่ต้องการความคุ้มครองกว้างกว่าโดยรวม"
+            "value": "คุ้มครองรถตัวเองและคู่กรณีตามเงื่อนไข รวมถึงอุบัติเหตุที่ไม่มีคู่กรณี",
+            "tag": "รวมการชนแบบไม่มีคู่กรณี"
           },
           "en": {
             "label": "Class 1",
             "note": "",
-            "value": "Suitable for newer vehicles or drivers seeking broader overall protection"
+            "value": "Covers your car and third-party liability, including single-vehicle accidents, subject to policy terms.",
+            "tag": "Includes single-vehicle accidents"
           }
         },
         {
@@ -884,12 +886,14 @@ const DEFAULTS = {
           "th": {
             "label": "ชั้น 2+",
             "note": "เฉพาะชนคู่กรณีที่ระบุได้",
-            "value": "เหมาะสำหรับรถมูลค่าปานกลางที่ต้องการสมดุลระหว่างความคุ้มครองและเบี้ยประกัน"
+            "value": "คุ้มครองรถตัวเองเมื่อชนกับยานพาหนะที่ระบุคู่กรณีได้ รวมถึงรถหายและไฟไหม้ตามเงื่อนไข",
+            "tag": "ชนรถ รถหาย และไฟไหม้"
           },
           "en": {
             "label": "Class 2+",
             "note": "only when the other vehicle is identified",
-            "value": "Suitable for mid-value cars where premium and protection need to be balanced"
+            "value": "Own-car cover for collisions with an identified vehicle, plus theft and fire, subject to policy terms.",
+            "tag": "Collision, theft and fire"
           }
         },
         {
@@ -903,12 +907,14 @@ const DEFAULTS = {
           "th": {
             "label": "ชั้น 2",
             "note": "",
-            "value": "เหมาะกับรถที่ต้องการเน้นความคุ้มครองรถหายหรือไฟไหม้มากกว่าความเสียหายจากการชน"
+            "value": "คุ้มครองคู่กรณี และรถตัวเองกรณีรถหายหรือไฟไหม้ตามเงื่อนไข ไม่รวมความเสียหายจากการชนของรถตัวเอง",
+            "tag": "รถหายและไฟไหม้"
           },
           "en": {
             "label": "Class 2",
             "note": "",
-            "value": "Suitable when theft or fire is the main concern rather than collision damage"
+            "value": "Third-party liability, plus theft and fire cover for your car. Does not cover collision damage to your own car.",
+            "tag": "Theft and fire"
           }
         },
         {
@@ -922,12 +928,14 @@ const DEFAULTS = {
           "th": {
             "label": "ชั้น 3+",
             "note": "เฉพาะชนคู่กรณีที่ระบุได้",
-            "value": "ช่วยลดเบี้ยประกัน โดยยังมีความคุ้มครองบางส่วนเมื่อชนกับคู่กรณีที่ระบุได้"
+            "value": "คุ้มครองรถตัวเองเมื่อชนกับยานพาหนะที่ระบุคู่กรณีได้ และความรับผิดต่อคู่กรณีตามเงื่อนไข",
+            "tag": "ชนกับยานพาหนะที่ระบุได้"
           },
           "en": {
             "label": "Class 3+",
             "note": "only when the other vehicle is identified",
-            "value": "A lower-premium option with partial own-car cover when the other vehicle is identified"
+            "value": "Own-car cover for collisions with an identified vehicle, and third-party liability, subject to policy terms.",
+            "tag": "Identified-vehicle collisions"
           }
         },
         {
@@ -941,12 +949,14 @@ const DEFAULTS = {
           "th": {
             "label": "ชั้น 3",
             "note": "",
-            "value": "เหมาะกับรถใช้งานมานาน หรือรถที่มูลค่าไม่สูงและต้องการความคุ้มครองพื้นฐาน"
+            "value": "คุ้มครองความรับผิดต่อคู่กรณี ไม่รวมความเสียหายของรถตัวเอง",
+            "tag": "ความรับผิดต่อคู่กรณี"
           },
           "en": {
             "label": "Class 3",
             "note": "",
-            "value": "Suitable for older or lower-value cars where basic protection is enough"
+            "value": "Covers third-party liability, not damage to your own car.",
+            "tag": "Third-party liability"
           }
         }
       ]
@@ -1074,47 +1084,47 @@ const DEFAULTS = {
       "cols": 3,
       "th": {
         "kicker": "เตือนล่วงหน้า · ยกเลิกได้ทุกเมื่อ",
-        "title": "ไม่ต้องกังวลเรื่องวันหมดอายุ\nให้เราช่วยเตือนล่วงหน้า",
+        "title": "ให้ช่วยเตือนวันต่ออายุประกันไหม?",
         "body": "แจ้งประเภทกรมธรรม์และเดือนที่หมดอายุไว้กับเรา เราจะเตือนล่วงหน้า 60 วัน และสำหรับประกันรถยนต์จะช่วยเปรียบเทียบข้อเสนอใหม่เพื่อให้คุณพิจารณาว่าควรต่ออายุที่เดิมหรือเปลี่ยนทางเลือก โดยยังไม่ต้องส่งเอกสารในขั้นตอนนี้",
-        "note": "เราใช้ข้อมูลนี้เพื่อแจ้งเตือนเฉพาะเรื่องที่คุณขอ ไม่ส่งโปรโมชั่น และคุณสามารถยกเลิกการแจ้งเตือนได้ทุกเมื่อ"
+        "note": "เราใช้ข้อมูลนี้เพื่อติดตามเรื่องต่ออายุที่คุณแจ้งไว้ หากไม่ต้องการให้เตือนต่อ บอกเราทาง LINE ได้"
       },
       "en": {
         "kicker": "Advance reminders · stop any time",
-        "title": "Let us keep track of\nyour renewal dates",
+        "title": "Would you like a renewal reminder?",
         "body": "Tell us the policy type and expiry month. We will remind you 60 days in advance and, for motor insurance, provide a fresh comparison for the coming renewal. No documents are required at this stage.",
-        "note": "We use the information only for the reminders you request. We do not send promotional messages, and you can stop reminders at any time."
+        "note": "We use these details to follow up on the renewal you requested. Let us know on LINE if you no longer want reminders."
       },
       "items": [
         {
           "icon": "bell",
           "th": {
-            "title": "เตือน 60 วันก่อน",
-            "body": "มีเวลาพอสำหรับเปรียบเทียบข้อเสนอ ต่ออายุ หรือเปลี่ยนบริษัทประกันโดยไม่เร่งรีบ"
+            "title": "แจ้งก่อนถึงวันต่ออายุ",
+            "body": "ฝากเดือนที่กรมธรรม์หมดอายุไว้ เพื่อให้เราติดต่อกลับและช่วยเตรียมเรื่องต่ออายุ"
           },
           "en": {
-            "title": "Sixty days ahead",
-            "body": "Enough time to compare options, renew or switch insurers without rushing."
+            "title": "A reminder before renewal",
+            "body": "Leave your expiry month so we can get in touch and help you prepare for renewal."
           }
         },
         {
           "icon": "compare",
           "th": {
-            "title": "มาพร้อมข้อมูลใหม่",
-            "body": "สำหรับประกันรถยนต์ เราจะช่วยเปรียบเทียบข้อเสนอใหม่ในแต่ละปี เพราะราคาและเงื่อนไขอาจเปลี่ยนได้"
+            "title": "ช่วยเปรียบเทียบอีกครั้ง",
+            "body": "สำหรับรถยนต์ เราช่วยดูเบี้ยและเงื่อนไขที่เสนอในรอบต่ออายุ เทียบกับกรมธรรม์เดิมให้ได้"
           },
           "en": {
-            "title": "With updated options",
-            "body": "For motor insurance, we can compare fresh offers each year because premiums and conditions may change."
+            "title": "Compare your options again",
+            "body": "For car insurance, we can compare renewal quotes and terms with your current policy."
           }
         },
         {
           "icon": "lock",
           "th": {
-            "title": "ใช้ข้อมูลเท่าที่จำเป็น",
+            "title": "ใช้ข้อมูลอะไรบ้าง?",
             "body": "เริ่มจากประเภทกรมธรรม์ เดือนที่หมดอายุ และช่องทางติดต่อ โดยยังไม่ต้องส่งเลขกรมธรรม์หรือเลขบัตรประชาชน"
           },
           "en": {
-            "title": "Only necessary data",
+            "title": "What details do you need?",
             "body": "We start with the policy type, expiry month and contact channel. No policy number or ID card number is needed at this stage."
           }
         }
@@ -1140,57 +1150,57 @@ const DEFAULTS = {
         {
           "th": {
             "label": "สุขภาพ",
-            "meta": "อ่าน 2 นาที",
-            "title": "ค่าห้องที่เลือกไว้ อาจไม่พอกับโรงพยาบาลที่คุณจะไปจริง",
-            "body": "เวลาซื้อประกันสุขภาพ หลายคนเลือกค่าห้องตามเบี้ยที่จ่ายไหว แต่เมื่อป่วยจริง เรามักเลือกโรงพยาบาลที่ใกล้บ้านหรือแพทย์ที่ไว้วางใจ ไม่ใช่โรงพยาบาลที่ค่าห้องพอดีกับกรมธรรม์\n\nวิธีตรวจง่าย ๆ คือดูค่าห้องเดี่ยวต่อคืนของโรงพยาบาลที่คุณมีแนวโน้มใช้ แล้วเทียบกับตัวเลขในกรมธรรม์ หากกรมธรรม์ให้ 4,000 บาท แต่ค่าห้องจริง 6,500 บาท ส่วนต่าง 2,500 บาทต่อคืนอาจเป็นค่าใช้จ่ายที่ผู้เอาประกันต้องรับผิดชอบเอง ทั้งนี้ขึ้นอยู่กับเงื่อนไขกรมธรรม์\n\nแบบเหมาจ่ายด้วยวงเงินรวมช่วยลดข้อจำกัดจากการเพิ่มค่าห้องทีละขั้น เพราะไม่ต้องแยกดูวงเงินย่อยของแต่ละรายการมากเท่าเดิม"
+            "meta": "",
+            "title": "ควรเลือกค่าห้องวันละเท่าไหร่?",
+            "body": "ลองดูค่าห้องของโรงพยาบาลที่คุณมีแนวโน้มใช้ แล้วเทียบกับสวัสดิการและประกันที่มีอยู่ รวมถึงงบที่จ่ายเบี้ยไหว ต้องดูด้วยว่ากรมธรรม์กำหนดวงเงินค่าห้องและค่าใช้จ่ายส่วนอื่นไว้อย่างไร ไม่ใช่ดูตัวเลขค่าห้องอย่างเดียว"
           },
           "en": {
             "label": "Health",
-            "meta": "2 min read",
-            "title": "Your room benefit may not match the hospital you would actually use",
-            "body": "When buying health insurance, many people choose a room benefit around the premium they can afford. But when illness happens, you usually choose the hospital near home or the doctor you trust, not the hospital whose room rate happens to match your policy.\n\nA simple check is to look up the private room rate at the hospital you are likely to use, then compare it with the figure on your policy. If the policy pays ฿4,000 and the room is ฿6,500, the ฿2,500 difference per night may be your responsibility, depending on policy terms.\n\nAn aggregate-limit plan can address this more directly than increasing the room benefit one step at a time, because fewer item-by-item caps need to be checked."
+            "meta": "",
+            "title": "How much cover do I need for hospital room costs?",
+            "body": "Check room rates at the hospital you are likely to use, then compare them with your existing benefits and premium budget. Also check how the policy limits room costs and other expenses, rather than looking at the room benefit alone."
           }
         },
         {
           "th": {
             "label": "รถยนต์",
-            "meta": "อ่าน 2 นาที",
-            "title": "ชั้น 3+ ไม่ได้คุ้มครองทุกการชน และนี่คือจุดที่มักพลาด",
-            "body": "ประกันชั้น 3+ คุ้มครองความเสียหายต่อรถของคุณเมื่อชนกับ “ยานพาหนะทางบกที่มีคู่กรณีระบุได้” เงื่อนไขนี้สั้น แต่ตัดหลายเหตุการณ์ออกไป\n\nชนเสาไฟ ชนขอบทาง ถอยชนกำแพงบ้าน ชนสัตว์ที่วิ่งตัดหน้า หรือคู่กรณีหลบหนีและไม่สามารถระบุได้ อาจไม่เข้าเงื่อนไขความคุ้มครองรถของผู้เอาประกัน ส่วนความเสียหายต่อคู่กรณียังเป็นอีกเงื่อนไขหนึ่งตามกรมธรรม์\n\nหากรถยังผ่อนอยู่ หรือเป็นรถคันหลักที่ใช้ทำงาน ส่วนต่างเบี้ยระหว่างชั้น 3+ กับชั้น 1 อาจน้อยกว่าค่าซ่อมครั้งเดียวที่ต้องรับผิดชอบเอง ควรเปรียบเทียบตัวเลขจริงก่อนตัดสินใจ"
+            "meta": "",
+            "title": "ประกันชั้น 3+ ถ้าขับชนเอง เคลมได้ไหม?",
+            "body": "โดยทั่วไป ความเสียหายของรถตัวเองในประกันชั้น 3+ ต้องเกิดจากการชนกับยานพาหนะและระบุคู่กรณีได้ หากชนเสาหรือกำแพงเอง มักไม่อยู่ในความคุ้มครองส่วนนี้ ควรตรวจเงื่อนไขกรมธรรม์ของคุณก่อนแจ้งเคลม"
           },
           "en": {
             "label": "Motor",
-            "meta": "2 min read",
-            "title": "Class 3+ does not cover every collision — here is the common gap",
-            "body": "Class 3+ covers damage to your car when it collides with an identified land vehicle. That condition is short, but it excludes many situations.\n\nHitting a lamp post, kerb or wall, striking an animal, or being hit by a driver who cannot be identified may fall outside own-car damage cover. Third-party liability is assessed under its own policy conditions.\n\nIf the car is still financed or is essential for work, the premium gap between Class 3+ and Class 1 may be smaller than one repair bill you would otherwise pay yourself. It is worth comparing the actual numbers before deciding."
+            "meta": "",
+            "title": "Does Class 3+ cover an accident with no other vehicle involved?",
+            "body": "Class 3+ generally covers damage to your own car only in a collision with an identified vehicle. Hitting a post or wall is generally not covered under this benefit. Check the terms of your own policy."
           }
         },
         {
           "th": {
             "label": "ชีวิต",
-            "meta": "อ่าน 2 นาที",
-            "title": "ทุนประกันชีวิตควรสะท้อนภาระทางการเงินและระยะเวลาที่ครอบครัวต้องพึ่งพารายได้",
-            "body": "คำถามที่ตอบง่ายกว่า “ควรทำทุนเท่าไหร่” คือ “ถ้ารายได้หายไปพรุ่งนี้ คนที่บ้านต้องใช้เวลานานแค่ไหนก่อนยืนได้ด้วยตัวเอง”\n\nนำค่าใช้จ่ายบ้านต่อเดือนคูณจำนวนเดือนที่ต้องการดูแลต่อ บวกหนี้ที่ยังเหลือ เช่น บ้าน รถ และค่าเรียนของลูกที่ยังต้องจ่าย ตัวเลขนี้คือฐานสำหรับพิจารณาทุนประกัน ไม่จำเป็นต้องเป็นเลขกลมหรือเลขสวย\n\nหลายคนที่คำนวณแบบนี้พบว่าทุนเดิมอาจยังไม่พอ แต่ก็อาจพบว่าแบบชั่วระยะเวลา (term) ช่วยเติมส่วนที่ขาดได้ด้วยเบี้ยที่เข้าถึงได้กว่าที่คิด"
+            "meta": "",
+            "title": "ควรทำประกันชีวิตวงเงินเท่าไหร่?",
+            "body": "เริ่มจากดูว่ามีใครต้องพึ่งพารายได้ของคุณ มีหนี้หรือค่าใช้จ่ายที่ต้องดูแลเท่าไหร่ และต้องดูแลอีกนานแค่ไหน จากนั้นดูเงินออมและประกันที่มีอยู่ด้วย วงเงินที่เหมาะจะแตกต่างกัน และควรเลือกเบี้ยที่จ่ายต่อเนื่องไหว"
           },
           "en": {
             "label": "Life",
-            "meta": "2 min read",
-            "title": "A life sum assured should reflect debt and the time your family needs support",
-            "body": "A more useful starting question is: if household income stopped tomorrow, how long would the family need before standing on its own?\n\nTake the household’s monthly costs, multiply by the number of months to protect, then add outstanding debts such as mortgage, car finance and future education costs. That figure is the starting point for the sum assured. It does not need to be round.\n\nMany people who calculate this way find their existing cover may be short, but term cover can often fill the gap for a more accessible premium than expected."
+            "meta": "",
+            "title": "How much life insurance do I need?",
+            "body": "Consider who depends on your income, the debts and expenses they would need to cover, and for how long. Take your savings and existing insurance into account too. The amount will vary, and premiums need to remain affordable."
           }
         },
         {
           "th": {
             "label": "ภาษี",
-            "meta": "อ่าน 1 นาที",
-            "title": "สิทธิลดหย่อนประกันมีสองกลุ่มหลัก คนมักใช้ไม่ครบ",
-            "body": "เบี้ยประกันชีวิตทั่วไปลดหย่อนได้ถึง 100,000 บาท และเบี้ยประกันสุขภาพตนเองรวมอยู่ในเพดานนี้ได้ไม่เกิน 25,000 บาท\n\nประกันบำนาญเป็นอีกกลุ่มหนึ่งที่แยกออกมา ลดหย่อนเพิ่มได้ถึง 200,000 บาท โดยไม่เกิน 15% ของเงินได้ และเมื่อรวมกับ RMF กองทุนสำรองเลี้ยงชีพ และ กบข. ต้องไม่เกิน 500,000 บาท\n\nผู้ที่ใช้สิทธิ 100,000 บาทเต็มแล้วและยังต้องการวางแผนภาษีเพิ่มเติม มักไม่รู้ว่าสิทธิบำนาญยังอาจเหลืออยู่ ตัวเลขและเงื่อนไขของแต่ละปีควรตรวจสอบกับกรมสรรพากรก่อนยื่นภาษี"
+            "meta": "",
+            "title": "ประกันแบบไหนลดหย่อนภาษีได้บ้าง?",
+            "body": "ประกันชีวิต สุขภาพ และบำนาญบางแบบใช้ลดหย่อนได้เมื่อเข้าเงื่อนไขของกรมสรรพากร แต่แต่ละประเภทมีเพดานและเงื่อนไขต่างกัน ควรตรวจหนังสือรับรองเบี้ยประกันและหลักเกณฑ์ของปีภาษีที่จะยื่น หากไม่แน่ใจว่าเบี้ยส่วนไหนใช้สิทธิได้ ให้เราช่วยตรวจข้อมูลกับบริษัทประกันได้"
           },
           "en": {
             "label": "Tax",
-            "meta": "1 min read",
-            "title": "Insurance-related tax deductions fall into two main categories",
-            "body": "Ordinary life premiums are deductible up to ฿100,000, and your own health premiums can be included within that ceiling up to ฿25,000.\n\nAnnuity cover sits in a separate category: a further ฿200,000, capped at 15% of income and at ฿500,000 when combined with RMF and provident-fund contributions.\n\nPeople who have already used the ฿100,000 allowance and still want additional tax planning often do not realise the annuity allowance may remain available. Confirm the current-year figures and conditions with the Revenue Department before filing."
+            "meta": "",
+            "title": "Which types of insurance qualify for tax deductions?",
+            "body": "Some life, health and annuity policies qualify under Revenue Department rules. Limits and conditions differ. Check your premium certificate and the rules for the relevant tax year. We can help check with the insurer which part of your premium is eligible."
           }
         }
       ]
@@ -1278,13 +1288,13 @@ const DEFAULTS = {
       "cols": 2,
       "th": {
         "kicker": "เกี่ยวกับ CoverMate",
-        "title": "ดูแลด้วยความเข้าใจ\nและความรอบคอบ",
-        "body": "CoverMate เกิดขึ้นจากการเห็นว่าหลายคนเพิ่งพบในวันที่ต้องใช้สิทธิหรือเคลมว่า ความคุ้มครองที่มีไม่ตรงกับสิ่งที่เข้าใจไว้ เราจึงให้ความสำคัญกับการอธิบายทางเลือก เงื่อนไข และข้อจำกัดให้ชัดเจน เพื่อให้คุณมีข้อมูลเพียงพอก่อนตัดสินใจ\n\nประกันชีวิตและสุขภาพดำเนินการผ่าน AIA ส่วนประกันรถยนต์ให้บริการในฐานะนายหน้า โดยเปรียบเทียบทางเลือกจากบริษัทประกันภัยตามความเหมาะสม"
+        "title": "เราช่วยเรื่องอะไรได้บ้าง",
+        "body": "คุณอาจกำลังเลือกประกันฉบับแรก หรือมีกรมธรรม์อยู่แล้วแต่ยังไม่เข้าใจบางข้อ เราช่วยอ่าน อธิบายความคุ้มครองและข้อยกเว้น แล้วคุยกันว่ามีเรื่องไหนควรตรวจเพิ่มเติม หากต้องการเปรียบเทียบแผน เราจะดูทั้งเบี้ย เงื่อนไข และงบประมาณของคุณไปด้วยกัน"
       },
       "en": {
         "kicker": "About CoverMate",
-        "title": "A considered approach\nto protection",
-        "body": "CoverMate was created after seeing how often people discover, only when they need to claim, that their cover does not match what they understood. Our approach is to explain options, conditions and limitations clearly so you have enough information before deciding.\n\nFor life and health insurance, we arrange cover through AIA. For motor insurance, we act in a broker capacity and compare suitable insurer options."
+        "title": "How we can help",
+        "body": "Whether you're looking at your first policy or have questions about one you already hold, we can help. We explain the cover and exclusions, check anything unclear, and compare premiums and terms with your budget in mind."
       },
       "items": [
         {
@@ -1324,7 +1334,7 @@ const DEFAULTS = {
           },
           "en": {
             "label": "Area",
-            "value": "Bangkok & surrounding"
+            "value": "Bangkok and surrounding areas"
           }
         }
       ]
@@ -1336,64 +1346,64 @@ const DEFAULTS = {
       "bg": "bg",
       "cols": 1,
       "th": {
-        "kicker": "คำถามที่ถูกถามบ่อย",
+        "kicker": "",
         "title": "คำถามที่พบบ่อย",
         "body": ""
       },
       "en": {
-        "kicker": "Asked most often",
-        "title": "Questions, answered plainly",
+        "kicker": "",
+        "title": "Frequently asked questions",
         "body": ""
       },
       "items": [
         {
           "th": {
-            "q": "ต้องจ่ายค่าที่ปรึกษาให้ CoverMate ไหม",
-            "a": "ไม่มีค่าที่ปรึกษาเพิ่มเติมจาก CoverMate ค่าตอบแทนในการให้บริการมาจากบริษัทประกันภัยเมื่อมีการออกกรมธรรม์ โดยเบี้ยประกันเป็นไปตามอัตราและเงื่อนไขของบริษัทประกันภัย"
+            "q": "ปรึกษาเรื่องประกัน มีค่าใช้จ่ายไหม?",
+            "a": "ไม่มีค่าปรึกษาจาก CoverMate คุณถามหรือให้ช่วยอ่านกรมธรรม์เดิมได้ โดยไม่จำเป็นต้องซื้อประกัน หากมีการทำประกัน เราได้รับค่าตอบแทนจากบริษัทประกันตามเงื่อนไขของแต่ละผลิตภัณฑ์"
           },
           "en": {
-            "q": "Does CoverMate charge a consultation fee?",
-            "a": "No additional consultation fee is charged by CoverMate. Compensation comes from the insurer when a policy is issued, and premiums follow the insurer’s filed rates and conditions."
+            "q": "Is there a fee for advice?",
+            "a": "We don't charge for advice or for reviewing an existing policy. You don't need to buy insurance. If a policy is arranged, we receive commission from the insurer under the terms for that product."
           }
         },
         {
           "th": {
-            "q": "มีประกันอยู่แล้ว ย้ายมาให้ดูแลได้ไหม",
-            "a": "สำหรับประกันรถยนต์สามารถเปลี่ยนนายหน้าได้เมื่อต่ออายุ ส่วนประกันชีวิตที่มีอยู่แล้วยังคงอยู่กับตัวแทนเดิม แต่เราสามารถช่วยตรวจทานกรมธรรม์เดิมให้โดยไม่มีค่าใช้จ่าย"
+            "q": "มีประกันอยู่แล้ว ให้ช่วยดูได้ไหม?",
+            "a": "ได้ ส่งหน้าตารางกรมธรรม์มาและบอกเรื่องที่สงสัย เราช่วยอธิบายความคุ้มครองและเงื่อนไขให้ได้ ส่วนการเปลี่ยนผู้ดูแลหรือนายหน้าเป็นอีกเรื่องหนึ่ง ต้องตรวจขั้นตอนกับบริษัทประกันของกรมธรรม์นั้นก่อน"
           },
           "en": {
-            "q": "Can existing cover be transferred for review?",
-            "a": "For motor insurance, the broker can usually be changed at renewal. Existing life policies remain with the original agent, but we can review them for gaps or overlap at no charge."
+            "q": "Can you help me review a policy I already have?",
+            "a": "Yes. Send your policy schedule and tell us what you'd like to check. We can explain the cover and terms. Changing the servicing agent or broker is a separate process that needs to be checked with your insurer."
           }
         },
         {
           "th": {
-            "q": "จะถูกติดต่อซ้ำ ๆ หรือไม่",
-            "a": "เราจะให้ข้อมูลที่เกี่ยวข้องและให้คุณตัดสินใจตามจังหวะของคุณ หากยังไม่ประสงค์ดำเนินการต่อ เราจะไม่ติดต่อเพื่อติดตามการขาย เว้นแต่คุณขอให้เราแจ้งเตือน"
+            "q": "ถ้าแค่สอบถาม จะมีคนโทรมาตามไหม?",
+            "a": "คุณสอบถามก่อนได้ เราจะตอบเรื่องที่คุณถามผ่านช่องทางที่แจ้งไว้ หากยังไม่ต้องการทำประกันต่อ บอกเราได้ เราจะไม่โทรติดตามการซื้อ เว้นแต่คุณขอให้ติดต่อกลับ"
           },
           "en": {
-            "q": "Will CoverMate follow up repeatedly?",
-            "a": "We provide the relevant information and let you decide at your own pace. If you prefer not to proceed, we will not follow up for sales unless you ask for a reminder."
+            "q": "Will I get follow-up calls if I only ask a question?",
+            "a": "You can ask a question without committing to a purchase. We'll reply through the channel you provide. If you're not looking to proceed, let us know. We won't make sales follow-up calls unless you ask us to contact you."
           }
         },
         {
           "th": {
-            "q": "เบี้ยผ่าน CoverMate แพงกว่าซื้อออนไลน์ไหม",
-            "a": "เบี้ยประกันเป็นไปตามอัตราและเงื่อนไขของบริษัทประกันภัย การใช้บริการผ่าน CoverMate ไม่มีค่าที่ปรึกษาเพิ่มเติม และเราช่วยเปรียบเทียบเงื่อนไขให้ก่อนตัดสินใจ"
+            "q": "ซื้อผ่าน CoverMate แพงกว่าซื้อออนไลน์ไหม?",
+            "a": "ราคาอาจต่างกันตามแผน ความคุ้มครอง ส่วนลด และช่องทางขาย จึงควรเทียบใบเสนอราคาที่มีเงื่อนไขเดียวกัน หากมีราคาที่ดูไว้อยู่แล้ว ส่งมาให้ช่วยเทียบได้ โดย CoverMate ไม่มีค่าปรึกษาเพิ่มเติม"
           },
           "en": {
-            "q": "Is it more expensive than buying online?",
-            "a": "Premiums follow the insurer’s rates and conditions. Using CoverMate adds no separate consultation fee, and we help compare the conditions before you decide."
+            "q": "Does buying through CoverMate cost more than buying online?",
+            "a": "Prices can differ by plan, cover, discounts and sales channel. It's worth comparing quotes on the same terms. If you already have a quote, we can help compare it. CoverMate does not charge an additional consultation fee."
           }
         },
         {
           "th": {
-            "q": "เคลมยากไหม ถ้าเคลมแล้วไม่ได้ล่ะ",
-            "a": "เมื่อเกิดการเคลม เราช่วยตรวจสอบเอกสารและประสานงานกับบริษัทประกันภัยตามขั้นตอน หากมีการปฏิเสธการเคลม เราสามารถช่วยตรวจสอบเหตุผลและประสานงานเรื่องการทบทวนหรืออุทธรณ์ตามช่องทางที่เกี่ยวข้อง"
+            "q": "ถ้าเคลมไม่ผ่าน ต้องทำยังไง?",
+            "a": "ขอเหตุผลและรายละเอียดจากบริษัทประกันก่อน แล้วส่งมาให้เราช่วยอ่านเทียบกับกรมธรรม์ได้ เราช่วยตรวจเอกสารและประสานงานเพื่อขอทบทวนได้ แต่ไม่สามารถรับรองผลการพิจารณาเคลม"
           },
           "en": {
-            "q": "What if a claim gets refused?",
-            "a": "When a claim occurs, we can help check documents and coordinate with the insurer through the required process. If a claim is refused, we can review the reason and help with the relevant review or appeal channel."
+            "q": "What can I do if my claim is rejected?",
+            "a": "Ask your insurer for the reasons and details of the decision. We can help read these against your policy, check the documents and contact the insurer about a review. We cannot guarantee the outcome."
           }
         }
       ]
@@ -1405,16 +1415,16 @@ const DEFAULTS = {
       "bg": "surface",
       "cols": 3,
       "th": {
-        "kicker": "โครงสร้างค่าตอบแทน · อธิบายอย่างชัดเจน",
-        "title": "ค่าตอบแทนในการให้บริการ\nมาจากไหน",
-        "body": "ความโปร่งใสเรื่องค่าตอบแทนเป็นส่วนสำคัญของการให้คำแนะนำ เราจึงอธิบายไว้ล่วงหน้าว่าค่าตอบแทนในการให้บริการมาจากช่องทางใด",
-        "note": "เบี้ยประกันเป็นอัตราที่บริษัทประกันภัยยื่นและได้รับความเห็นชอบจาก คปภ. การใช้บริการผ่าน CoverMate ไม่มีค่าที่ปรึกษาเพิ่มเติม"
+        "kicker": "",
+        "title": "ค่าปรึกษาและค่าตอบแทน",
+        "body": "CoverMate ไม่มีค่าปรึกษา หากมีการทำประกัน เราได้รับค่าตอบแทนจากบริษัทประกัน คุณสอบถามเรื่องค่าตอบแทนของแผนที่เสนอได้",
+        "note": "เบี้ยอาจต่างกันตามแผน เงื่อนไข ส่วนลด และช่องทางขาย ควรเปรียบเทียบใบเสนอราคาที่มีความคุ้มครองเดียวกัน"
       },
       "en": {
-        "kicker": "Compensation structure · explained clearly",
-        "title": "Where our\nservice compensation comes from",
-        "body": "Transparency about compensation is part of giving trustworthy advice. We explain in advance how CoverMate is compensated for the service.",
-        "note": "Premiums are filed with and approved by the OIC. Using CoverMate adds no separate consultation fee."
+        "kicker": "",
+        "title": "Advice fees and commission",
+        "body": "CoverMate does not charge for advice. If a policy is arranged, we receive commission from the insurer. You can ask us about the commission on a proposed plan.",
+        "note": "Premiums can differ by plan, terms, discounts and sales channel. Compare quotes with equivalent cover."
       },
       "cards": [
         {
@@ -1422,80 +1432,80 @@ const DEFAULTS = {
           "th": {
             "kicker": "คุณจ่าย",
             "title": "เบี้ยประกัน",
-            "body": "ชำระเบี้ยประกันให้บริษัทประกันภัยโดยตรง โดยไม่มีค่าที่ปรึกษาแยกต่างหากจาก CoverMate"
+            "body": "ชำระเบี้ยผ่านช่องทางรับชำระที่บริษัทกำหนด ไม่มีค่าปรึกษาแยกจาก CoverMate"
           },
           "en": {
             "kicker": "You pay",
             "title": "The premium",
-            "body": "Premiums are paid to the insurer directly, with no separate advisory fee from CoverMate."
+            "body": "Pay through the company's designated payment channels. CoverMate does not add a consultation fee."
           }
         },
         {
           "n": "2",
           "th": {
             "kicker": "บริษัทประกันภัยจ่าย",
-            "title": "ค่าตอบแทนการให้บริการ",
-            "body": "บริษัทประกันภัยเป็นผู้จ่ายค่าตอบแทนตามโครงสร้างของผลิตภัณฑ์ ซึ่งรวมอยู่ในอัตราเบี้ยประกันตามเงื่อนไขที่เกี่ยวข้อง"
+            "title": "ค่าตอบแทนของ CoverMate",
+            "body": "เมื่อมีการทำประกัน เราได้รับค่าตอบแทนตามข้อตกลงของบริษัทและผลิตภัณฑ์นั้น"
           },
           "en": {
             "kicker": "The insurer pays",
-            "title": "Service compensation",
-            "body": "The insurer pays compensation according to the product structure, already reflected in the applicable premium rate."
+            "title": "Our commission",
+            "body": "When a policy is arranged, we receive commission under the terms for that insurer and product."
           }
         },
         {
           "n": "3",
           "th": {
-            "kicker": "แปลว่า",
-            "title": "ไม่มีค่าที่ปรึกษาเพิ่ม",
-            "body": "การใช้บริการผ่าน CoverMate ไม่มีค่าที่ปรึกษาเพิ่มเติม และเรายังคงช่วยดูแลเรื่องการต่ออายุและการประสานงานเมื่อเกิดการเคลม"
+            "kicker": "ก่อนเลือกแผน",
+            "title": "เทียบราคาและเงื่อนไข",
+            "body": "ดูทั้งเบี้ย วงเงิน ข้อยกเว้น และค่าใช้จ่ายที่ต้องจ่ายเอง เราช่วยอ่านใบเสนอราคาเทียบกันได้"
           },
           "en": {
-            "kicker": "Which means",
-            "title": "No extra advisory fee",
-            "body": "Using CoverMate adds no separate advisory fee, while we continue helping with renewals and claim coordination."
+            "kicker": "Before choosing",
+            "title": "Compare prices and terms",
+            "body": "Compare premiums, limits, exclusions and costs you would pay yourself. We can help you read quotes side by side."
           }
         }
       ],
       "items": [
         {
           "th": {
-            "label": "ทำไมถึงต่างกันในแต่ละแบบ",
-            "value": "โครงสร้างค่าตอบแทนแตกต่างกันตามประเภทผลิตภัณฑ์และเงื่อนไขของบริษัทประกันภัย เราอธิบายให้ชัดเจนเมื่อเกี่ยวข้องกับการตัดสินใจ"
+            "label": "ค่าตอบแทนคิดอย่างไร?",
+            "value": "อัตราและช่วงเวลาจ่ายค่าตอบแทนขึ้นอยู่กับบริษัทและประเภทประกัน เราอธิบายรายละเอียดของแผนที่เสนอให้คุณได้"
           },
           "en": {
-            "label": "Why it differs by product",
-            "value": "Compensation structures differ by product type and insurer conditions. We explain this clearly when it is relevant to your decision."
+            "label": "How does commission work?",
+            "value": "The rate and payment schedule depend on the insurer and product. We can explain the details of the plan we propose."
           }
         },
         {
           "th": {
-            "label": "สิ่งที่เรายึดถือ",
-            "value": "เราไม่แนะนำผลิตภัณฑ์เพียงเพราะให้ค่าตอบแทนสูงกว่า หากไม่เหมาะกับความต้องการของคุณ และไม่เร่งรัดการตัดสินใจด้วยแรงกดดันจากโปรโมชั่น"
+            "label": "ใช้ข้อมูลอะไรแนะนำแผน?",
+            "value": "เราดูความคุ้มครองที่คุณต้องการ งบประมาณ และเงื่อนไขของแต่ละแผน พร้อมอธิบายข้อจำกัดที่ควรรู้"
           },
           "en": {
-            "label": "What we stand by",
-            "value": "We do not recommend a higher-paying product if it is not suitable for your needs, and we do not rush decisions with promotion pressure."
+            "label": "How do you compare plans?",
+            "value": "We consider the cover you need, your budget and the terms of each plan, including the limitations."
           }
         },
         {
           "th": {
-            "label": "สอบถามได้โดยตรง",
-            "value": "หากต้องการทราบโครงสร้างค่าตอบแทนของแบบประกันที่เสนอ สามารถสอบถามเราได้โดยตรง"
+            "label": "ถามเรื่องค่าตอบแทนได้ไหม?",
+            "value": "ได้ หากอยากทราบว่า CoverMate ได้รับค่าตอบแทนจากแผนที่เสนออย่างไร สอบถามเราได้โดยตรง"
           },
           "en": {
-            "label": "Ask directly",
-            "value": "If you want to understand the compensation structure for a proposed plan, you can ask us directly."
+            "label": "Can I ask about your commission?",
+            "value": "Yes. You can ask us directly how CoverMate is paid for a plan we propose."
           }
         },
         {
           "th": {
-            "label": "ถ้าไม่ดำเนินการต่อ",
-            "value": "การตรวจกรมธรรม์เดิม ตอบคำถาม หรือช่วยดูขั้นตอนเบื้องต้นเมื่อเกิดการเคลม ไม่มีค่าใช้จ่าย และเราจะไม่ติดตามการขายหากคุณไม่ได้ขอ"
+            "label": "ถ้ายังไม่ซื้อประกันล่ะ?",
+            "value": "คุณยังถามหรือให้ช่วยอ่านกรมธรรม์เดิมได้ ไม่มีค่าปรึกษา และไม่จำเป็นต้องซื้อประกันเพิ่ม"
           },
           "en": {
-            "label": "If you do not proceed",
-            "value": "Reviewing an existing policy, answering questions or helping with initial claim steps is at no charge, and we will not follow up for sales unless you ask us to."
+            "label": "What if I'm not ready to buy?",
+            "value": "You can still ask questions or have us review an existing policy. There is no consultation fee or need to buy additional insurance."
           }
         }
       ]
@@ -1508,14 +1518,14 @@ const DEFAULTS = {
       "cols": 2,
       "th": {
         "kicker": "พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล",
-        "title": "ข้อมูลที่คุณส่งให้เรา\nถูกนำไปใช้อย่างไร",
-        "body": "เราแจ้งรายละเอียดการใช้ข้อมูลไว้ก่อนที่คุณจะส่งข้อมูล เพื่อให้ทราบว่าข้อมูลใดถูกเก็บ ใช้เพื่อวัตถุประสงค์ใด และอาจถูกส่งต่อให้ใครบ้าง",
+        "title": "ข้อมูลที่คุณส่งมา\nถูกใช้ทำอะไร?",
+        "body": "ก่อนส่งข้อมูล คุณอ่านรายละเอียดได้ที่นี่ว่าเราเก็บ ใช้ และส่งต่อข้อมูลอย่างไร",
         "note": "หากต้องการขอเข้าถึง แก้ไข หรือลบข้อมูล สามารถติดต่อเราทาง LINE หรือโทรศัพท์ได้ เราจะดำเนินการตามระยะเวลาที่กฎหมายกำหนด"
       },
       "en": {
         "kicker": "Thai PDPA",
-        "title": "How we use\nthe information you provide",
-        "body": "We explain how information is used before you send it, so you know what is collected, why it is used, and who it may be shared with.",
+        "title": "How we use\nyour information",
+        "body": "Before sharing your details, you can read here how we collect, use and share them.",
         "note": "To request access, correction or deletion of your personal data, contact us by LINE or telephone. We will process the request within the period required by law."
       },
       "items": [
@@ -1579,13 +1589,13 @@ const DEFAULTS = {
       "cols": 2,
       "th": {
         "kicker": "ติดต่อเรา",
-        "title": "ขอรับคำปรึกษา",
+        "title": "มีเรื่องอยากถาม คุยกับเราได้",
         "body": "แจ้งชื่อและเรื่องที่ต้องการทราบ เราจะตอบกลับพร้อมข้อมูลที่เกี่ยวข้องและทางเลือกที่ชัดเจน โดยไม่มีค่าใช้จ่ายและไม่มีข้อผูกมัด",
         "note": "หากไม่สะดวกกรอกแบบฟอร์ม สามารถติดต่อเราทาง LINE ได้โดยตรง"
       },
       "en": {
         "kicker": "Contact us",
-        "title": "Request a consultation",
+        "title": "What would you like to ask?",
         "body": "Leave your name and let us know what you would like to discuss. We will respond with clear, relevant information and available options, with no consultation fee or obligation.",
         "note": "You can also contact us directly on LINE."
       },
@@ -1599,8 +1609,8 @@ const DEFAULTS = {
         "en": "Motor Insurance | CoverMate compares 14 insurers"
       },
       "description": {
-        "th": "หน้าเฉพาะประกันรถยนต์ของ CoverMate เปรียบเทียบเบี้ยและความคุ้มครองจากบริษัทประกันภัย 14 แห่ง พร้อมช่วยดูทุน ซ่อมห้างหรือซ่อมอู่ ค่าเสียหายส่วนแรก และเงื่อนไขสำคัญ",
-        "en": "Dedicated motor insurance page from CoverMate: compare premiums and cover from 14 insurers with guidance on sums insured, repair options, excess and key conditions."
+        "th": "เปรียบเทียบเบี้ยและความคุ้มครองประกันรถยนต์กับ CoverMate พร้อมอธิบายเรื่องซ่อมห้าง ซ่อมอู่ และค่าเสียหายส่วนแรก",
+        "en": "Compare car insurance premiums and cover with CoverMate, with help understanding repair options, excess and policy terms."
       }
     },
     "nav": [
@@ -1662,23 +1672,23 @@ const DEFAULTS = {
       "cta2href": "#insurers",
       "claimHref": "#claim",
       "th": {
-        "kicker": "ประกันรถยนต์ · ปรึกษาฟรี กรุงเทพฯ",
-        "title": "เบี้ยรถคันเดิม\nเทียบหลายบริษัทในที่เดียว",
-        "body": "ในฐานะนายหน้า เราเปรียบเทียบเบี้ยประกันรถยนต์จากบริษัทประกันภัย 14 แห่ง ทั้งภาคสมัครใจและ พ.ร.บ. พร้อมช่วยดูทุนประกัน ซ่อมห้างหรือซ่อมอู่ ค่าเสียหายส่วนแรก และเงื่อนไขสำคัญให้เหมาะกับการใช้รถของคุณ",
-        "cta1": "คุยเรื่องประกันรถยนต์ทาง LINE",
+        "kicker": "ประกันรถยนต์กับ CoverMate",
+        "title": "ให้เราช่วยเทียบ\nประกันรถของคุณ",
+        "body": "ส่งข้อมูลรถและบอกสิ่งที่อยากให้ช่วยดู เราจะเปรียบเทียบเบี้ยและความคุ้มครองจากบริษัทที่รับประกันรถของคุณ พร้อมอธิบายเรื่องซ่อมห้าง ซ่อมอู่ และค่าเสียหายส่วนแรก",
+        "cta1": "คุยเรื่องประกันรถทาง LINE",
         "cta2": "ดูบริษัทที่เทียบให้",
         "note": "เราตอบกลับด้วยตนเองในเวลาทำการ",
-        "claimText": "เกิดอุบัติเหตุอยู่ตอนนี้ โทร 1669 ก่อนเสมอ แล้วค่อยติดต่อเรา",
+        "claimText": "หากมีผู้เจ็บป่วยฉุกเฉิน โทร 1669",
         "claimLinkText": "ดูขั้นตอนเมื่อเกิดเหตุ"
       },
       "en": {
-        "kicker": "Motor insurance · free advice, Bangkok",
-        "title": "One car,\ncompare multiple insurers",
-        "body": "As a broker, we compare motor insurance options from 14 insurers, including voluntary cover and compulsory พ.ร.บ. We help review the sum insured, dealer or garage repair, excess and key conditions for how you use the car.",
-        "cta1": "Talk motor insurance on LINE",
+        "kicker": "Car insurance with CoverMate",
+        "title": "Compare insurance\nfor your car",
+        "body": "Tell us about your car and what you'd like to check. We compare quotes from insurers that can cover it, and explain repair options, excess and policy limits.",
+        "cta1": "Ask about car insurance",
         "cta2": "See insurers compared",
         "note": "We respond personally during business hours.",
-        "claimText": "In an accident right now, call 1669 first, then contact us",
+        "claimText": "For a medical emergency in Thailand, call 1669.",
         "claimLinkText": "See the accident guide"
       },
       "items": []
@@ -1704,10 +1714,10 @@ const DEFAULTS = {
         {
           "icon": "check",
           "th": {
-            "label": "ดูทุนและเงื่อนไขให้เหมาะกับรถ"
+            "label": "ช่วยดูวงเงินและเงื่อนไข"
           },
           "en": {
-            "label": "Sum and conditions checked"
+            "label": "Help with limits and terms"
           }
         },
         {
@@ -1716,7 +1726,7 @@ const DEFAULTS = {
             "label": "คุยสะดวกทาง LINE"
           },
           "en": {
-            "label": "Easy LINE consultation"
+            "label": "Chat with us on LINE"
           }
         },
         {
@@ -1738,13 +1748,13 @@ const DEFAULTS = {
       "cols": 2,
       "th": {
         "kicker": "ความคุ้มครองรถยนต์",
-        "title": "เลือกชั้นประกัน\nให้พอดีกับการใช้รถ",
-        "body": "สรุปข้อแตกต่างของแต่ละชั้น พร้อมเทียบเบี้ยและเงื่อนไขสำคัญจากบริษัทที่เหมาะสมก่อนตัดสินใจ"
+        "title": "ประกันรถยนต์แต่ละชั้น\nคุ้มครองอะไรบ้าง?",
+        "body": "ดูว่าแต่ละชั้นคุ้มครองอะไร แล้วค่อยเทียบวงเงินและเงื่อนไขของแผนที่สนใจ"
       },
       "en": {
         "kicker": "Motor cover classes",
-        "title": "Pick the class\nthat fits your driving",
-        "body": "See practical differences between classes, with premiums and key conditions compared before you decide."
+        "title": "What does each class\nof car insurance cover?",
+        "body": "Compare cover, limits and exclusions before choosing a policy."
       },
       "items": [
         {
@@ -1752,16 +1762,16 @@ const DEFAULTS = {
           "tone": "accent",
           "th": {
             "title": "ชั้น 1",
-            "sub": "คุ้มครองครบที่สุด",
+            "sub": "รวมการชนแบบไม่มีคู่กรณี",
             "b1": "คุ้มครองรถคุณและคู่กรณี ทั้งการชน รถหาย ไฟไหม้ น้ำท่วม และอุบัติเหตุที่ไม่มีคู่กรณีตามเงื่อนไขกรมธรรม์",
-            "b2": "เหมาะกับรถใหม่ รถที่ยังผ่อนอยู่ หรือรถที่ต้องการความสบายใจสูง",
+            "b2": "พิจารณาร่วมกับมูลค่ารถ เงื่อนไขสัญญาเช่าซื้อ และงบประมาณ",
             "b3": "ช่วยเลือกทุน ซ่อมห้างหรือซ่อมอู่ และค่าเสียหายส่วนแรกให้เหมาะกับงบ"
           },
           "en": {
             "title": "Class 1",
-            "sub": "Most complete voluntary cover",
+            "sub": "Includes single-vehicle accidents",
             "b1": "Covers your car and third-party liability, including collision, theft, fire, flood and no-third-party accidents subject to policy terms.",
-            "b2": "Often suitable for newer cars, financed cars or owners who want the highest peace of mind.",
+            "b2": "Consider your car value, any finance requirements and your budget.",
             "b3": "We help choose sum insured, dealer or garage repair, and excess level to fit the budget."
           }
         },
@@ -1770,17 +1780,17 @@ const DEFAULTS = {
           "tone": "sage",
           "th": {
             "title": "ชั้น 2+ / 3+",
-            "sub": "คุ้มค่าเมื่อยังอยากคุ้มครองรถตัวเอง",
+            "sub": "คุ้มครองรถตัวเองเมื่อชนกับยานพาหนะ",
             "b1": "คุ้มครองรถคุณเมื่อชนกับยานพาหนะที่ระบุคู่กรณีได้",
             "b2": "ชั้น 2+ เพิ่มรถหายและไฟไหม้ ส่วน 3+ เน้นการชนแบบมีคู่กรณี",
-            "b3": "เหมาะกับรถใช้งานประจำที่ต้องการเบี้ยเบากว่าชั้น 1"
+            "b3": "ตรวจวงเงินและเงื่อนไขการชนให้ชัดเจนก่อนเลือก"
           },
           "en": {
             "title": "Class 2+ / 3+",
-            "sub": "Value cover with own-car protection",
+            "sub": "Own-car cover for vehicle collisions",
             "b1": "Covers your own car when the collision involves an identified vehicle.",
             "b2": "Class 2+ adds theft and fire; Class 3+ focuses on identified-vehicle collision.",
-            "b3": "Often suits everyday cars when you want a lower premium than Class 1."
+            "b3": "Check collision limits and conditions before choosing a plan."
           }
         },
         {
@@ -1788,17 +1798,17 @@ const DEFAULTS = {
           "tone": "ink",
           "th": {
             "title": "ชั้น 3",
-            "sub": "คุ้มครองคู่กรณี เบี้ยประหยัด",
+            "sub": "ความรับผิดต่อคู่กรณี",
             "b1": "คุ้มครองความรับผิดต่อชีวิตและทรัพย์สินของคู่กรณีตามวงเงินกรมธรรม์",
             "b2": "โดยทั่วไปไม่คุ้มครองความเสียหายรถของคุณเอง",
-            "b3": "เหมาะกับรถอายุมาก รถใช้งานน้อย หรือกรณีที่ต้องการควบคุมค่าเบี้ยให้ต่ำที่สุด"
+            "b3": "ควรพิจารณาว่ารับผิดชอบค่าซ่อมรถตัวเองได้หรือไม่หากเกิดอุบัติเหตุ"
           },
           "en": {
             "title": "Class 3",
-            "sub": "Third-party cover, lowest premium",
+            "sub": "Third-party liability",
             "b1": "Covers liability for injury and property damage to third parties within policy limits.",
             "b2": "Generally does not cover damage to your own car.",
-            "b3": "Often fits older or low-use cars, or when keeping the premium as low as possible is the priority."
+            "b3": "Consider whether you could pay for repairs to your own car after an accident."
           }
         },
         {

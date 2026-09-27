@@ -47,7 +47,7 @@ assert.deepEqual(v6.sections, v5.sections, 'Moving licence cards does not rewrit
 assert.deepEqual(v6.licences, v5.licences, 'Licence values are preserved');
 assert.deepEqual(v6.homeDesign.licenceTitle, v5.homeDesign.licenceTitle, 'Owner copy and intentional blanks survive');
 assert.equal(v6.homeDesign.licenceBackground, '', 'Cleared artwork stays cleared');
-assert.ok(v6.homeDesign.licenceStatement.th);
+assert.deepEqual(v6.homeDesign.licenceStatement, { th: '', en: '' }, 'Optional licence slogan defaults to blank');
 assert.deepEqual(migrateCmsContent(v6), v6, 'Licence presentation migration is idempotent');
 const licenceArt = contract.cmsImageSlots(v6).find(slot => slot.path === 'homeDesign.licenceBackground');
 assert.equal(licenceArt.width / licenceArt.height, 3, 'Admin background crop ratio');
@@ -66,7 +66,7 @@ assert.deepEqual(newFees.items.map(i=>[i.id,i.th,i.en,i.on]),oldFees.items.map(i
 assert.equal(newFees.items[0].icon,'users','Custom icon is not overwritten');
 assert.equal(newFees.items[1].icon,'ban');
 assert.deepEqual(v9.homeDesign.feesStatement,{th:'ข้อความเจ้าของ',en:''});
-assert.ok(v9.homeDesign.privacyStatement.th);
+assert.deepEqual(v9.homeDesign.privacyStatement, { th: '', en: '' }, 'Optional privacy slogan defaults to blank');
 assert.deepEqual(migrateCmsContent(v9),v9);
 newFees.items.reverse();
 assert.deepEqual(migrateCmsContent(v9).sections.find(s=>s.id==='fees').items,newFees.items,'Icons stay attached to reordered IDs');
@@ -85,7 +85,7 @@ for (const version of [6,7]) {
   assert.deepEqual(current.contact,older.contact,'Presentation migration preserves actual channels');
   assert.deepEqual(current.homeDesign.contactFormHeading,older.homeDesign.contactFormHeading);
   assert.equal(current.footer.backgroundArt,'');
-  assert.ok(current.footer.statement.th);
+  assert.deepEqual(current.footer.statement, { th: '', en: '' }, 'Optional footer slogan defaults to blank');
   assert.deepEqual(migrateCmsContent(current),current);
 }
 for (const path of ['homeDesign.contactBackground','footer.backgroundArt']) {
@@ -123,7 +123,8 @@ assert.deepEqual(clean.header, edited.header);
 assert.deepEqual(clean.brand.credential, edited.brand.credential);
 assert.equal(clean.sections.find(s => s.id === 'faq').items.find(item => item.sourceGuideId).th.a, 'ผมพร้อมช่วยครับ');
 assert.equal(motorInsurerLogoCount(clean), 0);
-assert.match(clean.sections.find(s => s.id === 'hero').th.body, /บริษัทประกันภัย 0 แห่ง/);
+assert.equal(clean.sections.find(s => s.id === 'hero').th.body, edited.sections.find(s => s.id === 'hero').th.body, 'Hero copy without a count is preserved');
+assert.equal(resolveCmsContent('บริษัทประกันภัย {{activeMotorInsurerCount}} แห่ง', clean), 'บริษัทประกันภัย 1 แห่ง', 'Explicit tokens count the active insurer even when its logo is cleared');
 assert.equal(clean.sections.find(s => s.id === 'insurers').items[0].logo, '');
 assert.equal(clean.sections.find(s => s.id === 'insurers').cards.length, 0);
 assert.deepEqual(clean.motorPage.sections, []);

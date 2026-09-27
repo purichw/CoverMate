@@ -1,6 +1,6 @@
 # CoverMate Website Current Product Spec
 
-Last updated: 2026-09-24
+Last updated: 2026-09-27
 
 ## Current Authority And Release State
 
@@ -13,6 +13,24 @@ editor Undo/Redo/Reset affect Draft, while the separate Publish rollback changes
 Live. The dated candidate and snapshot notes below retain their original evidence
 scope; they are not current deployment claims. `HANDOFF.md` and release records
 own exact-SHA CI and hosted status.
+
+Public voice follows the owner's September 27 direction: a helpful companion,
+not a marketer. Use plain, warm, serious Thai/English that answers the reader's
+question. Keep slogans occasional rather than repeating punchlines across
+sections; do not turn "companion" into another slogan. FAQ headings should be
+questions an ordinary customer would actually ask, with direct answers and
+necessary conditions. [COPY_VOICE_AUDIT_20260927.md](/Users/point/CoverMate/docs/COPY_VOICE_AUDIT_20260927.md)
+owns the reviewed examples, sources and local proposal workflow. Copywriting
+does not authorize new coverage promises or rewriting licence/consent facts.
+Source/default updates are not publication of existing Firestore copy.
+
+Articles source now includes `/articles`, `/articles/:slug`, and the owner-only
+`/admin#articles` list/editor. [ARTICLES_PUBLISHING.md](/Users/point/CoverMate/docs/ARTICLES_PUBLISHING.md)
+owns central persistence, draft/live publication, locale/date rules and the
+independent master/Home/navigation switches. Public routes depend on those
+switches and due published translations, not merely the presence of source
+files. Earlier four-module Admin and two-public-page inventories below predate
+Articles; do not use them to remove the module or reopen local-only publishing.
 
 The September 23 Home contact submission candidate follows the owner's state
 mockup plus dedicated behavior spec. [CONTACT_SUBMISSION.md](/Users/point/CoverMate/docs/CONTACT_SUBMISSION.md)
@@ -610,13 +628,17 @@ without sending visitors to a separate comparison page.
 Structure:
 
 - Section ID/type: `tiers`.
-- Desktop renders a table with 5 rows (`ชั้น 1`, `ชั้น 2+`, `ชั้น 2`,
-  `ชั้น 3+`, `ชั้น 3`) and 5 coverage axes.
-- Mobile renders stacked class cards so the visitor does not horizontally
-  scroll.
+- Desktop at 1000px and wider renders classes as columns (`ชั้น 1`, `ชั้น 2+`,
+  `ชั้น 2`, `ชั้น 3+`, `ชั้น 3`) and coverage topics as rows, with suitability
+  and class-note rows. The count follows enabled CMS classes/topics.
+- Smaller screens render topic disclosures, each listing all enabled classes;
+  suitability starts open. Home and Motor share this composition.
 - Cell states are data-driven: `y` covered, `p` conditional, `n` not covered.
-- The admin Content tab can edit headings, rows, row notes, cell states, add
-  columns, and add tiers.
+- Edit mode allows clicking a cell status to cycle it and editing a separate
+  localized Remark for every state. Content tools also edit headings, class
+  notes, cell states and remarks, and add/reorder/hide/duplicate topics/classes.
+- See [Motor comparison](/Users/point/CoverMate/docs/MOTOR_COMPARISON.md) for the durable-ID remark map,
+  legacy migration, history and draft/publish contracts.
 
 Guardrails:
 
@@ -685,12 +707,22 @@ Structure:
 
 ### FAQ
 
-Purpose: answer objections and reduce uncertainty.
+Purpose: answer ordinary customer questions clearly, without sales punchlines.
 
 Structure:
 
-- One-column accordion rows on desktop or balanced two-column layout only if text stays readable.
+- Use the current compact shared Home/Motor accordion layout; preserve readable
+  TH/EN wrapping and equal collapsed peers rather than restoring historical columns.
 - Keep icons/affordances aligned right.
+- CMS owns question, answer and optional category/reading time in both languages.
+  Optional metadata may be blank; do not add reading-time labels to short answers
+  merely because the legacy Guides items had them.
+- Add appears before the question list and focuses the new row. Delete names
+  the question in a confirmation, removes both languages from Draft and supports
+  editor Undo/Redo. Hide is separate and retains the content. Empty lists stay
+  empty after reload; archived Guides are recovery data, not fallback questions.
+- See [CMS ownership](/Users/point/CoverMate/docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing) for command
+  owners and local regression coverage. Current rollout status belongs in HANDOFF.
 
 ### Fee Transparency
 
@@ -811,6 +843,11 @@ Required elements:
 
 - Single shared admin shell; sidebar changes views client-side without a full
   document reload.
+- The September 26 local consolidation uses `admin/shell.css` and `admin/shell.js`
+  for all five modules: one 256px desktop sidebar, logo, active navigation,
+  verified-account footer, topbar and mobile drawer at widths below 1040px.
+  Role Preview belongs in Settings, not the signed-in account footer.
+  See `ADMIN_SHELL.md` for ownership and verification; this is not deployment evidence.
 - OIC verify link.
 - H1: `Admin Portal`.
 - Four primary cards:

@@ -11,13 +11,18 @@ Prepare a fresh Codex chat to work safely on CoverMate without relying on stale 
 
 ## Workflow
 
-1. Treat the repo as:
+1. Identify the active CoverMate checkout from the current task/workspace. The
+   primary repository is:
 
 ```text
 /Users/point/CoverMate
 ```
 
-2. Inspect current state first:
+   A task-specific checkout takes precedence; do not switch to the primary
+   checkout just because it is listed here. Read that checkout's HANDOFF.
+
+2. Inspect branch/upstream and local changes in the selected checkout first.
+   For the primary checkout:
 
 ```bash
 git -C "/Users/point/CoverMate" status --short --branch
@@ -40,6 +45,9 @@ git -C "/Users/point/CoverMate" status --short --branch
 - Treat production repo files, current docs, and Firestore live CMS state as source of truth over older external prototypes/exports unless the owner explicitly reopens a product decision.
 - Preserve existing routes, Firebase/Firestore contracts, localStorage keys, SEO/noindex boundaries, admin session behavior, responsive constraints, and owner-mode UI contracts unless the task explicitly changes them.
 - Admin controls use natural Thai with familiar English workflow terms. Cases is owner-only; legacy Leads/Tasks/Audit APIs remain compatibility surfaces. Use `docs/ADMIN_LANGUAGE.md`, `docs/ADMIN_CASES_V2.md` and `docs/CMS_EDITOR_HISTORY.md` instead of historical English-only chrome or Operations-tab instructions.
+- Public copy follows `docs/COPY_VOICE_AUDIT_20260927.md`: plain, warm, helpful TH/EN; genuine customer FAQ questions rather than slogans. Read its reviewed proposal workflow before changing existing CMS copy. Code/default deployment and CMS publication are separate operations.
+- FAQ add/delete work follows `docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing`: stable bilingual IDs, confirmed deletion, distinct Hide, Draft Undo/Redo and intentional empty lists. Use the isolated `check:faq` harness for this flow, not the read-only public copy preview.
+- Keep this workflow inside the current chat. Preparing a handoff does not authorize inspecting, creating or messaging another chat, nor release actions described by historical notes.
 - For UI work, provide snapshots or screenshots in the final handoff.
 - For release work, use `$release-gate`; for deployed media/image changes, use `$production-asset-smoke` after deployment; for rollback-like requests, use `$rollback-guardrail` before changing files.
 - Use UAT proportionally. Do not run hosted UAT smoke, create fresh UAT previews, or seed UAT data for small copy/CSS/docs/icon tweaks by default. Use UAT only when the diff touches Firebase/Auth, Firestore Rules, CMS data paths, Admin session/publish/save flows, lead capture, Operations/Analytics APIs, environment/routing/Vercel config, production-like routing behavior, or when the owner explicitly asks for UAT/regression.

@@ -458,11 +458,11 @@ const CMS_CONTENT_FIELDS = [
     ['submittingBody','กรุณารอสักครู่ ระหว่างที่เรารอการยืนยันจากระบบ','Please wait while we confirm your submission.'],
     ['slowTitle','กำลังรอการยืนยันจากระบบ','Still waiting for confirmation'],
     ['slowBody','การเชื่อมต่อใช้เวลานานกว่าปกติ กรุณาอย่าส่งคำขอซ้ำระหว่างรอผล','This is taking longer than usual. Please avoid submitting the same request again while you wait.'],
-    ['successTitle','ได้รับคำขอของคุณแล้ว','Your request has been received'],
-    ['successBody','เราบันทึกข้อมูลเรียบร้อยแล้ว และจะติดต่อกลับตามช่องทางที่คุณระบุ','Your request has been saved. We will contact you using the details you provided.'],
-    ['successIntro','เล่าเรื่องที่ต้องการให้ช่วยเพิ่มเติมได้ทาง LINE','Continue on LINE to tell us more about your enquiry.'],
+    ['successTitle',"ได้รับข้อมูลแล้ว","We've received your enquiry."],
+    ['successBody',"เราจะติดต่อกลับตามช่องทางที่คุณแจ้งไว้","We'll reply using the contact details you provided."],
+    ['successIntro',"หากมีเรื่องอยากบอกเพิ่มเติม คุยต่อทาง LINE ได้","If there's anything else you'd like to add, you can message us on LINE."],
     ['successLine','คุยต่อทาง LINE','Continue on LINE'],
-    ['successOptional','ไม่สะดวกคุยตอนนี้ก็ได้ คำขอของคุณถูกส่งแล้ว','Chatting now is optional. Your request has already been submitted.'],
+    ['successOptional',"ส่งข้อมูลเรียบร้อยแล้ว ไม่จำเป็นต้องส่งซ้ำทาง LINE","Your enquiry has been submitted. You do not need to send it again on LINE."],
     ['failureTitle','ยังส่งคำขอไม่สำเร็จ','Your request could not be submitted'],
     ['failureBody','ระบบยังไม่ได้รับคำขอของคุณ ข้อมูลที่กรอกยังอยู่ในแบบฟอร์มนี้','Your request has not been received. Your entries are still available in this form.'],
     ['failureIntro','ติดต่อเราได้อีกทางผ่าน LINE เพื่อแจ้งเรื่องที่ต้องการสอบถาม','You can contact us through LINE instead.'],
@@ -647,7 +647,7 @@ const CMS_CONTENT_FIELDS = [
     ['deniedBody','คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณากลับสู่หน้าหลัก','You don’t have permission to access this page. Please return to the homepage.'],
     ['busyTitle','กรุณารอสักครู่ แล้วลองใหม่','Please wait a moment and try again'],
     ['busyBody','ขณะนี้มีคำขอเข้ามาหลายรายการ กรุณาลองอีกครั้งภายหลัง หรือกลับสู่หน้าหลัก','There are too many requests right now. Please try again later or return to the homepage.'],
-    ['unavailableTitle','หน้านี้ยังไม่พร้อมให้บริการชั่วคราว','This page is temporarily unavailable'],
+    ['unavailableTitle',"หน้านี้เปิดไม่ได้ชั่วคราว","This page is temporarily unavailable"],
     ['unavailableBody','กรุณาลองอีกครั้งภายหลัง หรือกลับสู่หน้าหลัก','Please try again later or return to the homepage.'],
     ['serverTitle','เกิดข้อขัดข้องในการแสดงหน้านี้','Something went wrong'],
     ['serverBody','กรุณาลองอีกครั้ง หรือกลับสู่หน้าหลัก','Please try again or return to the homepage.'],
@@ -662,7 +662,7 @@ const CMS_CONTENT_FIELDS = [
     ['health','ประกันสุขภาพ','Health insurance'],['contact','ติดต่อเรา','Contact us'],
     ['helpTitle','ต้องการความช่วยเหลือเพิ่มเติม?','Need more help?'],
     ['helpBody','ติดต่อ CoverMate ผ่าน LINE เพื่อสอบถามข้อมูลเพิ่มเติม','Contact CoverMate on LINE for more information.'],
-    ['statement','ให้เรื่องประกัน\nเป็นเรื่องที่เข้าใจได้','Making insurance\neasier to understand'],
+    ['statement',"",""],
     ['skip','ข้ามไปยังเนื้อหา','Skip to content']
   ].map(([key,th,en])=>({path:'errorPage.'+key,label:key.replace(/([A-Z])/g,' $1'),group:'Error page',localized:true,seed:{th,en}})),
   {path:'cookieConsent.title',label:'Banner heading',group:'Cookie consent',localized:true,seed:{th:'คุกกี้วิเคราะห์การใช้งาน',en:'Analytics cookies'}},
@@ -677,29 +677,29 @@ const CMS_CONTENT_FIELDS = [
   {path:'cookieConsent.allowed',label:'Allowed status',group:'Cookie consent',localized:true,seed:{th:'ปัจจุบัน: อนุญาตคุกกี้วิเคราะห์',en:'Current choice: analytics allowed'}},
   {path:'cookieConsent.denied',label:'Declined status',group:'Cookie consent',localized:true,seed:{th:'ปัจจุบัน: ไม่อนุญาตคุกกี้วิเคราะห์',en:'Current choice: analytics declined'}},
   {path:'cookieConsent.close',label:'Close without changes',group:'Cookie consent',localized:true,seed:{th:'ปิดโดยไม่เปลี่ยนตัวเลือก',en:'Close without changes'}},
-  {path:'publicCopy.motorLogoNotice',label:'Motor insurer logo note',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'โลโก้เป็นเครื่องหมายการค้าของบริษัทนั้น ๆ · แสดงบริษัทที่จัดเบี้ยเทียบให้ได้',en:'Logos are trademarks of their owners · shown as the insurers I can quote and compare'}},
+  {path:'publicCopy.motorLogoNotice',label:'Motor insurer logo note',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:"โลโก้เป็นเครื่องหมายการค้าของแต่ละบริษัท · แสดงบริษัทที่เราช่วยเปรียบเทียบประกันรถยนต์ได้",en:"Logos belong to their respective owners. These are insurers we can compare car insurance options from."}},
   {path:'publicCopy.tierClassLabel',label:'Comparison: class heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'ชั้นประกัน',en:'Class'}},
-  {path:'publicCopy.tierBestLabel',label:'Comparison: suitability heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เหมาะกับใคร',en:'Best for'}},
+  {path:'publicCopy.tierBestLabel',label:'Comparison: suitability heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:"ความคุ้มครองโดยสรุป",en:"Cover summary"}},
   {path:'publicCopy.storyEventLabel',label:'Story: event heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เกิดอะไรขึ้น',en:'What happened'}},
   {path:'publicCopy.storyActionLabel',label:'Story: response heading',group:'Shared section labels',localized:true,legacyInline:true,seed:{th:'เราทำอะไร',en:'What we do'}},
   ...localizedCmsFields('homeDesign','Home articles',[
     ['articlesEyebrow','Articles eyebrow','บทความจาก CoverMate','From CoverMate'],
-    ['articlesTitle','Articles title','เรื่องประกัน อ่านให้เข้าใจก่อนตัดสินใจ','Understand insurance before you decide'],
-    ['articlesIntro','Articles intro','รวมความรู้และข้อควรรู้เรื่องประกัน เพื่อช่วยให้คุณพิจารณาความคุ้มครองได้อย่างเข้าใจ','Practical insurance guides to help you understand your cover and consider your options.'],
+    ['articlesTitle','Articles title',"บทความเรื่องประกัน","Insurance guides"],
+    ['articlesIntro','Articles intro',"คำอธิบายเรื่องความคุ้มครอง การเลือกประกัน และการเคลม","Guides to understanding cover, comparing policies and making a claim"],
     ['articlesAll','Articles all','ดูบทความทั้งหมด','View all articles'],
     ['articlesRead','Articles read','อ่านบทความ','Read article']
   ]),
   ...localizedCmsFields('articlesPage','Articles index',[
     ['eyebrow','Articles page: eyebrow','บทความจาก CoverMate','From CoverMate'],
-    ['title','Articles page: heading','ความรู้เรื่องประกัน\nอ่านง่าย ใช้ได้จริง','Insurance knowledge\nfor everyday decisions'],
-    ['intro','Articles page: introduction','รวมความรู้และข้อควรรู้เรื่องประกัน เพื่อช่วยให้คุณเลือกความคุ้มครองและวางแผนได้อย่างเข้าใจ','Practical insurance guides to help you understand your cover and make informed decisions.'],
+    ['title','Articles page: heading',"บทความเรื่องประกัน","Insurance guides"],
+    ['intro','Articles page: introduction',"รวมคำอธิบายเรื่องความคุ้มครอง การเลือกประกัน และการเคลม ถ้าอ่านแล้วยังมีข้อสงสัย ถามเราได้","Read about cover, choosing a policy and making a claim. Ask us if you have questions."],
     ['search','Articles page: search','ค้นหาบทความ','Search articles'],
     ['searchHint','Articles page: search placeholder','ค้นหาบทความ เช่น ประกันรถยนต์ สุขภาพ เคลม','Search motor insurance, health, claims...'],
     ['all','Articles page: all categories','ทั้งหมด','All topics'],
     ['categories','Articles page: categories label','หมวดหมู่บทความ','Article categories'],
     ['sort','Articles page: sort label','เรียงตาม','Sort by'],
-    ['latestSort','Articles page: newest first','เรื่องล่าสุด','Newest first'],
-    ['oldestSort','Articles page: oldest first','เรื่องเก่าสุด','Oldest first'],
+    ['latestSort','Articles page: newest first',"ใหม่สุดก่อน","Newest first"],
+    ['oldestSort','Articles page: oldest first',"เก่าสุดก่อน","Oldest first"],
     ['titleSort','Articles page: title sort','ชื่อบทความ','Article title'],
     ['featured','Articles page: featured label','บทความแนะนำ','Featured article'],
     ['latest','Articles page: results heading','บทความล่าสุด','Latest articles'],
@@ -713,9 +713,9 @@ const CMS_CONTENT_FIELDS = [
     ['pagination','Articles page: pagination label','หน้าบทความ','Article pages'],
     ['previous','Articles page: previous page','หน้าก่อน','Previous page'],
     ['next','Articles page: next page','หน้าถัดไป','Next page'],
-    ['ctaTitle','Articles page: consultation heading','ยังไม่แน่ใจว่าควรเริ่มจากความคุ้มครองไหน?','Not sure where to start with your cover?'],
-    ['ctaBody','Articles page: consultation body','คุยกับ CoverMate เพื่อช่วยทำความเข้าใจทางเลือกที่เหมาะกับคุณ โดยไม่มีค่าใช้จ่าย','Talk to CoverMate about your options, with no consultation fee.'],
-    ['ctaLabel','Articles page: consultation action','ปรึกษาผ่าน LINE','Talk to us on LINE']
+    ['ctaTitle','Articles page: consultation heading',"อ่านแล้วมีคำถามเพิ่มเติมไหม?","Have a question about what you've read?"],
+    ['ctaBody','Articles page: consultation body',"ถามเรื่องที่ยังไม่เข้าใจ หรือให้ช่วยดูว่าข้อมูลนี้เกี่ยวกับกรมธรรม์ของคุณอย่างไรได้ทาง LINE ไม่มีค่าปรึกษา","Ask us on LINE if anything is unclear or you'd like help relating it to your policy. There is no consultation fee."],
+    ['ctaLabel','Articles page: consultation action',"คุยทาง LINE","Chat on LINE"]
   ]),
   {path:'articlesPage.heroImage',label:'Articles page: hero artwork',group:'Articles index',media:true,seed:'assets/brand/articles-reading-v1.webp'},
   ...localizedCmsFields('articleDetail','Article reader',[
@@ -729,8 +729,8 @@ const CMS_CONTENT_FIELDS = [
     ['sources','Article: sources','แหล่งข้อมูล','Sources'],
     ['save','Article: save','บันทึก','Save'],
     ['saved','Article: saved','บันทึกแล้ว','Saved'],
-    ['saveHint','Article: save hint','บันทึกบทความในอุปกรณ์นี้','Save this article on this device'],
-    ['savedMessage','Article: saved message','บันทึกในอุปกรณ์นี้แล้ว','Saved on this device'],
+    ['saveHint','Article: save hint',"บันทึกบทความในเบราว์เซอร์นี้","Save this article in this browser"],
+    ['savedMessage','Article: saved message',"บันทึกในเบราว์เซอร์นี้แล้ว","Saved in this browser"],
     ['removedMessage','Article: removed message','นำออกจากรายการที่บันทึกแล้ว','Removed from saved articles'],
     ['saveError','Article: save error','เบราว์เซอร์ไม่อนุญาตให้บันทึก กรุณาบุ๊กมาร์กหน้านี้แทน','Storage is unavailable. Bookmark this page instead.'],
     ['share','Article: share','แชร์บทความ','Share article'],
@@ -740,16 +740,16 @@ const CMS_CONTENT_FIELDS = [
     ['copied','Article: copied','คัดลอกลิงก์แล้ว','Link copied'],
     ['manualCopy','Article: manual copy','คัดลอกลิงก์จากช่องนี้','Copy the address below'],
     ['unavailable','Article: unavailable','ไม่พบบทความในภาษานี้','Article not available in this language'],
-    ['note','Article: sidebar note','เรื่องประกัน\nเริ่มจากความเข้าใจ\nก่อนตัดสินใจ','Understand your cover.\nThen choose with confidence.']
+    ['note','Article: sidebar note',"",""]
   ]),
   {path:'homeDesign.botanicalIllustration',label:'Hero background artwork',group:'Home design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   {path:'homeDesign.licenceEyebrow',label:'Licence section: eyebrow',group:'Home licences',localized:true,seed:{th:'ABOUT COVERMATE',en:'ABOUT COVERMATE'}},
   {path:'homeDesign.licenceTitle',label:'Licence section: heading',group:'Home licences',localized:true,seed:{th:'ใบอนุญาตและบทบาทการให้บริการ',en:'Our licences and advisory roles'}},
-  {path:'homeDesign.licenceStatement',label:'Licence section: statement',group:'Home licences',localized:true,seed:{th:'มั่นใจได้ เพราะเราดำเนินการ\nอย่างถูกต้องและโปร่งใส',en:'Confidence through\nprofessional, transparent service'}},
+  {path:'homeDesign.licenceStatement',label:'Licence section: statement',group:'Home licences',localized:true,seed:{th:"",en:""}},
   {path:'homeDesign.licenceBackground',label:'Licence section: background artwork',group:'Home licences',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   ...localizedCmsFields("homeDesign","Home design",[
     ["heroStatement","Optional hero statement","",""],
-    ["aboutTeaser","Optional about teaser","",""],
+    ["aboutTeaser","Optional about teaser","ช่วยอ่านกรมธรรม์เดิม อธิบายเงื่อนไข และเปรียบเทียบแผนที่คุณสนใจ","Help with existing policies, policy terms and plans you want to compare"],
     ["detailsLabel","Read more","อ่านเพิ่มเติม","Read more"],
     ["comparisonLabel","Full comparison","เปรียบเทียบความคุ้มครองทุกชั้น","Compare all cover levels"],
     ["motorLabel","Motor page link","ดูประกันรถยนต์ทั้งหมด","Explore motor insurance"],
@@ -760,22 +760,22 @@ const CMS_CONTENT_FIELDS = [
   ]),
   ...localizedCmsFields("homeDesign","Home contact",[
     ["contactFormHeading","Form heading","ส่งคำถามถึงเรา","Send us your question"],
-    ["contactFormHelper","Form introduction","ฝากข้อมูลไว้ แล้วเราจะติดต่อกลับตามช่องทางที่คุณระบุ","Leave your details and we will reply through your chosen contact channel."],
+    ["contactFormHelper","Form introduction","บอกเรื่องที่อยากให้ช่วย พร้อมช่องทางติดต่อกลับ","Tell us what you'd like help with and how to reach you."],
     ["contactLineLabel","LINE label","พูดคุยกับเราได้ที่","Chat with us on LINE"],
     ["contactFacebookHelper","Facebook helper","ติดตามข่าวสารหรือส่งข้อความถึงเรา","Follow our updates or send us a message"],
     ["contactHoursLabel","Hours label","เวลาทำการ","Business hours"],
     ["contactAreaLabel","Service area label","พื้นที่ให้บริการ","Service area"],
-    ["contactReassurance","Reassurance","สอบถามก่อนได้ ไม่จำเป็นต้องตัดสินใจทันที","Ask us first. There is no need to decide right away."],
+    ["contactReassurance","Reassurance","ปรึกษาได้โดยไม่มีค่าใช้จ่าย","No consultation fee"],
     ["contactNamePlaceholder","Name placeholder","เช่น ชื่อเล่นของคุณ","For example, your preferred name"],
     ["contactContactPlaceholder","Contact placeholder","เช่น LINE ID หรือเบอร์โทรของคุณ","Your LINE ID or phone number"],
     ["contactDetailsPlaceholder","Details placeholder","เล่าเรื่องที่อยากให้เราช่วยดูเพิ่มเติม","Tell us what you would like help with"]
   ]),
   ...localizedCmsFields("homeDesign","Motor comparison",[
     ["comparisonTitle","หัวตารางเปรียบเทียบ","ตารางเปรียบเทียบความคุ้มครอง","Compare motor coverage"],
-    ["comparisonSubtitle","คำอธิบายหัวตาราง","เลือกความคุ้มครองที่ใช่ สำหรับคุณ","Find the cover that fits you"],
+    ["comparisonSubtitle","คำอธิบายหัวตาราง","ดูความคุ้มครองหลักของแต่ละชั้น","Compare the main benefits of each class"],
     ["comparisonMobileSubtitle","คำแนะนำการเปิดหัวข้อบนมือถือ","เลือกหัวข้อเพื่อดูความคุ้มครองของแต่ละชั้น","Choose a topic to compare each class"],
     ["comparisonNotesLabel","ชื่อแถวหมายเหตุ","หมายเหตุ","Notes"],
-    ["comparisonStatement","ข้อความปิดท้ายตาราง (ไม่บังคับ)","ขับขี่สบายใจ\nให้เราดูแล","Drive with confidence.\nWe are here for you."]
+    ["comparisonStatement","ข้อความปิดท้ายตาราง (ไม่บังคับ)","",""]
   ]),
   {path:'homeDesign.contactBackground',label:'Background artwork',group:'Home contact',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   ...['line','facebook','hours','area','reassurance','form'].map(key => ({path:'homeDesign.contactIcon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Home contact',media:true,seed:key==='line'?'assets/brand/LINE_Brand_icon.png':key==='facebook'?'assets/brand/facebook-icon.svg':''})),
@@ -788,22 +788,22 @@ const CMS_CONTENT_FIELDS = [
   ]),
   ...localizedCmsFields("footer","Footer design",[
     ["licenceHelper","Licence introduction","ข้อมูลใบอนุญาตที่ตรวจสอบได้","Verifiable licence information"],
-    ["navHelper","Navigation introduction","ข้อมูลที่คุณอาจสนใจ","Explore useful information"],
-    ["contactHelper","Contact introduction","เราพร้อมดูแลคุณ","We are here to help"],
-    ["statement","Closing statement","ดูแล...ในทุกช่วงของชีวิต","Here for every stage of life"],
-    ["categoryLine","Closing brand line","LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER","LIFE · HEALTH · MOTOR · A BRIGHTER TOMORROW TOGETHER"]
+    ["navHelper","Navigation introduction","",""],
+    ["contactHelper","Contact introduction","",""],
+    ["statement","Closing statement","",""],
+    ["categoryLine","Closing brand line","LIFE · HEALTH · MOTOR","LIFE · HEALTH · MOTOR"]
   ]),
   {path:'footer.backgroundArt',label:'Background artwork',group:'Footer design',media:true,seed:'assets/brand/home-hero-background-v2.webp'},
   ...['licence','nav','contact','line','facebook','hours'].map(key => ({path:'footer.icon'+key[0].toUpperCase()+key.slice(1),label:key+' icon override',group:'Footer design',media:true,seed:key==='line'?'assets/brand/LINE_Brand_icon.png':key==='facebook'?'assets/brand/facebook-icon.svg':''})),
   {path:'homeDesign.consentChanged',label:'Updated consent notice',group:'Form messages',localized:true,seed:{th:'ข้อความยินยอมมีการอัปเดต กรุณาอ่านและยืนยันใหม่ก่อนส่ง ข้อมูลที่กรอกยังอยู่',en:'The consent text has changed. Please read and confirm it again before sending. Your entries are still here.'}},
   {path:'homeDesign.formUnavailable',label:'Form unavailable notice',group:'Form messages',localized:true,seed:{th:'แบบฟอร์มนี้ปิดรับชั่วคราว ข้อมูลของคุณยังไม่ได้ถูกส่ง สามารถติดต่อผ่านช่องทางที่แสดงบนเว็บไซต์',en:'This form is temporarily unavailable. Your information has not been sent. Please use the contact channels shown on the site.'}},
   {path:'homeDesign.returnLabel',label:'Return to consultation',group:'Home design',localized:true,seed:{th:'กลับไปที่แบบฟอร์ม',en:'Return to the form'}},
-  {path:'homeDesign.feesStatement',label:'Fees: heading statement',group:'Transparency design',localized:true,seed:{th:'โปร่งใส\nและพูดตรงเสมอ',en:'Open and honest,\nalways'}},
-  {path:'homeDesign.privacyStatement',label:'Privacy: heading statement',group:'Transparency design',localized:true,seed:{th:'ข้อมูลของคุณ\nเราดูแลอย่างจริงจัง',en:'Your information,\nhandled with care'}},
+  {path:'homeDesign.feesStatement',label:'Fees: heading statement',group:'Transparency design',localized:true,seed:{th:"",en:""}},
+  {path:'homeDesign.privacyStatement',label:'Privacy: heading statement',group:'Transparency design',localized:true,seed:{th:"",en:""}},
   {path:'homeDesign.feesSummaryLabel',label:'Fees: note heading',group:'Transparency design',localized:true,seed:{th:'สรุปสั้น ๆ',en:'In short'}},
   {path:'homeDesign.privacySummaryLabel',label:'Privacy: note heading',group:'Transparency design',localized:true,seed:{th:'การดูแลข้อมูลของคุณ',en:'Looking after your information'}},
-  {path:'homeDesign.feesClosingStatement',label:'Fees: closing statement',group:'Transparency design',localized:true,seed:{th:'ดูแลคุณ\nอย่างจริงใจ',en:'Here for you,\nwith care'}},
-  {path:'homeDesign.privacyClosingStatement',label:'Privacy: closing statement',group:'Transparency design',localized:true,seed:{th:'เป็นส่วนตัว\nและใส่ใจ',en:'Private,\nand personal'}},
+  {path:'homeDesign.feesClosingStatement',label:'Fees: closing statement',group:'Transparency design',localized:true,seed:{th:"",en:""}},
+  {path:'homeDesign.privacyClosingStatement',label:'Privacy: closing statement',group:'Transparency design',localized:true,seed:{th:"",en:""}},
   ...['fees','privacy','transparencyNote'].map(key => ({path:'homeDesign.'+key+'Icon',label:key+' icon override',group:'Transparency design',media:true,seed:''})),
   ...localizedCmsFields("homeDesign","Home design",[
     ["includeCalculator","Explicit calculator sharing","แนบผลประเมินนี้ในคำปรึกษา","Include this estimate in my enquiry"],
@@ -884,7 +884,7 @@ const CMS_CONTENT_FIELDS = [
     ["calcSend","Send","ส่งตัวเลขนี้ให้เราดูต่อ","Send us these numbers"]
   ],false),
   ...localizedCmsFields("publicCopy","Renewal form labels",[
-    ["renewalTitle","Title","ตั้งเตือนต่ออายุ","Set a renewal reminder"],
+    ["renewalTitle","Title","ขอให้ช่วยเตือนต่ออายุ","Request a renewal reminder"],
     ["renewalPolicy","Policy","กรมธรรม์ประเภทไหน","Which policy"],
     ["renewalMonth","Month","หมดอายุเดือนไหน","Expires in"],
     ["renewalContact","Contact","LINE ID หรือเบอร์โทร","LINE ID or phone"]
@@ -892,16 +892,16 @@ const CMS_CONTENT_FIELDS = [
   ...localizedCmsFields("publicCopy","Renewal form labels",[
     ["renewalConsent","Consent","ยินยอมให้ติดต่อกลับเพื่อแจ้งเตือนต่ออายุ และใช้ข้อมูลนี้เฉพาะการติดตามกรมธรรม์ที่ระบุ","I agree to be contacted about this renewal reminder and to use this information only for the selected policy follow-up."],
     ["renewalPrivacy","Privacy","อ่านว่าข้อมูลถูกใช้อะไร","Read how your data is used"],
-    ["renewalSubmit","Submit","ตั้งเตือนให้เราจำ","Remind me"],
-    ["renewalSuccess","Success","ตั้งเตือนไว้แล้ว เราจะทักไปก่อน 60 วัน","Set. We will message you 60 days ahead."]
+    ["renewalSubmit","Submit","ขอให้แจ้งเตือนต่ออายุ","Request a renewal reminder"],
+    ["renewalSuccess","Success","ได้รับคำขอแจ้งเตือนต่ออายุแล้ว","We have received your request for a renewal reminder."]
   ],false),
   ...localizedCmsFields("publicCopy","Consultation form labels",[
     ["contactScan","Scan","สแกนเพื่อแอดไลน์","Scan to add on LINE"],
     ["contactTitle","Title","สอบถามหรือขอใบเสนอราคา","Ask a question or request a quotation"],
-    ["contactName","Name","ชื่อที่ให้เรียก","What should I call you"],
+    ["contactName","Name","ชื่อที่ให้เรียก","What should we call you?"],
     ["contactContact","Contact","LINE ID หรือเบอร์โทร","LINE ID or phone"],
     ["contactEmail","Email","อีเมล (ไม่บังคับ)","Email (optional)"],
-    ["contactEmailHint","Email purpose","สำหรับรับอีเมลตอบรับคำขอและติดต่อเรื่องที่คุณสอบถาม ไม่ใช่การสมัครรับข่าวสาร","For a request acknowledgement and replies about your enquiry, not a newsletter subscription."],
+    ["contactEmailHint","Email purpose","สำหรับรับข้อความยืนยันและติดต่อเรื่องที่คุณสอบถาม ไม่ใช่การสมัครรับข่าวสาร","For confirmation and replies about your enquiry, not a newsletter subscription."],
     ["contactTopic","Topic","เรื่องที่ต้องการสอบถาม","Type of enquiry"],
     ["contactCoverage","Coverage","ความคุ้มครองที่สนใจ","Coverage of interest"],
     ["contactDetails","Details","รายละเอียดเพิ่มเติม (ถ้ามี)","Anything else? (optional)"]
@@ -934,8 +934,8 @@ const CMS_CONTENT_FIELDS = [
   { path: 'licences.verifyUrl', label: 'Licence verification link', group: 'Licences', url: true, seed: 'https://smart.oic.or.th/eservice/Menu1' },
   { path: 'licences.verifyLabel', label: 'Licence verification label', group: 'Licences', localized: true, seed: { th: 'ตรวจสอบใบอนุญาตกับ คปภ.', en: 'Verify licence with OIC' } },
   { path: 'footer.licenceHeading', label: 'Licence heading', group: 'Website labels', localized: true, seed: { th: 'ใบอนุญาต', en: 'Licences' } },
-  { path: 'footer.navHeading', label: 'Navigation heading', group: 'Website labels', localized: true, seed: { th: 'ไปที่', en: 'Go to' } },
-  { path: 'footer.contactHeading', label: 'Contact heading', group: 'Website labels', localized: true, seed: { th: 'ติดต่อ', en: 'Contact' } },
+  { path: 'footer.navHeading', label: 'Navigation heading', group: 'Website labels', localized: true, seed: { th: "ข้อมูลเพิ่มเติม", en: "More information" } },
+  { path: 'footer.contactHeading', label: 'Contact heading', group: 'Website labels', localized: true, seed: { th: "ติดต่อเรา", en: "Contact us" } },
   { path: 'footer.privacyLabel', label: 'Privacy link', group: 'Website labels', localized: true, seed: { th: 'ข้อมูลของคุณถูกใช้ทำอะไร', en: 'How your information is used' } },
   { path: 'ui.advisorLabel', label: 'Advisor heading', group: 'Website labels', localized: true, seed: { th: 'ดูแลโดย', en: 'Advised by' } },
   { path: 'ui.coverageLabel', label: 'Coverage cards heading', group: 'Website labels', localized: true, seed: { th: 'วันนี้อยากให้ช่วยเรื่องไหน', en: 'What would you like help with today?' } },
@@ -945,7 +945,7 @@ const CMS_CONTENT_FIELDS = [
   { path: 'ui.consentRequired', label: 'Consent required', group: 'Form messages', localized: true, seed: { th: 'กรุณายืนยันการให้ติดต่อกลับและการใช้ข้อมูลก่อนส่งข้อความ', en: 'Please confirm consent before sending your enquiry.' } },
   { path: 'ui.submitError', label: 'Submission failed', group: 'Form messages', localized: true, seed: { th: 'ส่งไม่สำเร็จ กรุณาลองใหม่', en: 'Could not send yet. Please try again.' } },
   { path: 'ui.submitPending', label: 'Submission pending', group: 'Form messages', localized: true, seed: { th: 'กำลังบันทึกข้อมูล...', en: 'Saving your enquiry...' } },
-  { path: 'ui.submitSuccess', label: 'Submission successful', group: 'Form messages', localized: true, seed: { th: 'ได้รับข้อมูลแล้ว เราจะติดต่อกลับโดยเร็วที่สุด', en: 'Thank you. We will reply as soon as possible.' } }
+  { path: 'ui.submitSuccess', label: 'Submission successful', group: 'Form messages', localized: true, seed: { th: "ได้รับข้อมูลแล้ว เราจะติดต่อกลับตามช่องทางที่คุณแจ้งไว้", en: "We've received your enquiry and will reply using the details you provided." } }
 ];
 
 function cmsGet(config, path) {
