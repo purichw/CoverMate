@@ -11,7 +11,7 @@ Server-only Vercel Production variables:
 
 - `RESEND_API_KEY`: key permitted to send from the verified sender domain.
 - `ADMIN_NOTIFICATION_FROM`: `CoverMate <notifications@notify.covermateinsurance.com>`.
-- `ADMIN_NOTIFICATION_EMAIL`: `covermate@proton.me`.
+- `ADMIN_NOTIFICATION_EMAIL`: `covermate@covermateinsurance.com`.
 - `ADMIN_NOTIFICATION_CRON_SECRET`: at least 32 characters; only the dedicated
   worker caller receives it, never the Resend key or Firebase credentials.
 - `ADMIN_NOTIFICATION_SCHEDULER_ENABLED`: `true` after configuring the worker.

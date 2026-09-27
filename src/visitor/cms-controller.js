@@ -508,6 +508,7 @@ export function withCmsController(Base, {
             self.saveInlineText(el, true);
           });
           el.addEventListener('click', function (e) { if (self.state.editMode) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+          el.addEventListener('auxclick', function (e) { if (self.state.editMode && e.button === 1) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
         }
         this.markEditableEmpty(el);
       });

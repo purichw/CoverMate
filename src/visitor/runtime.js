@@ -1311,6 +1311,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     if (semantic && isSemanticCopyPath(this.state.site, semantic)) return semantic;
     const anchor = el.closest('[data-cms-copy]');
     const path = anchor && anchor.getAttribute('data-cms-copy');
+    if (path && isSemanticCopyPath(this.state.site, path)) return path;
     return path && (CMS_CONTENT_FIELDS.some(field => field.localized && field.path === path) || isSemanticCopyPath(this.state.site, path + '.' + this.state.lang)) ? path + '.' + this.state.lang : '';
   }
 
@@ -2348,7 +2349,6 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       sharedDesign:sharedDesign, legacyDesign:!sharedDesign, heroProof:heroProof,
       ...calculatorView,
       homeCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.localized && field.path.startsWith('homeDesign.')).map(field => [field.path.slice(11), cmsText(field.path)])),
-      homeWideDetails: (!S.compactHome && !S.touchInteraction) || S.editMode,
       publicNotice: S.publicNoticeKey ? cmsText(S.publicNoticeKey) : '',
       footerGridStyle: '--footer-columns:' + Math.max(1, Math.min(4, Number(site.footer.columns) || 4)) + ';--footer-tablet-columns:' + Math.max(1, Math.min(2, Number(site.footer.columns) || 2)),
       menuOpen: S.menuOpen,

@@ -155,7 +155,9 @@ if(process.argv.includes('--browser')||process.argv.includes('--serve')) {
         checks.push(`${width}px ${lang}: three canonical names, one small image, unchanged form/footer/licences, no overflow`);
       }
       await ready('/motor');assert.equal(await nameNodes().count(),0);assert.equal(await page.locator('.hm-advisor-photo,.cm-contact-advisor,.hm-licence-advisor').count(),0);
-      assert.equal(await page.locator('.hm-proof-details').count(),1,'Motor disclosure retained');
+      assert.equal(await page.locator('.hm-proof details,.hm-proof summary,.hm-proof .hm-plus').count(),0,'Motor proof is permanently expanded');
+      assert.ok(await page.locator('.hm-proof .hm-licences').isVisible(),'Motor credentials stay visible');
+      assert.ok(await page.locator('.hm-proof .hm-proof-service').isVisible(),'Motor service hours stay visible');
       draft.config.advisor.fullName.en='';await ready('/?lang=en');assert.equal(await nameNodes().count(),0);assert.equal(await page.locator('.hm-advisor-photo').count(),0);
       draft.config.advisor.photo='';await ready('/?lang=th');assert.equal(await nameNodes().count(),3);assert.equal(await page.locator('.hm-advisor-photo').count(),0);
       draft.config.advisor.fullName.en='CMS_LONG_NAME_'.repeat(10);
