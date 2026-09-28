@@ -6,8 +6,9 @@
 .cm-contact-line .cm-contact-icon img,.cm-footer-line .cm-footer-icon img { width:100%; height:100%; object-fit:contain; filter:none; }
 .cm-line-contact { position:fixed; z-index:36; right:max(20px,env(safe-area-inset-right)); bottom:calc(var(--cm-dock-height,0px) + 16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:flex-end; gap:12px; max-width:calc(100vw - 32px); }
 .cm-line-contact svg { width:22px; height:22px; flex:none; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.cm-line-launcher { display:grid; place-items:center; padding:2px; border:1px solid var(--color-neutral-300); border-radius:50%; background:var(--color-bg); color:var(--color-text); box-shadow:0 4px 20px #17241626; cursor:pointer; }
+.cm-line-launcher { display:flex; align-items:center; justify-content:center; gap:4px; min-height:64px; max-width:min(320px,100%); padding:1px 22px 1px 6px; border:1px solid var(--color-neutral-300); border-radius:999px; background:var(--color-bg); color:var(--color-text); box-shadow:0 4px 14px #1724161a; font:inherit; cursor:pointer; }
 .cm-line-launcher .cm-line-mark { --line-size:40px; }
+.cm-line-launcher-label { min-width:0; font-size:16px; font-weight:700; line-height:1.5; text-align:center; overflow-wrap:anywhere; }
 .cm-line-launcher:hover { background:#fff; border-color:#648254; }
 .cm-line-contact :is(button,a):focus-visible { outline:3px solid var(--color-accent-700); outline-offset:3px; }
 .cm-line-panel { width:352px; max-width:100%; max-height:calc(100dvh - var(--cm-dock-height,0px) - 174px - env(safe-area-inset-bottom)); overflow:auto; overscroll-behavior:contain; border:1px solid var(--color-neutral-300); border-radius:8px; background:var(--color-bg); color:var(--color-text); box-shadow:0 10px 36px #17241624; line-height:1.6; }

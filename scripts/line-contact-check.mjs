@@ -34,6 +34,7 @@ for (const name of ['default','no-line','disabled','custom']) {
     doc.config.contact.lineId = '@local-fixture';
     doc.config.contact.hours = {th:'เวลาทดสอบจาก CMS',en:'CMS test hours'};
     doc.config.lineContact.title = {th:'หัวข้อจาก CMS',en:'CMS custom title'};
+    doc.config.lineContact.action = {th:'คุยทาง LINE',en:'Message us on LINE'};
   }
   variants[name] = createPageHandler({readPublished:async()=>doc});
 }
@@ -95,6 +96,18 @@ else {
         report.checks.push(`${route} ${width}px ${lang}: no floating launcher/panel; bottom CTA, menu, official logo, CMS destination and disabled/missing URL preserved`);
         await context.close();continue;
       }
+      const launcher=page.locator('[data-line-launcher]');
+      const assertLauncher=async(expected)=>{
+        assert.equal(await launcher.innerText(),expected);
+        assert.equal(await launcher.getAttribute('aria-label'),expected);
+        const layout=await launcher.evaluate(n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect(),label=n.querySelector('.cm-line-launcher-label');return {display:s.display,radius:s.borderRadius,width:r.width,height:r.height,icon:n.querySelector('img').getBoundingClientRect().width,overflow:label.scrollWidth>label.clientWidth};});
+        assert.equal(layout.display,'flex');assert.equal(layout.radius,'999px');
+        assert.ok(layout.width>layout.height);assert.ok(layout.height>=64);
+        assert.equal(layout.icon,40);assert.equal(layout.overflow,false);
+      };
+      await assertLauncher(state.config.lineContact.action[lang]);
+      await page.screenshot({path:`${out}/${route==='/'?'home':'motor'}-${width}-${lang}-closed.png`});
+      if(route==='/') await page.screenshot({path:`${out}/launcher-capsule-context.png`,clip:{x:width-480,y:height-240,width:480,height:240}});
       await open();
       assert.equal(await page.locator('[data-line-action]').getAttribute('href'),state.config.contact.lineUrl);
       assert.equal(await page.locator('[data-line-action]').getAttribute('target'),'_blank');
@@ -118,12 +131,13 @@ else {
       const logos = await page.locator('.cm-line-mark img,.cm-contact-line img,.cm-footer-line img').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({src:n.src,loaded:n.complete&&n.naturalWidth>0,width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height,filter:getComputedStyle(n).filter,transform:getComputedStyle(n).transform})));
       assert.ok(logos.length>=3);
       for(const logo of logos) { assert.ok(logo.loaded);assert.match(logo.src,/LINE_Brand_icon\.png/);assert.ok(logo.height >= (width<768?40:20));assert.equal(logo.width,logo.height);assert.equal(logo.filter,'none');assert.equal(logo.transform,'none'); }
-      await ready('&fixture=custom');await open();
+      await ready('&fixture=custom');await assertLauncher(lang==='th'?'คุยทาง LINE':'Message us on LINE');await open();
       assert.equal(await page.locator('#cm-line-title').innerText(),lang==='th'?'หัวข้อจาก CMS':'CMS custom title');
       assert.equal(await page.locator('.cm-line-hours').innerText(),lang==='th'?'เวลาทดสอบจาก CMS':'CMS test hours');
       assert.match(await page.locator('[data-line-action]').getAttribute('href'),/@local-fixture$/);
       await page.locator(`[data-language-switch="${lang==='th'?'en':'th'}"]`).click();await closed();await open();
       assert.equal(await page.locator('#cm-line-title').innerText(),lang==='th'?'CMS custom title':'หัวข้อจาก CMS');
+      await assertLauncher(lang==='th'?'Message us on LINE':'คุยทาง LINE');
       await ready('&fixture=no-line');assert.equal(await page.locator('[data-line-launcher]').count(),0);
       await ready('&fixture=disabled');assert.equal(await page.locator('[data-line-launcher]').count(),0);
       await ready();await open();

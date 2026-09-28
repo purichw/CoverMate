@@ -2807,6 +2807,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       toggleLineContact: () => this.setLineContact(!this.state.lineContactOpen, this.state.lineContactOpen),
       closeLineContact: () => this.setLineContact(false, true),
       lineCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='LINE contact').map(field=>[field.path.split('.')[1],cmsText(field.path)])),
+      lineLauncherLabel: cmsText('lineContact.action') || cmsText('lineContact.launcher'),
       hasLine: hasLine,
       hasPhone: !!site.contact.phone, hasEmail: !!site.contact.email,
       facebookName: site.contact.facebookName || '', facebookUrl: site.contact.facebookUrl || '', hasFacebook: !!(site.contact.facebookName && /^https:/.test(site.contact.facebookUrl || '')),
