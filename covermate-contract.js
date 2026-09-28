@@ -437,7 +437,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 23;
+const CMS_CONTENT_VERSION = 24;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -738,6 +738,7 @@ const CMS_CONTENT_FIELDS = [
     ['share','Article: share','แชร์บทความ','Share article'],
     ['lineShare','Article: share LINE','แชร์ผ่าน LINE','Share on LINE'],
     ['facebookShare','Article: share Facebook','แชร์ผ่าน Facebook','Share on Facebook'],
+    ['xShare','Article: share X','แชร์ผ่าน X','Share on X'],
     ['copy','Article: copy link','คัดลอกลิงก์','Copy link'],
     ['copied','Article: copied','คัดลอกลิงก์แล้ว','Link copied'],
     ['manualCopy','Article: manual copy','คัดลอกลิงก์จากช่องนี้','Copy the address below'],
@@ -1054,6 +1055,9 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  if (previousVersion < 24) CMS_CONTENT_FIELDS.filter(field => field.path === 'articleDetail.xShare').forEach(field => {
+    for (const lang of ['th','en']) if (cmsGet(next,field.path+'.'+lang) === undefined) cmsSet(next,field.path+'.'+lang,field.seed[lang]);
+  });
   if (previousVersion < 23) CMS_CONTENT_FIELDS.filter(field => field.group === 'Article reader').forEach(field => {
     ['th','en'].forEach(lang=>{const path=field.path+'.'+lang;if(cmsGet(next,path)===undefined)cmsSet(next,path,field.seed[lang]);});
   });

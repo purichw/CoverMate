@@ -1,23 +1,31 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import vm from 'node:vm';
 import { pathToFileURL } from 'node:url';
 import { startStaticServer, REPO_ROOT } from './lib/static-server.mjs';
 import { firebaseMock, createLegacyOpsState } from './fixtures/ops-portal.mjs';
 import { createCasesFixture } from './fixtures/cases.mjs';
 import { adminArticleFixture } from './fixtures/home-articles/admin-feed.mjs';
 import { editorArticleFixture } from './fixtures/home-articles/editor-feed.mjs';
+import { articleIndexFixture } from './fixtures/home-articles/index-feed.mjs';
+import { renderPublicPage } from '../server/seo-page.mjs';
 import cases from '../server/cases-contract.cjs';
 
-export async function startArticlesAdminPreview() {
+export async function startArticlesAdminPreview({state,feed=structuredClone(articleIndexFixture)} = {}) {
+  state ||= {config:JSON.parse(vm.runInNewContext(await fs.readFile(path.join(REPO_ROOT,'src/visitor/defaults.js'),'utf8')+'\nJSON.stringify(DEFAULTS)')),text:{}};
   let catalog = structuredClone(adminArticleFixture), failure = 0, delay = 0;
   const legacy = createLegacyOpsState(), fixture = createCasesFixture();
   const requests = [];
   const result = await startStaticServer({
-    headers: { 'Cache-Control': 'no-store', 'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; frame-src 'none'" },
+    headers: { 'Cache-Control': 'no-store', 'X-Frame-Options':'DENY', 'Content-Security-Policy': "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self'; form-action 'none'; frame-src 'none'" },
     async onRequest(req, res) {
       const url = new URL(req.url, 'http://localhost');
       const send = (type, data, status = 200) => { res.writeHead(status, { 'Content-Type': type }); res.end(data); return true; };
       if (!['GET', 'HEAD'].includes(req.method)) { requests.push({ path: url.pathname, method: req.method }); return send('application/json', '{"error":"Preview is read-only"}', 405); }
+      if(url.pathname==='/') {
+        const html=await fs.readFile(path.join(REPO_ROOT,'index.html'),'utf8');
+        return send('text/html',renderPublicPage(html,state.config,{path:'/',lang:url.searchParams.get('lang'),noindex:true,publishedState:state,siteId:'covermate',articleFeed:feed}));
+      }
       if (['/admin', '/admin/', '/admin/index.html'].includes(url.pathname)) {
         const html = await fs.readFile(path.join(REPO_ROOT, 'admin/index.html'), 'utf8');
         const seed = `<script>localStorage.setItem('covermate-admin-session',JSON.stringify({firebase:true,uid:'article-preview',email:'preview@example.test',name:'CoverMate Preview',role:'admin',exp:Date.now()+3600000}));</script>`;

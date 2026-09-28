@@ -4,7 +4,7 @@ import {projectArticleDetail,articleDetailSlug,articleShareUrl,articleSaved,togg
 import {articleDetailFixture} from './fixtures/home-articles/detail-feed.mjs';
 import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {cmsMedia,migrateCmsContent,routePageFromLocationParts} from '../covermate-contract.js';
+import {cmsMedia,migrateCmsContent,routePageFromLocationParts,CMS_CONTENT_VERSION} from '../covermate-contract.js';
 import {createSeoModel} from '../covermate-seo.mjs';
 
 const slug='health-insurance-checklist',path='/articles/'+slug;
@@ -28,7 +28,9 @@ const storage={value:'[]',getItem(){return this.value;},setItem(_key,value){this
 assert.equal(toggleSavedArticle(storage,slug),true);assert.equal(articleSaved(storage,slug),true);assert.equal(toggleSavedArticle(storage,slug),false);
 storage.value='{}';assert.equal(toggleSavedArticle(storage,slug),true);
 const migrated=migrateCmsContent({cmsContentVersion:22,articleDetail:{toc:{th:'Custom',en:''}}});
-assert.equal(migrated.cmsContentVersion,23);assert.deepEqual(migrated.articleDetail.toc,{th:'Custom',en:''});assert.ok(migrated.articleDetail.share.th);
+assert.equal(migrated.cmsContentVersion,CMS_CONTENT_VERSION);assert.deepEqual(migrated.articleDetail.toc,{th:'Custom',en:''});assert.ok(migrated.articleDetail.share.th);
+assert.deepEqual(migrateCmsContent({cmsContentVersion:23}).articleDetail.xShare,{th:'แชร์ผ่าน X',en:'Share on X'});
+assert.deepEqual(migrateCmsContent({cmsContentVersion:23,articleDetail:{xShare:{th:'Custom X',en:''}}}).articleDetail.xShare,{th:'Custom X',en:''});
 assert.deepEqual(migrateCmsContent(migrated),migrated);
 const seo=createSeoModel({}, {path,article:detail});assert.equal(seo.title,detail.title);assert.equal(seo.canonical,'https://covermateinsurance.com'+path);assert.equal(seo.properties['og:type'],'article');assert.match(seo.meta.robots,/noindex/);
 console.log('PASS article publication/body projection, routing, safe links, save toggle, share URL, migration and SEO.');

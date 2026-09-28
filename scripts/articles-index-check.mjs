@@ -5,7 +5,7 @@ import {projectHomeArticles} from '../src/visitor/home-articles.mjs';
 import {articleIndexFixture} from './fixtures/home-articles/index-feed.mjs';
 import {startArticlesIndexPreview} from './articles-index-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {cmsMedia,migrateCmsContent,routePageFromLocationParts,publicPathForRoutePage} from '../covermate-contract.js';
+import {cmsMedia,migrateCmsContent,routePageFromLocationParts,publicPathForRoutePage,CMS_CONTENT_VERSION} from '../covermate-contract.js';
 import {createSeoModel} from '../covermate-seo.mjs';
 
 const options={now:Date.parse('2026-09-27'),mediaUrl:cmsMedia};
@@ -26,7 +26,7 @@ for(const mutate of [item=>item.status='draft',item=>item.status='scheduled',ite
 }
 const bad=structuredClone(feed);bad.items[0].image.src='javascript:alert(1)';assert.equal(view(bad).featured.image,'');
 const original={cmsContentVersion:21,articlesPage:{title:{th:'Owner title',en:''},heroImage:''}};
-const migrated=migrateCmsContent(original);assert.equal(migrated.cmsContentVersion,23);assert.deepEqual(migrated.articlesPage.title,original.articlesPage.title);assert.equal(migrated.articlesPage.heroImage,'');
+const migrated=migrateCmsContent(original);assert.equal(migrated.cmsContentVersion,CMS_CONTENT_VERSION);assert.deepEqual(migrated.articlesPage.title,original.articlesPage.title);assert.equal(migrated.articlesPage.heroImage,'');
 assert.deepEqual(migrateCmsContent(migrated),migrated);
 assert.equal(routePageFromLocationParts('/articles/'),'articles');assert.equal(publicPathForRoutePage('articles'),'/articles');
 assert.equal(routePageFromLocationParts('/admin/edit','?page=articles'),'home','Articles do not opt into the Home editor');

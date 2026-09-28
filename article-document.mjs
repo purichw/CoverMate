@@ -121,7 +121,7 @@ export function registerArticleDocument() {
   if (typeof customElements === 'undefined' || customElements.get('cm-article-document')) return;
   customElements.define('cm-article-document',class extends HTMLElement {
     static get observedAttributes() {return ['data-document'];}
-    connectedCallback() {this.paint();}
+    connectedCallback() {this.classList.add('cm-article-prose');this.paint();}
     attributeChangedCallback() {this.paint();}
     paint() {
       try { this.innerHTML = renderArticleDocument(JSON.parse(this.getAttribute('data-document') || '{}')).html; }

@@ -1,13 +1,14 @@
 import {Editor} from '@tiptap/core';
 import {createElement,Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone} from 'lucide';
 import {articleExtensions} from './article-extensions.mjs';
-import {articleEscape as esc,articleUrl,articleVideo,articleDocumentText,renderArticleDocument,registerArticleDocument} from '../../article-document.mjs';
+import {articleEscape as esc,articleUrl,articleVideo,articleDocumentText,registerArticleDocument} from '../../article-document.mjs';
 import {createArticleDraft,ARTICLE_CATEGORIES,parseDraftBackup,publicationDateInput,publicationDateISO} from '../../admin/articles/drafts.mjs';
 import {projectArticleDetail} from '../visitor/article-detail.mjs';
+import {createArticlePreviewPage} from './article-preview.mjs';
 
 const glyphs={Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone};
 const icon = name => createElement(glyphs[name],{width:20,height:20,'aria-hidden':'true'}).outerHTML;
-const btn=(action,name,label='',extra='')=>`<button type="button" class="ae-button" data-ae="${action}" aria-label="${esc(label || action)}" title="${esc(label || action)}" ${extra}>${icon(name)}${label && ['back','preview','save','settings','export','import','cover'].includes(action)?`<span>${esc(label)}</span>`:''}</button>`;
+const btn=(action,name,label='',extra='')=>`<button type="button" class="ae-button" data-ae="${action}" aria-label="${esc(label || action)}" title="${esc(label || action)}" ${extra}>${icon(name)}${label && ['back','preview','save','settings','export','import','cover','desktop','mobile'].includes(action)?`<span>${esc(label)}</span>`:''}</button>`;
 const field=(key,label,value='',type='text',extra='')=>`<label class="ae-field"><span>${label}</span>${type==='textarea'?`<textarea data-field="${key}" rows="${['title','excerpt'].includes(key)?2:3}" ${extra}>${esc(value)}</textarea>`:`<input data-field="${key}" type="${type}" value="${esc(value)}" ${extra}>`}</label>`;
 const calloutLabels={summary:'สรุปประเด็นสำคัญ',keypoints:'สิ่งที่ควรรู้',note:'หมายเหตุ',warning:'ข้อควรระวัง'};
 
@@ -39,12 +40,17 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   }
   function growFields(){root.querySelectorAll('.ae-title-fields textarea').forEach(el=>{el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';});}
   function formSelect(key,label,entries,value) {return `<label class="ae-field"><span>${label}</span><select data-field="${key}" aria-label="${label}">${entries.map(([id,title])=>`<option value="${id}" ${id===value?'selected':''}>${esc(title)}</option>`).join('')}</select></label>`;}
+  function noteControl(key,label,max) {
+    const t=locale();
+    return `<div class="ae-note-control"><label class="ae-toggle"><span>แสดง${label}</span><input type="checkbox" role="switch" data-field="${key}Enabled" ${t[key+'Enabled']!==false?'checked':''}></label>${field(key,label+' · '+lang.toUpperCase(),t[key],'textarea',`maxlength="${max}"`)}</div>`;
+  }
   function settings(){
     const t=locale();
     return `<section class="ae-settings-section"><h2>ภาพปก</h2><div class="ae-cover">${draft.cover.src?`<img src="${esc(draft.cover.src)}" alt="${esc(t.coverAlt)}">`:icon('Image')}</div><div class="ae-cover-actions">${btn('cover','Image','เปลี่ยนภาพ')}<button type="button" class="ae-text-button" data-ae="clear-cover">นำออก</button></div>${field('coverAlt','ข้อความอธิบายภาพ',t.coverAlt)}${field('caption','คำบรรยายภาพปก',t.caption)}</section>
       <section class="ae-settings-section"><h2>จัดหมวดหมู่</h2>${formSelect('categoryId','หมวดหมู่',Object.entries(ARTICLE_CATEGORIES).map(([id,names])=>[id,names[0]]),draft.categoryId)}${field('tags','แท็ก (คั่นด้วยเครื่องหมาย ,)',draft.tags.join(', '))}${field('authorName','ผู้เขียน',draft.authorName)}</section>
       <section class="ae-settings-section"><h2>วันที่และการแสดงผล</h2>${field('publishedAt','วันที่บทความ · '+(lang==='th'?'TH':'EN')+' (เวลาไทย)',publicationDateInput(t.publishedAt),'datetime-local','min="1900-01-01T00:00" max="9999-12-31T23:59"')}<small>${cloud?'เว้นว่างเพื่อใช้วันเผยแพร่ครั้งแรก วันที่ในอนาคตจะแสดงเมื่อถึงกำหนดหลังยืนยันเผยแพร่':'วันที่ที่จะแสดงหลังเผยแพร่ ไม่ใช่การตั้งเวลาส่งขึ้นเว็บไซต์'}</small><label class="ae-toggle"><span>ปักหมุดในหน้ารวมบทความ</span><input type="checkbox" role="switch" data-field="pinned" ${draft.pinned?'checked':''}></label><label class="ae-toggle"><span>แนะนำบนหน้า Home</span><input type="checkbox" role="switch" data-field="featured" ${draft.featured?'checked':''}></label></section>
-      <section class="ae-settings-section"><h2>สรุปและแหล่งอ้างอิง</h2>${field('takeaways','Key takeaways (หนึ่งข้อต่อบรรทัด)',t.takeaways.join('\n'),'textarea')}<div class="ae-source-list">${t.sources.map((source,i)=>`<div class="ae-source-row">${field('source-label-'+i,'ชื่อแหล่งอ้างอิง',source.label)}${field('source-url-'+i,'URL',source.url,'url')}<button class="ae-text-button" type="button" data-ae="remove-source" data-index="${i}">นำออก</button></div>`).join('')}</div><button type="button" class="ae-text-button" data-ae="add-source">เพิ่มแหล่งอ้างอิง</button></section>
+      <section class="ae-settings-section"><h2>สรุปและแหล่งอ้างอิง</h2>${field('takeaways','Key takeaways (หนึ่งข้อต่อบรรทัด)',t.takeaways.join('\n'),'textarea')}<small>แสดงเป็นรายการเช็กพร้อมหลอดไฟ บน Desktop อยู่ท้ายเนื้อหา บน Mobile อยู่ใต้ภาพปก</small>${noteControl('takeawayNote','ข้อความลายมือข้างสรุป',500)}<small>ปิดเพื่อซ่อนเฉพาะข้อความลายมือ โดยเก็บข้อความไว้เปิดใช้ใหม่ได้</small><div class="ae-source-list">${t.sources.map((source,i)=>`<div class="ae-source-row">${field('source-label-'+i,'ชื่อแหล่งอ้างอิง',source.label)}${field('source-url-'+i,'URL',source.url,'url')}<button class="ae-text-button" type="button" data-ae="remove-source" data-index="${i}">นำออก</button></div>`).join('')}</div><button type="button" class="ae-text-button" data-ae="add-source">เพิ่มแหล่งอ้างอิง</button></section>
+      <section class="ae-settings-section"><h2>ข้อความประกอบบทความ</h2><small>แก้ข้อความและเปิด–ปิดแยกตามภาษาได้ ปิดแล้วข้อความยังเก็บไว้</small>${noteControl('headerNote','ข้อความลายมือส่วนหัว',500)}${noteControl('sidebarQuote','คำพูดข้างบทความ',1000)}<small>คำพูดข้างบทความที่เปิดไว้และเว้นว่าง จะใช้ข้อความกลางของเว็บไซต์ถ้ามี ปิดสวิตช์เพื่อซ่อนทั้งหมด</small></section>
       <section class="ae-settings-section"><h2>URL และ SEO</h2>${field('slug','ลิงก์บทความ /articles/',draft.slug,'text',draft.basePublished||draft.slugLocked?'readonly aria-describedby="aeSlugHelp"':'pattern="[a-z0-9]+(-[a-z0-9]+)*"')}<small id="aeSlugHelp">${draft.basePublished||draft.slugLocked?'คง URL เดิมของบทความที่เผยแพร่แล้ว':'ใช้ภาษาอังกฤษ ตัวเลข และขีดกลาง'}</small><details class="ae-seo"><summary>ตั้งค่าการค้นหา</summary>${field('seoTitle','SEO title',t.seoTitle)}${field('seoDescription','SEO description',t.seoDescription,'textarea')}</details></section>`;
   }
   function tool(action,name,label,mark=''){return btn(action,name,label,mark?`data-mark="${mark}" aria-pressed="false"`:'');}
@@ -212,10 +218,35 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     item.translations[lang]={...t,status:'published',publishedAt:t.publishedAt || new Date().toISOString(),author:draft.authorName,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
     const detail=projectArticleDetail({available:true,sample:true,item},{slug:item.slug,lang,now:Math.max(Date.now(),Date.parse(item.translations[lang].publishedAt)),mediaUrl:value=>articleUrl(value,true)});
     if(!detail.available){setStatus('ดูตัวอย่างไม่ได้ ตรวจลิงก์บทความและเนื้อหา',true);return;}
-    const d=modal('ตัวอย่างฉบับร่าง · ยังไม่เผยแพร่',`<div class="ae-preview-modes" role="group" aria-label="ขนาดตัวอย่าง">${btn('desktop','Monitor','Desktop','aria-pressed="true"')}${btn('mobile','Smartphone','Mobile','aria-pressed="false"')}</div><div class="ae-preview-scroll"><div class="ae-preview-content ad-page" lang="${lang}"><div class="ad-header"><span class="ae-preview-category">${esc(detail.category)}</span><h1>${esc(detail.title)}</h1><p class="ad-deck">${esc(detail.excerpt)}</p><div class="ad-meta"><span>${esc(detail.author)}</span><span>${esc(detail.reading)}</span></div></div>${detail.image?`<figure class="ae-preview-cover"><img src="${esc(detail.image)}" alt="${esc(detail.imageAlt)}"><figcaption>${esc(detail.caption)}</figcaption></figure>`:''}${detail.takeaways.length?`<section class="ad-takeaways"><h2>${lang==='en'?'Key takeaways':'สรุปประเด็นสำคัญ'}</h2><ul>${detail.takeaways.map(t=>`<li>${esc(t.text)}</li>`).join('')}</ul></section>`:''}${detail.toc.length?`<nav class="ae-preview-toc" aria-label="สารบัญ">${detail.toc.map(t=>`<a href="${t.href}">${esc(t.label)}</a>`).join('')}</nav>`:''}<article class="cm-article-prose">${renderArticleDocument(t.document).html}</article>${detail.sources.length?`<section class="ad-sources"><h2>${lang==='en'?'Sources':'แหล่งอ้างอิง'}</h2><ul>${detail.sources.map(s=>`<li><a href="${esc(s.href)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a></li>`).join('')}</ul></section>`:''}</div></div>`,{wide:true});
-    d.querySelectorAll('.ae-preview-modes button').forEach(button=>button.onclick=()=>{d.dataset.size=button.dataset.ae;d.querySelectorAll('.ae-preview-modes button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));});
-    const date=document.createElement('time');date.dateTime=item.translations[lang].publishedAt;date.textContent=new Intl.DateTimeFormat(lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'}).format(new Date(date.dateTime));d.querySelector('.ad-meta').prepend(date);
-    d.querySelectorAll('.ae-preview-toc a').forEach(a=>a.onclick=event=>{event.preventDefault();d.querySelector(a.getAttribute('href'))?.scrollIntoView({block:'start'});});
+    const d=modal('Preview · ฉบับร่างยังไม่เผยแพร่',`<div class="ae-preview-modes" role="group" aria-label="ขนาดตัวอย่าง">${btn('desktop','Monitor','Desktop','aria-pressed="true"')}${btn('mobile','Smartphone','Mobile','aria-pressed="false"')}</div><p class="ae-preview-status" role="status">กำลังโหลดหน้าเว็บไซต์…</p><div class="ae-preview-scroll"><iframe class="ae-preview-frame" title="Preview บทความบนเว็บไซต์" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" hidden></iframe></div>`,{wide:true});
+    const frame=d.querySelector('iframe'),status=d.querySelector('.ae-preview-status'),controller=new AbortController();
+    const message=event=>{if(event.source===frame.contentWindow&&event.origin===location.origin&&event.data?.type==='covermate:article-preview-action')status.textContent=event.data.message;};
+    window.addEventListener('message',message);
+    d.addEventListener('close',()=>{controller.abort();window.removeEventListener('message',message);},{once:true});
+    const load=async()=>{
+      status.textContent='กำลังโหลดหน้าเว็บไซต์…';
+      try {
+        const response=await fetch('/?lang='+lang,{cache:'no-store',signal:controller.signal});
+        if(!response.ok)throw new Error('โหลดหน้าเว็บไซต์ไม่สำเร็จ');
+        const html=createArticlePreviewPage(await response.text(),detail,{lang,origin:location.origin});
+        if(!d.open)return;
+        frame.hidden=false;
+        await new Promise((resolve,reject)=>{
+          const timer=setTimeout(()=>{clearInterval(poll);reject(new Error('Preview โหลดไม่สำเร็จ'));},15000);
+          const poll=setInterval(()=>{if(controller.signal.aborted){clearInterval(poll);clearTimeout(timer);resolve();return;}try{if(frame.contentWindow?.CoverMateBoot?.pending===false&&frame.contentDocument?.querySelector('.ad-page .ad-prose')){clearInterval(poll);clearTimeout(timer);resolve();}}catch{}},100);
+          frame.srcdoc=html;
+        });
+        if(d.open)status.textContent='ร่างล่าสุด · ลิงก์และการแชร์อยู่ในโหมด Preview';
+      }catch(error){if(error.name!=='AbortError'&&d.open){status.textContent='โหลด Preview ไม่สำเร็จ กรุณาลองอีกครั้ง ';const retry=document.createElement('button');retry.type='button';retry.className='ae-text-button';retry.textContent='ลองอีกครั้ง';retry.onclick=load;status.append(retry);}}
+    };
+    load();
+    d.dataset.size=matchMedia('(max-width:767px)').matches?'mobile':'desktop';
+    const setMode=mode=>{
+      d.dataset.size=mode;
+      d.querySelectorAll('.ae-preview-modes button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.ae===mode)));
+    };
+    setMode(d.dataset.size);
+    d.querySelectorAll('.ae-preview-modes button').forEach(button=>button.onclick=()=>setMode(button.dataset.ae));
   }
   function openSettings(){
     if(settingsDialog)return;settingsOpener=document.activeElement;
@@ -230,6 +261,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const el=event.target,key=el.dataset.field;if(!key)return;
     const t=locale();
     if(key==='featured'||key==='pinned')draft[key]=el.checked;
+    else if(['headerNoteEnabled','sidebarQuoteEnabled','takeawayNoteEnabled'].includes(key))t[key]=el.checked;
     else if(key==='publishedAt'){try{t.publishedAt=publicationDateISO(el.value);el.setCustomValidity('');}catch(error){el.setCustomValidity(error.message);}}
     else if(key==='tags')draft.tags=el.value.split(',').map(v=>v.trim()).filter(Boolean);
     else if(key==='takeaways')t.takeaways=el.value.split('\n').map(v=>v.trim()).filter(Boolean);

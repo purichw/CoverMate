@@ -47,6 +47,8 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
     seoTitle:text(copy.seoTitle),seoDescription:text(copy.seoDescription),
     toc:rich ? rich.toc : blocks.filter(block=>block.heading).map(block=>({key:block.id,id:block.id,label:block.text,href:'#'+block.id,className:block.h3?'ad-toc-sub':''})),
     takeaways:texts(copy.takeaways).slice(0,8),author:text(copy.author),caption:text(copy.caption),
+    headerNote:text(copy.headerNote),sidebarQuote:text(copy.sidebarQuote),takeawayNote:text(copy.takeawayNote),
+    headerNoteEnabled:copy.headerNoteEnabled!==false,sidebarQuoteEnabled:copy.sidebarQuoteEnabled!==false,takeawayNoteEnabled:copy.takeawayNoteEnabled!==false,
     image:mediaUrl(item.cover?.src) || summary.image,imageAlt:text(copy.coverAlt) || summary.imageAlt,
     date:date.format(published),datetime:published.toISOString(),
     updated: Number.isFinite(updated) && updated>summary.publishedAt && updated<=(now ?? Date.now()) ? date.format(updated) : '',

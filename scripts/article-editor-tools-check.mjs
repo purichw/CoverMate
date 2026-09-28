@@ -147,6 +147,15 @@ try {
   await field('slug').fill('qa-toolbar');await field('authorName').fill('QA author');
   await choose('หมวดหมู่','ประกันสุขภาพ');
   await field('featured').check();await field('pinned').check();
+  const articleNotes={
+    th:{headerNote:'<b>ข้อความหัวบทความ</b>',sidebarQuote:'คำพูดข้างบทความ\nที่แก้ไขได้',takeawayNote:'สรุปวันนี้\nเพื่อวันข้างหน้า'},
+    en:{headerNote:'Article header note',sidebarQuote:'An editable\nsidebar quote',takeawayNote:'Understand today\nprepare for tomorrow'}
+  };
+  for(const lang of ['th','en']){
+    await page.locator(`[data-lang=${lang}]`).click();
+    for(const [key,value] of Object.entries(articleNotes[lang]))await field(key).fill(value);
+  }
+  await page.locator('[data-lang=th]').click();
   await page.locator('.ae-seo summary').click();await field('seoTitle').fill('SEO QA');await field('seoDescription').fill('SEO description');
   await field('takeaways').fill(Array.from({length:9},(_,i)=>'Point '+i).join('\n'));
   await tool('save');assert.match(await feedback(),/8/);await field('takeaways').fill('Point one\nPoint two');
@@ -155,14 +164,23 @@ try {
   await field('source-label-0').fill('Reference');await field('source-url-0').fill('https://example.com/source');
   await tool('add-source');await page.locator('[data-ae=remove-source][data-index="1"]').click();
   await save();
-  await tool('preview');assert.equal(await page.locator('.ae-preview-content .ad-sources a').getAttribute('href'),'https://example.com/source');
-  assert.equal(await page.locator('.ae-preview-content .ad-takeaways li').count(),2);
+  await tool('preview');const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-sources a').waitFor();assert.equal(await preview.locator('.ad-sources a').getAttribute('href'),'https://example.com/source');
+  assert.equal(await preview.locator('.ad-takeaways li').count(),2);
+  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'.ad-takeaways-note'}))assert.equal(await preview.locator(selector).innerText(),articleNotes.th[key]);
+  assert.equal(await preview.locator('.ad-header-note b').count(),0,'Note HTML renders literally as text');
   await page.screenshot({path:out+'/'+engine+'-preview.png'});await close();
+  for(const key of Object.keys(articleNotes.th))await field(key+'Enabled').uncheck();
+  await save();await tool('preview');await preview.locator('.ad-prose').waitFor();
+  assert.equal(await preview.locator('.ad-header-note,.ad-side-note,.ad-takeaways-note').count(),0,'Each disabled note is absent, including any global sidebar fallback');
+  assert.equal(await preview.locator('.ad-takeaways li').count(),2,'Hiding the handwritten note retains the takeaway summary');
+  await page.screenshot({path:out+'/'+engine+'-notes-hidden-preview.png'});await close();
   const download=page.waitForEvent('download');await tool('export');const backup=await download;
   await backup.saveAs(out+'/'+engine+'-backup.json');
   const draft=JSON.parse(fs.readFileSync(out+'/'+engine+'-backup.json','utf8'));
   assert.equal(draft.slug,'qa-toolbar');assert.equal(draft.authorName,'QA author');assert.equal(draft.categoryId,'health');
   assert.equal(draft.featured,true);assert.equal(draft.pinned,true);assert.equal(draft.translations.th.seoTitle,'SEO QA');
+  for(const lang of ['th','en'])for(const [key,value] of Object.entries(articleNotes[lang]))assert.equal(draft.translations[lang][key],value,'Backup preserves localized '+key);
+  for(const lang of ['th','en'])for(const key of Object.keys(articleNotes[lang]))assert.equal(draft.translations[lang][key+'Enabled'],lang==='en','Backup preserves each language visibility without clearing text');
   await page.locator('.ae-import-file').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{"schemaVersion":999}')});
   await page.locator('.ae-feedback').filter({hasText:'ไฟล์นี้ไม่ใช่ฉบับร่าง Article Editor'}).waitFor();
   assert.equal(await page.locator('.ae-feedback').getAttribute('data-error'),'true');
@@ -171,6 +189,25 @@ try {
   await page.locator('[name=query]').fill('Toolbar interaction QA');await page.locator('[data-article-action=edit]').first().click();
   assert.equal(await field('slug').inputValue(),'qa-toolbar');assert.equal(await field('pinned').isChecked(),true);
   await page.locator('.ae-seo summary').click();assert.equal(await field('seoDescription').inputValue(),'SEO description');
+  for(const lang of ['th','en']){
+    await page.locator(`[data-lang=${lang}]`).click();
+    for(const [key,value] of Object.entries(articleNotes[lang]))assert.equal(await field(key).inputValue(),value,'Saved '+lang+' '+key+' reloads into the editor');
+    for(const key of Object.keys(articleNotes[lang]))assert.equal(await field(key+'Enabled').isChecked(),lang==='en','Saved '+lang+' visibility reloads independently');
+  }
+  await page.locator('[data-lang=th]').click();
+  for(const key of Object.keys(articleNotes.th))await field(key+'Enabled').check();
+  await field('takeawayNote').fill('วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า');
+  await save();
+  await page.locator('[data-field=takeawayNoteEnabled]').scrollIntoViewIfNeeded();
+  await page.screenshot({path:out+'/'+engine+'-note-controls.png'});
+  await tool('preview');await preview.locator('.ad-takeaways-note').waitFor();
+  assert.equal(await preview.locator('.ad-header-note').innerText(),articleNotes.th.headerNote);
+  assert.equal(await preview.locator('.ad-side-note p').innerText(),articleNotes.th.sidebarQuote);
+  assert.equal(await preview.locator('.ad-takeaways-note').innerText(),'วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า','Re-enabled note uses the newly edited text');
+  await preview.locator('.ad-takeaways-note').scrollIntoViewIfNeeded();
+  await page.screenshot({path:out+'/'+engine+'-notes-restored-preview.png'});await close();
+  check('All three notes toggle off/on without losing text; localized visibility saves, exports, reloads and reaches the real full-page preview');
+  check('Header, sidebar and takeaway notes remain independent in TH/EN, render escaped, export and persist/reload');
   check('Metadata persists/reloads; source/takeaway/tag limits; preview sources; backup contains metadata; invalid import preserves draft');
   await tool('back');await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[name=query]').fill('');

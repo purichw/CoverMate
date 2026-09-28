@@ -1,8 +1,8 @@
 # Public Article Reader
 
-Local implementation, 2026-09-27. No deploy or publication backend is included.
-This extends the Home and public index work with `/articles/{slug}`. The local
-Article Editor now shares a canonical document renderer with this view.
+Updated 2026-09-28. `/articles/{slug}` and the CMS Preview share the document
+renderer and article composition. See [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md)
+for the current production publication, visibility, SEO and storage contract.
 
 ## Reading Experience
 
@@ -11,10 +11,24 @@ Article Editor now shares a canonical document renderer with this view.
 - Article header: breadcrumbs, category, title, description, publication date,
   optional reading time/author/update date, local save and sharing.
 - Desktop: reading column plus sticky contents/share sidebar, followed by key
-  takeaways. Mobile: cover, takeaways, collapsible contents, body, related cards.
+  takeaways. Mobile: cover, takeaways, body, collapsible contents/share, related
+  cards. Responsive behavior follows the article container, including CMS Preview.
+- CMS Preview runs this actual page bundle in an isolated viewport, including
+  the public header/footer, share controls, related published cards and contact
+  dock. Unsaved article content is injected only in memory. External actions
+  show Preview feedback; no publication, analytics or draft-sharing occurs.
+- Reference composition includes gold bulb/checklist badges, compact prose,
+  panoramic covers, botanical decorations and optional handwritten notes.
+  `headerNote`, `sidebarQuote`, and `takeawayNote` are localized editable metadata
+  with independent `*Enabled` switches (missing flags default to true). Disabled
+  notes retain their authored text but produce no text/card in public or Preview.
+  Empty notes do not produce decorative blank cards. The sidebar uses the CMS
+  `articleDetail.note` only when enabled and no per-article quote is set. Disabling
+  the takeaway note preserves the summary/checklist. Without a cover URL,
+  no oversized image placeholder is rendered; an existing caption is preserved.
 - Heading links update the hash and focus the target below the fixed header.
 - Share uses the native share sheet when available. Otherwise it focuses the
-  LINE/Facebook/copy controls. Clipboard denial reveals a selectable URL.
+  LINE/Facebook/X/copy controls. Clipboard denial reveals a selectable URL.
   Social destinations are constructed locally; no third-party SDK/tracking is loaded.
 - Save stores up to 100 slugs under `covermate-saved-articles-v1`, only on an
   explicit click. This is device-local, not an account, bookmark library or sync.
@@ -26,10 +40,11 @@ Article Editor now shares a canonical document renderer with this view.
 ## Data And Routing Boundary
 
 `createPageHandler` accepts a separate `readArticle(siteId, slug)` adapter,
-defaulting to `null` until a real published-only reader exists. Its result is
+with the production published-only repository. Its result is
 `{available:true, item}` using the publication summary schema plus localized
 `body`, `takeaways`, `author`, `updatedAt`, `caption`, `coverAlt`, `sources`, and
-optional item-level `cover.src`. Local fixtures may also specify `sample:true`.
+optional localized notes and item-level `cover.src`. Local fixtures may also
+specify `sample:true`.
 
 The server checks record and selected-translation publication, dates, safe slug
 and nonempty supported body before emitting a normalized selected-language
@@ -44,16 +59,18 @@ quote/attribution, semantic summary/keypoints/note/warning, image/alt/caption,
 tables, divider and validated YouTube link cards. Unknown nodes and raw HTML
 are discarded. Its only HTML boundary is a whitelist renderer with escaped
 text/attributes, mounted by `cm-article-document`; author HTML is never trusted.
-Editor and Visitor reuse `assets/article-document.css`. Reference links require
+Editor and Visitor reuse `assets/article-document.css`. The custom element sets
+its own `cm-article-prose` class so template attribute conversion cannot drop
+callout/list/quote styling. Reference links require
 HTTPS. Media URLs pass the shared URL sanitizer and asset versioning. See
 `ARTICLE_EDITOR.md` for the schema and unsupported embed/upload boundaries.
 
-The exact one-slug Vercel rewrite delegates to the same handler. The route stays
-noindex and no-store until the publication backend/cache policy is implemented.
-SSR and client title, canonical and Open Graph metadata use the article, not
-Home. No Article JSON-LD, sitemap additions or indexing claims are made yet.
+The exact one-slug Vercel rewrite delegates to the same handler. Visibility,
+no-store, Article JSON-LD, canonical metadata and sitemap behavior follow
+`ARTICLES_PUBLISHING.md`; UAT remains noindex.
 
-CMS content version 23 adds only reader labels under `articleDetail.*`.
+CMS content version 23 introduced reader labels under `articleDetail.*`;
+version 24 adds the localized X-share label for existing published configurations.
 Migration fills absent language fields while preserving custom text and blanks.
 This does not add a website-owner editor route for article bodies.
 
@@ -71,6 +88,14 @@ This does not add a website-owner editor route for article bodies.
 - `scripts/fixtures/home-articles/family-health-v1.webp`: generated illustrative
   family cover, not real customers/testimonials. Source generated image:
   `exec-75413578-5fb0-4fad-9098-49551092ca02.png`. Fixtures remain outside the build.
+- `scripts/article-reader-parity-check.mjs`: real CMS Preview versus public
+  computed-style/layout assertions, including mobile mode in a desktop window
+  and maximum-length notes without overflow or overlap.
+- `scripts/article-reference-snapshots.mjs`: local reference-content screenshots
+  and labeled comparison boards; never writes public content.
+- Handwritten notes use self-hosted Sriracha by Cadson Demak, licensed under the
+  [SIL OFL](../assets/fonts/sriracha-OFL.txt). Font source:
+  [Google Fonts](https://github.com/google/fonts/tree/main/ofl/sriracha).
 
 ```sh
 node scripts/generate-visitor-bundle.mjs
@@ -93,7 +118,8 @@ The detail-specific WebKit run rendered all four viewports and exercised TOC
 navigation, but process-crashed on reload after a save. Cause unresolved; this
 is not a full Safari pass. Chromium covers the complete reader flow.
 
-Before production: implement the published-only article adapter and editor
-permissions; approve copy and authorship; calculate reading time from final
-content; add server document validation and persisted schema migrations; decide saved-list UX;
-verify actual device sharing, image failure and cache/indexing behavior.
+The published-only adapter, editor authorization, server validation and persisted
+draft/live workflow are implemented; see `ARTICLES_PUBLISHING.md` for their
+verification. Before publishing editorial content, approve its copy, authorship,
+media and reading time. Physical-device sharing and a future saved-list UI remain
+separate from the reader presentation work.

@@ -100,7 +100,8 @@ if(process.argv.includes('--browser')) {
     await page.locator('[data-field=tags]').fill('policy-check, covermate');
     await save(page);
     await page.locator('[data-ae=preview]').click();await page.locator('.ae-preview-dialog').waitFor();
-    const previewHTML=await page.locator('.ae-preview-content article').innerHTML();assert.ok(previewHTML.includes('<table>'));assert.ok(previewHTML.includes('<cite>'));assert.ok(previewHTML.includes('data-kind="summary"'));assert.ok(previewHTML.includes('data-kind="keypoints"'));
+    const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-prose table').waitFor();
+    const previewHTML=await preview.locator('.ad-prose').innerHTML();assert.ok(previewHTML.includes('<table>'));assert.ok(previewHTML.includes('<cite>'));assert.ok(previewHTML.includes('data-kind="summary"'));assert.ok(previewHTML.includes('data-kind="keypoints"'));
     await page.locator('.ae-preview-dialog [data-ae=mobile]').click();await page.screenshot({path:out+'/'+engine+'-preview.png'});
     await page.locator('.ae-preview-dialog [data-ae=close]').click();
     const second=await context.newPage();second.setDefaultTimeout(10000);await go(second);await edit(second);

@@ -24,6 +24,12 @@ function draftValue(input) {
     for(const [key,max] of Object.entries({title:240,excerpt:600,seoTitle:240,seoDescription:600,coverAlt:500,imageAlt:500,caption:1000})) {
       if(typeof t[key]!=='string'||t[key].length>max)fail(`${lang.toUpperCase()}: ${key} ยาวเกิน ${max} ตัวอักษร`);
     }
+    for(const [key,max] of Object.entries({headerNote:500,sidebarQuote:1000,takeawayNote:500})) {
+      if(t[key]!==undefined&&(typeof t[key]!=='string'||t[key].length>max))fail(`${lang.toUpperCase()}: ${key} ต้องเป็นข้อความไม่เกิน ${max} ตัวอักษร`);
+    }
+    for(const key of ['headerNoteEnabled','sidebarQuoteEnabled','takeawayNoteEnabled']) {
+      if(t[key]!==undefined&&typeof t[key]!=='boolean')fail(`${lang.toUpperCase()}: ${key} ต้องเป็นค่าเปิดหรือปิด`);
+    }
     if(t.publishedAt!==null&&!Number.isFinite(Date.parse(t.publishedAt)))fail('วันที่บทความไม่ถูกต้อง');
     if(!Array.isArray(t.takeaways)||t.takeaways.length>8||t.takeaways.some(v=>typeof v!=='string'||v.length>1000))fail('สรุปได้ไม่เกิน 8 ข้อ ข้อละ 1,000 ตัวอักษร');
     if(!Array.isArray(t.sources)||t.sources.length>30||t.sources.some(s=>typeof s?.label!=='string'||!s.label.trim()||s.label.length>500||typeof s.url!=='string'||!s.url.startsWith('https:')||!articleUrl(s.url)))fail('แหล่งอ้างอิงต้องมีชื่อและลิงก์ HTTPS ที่ถูกต้อง');

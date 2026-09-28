@@ -30,6 +30,8 @@ export function createArticleDraft(source = {}, author = 'CoverMate') {
     draft.translations[lang] = {
       title:text(t.title),excerpt:text(t.excerpt),category:ARTICLE_CATEGORIES[draft.categoryId]?.[lang === 'en' ? 1 : 0] || text(t.category),
       imageAlt:text(t.imageAlt),coverAlt:text(t.coverAlt) || text(t.imageAlt),caption:text(t.caption),
+      headerNote:text(t.headerNote),sidebarQuote:text(t.sidebarQuote),takeawayNote:text(t.takeawayNote),
+      headerNoteEnabled:t.headerNoteEnabled!==false,sidebarQuoteEnabled:t.sidebarQuoteEnabled!==false,takeawayNoteEnabled:t.takeawayNoteEnabled!==false,
       seoTitle:text(t.seoTitle),seoDescription:text(t.seoDescription),publishedAt:Number.isFinite(Date.parse(t.publishedAt))?new Date(t.publishedAt).toISOString():null,
       takeaways:Array.isArray(t.takeaways) ? t.takeaways.filter(item=>typeof item==='string') : [],sources:Array.isArray(t.sources) ? t.sources.filter(item=>item&&typeof item==='object').map(item=>({label:text(item.label),url:text(item.url)})) : [],
       document:normalizeArticleDocument(t.document || legacyArticleDocument(Array.isArray(t.body)?t.body:[]))

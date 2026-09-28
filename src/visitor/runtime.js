@@ -166,7 +166,7 @@ function assetURL(p){
     var R = (typeof window !== "undefined" && window.__resources) || null;
     if (R && R[ref]) ref = R[ref];
     if (window.CoverMateContract && window.CoverMateContract.versionedAssetUrl) {
-      ref = window.CoverMateContract.versionedAssetUrl(ref, IMAGE_VERSIONS, window.location.origin);
+      ref = window.CoverMateContract.versionedAssetUrl(ref, IMAGE_VERSIONS, window.__covermateArticlePreview?.origin || window.location.origin);
     }
     if (/^(https?:|data:|blob:|\/)/.test(ref)) return ref;
     if (ref.indexOf('assets/') === 0 || /^favicon\.(svg|ico)$/.test(ref)) return '/' + ref;
@@ -317,7 +317,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   state = {
     articleFeed: readHomeArticleFeed(document),
     articleSearchDraft: null,
-    articleDetail:readArticleDetail(document),
+    articleDetail:window.__covermateArticlePreview?.detail || readArticleDetail(document),
     detailFeedback:'',detailCopyFeedback:'',detailManualCopy:false,
     menuOpen: false,
     lineContactOpen: false,
@@ -345,7 +345,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     calculatorReferenceDraft: null,
     calculatorAttachmentText: '',
     shareCalculator: false,
-    lang: new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th',
+    lang: window.__covermateArticlePreview?.lang || (new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'th'),
     site: clone(DEFAULTS),
     routePage: 'home',
     admin: false,
@@ -705,6 +705,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   writeJSON(k, v) { try { window.localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* quota */ } }
 
   setLanguage(lang, event) {
+    if(window.__covermateArticlePreview){event?.preventDefault();window.__covermateArticlePreview.notify();return;}
     if (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey) return;
     event?.preventDefault();
     const address = new URL(window.location.href);
@@ -736,6 +737,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   async shareArticle(copyOnly, copy) {
+    if(window.__covermateArticlePreview){window.__covermateArticlePreview.notify();return;}
     const url=articleShareUrl(window.location);
     if(copyOnly) {
       try {await navigator.clipboard.writeText(url);this.setState({detailCopyFeedback:copy.copied,detailManualCopy:false});}
@@ -843,7 +845,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   syncSeo() {
     if (typeof document === 'undefined') return;
     const site = this.state.site || DEFAULTS;
-    const owner = this.state.admin || this.state.editMode || this.state.preview;
+    const owner = this.state.admin || this.state.editMode || this.state.preview || !!window.__covermateArticlePreview;
     const previewHost = window.location.hostname.endsWith('.vercel.app') && window.location.hostname !== 'covermate.vercel.app';
     const productionHost = ['covermateinsurance.com', 'www.covermateinsurance.com', 'covermate.vercel.app'].includes(window.location.hostname);
     const queryUat = ['uat', 'staging', 'preview'].includes(new URLSearchParams(window.location.search).get('cm_env'));
@@ -1177,7 +1179,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   localizedPublicHref(value) {
     if (value === '#insurers' && this.state.routePage !== 'motor') return '#motor';
     if (!/^\/(?:motor|articles(?:\/[^?#]*)?)?(?:[?#]|$)/.test(value || '')) return value;
-    const url = new URL(value, window.location.origin);
+    const url = new URL(value, window.__covermateArticlePreview?.origin || window.location.origin);
     if (url.pathname === '/' && url.hash === '#insurers') url.hash = '#motor';
     if (this.state.lang === 'en') url.searchParams.set('lang', 'en');
     else url.searchParams.delete('lang');
@@ -1268,6 +1270,13 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   applyMode() {
+    if(window.__covermateArticlePreview){
+      const src=adaptLegacyHomeCopy(this.loadLive().config,this.loadLive().text);
+      this.textOv=clone(src.text || {});this._modeApplied=true;
+      document.documentElement.setAttribute('data-covermate-route','article');
+      this.setState({site:src.config,routePage:'article',admin:false,editMode:false,preview:false,adminEver:false},()=>{this.syncSeo();requestAnimationFrame(()=>{this.applyText();window.__covermateReveal?.();});});
+      return;
+    }
     const publicView = this.consumePublicViewRequest();
     const pathMode = this.ownerModeFromPath(window.location.pathname);
     const routePage = this.routePageFromLocation(window.location.pathname, window.location.search);
@@ -1928,7 +1937,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const articleDetail={...(S.articleDetail || {available:false,blocks:[],toc:[],takeaways:[],sources:[]})};
     articleDetail.toc=(articleDetail.toc||[]).map(entry=>({...entry,click:event=>{
       if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
-      event.preventDefault();history.pushState(null,'',entry.href);
+      event.preventDefault();if(!window.__covermateArticlePreview)history.pushState(null,'',entry.href);
       this._routeLocation=location.href;this.scrollToAnchor(entry.id,{smooth:false});
       document.getElementById(entry.id)?.focus({preventScroll:true});
     }}));
@@ -1936,7 +1945,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       .sort((a,b)=>Number(b.categoryId===articleDetail.categoryId)-Number(a.categoryId===articleDetail.categoryId)||b.publishedAt-a.publishedAt).slice(0,4).map(item=>articleCardSummary(item,lk));
     let detailSaved=false;
     try {detailSaved=articleSaved(localStorage,articleDetail.slug);}catch{}
-    const detailShareAddress=articleShareUrl(window.location);
+    const detailShareAddress=window.__covermateArticlePreview?.href || articleShareUrl(window.location);
 
     const fitSectionRaw = (site.sections || []).find(x => x && x.type === 'fit') || {};
     const fitCalculator = this.mergeDeepDefaults(DEFAULT_NEEDS_CALCULATOR, fitSectionRaw.calculator);
@@ -2678,6 +2687,10 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       articleDetail,detailCopy,detailRelated:relatedItems,detailHasRelated:relatedItems.length>0,
       homeHref:this.localizedPublicHref('/'),articlesHref:this.localizedPublicHref('/articles'),
       detailHasTakeaways:!!articleDetail.takeaways?.length,detailHasSources:!!articleDetail.sources?.length,
+      detailHasTakeawaySection:!!articleDetail.takeaways?.length || (articleDetail.takeawayNoteEnabled!==false && !!articleDetail.takeawayNote),
+      detailHeaderNote:articleDetail.headerNoteEnabled===false?'':articleDetail.headerNote,
+      detailTakeawayNote:articleDetail.takeawayNoteEnabled===false?'':articleDetail.takeawayNote,
+      detailSidebarQuote:articleDetail.sidebarQuoteEnabled===false?'':articleDetail.sidebarQuote || detailCopy.note,
       detailHasToc:!!articleDetail.toc?.length,detailTocOpen:!S.compactHome,
       detailClockPaths:ICONS.clock,detailQuotePaths:ICONS.quote,detailCheckPaths:ICONS.check,
       detailSaved,detailSaveLabel:detailSaved?detailCopy.saved:detailCopy.save,
@@ -2686,6 +2699,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       detailShare:()=>this.shareArticle(false,detailCopy),detailCopyLink:()=>this.shareArticle(true,detailCopy),detailSelectLink:event=>event.target.select(),
       detailShareAddress,detailLineShare:'https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(detailShareAddress),
       detailFacebookShare:'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(detailShareAddress),
+      detailXShare:'https://twitter.com/intent/tweet?url='+encodeURIComponent(detailShareAddress),
       articleResultsTitle:articleIndex.filtered?articleCopy.results:articleCopy.latest,
       articleEmptyTitle:articleIndex.filtered?articleCopy.noResults:articleCopy.empty,
       articleSampleLabel:th?'พรีวิวการออกแบบ · บทความตัวอย่าง ยังไม่เผยแพร่จริง':'Design preview · Sample articles, not published content',
