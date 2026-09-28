@@ -19,6 +19,9 @@ Unrelated working-tree changes in the primary checkout are excluded.
   flags survive save, publish, backup and projection. Hidden text is retained;
   disabling the sidebar quote also blocks global fallback. Existing records
   default to enabled without migration. The self-hosted Sriracha font includes OFL.
+- Hosted verification also covers opening Create before the catalog finishes:
+  late list responses retain data without rendering over the editor. Preview
+  fetches the published shell from the current environment, including local UAT.
 
 There are no production CMS edits, sample publications, lead submissions,
 email sends, Rules changes, environment changes or data migrations. Photos and

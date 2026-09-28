@@ -155,7 +155,9 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       s.catalog = null; s.loaded = false;
       s.phase = error.status === 403 ? 'forbidden' : error.status === 401 ? 'unauthorized' : 'error';
     }
-    if (s.active) {
+    // A catalog request may finish after Create has replaced the list with the editor.
+    // Keep its data, but only render list controls while the list still owns the root.
+    if (s.active && !editor) {
       filters(); renderVisibility(); results();
       const recovery=root.querySelector('.article-recovery');
       recovery.hidden=!recoverable.length;

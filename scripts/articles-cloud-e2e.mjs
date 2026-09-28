@@ -98,8 +98,15 @@ try {
       await admin.locator('[data-ae=back]').click();
       await admin.getByRole('button',{name:'แก้ไข: '+title,exact:true}).click();
       await admin.locator('[data-ae=preview]').click();
-      await admin.getByRole('dialog').getByRole('heading',{name:title,exact:true}).waitFor();
-      await admin.getByRole('dialog').locator('[data-ae=close]').click();
+      const previewDialog=admin.getByRole('dialog',{name:'Preview · ฉบับร่างยังไม่เผยแพร่',exact:true});
+      const preview=previewDialog.frameLocator('.ae-preview-frame');
+      await preview.getByRole('heading',{name:title,exact:true}).waitFor();
+      await preview.locator('header').waitFor();
+      await preview.locator('footer').waitFor();
+      await preview.getByText('ข้อสรุปจาก CMS',{exact:true}).waitFor();
+      assert.match(await preview.locator('meta[name=robots]').getAttribute('content'),/noindex/);
+      assert.equal(await repository.detail('covermate-uat',slug),null,'Full-page Preview does not publish the draft');
+      await previewDialog.locator('[data-ae=close]').click();
       await publish(admin);
       console.log(engine+': published');
       const published=await repository.detail('covermate-uat',slug);assert.ok(published?.item);

@@ -5,6 +5,7 @@ import {articleEscape as esc,articleUrl,articleVideo,articleDocumentText,registe
 import {createArticleDraft,ARTICLE_CATEGORIES,parseDraftBackup,publicationDateInput,publicationDateISO} from '../../admin/articles/drafts.mjs';
 import {projectArticleDetail} from '../visitor/article-detail.mjs';
 import {createArticlePreviewPage} from './article-preview.mjs';
+import {appendEnvironmentSearch} from '../../covermate-environment.mjs';
 
 const glyphs={Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone};
 const icon = name => createElement(glyphs[name],{width:20,height:20,'aria-hidden':'true'}).outerHTML;
@@ -227,7 +228,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const load=async()=>{
       status.textContent='กำลังโหลดหน้าเว็บไซต์…';
       try {
-        const response=await fetch('/?lang='+lang,{cache:'no-store',signal:controller.signal});
+        const response=await fetch(appendEnvironmentSearch('/?lang='+lang),{cache:'no-store',signal:controller.signal});
         if(!response.ok)throw new Error('โหลดหน้าเว็บไซต์ไม่สำเร็จ');
         const html=createArticlePreviewPage(await response.text(),detail,{lang,origin:location.origin});
         if(!d.open)return;
