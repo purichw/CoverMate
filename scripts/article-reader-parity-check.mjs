@@ -175,6 +175,15 @@ try {
   await editorPage.locator('[data-article-state=ready]').waitFor();
   await editorPage.locator(`[data-article-id="${fixture.id}"] [data-article-action=edit]:visible`).first().click();
   await editorPage.locator('.ae-workspace').waitFor();
+  // Vercel injects its feedback toolbar into hosted preview HTML. It must not
+  // execute inside the private article frame or send deployment telemetry.
+  await editorPage.route(url=>url.pathname==='/'&&url.searchParams.has('lang'),async route=>{
+    const response=await route.fetch();
+    const html=await response.text(),end=html.lastIndexOf('</body>');
+    assert.ok(end>0);
+    const body=html.slice(0,end)+'<script async src="https://vercel.live/_next-live/feedback/feedback.js"></script>'+html.slice(end);
+    await route.fulfill({response,body});
+  });
   const storageBeforePreview=await editorPage.evaluate(()=>({local:{...localStorage},session:{...sessionStorage}}));
   await editorPage.locator('[data-ae=preview]:visible').click();
   const preview=editorPage.frameLocator('.ae-preview-frame').locator('.ad-page');
@@ -198,7 +207,7 @@ try {
   assert.equal(await preview.evaluate(()=>location.href),previewUrl,'Share links do not navigate a private draft');
   await preview.locator('.ad-toc a').first().click();
   assert.equal(await preview.evaluate(()=>document.activeElement.id),'section-0','Contents still scroll and focus in Preview');
-  assert.equal(await fullPreview.locator('script[src*="covermate-analytics"],script[src*="telemetry"]').count(),0);
+  assert.equal(await fullPreview.locator('script[src*="covermate-analytics"],script[src*="telemetry"],script[src*="vercel.live"]').count(),0);
   assert.deepEqual(await editorPage.evaluate(()=>({local:{...localStorage},session:{...sessionStorage}})),storageBeforePreview,'Preview does not alter real visitor/admin storage');
   report.checks.push('Real public header/footer/feed/share/dock, temporary bookmarks, safe external-action feedback, TOC focus and no analytics');
 

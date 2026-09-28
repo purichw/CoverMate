@@ -27,7 +27,7 @@ export function createArticlePreviewPage(html,detail,{lang='th',origin}={}) {
   const encode=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
   const payload={detail:{...detail,sample:false},lang,origin:base,state,href:base+'/articles/'+detail.slug+(lang==='en'?'?lang=en':'')};
   const head=`<base href="${esc(base+'/')}"><meta name="robots" content="noindex,nofollow,noarchive">`;
-  const clean=source=>source.replace(/<script\b[^>]*\bsrc="\/(?:covermate-analytics\.js|assets\/telemetry\.js)"[^>]*>\s*<\/script>/gi,'').replace(/<!-- COVERMATE_SEO_START -->[\s\S]*?<!-- COVERMATE_SEO_END -->/g,'');
+  const clean=source=>source.replace(/<script\b[^>]*\bsrc="(?:\/(?:covermate-analytics\.js|assets\/telemetry\.js)|https:\/\/vercel\.live\/_next-live\/feedback\/feedback\.js)(?:\?[^"\s]*)?"[^>]*>\s*<\/script>/gi,'').replace(/<!-- COVERMATE_SEO_START -->[\s\S]*?<!-- COVERMATE_SEO_END -->/g,'');
   let template=clean(extractBundlerTemplate(html)).replace(/<head[^>]*>/i,match=>match+head);
   template=template.replace(/<script\b[^>]*\bid="covermate-article-detail"[^>]*>[\s\S]*?<\/script>/gi,'');
   template=template.replace('</head>',`<script id="covermate-article-detail" type="application/json">${encode(payload.detail)}</script></head>`);
