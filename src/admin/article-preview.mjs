@@ -1,4 +1,3 @@
-import {articleEscape as esc} from '../../article-document.mjs';
 import {extractBundlerTemplate,replaceBundlerTemplate} from '../../server/bundler-template.mjs';
 
 // The real Visitor application runs in its own viewport. Draft content is only
@@ -26,7 +25,9 @@ export function createArticlePreviewPage(html,detail,{lang='th',origin}={}) {
   if(!state?.config?.sections)throw new Error('โหลดข้อมูลเว็บไซต์สำหรับ Preview ไม่สำเร็จ');
   const encode=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
   const payload={detail:{...detail,sample:false},lang,origin:base,state,href:base+'/articles/'+detail.slug+(lang==='en'?'?lang=en':'')};
-  const head=`<base href="${esc(base+'/')}"><meta name="robots" content="noindex,nofollow,noarchive">`;
+  // srcdoc inherits its parent URL for root-relative assets. An explicit base
+  // produces base-uri CSP reports in the rewritten document on hosted pages.
+  const head='<meta name="robots" content="noindex,nofollow,noarchive">';
   const clean=source=>source.replace(/<script\b[^>]*\bsrc="(?:\/(?:covermate-analytics\.js|assets\/telemetry\.js)|https:\/\/vercel\.live\/_next-live\/feedback\/feedback\.js)(?:\?[^"\s]*)?"[^>]*>\s*<\/script>/gi,'').replace(/<!-- COVERMATE_SEO_START -->[\s\S]*?<!-- COVERMATE_SEO_END -->/g,'');
   let template=clean(extractBundlerTemplate(html)).replace(/<head[^>]*>/i,match=>match+head);
   template=template.replace(/<script\b[^>]*\bid="covermate-article-detail"[^>]*>[\s\S]*?<\/script>/gi,'');

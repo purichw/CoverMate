@@ -170,6 +170,10 @@ try {
   const origins=new Set([admin.baseUrl,reader.baseUrl]);
   await context.route('**/*',route=>origins.has(new URL(route.request().url()).origin)?route.continue():route.abort());
   const editorPage=await context.newPage(),publicPage=await context.newPage();
+  await editorPage.addInitScript(()=>{
+    window.__articlePreviewCspViolations=[];
+    document.addEventListener('securitypolicyviolation',event=>window.__articlePreviewCspViolations.push(event.effectiveDirective));
+  });
   for(const page of [editorPage,publicPage]){page.setDefaultTimeout(10000);page.on('pageerror',error=>report.errors.push(error.message));}
   await editorPage.goto(admin.baseUrl+'/admin#articles');
   await editorPage.locator('[data-article-state=ready]').waitFor();
@@ -208,6 +212,7 @@ try {
   await preview.locator('.ad-toc a').first().click();
   assert.equal(await preview.evaluate(()=>document.activeElement.id),'section-0','Contents still scroll and focus in Preview');
   assert.equal(await fullPreview.locator('script[src*="covermate-analytics"],script[src*="telemetry"],script[src*="vercel.live"]').count(),0);
+  assert.deepEqual(await preview.evaluate(()=>(window.__articlePreviewCspViolations||[]).filter(directive=>directive==='base-uri')),[],'Private frame avoids base-uri violations under inherited CSP');
   assert.deepEqual(await editorPage.evaluate(()=>({local:{...localStorage},session:{...sessionStorage}})),storageBeforePreview,'Preview does not alter real visitor/admin storage');
   report.checks.push('Real public header/footer/feed/share/dock, temporary bookmarks, safe external-action feedback, TOC focus and no analytics');
 
