@@ -1,0 +1,6 @@
+<sc-for list="{{ contactEditorGroups }}" as="group">
+  <details class="cm-editor-disclosure cm-editor-field-group" open="{{ group.open }}" data-editor-contact-group="{{ group.key }}" data-editor-channel="{{ group.channelKey }}">
+    <summary>{{ group.label }}<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary>
+    <div><sc-for list="{{ group.fields }}" as="field"><label class="cm-editor-field"><span>{{ field.label }}</span><sc-if value="{{ field.small }}"><input data-contact-field="{{ field.path }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}" sc-camel-on-blur="{{ field.commit }}"></sc-if><sc-if value="{{ field.big }}"><textarea rows="3" data-contact-field="{{ field.path }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}" sc-camel-on-blur="{{ field.commit }}"></textarea></sc-if><sc-if value="{{ field.hint }}"><small>{{ field.hint }}</small></sc-if></label></sc-for><sc-if value="{{ group.editIcon }}"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ group.editIcon }}">เปลี่ยนไอคอน</button></sc-if></div>
+  </details>
+</sc-for>

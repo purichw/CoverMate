@@ -178,7 +178,7 @@ try {
   assert.equal(seed?.siteId, 'covermate-uat', 'Hosted published seed must identify UAT.');
   report.servedHtmlSha256 = sha(html);
   report.committedAssetProof = {};
-  for (const file of ['covermate-contract.js','assets/visitor/home.css']) {
+  for (const file of ['covermate-contract.js','assets/visitor/home.css','assets/visitor/editor-preview.js','assets/visitor/editor-versions.js']) {
     const res = await fetch(new URL('/' + file, url.origin), {headers:vercelBypassHeaders(),redirect:'manual',signal:AbortSignal.timeout(30000)});
     assert.equal(res.status, 200, 'Committed asset unavailable: ' + file);
     const served = Buffer.from(await res.arrayBuffer());
@@ -190,7 +190,7 @@ try {
     // SSR changes SEO/seed. Prove the unchanged embedded runtime and versioned
     // external stylesheets before any write.
     const committed = execFileSync('git',['show',expectedCommit + ':index.html'],{cwd:root,encoding:'utf8'});
-    const styleFiles = ['assets/visitor/editor-panel.css','assets/visitor/editor-tools.css'];
+    const styleFiles = ['assets/visitor/editor-panel.css','assets/visitor/editor-tools.css','assets/visitor/layout.css'];
     const blocks = source => {
       const template = extractBundlerTemplate(source);
       const runtime = [...template.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(match=>match[1]).filter(code=>code.includes('editorPanelExpanded'));

@@ -544,6 +544,7 @@
       .actions .btn-dark { grid-column: 1 / -1; }
     }
   </style>
+  <link rel="stylesheet" href="/admin/stat-card.css">
 </head>
 <body data-auth-state="checking">
   <div class="auth-check" role="status" aria-live="polite">กำลังตรวจสอบสิทธิ์ผู้ดูแล…</div>
@@ -591,22 +592,22 @@
     </section>
 
     <section class="grid kpis" aria-label="สถิติสำคัญ">
-      <article class="metric">
+      <article class="metric cm-stat-card">
         <span>Sessions</span>
         <strong class="mono" data-kpi="sessions">N/A</strong>
         <small id="sessions-kpi-note">กำลังตรวจสอบ GA4 Data API…</small>
       </article>
-      <article class="metric">
+      <article class="metric cm-stat-card">
         <span>ผู้ใช้งาน</span>
         <strong class="mono" data-kpi="users">N/A</strong>
         <small id="users-kpi-note">กำลังตรวจสอบ GA4 Data API…</small>
       </article>
-      <article class="metric">
+      <article class="metric cm-stat-card">
         <span>เคสที่บันทึก</span>
         <strong class="mono" data-kpi="leads">0</strong>
         <small id="lead-kpi-note">กำลังโหลดเคสจาก Firestore…</small>
       </article>
-      <article class="metric">
+      <article class="metric cm-stat-card">
         <span>อัตราเปลี่ยนเป็นเคส</span>
         <strong class="mono" data-kpi="conversion">N/A</strong>
         <small id="conversion-kpi-note">ใช้จำนวนเคสจาก Firestore เทียบกับ Sessions จาก GA4</small>

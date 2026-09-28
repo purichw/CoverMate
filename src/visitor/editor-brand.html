@@ -1,0 +1,60 @@
+<sc-if value="{{ tabBrand }}" hint-placeholder-val="{{ false }}">
+  <section class="cm-brand-editor" aria-labelledby="cm-brand-title">
+    <div class="cm-brand-heading"><div><h3 id="cm-brand-title">แบรนด์และข้อมูลติดต่อ</h3><span class="cm-editor-help">ข้อมูลส่วนกลาง · ใช้ร่วมกันทุกหน้า</span></div><!-- COVERMATE_EDITOR_LANGUAGE --></div>
+    <div class="cm-brand-location-desktop"><!-- COVERMATE_EDITOR_BRAND_LOCATION --></div>
+    <details class="cm-editor-disclosure cm-brand-preview"><summary>ตัวอย่างหน้าเว็บไซต์<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div><!-- COVERMATE_EDITOR_BRAND_LOCATION --><!-- COVERMATE_EDITOR_PREVIEW --></div></details>
+    <sc-for list="{{ brandEditorGroups }}" as="group">
+      <details class="cm-editor-disclosure cm-brand-group" data-brand-group="{{ group.key }}" open="{{ group.open }}">
+        <summary sc-camel-on-click="{{ group.inspect }}"><span class="cm-brand-number">{{ group.number }}</span><strong>{{ group.label }}</strong><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <div>
+          <div class="cm-brand-fields"><sc-for list="{{ group.fields }}" as="field"><!-- COVERMATE_EDITOR_CMS_FIELD --></sc-for></div>
+          <sc-for list="{{ group.subgroups }}" as="subgroup"><details class="cm-editor-disclosure" data-cms-group="{{ subgroup.key }}"><summary>{{ subgroup.label }}<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="cm-brand-fields"><sc-for list="{{ subgroup.fields }}" as="field"><!-- COVERMATE_EDITOR_CMS_FIELD --></sc-for></div></details></sc-for>
+          <sc-for list="{{ group.toggles }}" as="toggle"><label class="cm-brand-toggle"><span>{{ toggle.label }}<small>{{ toggle.scope }}</small></span><input type="checkbox" role="switch" data-brand-toggle="{{ toggle.key }}" checked="{{ toggle.checked }}" sc-camel-on-change="{{ toggle.change }}"></label></sc-for>
+          <sc-for list="{{ group.links }}" as="link"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ link.open }}">{{ link.label }} <span aria-hidden="true">→</span></button></sc-for>
+          <sc-if value="{{ group.layout }}"><div class="cm-editor-columns"><span>คอลัมน์ Footer</span><button type="button" aria-label="ลดคอลัมน์ Footer" sc-camel-on-click="{{ footLess }}">−</button><span>{{ footCols }}</span><button type="button" aria-label="เพิ่มคอลัมน์ Footer" sc-camel-on-click="{{ footMore }}">+</button></div></sc-if>
+        </div>
+      </details>
+    </sc-for>
+    <details class="cm-editor-disclosure cm-brand-advanced"><summary>การตั้งค่าส่วนกลางเพิ่มเติม<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div>
+      <details class="hm-admin-design" data-home-design-controls data-cms-group="Page composition">
+        <summary>องค์ประกอบที่ใช้ร่วมกัน</summary>
+        <fieldset><legend>ชั้นประกันรถที่แนะนำ</legend><sc-for list="{{ homeTierChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
+        <fieldset><legend>หัวข้อความคุ้มครองใน Preview</legend><sc-for list="{{ homeAxisChoices }}" as="choice"><label><input type="checkbox" checked="{{ choice.checked }}" sc-camel-on-change="{{ choice.toggle }}">{{ choice.label }}</label></sc-for></fieldset>
+        <fieldset><legend>Layout</legend><label><input type="checkbox" checked="{{ homeCompact }}" sc-camel-on-change="{{ toggleHomeDensity }}">ระยะห่างแบบกระชับ</label><label><input type="checkbox" checked="{{ homeSharp }}" sc-camel-on-change="{{ toggleHomeRadius }}">ลดความมนของมุม</label></fieldset>
+        <fieldset><legend>ลิงก์บริการ (เฉพาะหน้าแรก)</legend><sc-for list="{{ homeTasks }}" as="task"><div class="hm-admin-task"><label><input type="checkbox" checked="{{ task.on }}" sc-camel-on-change="{{ task.toggle }}">แสดง</label><label>ข้อความ<input value="{{ task.labelInput.value }}" sc-camel-on-change="{{ task.labelInput.change }}" sc-camel-on-blur="{{ task.labelInput.commit }}"></label><label>ปลายทางลิงก์<input value="{{ task.targetInput.value }}" sc-camel-on-change="{{ task.targetInput.change }}" sc-camel-on-blur="{{ task.targetInput.commit }}"></label><div><button type="button" title="เลื่อนขึ้น" aria-label="เลื่อนลิงก์ขึ้น" sc-camel-on-click="{{ task.up }}">↑</button><button type="button" title="เลื่อนลง" aria-label="เลื่อนลิงก์ลง" sc-camel-on-click="{{ task.down }}">↓</button><button type="button" sc-camel-on-click="{{ task.duplicate }}">ทำสำเนา</button></div></div></sc-for><button type="button" sc-camel-on-click="{{ addHomeTask }}">เพิ่มลิงก์บริการ</button></fieldset>
+      </details>
+      <details class="om-cms-group" data-cms-group="Images & crop">
+        <summary>รูปภาพและ Crop</summary>
+        <div class="om-cms-fields">
+          <sc-for list="{{ imageSlots }}" as="slot">
+            <div class="om-media-row" data-media-slot="{{ slot.path }}">
+              <sc-if value="{{ slot.hasImage }}"><img sc-camel-src="{{ slot.image }}" alt="" loading="lazy" width="64" height="48" style="object-fit:contain"></sc-if>
+              <div><strong>{{ slot.label }}</strong><small>{{ slot.width }} × {{ slot.height }}</small></div>
+              <button type="button" sc-camel-on-click="{{ slot.edit }}">แก้ไขรูป</button>
+            </div>
+          </sc-for>
+        </div>
+      </details>
+      <details class="om-cms-group" data-cms-group="Navigation">
+        <summary>เมนูและลิงก์</summary>
+        <div class="om-cms-fields">
+          <label class="om-cms-field"><span>ข้อความปุ่มบน Header</span><input data-cms-header-cta="true" value="{{ headerCtaInput.value }}" sc-camel-on-change="{{ headerCtaInput.change }}" sc-camel-on-blur="{{ headerCtaInput.commit }}"></label>
+          <sc-for list="{{ adminHeroLinks }}" as="link">
+            <label class="om-cms-field"><span>{{ link.label }}</span><input data-cms-hero-link="{{ link.key }}" value="{{ link.input.value }}" sc-camel-on-change="{{ link.input.change }}" sc-camel-on-blur="{{ link.input.commit }}"></label>
+          </sc-for>
+          <sc-for list="{{ adminNavItems }}" as="nav">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--color-neutral-300)">
+              <label class="om-cms-field"><span>ข้อความ</span><input data-cms-nav-label="{{ nav.key }}" value="{{ nav.labelInput.value }}" sc-camel-on-change="{{ nav.labelInput.change }}" sc-camel-on-blur="{{ nav.labelInput.commit }}"></label>
+              <button type="button" title="นำลิงก์ออก" aria-label="นำลิงก์ออก" sc-camel-on-click="{{ nav.remove }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              <label class="om-cms-field"><span>ปลายทางลิงก์</span><input value="{{ nav.hrefInput.value }}" sc-camel-on-change="{{ nav.hrefInput.change }}" sc-camel-on-blur="{{ nav.hrefInput.commit }}"></label>
+              <button type="button" title="เลื่อนลิงก์ขึ้น" aria-label="เลื่อนลิงก์ขึ้น" disabled="{{ nav.first }}" sc-camel-on-click="{{ nav.up }}" style="align-self:end;width:40px;height:40px;border:0;background:transparent;color:var(--color-text);cursor:pointer"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="m6 15 6-6 6 6"/></svg></button>
+            </div>
+          </sc-for>
+          <button type="button" sc-camel-on-click="{{ addNavItem }}" style="align-self:flex-start;padding:10px 14px;border:1px solid var(--color-neutral-300);border-radius:8px;background:var(--color-bg);color:var(--color-text);font:inherit;cursor:pointer">เพิ่มลิงก์</button>
+        </div>
+      </details>
+
+      <sc-for list="{{ brandOtherGroups }}" as="group"><details class="om-cms-group" data-cms-group="{{ group.key }}"><summary>{{ group.label }}</summary><div class="cm-brand-fields"><sc-for list="{{ group.fields }}" as="field"><!-- COVERMATE_EDITOR_CMS_FIELD --></sc-for></div></details></sc-for>
+    </div></details>
+  </section>
+</sc-if>

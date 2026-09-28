@@ -1,0 +1,17 @@
+<div class="cm-editor-content-groups">
+    <sc-for list="{{ heroFieldGroups }}" as="group">
+      <details class="cm-editor-disclosure cm-editor-field-group" data-editor-field-group="{{ group.key }}" open="{{ group.open }}">
+        <summary><span>{{ group.label }}</span><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary>
+        <div class="cm-editor-field-grid"><sc-for list="{{ group.fields }}" as="f"><!-- COVERMATE_EDITOR_FIELD --></sc-for></div>
+      </details>
+    </sc-for>
+    <details class="cm-editor-disclosure cm-editor-field-group" data-editor-hero-layout>
+      <summary>ภาพและการแสดงผล<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary>
+      <div>
+        <span class="cm-editor-field-label">สีพื้นหลัง</span>
+        <div class="cm-editor-swatches" role="group" aria-label="สีพื้นหลัง Hero"><sc-for list="{{ heroBackgrounds }}" as="option"><button type="button" style="background:{{ option.color }}" aria-label="{{ option.label }}" title="{{ option.label }}" aria-pressed="{{ option.selected }}" sc-camel-on-click="{{ option.choose }}"><sc-if value="{{ option.selected }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"></path></svg></sc-if></button></sc-for></div>
+        <sc-if value="{{ heroHasArtwork }}"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ editHeroArtwork }}">ภาพพื้นหลัง Hero</button></sc-if>
+        <div class="cm-editor-shortcuts"><sc-for list="{{ contentShortcuts }}" as="shortcut"><button type="button" class="cm-editor-button" data-admin-content-shortcut="{{ shortcut.key }}" sc-camel-on-click="{{ shortcut.open }}">{{ shortcut.label }}</button></sc-for></div>
+      </div>
+    </details>
+  </div>

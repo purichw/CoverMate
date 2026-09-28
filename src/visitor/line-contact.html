@@ -18,8 +18,9 @@
         </div>
       </section>
     </sc-if>
-    <button type="button" class="cm-line-launcher" data-line-launcher aria-label="{{ lineCopy.launcher }}" title="{{ lineCopy.launcher }}" aria-expanded="{{ lineContactOpen }}" aria-controls="cm-line-panel" sc-camel-on-click="{{ toggleLineContact }}">
+    <button type="button" class="cm-line-launcher" data-line-launcher aria-label="{{ lineLauncherLabel }}" title="{{ lineCopy.launcher }}" aria-expanded="{{ lineContactOpen }}" aria-controls="cm-line-panel" sc-camel-on-click="{{ toggleLineContact }}">
       <!-- COVERMATE_LINE_MARK -->
+      <sc-if value="{{ lineCopy.action }}"><span class="cm-line-launcher-label">{{ lineCopy.action }}</span></sc-if>
     </button>
   </aside>
 </sc-if>

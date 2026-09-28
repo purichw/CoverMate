@@ -173,10 +173,18 @@ try {
   }
   async function openGroup(name) {
     const group = page.locator(`[data-cms-group="${name}"]`);
-    if (!await group.evaluate(element => element.open)) await group.locator('summary').click();
+    await reveal(group.locator(':scope > summary'));
+    if (!await group.evaluate(element => element.open)) await group.locator(':scope > summary').click();
+  }
+  async function reveal(locator) {
+    const ancestors = locator.locator('xpath=ancestor::details');
+    for (let i=0;i<await ancestors.count();i++) {
+      if (!await ancestors.nth(i).evaluate(el=>el.open)) await ancestors.nth(i).locator(':scope > summary').click();
+    }
   }
   async function editField(field, value) {
     const input = page.locator(`[data-cms-field="${field}"]`);
+    await reveal(input);
     await input.fill(value);
     await input.press('Tab');
   }
@@ -314,8 +322,7 @@ try {
   await poll(async () => (await page.locator(`[data-cms-field="${formField}"]`).inputValue()) === formBefore, 'Undo restores form choice label.');
   await historyAction('redo');
   assert.equal(await page.locator(`[data-cms-field="${formField}"]`).inputValue(), 'หัวข้อแบบฟอร์มสำหรับทดสอบ Undo');
-  await openGroup('Brand images');
-  const mediaField = 'brand.media.mark';
+  const mediaField = 'brand.media.headerLogo.th';
   const mediaBefore = await page.locator(`[data-cms-field="${mediaField}"]`).inputValue();
   const replacement = mediaBefore === 'assets/brand/covermate-mark.png' ? 'assets/brand/covermate-advisory-logo-en.png' : 'assets/brand/covermate-mark.png';
   await editField(mediaField, replacement);

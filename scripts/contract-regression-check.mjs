@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { importCoverMateContract } from "./lib/contract-loader.mjs";
 
 const {
+  CMS_EDITABLE_PAGES,
   adminPortalRouteStateFromLocation,
   adminPortalUrl,
   cleanPublicExitPath,
@@ -25,6 +26,18 @@ assert.equal(ownerModeFromHash("#admin"), "admin");
 assert.equal(ownerPathForMode("admin"), "/admin/content");
 assert.equal(ownerPathForMode("edit", "motor"), "/admin/edit?page=motor");
 assert.equal(ownerPathForMode("preview", "motor"), "/admin/preview?page=motor");
+assert.equal(ownerPathForMode('preview', 'motor', '?page=home&lang=en&cm_env=uat&cm_emulator=1&token=private'), '/admin/preview?page=motor&lang=en&cm_env=uat&cm_emulator=1');
+assert.equal(ownerPathForMode('admin', 'home', '?lang=th&cm_env=invalid&cm_emulator=0'), '/admin/content');
+assert.equal(ownerPathForMode('invalid', 'motor', '?lang=en'), '');
+assert.equal(routePageFromLocationParts('/admin/content', '?page=missing'), 'home');
+for (const page of CMS_EDITABLE_PAGES) {
+  assert.equal(routePageFromLocationParts(page.path), page.id);
+  assert.equal(publicPathForRoutePage(page.id), page.path);
+  for (const mode of ['admin', 'edit', 'preview']) {
+    const url = new URL(ownerPathForMode(mode, page.id), 'https://example.invalid');
+    assert.equal(routePageFromLocationParts(url.pathname, url.search), page.id);
+  }
+}
 
 assert.equal(publicPathForRoutePage("home"), "/");
 assert.equal(publicPathForRoutePage("motor"), "/motor");

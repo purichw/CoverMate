@@ -19,6 +19,17 @@ The website editor (`/admin/edit`) and content tools (`/admin/content`) share Un
 
 ## Persistence and boundaries
 
+The **ประวัติเวอร์ชัน** tab is distinct from tab-local Undo history. It loads
+up to 20 published snapshots from Firestore, with recorded IDs, authors and dates.
+Draft autosaves are not published-history entries. As of the September 28 redesign,
+selecting a published snapshot opens a canonical-value comparison with current
+Draft or Live. Restoring requires confirmation and saves only Draft through the
+existing authorized/revision-checked write path. It does not Publish, append a
+published version or update Live caches. Success is Undo/Redo-capable; a failed
+restore leaves the previous Draft/history intact. This replaces the earlier
+Restore action that published immediately. The explicitly labeled 30-second
+post-Publish rollback remains unchanged and still changes Live.
+
 `src/visitor/editor-history.js` holds isolated `{config, text}` snapshots. It keeps at most 30 states and 2 MiB, removing oldest states as needed. A single oversized Draft remains editable but has no older history. Session storage is scoped by site/environment and admin identity; history is private to that browser tab. It survives reload only when its current snapshot matches the authoritative loaded Draft. A different Draft or corrupt stored history starts a new history. Storage denial falls back to memory.
 
 Authentication, visitor form/calculator values, current language, route, preview mode, publishing timestamps and backend revisions are outside edit history. Undo restores the content without navigating or changing the chosen language. Reset does not delete Cloudinary assets; it restores image references.

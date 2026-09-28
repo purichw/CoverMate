@@ -20,6 +20,7 @@ export const VISITOR_ASSET_VERSIONS_SLOT = "/* COVERMATE_ASSET_VERSIONS */ {}";
 const ROOT = new URL("../../", import.meta.url);
 const DESIGN_SYSTEM_STYLE = /<style>(\/\* Organic[^]*?)<\/style>/;
 const EDITOR_TOOLS_STYLE = /<style id="covermate-owner-dock-ui">([\s\S]*?)<\/style>/;
+const LAYOUT_STYLE = /<style id="covermate-layout">([\s\S]*?)<\/style>/;
 
 export const VISITOR_SOURCE_PATHS = Object.freeze({
   index: new URL("index.html", ROOT),
@@ -37,10 +38,12 @@ export function readVisitorStyleAssets() {
   const template = readText(VISITOR_SOURCE_PATHS.template);
   const designSystem = template.match(DESIGN_SYSTEM_STYLE)?.[1];
   const editorTools = template.match(EDITOR_TOOLS_STYLE)?.[1];
+  const layout = template.match(LAYOUT_STYLE)?.[1];
   if (!designSystem) throw new Error('Visitor design-system stylesheet is missing.');
   if (!editorTools) throw new Error('Editor tools stylesheet is missing.');
-  return ['organic', 'home', 'articles-index', 'article-detail', 'line-contact', 'calculator', 'submission', 'select', 'editor-tools', 'editor-panel'].map(name => {
-    const source = name === 'organic' ? designSystem : name === 'editor-tools' ? editorTools : readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT));
+  if (!layout) throw new Error('Visitor layout stylesheet is missing.');
+  return ['organic', 'layout', 'home', 'articles-index', 'article-detail', 'line-contact', 'calculator', 'submission', 'select', 'editor-tools', 'editor-panel'].map(name => {
+    const source = name === 'organic' ? designSystem : name === 'layout' ? layout : name === 'editor-tools' ? editorTools : readText(new URL(`src/${name === 'select' ? 'shared' : 'visitor'}/${name}.css`, ROOT));
     const css = transformSync(source, { loader:'css', minifyWhitespace:true }).code;
     const hash = createHash('sha256').update(css).digest('hex').slice(0,16);
     return { name, css, file:new URL(`assets/visitor/${name}.css`, ROOT), link:`<link rel="stylesheet" href="/assets/visitor/${name}.css?v=${hash}">` };
@@ -56,6 +59,18 @@ export function readSelectAsset() {
   const code = transformSync(readText(new URL('src/shared/select.js', ROOT)), { minify:true, format:'esm', target:'es2022' }).code;
   const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
+}
+
+export function readEditorPreviewAsset() {
+  const code = transformSync(readText(new URL('src/visitor/editor-preview.js', ROOT)), { minify:true, format:'esm', target:'es2022' }).code;
+  const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
+  return { code, file:new URL('assets/visitor/editor-preview.js', ROOT), url:`/assets/visitor/editor-preview.js?v=${hash}` };
+}
+
+export function readEditorVersionsAsset() {
+  const code = transformSync(readText(new URL('src/visitor/editor-versions.js', ROOT)), { minify:true, format:'esm', target:'es2022', charset:'utf8' }).code;
+  const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
+  return { code, file:new URL('assets/visitor/editor-versions.js', ROOT), url:`/assets/visitor/editor-versions.js?v=${hash}` };
 }
 
 export function readPublicContractAsset() {
@@ -131,6 +146,7 @@ export function readVisitorSources() {
     template: readText(VISITOR_SOURCE_PATHS.template)
       .replace(DESIGN_SYSTEM_STYLE, () => visitorStyles.organic)
       .replace(EDITOR_TOOLS_STYLE, () => visitorStyles['editor-tools'])
+      .replace(LAYOUT_STYLE, () => visitorStyles.layout)
       .replace('<!-- COVERMATE_SUBMISSION_TEMPLATE -->', () => readText(new URL('src/visitor/submission.html', ROOT)))
       .replace('<style>/* COVERMATE_SUBMISSION_STYLES */</style>', () => visitorStyles.submission)
       .replace('<!-- COVERMATE_CALCULATOR_TEMPLATE -->', () => readText(new URL('src/visitor/calculator.html', ROOT)))
@@ -143,6 +159,19 @@ export function readVisitorSources() {
       .replaceAll('<!-- COVERMATE_ARTICLE_CARD -->', () => readText(new URL('src/visitor/article-card.html', ROOT)))
       .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
+      .replace('<!-- COVERMATE_EDITOR_CONTENT -->', () => readText(new URL('src/visitor/editor-content.html', ROOT)))
+      .replace('<!-- COVERMATE_EDITOR_BRAND -->', () => readText(new URL('src/visitor/editor-brand.html', ROOT)))
+      .replace('<!-- COVERMATE_EDITOR_VERSIONS -->', () => readText(new URL('src/visitor/editor-versions.html', ROOT)))
+      .replace('<!-- COVERMATE_EDITOR_VERSION_DETAIL -->', () => readText(new URL('src/visitor/editor-version-detail.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_BRAND_LOCATION -->', () => readText(new URL('src/visitor/editor-brand-location.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_CMS_FIELD -->', () => readText(new URL('src/visitor/editor-cms-field.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_CMS_INPUT -->', () => readText(new URL('src/visitor/editor-cms-input.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_CONTACT -->', () => readText(new URL('src/visitor/editor-contact.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_PREVIEW -->', () => readText(new URL('src/visitor/editor-preview.html', ROOT)))
+      .replace('<!-- COVERMATE_EDITOR_HERO -->', () => readText(new URL('src/visitor/editor-hero.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_FIELD -->', () => readText(new URL('src/visitor/editor-field.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_LANGUAGE -->', () => readText(new URL('src/visitor/editor-language.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_EDITOR_PAGE -->', () => readText(new URL('src/visitor/editor-page.html', ROOT)))
       .replace('<style>/* COVERMATE_EDITOR_PANEL_STYLES */</style>', () => visitorStyles['editor-panel'])
       .replace('<style>/* COVERMATE_HOME_STYLES */</style>', () => visitorStyles.home)
       .replace('<style>/* COVERMATE_ARTICLES_INDEX_STYLES */</style>', () => visitorStyles['articles-index'])
@@ -152,13 +181,13 @@ export function readVisitorSources() {
       .replace('<!-- COVERMATE_SELECT_STYLES -->', () => visitorStyles.select)
       .replaceAll('<!-- COVERMATE_LINE_MARK -->', () => readText(new URL('src/visitor/line-mark.html', ROOT))),
     defaults: readText(VISITOR_SOURCE_PATHS.defaults).replace(/\s*$/, "\n"),
-    runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n").replace('/assets/visitor/select.js',readSelectAsset().url),
+    runtime: readText(VISITOR_SOURCE_PATHS.runtime).replace(/\s*$/, "\n").replace('/assets/visitor/select.js',readSelectAsset().url).replace('/assets/visitor/editor-preview.js',readEditorPreviewAsset().url),
     adminLabels: readText(new URL('src/visitor/admin-labels.js', ROOT)),
     cmsController: buildSync({
       entryPoints: [fileURLToPath(new URL('src/visitor/cms-controller.js', ROOT))],
-      bundle: true, write: false, format: 'iife', globalName: 'CoverMateCms',
+      bundle: true, write: false, minify: true, format: 'iife', globalName: 'CoverMateCms',
       target: 'es2022', charset: 'utf8'
-    }).outputFiles[0].text,
+    }).outputFiles[0].text.replace('/assets/visitor/editor-versions.js',readEditorVersionsAsset().url),
     calculatorSource: readText(new URL('covermate-calculator.mjs', ROOT)).replace(/^export /gm, ''),
     recommendationSource: readText(new URL('covermate-recommendations.mjs', ROOT)).replace(/^export /gm, ''),
     submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),

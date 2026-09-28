@@ -2,6 +2,18 @@
 
 Last updated: 2026-09-28
 
+## Article Presentation and Full-page Preview
+
+The owner authorized push/deploy from `.tools/motor-comparison-20260924`,
+integrating current main through `4ae4918`. Article editor and reader share rich
+styles; Preview now uses the real public page bundle and shell with private
+in-memory draft data. Header/sidebar/summary handwriting is editable and can be
+enabled independently for TH/EN without erasing text. See [article editor](ARTICLE_EDITOR.md),
+[reader](ARTICLE_DETAIL.md), and [release gates](RELEASE_ARTICLE_PRESENTATION_20260928.md).
+No production content publication or customer writes are part of release QA.
+Exact-SHA CI, hosted UAT and canonical deployment readback remain separate gates;
+their final evidence belongs in `uat-results/article-release/`.
+
 ## Admin Cleanup and Analytics Release
 
 The owner authorized push/deploy of this chat's changes only, from

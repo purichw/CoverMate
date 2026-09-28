@@ -24,6 +24,10 @@ separately in [the September 24 release](RELEASE_SELECT_MOBILE_LINE_20260924.md)
 
 - Closed initially. Click to open; close button, Escape, outside pointer or
   focus leaving the component close it. Explicit close restores trigger focus.
+- The desktop/tablet launcher is a light capsule with the official 40px LINE
+  mark and a visible label from `lineContact.action`, shared with the panel CTA.
+  `lineContact.launcher` remains its tooltip and accessible-name fallback when
+  the action label is intentionally blank. No new CMS field or fixed copy.
 - Non-modal, no focus trap, auto-popup, fake presence, conversation input,
   third-party chat script, or new storage/cookie requirement.
 - Only the CTA opens LINE, in a new tab, with the exact `contact.lineUrl`.

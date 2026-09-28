@@ -6,6 +6,12 @@ import { createHash } from 'node:crypto';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
+import { checkHeroEditor } from './lib/hero-editor-check.mjs';
+import { checkEditorParity } from './lib/editor-parity-check.mjs';
+import { checkEditorPages } from './lib/editor-pages-check.mjs';
+import { checkContentWorkspace } from './lib/editor-content-check.mjs';
+import { checkBrandWorkspace } from './lib/editor-brand-check.mjs';
+import { checkVersionsWorkspace } from './lib/editor-versions-check.mjs';
 
 // Local-only real UI: synthetic owner, memory-only Draft, immutable Live.
 // --serve exposes the same isolated fixture to a normal browser for design review.
@@ -19,19 +25,30 @@ const clean = value => contract.sanitizeStateDoc(value, { repeatableIds: true })
 const live = clean({ config: defaults, text: {}, revision: 1 });
 const originalLive = structuredClone(live);
 let draft = structuredClone(live), saves = 0, forbiddenWrites = 0;
+let versionsFailure = false, draftFailure = false;
+let versions = process.argv.includes('--versions') ? Array.from({length:8},(_,index)=>{
+  const snapshot=structuredClone(live);
+  if(index) {
+    snapshot.config.sections.find(section=>section.id==='hero').th.title='ตัวอย่างทดสอบประวัติ '+index;
+    snapshot.config.contact.lineId='@history-'+index;
+    snapshot.config.brand.media.headerLogo.th='';
+  }
+  return {id:'local-v'+String(8-index).padStart(2,'0'),ts:Date.UTC(2026,8,27-index,9,30),createdBy:{email:'local-owner@example.invalid'},...snapshot};
+}) : [];
 const portArg = process.argv.find(arg => arg.startsWith('--port='));
 const port = portArg ? Number(portArg.split('=')[1]) : 0;
 assert.ok(Number.isInteger(port) && port >= 0 && port <= 65535, '--port must be a valid local port');
 const fixturePath = '/__editor-panel-fixture';
 const sessionScript = `<script>localStorage.setItem('covermate-admin-session',JSON.stringify({firebase:true,uid:'local-panel-owner',email:'panel@example.invalid',name:'Local design review',role:'owner',exp:Date.now()+86400000}));</script>`;
 const firebaseFixture = `
-  import {cacheSiteState} from '/covermate-contract.js';
+  import {cacheSiteState,cacheVersions} from '/covermate-contract.js';
   const user={uid:'local-panel-owner',email:'panel@example.invalid',displayName:'Local design review',getIdToken:async()=> 'local-fixture-only'};
   const session={firebase:true,uid:user.uid,email:user.email,name:user.displayName,role:'owner',exp:Date.now()+86400000};
   localStorage.setItem('covermate-admin-session',JSON.stringify(session));
   window.CoverMateFirebase={auth:{currentUser:user},waitForAuth:async()=>user,
     syncSessionFromCurrentUser:async()=>({ok:true,user,session,admin:{role:'owner',active:true}}),
-    hydrateLocalContent:async()=>{const states=await fetch('${fixturePath}').then(r=>r.json());cacheSiteState('live',states.live);cacheSiteState('draft',states.draft);return {live:true,draft:true,source:'remote'};},
+    hydrateLocalContent:async()=>{const states=await fetch('${fixturePath}').then(r=>r.json());cacheSiteState('live',states.live);cacheSiteState('draft',states.draft);cacheVersions(states.versions);return {live:true,draft:true,source:'remote'};},
+    loadVersions:async()=>{const response=await fetch('${fixturePath}/versions');if(!response.ok)throw new TypeError('Local fixture: history offline');return response.json();},
     saveSiteState:async(name,config,text,options={})=>{const response=await fetch('${fixturePath}',{method:'POST',body:JSON.stringify({name,config,text})});if(!response.ok)throw Error('Only local Draft saves are allowed');const state=await response.json();if(options.cache!==false)cacheSiteState(name,state);return state;},
     publishSiteState:async()=>{throw Error('Local design preview: Publish is disabled. No live content was changed.');},
     signOut:async()=>{}
@@ -48,19 +65,21 @@ const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true, p
   headers: { 'Content-Security-Policy': "connect-src 'self'; form-action 'self'" },
   onRequest: async (req, res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
+    if(pathname===fixturePath+'/versions') {res.writeHead(versionsFailure?503:200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(versionsFailure?{error:'local fixture offline'}:versions));return true;}
     if (['/admin/content','/admin/edit','/admin/preview'].includes(pathname)) {
       res.writeHead(200, { 'Content-Type':'text/html; charset=utf-8' });
       res.end(fs.readFileSync('index.html','utf8').replace('<head>', '<head>' + sessionScript)); return true;
     }
     if (pathname === fixturePath) {
       if (req.method === 'POST') {
-        let body = ''; for await (const chunk of req) body += chunk;
-        const payload = JSON.parse(body);
+        const chunks = []; for await (const chunk of req) chunks.push(chunk);
+        const payload = JSON.parse(Buffer.concat(chunks).toString('utf8'));
         if (payload.name !== 'draft') { forbiddenWrites++; res.writeHead(403); res.end('Only Draft writes allowed'); return true; }
+        if(draftFailure){res.writeHead(503);res.end('Local fixture: failed Draft write');return true;}
         draft = clean({ config:payload.config, text:payload.text || {}, revision:(draft.revision || 0) + 1 }); saves++;
       }
       res.writeHead(200, { 'Content-Type':'application/json', 'Cache-Control':'no-store' });
-      res.end(JSON.stringify(req.method === 'POST' ? draft : { live, draft })); return true;
+      res.end(JSON.stringify(req.method === 'POST' ? draft : { live, draft, versions })); return true;
     }
     if (pathname === '/covermate-firebase.js' || pathname === '/covermate-public.mjs') {
       res.writeHead(200, { 'Content-Type':'application/javascript' });
@@ -77,9 +96,10 @@ if (process.argv.includes('--serve')) {
   console.log('Local editor panel preview: ' + baseUrl + '/admin/content');
   console.log('Synthetic owner; in-memory Draft only; Publish and customer submissions disabled.');
 } else {
-  const output = path.resolve(process.env.EDITOR_PANEL_SCREENSHOT_DIR || 'uat-results/editor-panel');
+  const output = path.resolve(process.env.EDITOR_PANEL_SCREENSHOT_DIR || (process.argv.includes('--versions') ? 'uat-results/editor-versions' : process.argv.includes('--brand') ? 'uat-results/editor-brand' : process.argv.includes('--content') ? 'uat-results/editor-content' : process.argv.includes('--pages') ? 'uat-results/editor-pages' : process.argv.includes('--parity') ? 'uat-results/editor-parity' : process.argv.includes('--hero') ? 'uat-results/hero-editor' : 'uat-results/editor-panel'));
   fs.mkdirSync(output, { recursive:true });
   const owners = ['src/visitor/runtime.js','src/visitor/template.html','src/visitor/home.css','src/visitor/editor-panel.css','src/visitor/cms-controller.js','covermate-contract.js','index.html','assets/visitor/home.css','assets/visitor/editor-tools.css','assets/visitor/editor-panel.css','scripts/editor-panel-browser-check.mjs'];
+  if(process.argv.includes('--versions'))owners.push('src/visitor/editor-versions.js','src/visitor/editor-versions.html','src/visitor/editor-version-detail.html','assets/visitor/editor-versions.js','scripts/lib/editor-versions-check.mjs');
   const hashes = () => Object.fromEntries(owners.map(file => [file,createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
   const report = { passed:false, startedAt:new Date().toISOString(), sourceHashes:hashes(), checks:[], screenshots:[], geometry:[], errors:[], blockedRequests:[], fixture:{environment:'Local static server; synthetic owner; memory-only Draft',productionWrites:0,publishEnabled:false} };
   const browser = await launchChromium(loadPlaywright().chromium);
@@ -144,6 +164,19 @@ if (process.argv.includes('--serve')) {
     }
 
     await page.goto(baseUrl+'/admin/content');await ready();
+    if (process.argv.includes('--versions')) {
+      await checkVersionsWorkspace({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,readVersions:()=>versions,setVersions:value=>{versions=value;},failHistory:value=>{versionsFailure=value;},failDraft:value=>{draftFailure=value;},report});
+    } else if (process.argv.includes('--brand')) {
+      await checkBrandWorkspace({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,report});
+    } else if (process.argv.includes('--content')) {
+      await checkContentWorkspace({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,report});
+    } else if (process.argv.includes('--pages')) {
+      await checkEditorPages({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,report});
+    } else if (process.argv.includes('--parity')) {
+      await checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,report});
+    } else if (process.argv.includes('--hero')) {
+      await checkHeroEditor({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,report});
+    } else {
     const outlineIds=await panel().locator('[data-admin-section-row]').evaluateAll(nodes=>nodes.map(el=>el.dataset.adminSectionRow));
     const actualIds=await page.locator('main section[id]').evaluateAll(nodes=>nodes.map(el=>el.id));
     assert.deepEqual(outlineIds.filter(id=>actualIds.includes(id)),actualIds,'Outline order follows actual Home sections');
@@ -300,13 +333,13 @@ if (process.argv.includes('--serve')) {
     await page.locator('[data-editor-panel-open]').click();await ready();await select('talk');
     assert.equal(await input('contact.lineId').inputValue(),'@panel-escape','Reopening inspector retains value typed before Escape');
     report.checks.push('Mobile reorder menu works with compact rows; panel opening focuses visible control; Escape preserves active input and restores owner Tools focus.');
+    }
     assert.deepEqual(live,originalLive,'All edits preserve immutable published fixture');
     assert.equal(forbiddenWrites,0,'No production/API/publish write attempted');
     assert.deepEqual(report.errors,[],'No page runtime errors');
     assert.deepEqual(hashes(),report.sourceHashes,'Source build remains stable during captured evidence');
-    report.checks.push('Mobile bottom sheet fits viewport; inspector scrolls internally; mobile field edit commits canonical Draft.');
     report.passed=true;report.saves=saves;
-    console.log('PASS editor panel: outline/search/selection, Contact canonical autosave/reload, history, confirmations, Preview, existing tabs, desktop/mobile layout.');
+    console.log('PASS editor panel: '+report.checks.join('\n'));
     console.log('Snapshots and report: '+output);
   } catch(error) {
     report.failure=error.stack;
@@ -315,6 +348,11 @@ if (process.argv.includes('--serve')) {
   } finally {
     report.finishedAt=new Date().toISOString();
     fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');
-    await context?.close();await browser.close();await new Promise(resolve=>server.close(resolve));
+    // Navigation can leave Chrome's context-close acknowledgment pending after
+    // its process exits. Bound cleanup; the assertion report is already saved.
+    let cleanupTimer;
+    await Promise.race([browser.close().catch(()=>{}),new Promise(resolve=>{cleanupTimer=setTimeout(resolve,5000);})]);
+    clearTimeout(cleanupTimer);
+    server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
   }
 }

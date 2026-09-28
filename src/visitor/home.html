@@ -59,7 +59,7 @@
     <sc-if value="{{ s.homeInsurers }}">
       <div class="hm-insurer-band">
         <div class="hm-section-copy"><p class="hm-eyebrow" data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</p><h2 data-content-path="{{ s.copy.title }}">{{ s.title }}</h2><sc-if value="{{ s.hasCta1 }}"><a class="hm-text-link" href="{{ s.cta1href }}"><span data-content-path="{{ s.copy.cta1 }}">{{ s.cta1 }}</span><span aria-hidden="true">→</span></a></sc-if></div>
-        <div class="hm-logo-grid"><sc-for list="{{ s.items }}" as="it"><div class="hm-logo-tile" data-content-id="{{ it.key }}"><sc-if value="{{ it.hasLogo }}"><img data-cms-image="{{ it.mediaLogoPath }}" sc-camel-src="{{ it.logo }}" alt="{{ it.logoAlt }}" loading="lazy" width="104" height="72"></sc-if><span class="hm-logo-name">{{ it.name }}</span></div></sc-for></div>
+        <div class="hm-logo-grid"><sc-for list="{{ s.items }}" as="it"><div class="hm-logo-tile" data-content-id="{{ it.key }}"><sc-if value="{{ it.hasLogo }}"><img data-cms-image="{{ it.mediaLogoPath }}" sc-camel-src="{{ it.logo }}" alt="{{ it.logoAlt }}" loading="lazy" width="104" height="72"></sc-if><span class="hm-logo-name" data-content-path="{{ it.copy.name }}">{{ it.name }}</span></div></sc-for></div>
       </div>
     </sc-if>
 

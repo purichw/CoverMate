@@ -1,0 +1,6 @@
+  <section class="cm-editor-preview-panel" aria-label="ตัวอย่างส่วนที่แก้ไข">
+    <h4>ตัวอย่าง · {{ sectionPreviewLabel }}</h4>
+    <div class="cm-editor-preview-modes" role="group" aria-label="ขนาดหน้าตัวอย่าง"><sc-for list="{{ heroPreviewModes }}" as="mode"><button type="button" data-editor-preview-mode="{{ mode.width }}" title="{{ mode.label }}" aria-label="{{ mode.label }}" aria-pressed="{{ mode.selected }}" sc-camel-on-click="{{ mode.choose }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="{{ mode.path }}"></path></svg><span>{{ mode.label }}</span></button></sc-for></div>
+    <div class="cm-editor-preview" data-editor-preview="{{ previewSection }}" data-preview-width="{{ heroPreviewWidth }}" aria-label="ตัวอย่างส่วนที่แก้ไขจากฉบับร่าง"></div>
+    <button type="button" class="cm-editor-preview-open" sc-camel-on-click="{{ openPreview }}">เปิด Preview เต็มหน้า ↗</button>
+  </section>

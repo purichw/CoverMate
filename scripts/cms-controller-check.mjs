@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { withCmsController } from '../src/visitor/cms-controller.js';
+import { snapshotKey, versionChanges } from '../src/visitor/editor-versions.js';
+import * as versions from '../src/visitor/editor-versions.js';
 import * as contract from '../covermate-contract.js';
 
 // Import the shipped controller/history directly. Only its host renderer,
@@ -67,6 +69,7 @@ async function advance(ms) {
 
 class Host {
   constructor(snapshot = baseline) {
+    this._versions = versions;
     this.state = {
       site: clone(snapshot.config), lang: 'en', admin: true, editMode: false,
       remoteBusy: false, remoteAction: '', remoteError: '', confirmAction: null,
@@ -133,6 +136,50 @@ function assertIdleError(editor) {
 }
 
 try {
+  {
+    assert.equal(snapshotKey({a:1,b:2}),snapshotKey({b:2,a:1}));
+    const before = {config:{sections:[{id:'one',th:{title:'เดิม'}},{id:'two',on:true}]},text:{'legacy:th':'old'}};
+    const after = {config:{sections:[{id:'two',on:true},{id:'one',th:{title:''}}]},text:{'legacy:th':'new'}};
+    const changes = versionChanges(before,after);
+    assert.deepEqual(changes.map(change=>change.path),['config.sections.order','config.sections.@one.th.title','text.legacy:th']);
+    assert.equal(changes[1].after,'(ค่าว่าง)');
+    assert.equal(versionChanges({a:1},{a:1}).length,0);
+  }
+  for (const failure of [null, 'content-conflict', 'permission-denied']) {
+    const editor = fixture();
+    editor.initEditorHistory(editor.currentSnapshot());
+    const before = editor.currentSnapshot(), stored = clone(before);
+    stored.config.sections[0].th.title = 'เวอร์ชันเก่า';
+    stored.config.sections[0].en.title = '';
+    stored.config.brand.media.headerLogo.th = '';
+    stored.text['legacy:th'] = 'เวอร์ชันเก่า';
+    const expected = canonical(stored);
+    editor.local.set(keys.K_HIST,[{id:'version-old',ts:5000,...stored}]);
+    editor.absTime = ts => String(ts);
+    editor.restoreVersion('version-old');
+    assert.equal(editor.state.confirmAction.kind,'restore-version');
+    assert.equal(editor.calls.length,0,'Requesting restore does not write');
+    editor.cancelConfirm();
+    assert.deepEqual(editor.currentSnapshot(),before,'Cancel retains complete Draft');
+    editor.restoreVersion('version-old');
+    const historyBefore = editor._editorHistory.serialize();
+    if (failure) editor.remote.saveSiteState = async () => {throw Object.assign(new Error(failure),{code:failure});};
+    await editor.restoreVersionConfirmed(editor.state.confirmAction);flushFrames();
+    if (failure) {
+      assert.deepEqual(editor.currentSnapshot(),before,'Failed restore cannot overwrite local Draft');
+      assert.equal(editor._editorHistory.serialize(),historyBefore);
+      assertIdleError(editor);
+    } else {
+      assert.deepEqual(editor.currentSnapshot(),expected,'Restore preserves blank translations, media and legacy text');
+      assert.equal(editor.calls.length,1);
+      assert.equal(editor.calls[0][1],'draft');
+      editor.stepEditorHistory('undo');flushFrames();
+      assert.deepEqual(editor.currentSnapshot(),before,'Undo restores the complete prior Draft');
+      editor.stepEditorHistory('redo');flushFrames();
+      assert.deepEqual(editor.currentSnapshot(),expected);
+    }
+    assertNoLiveWrites(editor);
+  }
   {
     const editor = fixture();
     const input = clone(baseline);

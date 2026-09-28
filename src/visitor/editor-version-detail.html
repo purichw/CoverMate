@@ -1,0 +1,17 @@
+<sc-if value="{{ showVersionDetail }}" hint-placeholder-val="{{ false }}">
+  <div class="cm-version-backdrop" data-noedit="true">
+    <section class="cm-version-dialog" data-version-dialog role="dialog" aria-modal="true" aria-labelledby="version-detail-title">
+      <header><div><h2 id="version-detail-title">รายละเอียดเวอร์ชัน</h2><p>#{{ versionDetail.shortId }} · {{ versionDetail.stamp }}</p></div><button type="button" class="cm-editor-icon-button" data-version-close aria-label="ปิดรายละเอียดเวอร์ชัน" sc-camel-on-click="{{ closeVersionDetail }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></header>
+      <div class="cm-version-dialog-body">
+        <div class="cm-version-detail-meta"><span class="cm-version-badge" data-live="{{ versionDetail.isLive }}">{{ versionDetail.status }}</span><span>โดย {{ versionDetail.actor }}</span></div>
+        <p class="cm-version-full-id">รหัสเวอร์ชัน: {{ versionDetail.id }}</p>
+        <sc-if value="{{ versionDetail.hasOrigin }}"><p>{{ versionDetail.origin }}</p></sc-if>
+        <div class="cm-version-compare-toolbar"><h3>เปรียบเทียบเนื้อหา <small>{{ versionDifferenceCount }} จุด</small></h3><label class="cm-editor-field"><span>เทียบกับ</span><select aria-label="เปรียบเทียบเวอร์ชันกับ" value="{{ versionCompare }}" sc-camel-on-change="{{ onVersionCompare }}"><option value="draft">Draft ปัจจุบัน</option><option value="live">Live ปัจจุบัน</option></select></label></div>
+        <sc-if value="{{ versionSame }}"><p class="cm-version-notice">เนื้อหาเหมือนกับ {{ versionCompareLabel }}</p></sc-if>
+        <div class="cm-version-diff-list"><sc-for list="{{ versionDifferences }}" as="change"><section class="cm-version-diff"><h4>{{ change.label }}</h4><code>{{ change.path }}</code><div><div><span>เวอร์ชันที่เลือก</span><pre>{{ change.before }}</pre></div><div><span>{{ versionCompareLabel }}</span><pre>{{ change.after }}</pre></div></div></section></sc-for></div>
+        <sc-if value="{{ versionMoreDiff }}"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ versionLoadMore }}">แสดงจุดที่เปลี่ยนเพิ่มเติม</button></sc-if>
+      </div>
+      <footer><p>กู้คืนทั้งเว็บเป็น Draft ก่อน โดยยังไม่เผยแพร่</p><div><button type="button" class="cm-editor-button" sc-camel-on-click="{{ closeVersionDetail }}">ปิด</button><button type="button" class="cm-editor-button cm-editor-button--primary" data-version-restore disabled="{{ versionRestoreDisabled }}" sc-camel-on-click="{{ versionDetail.restore }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7"></path></svg>กู้คืนเป็นฉบับร่าง</button></div></footer>
+    </section>
+  </div>
+</sc-if>

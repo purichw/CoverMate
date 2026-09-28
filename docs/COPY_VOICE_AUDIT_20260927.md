@@ -2,7 +2,21 @@
 
 วันที่ตรวจ: 27 กันยายน 2026
 
-สถานะ: ปรับข้อความต้นทางและ CMS default seeds แล้ว พร้อมฉบับร่างและเว็บพรีวิวในเครื่อง ยังไม่ได้เขียน CMS บนระบบจริง, push หรือ deploy
+สถานะล่าสุด 28 กันยายน 2026: นำข้อความที่ตรวจแล้วเข้า Published และ Draft ของ CMS จริงแล้วตามคำขอผู้ใช้ ตรวจ Home/Motor ทั้ง TH/EN ว่าใช้ข้อมูลชุดใหม่จริง การเผยแพร่ข้อมูลครั้งนี้แยกจากงานดีไซน์ Hero editor ที่ยังไม่ได้ deploy
+
+### การเผยแพร่ข้อมูล CMS จริง
+
+- สาเหตุที่ข้อความก่อนหน้านี้ไม่ขึ้น: การแก้ source/default seeds และ deploy โค้ดไม่ได้แทนค่า Published CMS ที่มีข้อความเดิมอยู่แล้ว
+- ใช้ `scripts/release-copy-voice.mjs` กับ proposal เดิม อ่าน Live/Draft ล่าสุดแยกกัน ตรวจ conflict ราย field และเขียนแบบ atomic พร้อม update-time preconditions ไม่ยก Draft ทั้งชุดไป Publish
+- อัปเดต 332 fields ต่อ state; ตรวจชุดข้อความที่ทบทวนแล้วครบ 342 entries (10 entries เดิมตรงอยู่แล้ว) ค่า optional 24 fields ที่ยังไม่มีใน Live schema เก่าเติมได้เฉพาะ localized CMS owners ที่ลงทะเบียนไว้ ไม่ normalize หรือเปลี่ยน schema ทั้งชุด
+- Live revision `11 -> 12`, Draft revision `67 -> 68`; CMS version `copy-voice-1790533189491`
+- สำรองก่อนเขียนไว้ที่ `uat-results/copy-release/before-1790533189491.json` และผล read-back ที่ `result-1790533189491.json` ไฟล์หลักฐานเหล่านี้เก็บเฉพาะในเครื่อง ไม่ติดตามด้วย Git
+- อ่านกลับยืนยัน config/text นอกขอบเขตไม่เปลี่ยน งานอื่นใน Draft ไม่ถูกเผยแพร่ และข้อความยังแก้ได้ผ่าน CMS ไม่มี runtime override เพื่อบังคับข้อความใหม่
+- เปิด public Home/Motor ทั้ง TH/EN ในเบราว์เซอร์ ตรวจ CMS snapshot ครบ 342 entries และหัวข้อ Hero ที่ render จริง ผลอยู่ที่ `uat-results/copy-release/public-verification.json`
+- เปิด FAQ บนเว็บจริงครบ 9 ข้อทั้ง TH/EN ตรวจหัวข้อกับชุดที่ทบทวนแล้วและกดขยายทุกข้อผ่าน ผล `faq-public-verification.json` และภาพ `faq-th-live.png` / `faq-en-live.png` อยู่ในโฟลเดอร์เดียวกัน
+- การเผยแพร่ข้อความนี้ไม่ส่งฟอร์ม ไม่แก้ customer records และไม่ส่งอีเมล
+
+สคริปต์เผยแพร่เป็นเครื่องมือ maintenance สำหรับ proposal ชุดนี้เท่านั้น ค่าเริ่มต้นเป็น dry-run; ต้องมี `--apply` จึงเขียนจริง และต้องมีสิทธิ์ server ของ project ที่ระบุ ห้ามสร้าง baseline ใหม่เพื่อข้าม conflict หรือใช้ซ้ำกับงาน copy ชุดอื่นโดยไม่ตรวจ
 
 ## ผลการปรับข้อความ
 
@@ -22,7 +36,7 @@
 - รูปหลังแก้และผลตรวจอยู่ใน `uat-results/copy-audit-20260927/` พรีวิวปิดการส่งฟอร์มและการเขียนข้อมูลทุกชนิด
 - เทสต์ CMS ownership ปรับให้ยอมรับคำโปรยว่างอย่างตั้งใจ ส่วน FAQ browser harness เพิ่มการกดยืนยัน Save draft ตาม dialog ที่มีอยู่แล้ว ไม่เปลี่ยนพฤติกรรมบันทึกจริง
 - ผ่าน `check:contracts`, `check:cms`, `check:faq` (รวมบันทึกร่าง/โหลดใหม่/พรีวิวใน fixture), `check:contact`, `check:seo`, `check:errors`, `check:visitor-source`, `copy-voice-check`, `copy-voice-browser-check` และ `git diff --check`
-- ไม่ทดสอบ production writes, email delivery หรือ blog publishing ในงานปรับสำนวนนี้
+- การตรวจรอบ 27 กันยายนยังไม่เขียน production; การเผยแพร่ CMS ที่ได้รับอนุญาตภายหลังอยู่ในส่วนสถานะล่าสุดด้านบน ไม่รวม email delivery หรือ blog publishing
 
 ### ไฟล์และคำสั่งสำหรับทำต่อ
 

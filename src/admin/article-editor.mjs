@@ -105,8 +105,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     root.querySelectorAll('[data-editor-lang]').forEach(el=>{el.hidden=el.dataset.editorLang!==lang;});
     createEditor(lang);refreshSettings();dirty();updateToolbar();
   }
-  function modal(title,html,{wide=false}={}) {
-    const opener=document.activeElement,d=document.createElement('dialog');
+  function modal(title,html,{wide=false,opener=document.activeElement}={}) {
+    const d=document.createElement('dialog');
     d.className='ae-dialog'+(wide?' ae-preview-dialog':'');d.setAttribute('aria-label',title);
     d.innerHTML=`<div class="ae-dialog-head"><h2>${esc(title)}</h2>${btn('close','X','ปิด')}</div>${html}`;
     document.body.append(d);dialogs.add(d);
@@ -189,9 +189,10 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   }
   async function publication(action){
     if(!cloud||busy)return;
+    const opener=document.activeElement;
     if(!await save()||changed())return;
     const title=action==='publish'?'ยืนยันเผยแพร่บทความ':'ถอนเผยแพร่บทความ';
-    const d=modal(title,`<form class="ae-modal-form">${action==='publish'?`<fieldset><legend>ภาษาที่ต้องการเผยแพร่</legend>${['th','en'].map(l=>`<label><input type="checkbox" name="language" value="${l}" ${l===lang?'checked':''}> ${l.toUpperCase()}</label>`).join('')}</fieldset><p>เผยแพร่ฉบับที่บันทึกล่าสุด วันที่ในอนาคตจะแสดงเมื่อถึงกำหนด หากปิดระบบบทความไว้ หน้าบ้านยังไม่แสดง</p>`:'<p>นำบทความออกจากหน้าบ้านทุกภาษา โดยเก็บเนื้อหาและร่างไว้ใน CMS</p>'}<p class="ae-form-error" role="alert"></p><div class="ae-modal-actions"><button class="ae-button" type="button" data-cancel>ยกเลิก</button><button class="ae-button ae-primary" type="submit">${action==='publish'?'ยืนยันเผยแพร่':'ยืนยันถอนเผยแพร่'}</button></div></form>`);
+    const d=modal(title,`<form class="ae-modal-form">${action==='publish'?`<fieldset class="ae-choice-group"><legend>ภาษาที่ต้องการเผยแพร่</legend><div class="ae-choice-options">${['th','en'].map(l=>`<label class="ae-checkbox"><input type="checkbox" name="language" value="${l}" ${l===lang?'checked':''}><span>${l.toUpperCase()}</span></label>`).join('')}</div></fieldset><p>เผยแพร่ฉบับที่บันทึกล่าสุด วันที่ในอนาคตจะแสดงเมื่อถึงกำหนด หากปิดระบบบทความไว้ หน้าบ้านยังไม่แสดง</p>`:'<p>นำบทความออกจากหน้าบ้านทุกภาษา โดยเก็บเนื้อหาและร่างไว้ใน CMS</p>'}<p class="ae-form-error" role="alert"></p><div class="ae-modal-actions"><button class="ae-button" type="button" data-cancel>ยกเลิก</button><button class="ae-button ae-primary" type="submit">${action==='publish'?'ยืนยันเผยแพร่':'ยืนยันถอนเผยแพร่'}</button></div></form>`,{opener});
     d.querySelector('[data-cancel]').onclick=()=>d.close();
     d.querySelector('form').onsubmit=async event=>{
       event.preventDefault();if(busy)return;

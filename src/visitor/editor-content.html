@@ -1,0 +1,160 @@
+    <!-- CONTENT TAB -->
+    <sc-if value="{{ tabContent }}" hint-placeholder-val="{{ false }}">
+      <div class="cm-editor-content-workspace">
+        <!-- COVERMATE_EDITOR_PREVIEW -->
+        <nav class="cm-editor-content-outline" aria-label="ส่วนของหน้าที่แก้ไข">
+          <h3>ส่วนของ{{ adminPageName }}</h3>
+          <sc-for list="{{ contentSections }}" as="section">
+            <div class="cm-editor-content-row" data-content-row="{{ section.id }}" data-selected="{{ section.sel }}">
+              <button type="button" class="cm-editor-content-pick" aria-pressed="{{ section.sel }}" sc-camel-on-click="{{ section.openContent }}"><span class="cm-editor-order">{{ section.order }}</span><span><strong>{{ section.name }}</strong><small>{{ section.statusLabel }}</small></span><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></button>
+            </div>
+          </sc-for>
+        </nav>
+        <section class="cm-editor-content-detail" data-content-detail="{{ curId }}">
+          <label class="cm-editor-field cm-editor-section-picker"><span>ส่วนที่แก้ไข</span><select data-editor-content-section aria-label="เลือกส่วนที่แก้ไขเนื้อหา" value="{{ curId }}" sc-camel-on-change="{{ selectContentSection }}"><sc-for list="{{ contentSections }}" as="section"><option value="{{ section.id }}">{{ section.order }}. {{ section.name }}</option></sc-for></select></label>
+          <div class="cm-editor-content-heading"><h3 tabindex="-1" data-editor-content-title>แก้ไข : {{ curName }}</h3><sc-if value="{{ selectedOutline.canToggle }}"><button type="button" class="cm-editor-visibility" data-content-visibility data-hero-visibility role="switch" aria-checked="{{ selectedOutline.on }}" aria-label="แสดงหรือซ่อนส่วนนี้" sc-camel-on-click="{{ selectedOutline.toggle }}">{{ selectedOutline.statusLabel }}</button></sc-if></div>
+          <div class="cm-editor-content-meta"><p class="cm-editor-help">{{ contentScope }}</p><!-- COVERMATE_EDITOR_LANGUAGE --></div>
+          <sc-if value="{{ contentDependency }}"><p class="cm-editor-notice">{{ contentDependency }}</p></sc-if>
+          <sc-if value="{{ editingHero }}"><!-- COVERMATE_EDITOR_HERO --></sc-if>
+          <sc-if value="{{ !editingHero }}">
+            <sc-if value="{{ showContactInspector }}"><!-- COVERMATE_EDITOR_CONTACT --></sc-if>
+            <sc-for list="{{ contentFieldGroups }}" as="group">
+              <details class="cm-editor-disclosure cm-editor-field-group" data-editor-field-group="{{ group.key }}" open="{{ group.open }}"><summary>{{ group.label }}<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div><sc-for list="{{ group.fields }}" as="f"><!-- COVERMATE_EDITOR_FIELD --></sc-for></div></details>
+            </sc-for>
+          </sc-if>
+      <sc-if value="{{ hasCalculatorFields }}">
+        <details class="om-cms-group" data-cms-group="Calculator data"><summary>ข้อมูลและแหล่งอ้างอิงเครื่องคำนวณ</summary><div class="om-cms-fields">
+          <sc-for list="{{ calculatorFields }}" as="field"><label class="om-cms-field"><span>{{ field.label }}</span><input data-calculator-field="{{ field.key }}" type="{{ field.type }}" value="{{ field.value }}" sc-camel-on-change="{{ field.change }}"></label></sc-for>
+        </div></details>
+        <details class="om-cms-group" data-needs-catalog-admin><summary>AIA · Product catalog &amp; review</summary><div class="om-cms-fields">
+          <label class="om-cms-field"><span>Product records (JSON)</span><textarea rows="12" data-needs-catalog-json value="{{ calculatorCatalogText }}" sc-camel-on-change="{{ onCalculatorCatalog }}"></textarea></label>
+          <button type="button" sc-camel-on-click="{{ addCalculatorProduct }}">Add draft product</button><button type="button" data-needs-save-catalog sc-camel-on-click="{{ saveCalculatorCatalog }}">Save catalog to draft</button>
+          <label class="om-cms-field"><span>Hospital references (JSON)</span><textarea rows="8" data-needs-references-json value="{{ calculatorReferenceText }}" sc-camel-on-change="{{ onCalculatorReferences }}"></textarea></label>
+          <button type="button" sc-camel-on-click="{{ addCalculatorReference }}">Add draft reference</button><button type="button" data-needs-save-references sc-camel-on-click="{{ saveCalculatorReferences }}">Save references to draft</button>
+          <p role="alert">{{ calculatorCatalogError }}</p>
+          <label class="om-cms-field"><span>Reviewed by</span><input data-needs-reviewer value="{{ calculatorReviewer }}" sc-camel-on-change="{{ onCalculatorReviewer }}"></label>
+          <sc-for list="{{ calculatorReviewRows }}" as="record"><div class="om-cms-field"><strong>{{ record.title }}</strong><span>{{ record.status }}</span><span>{{ record.issues }}</span><button type="button" data-needs-approve="{{ record.id }}" disabled="{{ record.disabled }}" sc-camel-on-click="{{ record.approve }}">Approve reviewed record</button></div></sc-for>
+        </div></details>
+      </sc-if>
+      <sc-if value="{{ editingFaq }}">
+        <div class="om-faq-actions">
+          <strong>คำถามทั้งหมด ({{ faqCount }})</strong>
+          <button type="button" class="om-faq-add" data-admin-add-faq sc-camel-on-click="{{ addFaq }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>เพิ่มคำถาม</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasItemEditor }}"><details class="cm-editor-disclosure cm-editor-field-group" data-content-group="items" open><summary>{{ contentItemsLabel }}<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div>
+      <sc-for list="{{ editItems }}" as="it" hint-placeholder-count="3">
+        <details class="cm-editor-record" data-admin-repeatable-id="{{ it.id }}" open="{{ it.open }}"><summary><span>{{ it.title }}</span><small>{{ it.stateLabel }}</small><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="cm-editor-record-fields">
+          <div class="cm-editor-record-actions">
+            <span style="font-size:11.5px;font-weight:700;letter-spacing:0;color:var(--color-neutral-700);margin-right:auto">{{ it.rowLabel }}</span>
+            <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ it.stateBg }};color:{{ it.stateFg }}">{{ it.stateLabel }}</span>
+            <span class="cm-editor-record-actions">
+              <button type="button" sc-camel-on-click="{{ it.up }}" aria-label="เลื่อนรายการขึ้น" title="เลื่อนรายการขึ้น" class="cm-editor-item-action" style="opacity:{{ it.upOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ it.down }}" aria-label="เลื่อนรายการลง" title="เลื่อนรายการลง" class="cm-editor-item-action" style="opacity:{{ it.downOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ it.duplicate }}" aria-label="ทำสำเนารายการ" title="ทำสำเนารายการ" class="cm-editor-item-action"><svg sc-camel-view-box="0 0 24 24"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ it.toggleVisible }}" class="cm-editor-button">{{ it.visibilityLabel }}</button>
+              <sc-if value="{{ it.canDeleteFaq }}"><button type="button" class="om-faq-delete" sc-camel-on-click="{{ it.deleteFaq }}" aria-label="ลบคำถาม" title="ลบคำถาม"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></sc-if>
+            </span>
+          </div>
+<sc-for list="{{ it.fields }}" as="f" hint-placeholder-count="2"><!-- COVERMATE_EDITOR_FIELD --></sc-for>
+          <sc-if value="{{ it.hasIcon }}">
+            <label class="om-cms-field"><span>ไอคอน</span><span class="cm-select-shell"><select aria-label="ไอคอนรายการ" value="{{ it.icon }}" sc-camel-on-change="{{ it.onIcon }}"><sc-for list="{{ it.iconOptions }}" as="option"><option value="{{ option.key }}">{{ option.label }}</option></sc-for></select></span></label>
+          </sc-if>
+          <sc-if value="{{ it.hasTone }}">
+            <div role="group" aria-label="สีการ์ด" style="display:flex;gap:8px"><sc-for list="{{ it.toneOptions }}" as="tone"><button type="button" title="{{ tone.key }}" aria-label="{{ tone.key }}" aria-pressed="{{ tone.selected }}" sc-camel-on-click="{{ tone.choose }}" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--color-bg);background:{{ tone.color }};cursor:pointer"><sc-if value="{{ tone.selected }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:white;fill:none;stroke-width:2"><path d="m5 12 4 4 10-10"/></svg></sc-if></button></sc-for></div>
+          </sc-if>
+          <sc-if value="{{ it.hasPhotoControl }}">
+            <label class="om-cms-field"><span>รูปภาพ (ไม่บังคับ)</span><input aria-label="รูปผู้รีวิว" value="{{ it.photoInput.value }}" sc-camel-on-change="{{ it.photoInput.change }}" sc-camel-on-blur="{{ it.photoInput.commit }}"></label>
+            <label class="om-cms-field"><span>คำอธิบายรูป (Alt text)</span><input aria-label="คำอธิบายรูปผู้รีวิว" value="{{ it.photoAltInput.value }}" sc-camel-on-change="{{ it.photoAltInput.change }}" sc-camel-on-blur="{{ it.photoAltInput.commit }}"></label>
+          </sc-if>
+          <sc-if value="{{ it.showLogo }}" hint-placeholder-val="{{ false }}">
+            <label style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ไฟล์โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ไฟล์โลโก้</sc-if></span>
+              <span style="display:flex;align-items:center;gap:8px">
+                <span role="img" aria-hidden="true" style="{{ it.logoThumb }}"></span>
+                <input value="{{ it.logo }}" sc-camel-on-change="{{ it.onLogo }}" placeholder="assets/ins/15-name.png" style="flex:1 1 auto;min-width:0;font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+              </span>
+            </label>
+          </sc-if>
+          <sc-if value="{{ it.showLogo }}"><label class="om-cms-field"><span>คำอธิบายโลโก้ (Alt text)</span><input aria-label="คำอธิบายโลโก้บริษัทประกัน" value="{{ it.logoAltInput.value }}" sc-camel-on-change="{{ it.logoAltInput.change }}" sc-camel-on-blur="{{ it.logoAltInput.commit }}"></label></sc-if>
+          <sc-if value="{{ it.hasCells }}" hint-placeholder-val="{{ false }}">
+            <label style="display:flex;flex-direction:column;gap:8px">
+              <span>ภาพชั้นประกัน (ไม่บังคับ)</span>
+              <sc-if value="{{ it.hasIllustration }}"><img sc-camel-src="{{ it.illustrationThumb }}" alt="" width="96" height="96" style="object-fit:contain"></sc-if>
+              <input aria-label="ภาพชั้นประกัน" value="{{ it.illustration }}" sc-camel-on-change="{{ it.onIllustration }}" style="font:inherit;font-size:14px;padding:10px;border:1px solid var(--color-neutral-300);border-radius:8px;min-width:0">
+            </label>
+            <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ความคุ้มครอง (กดเพื่อสลับ)</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ความคุ้มครอง (แตะเพื่อเปลี่ยน)</sc-if></span>
+              <sc-for list="{{ it.cells }}" as="cell" hint-placeholder-count="5">
+                <div data-tier-id="{{ cell.tierId }}" data-head-id="{{ cell.headId }}" class="cm-editor-cell">
+                <button type="button" data-tier-status data-noedit sc-camel-on-click="{{ cell.cycle }}">
+                  <span style="width:22px;height:22px;flex:0 0 auto;border-radius:999px;background:{{ cell.bg }};color:{{ cell.fg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">{{ cell.glyph }}</span>
+                  <span >{{ cell.label }}</span>
+                  <span >{{ cell.state }}</span>
+                </button>
+                <sc-if value="{{ cell.hasNote }}"><span class="cm-editor-cell-note">{{ cell.note }}</span></sc-if>
+                <button type="button" data-tier-remark data-noedit aria-label="{{ cell.remarkActionLabel }}" sc-camel-on-click="{{ cell.editRemark }}" class="cm-editor-button">{{ cell.remarkLabel }}</button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div></details>
+      </sc-for>
+      <sc-if value="{{ canAddItem }}"><button type="button" class="cm-editor-button cm-editor-add" sc-camel-on-click="{{ addItem }}">+ เพิ่ม{{ addLabel }}</button></sc-if>
+      </div></details></sc-if>
+
+      <sc-if value="{{ hasHeads }}" hint-placeholder-val="{{ false }}">
+<details class="cm-editor-disclosure cm-editor-field-group" data-content-group="heads"><summary>รายการเปรียบเทียบ (แถว)<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div>
+        <sc-for list="{{ editHeads }}" as="hd" hint-placeholder-count="5">
+          <div data-admin-repeatable-head-id="{{ hd.id }}" class="cm-editor-head-row cm-editor-field">
+            <button type="button" sc-camel-on-click="{{ hd.up }}" aria-label="เลื่อนหัวข้อขึ้น" title="เลื่อนหัวข้อขึ้น" style="min-width:36px;min-height:36px">↑</button>
+            <button type="button" sc-camel-on-click="{{ hd.down }}" aria-label="เลื่อนหัวข้อลง" title="เลื่อนหัวข้อลง" style="min-width:36px;min-height:36px">↓</button>
+            <input aria-label="ชื่อหัวข้อความคุ้มครอง" value="{{ hd.value }}" sc-camel-on-change="{{ hd.onInput }}" >
+            <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ hd.stateBg }};color:{{ hd.stateFg }}">{{ hd.stateLabel }}</span>
+            <button type="button" sc-camel-on-click="{{ hd.duplicate }}" aria-label="ทำสำเนาหัวข้อความคุ้มครอง" class="cm-editor-button">ทำสำเนา</button>
+            <button type="button" sc-camel-on-click="{{ hd.toggleVisible }}" aria-label="แสดงหรือซ่อนหัวข้อ" class="cm-editor-button">{{ hd.visibilityLabel }}</button>
+          </div>
+        </sc-for>
+        <button type="button" class="cm-editor-button cm-editor-add" sc-camel-on-click="{{ addHead }}">+ เพิ่มหัวข้อความคุ้มครอง</button></div></details>
+      </sc-if>
+
+      <sc-if value="{{ hasCards }}" hint-placeholder-val="{{ false }}">
+        <details class="cm-editor-disclosure cm-editor-field-group" data-content-group="cards" open><summary>การ์ดในส่วนนี้<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div>
+        <sc-for list="{{ editCards }}" as="cd">
+          <details class="cm-editor-record" data-admin-repeatable-card-id="{{ cd.id }}" open="{{ cd.open }}"><summary><span>{{ cd.title }}</span><small>{{ cd.stateLabel }}</small><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="cm-editor-record-fields">
+            <div class="cm-editor-record-actions">
+              <sc-if value="{{ cd.hasLogo }}" hint-placeholder-val="{{ false }}"><span role="img" aria-label="{{ cd.logoAlt }}" style="{{ cd.logoThumb }}"></span></sc-if>
+              <span style="font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-left:auto">การ์ด {{ cd.n }}</span>
+              <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ cd.stateBg }};color:{{ cd.stateFg }}">{{ cd.stateLabel }}</span>
+              <button type="button" sc-camel-on-click="{{ cd.up }}" aria-label="เลื่อนการ์ดขึ้น" title="เลื่อนการ์ดขึ้น" class="cm-editor-item-action" style="opacity:{{ cd.upOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ cd.down }}" aria-label="เลื่อนการ์ดลง" title="เลื่อนการ์ดลง" class="cm-editor-item-action" style="opacity:{{ cd.downOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ cd.duplicate }}" aria-label="ทำสำเนาการ์ด" title="ทำสำเนาการ์ด" class="cm-editor-item-action"><svg sc-camel-view-box="0 0 24 24"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+              <button type="button" sc-camel-on-click="{{ cd.toggleVisible }}" aria-label="แสดงหรือซ่อนการ์ด" class="cm-editor-button">{{ cd.visibilityLabel }}</button>
+            </div>
+<sc-for list="{{ cd.fields }}" as="f" hint-placeholder-count="3"><!-- COVERMATE_EDITOR_FIELD --></sc-for>
+            <sc-if value="{{ cd.showLogo }}" hint-placeholder-val="{{ false }}">
+              <label class="om-cms-field"><span>ประเภทใบอนุญาต</span><span class="cm-select-shell"><sc-raw-select data-admin-licence-role="{{ cd.id }}" value="{{ cd.licenceRole }}" sc-camel-on-change="{{ cd.onLicenceRole }}"><sc-for list="{{ cd.licenceRoleOptions }}" as="option"><option value="{{ option.value }}">{{ option.label }}</option></sc-for></sc-raw-select></span></label>
+            <label class="cm-editor-field">
+              <span>ที่อยู่โลโก้</span>
+              <input value="{{ cd.logo }}" sc-camel-on-change="{{ cd.onLogo }}">
+            </label>
+            <label class="cm-editor-field">
+              <span>คำอธิบายโลโก้ (Alt text)</span>
+              <input value="{{ cd.logoAlt }}" sc-camel-on-change="{{ cd.onLogoAlt }}">
+            </label>
+            </sc-if>
+          </div></details>
+        </sc-for>
+        <sc-if value="{{ canAddCard }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="cm-editor-button cm-editor-add" sc-camel-on-click="{{ addCard }}">+ เพิ่ม{{ addCardLabel }}</button>
+        </sc-if>
+        </div></details>
+      </sc-if>
+
+      <sc-if value="{{ !editingHero }}"><details class="cm-editor-disclosure cm-editor-field-group"><summary>การแสดงผลและข้อมูลที่เกี่ยวข้อง<svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div>
+        <sc-if value="{{ selectedOutline.canMove }}"><div class="cm-editor-record-actions"><button type="button" class="cm-editor-button" disabled="{{ selectedOutline.first }}" sc-camel-on-click="{{ selectedOutline.up }}">เลื่อนส่วนขึ้น</button><button type="button" class="cm-editor-button" disabled="{{ selectedOutline.last }}" sc-camel-on-click="{{ selectedOutline.down }}">เลื่อนส่วนลง</button></div></sc-if>
+        <div class="cm-editor-shortcuts"><sc-for list="{{ contentShortcuts }}" as="shortcut"><button type="button" class="cm-editor-button" data-admin-content-shortcut="{{ shortcut.key }}" sc-camel-on-click="{{ shortcut.open }}">{{ shortcut.label }}</button></sc-for><button type="button" class="cm-editor-button" sc-camel-on-click="{{ goMedia }}">รูปภาพและ Crop</button></div>
+      </div></details></sc-if>
+        </section>
+      </div>
+    </sc-if>

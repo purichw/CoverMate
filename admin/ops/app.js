@@ -1053,7 +1053,7 @@ function errorNotice(resource) {
 
 function metric(label, value, copy, cta, moduleId) {
   return `
-    <section class="card metric">
+    <section class="card metric cm-stat-card">
       <span class="label"><span class="dot"></span>${escapeHTML(label)}</span>
       <span class="value">${escapeHTML(String(value))}</span>
       <p>${escapeHTML(copy)}</p>

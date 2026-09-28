@@ -8,6 +8,7 @@ const visitor=await startArticlesIndexPreview(),admin=await startArticlesAdminPr
 const pw=loadPlaywright(),engine=process.env.BROWSER||'chromium';
 const browser=engine==='chromium'?await launchChromium(pw.chromium):await pw[engine].launch();
 const out='uat-results/select-spacing';fs.mkdirSync(out,{recursive:true});
+const centerOnly=process.argv.includes('--center-only');
 const report={engine,source:'Local built UI, synthetic read-only fixtures; no production writes',checks:[],errors:[]};
 try {
   const context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
@@ -17,17 +18,21 @@ try {
     await page.evaluate(()=>window.CoverMateSelect?.refresh());
     const controls=await page.locator('.cm-select-trigger:visible').evaluateAll(nodes=>nodes.map(n=>{
       const r=n.getBoundingClientRect(),text=n.querySelector('.cm-select-value').getBoundingClientRect(),style=getComputedStyle(n);
-      return {label:n.getAttribute('aria-label'),padding:parseFloat(style.paddingLeft),inset:text.left-r.left,rightGap:r.right-text.right,width:r.width,height:r.height};
+      const value=n.querySelector('.cm-select-value');
+      return {label:n.getAttribute('aria-label'),align:style.textAlign,truncated:value.scrollWidth>value.clientWidth+1,padding:parseFloat(style.paddingLeft),inset:text.left-r.left,rightGap:r.right-text.right,width:r.width,height:r.height};
     }));
     assert.ok(controls.length,surface+' has visible controls');
     for(const control of controls) {
       assert.ok(control.padding>=min,surface+': '+JSON.stringify(control));
       assert.ok(control.inset>=min&&control.rightGap>=32,surface+' preserves text and chevron insets');
+      assert.equal(control.align,'center',surface+' centers text');
+      assert.ok(Math.abs(control.inset-control.rightGap)<1,surface+' centers the value within the whole control');
+      if(centerOnly)assert.equal(control.truncated,false,surface+' default selection fits: '+control.label);
     }
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,surface+' has no page overflow');
     report.checks.push({surface,width:page.viewportSize().width,controls});
   }
-  for(const width of [320,390,1440]) {
+  for(const width of centerOnly?[390,1440]:[320,390,1440]) {
     await page.setViewportSize({width,height:width===1440?1000:844});
     await page.goto(visitor.baseUrl+'/articles');
     const trigger=page.locator('.ar-sort .cm-select-trigger');await trigger.waitFor();
@@ -42,7 +47,26 @@ try {
     await measure('Articles EN',12);
     await page.goto(admin.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();
     await measure('CMS list');
+    if(centerOnly) {
+      await page.goto(admin.baseUrl+'/admin#operations');await page.locator('.case-list[aria-busy="false"]').waitFor();
+      await measure('CMS cases');
+      const status=page.locator('#caseStatusFilter + button');
+      await status.click();
+      const options=await page.getByRole('option').evaluateAll(nodes=>nodes.map(n=>{
+        const style=getComputedStyle(n);
+        return {align:style.textAlign,justify:style.justifyContent,left:style.paddingLeft,right:style.paddingRight};
+      }));
+      for(const option of options) {assert.equal(option.align,'center');assert.equal(option.justify,'center');assert.equal(option.left,option.right);}
+      if(width===390)await page.screenshot({path:out+'/centered-cases-390.png'});
+      await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+      await page.waitForFunction(()=>document.querySelector('#caseStatusFilter')?.selectedIndex===1);
+      await page.locator('.case-list[aria-busy="false"]').waitFor();
+      await status.click();await page.keyboard.press('Escape');
+      assert.equal(await status.getAttribute('aria-expanded'),'false');
+      assert.equal(await status.evaluate(n=>n===document.activeElement),true);
+    }
   }
+  if(!centerOnly) {
   await page.locator('[data-article-action=edit]').first().click();await page.locator('.ae-format-select .cm-select-trigger').waitFor();
   await measure('Editor desktop');
   await page.setViewportSize({width:390,height:844});await measure('Editor mobile');
@@ -52,6 +76,7 @@ try {
   await measure('Home calculator');
   await page.locator('.hm-renew-disclosure > summary').click();await page.locator('.hm-renew-disclosure .cm-select-trigger').first().waitFor();
   await measure('Home renewal');
+  }
   assert.deepEqual(report.errors,[]);
   report.passed=true;
   console.log(JSON.stringify(report,null,2));
