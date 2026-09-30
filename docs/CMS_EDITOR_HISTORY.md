@@ -6,6 +6,31 @@ historical evidence for their stated scope.
 
 The website editor (`/admin/edit`) and content tools (`/admin/content`) share Undo, Redo and Reset Draft. These controls act on the complete website Draft, including both languages, positional text overrides, images and their source metadata, section order/visibility, theme, contact and SEO settings. They do not change the published website.
 
+## Website and article scope
+
+Website Save/autosave writes only `sites/{site}/states/draft`. Website Publish
+writes only website `states/live`, `states/draft` and `versions/{id}`. Reset,
+Undo/Redo and version restore operate on the website draft; they never save,
+publish, reset or remove an article draft/live snapshot or article revision.
+Article Save/Publish is separate and affects only the selected article, not the
+website draft/live/version history or other articles. Article visibility settings
+also have their own document and revision.
+
+Website-owned presentation includes `homeDesign.articles*`, `articlesPage` and
+`articleDetail` (headings, labels, shared artwork/layout around articles).
+Changing these through website Publish/Reset does not change article titles,
+body content, cover images, publication dates or draft/live status.
+
+Confirmations explicitly identify the website or selected-article scope.
+`npm run check:content-isolation` exercises the real website writer and article
+repository against one isolated store, asserting exact write paths and unchanged
+opposite-domain records/revisions across Save, Publish, Reset and article settings.
+It does not access a hosted database or migrate existing content.
+`node scripts/content-scope-browser-check.mjs` verifies the real built website
+and article editor controls with local repository spies: cancel/confirm behavior,
+per-domain calls, scoped confirmation copy and article mobile fit. Its report and
+screenshots are written to ignored `uat-results/content-scope/`.
+
 ## Interaction
 
 - Undo / Redo remain visible in the inline editor dock and the content panel footer. Unavailable actions remain focusable, with an explanation in their title and `aria-disabled` state.

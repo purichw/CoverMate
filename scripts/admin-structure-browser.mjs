@@ -178,7 +178,7 @@ else {
     await page.setViewportSize({width:1440,height:1000});
     await page.screenshot({path:path.join(localeOut,'cms-en-content-desktop.png')});
     await page.getByRole('button',{name:'Save draft',exact:true}).click();
-    assert.ok(await page.getByText('Save draft นี้ไหม?',{exact:true}).isVisible());
+    assert.ok(await page.getByText('Save draft หน้าเว็บ?',{exact:true}).isVisible());
     await page.getByRole('button',{name:'ยกเลิก',exact:true}).click();
     assert.deepEqual(errors,[]);
     fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({passed:true,saves,checks:['Home/Motor DOM order','route-specific reordering','visibility dependency','canonical licence edit','design shortcuts','draft reload','no live writes','desktop/mobile fit'],errors,network:'All external traffic blocked; in-memory drafts only.'},null,2));

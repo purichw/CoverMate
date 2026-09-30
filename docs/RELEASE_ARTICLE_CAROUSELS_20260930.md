@@ -1,7 +1,7 @@
 # Article carousels and CMS integration - 2026-09-30
 
 The owner authorized push and deployment of this chat's changes. The candidate
-integrates upstream `759024f` in `.tools/admin-shell-consistency-20260926`;
+integrates upstream `73162cf` in `.tools/admin-shell-consistency-20260926`;
 unrelated changes in the primary checkout are excluded.
 
 ## Scope
@@ -18,6 +18,8 @@ unrelated changes in the primary checkout are excluded.
 - Desktop writing spans both metadata columns to preserve reader typography.
   Legacy Summary/Quote conversion controls retain their DOM identity during
   selection updates so pointer clicks are not lost; conversion remains undoable.
+- Upstream publication-scope copy and isolation tests are retained: website
+  drafts and each article have independent save, publish and reset boundaries.
 - The shared reader is a versioned generated asset loaded before the component
   runtime. This keeps the compressed shell under the existing performance cap;
   bundle validation guards its execution order and generated parity.

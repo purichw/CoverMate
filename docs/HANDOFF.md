@@ -2,6 +2,30 @@
 
 Last updated: 2026-09-30
 
+## Website / Article Lifecycle Isolation — Release Candidate
+
+After release `759024f`, the owner requested explicit separation of website
+Save/Publish/Reset from article drafts, in both directions. The existing writers
+already use independent collections and revisions. This follow-up clarifies the
+confirmation/notice scope and adds a real-module bidirectional regression through
+`npm run check:content-isolation`; no data migration is needed. Website-owned
+article-page presentation remains separate from actual article content.
+See `CMS_EDITOR_HISTORY.md` and `ARTICLES_PUBLISHING.md`. The owner has authorized
+push and production deployment of this follow-up. Integrate current main before
+push and preserve concurrent releases; exact-SHA CI and canonical deployment
+readback remain required. Authorization alone is not deployment evidence.
+
+Focused verification passed: 14 real-module lifecycle operations (including
+unchanged other-article records/revisions), existing Reset and CMS-controller
+checks, generated bundle validation, diff checks and local browser
+Save/Publish/Reset cancel/confirm flows. Article confirmation also passed at
+390px. Evidence: ignored `uat-results/content-scope/report.json` and screenshots.
+Generated Home/Motor HTML remains inside the existing raw/gzip byte caps.
+The full GitHub `verify` job gates production alias assignment. Final CI,
+deployment identity and read-only hosted evidence belong in ignored
+`uat-results/content-scope-release/receipt.json`. No hosted content mutation is
+needed. Prefer a forward fix; any rollback needs separate authorization.
+
 ## Admin Cards, Email Templates And Full-original Media Release
 
 The owner authorized push and production deploy of this chat's work only from

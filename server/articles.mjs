@@ -68,6 +68,8 @@ function catalogValue(record,now) {
 
 export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
   function refs(site) {
+    // Article lifecycle is independent of website states and version history.
+    // Shared page chrome is read by renderers, never saved/published here.
     if(!['covermate','covermate-uat'].includes(site))throw error(400,'environment','Invalid article environment');
     const root=db.doc('sites/'+site);
     return {items:root.collection('articles'),catalog:root.collection('articleCatalog'),slugs:root.collection('articleSlugs'),settings:root.collection('articleSettings').doc('current'),audit:root.collection('articleAudit')};

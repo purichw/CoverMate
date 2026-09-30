@@ -15,6 +15,7 @@ const commands = [
   ["npm", ["run", "build:errors"]],
   ["npm", ["run", "check:errors"]],
   ["npm", ["run", "check:editor-history"]],
+  ["npm", ["run", "check:content-isolation"]],
   ["npm", ["run", "check:editor-panel"]],
   ["npm", ["run", "check:editor-versions"]],
   ["npm", ["run", "check:admin-controls"]],

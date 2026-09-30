@@ -89,6 +89,7 @@
     "smoke:admin-builder": "COVERMATE_SMOKE_SUITE=admin-builder node scripts/smoke.mjs",
     "smoke": "node scripts/smoke.mjs",
     "check:editor-history": "node scripts/editor-history-model-check.mjs && node scripts/editor-reset-contract-check.mjs && node scripts/editor-history-browser-check.mjs",
+    "check:content-isolation": "node scripts/content-lifecycle-isolation-check.mjs",
     "check:admin-home": "node scripts/admin-home-browser-check.mjs",
     "check:admin-analytics": "node scripts/admin-analytics-model-check.mjs && node scripts/admin-analytics-browser-check.mjs"
   },
