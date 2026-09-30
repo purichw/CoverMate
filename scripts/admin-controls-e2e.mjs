@@ -140,13 +140,14 @@ try {
       await page.locator('.article-more[open] [data-article-action="edit"]').click();
     } else await page.locator('.article-desktop-action[data-article-action="edit"]').first().click();
     await page.locator('.ae-workspace').waitFor();
-    await page.locator('.tiptap:visible > p').first().click();
+    const editor=page.frameLocator('.ae-canvas-frame').locator('.tiptap:visible');
+    await editor.locator(':scope > p').first().click();
     await choose(page.locator('[data-format="block"]'),'h3');
-    assert.ok(await page.locator('.tiptap:visible h3').count()>0);
-    if(width<1040)await page.locator('[data-ae="settings"]:visible').click();
+    assert.ok(await editor.locator('h3').count()>0);
+    await page.locator('.ae-actions [data-ae="settings"]').click();
     await choose(page.locator('select[data-field="categoryId"]'),'health');
     assert.equal(await page.locator('select[data-field="categoryId"]').inputValue(),'health');
-    if(width<1040)await page.locator('.ae-settings-dialog .ae-done').click();
+    await page.locator('.ae-settings-dialog .ae-done').click();
     await page.locator('[data-ae="back"]').click();
     await page.locator('[data-article-state="ready"]').waitFor();
 
