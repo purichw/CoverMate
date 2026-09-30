@@ -8,6 +8,7 @@ import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 import { toFirestoreFields } from './lib/uat-env.mjs';
+import { installMediaFixture } from './media-upload-browser-check.mjs';
 
 // No production services are called. Firebase, public live reads and all draft
 // writes are fixtures; publishing and unrelated network writes are rejected.
@@ -77,6 +78,7 @@ try {
     };
     window.CoverMateFirebase = {
       auth: { currentUser: user }, waitForAuth: async () => user,
+      getAdminIdToken: async () => 'fixture-only',
       syncSessionFromCurrentUser: async () => ({ ok: true, user, session, admin: { role: 'owner', active: true } }),
       hydrateLocalContent: async () => {
         const data = await fetch('/__editor-history-fixture').then(response => response.json());
@@ -90,6 +92,7 @@ try {
     };
     window.dispatchEvent(new CustomEvent('covermate-firebase-ready'));
   ` }));
+  const media = await installMediaFixture(context, { token: 'fixture-only', sourceBytes: fs.readFileSync('assets/brand/covermate-mark.png'), useActualApi: true });
   await context.addInitScript(() => localStorage.setItem('covermate-admin-session', JSON.stringify({ firebase: true, uid: 'editor-history-owner', name: 'History Test Owner', email: 'history@example.test', role: 'owner', ts: Date.now(), exp: Date.now() + 86400000 })));
   page = await context.newPage();
   page.setDefaultTimeout(15000);
@@ -325,12 +328,38 @@ try {
   const mediaField = 'brand.media.headerLogo.th';
   const mediaBefore = await page.locator(`[data-cms-field="${mediaField}"]`).inputValue();
   const replacement = mediaBefore === 'assets/brand/covermate-mark.png' ? 'assets/brand/covermate-advisory-logo-en.png' : 'assets/brand/covermate-mark.png';
+  const beforeMedia = await settledDraft();
+  const beforeMediaSaves = saveCount;
+  const cropDialog = page.getByRole('dialog', { name: 'แก้ไขรูปภาพ', exact: true });
+  const cropReady = () => page.waitForFunction(() => document.querySelector('.cm-media-stage > img')?.cropper?.ready && !document.querySelector('.cm-media-primary')?.disabled);
   await editField(mediaField, replacement);
+  await cropDialog.waitFor(); await cropReady();
+  assert.deepEqual(await localSnapshot(), beforeMedia, 'Entering an image URL opens crop without changing the draft/history snapshot.');
+  await cropDialog.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click();
+  await cropDialog.waitFor({ state: 'detached' });
+  assert.deepEqual(await localSnapshot(), beforeMedia, 'Canceling the mandatory crop keeps the full prior snapshot.');
+  assert.equal(saveCount, beforeMediaSaves, 'Canceling the crop does not autosave an image change.');
+  assert.equal(await page.locator(`[data-cms-field="${mediaField}"]`).inputValue(), mediaBefore);
+  await editField(mediaField, replacement);
+  await cropDialog.waitFor(); await cropReady();
+  const cropSaved = page.waitForResponse(response => new URL(response.url()).pathname === '/api/media' && response.request().postDataJSON()?.action === 'crop');
+  await cropDialog.getByRole('button', { name: 'ใช้รูปนี้ใน draft', exact: true }).click();
+  const cropResponse = await cropSaved, cropped = await cropResponse.json();
+  assert.equal(cropResponse.status(), 201);
+  await cropDialog.waitFor({ state: 'detached' });
+  const afterMedia = await settledDraft(beforeMediaSaves);
+  assert.equal(afterMedia.config.mediaEdits[mediaField].output, cropped.url);
+  assert.equal(afterMedia.config.mediaEdits[mediaField].source, replacement, 'CMS keeps the canonical bundled original path.');
+  assert.equal(afterMedia.config.mediaEdits[mediaField].crop.mode, 'crop');
+  assert.equal(media.crops, 1, 'Only the confirmed crop stores a derivative.');
+  assert.equal(media.sourceUploads, 0, 'A bundled original is reused without uploading it again.');
   await historyAction('undo');
   await poll(async () => (await page.locator(`[data-cms-field="${mediaField}"]`).inputValue()) === mediaBefore, 'Undo restores media URL.');
+  assert.deepEqual(await localSnapshot(), beforeMedia, 'Undo restores the original source metadata and the complete pre-crop snapshot.');
   await historyAction('redo');
-  assert.equal(await page.locator(`[data-cms-field="${mediaField}"]`).inputValue(), replacement);
-  report.checks.push('/admin/content exposes the same history. Real form-choice and media URL edits Undo/Redo correctly.');
+  assert.equal(await page.locator(`[data-cms-field="${mediaField}"]`).inputValue(), cropped.url);
+  assert.deepEqual(await localSnapshot(), afterMedia, 'Redo restores the hosted crop URL, original source and crop geometry together.');
+  report.checks.push('/admin/content exposes the same history. Form-choice edits and confirmed media crops Undo/Redo complete snapshots; canceling mandatory crop makes no draft write.');
 
   await page.getByRole('button', { name: 'โครงสร้างหน้า', exact: true }).click();
   const orderBefore = (await localSnapshot()).config.sections.map(section => section.id);

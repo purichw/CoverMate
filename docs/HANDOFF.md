@@ -11,6 +11,19 @@ and required gates. Exact-SHA CI, hosted read-only UAT and production readback
 are recorded in `uat-results/admin-release-20260930/`. No production CMS Draft
 publication, customer mutation, Rules or credential change is part of rollout.
 
+## Admin Cards, Email Templates And Full-original Media Release
+
+The owner authorized push and production deploy of this chat's work only from
+`.tools/center-admin-cards`, based on `5d72b2c`. Scope is centered Admin cards,
+consistent TH/EN email copy and Gregorian dates, responsive customer email
+artwork, and a shared full-original Cloudinary upload/crop flow for CMS and
+articles. The primary checkout's unrelated edits remain excluded.
+See [the release record](RELEASE_ADMIN_EMAIL_MEDIA_20260930.md) for required
+checks, hosted verification boundaries and recovery. No production CMS Publish,
+customer email send, content migration, Rules or credential changes are part of
+the release. Exact-SHA CI, hosted media UAT and production readback are separate
+gates; the ignored release receipt records their terminal outcomes.
+
 ## Article Presentation and Full-page Preview
 
 The owner authorized push/deploy from `.tools/motor-comparison-20260924`,

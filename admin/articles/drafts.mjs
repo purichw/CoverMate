@@ -1,4 +1,4 @@
-import {normalizeArticleDocument,legacyArticleDocument,articleUrl} from '../../article-document.mjs';
+import {normalizeArticleDocument,legacyArticleDocument,articleUrl,normalizeArticleMedia} from '../../article-document.mjs';
 
 export const ARTICLE_CATEGORIES = {motor:['ประกันรถยนต์','Motor insurance'],health:['ประกันสุขภาพ','Health insurance'],life:['ประกันชีวิต','Life insurance'],critical:['โรคร้ายแรง','Critical illness'],finance:['วางแผนการเงิน','Financial planning'],claims:['เคลมและกรมธรรม์','Claims and policies'],travel:['ประกันเดินทาง','Travel insurance'],general:['ความรู้ทั่วไป','General']};
 // Editorial dates are entered in Bangkok time, independent of the device zone.
@@ -22,7 +22,7 @@ export function createArticleDraft(source = {}, author = 'CoverMate') {
     categoryId:text(source.categoryId) || 'general',tags:Array.isArray(source.tags) ? source.tags.filter(tag=>typeof tag==='string').slice(0,20) : [],
     authorName:text(source.authorName) || author,featured:source.featured === true,pinned:source.pinned === true,
     createdAt:source.createdAt || new Date().toISOString(),
-    image:{src:articleUrl(source.image?.src,true)},cover:{src:articleUrl(source.cover?.src || source.image?.src,true)},
+    image:normalizeArticleMedia(source.image),cover:normalizeArticleMedia(source.cover?.src?source.cover:source.image),
     translations:{},status:'draft',localDraft:source.cloudDraft!==true,cloudDraft:source.cloudDraft===true,revision:source.localDraft || source.cloudDraft ? source.revision || 0 : 0,updatedAt:source.localDraft || source.cloudDraft ? source.updatedAt || null : null
   };
   for (const lang of ['th','en']) {

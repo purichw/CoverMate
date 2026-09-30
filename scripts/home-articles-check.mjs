@@ -6,7 +6,7 @@ import {homeArticleFixture} from './fixtures/home-articles/feed.mjs';
 import {startHomeArticlesPreview} from './home-articles-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
 import {buildVisitorRuntime} from './lib/visitor-source.mjs';
-import {sanitizeStateDoc,migrateCmsContent,cmsMedia,CMS_CONTENT_VERSION} from '../covermate-contract.js';
+import contract,{sanitizeStateDoc,migrateCmsContent,cmsMedia,CMS_CONTENT_VERSION} from '../covermate-contract.js';
 
 const feed=structuredClone(homeArticleFixture);
 const options={now:Date.parse('2026-09-27'),mediaUrl:cmsMedia};
@@ -41,7 +41,7 @@ assert.deepEqual(migrated.homeDesign.articlesTitle,input.homeDesign.articlesTitl
 for(const key of ['sections','contact','brand','footer','motorPage','licences'])assert.deepEqual(migrated[key],input[key]);
 assert.deepEqual(migrateCmsContent(migrated),migrated);
 const sandbox={console,URL,URLSearchParams,setTimeout:()=>0,clearTimeout(){},requestAnimationFrame:fn=>fn(),
-  window:{innerWidth:1440,location:{pathname:'/',search:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem(){},removeItem(){}}},
+  window:{CoverMateContract:contract,innerWidth:1440,location:{pathname:'/',search:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem(){},removeItem(){}}},
   document:{querySelector:()=>null,querySelectorAll:()=>[],documentElement:{setAttribute(){},removeAttribute(){}},body:null},
   DCLogic:class{setState(value,callback){Object.assign(this.state,typeof value==='function'?value(this.state):value);callback?.();}}
 };

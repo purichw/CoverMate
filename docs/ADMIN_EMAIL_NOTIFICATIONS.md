@@ -82,6 +82,9 @@ components or CSS variables, with Google Sans/Thai and safe client fallbacks.
 Logo, heading, introduction, CTA and footer share a centered axis. Case metadata
 keeps explicit left alignment, with balanced top and bottom padding. Table-cell
 padding and HTML alignment attributes preserve the grouping in email clients.
+Owner copy uses short, direct instructions to open the case and record the next
+step. All displayed dates use Gregorian years (ค.ศ.) with Bangkok time, including
+the long-form digest date and each case's follow-up date, matching Admin.
 The logo comes from the published Thai `brand.media.headerLogo`; an intentional
 blank remains blank. First-attempt HTML is frozen with the payload so a later
 Publish or template deploy cannot change a retried Resend request.

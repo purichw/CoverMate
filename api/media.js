@@ -1,6 +1,6 @@
 const sharp = require('sharp');
 const { getAuth } = require('firebase-admin/auth');
-const { store } = require('../server/cloudinary.cjs');
+const mediaProvider = require('../server/media-provider.cjs');
 const { serverApp, serverDb } = require('../server/firebase.cjs');
 const { IDENTITY_ROOT } = require('../server/firebase-rest.cjs');
 const { json, readBody, error, reportFailure, fetchWithTimeout } = require('../server/http.cjs');
@@ -65,13 +65,34 @@ async function validateImage(value, maxDimension) {
   } catch { throw error(422,'invalid_image','The image could not be decoded or exceeds the size limit.'); }
 }
 
-function makeMediaHandler(deps = {authorize,reserve,store}) {
+function makeMediaHandler(overrides = {}) {
+  const deps = { authorize, reserve, store: mediaProvider.store, prepare: mediaProvider.prepare, complete: mediaProvider.complete, ...overrides };
   return async function mediaApi(req,res) {
     try {
       if (req.method !== 'POST') { res.setHeader('Allow','POST'); return json(res,405,{error:'method_not_allowed'}); }
       const actor = await deps.authorize(req);
       const body = await readBody(req,4100000);
       if (!body || typeof body !== 'object' || Array.isArray(body)) throw error(422,'invalid_body','Invalid image upload.');
+      if (body.action === 'prepare') {
+        const source = mediaProvider.validateSourceRequest(body);
+        await deps.reserve(actor);
+        return json(res,201,await deps.prepare(actor,source));
+      }
+      if (body.action === 'complete') {
+        await deps.reserve(actor);
+        return json(res,201,await deps.complete(actor,body));
+      }
+      if (body.action === 'crop') {
+        const image = await validateImage(body.image,2048);
+        const sourceUrl = mediaProvider.validateSourceUrl(body.sourceUrl,{allowAssetPath:true});
+        const sourceAsset = mediaProvider.sanitizeSourceAsset(body.sourceAsset);
+        const crop = mediaProvider.sanitizeCrop(body.crop);
+        await deps.reserve(actor);
+        const urls = await deps.store(actor,{image:image.bytes});
+        return json(res,201,{url:urls.image,sourceUrl,width:image.width,height:image.height,provider:urls.provider || 'cloudinary',...(sourceAsset ? {sourceAsset} : {}),...(crop ? {crop} : {})});
+      }
+      if (body.action !== undefined) throw error(422,'invalid_action','Unknown media operation.');
+      // Compatibility for older editors: save the normalized source/output pair.
       const image = await validateImage(body.image,2048);
       const source = await validateImage(body.source,2048);
       await deps.reserve(actor);

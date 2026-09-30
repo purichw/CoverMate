@@ -9,6 +9,28 @@ export function articleUrl(value, image = false) {
   try { const u = new URL(value); return !u.username && !u.password && (u.protocol === 'https:' || (!image && u.protocol === 'mailto:')) ? u.href : ''; }
   catch { return ''; }
 }
+// Private draft metadata stays with the image, so moving or duplicating a
+// figure does not disconnect it from the original used for re-cropping.
+export function normalizeArticleMedia(value = {}, {includeMetadata = true} = {}) {
+  const src=articleUrl(value?.src,true), result={src};
+  if(!src||!includeMetadata)return result;
+  const sourceUrl=articleUrl(value.sourceUrl,true);
+  const internal=sourceUrl?.startsWith('/')&&/^\/(?:assets\/.+|favicon\.(?:svg|ico))$/.test(new URL(sourceUrl,'https://covermate.invalid').pathname);
+  if(!sourceUrl?.startsWith('https://')&&!internal)return result;
+  result.sourceUrl=sourceUrl;
+  if(/^[a-z][a-z0-9_-]{0,39}$/.test(value.provider || ''))result.provider=value.provider;
+  const integer=(n,max)=>Number.isSafeInteger(n)&&n>0&&n<=max;
+  for(const key of ['width','height'])if(integer(value[key],20000))result[key]=value[key];
+  const asset=value.sourceAsset;
+  if(asset&&typeof asset==='object'&&typeof asset.publicId==='string'&&/^[A-Za-z0-9_./-]{1,300}$/.test(asset.publicId)&&!asset.publicId.includes('..')&&integer(asset.version,Number.MAX_SAFE_INTEGER)&&integer(asset.width,Number.MAX_SAFE_INTEGER)&&integer(asset.height,Number.MAX_SAFE_INTEGER)&&asset.width*asset.height<=20000000&&integer(asset.bytes,8000000)&&/^(png|jpg|jpeg|webp|svg)$/.test(asset.format || '')) {
+    result.sourceAsset=Object.fromEntries(['publicId','version','width','height','bytes','format'].map(key=>[key,asset[key]]));
+  }
+  const crop=value.crop;
+  if(crop&&typeof crop==='object'&&['crop','fit'].includes(crop.mode)&&['x','y','width','height','rotate','scaleX','scaleY','sourceWidth','sourceHeight'].every(key=>typeof crop[key]==='number'&&Number.isFinite(crop[key]))&&crop.width>0&&crop.height>0&&crop.x>=0&&crop.y>=0&&integer(crop.sourceWidth,Number.MAX_SAFE_INTEGER)&&integer(crop.sourceHeight,Number.MAX_SAFE_INTEGER)&&crop.sourceWidth*crop.sourceHeight<=20000000&&crop.x+crop.width<=crop.sourceWidth+1&&crop.y+crop.height<=crop.sourceHeight+1&&Math.abs(crop.rotate)<=360&&[1,-1].includes(crop.scaleX)&&[1,-1].includes(crop.scaleY)) {
+    result.crop=Object.fromEntries(['mode','x','y','width','height','rotate','scaleX','scaleY','sourceWidth','sourceHeight'].map(key=>[key,crop[key]]));
+  }
+  return result;
+}
 export function articleVideo(value) {
   try {
     const u = new URL(value);
@@ -30,7 +52,7 @@ export function legacyArticleDocument(body = []) {
     return [];
   })};
 }
-export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(value,true)} = {}) {
+export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(value,true),includeMediaMetadata = true} = {}) {
   let count = 0;
   const inline = new Set(['text','hardBreak']);
   const blocks = new Set(['paragraph','heading','bulletList','orderedList','blockquote','callout','figure','horizontalRule','table','video','quoteCard','takeaway']);
@@ -56,7 +78,7 @@ export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(
       if (['horizontalRule','hardBreak'].includes(type)) {const attrs={...placement,...typography};return [{type,...(Object.keys(attrs).length?{attrs}:{})}];}
       if (type === 'figure') {
         const src = mediaUrl(a.src);
-        return src && articleUrl(src,true) ? [{type,attrs:{src,alt:text(a.alt),caption:text(a.caption),...placement,...typography}}] : [];
+        return src && articleUrl(src,true) ? [{type,attrs:{...normalizeArticleMedia({...a,src},{includeMetadata:includeMediaMetadata}),alt:text(a.alt),caption:text(a.caption),...placement,...typography}}] : [];
       }
       if (type === 'video') {
         const id = articleVideo(a.src);
@@ -95,7 +117,7 @@ export function articleDocumentText(doc) {
   return doc?.type === 'text' ? doc.text : (doc?.content || []).map(articleDocumentText).join(['paragraph','heading'].includes(doc?.type) ? '' : ' ');
 }
 export function renderArticleDocument(input, options) {
-  const doc = normalizeArticleDocument(input,options), toc = [];
+  const doc = normalizeArticleDocument(input,{...options,includeMediaMetadata:false}), toc = [];
   let heading = 0;
   const esc = articleEscape;
   const attributes=attrs=>Object.entries(attrs).map(([key,value])=>` ${key}="${esc(value)}"`).join('');

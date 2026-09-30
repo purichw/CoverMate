@@ -18,6 +18,11 @@ logo artwork and existing Google Sans / Google Sans Thai fonts. Controls use
 natural Thai, with established terms such as Admin Portal, CMS, Analytics,
 Preview and Publish retained.
 
+The September 30 alignment direction applies to Home destination cards and
+Website content action cards: center their icon/chip stack, headings and action
+groups on desktop and mobile. Long descriptions remain left-aligned for reading;
+peer actions share a bottom baseline. Keep this rule scoped to these cards.
+
 | Owner | Responsibility |
 | --- | --- |
 | `admin/index.html` | Authenticated shell markup and shared public-site links |

@@ -1,7 +1,8 @@
 import {Editor} from '@tiptap/core';
 import {createElement,Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone} from 'lucide';
 import {articleExtensions} from './article-extensions.mjs';
-import {articleEscape as esc,articleUrl,articleVideo,articleDocumentText,registerArticleDocument} from '../../article-document.mjs';
+import {articleEscape as esc,articleUrl,articleVideo,articleDocumentText,registerArticleDocument,normalizeArticleMedia} from '../../article-document.mjs';
+import {articleImageTransfer,stripArticleClipboardImages,articleImageSize} from './article-media-input.mjs';
 import {createArticleDraft,ARTICLE_CATEGORIES,parseDraftBackup,publicationDateInput,publicationDateISO} from '../../admin/articles/drafts.mjs';
 import {projectArticleDetail} from '../visitor/article-detail.mjs';
 import {createArticlePreviewPage} from './article-preview.mjs';
@@ -17,10 +18,21 @@ const btn=(action,name,label='',extra='')=>`<button type="button" class="ae-butt
 const field=(key,label,value='',type='text',extra='')=>`<label class="ae-field"><span>${label}</span>${type==='textarea'?`<textarea data-field="${key}" rows="${['title','excerpt'].includes(key)?2:3}" ${extra}>${esc(value)}</textarea>`:`<input data-field="${key}" type="${type}" value="${esc(value)}" ${extra}>`}</label>`;
 const calloutLabels={summary:'สรุปประเด็นสำคัญ',keypoints:'สิ่งที่ควรรู้',note:'หมายเหตุ',warning:'ข้อควรระวัง',feature:'ความคุ้มครองที่น่าสนใจ'};
 
-export function createArticleWritingEditor({element,content,lang,onUpdate,onSelectionUpdate,onTransaction}) {
+export function createArticleWritingEditor({element,content,lang,onUpdate,onSelectionUpdate,onTransaction,onImageRequest}) {
   if(!content?.content?.length)content={...content,type:'doc',content:[{type:'paragraph'}]};
+  const requestImage=transfer=>{
+    const request=articleImageTransfer(transfer,element.ownerDocument);
+    if(request)queueMicrotask(()=>onImageRequest?.(request));
+    return request;
+  };
   return new Editor({element,extensions:articleExtensions(),content,
-    editorProps:{attributes:{class:'cm-article-prose',role:'textbox','aria-label':lang==='th'?'เนื้อหาบทความภาษาไทย':'Article body in English','aria-multiline':'true',lang},handleDOMEvents:{click(view,event){if(event.target.closest('a.article-video'))event.preventDefault();return false;}}},
+    editorProps:{attributes:{class:'cm-article-prose',role:'textbox','aria-label':lang==='th'?'เนื้อหาบทความภาษาไทย':'Article body in English','aria-multiline':'true',lang},
+      transformPastedHTML:html=>stripArticleClipboardImages(html,element.ownerDocument),
+      handlePaste(view,event){const request=requestImage(event.clipboardData);return !!request&&!event.clipboardData.getData('text/html');},
+      handleDOMEvents:{
+        click(view,event){if(event.target.closest('a.article-video'))event.preventDefault();return false;},
+        drop(view,event){if(view.dragging)return false;const request=requestImage(event.dataTransfer);if(request)event.preventDefault();return !!request;}
+      }},
     onUpdate,onSelectionUpdate,onTransaction
   });
 }
@@ -34,7 +46,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   const cloud=repository?.cloud===true;
   if(cloud){draft.cloudDraft=true;draft.localDraft=false;saved=JSON.stringify(draft);}
   const editors={},dialogs=new Set();
-  let settingsDialog,settingsOpener,lastSelection,canvas,canvasDocument,canvasFactory,writingReady=false;
+  let settingsDialog,settingsOpener,lastSelection,canvas,canvasDocument,canvasFactory,writingReady=false,mediaOpening=false;
   const locale=()=>draft.translations[lang];
   const active=()=>editors[lang];
   const changed=()=>JSON.stringify(draft)!==saved;
@@ -120,7 +132,13 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const host=canvasDocument.createElement('div');host.className='ae-editor-host';host.dataset.editorLang=key;host.hidden=key!==lang;
     canvasDocument.querySelector('.ad-prose').prepend(host);
     const editor=canvasFactory({element:host,content:draft.translations[key].document,lang:key,
-      onUpdate:()=>{dirty();updateToolbar();},onSelectionUpdate:()=>updateToolbar(),onTransaction:()=>{if(editors[key])updateToolbar();}
+      onUpdate:()=>{dirty();updateToolbar();},onSelectionUpdate:()=>updateToolbar(),onTransaction:()=>{if(editors[key])updateToolbar();},
+      onImageRequest:request=>{
+        if(destroyed||lang!==key)return;
+        if(request.unsupported){setStatus('รูปที่วางเป็นข้อมูลชั่วคราว กรุณาเลือกไฟล์ผ่านปุ่มเพิ่มรูปเพื่ออัปโหลดและครอป',true);return;}
+        if(request.count>1){setStatus('กรุณาวางรูปทีละรูป เพื่อครอปและใส่คำอธิบายให้ครบ',true);return;}
+        editArticleImage('image',{...request,insert:true}).catch(error=>setStatus(error.message || 'เปิดตัวแก้ไขรูปไม่ได้',true));
+      }
     });
     editors[key]=editor;return editor;
   }
@@ -195,6 +213,45 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       d.querySelector('form').onsubmit=event=>{event.preventDefault();const values=Object.fromEntries([...d.querySelectorAll('[data-field]')].map(el=>[el.dataset.field,el.value.trim()]));const error=validate?.(values);if(error){d.querySelector('.ae-form-error').textContent=error;return;}resolve(values);d.close();};
     });
   }
+  async function editArticleImage(action,initial={}) {
+    if(mediaOpening||destroyed||!writingReady)return;
+    const editor=active(),language=lang,owner=draft;
+    const selection=editor.state.selection;
+    const selected=!initial.insert&&selection.node?.type.name==='figure'?{node:selection.node,pos:selection.from}:null;
+    const before=action==='cover'?structuredClone(draft.cover):selected?.node.attrs || {};
+    const docBefore=editor.state.doc;
+    mediaOpening=true;
+    try {
+      const values=await editFields(action==='cover'?'คำอธิบายภาพปก':'คำอธิบายภาพในเนื้อหา',[
+        ['alt','ข้อความอธิบายภาพ',action==='cover'?locale().coverAlt:initial.alt || before.alt || ''],
+        ['caption','คำบรรยาย / เครดิตภาพ (ไม่บังคับ)',action==='cover'?locale().caption:initial.caption || before.caption || '']
+      ],value=>value.alt?'':'กรุณาใส่ข้อความอธิบายภาพ');
+      if(!values||destroyed)return;
+      const current=()=>!destroyed&&draft===owner&&lang===language&&!editor.isDestroyed&&editor.state.doc===docBefore&&(action!=='cover'||JSON.stringify(draft.cover)===JSON.stringify(before));
+      if(!current())throw Error('ภาพหรือเนื้อหาถูกเปลี่ยนระหว่างแก้ไข กรุณาเปิดตัวแก้ไขรูปอีกครั้ง');
+      const {width,height}=articleImageSize(before);
+      const media=await import(window.location.origin+'/admin/media-editor.js');
+      if(!current())return;
+      await media.editImage({slot:{path:'articles.'+draft.id+(action==='cover'?'.cover':'.'+language+'.figure'),label:action==='cover'?'ภาพปกบทความ':'ภาพในเนื้อหาบทความ',value:before.src || '',width,height},
+        source:before.sourceUrl || before.src || '',sourceAsset:before.sourceAsset,provider:before.provider,crop:before.crop,lang:'th',
+        initialFile:initial.initialFile,initialUrl:initial.initialUrl,
+        getToken:async()=>{if(!window.CoverMateFirebase)await import(window.location.origin+'/covermate-firebase.js');return window.CoverMateFirebase.getAdminIdToken(true);},
+        onApply:result=>{
+          if(!current())throw Error('ภาพหรือเนื้อหาถูกเปลี่ยนระหว่างแก้ไข กรุณาปิดแล้วเปิดตัวแก้ไขรูปอีกครั้ง');
+          const next=normalizeArticleMedia({...result,src:result.url});
+          if(result.url&&(!next.src||!next.sourceUrl))throw Error('ที่อยู่ภาพไม่ถูกต้อง กรุณาลองใหม่');
+          if(action==='cover') {
+            draft.cover=next;draft.image=structuredClone(next);
+            locale().coverAlt=values.alt;locale().imageAlt=values.alt;locale().caption=values.caption;refreshSettings();dirty();
+          } else if(selected) {
+            const retained=Object.fromEntries(Object.entries(before).filter(([key])=>!['src','sourceUrl','provider','sourceAsset','crop','width','height'].includes(key)));
+            editor.chain().focus().command(({tr})=>{closeHistory(tr);if(next.src)tr.setNodeMarkup(selected.pos,undefined,{...retained,...next,alt:values.alt,caption:values.caption});else tr.delete(selected.pos,selected.pos+selected.node.nodeSize);return true;}).run();
+          } else if(next.src)insertArticleBlock(editor,{type:'figure',attrs:{...next,alt:values.alt,caption:values.caption}});
+          updateToolbar();
+        }
+      });
+    } finally {mediaOpening=false;}
+  }
   const restore=()=>active().chain().focus().setTextSelection(lastSelection);
   function insertBlock(node){active().chain().focus().insertContent([node,{type:'paragraph'}]).run();}
   const styleLabels={fontSize:'ขนาดตัวอักษร (px)',fontSizeMobile:'ขนาดบนมือถือ (px)',lineHeight:'ระยะบรรทัด (เท่า)',spaceBefore:'ระยะก่อนบล็อก (px)',spaceAfter:'ระยะหลังบล็อก (px)',padding:'ระยะภายในบล็อก (px)'};
@@ -256,13 +313,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       if(values)restore().extendMarkRange('link').setLink({href:articleUrl(values.href)}).run();
     }
     if(action==='image'||action==='cover'){
-      const selected=editor.isActive('figure')?editor.getAttributes('figure'):{};
-      const src=action==='cover'?draft.cover.src:selected.src;
-      const values=await editFields(action==='cover'?'ภาพปกบทความ':'ภาพในเนื้อหา',[
-        ['src','URL ภาพ หรือ /assets/...',src || ''],['alt','ข้อความอธิบายภาพ',action==='cover'?locale().coverAlt:selected.alt || ''],['caption','คำบรรยายภาพ',action==='cover'?locale().caption:selected.caption || '']
-      ],v=>!articleUrl(v.src,true)?'ใช้ URL ภาพ HTTPS หรือ path ภายในเว็บไซต์':!v.alt?'กรุณาใส่ข้อความอธิบายภาพ':'');
-      if(values){values.src=articleUrl(values.src,true);if(action==='cover'){draft.cover={src:values.src};draft.image={src:values.src};locale().coverAlt=values.alt;locale().imageAlt=values.alt;locale().caption=values.caption;refreshSettings();dirty();}
-        else if(selected.src){editor.chain().focus().updateAttributes('figure',values).run();}else{insertArticleBlock(editor,{type:'figure',attrs:values});}}
+      try{await editArticleImage(action);}catch(error){setStatus(error.message || 'เปิดตัวแก้ไขรูปไม่ได้',true);}
     }
     if(action==='quote'){
       const values=await editFields('คำพูด',[['attribution','ผู้กล่าว (ไม่บังคับ)',editor.getAttributes('blockquote').attribution || '']],()=> '');

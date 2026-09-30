@@ -1231,7 +1231,8 @@ function sanitizeCmsFields(config) {
       return { ...item, label, href: /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(href) ? href : '' };
     });
   });
-  sanitizeCmsMediaAndLinks(config);
+  // Reuse the loaded contract instead of embedding its media normalizer twice.
+  (globalThis.window?.CoverMateContract?.sanitizeCmsMediaAndLinks || sanitizeCmsMediaAndLinks)(config);
   return config;
 }
 
@@ -1262,25 +1263,6 @@ function adoptLegacyGuideCopy(next, text) {
   });
 }
 
-function sanitizeCmsMediaAndLinks(config) {
-  const sections = [...(config.sections || []), ...['hero','trust','cover'].map(key => config.motorPage?.[key])].filter(Boolean);
-  for (const section of sections) {
-    if (section.type === 'insurers') (section.cards || []).forEach(card => {
-      if (card.licenceRole !== undefined && !['','life','broker'].includes(card.licenceRole)) card.licenceRole = '';
-    });
-    for (const owner of [section,section.th,section.en].filter(Boolean)) for (const key of ['cta1href','cta2href','claimHref']) {
-      if (Object.hasOwn(owner,key)) owner[key] = /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(String(owner[key] || '')) ? owner[key] : '';
-    }
-  }
-  const imageSlots = [...cmsImageSlots(config,'th'), ...cmsImageSlots(config,'en')];
-  imageSlots.forEach(slot => { if (cmsGet(config,slot.path) !== undefined) cmsSet(config,slot.path,slot.value); });
-  const edits = config.mediaEdits || {};
-  config.mediaEdits = Object.fromEntries(imageSlots.filter(slot => edits[slot.path] && edits[slot.path].output === slot.value).map(slot => {
-    const edit = edits[slot.path];
-    return [slot.path,{output:slot.value,source:cmsMedia(edit.source)}];
-  }));
-}
-
 // These three heading positions predate both layouts. Unknown positions are
 // retained for review, never applied to a different text node in the new Home.
 function adaptLegacyHomeCopy(config, overrides) {
@@ -1306,6 +1288,39 @@ function adaptLegacyHomeCopy(config, overrides) {
   return { config: next, text };
 }
 // COVERMATE_CMS_SCHEMA_END
+
+// Persist URLs and bounded editing coordinates, never the original image bytes.
+// Kept outside the embedded schema: browser and server use this one validator.
+export function sanitizeCmsMediaAndLinks(config) {
+  const sections = [...(config.sections || []), ...['hero','trust','cover'].map(key => config.motorPage?.[key])].filter(Boolean);
+  for (const section of sections) {
+    if (section.type === 'insurers') (section.cards || []).forEach(card => {
+      if (card.licenceRole !== undefined && !['','life','broker'].includes(card.licenceRole)) card.licenceRole = '';
+    });
+    for (const owner of [section,section.th,section.en].filter(Boolean)) for (const key of ['cta1href','cta2href','claimHref']) {
+      if (Object.hasOwn(owner,key)) owner[key] = /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(String(owner[key] || '')) ? owner[key] : '';
+    }
+  }
+  const slots = [...cmsImageSlots(config,'th'), ...cmsImageSlots(config,'en')];
+  slots.forEach(slot => { if (cmsGet(config,slot.path) !== undefined) cmsSet(config,slot.path,slot.value); });
+  const edits = config.mediaEdits || {};
+  config.mediaEdits = Object.fromEntries(slots.filter(slot => edits[slot.path] && edits[slot.path].output === slot.value).map(slot => [slot.path,cmsMediaEdit(edits[slot.path],slot.value)]));
+}
+
+function cmsMediaEdit(edit, output) {
+  const source = cmsMedia(edit.source), result = {output,source};
+  if (!source) return result;
+  if (/^[a-z][a-z0-9_-]{0,39}$/.test(edit.provider || '')) result.provider=edit.provider;
+  const asset=edit.sourceAsset, integer=n=>Number.isSafeInteger(n)&&n>0;
+  if (asset && typeof asset==='object' && typeof asset.publicId==='string' && /^[A-Za-z0-9_./-]{1,300}$/.test(asset.publicId) && !asset.publicId.includes('..') && integer(asset.version) && integer(asset.width) && integer(asset.height) && asset.width*asset.height<=20000000 && integer(asset.bytes) && asset.bytes<=8000000 && /^(png|jpg|jpeg|webp|svg)$/.test(asset.format || '')) {
+    result.sourceAsset=Object.fromEntries(['publicId','version','width','height','bytes','format'].map(key=>[key,asset[key]]));
+  }
+  const crop=edit.crop;
+  if (crop && typeof crop==='object' && ['crop','fit'].includes(crop.mode) && ['x','y','width','height','rotate','scaleX','scaleY','sourceWidth','sourceHeight'].every(key=>typeof crop[key]==='number'&&Number.isFinite(crop[key])) && integer(crop.sourceWidth) && integer(crop.sourceHeight) && crop.sourceWidth*crop.sourceHeight<=20000000 && crop.width>0 && crop.height>0 && crop.x>=0 && crop.y>=0 && crop.x+crop.width<=crop.sourceWidth+1 && crop.y+crop.height<=crop.sourceHeight+1 && Math.abs(crop.rotate)<=360 && [1,-1].includes(crop.scaleX) && [1,-1].includes(crop.scaleY)) {
+    result.crop=Object.fromEntries(['mode','x','y','width','height','rotate','scaleX','scaleY','sourceWidth','sourceHeight'].map(key=>[key,crop[key]]));
+  }
+  return result;
+}
 
 export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, normalizeTierRemarks, cmsGet, cmsSet, cmsMedia, cmsImageSlots, migrateCmsContent, resolveCmsContent, sanitizeCmsFields, isSemanticCopyPath, adaptLegacyHomeCopy };
 export const DEFAULT_SEO = {
@@ -1866,6 +1881,7 @@ const contract = {
   cmsGet,
   cmsSet,
   cmsMedia,
+  sanitizeCmsMediaAndLinks,
   cmsImageSlots,
   migrateCmsContent,
   resolveCmsContent,

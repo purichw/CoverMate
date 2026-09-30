@@ -27,7 +27,7 @@ const dueCases = [
 const digestInput = { kind: 'overdue_digest', overdueCases: dueCases, totalOverdue: 3, summaryDate: '2026-09-24', logoUrl };
 const kinds = ['new_case', 'test', 'follow_up_due', 'overdue_digest'];
 const templates = Object.fromEntries(kinds.map(kind => [kind, renderAdminEmail(kind === 'overdue_digest' ? digestInput : { ...input, kind })]));
-const date = value => `${new Date(value).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false })} (เวลาไทย)`;
+const date = value => `${new Date(value).toLocaleString('th-TH', { calendar: 'gregory', timeZone: 'Asia/Bangkok', hour12: false })} (เวลาไทย)`;
 const expectedUrl = kind => kind === 'test' ? adminUrl : kind === 'overdue_digest' ? `${adminUrl}?followUp=overdue` : `${adminUrl}?case=${input.caseId}`;
 const actionLabel = kind => kind === 'test' ? 'เปิด Admin' : kind === 'overdue_digest' ? 'ดูเคสเลยกำหนดใน Admin' : 'เปิดดูเคสใน Admin';
 const enquiryLabels = { quote: 'ขอใบเสนอราคา / เปรียบเทียบแผน', assess: 'ประเมินความคุ้มครองที่เหมาะสม', compare: 'เปรียบเทียบแผนประกัน', general: 'คำถามทั่วไป / เรื่องอื่น ๆ', review: 'ตรวจ / ทบทวนกรมธรรม์ที่มีอยู่', renewal: 'ต่ออายุประกัน', service: 'บริการหลังการขาย / แก้ไขกรมธรรม์', claim: 'สอบถาม / ขอความช่วยเหลือเรื่องเคลม' };
@@ -60,7 +60,9 @@ for (const item of dueCases) for (const value of [item.caseNumber, item.name, da
   assert.ok(templates.overdue_digest.text.includes(value));
   assert.ok(templates.overdue_digest.html.includes(value));
 }
-assert.ok(templates.overdue_digest.text.includes('24 กันยายน 2569'));
+assert.ok(templates.new_case.text.includes('24/9/2026 14:30:00 (เวลาไทย)'));
+assert.ok(templates.follow_up_due.text.includes('25/9/2026 10:00:00 (เวลาไทย)'));
+assert.ok(templates.overdue_digest.text.includes('24 กันยายน 2026'));
 for (const template of Object.values(templates)) {
   assert.doesNotMatch(template.html, /<(?:script|form|iframe|input|button)\b|\bvar\(--|\bon(?:load|error|click)\s*=/i);
   assert.match(template.html, /<html lang="th">/);
@@ -156,7 +158,7 @@ try {
   await page.setViewportSize({ width: 640, height: 1000 });
   await page.setContent(renderAdminEmail({ ...input, kind: 'new_case', logoUrl: `${logoUrl}?images-blocked=1` }).html, { waitUntil: 'load' });
   assert.equal(await page.locator('img').evaluate(image => image.naturalWidth), 0);
-  assert.equal(await page.locator('img').getAttribute('alt'), 'CoverMate · เพื่อนคู่คิดเรื่องประกัน');
+  assert.equal(await page.locator('img').getAttribute('alt'), 'CoverMate');
   assert.ok((await page.locator('body').innerText()).includes(input.caseNumber));
   assert.equal(await page.getByRole('link', { name: 'เปิดดูเคสใน Admin', exact: true }).isVisible(), true);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
