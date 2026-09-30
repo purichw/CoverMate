@@ -107,7 +107,12 @@ async function main() {
     const dialog = page.getByRole('dialog');
     const open = async (options = {}) => { await page.locator('#opener').focus(); await page.evaluate(options => window.openEditor(options), options); await dialog.waitFor(); };
     const ready = async () => { await page.locator('.cm-media-dialog .cropper-container').waitFor(); await page.waitForFunction(() => document.querySelector('.cm-media-stage > img')?.cropper?.ready && !document.querySelector('.cm-media-primary').disabled); };
-    const cancel = async () => { await dialog.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click(); await dialog.waitFor({ state: 'detached' }); };
+    const cancel = async () => {
+      await dialog.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click();
+      // close() hides the native dialog before its queued close handler removes
+      // it. Wait for that cleanup, not its disappearance from the role tree.
+      await page.locator('.cm-media-dialog').waitFor({ state: 'detached' });
+    };
     const save = async () => {
       await dialog.getByRole('button', { name: 'ใช้รูปนี้ใน draft', exact: true }).click();
       await page.waitForFunction(() => !document.querySelector('.cm-media-dialog') || Boolean(document.querySelector('.cm-media-error')?.textContent));

@@ -26,6 +26,12 @@ deployment identity and read-only hosted evidence belong in ignored
 `uat-results/content-scope-release/receipt.json`. No hosted content mutation is
 needed. Prefer a forward fix; any rollback needs separate authorization.
 
+The first release CI exposed a media-test timing race after Cancel: the native
+dialog leaves the accessibility tree before its queued close handler removes the
+DOM node. The fixture now waits for DOM removal before reopening. The original
+failure reproduced locally; the full media upload/crop/retry/cancel/mobile check
+passes with this stronger wait. Product behavior and assertions are unchanged.
+
 ## Admin Cards, Email Templates And Full-original Media Release
 
 The owner authorized push and production deploy of this chat's work only from
