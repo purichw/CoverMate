@@ -10,7 +10,8 @@ committed article features and exclude the untracked `node_modules` symlink.
 - Public Home Articles layout, centered shared dropdown labels/options and table
   headings across Visitor, Admin and article documents.
 - Shared Admin account menu/details and Logout, retaining verified identity,
-  notification entry points and unsaved Article/Cases guards.
+  notification entry points and unsaved Article/Cases guards. Logout awaits
+  Firebase sign-out before navigation so the redirect cannot interrupt it.
 - CMS hub with server reads of Live, Draft and bounded version history;
   explicit unknown/error states and links to existing authenticated CMS tools.
   Optional server reads preserve existing Firebase reader defaults.
@@ -23,6 +24,11 @@ committed article features and exclude the untracked `node_modules` symlink.
 No production CMS Publish, customer mutation, real email send, Firestore Rules,
 stored schema or credential change is included. Role enforcement and existing
 backend contracts remain. Code deployment does not publish the current CMS Draft.
+
+The release branch incorporates main through `759024f` to preserve concurrent
+repository updates. Scope is the diff from that main baseline; its existing
+email/media changes are not new work attributed to this chat. The final receipt
+must distinguish main's production status from candidate build readiness.
 
 ## Required gates and evidence
 

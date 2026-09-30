@@ -9,20 +9,30 @@ import { launchChromium, loadPlaywright } from './lib/playwright.mjs';
 // Account interactions against synthetic verified sessions, never production.
 const output = path.resolve('uat-results/admin-account');
 fs.mkdirSync(output, { recursive: true });
-const report = { passed: false, environment: 'Loopback fixtures; external requests and all backend writes blocked', checks: [], errors: [], reads: [], mutations: [] };
+const report = { passed: false, environment: 'Loopback fixtures; external requests and all backend writes blocked', checks: [], errors: [], reads: [], mutations: [], signOutEvents: [] };
 const preview = await startArticlesAdminPreview();
 const browser = await launchChromium(loadPlaywright().chromium);
-let context;
+let context, failSignOut = false;
 try {
   context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'th-TH', reducedMotion: 'reduce' });
+  await context.exposeBinding('__accountFixtureSignOut', async () => {
+    report.signOutEvents.push('sign-out-start');
+    // Auth persistence is asynchronous; a redirect must not unload its work.
+    await new Promise(resolve => setTimeout(resolve, 250));
+    if (failSignOut) { report.signOutEvents.push('sign-out-failed'); throw new Error('Synthetic sign-out unavailable'); }
+    report.signOutEvents.push('sign-out-complete');
+  });
   await context.route('**/*', route => {
     const request = route.request();
     if (new URL(request.url()).origin !== preview.baseUrl) return route.abort();
     if (!['GET', 'HEAD'].includes(request.method())) { report.mutations.push(request.url()); return route.abort(); }
     return route.continue();
   });
-  await context.route('**/covermate-firebase.js', route => route.fulfill({ contentType: 'text/javascript', body: firebaseMock.replace('signOut: async () => {}', 'signOut: async () => { sessionStorage.setItem("account-fixture-signed-out", "true"); }') }));
-  await context.route('**/admin/login*', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Local login destination</title><p>Local login destination</p>' }));
+  await context.route('**/covermate-firebase.js', route => route.fulfill({ contentType: 'text/javascript', body: firebaseMock.replace('signOut: async () => {}', 'signOut: async () => { await window.__accountFixtureSignOut(); sessionStorage.setItem("account-fixture-signed-out", "true"); }') }));
+  await context.route('**/admin/login*', route => {
+    report.signOutEvents.push('login');
+    return route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Local login destination</title><p>Local login destination</p>' });
+  });
   await context.route('**/api/ops/**', route => {
     const resource = new URL(route.request().url()).pathname.replace('/api/ops/', '');
     if (route.request().method() !== 'GET') { report.mutations.push(resource); return route.abort(); }
@@ -129,6 +139,7 @@ try {
   assert.equal(await homeAccount.evaluate(node => node === document.activeElement), true);
   await page.locator('.home-mobile-account [data-action=logout]').click();
   await page.waitForURL('**/admin/login*');
+  assert.deepEqual(report.signOutEvents, ['sign-out-start', 'sign-out-complete', 'login'], 'Home logout waits for actual Firebase sign-out completion before requesting login');
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
   assert.equal(await page.evaluate(() => sessionStorage.getItem('account-fixture-signed-out')), 'true');
   report.checks.push('Mobile Home footer opens the shared account details with focus restoration; its logout clears the session and invokes Firebase sign-out.');
@@ -143,6 +154,7 @@ try {
   page.once('dialog', async dialog => { articleGuard = true; await dialog.dismiss(); });
   await desktop.locator('[data-action=logout]').click();
   assert.equal(articleGuard, true);
+  assert.equal(report.signOutEvents.length, 3, 'Cancelled article guard must not begin sign-out');
   assert.ok(await page.evaluate(() => localStorage.getItem('covermate-admin-session')));
   assert.equal(await articleField(page, 'title').inputValue(), 'Account logout guard — unsaved fixture');
   page.once('dialog', dialog => dialog.accept());
@@ -160,15 +172,28 @@ try {
   await desktop.locator('[data-action=logout]').click();
   await page.locator('.case-discard').waitFor();
   await page.locator('[data-case-action=keep-editing]').click();
+  assert.equal(report.signOutEvents.length, 3, 'Keep editing must not begin sign-out');
   assert.ok(await page.evaluate(() => localStorage.getItem('covermate-admin-session')));
   assert.equal(await page.locator('[data-case-panel=new]').isVisible(), true);
   await openDesktop();
   await desktop.locator('[data-action=logout]').click();
   await page.locator('[data-case-action=discard]').click();
   await page.waitForURL('**/admin/login*');
+  assert.deepEqual(report.signOutEvents.slice(3), ['sign-out-start', 'sign-out-complete', 'login'], 'Confirmed case logout waits for sign-out completion before requesting login');
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
   assert.equal(await page.evaluate(() => sessionStorage.getItem('account-fixture-signed-out')), 'true');
   report.checks.push('Dirty case logout offers Keep editing/Discard; cancelling preserves the session, confirming clears session and calls Firebase sign-out before login redirect.');
+
+  failSignOut = true;
+  await ready();
+  await page.evaluate(() => sessionStorage.removeItem('account-fixture-signed-out'));
+  await openDesktop();
+  await desktop.locator('[data-action=logout]').click();
+  await page.waitForURL('**/admin/login*');
+  assert.deepEqual(report.signOutEvents.slice(6), ['sign-out-start', 'sign-out-failed', 'login']);
+  assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('account-fixture-signed-out')), null);
+  report.checks.push('A rejected Firebase sign-out still clears the local session and reaches login without claiming Firebase completion.');
 
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.mutations, []);
