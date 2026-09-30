@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import {articleCanvas,articleField,articleTool,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {installMediaFixture} from './media-upload-browser-check.mjs';
+import {firebaseMock} from './fixtures/ops-portal.mjs';
 
 const server=await startArticlesAdminPreview();
 const pw=loadPlaywright(),engine=process.env.BROWSER || 'chromium';
@@ -13,7 +15,19 @@ const report={engine,environment:'Loopback fixture account/catalog; real editor 
 let page;
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
-  await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
+  await context.route('**/*',async route=>{
+    if(new URL(route.request().url()).origin!==server.baseUrl)return route.abort();
+    if(!route.request().isNavigationRequest())return route.continue();
+    const response=await route.fetch(),headers=response.headers();
+    // Keep the preview's restrictive policy, with the same media hosts as
+    // production. The fixture below intercepts those hosts without network I/O.
+    if(headers['content-security-policy'])headers['content-security-policy']=headers['content-security-policy']
+      .replace("img-src 'self' data: blob:","img-src 'self' data: blob: https://res.cloudinary.com")
+      .replace("connect-src 'self'","connect-src 'self' https://api.cloudinary.com https://res.cloudinary.com");
+    return route.fulfill({response,headers});
+  });
+  await context.route('**/covermate-firebase.js',route=>route.fulfill({contentType:'text/javascript',body:firebaseMock+'\nwindow.CoverMateFirebase.getAdminIdToken=()=>window.CoverMateFirebase.auth.currentUser.getIdToken();'}));
+  const media=await installMediaFixture(context,{token:'ops-regression-token',useActualApi:true});
   page=await context.newPage();page.setDefaultTimeout(10000);
   page.on('pageerror',error=>report.errors.push(error.message));
   await page.goto(server.baseUrl+'/admin#articles');
@@ -25,6 +39,14 @@ try {
   const field=key=>articleField(page,key);
   const modalField=key=>page.locator(`.ae-modal-form [data-field="${key}"]`);
   const submit=async()=>{await page.locator('.ae-modal-form [type=submit]').click();if(!await page.locator('.ae-modal-form').count())await closeSettings(page);};
+  const submitImage=async source=>{
+    await page.locator('.ae-modal-form [type=submit]').click();
+    const dialog=page.locator('.cm-media-dialog');await dialog.waitFor();
+    if(source){await dialog.locator('input[type=text]').fill(source);await dialog.getByRole('button',{name:'ใช้ URL และจัดกรอบ',exact:true}).click();}
+    await page.waitForFunction(()=>document.querySelector('.cm-media-dialog .cropper-container')&&!document.querySelector('.cm-media-primary').disabled);
+    await dialog.getByRole('button',{name:'ใช้รูปนี้ใน draft',exact:true}).click();
+    await dialog.waitFor({state:'detached'});await closeSettings(page);
+  };
   const close=()=>page.locator('.ae-dialog [data-ae=close]').click();
   const feedback=()=>page.locator('.ae-feedback').innerText();
   const check=name=>{report.checks.push(name);console.log('PASS '+name);};
@@ -98,18 +120,20 @@ try {
   check('Quote attribution create/edit/unwrap; all five callout kinds create/edit/unwrap and validation');
 
   await plain('Media');await body.press('End');await tool('image');
-  await modalField('src').fill('/assets/brand/articles-reading-v1.webp');await modalField('alt').fill('');await submit();
+  await modalField('alt').fill('');await submit();
   assert.ok(await page.locator('.ae-form-error').innerText());
-  await modalField('alt').fill('Article image');await modalField('caption').fill('Figure caption');await submit();
+  await modalField('alt').fill('Article image');await modalField('caption').fill('Figure caption');await submitImage('/assets/brand/articles-reading-v1.webp');
   await body.locator('figure img').waitFor();assert.equal(await body.locator('figcaption').innerText(),'Figure caption');
-  await body.locator('figure img').click();await tool('image');await modalField('alt').fill('Edited alt');await submit();
+  await body.locator('figure img').click();await tool('image');await modalField('alt').fill('Edited alt');await submitImage();
   assert.equal(await body.locator('figure img').getAttribute('alt'),'Edited alt');
   assert.equal(await body.locator('figure').count(),1);
-  await tool('cover');await modalField('src').fill('/assets/brand/articles-reading-v1.webp');
-  await modalField('alt').fill('Cover alt');await modalField('caption').fill('Cover caption');await submit();
+  await tool('cover');
+  await modalField('alt').fill('Cover alt');await modalField('caption').fill('Cover caption');await submitImage('/assets/brand/articles-reading-v1.webp');
   assert.equal(await field('coverAlt').inputValue(),'Cover alt');assert.equal(await field('caption').inputValue(),'Cover caption');
   await tool('clear-cover');assert.equal(await page.locator('.ae-cover img').count(),0);
   assert.equal(await body.locator('figure').count(),1,'Removing cover preserves body images');
+  assert.equal(media.crops,3,'Body insert, re-crop and cover each use the shared media API');
+  assert.ok(media.responses.every(response=>response.status===201),'Real media handler accepts every isolated crop');
   await body.locator('p').last().click();await tool('divider');assert.equal(await body.locator('hr').count(),1);
   await tool('undo');assert.equal(await body.locator('hr').count(),0);await tool('redo');assert.equal(await body.locator('hr').count(),1);
   await body.locator('p').last().click();await tool('video');await modalField('src').fill('https://example.com/watch');await submit();

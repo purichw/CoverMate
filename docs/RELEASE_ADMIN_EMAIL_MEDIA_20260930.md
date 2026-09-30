@@ -47,6 +47,21 @@ prefix. Its apply callback stays local; it does not save/publish CMS or send
 emails. UAT state timestamps are compared, and the temporary allowlist/Auth
 identity is deactivated/disabled in cleanup. Test images remain immutable.
 
+Hosted protocol passed on Preview `covermate-1a1lc9k31-purich-w.vercel.app`
+at `17ff230e18af840b21857685cd3b7419f9ac2dc9`: one real 4000×2400 source
+upload, two 1200×630 derivatives, native-coordinate re-crop on mobile, all four
+API actions returning 201, and no CSP/console errors. UAT live/draft timestamps
+were unchanged and temporary Auth/allowlist access was disabled and revoked.
+The same Preview also passed the read-only email check: all 12 deployed PNG
+hashes matched, with TH/EN desktop/mobile decoding and no overflow.
+
+The first exact-SHA CI run caught a history-browser fixture still using the old
+direct-image-URL workflow. Release follow-up updates the affected history,
+article-tools, shared article-authoring and Admin smoke journeys to complete the
+required crop dialog. Existing history and real article Auth/API/publishing
+assertions remain required. Cloudinary storage alone is isolated in local and
+emulator journeys; the real hosted protocol proof above covers provider delivery.
+
 Before claiming completion verify canonical-domain alias, deployed SHA, changed
 bundle/asset hashes, source-upload CSP, unauthorized media rejection and rendered
 public assets on desktop/mobile. No production enquiry, email send or content

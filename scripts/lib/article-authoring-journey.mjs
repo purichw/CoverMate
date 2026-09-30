@@ -20,6 +20,24 @@ export async function authorRichArticle(page,{out,engine}) {
   const tool=action=>page.locator(`[data-ae="${action}"]:visible`).first().click();
   const modalField=key=>page.locator(`.ae-modal-form [data-field="${key}"]`);
   const submit=()=>page.locator('.ae-modal-form [type=submit]').click();
+  const cropBundledImage=async()=>{
+    const dialog=page.locator('.cm-media-dialog');
+    await dialog.waitFor();
+    await dialog.locator('.cm-media-source input[type=text]').fill(authoredArticle.image);
+    await dialog.getByRole('button',{name:'ใช้ URL และจัดกรอบ',exact:true}).click();
+    await dialog.locator('.cropper-container').waitFor();
+    const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/media'&&r.request().method()==='POST');
+    await dialog.getByRole('button',{name:'ใช้รูปนี้ใน draft',exact:true}).click();
+    const saved=await response;
+    assert.equal(saved.status(),201,'Real emulator media authorization and crop validation accept the image');
+    const result=await saved.json();
+    assert.equal(result.sourceUrl,authoredArticle.image,'The bundled original is retained for re-crop');
+    assert.equal(result.crop.mode,'crop');
+    assert.ok(result.crop.sourceWidth>0&&result.crop.sourceHeight>0);
+    assert.notEqual(result.url,result.sourceUrl,'Only the cropped derivative becomes the displayed image');
+    await dialog.waitFor({state:'detached'});
+    return result;
+  };
   const choose=async(name,label)=>{
     await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();
     await page.getByRole('option',{name:label,exact:true}).click();
@@ -53,8 +71,9 @@ export async function authorRichArticle(page,{out,engine}) {
   await page.locator('[data-ae=callout][data-kind=feature]').click();
   await modalField('title').fill('ประกันสุขภาพแบบเหมาจ่าย');await submit();
   await openArticleSettings(page);
-  await tool('cover');await modalField('src').fill(a.image);await modalField('alt').fill('ภาพประกอบบทความที่เลือกจาก Editor');
+  await tool('cover');await modalField('alt').fill('ภาพประกอบบทความที่เลือกจาก Editor');
   await modalField('caption').fill('ภาพปกและคำบรรยายจาก CMS');await submit();
+  const coverMedia=await cropBundledImage();
   await field('authorName').fill('ทีมบรรณาธิการ CoverMate');await choose('หมวดหมู่','ประกันสุขภาพ');
   await field('takeaways').fill(a.takeaways.join('\n'));
   for(const [key,value] of Object.entries(a.notes))await field(key).fill(value);
@@ -77,7 +96,8 @@ export async function authorRichArticle(page,{out,engine}) {
   await body.locator('[data-kind=feature] > div p').click();
   await tool('add-quote-card');await modalField('text').fill('เลือกความคุ้มครองที่สอดคล้องกับชีวิตของคุณ');await modalField('attribution').fill('CoverMate');await submit();
   await body.locator('.article-quote-card > div p').click();
-  await tool('image');await modalField('src').fill(a.image);await modalField('alt').fill('ภาพประกอบที่แทรกจาก Editor');await modalField('caption').fill('ภาพประกอบในเนื้อหา');await submit();
+  await tool('image');await modalField('alt').fill('ภาพประกอบที่แทรกจาก Editor');await modalField('caption').fill('ภาพประกอบในเนื้อหา');await submit();
+  const figureMedia=await cropBundledImage();
   const download=page.waitForEvent('download');await tool('export');
   const file=out+'/'+engine+'-authored-draft.json';await (await download).saveAs(file);
   const draft=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -91,11 +111,20 @@ export async function authorRichArticle(page,{out,engine}) {
   assert.ok(draft.translations.th.document.content.some(n=>n.type==='callout'&&n.attrs.kind==='feature'));
   assert.equal(draft.translations.th.document.content.find(n=>n.type==='quoteCard').attrs.placement,'sidebar');
   assert.equal(draft.translations.th.document.content.find(n=>n.type==='takeaway').attrs.placement,'full');
+  for(const [actual,accepted] of [[draft.cover,coverMedia],[draft.image,coverMedia],[draft.translations.th.document.content.find(n=>n.type==='figure').attrs,figureMedia]]){
+    assert.equal(actual.src,accepted.url,'Draft stores the accepted derivative');
+    assert.equal(actual.sourceUrl,a.image,'Draft preserves the original image');
+    assert.deepEqual(actual.crop,accepted.crop,'Draft preserves exact crop geometry');
+    assert.equal(actual.provider,accepted.provider);
+    assert.equal(actual.width,accepted.width);assert.equal(actual.height,accepted.height);
+  }
   return draft;
 }
 
-export function assertPersistedArticle(actual,expected) {
-  assert.deepEqual(normalizeArticleDocument(actual.translations.th.document),normalizeArticleDocument(expected.translations.th.document),'UI-authored rich document survives storage/public projection');
+export function assertPersistedArticle(actual,expected,{published=false}={}) {
+  assert.deepEqual(normalizeArticleDocument(actual.translations.th.document),normalizeArticleDocument(expected.translations.th.document,{includeMediaMetadata:!published}),'UI-authored rich document survives storage/public projection');
+  for(const key of ['image','cover'])assert.deepEqual(actual[key],published?{src:expected[key].src}:expected[key],'Preserved '+key+' with the correct private/public media boundary');
+  if(published)assert.doesNotMatch(JSON.stringify(actual),/"(?:sourceUrl|sourceAsset|crop)"\s*:/,'Public projection omits private re-crop metadata');
   for(const key of ['takeaways','sources','coverAlt','caption',...Object.keys(authoredArticle.notes)])assert.deepEqual(actual.translations.th[key],expected.translations.th[key],'Preserved '+key);
 }
 
@@ -118,7 +147,7 @@ export async function openArticleSettings(page){
 }
 export async function closeArticleSettings(page){await page.locator('.ae-settings-dialog .ae-done').click();}
 
-export async function assertReaderArticle(surface) {
+export async function assertReaderArticle(surface,expected) {
   const a=authoredArticle,prose=surface.locator('.ad-prose .cm-article-prose:visible');
   await prose.locator('h2').waitFor();
   assert.equal(await prose.locator('h2').innerText(),a.heading);
@@ -132,7 +161,12 @@ export async function assertReaderArticle(surface) {
   assert.equal(await prose.locator('.article-quote-card').getAttribute('data-placement'),'sidebar');
   assert.equal(await prose.locator('figure img').getAttribute('alt'),'ภาพประกอบที่แทรกจาก Editor');
   assert.equal(await surface.locator('.ad-toc nav a').count(),2,'Headings authored in the editor generate real TOC links');
-  assert.equal(new URL(await surface.locator('.ad-cover img').getAttribute('src'),'https://covermate.test').pathname,a.image);
+  assert.equal(await surface.locator('.ad-cover img').getAttribute('src'),expected.cover.src,'Reader uses the accepted cover derivative');
+  assert.equal(await prose.locator('figure img').getAttribute('src'),expected.translations.th.document.content.find(n=>n.type==='figure').attrs.src,'Reader uses the accepted body derivative');
+  for(const image of [surface.locator('.ad-cover img'),prose.locator('figure img')]){
+    await image.scrollIntoViewIfNeeded();
+    assert.ok(await image.evaluate(async el=>{await el.decode();return el.naturalWidth>0&&el.naturalHeight>0;}),'The derivative renders from the isolated storage boundary');
+  }
   assert.equal(await surface.locator('.ad-cover figcaption').innerText(),'ภาพปกและคำบรรยายจาก CMS');
   assert.equal((await surface.locator('.ad-author').innerText()).trim(),'ทีมบรรณาธิการ CoverMate');
   assert.equal(await surface.locator('.ad-takeaways li').count(),2);
