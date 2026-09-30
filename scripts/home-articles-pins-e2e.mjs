@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {createArticleDraft} from '../admin/articles/drafts.mjs';
 import {projectHomeArticles} from '../src/visitor/home-articles.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {openSettings} from './lib/article-editor-ui.mjs';
 
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.FIREBASE_AUTH_EMULATOR_HOST!=='127.0.0.1:9098'||process.env.COVERMATE_TEST_MODE!=='emulator'||process.env.VERCEL)throw Error('Local emulators required');
 const require=createRequire(import.meta.url),firebase=require('../server/firebase.cjs'),baseDb=firebase.serverDb();
@@ -75,7 +76,7 @@ try {
   await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback[data-error=true]').filter({hasText:'ไม่เกิน 10'}).waitFor();
   assert.equal(await admin.locator('[data-field=title]').inputValue(),'ข้อความที่ต้องไม่หายเมื่อเกินโควตา');assert.equal(await admin.locator('[data-field=featured]').isChecked(),true);
   await admin.screenshot({path:out+'/admin-limit-desktop.png',fullPage:true});
-  await admin.setViewportSize({width:390,height:844});await admin.getByRole('button',{name:'ตั้งค่าบทความ',exact:true}).click();
+  await admin.setViewportSize({width:390,height:844});await openSettings(admin);
   await admin.locator('.ae-settings-dialog .ae-publication').scrollIntoViewIfNeeded();await admin.screenshot({path:out+'/admin-home-pin-mobile.png'});
   assert.equal(await admin.locator('.ae-settings-dialog').evaluate(el=>el.scrollWidth>el.clientWidth),false);
 

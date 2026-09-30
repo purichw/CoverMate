@@ -152,6 +152,19 @@ if(process.argv.includes('--browser')) {
     await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับเผยแพร่แล้ว'}).waitFor();
     const clearedModel=createSeoModel({}, {path:'/articles/browser-validation',article:await project('browser-validation'),articleFeed:await repository.feed(site)});
     assert.equal(clearedModel.title,live.item.translations.th.title);assert.equal(clearedModel.meta.description,'คำโปรยฉบับแก้ไขที่ยังไม่เผยแพร่','Explicit cleared overrides publish the fallback');
+    for(let i=0;i<10;i++){const pin=valid('home-quota-'+i);pin.featured=true;await repository.mutate(site,'save',pin,0,uid);}
+    await page.setViewportSize({width:1440,height:1000});await articleField(page,'featured').check();
+    const retainedTitle=await page.locator('[data-field=title]').inputValue();
+    await page.locator('[data-ae=save]:visible').first().click();
+    await fieldError('featured').filter({hasText:'ไม่เกิน 10'}).waitFor();
+    await page.locator('.ae-settings-dialog[open]').waitFor();
+    assert.ok(await publish().isDisabled(),'Quota error prevents publication');
+    await page.setViewportSize({width:375,height:900});await openSettings(page);
+    assert.equal(await page.locator('[data-field=title]').inputValue(),retainedTitle,'Quota failure preserves content');
+    assert.ok(await page.getByRole('switch',{name:'ปักหมุดบน Home'}).isChecked());
+    assert.equal(await page.locator('.ae-settings-dialog').evaluate(el=>el.scrollWidth>el.clientWidth),false);
+    await page.locator('[data-field=featured]').uncheck();await closeSettings(page);await save();
+    assert.ok(await publish().isEnabled(),'Correcting the Home pin recovers publication');
     assert.deepEqual(errors,[]);assert.ok(requests.includes('save')&&requests.includes('publish'));
     fs.writeFileSync(out+'/'+engine+'-report.json',JSON.stringify({passed:true,engine,requests,errors,scope:'Actual editor + repository + visitor; isolated storage; auth not exercised'},null,2));
     console.log('PASS '+engine+' actual UI: field errors, draft save/reload, Alt, SEO preview/publication/visitor, TH/EN guard, slug conflict, mobile, live isolation, shortcut isolation.');
