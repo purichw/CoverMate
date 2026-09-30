@@ -160,7 +160,16 @@ if(process.argv.includes('--browser')) {
       if(width===390)await page.screenshot({path:out+'/'+engine+'-mobile-settings.png'});
       await page.locator('.ae-settings-dialog .ae-done').click();
       await page.locator('.ae-settings-dialog').waitFor({state:'detached'});assert.equal(await page.locator('[data-field=title]').inputValue(),'ยังไม่บันทึก');
-      if(width===390){await articleCanvas(page).locator('.ae-editor-host:visible .article-callout').first().scrollIntoViewIfNeeded();const bounds=await page.locator('.ae-toolbar').boundingBox();assert.ok(bounds.y>=130&&bounds.y<140,'Toolbar stays below shared mobile shell');await page.screenshot({path:out+'/'+engine+'-mobile-body.png'});}
+      if(width===390){
+        const callout=articleCanvas(page).locator('.ae-editor-host:visible .article-callout').first();
+        await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
+        await callout.locator('p').last().click();
+        const toolbar=await page.locator('.ae-toolbar').boundingBox(),frame=await page.locator('.ae-canvas-frame').boundingBox();
+        assert.ok(toolbar.y+toolbar.height<=frame.y+1,'Outer toolbar cannot cover the independently scrolling writing frame');
+        await page.locator('[data-format=block]').locator('..').scrollIntoViewIfNeeded();
+        assert.equal(await page.locator('.ae-toolbar').evaluate(el=>getComputedStyle(el).position),'relative','Formatting tools remain in document flow above the writing frame');
+        await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();await callout.locator('p').last().click();await page.screenshot({path:out+'/'+engine+'-mobile-body.png'});
+      }
     }
     await save(page);await page.locator('[data-ae=back]').click();await page.locator('[data-article-state=ready]').waitFor();
     const choose=async(name,label)=>{await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();await page.getByRole('option',{name:label,exact:true}).click();};
@@ -177,7 +186,8 @@ if(process.argv.includes('--browser')) {
     report.checks.push('Pin/date persistence, explicit Bangkok time, tag search, pin/date filters, reset and pinned-first ordering');
     await page.locator('[data-article-action=create]').click();await page.locator('.ae-workspace').waitFor();
     assert.equal(await page.locator('[data-field=title]').inputValue(),'');await articleField(page,'title').fill('บทความใหม่');
-    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').fill('เนื้อหาใหม่ที่ยังไม่เผยแพร่');await save(page);
+    const newBody=articleCanvas(page).locator('.ae-editor-host:visible .tiptap');
+    await newBody.waitFor({timeout:25000});await newBody.fill('เนื้อหาใหม่ที่ยังไม่เผยแพร่');await save(page);
     const download=page.waitForEvent('download');await page.locator('[data-ae=export]').click();const file=await download;await file.saveAs(out+'/draft-backup.json');
     assert.equal(JSON.parse(fs.readFileSync(out+'/draft-backup.json','utf8')).translations.th.title,'บทความใหม่');
     await page.locator('.ae-import-file').setInputFiles(out+'/draft-backup.json');await page.locator('.ae-feedback').filter({hasText:'นำเข้าสำเนา'}).waitFor();
@@ -204,7 +214,7 @@ if(process.argv.includes('--browser')) {
     assert.deepEqual(report.errors,[]);
     report.checks.push('Actual Visitor route uses identical rich document HTML, callouts, table, safe rendering and mobile fit');
     report.checks.push('820/390/320 responsive layout, settings sheet preservation, new article, export/import, disabled publish and no backend writes');report.passed=true;
-  } catch(error){report.failure=error.stack;throw error;} finally {
+  } catch(error){report.failure=error.stack;report.canvasStatus=await page.locator('.ae-canvas-status').allTextContents().catch(()=>[]);await page.screenshot({path:out+'/'+engine+'-failure.png'}).catch(()=>{});throw error;} finally {
     fs.writeFileSync(out+'/'+engine+'-report.json',JSON.stringify(report,null,2));await browser.close();await new Promise(resolve=>server.server.close(resolve));
   }
   console.log('PASS Article Editor browser flows.');
