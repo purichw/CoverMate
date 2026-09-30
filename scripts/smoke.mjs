@@ -490,6 +490,12 @@ const failures = [];
 
 async function newSmokePage(options) {
   const context = await browser.newContext(options);
+  // Static smoke uses synthetic Auth/CMS adapters, including the private feed.
+  // Real authorization and repository data are exercised by emulator journeys.
+  await context.route(`${baseOrigin}/api/articles?action=feed`, route => {
+    if(route.request().method() !== 'GET')throw Error('Smoke article feed is read-only');
+    return route.fulfill({json:{available:true,settings:{enabled:false,showHome:true,showNavigation:true},items:[]}});
+  });
   const page = await context.newPage();
   const pendingResources = new Set();
   let resourceActivity = 0;
