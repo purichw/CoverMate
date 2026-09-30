@@ -123,7 +123,12 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       if(!anchor)continue;
       let control=anchor.querySelector(`[data-legacy="${flag}"]`);
       if(!control){control=document.createElement('div');control.dataset.legacy=flag;anchor.prepend(control);}
-      control.innerHTML=attrs[flag]?'<small>จัดวางในเนื้อหาแล้ว เลือกบล็อกในพื้นที่เขียนเพื่อแก้ไขหรือย้ายตำแหน่ง</small>':`<button type="button" class="ae-button" data-ae="${action}">${label}</button>`;
+      const converted=String(!!attrs[flag]);
+      // Selection updates must not replace a button between pointerdown and click.
+      if(control.dataset.converted!==converted){
+        control.dataset.converted=converted;
+        control.innerHTML=attrs[flag]?'<small>จัดวางในเนื้อหาแล้ว เลือกบล็อกในพื้นที่เขียนเพื่อแก้ไขหรือย้ายตำแหน่ง</small>':`<button type="button" class="ae-button" data-ae="${action}">${label}</button>`;
+      }
     }
     const clear=panel.querySelector('[data-ae="clear-takeaways"]');if(clear)clear.hidden=!!attrs.takeawaysInDocument;
   }

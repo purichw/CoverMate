@@ -1,5 +1,5 @@
 export function registerArticleCarousel() {
-  if(customElements.get('article-carousel'))return;
+  if(typeof customElements==='undefined'||customElements.get('article-carousel'))return;
   customElements.define('article-carousel',class extends HTMLElement {
     connectedCallback() {
       this.abort=new AbortController();this.slides=[];this.index=0;this.visible=false;this.hovered=false;

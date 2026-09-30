@@ -87,13 +87,15 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
   is directly editable in its reading column; title, cover, summary and decorative
   notes open their settings on click or keyboard activation. Changes update the
   canvas before Save or Preview. Desktop/Mobile switches the writing viewport.
-- A settings drawer on desktop and sheet on mobile contain the same metadata.
-  The toolbar
+- Desktop places basic metadata beside publication/settings, with the real-page
+  writing canvas spanning the full width below them. This keeps Desktop mode at
+  reader scale instead of squeezing it into the metadata column. Mobile uses a
+  settings sheet with the same fields. The toolbar
   scrolls horizontally and stays below the shared shell. Bottom save actions
   respect safe-area padding and hide when a detected software keyboard opens.
 
-Images currently use HTTPS URLs or local asset paths. Article-specific uploads,
-inline cropping, revision-history restore, server autosave, whole-article duplication,
+Images support HTTPS URLs, local assets and uploads through the configured media
+provider, with explicit crop confirmation. Revision-history restore, server autosave, whole-article duplication,
 and archive/trash are not implemented controls. The offline test adapter has no
 publication capability; the real verified repository supports explicit Publish.
 

@@ -146,7 +146,11 @@ if(process.argv.includes('--browser')){
     await tool('undo');assert.deepEqual(await doc(),beforeConvert,'Undo conversion restores document and metadata presentation');
     await articleCanvas(page).locator('.ad-takeaways li').first().waitFor();assert.equal(await articleCanvas(page).locator('.ad-takeaways li').count(),2);
     await tool('redo');await articleCanvas(page).locator('.ad-takeaways').waitFor({state:'detached'});
-    await openSettings(page);await page.locator('[data-ae=convert-sidebar]:visible').click();await closeSettings(page);
+    await openSettings(page);
+    const quoteConversion=await page.locator('[data-ae=convert-sidebar]:visible').elementHandle();
+    await body().locator('p').first().click();
+    assert.equal(await quoteConversion.evaluate(el=>el.isConnected),true,'Selection changes preserve the conversion button and its pending click');
+    await page.locator('[data-ae=convert-sidebar]:visible').click();await closeSettings(page);
     await body().locator('.article-quote-card').waitFor();await articleCanvas(page).locator('.ad-side-note').waitFor({state:'detached'});
     const converted=await exported('converted');
     for(const key of ['takeaways','takeawayNote','sidebarQuote'])assert.deepEqual(converted.translations.th[key],legacy.translations.th[key],'Conversion preserves metadata: '+key);

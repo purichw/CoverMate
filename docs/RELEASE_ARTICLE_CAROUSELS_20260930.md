@@ -15,6 +15,9 @@ unrelated changes in the primary checkout are excluded.
 - The merged editor retains upstream's real-page writing canvas, rich blocks,
   typography, crop confirmation and publication boundaries alongside the basic
   metadata form and responsive settings panel.
+- Desktop writing spans both metadata columns to preserve reader typography.
+  Legacy Summary/Quote conversion controls retain their DOM identity during
+  selection updates so pointer clicks are not lost; conversion remains undoable.
 - The shared reader is a versioned generated asset loaded before the component
   runtime. This keeps the compressed shell under the existing performance cap;
   bundle validation guards its execution order and generated parity.

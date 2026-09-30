@@ -4,6 +4,9 @@ import {projectArticleIndex} from '../src/visitor/articles-index.mjs';
 import {articleIndexFixture} from './fixtures/home-articles/index-feed.mjs';
 import {startArticlesIndexPreview} from './articles-index-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {registerArticleCarousel} from '../src/visitor/article-carousel.mjs';
+
+assert.doesNotThrow(()=>registerArticleCarousel(),'Registration is safe during non-DOM contract evaluation');
 
 const feed=structuredClone(articleIndexFixture);
 feed.items.slice(0,3).forEach(item=>item.pinned=true);

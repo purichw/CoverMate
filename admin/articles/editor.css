@@ -37,6 +37,12 @@
 .ae-feedback { font-size:13px;color:#3f6537;line-height:1.6;margin:0 0 14px; }.ae-feedback:empty { display:none; }.ae-feedback[data-error=true] { color:#9c3026; }
 .ae-grid { display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:20px;align-items:start; }
 .ae-main-column { display:grid;gap:20px;min-width:0; }
+@media(min-width:1200px) {
+  .ae-main-column { display:contents; }
+  .ae-basic { grid-column:1;grid-row:1; }
+  .ae-grid > .ae-settings { grid-column:2;grid-row:1; }
+  .ae-writing { grid-column:1 / -1;grid-row:2; }
+}
 .ae-writing,.ae-basic { min-width:0;border:1px solid var(--line);border-radius:8px;background:#fffefb; }
 .ae-writing-head { display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #ece4d7; }.ae-writing-head h2 { font-size:16px;margin:0;line-height:1.5; }
 .ae-writing-head h2 { display:flex;align-items:center;gap:8px; }.ae-writing-head h2 svg { color:#a4511d; }.ae-body-language { font-size:12px;color:var(--ae-muted); }
