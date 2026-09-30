@@ -55,7 +55,6 @@ try {
       await admin.locator('[data-article-state=ready]').waitFor({timeout:60000}).catch(async e=>{await admin.screenshot({path:out+'/'+engine+'-failed.png'});console.error('CMS state:',admin.url(),(await admin.locator('body').innerText()).slice(-3000),{pending:[...pending],errors},await admin.evaluate(()=>({firebase:!!window.CoverMateFirebase,user:!!window.CoverMateFirebase?.auth.currentUser})));throw e;});
       console.log(engine+': catalog ready');
       const visibility=admin.locator('.article-visibility');
-      await visibility.locator('summary').click();
       assert.equal(await visibility.locator('[name=enabled]').isChecked(),false);
       await visibility.locator('[name=enabled]').check();
       await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();
@@ -75,6 +74,7 @@ try {
       await admin.locator('[data-field=slug]').fill(slug);
       await admin.locator('[data-field=featured]').check();
       await admin.locator('[data-field=pinned]').check();
+      await admin.locator('[data-panel=summary] > summary').click();
       await admin.locator('[data-field=takeaways]').fill('ข้อสรุปจาก CMS');
       await db.doc('admins/'+account.localId).update({active:false});
       await admin.locator('.ae-actions [data-ae=save]').click();
@@ -124,7 +124,7 @@ try {
       await publish(admin);
       await visitor.reload();await visitor.getByRole('heading',{name:title+' แก้ไข',exact:true}).waitFor();
       await admin.locator('[data-ae=back]').click();
-      await admin.locator('[data-article-state=ready]').waitFor();await visibility.locator('summary').click();
+      await admin.locator('[data-article-state=ready]').waitFor();
       for(const key of ['showHome','showNavigation']) {
         await visibility.locator('[name='+key+']').uncheck();
         await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();

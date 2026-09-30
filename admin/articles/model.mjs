@@ -29,6 +29,8 @@ export function normalizeArticleCatalog(payload) {
     return {
       id: record.id, slug: text(record.slug), status, translations,
       pinned:record.pinned===true,featured:record.featured===true,localDraft:record.localDraft===true,basePublished:record.basePublished===true,
+      publishedPinned:record.publishedPinned===true,
+      publishedHomePinned:record.publishedHomePinned===true,
       tags:Array.isArray(record.tags)?record.tags.filter(tag=>typeof tag==='string'):[],
       publishedAt:time(record.translations?.[translations.th.title?'th':'en']?.publishedAt),
       title: primary.title || 'ยังไม่ได้ตั้งชื่อบทความ', excerpt: primary.excerpt,
@@ -48,7 +50,7 @@ export function articleListView(items, { query = '', category = '', status = '',
   const needle = query.trim().normalize('NFC').toLocaleLowerCase('th');
   const from=dateFrom?Date.parse(dateFrom+'T00:00:00+07:00'):null,to=dateTo?Date.parse(dateTo+'T23:59:59.999+07:00'):null;
   const filtered = items.filter(item => (!category || item.categoryId === category) && (!status || item.status === status) &&
-    (!pinned || item.pinned===(pinned==='pinned')) && (!author || item.author===author) &&
+    (!pinned || (pinned==='home'?(item.featured||item.publishedHomePinned):item.pinned===(pinned==='pinned'))) && (!author || item.author===author) &&
     (from===null || item.publishedAt && item.publishedAt>=from) && (to===null || item.publishedAt && item.publishedAt<=to) &&
     (!needle || [item.title, item.excerpt, item.slug, item.author, ...(item.tags || []), ...Object.values(item.translations).flatMap(t => [t.title, t.excerpt])]
       .join(' ').normalize('NFC').toLocaleLowerCase('th').includes(needle)));

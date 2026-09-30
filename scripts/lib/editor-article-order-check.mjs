@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict';
+import {homeArticleFixture} from '../fixtures/home-articles/feed.mjs';
+
+export async function checkArticleSectionOrder({page,panel,poll,shot,assertFit,baseUrl,readDraft,setFeed,failFeed,report}) {
+  const row=id=>panel().locator(`[data-admin-section-row="${id}"]`);
+  const order=()=>page.locator('main section[id]').evaluateAll(nodes=>nodes.map(node=>node.id));
+  const anchor=()=>readDraft().config.homeDesign.articlesBefore;
+  const move=(id,direction)=>row(id).getByRole('button',{name:'เลื่อนส่วนนี้'+direction,exact:true}).filter({visible:true}).click();
+  const reload=async()=>{const response=page.waitForResponse(response=>response.url().includes('/api/articles?action=feed'));await page.reload();await response;await row('articles').waitFor();await poll(async()=>!(await row('articles').innerText()).includes('กำลังโหลด'),'Article feed settles');};
+  await page.locator('main #articles').waitFor();
+  const original=await order(),index=original.indexOf('articles');
+  assert.equal(original[index+1],'talk');
+  assert.equal(await row('articles').getByRole('switch').count(),0,'Visibility has one owner in Articles settings');
+  await move('articles','ขึ้น');
+  await poll(async()=>(await order()).indexOf('articles')===index-1,'Move up updates the actual page');
+  await poll(()=>anchor()===original[index-1],'Draft saves the stable anchor');
+  await panel().getByRole('button',{name:'Undo',exact:true}).click();
+  await poll(async()=>JSON.stringify(await order())===JSON.stringify(original),'Undo restores the page order');
+  await panel().getByRole('button',{name:'Redo',exact:true}).click();
+  await poll(async()=>(await order()).indexOf('articles')===index-1,'Redo reapplies the order');
+  await move('articles','ลง');
+  await move('talk','ขึ้น');
+  await poll(async()=>(await order()).indexOf('articles')===(await order()).indexOf('talk')+1,'Another section can cross Articles');
+  const movableAfterTalk=readDraft().config.sections[readDraft().config.sections.findIndex(section=>section.id==='talk')+1]?.id || '';
+  await poll(()=>anchor()===movableAfterTalk,'Reciprocal move persists');
+  const reordered=await order();
+  await panel().getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.locator('[data-confirm-accept]').click();
+  await page.locator('[data-admin-confirm]').waitFor({state:'detached'});
+  await reload();
+  assert.deepEqual(await order(),reordered,'Reload uses persisted order');
+  const popupPromise=page.waitForEvent('popup');await panel().getByRole('button',{name:'Preview',exact:true}).click();
+  const popup=await popupPromise;await popup.locator('main #articles').waitFor();
+  assert.deepEqual(await popup.locator('main section[id]').evaluateAll(nodes=>nodes.map(node=>node.id)),reordered,'Full Draft Preview uses the same saved order');
+  await popup.close();
+  await row('articles').locator('[data-admin-section-edit]').click();
+  const title=panel().locator('[data-admin-copy-key="homeDesign.articlesTitle.th"]');
+  await title.fill('บทความที่อยากให้อ่าน');
+  await poll(async()=>await page.locator('#home-articles-title').innerText()==='บทความที่อยากให้อ่าน','Existing Home article copy has panel parity');
+  assert.equal(await title.evaluate(el=>document.activeElement===el),true);
+  await panel().getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();
+  await row('articles').locator('[data-outline-select]').click();
+  await row('articles').scrollIntoViewIfNeeded();
+  await assertFit('Articles outline desktop');await shot('article-order-desktop.png','Article section selected in the real Home outline; local published sample feed');
+
+  await page.setViewportSize({width:390,height:844});
+  await panel().locator('[data-editor-pane="outline"]').click();
+  await panel().locator('[data-outline-search]').fill('บทความ');
+  await row('articles').locator('.cm-editor-move-menu>summary').click();
+  await move('articles','ขึ้น');
+  await poll(async()=>(await order()).indexOf('articles')+1===(await order()).indexOf('talk'),'Mobile move changes actual order');
+  await poll(()=>anchor()==='talk','Mobile move autosaves');
+  await assertFit('Articles outline mobile');
+  await shot('article-order-mobile-menu.png','Mobile order controls for Articles');
+  await row('articles').locator('.cm-editor-move-menu>summary').click();
+  await page.locator('main #articles').evaluate(el=>window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-70,behavior:'instant'}));
+  await shot('article-order-mobile.png','Articles row and actual Home section after a mobile move');
+
+  for (const feed of [{...homeArticleFixture,settings:{enabled:false,showHome:true}}, {...homeArticleFixture,settings:{enabled:true,showHome:false}}, {...homeArticleFixture,items:[]}]) {
+    setFeed(feed);await reload();
+    assert.equal(await page.locator('main #articles').count(),0,'Disabled/empty feed stays hidden');
+    assert.equal(await row('articles').count(),1,'Hidden Articles stays reorderable');
+    assert.equal(anchor(),'talk','Visibility does not discard placement');
+  }
+  await row('articles').locator('.cm-editor-move-menu>summary').click();
+  await move('articles','ลง');
+  await poll(()=>anchor()!=='talk','Placement can change while there are no articles');
+  const hiddenAnchor=anchor();
+  setFeed(structuredClone(homeArticleFixture));await reload();
+  const restoredOrder=await order();
+  assert.equal(restoredOrder[restoredOrder.indexOf('articles')+1],hiddenAnchor || 'licences','Returning feed restores the stored position before the fixed footer bands');
+  failFeed(true);await reload();
+  assert.ok((await row('articles').innerText()).includes('โหลดไม่ได้'));
+  assert.equal(await page.locator('main #articles').count(),0,'Failure does not use a stale publication');
+  await row('articles').locator('[data-admin-section-edit]').click();
+  failFeed(false);await panel().getByRole('button',{name:'โหลดบทความใหม่',exact:true}).click();
+  await page.locator('main #articles').waitFor();
+  assert.equal(anchor(),hiddenAnchor,'Retry preserves the position');
+  await page.goto(baseUrl+'/admin/content?page=motor');await row('motor').waitFor();
+  assert.equal(await row('articles').count(),0,'Article slot belongs to Home only');
+  report.checks.push('Articles: actual feed read, desktop/mobile reorder and reciprocal moves, Undo/Redo, Save/reload/full Draft Preview, copy parity, disabled/empty/error/retry, position recovery and Home-only scope.');
+}

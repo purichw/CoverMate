@@ -14,7 +14,7 @@
 .cm-article-prose blockquote::before { content:'“';position:absolute;top:13px;left:22px;color:#9ba77c;font-family:Georgia,serif;font-size:60px;line-height:1;pointer-events:none; }
 :is(.cm-article-prose,.ad-page .cm-article-prose) blockquote p { margin:0 0 10px; }
 .cm-article-prose blockquote > :last-child,.cm-article-prose blockquote > div > :last-child { margin-bottom:0; }
-.cm-article-prose cite { display:block;margin-top:12px;color:#77796a;font-size:13px;font-style:normal;line-height:1.6; }
+.cm-article-prose cite { display:block;margin-top:12px;color:#626656;font-size:13px;font-style:normal;line-height:1.6; }
 :is(.cm-article-prose,.ad-page .cm-article-prose) figure { margin:24px 0; }.cm-article-prose figure img { display:block;width:100%;height:auto;border-radius:8px; }
 .cm-article-prose figcaption { color:#66665f;font-size:12px;line-height:1.6;text-align:center;padding-top:8px; }
 .cm-article-prose .article-callout { position:relative;isolation:isolate;border:1px solid #e0dfd5;border-radius:12px;padding:22px 24px;margin:24px 0;background:#f7f7f0;color:#454a3b;font-size:18px;line-height:1.75; }

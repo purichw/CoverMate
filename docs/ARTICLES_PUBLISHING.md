@@ -31,6 +31,12 @@ Published slugs remain reserved and immutable, including after unpublishing.
 
 Pins, Home recommendation, category, tags, author, cover, separate TH/EN body,
 takeaways, sources and SEO fields pass through the same server publication model.
+The existing `featured` field is now labeled **ปักหมุดบน Home**, independent of
+index pins. Home displays up to ten eligible publications: Home pins newest-first,
+then latest unique articles. Home pin capacity is ten unique draft/live selections,
+enforced transactionally even on concurrent saves. A published pin must be removed
+from both draft and live to release capacity; unpublished edits never alter the
+public carousel. Index pins remain unlimited. See `HOME_ARTICLES.md` for details.
 Old account/environment-scoped IndexedDB drafts appear in a recovery area and
 can be copied into the central repository without publishing or deleting them.
 JSON import/export remains available for backup and stale-write recovery.
@@ -40,7 +46,7 @@ JSON import/export remains available for backup and stale-write recovery.
 `api/articles.js` reuses existing verified Firebase identity, revoked/disabled
 account checks, active owner allowlist and UAT-only restriction. No client role
 or local session alone authorizes a write. GET reads catalog/full draft; POST
-handles save, publish, unpublish and settings. All API responses are no-store.
+handles save, publish, unpublish, settings and `pin-order`. All API responses are no-store.
 
 Under `sites/{covermate|covermate-uat}`:
 
@@ -49,7 +55,7 @@ Under `sites/{covermate|covermate-uat}`:
 | `articles` | Private normalized draft and live document snapshots |
 | `articleCatalog` | Private lightweight catalog and public-summary projection |
 | `articleSlugs` | Atomically reserved published URLs |
-| `articleSettings/current` | Three flags and revision |
+| `articleSettings/current` | Three flags, ordered pin IDs and revision |
 | `articleAudit` | Actor/action/revision metadata, not article body copies |
 
 All collections remain denied by default in existing Firestore client rules.
@@ -57,6 +63,14 @@ Only the authorized server API writes them. Transactions atomically update the
 draft/live/catalog/slug/audit documents. Expected revisions reject stale writes
 with HTTP 409. Neither API failure nor missing credentials falls back to local
 publication or demonstration content.
+
+`pin-order` accepts `{order: string[], expectedRevision}`. It requires an exact
+permutation of current draft/live pins and saves the ordered IDs plus audit in
+one transaction. Settings or pin-membership races return 409, not last-write-wins.
+Reordering never saves/publishes article content. Flag changes preserve the order.
+The public feed exposes only eligible live pin IDs; draft and future IDs stay
+private. There is no separate pin-count limit (existing catalog/storage limits
+still apply). Public projection uses order, then date/stable ID for new pins.
 
 `api/page.js` injects only due published summaries for Home/index and a single
 due published translation for detail. Drafts and future translations never enter

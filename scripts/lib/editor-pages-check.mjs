@@ -77,8 +77,7 @@ export async function checkEditorPages({page,panel,poll,shot,assertFit,baseUrl,c
     await page.setViewportSize({width,height:width===1440?1000:844});
     await select('หน้าแรก','home');
     await select('ประกันรถยนต์','motor');
-    await panel().locator('[data-preview-ready="true"]').waitFor();
-    await poll(async()=>await page.frameLocator('[data-editor-preview] iframe').locator('h1').innerText()==='English Motor draft','Embedded preview follows selected Motor page at '+width);
+    await poll(async()=>await page.locator('main #motor h1').innerText()==='English Motor draft','Actual page follows selected Motor page at '+width);
     await assertFit('page switch '+width);
     await picker().click();
     await shot('pages-'+width+'.png','Motor Content, shared page selector open at '+width+'px');

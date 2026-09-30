@@ -1,6 +1,6 @@
 # Article Editor
 
-Updated 2026-09-28. Publication and cloud-storage behavior is specified in
+Updated 2026-09-30. Publication and cloud-storage behavior is specified in
 [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md); this document covers authoring
 and reader presentation.
 
@@ -27,6 +27,30 @@ changes. Saving during continued typing does not mark later edits saved.
 
 ## Writing
 
+The editor reconciles the September 30 desktop/mobile mock with the existing
+writer. Basic information groups title, stable slug, card excerpt, category,
+removable tags and the separate cover above the rich-text surface. It can be
+folded without unmounting fields or either language document. The desktop rail
+contains actual publication state, the editorial date, pin/Home switches and a
+live card preview. Author, image descriptions, SEO, takeaways, references and
+handwritten notes remain available in named disclosures. Disclosure state stays
+open across language/media/source refreshes.
+
+Mobile keeps the same full writer and existing settings sheet, with content,
+settings and full-page preview shortcuts plus safe-area save/publish actions.
+The sheet moves the same controls instead of maintaining a second form. Tags
+accept Enter or comma-separated input and commit on blur/save; removing a tag
+never drops text currently being entered. Validation reveals a folded invalid
+field. A late stylesheet/font load recalculates title/excerpt height.
+
+The live card uses the active draft language, category, cover, excerpt, editorial
+date and body reading time. It does not save or publish. Its action opens the
+existing real Visitor preview. Missing/failed cover images keep a stable frame;
+the body image is independent. Card excerpts and SEO descriptions stay separate.
+There is no pretend autosave, publication-status selector, slug-availability
+button or scheduled-unpublish control: these mock details have no corresponding
+supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
+
 - Independent TH/EN documents, titles, excerpts, dates, SEO and cover captions.
 - H2/H3, paragraphs, bold/italic/underline/strike/highlight, sub/superscript,
   alignment, ordered/bullet nested lists, safe links, divider and undo/redo.
@@ -36,6 +60,10 @@ changes. Saving during continued typing does not mark later edits saved.
 - YouTube link cards, not embedded players or arbitrary iframe/HTML.
 - Separate cover, category, tags, author, Home recommendation, pin, sources,
   localized key takeaways, slug, SEO title/description.
+- Independent `ปักหมุดบน Home` (`featured`, preserving existing values) and
+  index pin switches. Home pins reserve at most ten draft/live article slots;
+  server rejection keeps all editor changes available for correction. Publication
+  remains explicit, and removing a live pin requires republishing the change.
 - Optional localized `headerNote`, `sidebarQuote`, and `takeawayNote` create the
   handwritten header, botanical sidebar quote, and note beside the takeaway
   banner. Fields retain line breaks, are plain text, and can be cleared. Each
@@ -57,10 +85,11 @@ publication capability; the real verified repository supports explicit Publish.
 
 ## Editorial Metadata
 
-`pinned` is separate from `featured`: pinned records lead the public index's
-default ordering and the newest pin occupies its featured slot; Home uses its
-own recommendation flag and existing `featuredIds` ordering. Explicit title or
-oldest sorting overrides pins. Public search also includes tags.
+`pinned` is separate from `featured`: eligible published pins form the public
+index carousel in the Admin-managed pin order. There is no per-carousel pin cap;
+Home uses its own recommendation flag and existing `featuredIds` ordering.
+Explicit title/oldest sorting or search puts pins in normal results. Public
+search also includes tags. See [ADMIN_ARTICLES.md](ADMIN_ARTICLES.md).
 
 Each translation has nullable ISO `publishedAt`. Input/display use Asia/Bangkok,
 regardless of device timezone. A future date remains draft metadata: it does
@@ -129,6 +158,7 @@ node scripts/articles-admin-check.mjs
 node scripts/articles-index-check.mjs
 node scripts/article-detail-check.mjs
 node scripts/article-editor-metadata-check.mjs
+node scripts/article-editor-layout-check.mjs
 node scripts/article-reader-parity-check.mjs
 node scripts/article-reference-snapshots.mjs
 node scripts/articles-admin-preview.mjs
@@ -151,7 +181,16 @@ Scoped Axe checks on the writing workspace and mobile settings found no
 WCAG A/AA violations after isolating article table styles from the Admin shell.
 This automated check is not a complete accessibility or screen-reader audit.
 
-Before production publication, connect a server-authorized repository with
-revision conflicts, audit history, separate draft/public projections, media
-uploads and locale-aware publish/schedule jobs. Pin/date changes must go through
-that same publish/revision boundary, not directly mutate the public document.
+The production repository already enforces authorization, revision conflicts,
+audit records and separate draft/public projections. Pin/date changes use that
+publish/revision boundary; the carousel ordering has its own authorized settings
+revision. Do not add media-upload, autosave or expiry controls without their
+corresponding supported persistence operations.
+
+September 30 redesign evidence is in `uat-results/article-editor-redesign/`:
+paired reference/development captures, full desktop/mobile pages, writing and
+settings views, 1440/820/390/320 layout checks, live-card updates, metadata/tag
+save/reopen and scoped Axe checks. The actual Auth/Firestore emulator journey
+also verifies save, denied/conflicting saves, preview, publication, separate
+draft edits, republication and unpublish through the real API. No production
+content was changed for visual verification.

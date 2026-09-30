@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {projectArticleIndex} from '../src/visitor/articles-index.mjs';
+import {articleIndexFixture} from './fixtures/home-articles/index-feed.mjs';
+import {startArticlesIndexPreview} from './articles-index-preview.mjs';
+import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+
+const feed=structuredClone(articleIndexFixture);
+feed.items.slice(0,3).forEach(item=>item.pinned=true);
+feed.settings={enabled:true,pinnedOrder:feed.items.slice(0,3).map(item=>item.id).reverse()};
+const view=projectArticleIndex(feed);
+assert.deepEqual(view.featuredItems.map(item=>item.key),feed.settings.pinnedOrder);
+assert.equal(view.items.some(item=>item.pinned),false);
+assert.equal(projectArticleIndex(feed,{search:'?sort=oldest'}).hasFeatured,false);
+assert.equal(projectArticleIndex(feed,{search:'?category=motor'}).items.some(item=>item.pinned),true);
+const many=structuredClone(feed);many.items=Array.from({length:101},(_,i)=>({...many.items[0],id:'many-'+i,slug:'many-'+i}));many.settings.pinnedOrder=many.items.map(item=>item.id).reverse();
+assert.equal(projectArticleIndex(many).featuredItems.length,101,'No carousel pin-count cap');
+assert.equal(projectArticleIndex(many).hasList,false,'No empty Latest heading when every article is pinned');
+const fixture=process.argv.find(arg=>arg.startsWith('--fixture='))?.slice(10);
+const server=await startArticlesIndexPreview({feed,state:fixture?JSON.parse(fs.readFileSync(fixture,'utf8')).state:undefined});
+const browser=await launchChromium(loadPlaywright().chromium,{headless:true});
+const out='uat-results/article-carousel';fs.mkdirSync(out,{recursive:true});
+try {
+  const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+  await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.fulfill({status:403,body:'Local preview only'}));
+  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+  async function ready(lang='th') {
+    await page.goto(server.baseUrl+'/articles'+(lang==='en'?'?lang=en':''));
+    await page.locator('.ar-slide[data-active=true]').waitFor();
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));
+    await page.evaluate(()=>document.fonts.ready);
+    if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();
+  }
+  const active=()=>page.locator('.ar-slide[data-active=true]').getAttribute('data-slide-key');
+  for(const width of process.argv.includes('--interactions-only')?[]:[1440,820,390,320]) {
+    await page.setViewportSize({width,height:1000});await ready(width===320?'en':'th');
+    await page.locator('article-carousel').scrollIntoViewIfNeeded();
+    assert.equal(await active(),feed.settings.pinnedOrder[0]);
+    const carousel=page.locator('article-carousel');
+    assert.equal(await carousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'false','Reduced motion starts paused');
+    const sizes=[];
+    for(let i=0;i<3;i++) {
+      await page.locator('.ar-slide[data-active=true] img').waitFor();
+      await page.waitForFunction(()=>[...document.querySelectorAll('.ar-slide img')].every(img=>img.complete&&img.naturalWidth));
+      sizes.push(await page.locator('.ar-featured').boundingBox());
+      assert.equal(await carousel.locator('.ar-slide:visible').count(),1);
+      assert.equal(await carousel.locator('.ar-slide[inert]').count(),2);
+      await carousel.locator('[data-carousel-action=next]').click();
+    }
+    assert.equal(await active(),feed.settings.pinnedOrder[0],'Next wraps');
+    assert.ok(sizes.every(size=>Math.abs(size.height-sizes[0].height)<1),'Carousel height stays stable');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await carousel.locator('[data-carousel-action=previous]').focus();await page.keyboard.press('Enter');
+    assert.equal(await active(),feed.settings.pinnedOrder[2],'Keyboard previous wraps');
+    await carousel.locator('[data-carousel-action=next]').click();
+    const geometry=await page.locator('.ar-slide[data-active=true]').evaluate(el=>{const card=el.getBoundingClientRect(),media=el.querySelector('.ar-media').getBoundingClientRect();return {cardWidth:card.width,cardHeight:card.height,imageWidth:media.width,imageHeight:media.height,imageShare:media.width/card.width};});
+    console.log(width,geometry);
+    await page.screenshot({path:`${out}/${width}-context.png`});await carousel.screenshot({path:`${out}/${width}-carousel.png`});
+  }
+  await page.setViewportSize({width:390,height:844});await ready();await page.locator('article-carousel').scrollIntoViewIfNeeded();
+  const carousel=page.locator('article-carousel');
+  await carousel.dispatchEvent('pointerdown',{pointerType:'touch',isPrimary:true,clientX:280,clientY:450});
+  await carousel.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,clientX:140,clientY:460});
+  assert.equal(await active(),feed.settings.pinnedOrder[1],'Horizontal swipe advances without navigation');
+  await page.waitForTimeout(550);
+  await page.waitForFunction(()=>document.querySelector('article-carousel').visible);
+  const clockStart=new Date();
+  await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
+  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(0,0);
+  await page.waitForFunction(()=>{const el=document.querySelector('article-carousel');return el.playing&&el.visible&&!el.hovered;},null,{timeout:5000}).catch(async error=>{console.error('Carousel timing state',await carousel.evaluate(el=>({playing:el.playing,visible:el.visible,hovered:el.hovered,hidden:document.hidden,rect:el.getBoundingClientRect().toJSON(),focus:document.activeElement.outerHTML.slice(0,160)})));throw error;});
+  await page.clock.runFor(9000);assert.equal(await active(),feed.settings.pinnedOrder[1],'No early rotation');
+  await page.clock.runFor(2000);assert.equal(await active(),feed.settings.pinnedOrder[2],'Rotates after the 10-second interval');
+  await page.locator('.ar-slide[data-active=true] .ar-card-link').hover();await page.clock.runFor(11000);
+  assert.equal(await active(),feed.settings.pinnedOrder[2],'Hover pauses');
+  await page.mouse.move(0,0);await page.clock.runFor(10001);assert.equal(await active(),feed.settings.pinnedOrder[0]);
+  await page.locator('.ar-slide[data-active=true] .ar-card-link').focus();await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[0],'Keyboard focus stops rotation');
+  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(0,0);
+  await page.locator('footer').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.querySelector('article-carousel').visible===false);
+  await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[0],'Offscreen pauses');
+  await page.clock.resume();
+  await ready();await page.locator('.ar-slide[data-active=true] a').click();await page.locator('.ad-prose').waitFor();assert.match(page.url(),/travel-cover-checklist/);
+  await page.locator('.ad-related').scrollIntoViewIfNeeded();assert.ok(await page.locator('.ad-related img').count()>0,'Shared reader cards retain images');
+  server.setFeed({...feed,items:[feed.items[0]]});await ready();assert.equal(await page.locator('[data-carousel-controls]').isVisible(),false);
+  server.setFeed({...feed,items:feed.items.map(item=>({...item,pinned:false}))});await page.goto(server.baseUrl+'/articles');await page.locator('.ar-index').waitFor();assert.equal(await page.locator('article-carousel').count(),0);
+  server.setFeed(many);await ready();assert.equal(await page.locator('.ar-slide').count(),101);
+  assert.equal(await page.locator('.ar-slide img[src]').count(),3,'Only current and adjacent covers load initially');
+  assert.equal(await page.locator('#articles-results').count(),0);
+  assert.equal(await page.locator('.ar-sort').count(),1,'All-pinned mobile still has sorting');
+  await page.locator('.ar-sort .cm-select-trigger').click();await page.getByRole('option',{name:'เก่าสุดก่อน',exact:true}).click();
+  await page.locator('.ar-item').first().waitFor();assert.equal(await page.locator('article-carousel').count(),0);
+  await page.locator('.ar-clear').click();await page.locator('.ar-slide[data-active=true]').waitFor();
+  await page.locator('#articles-search').fill('no-results');await page.locator('#articles-search').press('Enter');await page.locator('.ar-empty').waitFor();
+  await page.locator('.ar-clear').click();await page.locator('.ar-slide[data-active=true]').waitFor();
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'articles-title','Clearing filters restores focus even when all articles are pinned');
+  // Verify initial autoplay with real wall time in a context without the mocked clock.
+  server.setFeed(feed);
+  const normalContext=await browser.newContext({viewport:{width:390,height:844}});
+  await normalContext.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.fulfill({status:403,body:'Local preview only'}));
+  const automatic=await normalContext.newPage();automatic.on('pageerror',error=>errors.push(error.message));
+  await automatic.goto(server.baseUrl+'/articles');await automatic.locator('.ar-slide[data-active=true]').waitFor();
+  await automatic.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));
+  if(await automatic.locator('[data-cookie-reject]').isVisible())await automatic.locator('[data-cookie-reject]').click();
+  const liveCarousel=automatic.locator('article-carousel');await liveCarousel.scrollIntoViewIfNeeded();await automatic.mouse.move(0,0);
+  await automatic.waitForFunction(()=>document.querySelector('article-carousel').visible);
+  assert.equal(await liveCarousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'true','Normal motion auto-starts');
+  await automatic.waitForTimeout(11000);
+  assert.equal(await liveCarousel.locator('[data-active=true]').getAttribute('data-slide-key'),feed.settings.pinnedOrder[1],'Automatic rotation needs no initial click');
+  await liveCarousel.locator('[data-carousel-action=play]').click();await automatic.mouse.move(0,0);
+  assert.equal(await liveCarousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'false','Clicking Pause really stops a running carousel');
+  await automatic.waitForTimeout(11000);assert.equal(await liveCarousel.locator('[data-active=true]').getAttribute('data-slide-key'),feed.settings.pinnedOrder[1]);
+  await normalContext.close();
+  assert.deepEqual(errors,[]);console.log('PASS pin projection, unlimited pins, desktop/mobile stable geometry, navigation/wrap, keyboard/swipe, 10-second timer, reduced motion, hover/focus/offscreen pause and reader link.');
+} finally {await browser.close();await new Promise(resolve=>server.server.close(resolve));}

@@ -144,6 +144,7 @@ try {
   await table.locator('td').first().click();await page.keyboard.type('QA table content');
   check('Table insert, add/delete rows/columns, header, merge/split, delete cancel/confirm and undo');
 
+  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
   await field('slug').fill('qa-toolbar');await field('authorName').fill('QA author');
   await choose('หมวดหมู่','ประกันสุขภาพ');
   await field('featured').check();await field('pinned').check();
@@ -156,10 +157,11 @@ try {
     for(const [key,value] of Object.entries(articleNotes[lang]))await field(key).fill(value);
   }
   await page.locator('[data-lang=th]').click();
-  await page.locator('.ae-seo summary').click();await field('seoTitle').fill('SEO QA');await field('seoDescription').fill('SEO description');
+  await field('seoTitle').fill('SEO QA');await field('seoDescription').fill('SEO description');
   await field('takeaways').fill(Array.from({length:9},(_,i)=>'Point '+i).join('\n'));
   await tool('save');assert.match(await feedback(),/8/);await field('takeaways').fill('Point one\nPoint two');
   await field('tags').fill(Array.from({length:21},(_,i)=>'tag'+i).join(','));await tool('save');assert.match(await feedback(),/20/);
+  while(await page.locator('[data-ae=remove-tag]').count())await page.locator('[data-ae=remove-tag]').last().click();
   await field('tags').fill('QA, health');await tool('add-source');await tool('save');assert.match(await feedback(),/HTTPS/);
   await field('source-label-0').fill('Reference');await field('source-url-0').fill('https://example.com/source');
   await tool('add-source');await page.locator('[data-ae=remove-source][data-index="1"]').click();
@@ -188,7 +190,8 @@ try {
   await page.reload();await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[name=query]').fill('Toolbar interaction QA');await page.locator('[data-article-action=edit]').first().click();
   assert.equal(await field('slug').inputValue(),'qa-toolbar');assert.equal(await field('pinned').isChecked(),true);
-  await page.locator('.ae-seo summary').click();assert.equal(await field('seoDescription').inputValue(),'SEO description');
+  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
+  assert.equal(await field('seoDescription').inputValue(),'SEO description');
   for(const lang of ['th','en']){
     await page.locator(`[data-lang=${lang}]`).click();
     for(const [key,value] of Object.entries(articleNotes[lang]))assert.equal(await field(key).inputValue(),value,'Saved '+lang+' '+key+' reloads into the editor');

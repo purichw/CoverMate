@@ -97,11 +97,11 @@ function readArticleReaderRuntime() {
   const helpers = ['articleDetailSlug', 'readArticleDetail', 'articleShareUrl', 'articleSaved', 'toggleSavedArticle'];
   // Bundle only browser entry points; full publication projection stays server-side.
   const code = buildSync({
-    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
+    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
     bundle: true, write: false, treeShaking: true, minify: true, format: 'iife',
     globalName: 'CoverMateArticleReader', target: 'es2022', charset: 'utf8'
   }).outputFiles[0].text;
-  return code + `\nconst {registerArticleDocument,${helpers.join(',')}} = CoverMateArticleReader;`;
+  return code + `\nconst {registerArticleDocument,registerArticleCarousel,${helpers.join(',')}} = CoverMateArticleReader;`;
 }
 
 export function readImageVersions(root = new URL("assets/", ROOT)) {
@@ -157,6 +157,7 @@ export function readVisitorSources() {
       .replace('<!-- COVERMATE_ARTICLE_DETAIL_TEMPLATE -->', () => readText(new URL('src/visitor/article-detail.html', ROOT)))
       .replaceAll('<!-- COVERMATE_ARTICLE_CTA -->', () => readText(new URL('src/visitor/article-cta.html', ROOT)))
       .replaceAll('<!-- COVERMATE_ARTICLE_CARD -->', () => readText(new URL('src/visitor/article-card.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_ARTICLE_SORT -->', () => readText(new URL('src/visitor/article-sort.html', ROOT)))
       .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
       .replace('<!-- COVERMATE_EDITOR_CONTENT -->', () => readText(new URL('src/visitor/editor-content.html', ROOT)))

@@ -1,20 +1,12 @@
     <!-- CONTENT TAB -->
     <sc-if value="{{ tabContent }}" hint-placeholder-val="{{ false }}">
       <div class="cm-editor-content-workspace">
-        <!-- COVERMATE_EDITOR_PREVIEW -->
-        <nav class="cm-editor-content-outline" aria-label="ส่วนของหน้าที่แก้ไข">
-          <h3>ส่วนของ{{ adminPageName }}</h3>
-          <sc-for list="{{ contentSections }}" as="section">
-            <div class="cm-editor-content-row" data-content-row="{{ section.id }}" data-selected="{{ section.sel }}">
-              <button type="button" class="cm-editor-content-pick" aria-pressed="{{ section.sel }}" sc-camel-on-click="{{ section.openContent }}"><span class="cm-editor-order">{{ section.order }}</span><span><strong>{{ section.name }}</strong><small>{{ section.statusLabel }}</small></span><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></button>
-            </div>
-          </sc-for>
-        </nav>
         <section class="cm-editor-content-detail" data-content-detail="{{ curId }}">
           <label class="cm-editor-field cm-editor-section-picker"><span>ส่วนที่แก้ไข</span><select data-editor-content-section aria-label="เลือกส่วนที่แก้ไขเนื้อหา" value="{{ curId }}" sc-camel-on-change="{{ selectContentSection }}"><sc-for list="{{ contentSections }}" as="section"><option value="{{ section.id }}">{{ section.order }}. {{ section.name }}</option></sc-for></select></label>
           <div class="cm-editor-content-heading"><h3 tabindex="-1" data-editor-content-title>แก้ไข : {{ curName }}</h3><sc-if value="{{ selectedOutline.canToggle }}"><button type="button" class="cm-editor-visibility" data-content-visibility data-hero-visibility role="switch" aria-checked="{{ selectedOutline.on }}" aria-label="แสดงหรือซ่อนส่วนนี้" sc-camel-on-click="{{ selectedOutline.toggle }}">{{ selectedOutline.statusLabel }}</button></sc-if></div>
           <div class="cm-editor-content-meta"><p class="cm-editor-help">{{ contentScope }}</p><!-- COVERMATE_EDITOR_LANGUAGE --></div>
           <sc-if value="{{ contentDependency }}"><p class="cm-editor-notice">{{ contentDependency }}</p></sc-if>
+          <sc-if value="{{ editingHomeArticles }}"><div class="cm-editor-shortcuts"><a class="cm-editor-button" href="{{ articleManagementHref }}">จัดการบทความ</a><sc-if value="{{ editorArticleFeedError }}"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ retryEditorArticleFeed }}">โหลดบทความใหม่</button></sc-if></div></sc-if>
           <sc-if value="{{ editingHero }}"><!-- COVERMATE_EDITOR_HERO --></sc-if>
           <sc-if value="{{ !editingHero }}">
             <sc-if value="{{ showContactInspector }}"><!-- COVERMATE_EDITOR_CONTACT --></sc-if>

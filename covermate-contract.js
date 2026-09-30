@@ -1210,6 +1210,8 @@ function sanitizeCmsFields(config) {
     });
   });
   const design = config.homeDesign;
+  // Missing placement keeps the legacy slot; an empty anchor means the last movable section.
+  if (typeof design.articlesBefore !== 'string' || (design.articlesBefore !== '' && !(config.sections || []).some(section => section?.id === design.articlesBefore))) delete design.articlesBefore;
   for (const key of ['featuredTierIds', 'previewAxisIds']) {
     design[key] = [...new Set((Array.isArray(design[key]) ? design[key] : []).filter(id => typeof id === 'string' && /^[\w-]{1,120}$/.test(id)))].slice(0, 50);
   }

@@ -462,7 +462,7 @@ async function selectAdminSection(page, id) {
       return panel && ((panel.innerText || '').includes(`#${sectionId}`) ||
         panel.querySelector(`[data-admin-section-row="${sectionId}"][data-selected="true"]`) &&
         panel.querySelector('[data-editor-inspector] [data-contact-field]') ||
-        panel.querySelector(`[data-content-row="${sectionId}"][data-selected="true"]`));
+        panel.querySelector(`[data-content-detail="${sectionId}"]`));
     },
     id,
     { timeout: 5000 }

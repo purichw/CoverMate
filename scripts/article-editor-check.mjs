@@ -141,6 +141,7 @@ if(process.argv.includes('--browser')) {
       assert.deepEqual(await page.locator('.ae-editor-host:visible table').evaluate(table=>({table:getComputedStyle(table).display,row:getComputedStyle(table.rows[0]).display,cell:getComputedStyle(table.rows[1].cells[0]).display,size:getComputedStyle(table.rows[0].cells[0]).fontSize})),{table:'table',row:'table-row',cell:'table-cell',size:'14px'},'Article tables keep reader geometry, not Admin stacked rows');
       await page.screenshot({path:out+'/'+engine+'-'+width+'-top.png'});
       await page.locator('[data-ae=settings]:visible').click();await page.locator('.ae-settings-dialog').waitFor();
+      if(await page.locator('.ae-settings-dialog [data-panel=metadata]:not([open])').count())await page.locator('.ae-settings-dialog [data-panel=metadata] > summary').click();
       await page.locator('.ae-settings-dialog [data-field=coverAlt]').fill('ข้อความอธิบายภาพจากมือถือ');
       if(width===390)await page.screenshot({path:out+'/'+engine+'-mobile-settings.png'});
       await page.locator('.ae-settings-dialog .ae-done').click();

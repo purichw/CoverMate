@@ -12,12 +12,14 @@ export function createCloudArticleRepository({request}={}) {
     if(!response.ok)throw Object.assign(Error(result.message||'โหลดข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง'),{status:response.status});
     return result;
   };
-  return {cloud:true,catalog:()=>call('catalog'),get:id=>call('read',null,id),
+  return {cloud:true,catalog:()=>call('catalog'),feed:()=>call('feed'),get:id=>call('read',null,id),
     save:(article,expectedRevision)=>call('save',{article,expectedRevision}),
     publish:(id,expectedRevision,languages)=>call('publish',{id,expectedRevision,languages}),
     unpublish:(id,expectedRevision)=>call('unpublish',{id,expectedRevision}),
+    reorderPins:(order,expectedRevision)=>call('pin-order',{order,expectedRevision}),
     settings:(settings,expectedRevision)=>call('settings',{settings,expectedRevision})};
 }
 const repository=createCloudArticleRepository();
 export const loadArticleCatalog=()=>repository.catalog();
+export const loadPublishedArticleFeed=()=>repository.feed();
 export const loadArticleForEditor=id=>repository.get(id);

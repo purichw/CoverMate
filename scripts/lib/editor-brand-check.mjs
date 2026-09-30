@@ -95,7 +95,9 @@ export async function checkBrandWorkspace({page,panel,poll,shot,assertFit,baseUr
   await reveal(panel().locator('[data-brand-group="credentials"]>summary'));
   await panel().getByRole('button',{name:'โลโก้บริษัทและการ์ดใบอนุญาต',exact:true}).click();
   await poll(async()=>await panel().getByRole('button',{name:'เนื้อหา',exact:true}).getAttribute('aria-pressed')==='true','Licence shortcut opens real Content owner');
-  await panel().locator('[data-content-row="licences"] button').click();
+  await panel().getByRole('combobox',{name:'เลือกส่วนที่แก้ไขเนื้อหา'}).and(page.locator('button')).click();
+  const licenceOption=await panel().locator('[data-editor-content-section] option[value="licences"]').innerText();
+  await page.getByRole('option',{name:licenceOption,exact:true}).click();
   await reveal(panel().locator('[data-admin-content-shortcut="Licences"]'));
   await panel().locator('[data-admin-content-shortcut="Licences"]').click();
   await input('licences.life.number').waitFor({state:'visible'});

@@ -51,7 +51,7 @@ if (process.argv.includes('--browser')) {
       await page.goto(server.baseUrl + `/admin?article_qa=${++visit}#articles`);
       await page.locator(`[data-article-state="${state}"]`).waitFor();
       await page.evaluate(() => document.fonts.ready);
-      await page.locator('.cm-select-trigger').first().waitFor();
+      await page.locator('.cm-select-trigger').first().waitFor({state:'attached'});
     };
     const fit = async () => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'No horizontal overflow');
     const capture = async name => {
@@ -134,6 +134,12 @@ if (process.argv.includes('--browser')) {
     const axe = await new AxeBuilder({ page }).include('.articles-workspace').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     assert.deepEqual(axe.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
     await page.setViewportSize({ width: 390, height: 844 });await go();
+    await page.getByRole('button',{name:'ตัวกรองเพิ่มเติม',exact:true}).click();
+    await choose('หมวดหมู่','ประกันสุขภาพ');await choose('สถานะ','ตั้งเวลาเผยแพร่');
+    assert.equal(await page.locator('.article-table tbody tr').count(),1);
+    await page.locator('[data-article-action=filters]').click();
+    assert.equal(await page.locator('[data-filter-count]').innerText(),'2');
+    await page.locator('.article-toolbar [data-article-action=reset]').click();
     await page.locator('.article-more > summary').first().click();await fit();
     const menu = await page.locator('.article-more[open] .article-actions-popover').boundingBox();
     assert.ok(menu.x >= 0 && menu.x + menu.width <= 390);

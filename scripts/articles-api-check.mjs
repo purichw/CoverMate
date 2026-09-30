@@ -21,8 +21,11 @@ try {
     return {status:response.status,body:await response.json()};
   }
   assert.equal((await call('catalog',null,'missing')).status,401);
+  assert.equal((await call('feed',null,'missing')).status,401);
   for(const role of ['advisor','ops','readonly','inactive','unknown'])assert.equal((await call('catalog',null,role)).status,403);
+  for(const role of ['advisor','ops','readonly','inactive','unknown'])assert.equal((await call('feed',null,role)).status,403);
   const denied=await fetch(baseUrl+'/api/articles?action=catalog',{headers:{Authorization:'Bearer '+tokens.owner}});assert.equal(denied.status,403,'UAT owner cannot access production');
+  assert.equal((await fetch(baseUrl+'/api/articles?action=feed',{headers:{Authorization:'Bearer '+tokens.owner}})).status,403,'UAT owner feed cannot read production');
   let flags=(await call('catalog')).body.settings;
   const flag=async changes=>{const result=await call('settings',{settings:{...flags,...changes},expectedRevision:flags.revision});assert.equal(result.status,200,JSON.stringify(result));flags=result.body;};
   await flag({enabled:false});
@@ -32,6 +35,7 @@ try {
   let result=await call('save',{article:draft,expectedRevision:0});assert.equal(result.status,200,JSON.stringify(result));draft=result.body;
   assert.equal((await call('read',null,'owner2','&id='+run)).body.translations.th.title,draft.translations.th.title,'Second owner reads same persisted draft');
   assert.equal((await repository.feed('covermate-uat')).items.some(i=>i.id===run),false,'Draft does not leak');
+  assert.equal((await call('feed')).body.items.some(i=>i.id===run),false,'Owner canvas endpoint does not expose a draft');
   const concurrent=await Promise.all(['A','B'].map(marker=>call('save',{article:{...draft,authorName:marker},expectedRevision:draft.revision})));
   assert.equal(concurrent.filter(r=>r.status===200).length,1);assert.equal(concurrent.filter(r=>r.status===409).length,1);draft=concurrent.find(r=>r.status===200).body;
   assert.equal((await call('publish',{id:run,expectedRevision:draft.revision,languages:['en']})).status,422,'Incomplete English cannot publish');
@@ -40,11 +44,14 @@ try {
   await flag({enabled:true});
   const sitemap=await fetch(baseUrl+'/api/article-sitemap?cm_env=uat');assert.equal(sitemap.status,200);assert.equal((await sitemap.text()).includes('<loc>'),false,'UAT sitemap is empty');
   const feed=await repository.feed('covermate-uat');assert.equal(feed.items.find(i=>i.id===run).translations.th.readingMinutes,1);assert.equal(JSON.stringify(feed).includes('document'),false);assert.equal(JSON.stringify(feed).includes('เนื้อหาจากคลังกลาง'),false);
+  assert.deepEqual((await call('feed')).body,feed,'Owner canvas reads exactly the Visitor publication projection');
   const detail=await repository.detail('covermate-uat',run);assert.equal(detail.item.translations.th.author,draft.authorName);assert.equal(detail.item.translations.en,undefined);
   assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat')).status,200);assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat&lang=en')).status,404);
   const liveTitle=detail.item.translations.th.title;draft.translations.th.title='ยังไม่เผยแพร่การแก้ไข';
   draft=(await call('save',{article:draft,expectedRevision:draft.revision})).body;
   assert.equal((await repository.detail('covermate-uat',run)).item.translations.th.title,liveTitle);
+  assert.equal((await call('feed')).body.items.find(i=>i.id===run).translations.th.title,liveTitle,'Unpublished edits stay out of the Home canvas');
+  if (!process.argv.includes('--feed-only')) {
   const duplicate=createArticleDraft(draft);duplicate.id='duplicate-'+crypto.randomUUID();duplicate.revision=0;duplicate.slugLocked=false;
   const dup=(await call('save',{article:duplicate,expectedRevision:0})).body;
   assert.equal((await call('publish',{id:dup.id,expectedRevision:dup.revision,languages:['th']})).status,409,'Slug is atomically reserved');
@@ -54,7 +61,7 @@ try {
     assert.match(response.headers.get('cache-control'),/no-store/);
     const home=extractBundlerTemplate(await (await fetch(baseUrl+'/?cm_env=uat')).text());
     const seed=JSON.parse(/<script id="covermate-article-feed" type="application\/json">(.*?)<\/script>/.exec(home)[1]);
-    assert.deepEqual(seed.settings,{enabled,showHome,showNavigation,revision:flags.revision});assert.equal(seed.items.some(i=>i.id===run),enabled);
+    assert.deepEqual(seed.settings,{enabled,showHome,showNavigation,revision:flags.revision,pinnedOrder:[]});assert.equal(seed.items.some(i=>i.id===run),enabled);
   }
   assert.equal((await call('settings',{settings:flags,expectedRevision:flags.revision-1})).status,409);
   assert.equal((await call('settings',{settings:{enabled:'true'},expectedRevision:flags.revision})).status,422);
@@ -73,4 +80,5 @@ try {
   for(const path of ['articles/'+run,'articleCatalog/'+run,'articleSlugs/'+run,'articleSettings/current'])assert.equal((await direct(path)).status,403,'No direct SDK access: '+path);
   assert.ok((await db.collection('sites/covermate-uat/articleAudit').where('articleId','==',run).get()).size>=5);
   console.log('PASS real article API: roles, UAT isolation, shared drafts, CAS conflicts, publication/locales, live isolation, slug reservation, scheduling, all 8 toggle combinations, no-store, direct URL/Firestore guards, unpublish and audit.');
+  } else console.log('PASS owner feed API: authentication, roles, UAT isolation, published-only projection and unpublished-edit isolation.');
 } finally {await new Promise(resolve=>server.close(resolve));}

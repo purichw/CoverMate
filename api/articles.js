@@ -9,6 +9,7 @@ module.exports = async function articles(req,res) {
     const url=new URL(req.url,'https://covermateinsurance.com'),action=url.searchParams.get('action')||'catalog';
     const actor=await authorize(req),store=await repo(),site=actor.env.siteId;
     if(req.method==='GET') {
+      if(action==='feed')return json(res,200,await store.feed(site));
       if(action==='catalog')return json(res,200,await store.catalog(site));
       if(action==='read')return json(res,200,await store.get(site,url.searchParams.get('id')));
       throw error(404,'not_found','ไม่พบรายการ');
@@ -16,6 +17,7 @@ module.exports = async function articles(req,res) {
     const body=await readBody(req,750000);
     if(!body||typeof body!=='object')throw error(422,'invalid_body','ข้อมูลไม่ถูกต้อง');
     if(action==='settings')return json(res,200,await store.changeSettings(site,body.settings,body.expectedRevision,actor.uid));
+    if(action==='pin-order')return json(res,200,await store.reorderPins(site,body.order,body.expectedRevision,actor.uid));
     if(!['save','publish','unpublish'].includes(action))throw error(404,'not_found','ไม่พบรายการ');
     return json(res,200,await store.mutate(site,action,action==='save'?body.article:body,body.expectedRevision,actor.uid));
   } catch(err) {

@@ -12,6 +12,8 @@ import { checkEditorPages } from './lib/editor-pages-check.mjs';
 import { checkContentWorkspace } from './lib/editor-content-check.mjs';
 import { checkBrandWorkspace } from './lib/editor-brand-check.mjs';
 import { checkVersionsWorkspace } from './lib/editor-versions-check.mjs';
+import { checkArticleSectionOrder } from './lib/editor-article-order-check.mjs';
+import { homeArticleFixture } from './fixtures/home-articles/feed.mjs';
 
 // Local-only real UI: synthetic owner, memory-only Draft, immutable Live.
 // --serve exposes the same isolated fixture to a normal browser for design review.
@@ -26,6 +28,8 @@ const live = clean({ config: defaults, text: {}, revision: 1 });
 const originalLive = structuredClone(live);
 let draft = structuredClone(live), saves = 0, forbiddenWrites = 0;
 let versionsFailure = false, draftFailure = false;
+let articleFeedFailure = false;
+let articleFeed = process.argv.includes('--article-order') ? structuredClone(homeArticleFixture) : {available:true,settings:{enabled:true,showHome:true},items:[]};
 let versions = process.argv.includes('--versions') ? Array.from({length:8},(_,index)=>{
   const snapshot=structuredClone(live);
   if(index) {
@@ -65,6 +69,13 @@ const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true, p
   headers: { 'Content-Security-Policy': "connect-src 'self'; form-action 'self'" },
   onRequest: async (req, res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
+    if (pathname === '/api/articles' && req.method === 'GET' && new URL(req.url,'http://localhost').searchParams.get('action') === 'feed') {
+      res.writeHead(articleFeedFailure?503:200,{'Content-Type':'application/json','Cache-Control':'no-store'});
+      res.end(JSON.stringify(articleFeedFailure?{message:'Local fixture: articles unavailable'}:articleFeed));return true;
+    }
+    if (/^\/assets\/article-preview\/(motor|health|travel)\.jpg$/.test(pathname)) {
+      res.writeHead(200,{'Content-Type':'image/jpeg'});res.end(fs.readFileSync(new URL('./fixtures/home-articles/'+pathname.split('/').pop(),import.meta.url)));return true;
+    }
     if(pathname===fixturePath+'/versions') {res.writeHead(versionsFailure?503:200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(versionsFailure?{error:'local fixture offline'}:versions));return true;}
     if (['/admin/content','/admin/edit','/admin/preview'].includes(pathname)) {
       res.writeHead(200, { 'Content-Type':'text/html; charset=utf-8' });
@@ -164,7 +175,9 @@ if (process.argv.includes('--serve')) {
     }
 
     await page.goto(baseUrl+'/admin/content');await ready();
-    if (process.argv.includes('--versions')) {
+    if (process.argv.includes('--article-order')) {
+      await checkArticleSectionOrder({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,setFeed:value=>{articleFeed=value;},failFeed:value=>{articleFeedFailure=value;},report});
+    } else if (process.argv.includes('--versions')) {
       await checkVersionsWorkspace({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,readVersions:()=>versions,setVersions:value=>{versions=value;},failHistory:value=>{versionsFailure=value;},failDraft:value=>{draftFailure=value;},report});
     } else if (process.argv.includes('--brand')) {
       await checkBrandWorkspace({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,report});

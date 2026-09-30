@@ -9,9 +9,10 @@
         </div>
         <a class="hm-articles-all" href="{{ homeArticles.indexHref }}"><span data-cms-copy="homeDesign.articlesAll">{{ homeCopy.articlesAll }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></a>
       </div>
+      <article-carousel data-layout="cards" data-language="{{ articleLanguage }}" role="region" aria-labelledby="home-articles-title">
       <ul class="hm-article-grid">
         <sc-for list="{{ homeArticles.items }}" as="article">
-          <li>
+          <li data-slide-key="{{ article.key }}">
             <article class="hm-article-card">
               <a class="hm-article-link" href="{{ article.href }}" aria-labelledby="{{ article.titleId }}">
                 <div class="hm-article-media">
@@ -29,6 +30,14 @@
           </li>
         </sc-for>
       </ul>
+      <div class="ar-carousel-controls" data-carousel-controls hidden>
+        <button type="button" data-carousel-action="play"><svg class="ar-carousel-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg><svg class="ar-carousel-play" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 3 14 9-14 9V3Z"/></svg></button>
+        <span data-carousel-counter aria-hidden="true"></span>
+        <button type="button" data-carousel-action="previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+        <button type="button" data-carousel-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+      <span class="ar-sr-only" data-carousel-announcement aria-live="polite" aria-atomic="true"></span>
+      </article-carousel>
     </div>
   </section>
 </sc-if>
