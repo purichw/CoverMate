@@ -64,6 +64,7 @@
             <div role="group" aria-label="สีการ์ด" style="display:flex;gap:8px"><sc-for list="{{ it.toneOptions }}" as="tone"><button type="button" title="{{ tone.key }}" aria-label="{{ tone.key }}" aria-pressed="{{ tone.selected }}" sc-camel-on-click="{{ tone.choose }}" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--color-bg);background:{{ tone.color }};cursor:pointer"><sc-if value="{{ tone.selected }}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:white;fill:none;stroke-width:2"><path d="m5 12 4 4 10-10"/></svg></sc-if></button></sc-for></div>
           </sc-if>
           <sc-if value="{{ it.hasPhotoControl }}">
+            <button type="button" class="cm-editor-button" sc-camel-on-click="{{ it.editPhoto }}">อัปโหลด / จัดกรอบรูปผู้รีวิว</button>
             <label class="om-cms-field"><span>รูปภาพ (ไม่บังคับ)</span><input aria-label="รูปผู้รีวิว" value="{{ it.photoInput.value }}" sc-camel-on-change="{{ it.photoInput.change }}" sc-camel-on-blur="{{ it.photoInput.commit }}"></label>
             <label class="om-cms-field"><span>คำอธิบายรูป (Alt text)</span><input aria-label="คำอธิบายรูปผู้รีวิว" value="{{ it.photoAltInput.value }}" sc-camel-on-change="{{ it.photoAltInput.change }}" sc-camel-on-blur="{{ it.photoAltInput.commit }}"></label>
           </sc-if>
@@ -72,7 +73,7 @@
               <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ไฟล์โลโก้</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ไฟล์โลโก้</sc-if></span>
               <span style="display:flex;align-items:center;gap:8px">
                 <span role="img" aria-hidden="true" style="{{ it.logoThumb }}"></span>
-                <input value="{{ it.logo }}" sc-camel-on-change="{{ it.onLogo }}" placeholder="assets/ins/15-name.png" style="flex:1 1 auto;min-width:0;font:inherit;font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--color-neutral-300);background:var(--color-bg);color:var(--color-text);transition:border-color .2s ease" style-focus="border-color:{{ A_base }}">
+                <button type="button" class="cm-editor-button" sc-camel-on-click="{{ it.editLogo }}">อัปโหลด / จัดกรอบโลโก้</button>
               </span>
             </label>
           </sc-if>
@@ -81,7 +82,7 @@
             <label style="display:flex;flex-direction:column;gap:8px">
               <span>ภาพชั้นประกัน (ไม่บังคับ)</span>
               <sc-if value="{{ it.hasIllustration }}"><img sc-camel-src="{{ it.illustrationThumb }}" alt="" width="96" height="96" style="object-fit:contain"></sc-if>
-              <input aria-label="ภาพชั้นประกัน" value="{{ it.illustration }}" sc-camel-on-change="{{ it.onIllustration }}" style="font:inherit;font-size:14px;padding:10px;border:1px solid var(--color-neutral-300);border-radius:8px;min-width:0">
+              <button type="button" class="cm-editor-button" sc-camel-on-click="{{ it.editIllustration }}">อัปโหลด / จัดกรอบภาพชั้นประกัน</button>
             </label>
             <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
               <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)"><sc-if value="{{ th }}" hint-placeholder-val="{{ true }}">ความคุ้มครอง (กดเพื่อสลับ)</sc-if><sc-if value="{{ en }}" hint-placeholder-val="{{ false }}">ความคุ้มครอง (แตะเพื่อเปลี่ยน)</sc-if></span>
@@ -135,8 +136,8 @@
             <sc-if value="{{ cd.showLogo }}" hint-placeholder-val="{{ false }}">
               <label class="om-cms-field"><span>ประเภทใบอนุญาต</span><span class="cm-select-shell"><sc-raw-select data-admin-licence-role="{{ cd.id }}" value="{{ cd.licenceRole }}" sc-camel-on-change="{{ cd.onLicenceRole }}"><sc-for list="{{ cd.licenceRoleOptions }}" as="option"><option value="{{ option.value }}">{{ option.label }}</option></sc-for></sc-raw-select></span></label>
             <label class="cm-editor-field">
-              <span>ที่อยู่โลโก้</span>
-              <input value="{{ cd.logo }}" sc-camel-on-change="{{ cd.onLogo }}">
+              <span>โลโก้</span>
+              <button type="button" class="cm-editor-button" sc-camel-on-click="{{ cd.editLogo }}">อัปโหลด / จัดกรอบโลโก้</button>
             </label>
             <label class="cm-editor-field">
               <span>คำอธิบายโลโก้ (Alt text)</span>

@@ -52,6 +52,23 @@ assert.deepEqual(migrateCmsContent(v6), v6, 'Licence presentation migration is i
 const licenceArt = contract.cmsImageSlots(v6).find(slot => slot.path === 'homeDesign.licenceBackground');
 assert.equal(licenceArt.width / licenceArt.height, 3, 'Admin background crop ratio');
 
+const mediaDraft=structuredClone(migrated), mediaPath='advisor.photo';
+const mediaEdit={output:'https://res.cloudinary.com/demo/image/upload/v1/image.png',source:'https://res.cloudinary.com/demo/image/upload/v1/source.jpg',provider:'cloudinary',
+  sourceAsset:{publicId:'covermate/cms-media/covermate/fixture/source',version:1,width:4000,height:2400,bytes:500000,format:'jpg',secret:'discard'},
+  crop:{mode:'crop',x:500,y:0,width:1920,height:2400,rotate:0,scaleX:1,scaleY:1,sourceWidth:4000,sourceHeight:2400,unknown:'discard'},binary:'discard'};
+cmsSet(mediaDraft,mediaPath,mediaEdit.output);mediaDraft.mediaEdits={[mediaPath]:mediaEdit};
+const retained=sanitize(mediaDraft).mediaEdits[mediaPath];
+assert.equal(retained.sourceAsset.width,4000,'Full original resolution survives CMS normalization');
+assert.equal(retained.crop.x,500,'Native source crop coordinates survive');
+assert.ok(!retained.binary&&!retained.sourceAsset.secret&&!retained.crop.unknown,'Only editing metadata is persisted');
+assert.deepEqual(sanitize(sanitize(mediaDraft)).mediaEdits,sanitize(mediaDraft).mediaEdits,'Recrop metadata survives repeated draft/history normalization');
+mediaDraft.mediaEdits[mediaPath].crop.x=4000;
+assert.equal(sanitize(mediaDraft).mediaEdits[mediaPath].crop,undefined,'Out-of-bounds crop is removed');
+mediaDraft.mediaEdits[mediaPath].source='data:image/png;base64,AAAA';
+assert.deepEqual(sanitize(mediaDraft).mediaEdits[mediaPath],{output:mediaEdit.output,source:''},'No base64 original or orphan editing metadata reaches CMS');
+cmsSet(mediaDraft,mediaPath,'assets/brand/covermate-logo.png');
+assert.equal(sanitize(mediaDraft).mediaEdits[mediaPath],undefined,'Replacing the displayed image invalidates its old original/crop');
+
 const v8 = structuredClone(migrated);
 v8.cmsContentVersion = 8;
 const oldFees = v8.sections.find(s=>s.id==='fees');

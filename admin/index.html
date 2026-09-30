@@ -755,11 +755,20 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      align-items: flex-start;
+      align-items: center;
       color: var(--text);
-      text-align: left;
+      text-align: center;
       text-decoration: none;
       transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .module-card > .note {
+      align-self: stretch;
+      text-align: left;
+    }
+
+    .module-card > .ghost-button {
+      margin-top: auto;
     }
 
     .module-card:hover {

@@ -26,10 +26,10 @@ body[data-module="home"] #screen { padding:0 28px 24px;max-width:1600px;width:10
 .home-welcome blockquote { font-size:13px;line-height:1.55;margin:0 0 0 8px;padding:0 20px 0 30px;border-left:1px solid #e7ddcf;color:#5a554d; }
 .home-welcome cite { display:block;font-size:12px;color:#797067;font-style:normal;margin-top:3px; }
 .home-modules { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0; }
-.home-module { position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;min-height:265px;padding:20px 21px 16px;border:1px solid #e8dbcb;border-radius:16px;background:var(--home-panel);color:var(--text);box-shadow:0 2px 5px #56390d06;transition:border-color .16s,box-shadow .16s; }
+.home-module { position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;min-height:265px;padding:20px 21px 16px;border:1px solid #e8dbcb;border-radius:16px;background:var(--home-panel);color:var(--text);box-shadow:0 2px 5px #56390d06;transition:border-color .16s,box-shadow .16s; }
 .home-module::after { content:"";position:absolute;z-index:-1;bottom:0;right:0;width:100%;height:43%;background:#f4dfc340;clip-path:ellipse(110% 100% at 115% 106%);pointer-events:none; }
 .home-module:hover { border-color:#c99168;box-shadow:0 4px 12px #6a4a1910; }
-.home-module-top { display:flex;align-items:flex-start;justify-content:space-between;gap:10px;width:100%;margin-bottom:13px; }
+.home-module-top { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;margin-bottom:13px; }
 .home-module-icon { width:54px;height:54px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;color:#fff;background:linear-gradient(140deg,#d16c35,#b95724); }
 .home-module-icon svg { width:27px;height:27px;stroke-width:1.6; }
 .home-module.sage .home-module-icon { background:linear-gradient(140deg,#768863,#566542); }
@@ -44,8 +44,8 @@ body[data-module="home"] #screen { padding:0 28px 24px;max-width:1600px;width:10
 .home-badge.failed i,.home-status-value.failed i { background:#a94631; }
 .home-module-top .home-badge { margin-top:2px;max-width:152px; }
 .home-module h2 { font-size:21px;font-weight:650;line-height:1.35;margin:0 0 8px; }
-.home-module p { font-size:14px;line-height:1.5;color:#5f5c56;margin-bottom:22px; }
-.home-module-action { display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:auto;color:var(--home-accent);font-size:14px;font-weight:500; }
+.home-module p { align-self:stretch;text-align:left;font-size:14px;line-height:1.5;color:#5f5c56;margin-bottom:22px; }
+.home-module-action { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:auto;color:var(--home-accent);font-size:14px;font-weight:500; }
 .home-action-arrow { display:grid;place-items:center;flex-shrink:0;width:35px;height:35px;border-radius:50%;background:#fbe4d0;color:#b7521e; }
 .home-action-arrow svg { width:21px;height:21px; }
 .home-details-grid { display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,1fr);gap:14px 12px; }

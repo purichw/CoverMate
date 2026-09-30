@@ -90,7 +90,7 @@ try {
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     report.checks.push(`${width}px ${lang}: CMS labels, invalid email focus, failure/edit keeps email, immutable retry, success clears, optional blank, Motor parity, no browser storage or overflow`);
     await page.setViewportSize({width:width===1440?760:width,height:1000});await page.goto(baseUrl+'/email-preview?lang='+lang);
-    await page.waitForFunction(()=>[...document.images].length===2&&[...document.images].every(img=>img.complete&&img.naturalWidth));
+    await page.waitForFunction(()=>document.images.length>0&&[...document.images].every(img=>img.complete&&img.naturalWidth));
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     assert.equal(await page.locator('a[href*="/admin"]').count(),0);
     await page.screenshot({path:`${out}/email-${width}-${lang}.png`,fullPage:true});

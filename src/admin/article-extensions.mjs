@@ -16,7 +16,7 @@ const Callout=Node.create({
 });
 const Figure=Node.create({
   name:'figure',group:'block',atom:true,draggable:true,
-  addAttributes(){return {src:{default:''},alt:{default:''},caption:{default:''}};},
+  addAttributes(){return {src:{default:''},alt:{default:''},caption:{default:''},...Object.fromEntries(['sourceUrl','provider','sourceAsset','crop','width','height'].map(key=>[key,{default:null,rendered:false}]))};},
   parseHTML(){return [{tag:'figure',getAttrs:el=>{const img=el.querySelector('img');return img && articleUrl(img.getAttribute('src'),true) ? {src:articleUrl(img.getAttribute('src'),true),alt:img.alt,caption:el.querySelector('figcaption')?.textContent || ''} : false;}},{tag:'img[src]',getAttrs:el=>articleUrl(el.getAttribute('src'),true)?{src:articleUrl(el.getAttribute('src'),true),alt:el.alt}:false}];},
   renderHTML({node,HTMLAttributes}){const a=node.attrs;return ['figure',HTMLAttributes,['img',{src:articleUrl(a.src,true),alt:a.alt}],['figcaption',{},a.caption]];}
 });
