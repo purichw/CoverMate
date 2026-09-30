@@ -79,9 +79,11 @@ try {
         for(let i=0;i<5;i++)window.dispatchEvent(new ErrorEvent('error',{message:'Script error.'}));
         window.dispatchEvent(new ErrorEvent('error',{message:'private@example.com',error:new TypeError('private@example.com'),filename:location.origin+'/private@example.com?token=secret',lineno:42,colno:3}));
       });
-      await telemetryPage.waitForFunction(()=>window.testBeacons.some(event=>event.errorClass==='TypeError'));
+      await telemetryPage.waitForFunction(()=>['opaque','TypeError'].every(type=>window.testBeacons.some(event=>event.errorClass===type)));
       const runtime=await telemetryPage.evaluate(()=>window.testBeacons.filter(event=>event.kind==='runtime_error'));
-      assert.equal(runtime.length,2);assert.equal(runtime[0].errorClass,'opaque');assert.equal(runtime[1].line,42);
+      assert.equal(runtime.length,2);
+      assert.deepEqual(runtime.map(event=>event.errorClass).sort(),['TypeError','opaque']);
+      assert.equal(runtime.find(event=>event.errorClass==='TypeError').line,42);
       assert.equal(diagnosticLoads,1);assert.ok(!JSON.stringify(runtime).includes('private'));assert.ok(!JSON.stringify(runtime).includes('secret'));
       await telemetryPage.close();
       const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
