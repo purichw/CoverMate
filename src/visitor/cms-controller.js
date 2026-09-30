@@ -156,8 +156,8 @@ export function withCmsController(Base, {
       if (this.state.remoteBusy) return;
       this._editorHistory?.breakGroup();
       this.setState({ confirmAction: {
-        kind: 'reset', kicker: 'Reset Draft', title: 'กลับไปยัง Publish ล่าสุด?',
-        body: 'แทนที่ Draft ทั้งเว็บด้วยเวอร์ชันที่ Publish ล่าสุด รวมข้อความ TH / EN รูปภาพ และการจัดวาง เว็บจริงจะไม่เปลี่ยน หลัง Reset ยังใช้ Undo เพื่อคืนงานก่อนหน้านี้ได้' + ((this.state.calculatorCatalogDraft !== null || this.state.calculatorReferenceDraft !== null) ? ' ข้อความ JSON ที่ยังไม่กด Save จะยังอยู่ในช่องแก้ไข' : ''),
+        kind: 'reset', kicker: 'Reset Draft', title: 'กลับไปยัง Publish หน้าเว็บล่าสุด?',
+        body: 'คืนร่างหน้าเว็บเป็นฉบับเผยแพร่ล่าสุด รวมข้อความ TH / EN รูปภาพ และการจัดวาง บทความไม่เปลี่ยน เว็บจริงคงเดิม และ Undo ได้' + ((this.state.calculatorCatalogDraft !== null || this.state.calculatorReferenceDraft !== null) ? ' ข้อความ JSON ที่ยังไม่กด Save จะยังอยู่ในช่องแก้ไข' : ''),
         actionLabel: 'Reset Draft'
       } }, () => this.focusAdminConfirm());
     }
@@ -173,7 +173,7 @@ export function withCmsController(Base, {
         this.applyEditorSnapshot(snapshot, false);
         this.setState({ remoteBusy: false, remoteAction: '', remoteError: '' });
         this.finishAdminConfirm();
-        this.showActionToast({ title: 'Reset Draft แล้ว', body: 'Draft ตรงกับ Publish ล่าสุดแล้ว เว็บจริงไม่เปลี่ยน กด Undo เพื่อคืนงานก่อน Reset ได้' });
+        this.showActionToast({ title: 'Reset Draft แล้ว', body: 'คืนร่างหน้าเว็บแล้ว บทความและเว็บจริงไม่เปลี่ยน กด Undo เพื่อคืนงานก่อน Reset ได้' });
       } catch (error) {
         this.noteRemoteError('Reset Draft ไม่สำเร็จ', error);
         this.finishAdminConfirm();
@@ -256,8 +256,8 @@ export function withCmsController(Base, {
       this.setState({
         confirmAction: {
           kind: 'save',
-          title: 'Save draft นี้ไหม?',
-          body: 'บันทึก Draft นี้ลง Firestore ผู้เข้าชมจะยังเห็นเว็บเวอร์ชันที่ Publish ไว้',
+          title: 'Save draft หน้าเว็บ?',
+          body: 'บันทึกเฉพาะร่างหน้าเว็บ ผู้เข้าชมยังเห็นฉบับเผยแพร่เดิม ร่างบทความไม่เปลี่ยน',
           actionLabel: 'Save draft',
           kicker: 'บันทึก Draft',
           undoSnapshot: null
@@ -270,8 +270,8 @@ export function withCmsController(Base, {
       this.setState({
         confirmAction: {
           kind: 'publish',
-          title: 'Publish การแก้ไขนี้ไหม?',
-          body: 'การแก้ไขใน Draft จะแสดงบนเว็บจริง หลัง Publish สำเร็จสามารถ Undo ได้ภายใน 30 วินาที',
+          title: 'Publish หน้าเว็บ?',
+          body: 'เผยแพร่เฉพาะร่างหน้าเว็บ ไม่บันทึกหรือเผยแพร่ร่างบทความ Undo ได้ภายใน 30 วินาที',
           actionLabel: 'Publish',
           kicker: 'อัปเดตเว็บจริง',
           undoSnapshot: this.loadLive()
@@ -338,7 +338,7 @@ export function withCmsController(Base, {
         this.showActionToast({
           kind: 'success',
           title: 'บันทึก Draft แล้ว',
-          body: 'บันทึก Draft ลง Firestore แล้ว ผู้เข้าชมยังเห็นเวอร์ชันที่ Publish ไว้'
+          body: 'บันทึกร่างหน้าเว็บแล้ว ฉบับเผยแพร่และร่างบทความยังคงเดิม'
         });
       } catch (e) {
         this.noteRemoteError('บันทึก Draft ไม่สำเร็จ', e);

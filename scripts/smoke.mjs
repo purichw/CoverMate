@@ -772,7 +772,7 @@ async function verifyAdminActionWorkflow() {
   await saveButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   let dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
-  if (!dialogText.includes("Save draft นี้ไหม?") || !dialogText.includes("ผู้เข้าชมจะยังเห็นเว็บเวอร์ชันที่ Publish ไว้")) {
+  if (!dialogText.includes("Save draft หน้าเว็บ?") || !dialogText.includes("ผู้เข้าชมยังเห็นฉบับเผยแพร่เดิม") || !dialogText.includes("ร่างบทความไม่เปลี่ยน")) {
     failures.push("admin actions: Save draft did not open the custom confirmation dialog");
   }
   await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "ยกเลิก" }).click();
@@ -832,7 +832,7 @@ async function verifyAdminActionWorkflow() {
   await publishButton.click();
   await page.locator('[data-admin-confirm="true"]').waitFor({ state: "visible", timeout: 5000 });
   dialogText = await page.locator('[data-admin-confirm="true"]').innerText();
-  if (!dialogText.includes("Publish การแก้ไขนี้ไหม?") || !dialogText.includes("แสดงบนเว็บจริง")) {
+  if (!dialogText.includes("Publish หน้าเว็บ?") || !dialogText.includes("เผยแพร่เฉพาะร่างหน้าเว็บ") || !dialogText.includes("ไม่บันทึกหรือเผยแพร่ร่างบทความ")) {
     failures.push("admin actions: Publish did not open the custom confirmation dialog");
   }
   await page.locator('[data-admin-confirm="true"]').getByRole("button", { name: "Publish" }).click();

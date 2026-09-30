@@ -129,6 +129,8 @@ function waitForAuth() {
 }
 
 function stateRef(name) {
+  // Website drafts/publications only. Articles have their own API, revisions
+  // and collections; never include them in a website Save/Publish/Reset.
   return firestoreMod.doc(db, "sites", SITE_ID, "states", name);
 }
 

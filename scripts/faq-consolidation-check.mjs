@@ -204,7 +204,7 @@ try {
   await page.screenshot({path:path.join(out,'admin-faq-editor.png')});
   const saved = page.waitForResponse(response => response.url().endsWith('/__faq-state') && response.request().method() === 'POST');
   await page.getByRole('button',{name:'Save draft',exact:true}).click();
-  await page.getByRole('dialog', {name:'Save draft นี้ไหม?'}).getByRole('button', {name:'Save draft',exact:true}).click();
+  await page.getByRole('dialog', {name:'Save draft หน้าเว็บ?'}).getByRole('button', {name:'Save draft',exact:true}).click();
   await saved;
   assert.ok(saves>0);
   await page.reload();
@@ -243,8 +243,8 @@ try {
     await target.waitFor({state:'detached'});
   }
   await page.getByRole('button',{name:'Save draft',exact:true}).click();
-  await page.getByRole('dialog',{name:'Save draft นี้ไหม?'}).getByRole('button',{name:'Save draft',exact:true}).click();
-  await page.getByRole('dialog',{name:'Save draft นี้ไหม?'}).waitFor({state:'detached'});
+  await page.getByRole('dialog',{name:'Save draft หน้าเว็บ?'}).getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.getByRole('dialog',{name:'Save draft หน้าเว็บ?'}).waitFor({state:'detached'});
   assert.deepEqual(draft.config.sections.find(s=>s.id==='faq').items, []);
   await page.reload();
   await openPanel();
