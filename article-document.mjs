@@ -1,4 +1,5 @@
 // Shared, versioned document boundary. No author-supplied HTML reaches the DOM.
+import {normalizeArticleTypography,articleTypographyAttributes} from './article-typography.mjs';
 export const ARTICLE_DOCUMENT_VERSION = 1;
 export const articleEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function articleUrl(value, image = false) {
@@ -32,7 +33,7 @@ export function legacyArticleDocument(body = []) {
 export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(value,true)} = {}) {
   let count = 0;
   const inline = new Set(['text','hardBreak']);
-  const blocks = new Set(['paragraph','heading','bulletList','orderedList','blockquote','callout','figure','horizontalRule','table','video']);
+  const blocks = new Set(['paragraph','heading','bulletList','orderedList','blockquote','callout','figure','horizontalRule','table','video','quoteCard','takeaway']);
   const text = value => typeof value === 'string' ? value.slice(0,50000) : '';
   function nodes(values, allowed, depth) {
     if (!Array.isArray(values) || depth > 12) return [];
@@ -41,27 +42,30 @@ export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(
       const a = n.attrs || {}, type = n.type;
       if (type === 'text') {
         if (!text(n.text)) return [];
-        const marks = (Array.isArray(n.marks) ? n.marks : []).slice(0,8).flatMap(m => {
+        const marks = (Array.isArray(n.marks) ? n.marks : []).slice(0,16).flatMap(m => {
           if(!m || typeof m!=='object')return [];
           if (['bold','italic','underline','strike','highlight','subscript','superscript','code'].includes(m.type)) return [{type:m.type}];
           if (m.type === 'link' && articleUrl(m.attrs?.href)) return [{type:'link',attrs:{href:articleUrl(m.attrs.href)}}];
+          if (m.type === 'textStyle') {const attrs=normalizeArticleTypography(m.attrs,{inline:true});return Object.keys(attrs).length?[{type:'textStyle',attrs}]:[];}
           return [];
         });
         return [{type,text:text(n.text),...(marks.length ? {marks} : {})}];
       }
-      if (['horizontalRule','hardBreak'].includes(type)) return [{type}];
+      const placement=depth===0&&['sidebar','full'].includes(a.placement)?{placement:a.placement}:{};
+      const typography=blocks.has(type)?normalizeArticleTypography(a):{};
+      if (['horizontalRule','hardBreak'].includes(type)) {const attrs={...placement,...typography};return [{type,...(Object.keys(attrs).length?{attrs}:{})}];}
       if (type === 'figure') {
         const src = mediaUrl(a.src);
-        return src && articleUrl(src,true) ? [{type,attrs:{src,alt:text(a.alt),caption:text(a.caption)}}] : [];
+        return src && articleUrl(src,true) ? [{type,attrs:{src,alt:text(a.alt),caption:text(a.caption),...placement,...typography}}] : [];
       }
       if (type === 'video') {
         const id = articleVideo(a.src);
-        return id ? [{type,attrs:{src:'https://www.youtube.com/watch?v='+id,title:text(a.title) || 'YouTube'}}] : [];
+        return id ? [{type,attrs:{src:'https://www.youtube.com/watch?v='+id,title:text(a.title) || 'YouTube',...placement,...typography}}] : [];
       }
       let children = blocks, attrs = {};
       if (['paragraph','heading'].includes(type)) {
         children = inline;
-        if (type === 'heading') attrs.level = a.level === 3 ? 3 : 2;
+        if (type === 'heading') attrs.level = [1,2,3,4,5,6].includes(a.level) ? a.level : 2;
         if (['left','center','right','justify'].includes(a.textAlign)) attrs.textAlign = a.textAlign;
       }
       if (['bulletList','orderedList'].includes(type)) children = new Set(['listItem']);
@@ -70,15 +74,22 @@ export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(
       if (type === 'tableRow') children = new Set(['tableCell','tableHeader']);
       if (['tableCell','tableHeader'].includes(type)) attrs = {colspan:Math.max(1,Math.min(12,Math.floor(Number(a.colspan))||1)),rowspan:Math.max(1,Math.min(50,Math.floor(Number(a.rowspan))||1))};
       if (type === 'blockquote') attrs.attribution = text(a.attribution);
-      if (type === 'callout') attrs = {kind:['summary','keypoints','note','warning'].includes(a.kind) ? a.kind : 'note',title:text(a.title)};
+      if (type === 'quoteCard') {attrs.attribution=text(a.attribution);children=new Set(['paragraph','heading','bulletList','orderedList']);}
+      if (type === 'takeaway') {attrs={title:text(a.title),note:text(a.note)};children=new Set(['paragraph','bulletList','orderedList']);}
+      if (type === 'callout') attrs = {kind:['summary','keypoints','note','warning','feature'].includes(a.kind) ? a.kind : 'note',title:text(a.title)};
       let content = nodes(n.content,children,depth+1);
       if (type === 'listItem' && content[0]?.type !== 'paragraph') content.unshift({type:'paragraph'});
-      if (['listItem','blockquote','callout','tableCell','tableHeader'].includes(type) && !content.length) content = [{type:'paragraph'}];
+      if (['listItem','blockquote','callout','quoteCard','takeaway','tableCell','tableHeader'].includes(type) && !content.length) content = [{type:'paragraph'}];
       if (['table','tableRow','bulletList','orderedList'].includes(type) && !content.length) return [];
+      Object.assign(attrs,placement,typography);
       return [{type,...(Object.keys(attrs).length ? {attrs} : {}),...(content.length ? {content} : {})}];
     });
   }
-  return {type:'doc',content:nodes(input?.type === 'doc' ? input.content : [],blocks,0)};
+  const content=nodes(input?.type === 'doc' ? input.content : [],blocks,0),attrs={};
+  if(input?.attrs?.layout==='blocks'||content.some(n=>['quoteCard','takeaway'].includes(n.type)||n.attrs?.placement))attrs.layout='blocks';
+  for(const key of ['takeawaysInDocument','sidebarQuoteInDocument'])if(input?.attrs?.[key]===true)attrs[key]=true;
+  for(const key of ['titleStyle','excerptStyle']){const style=normalizeArticleTypography(input?.attrs?.[key]);if(Object.keys(style).length)attrs[key]=style;}
+  return {type:'doc',...(Object.keys(attrs).length?{attrs}:{}),content};
 }
 export function articleDocumentText(doc) {
   return doc?.type === 'text' ? doc.text : (doc?.content || []).map(articleDocumentText).join(['paragraph','heading'].includes(doc?.type) ? '' : ' ');
@@ -87,24 +98,35 @@ export function renderArticleDocument(input, options) {
   const doc = normalizeArticleDocument(input,options), toc = [];
   let heading = 0;
   const esc = articleEscape;
-  function render(n) {
-    const a = n.attrs || {}, inner = (n.content || []).map(render).join('');
+  const attributes=attrs=>Object.entries(attrs).map(([key,value])=>` ${key}="${esc(value)}"`).join('');
+  function render(n,depth=0) {
+    const html=renderNode(n,depth);
+    if(n.type==='text'||n.type==='doc')return html;
+    const attrs=articleTypographyAttributes(n.attrs);
+    if(n.attrs?.textAlign)attrs.style=`text-align:${n.attrs.textAlign};${attrs.style||''}`;
+    if(depth===1&&doc.attrs?.layout==='blocks')attrs['data-placement']=n.attrs?.placement || 'body';
+    return html.replace(/^<[^>]+/,tag=>tag+attributes(attrs));
+  }
+  function renderNode(n,depth) {
+    const a = n.attrs || {}, inner = (n.content || []).map(child=>render(child,depth+1)).join('');
     if (n.type === 'text') return (n.marks || []).reduce((html,m) => {
+      if(m.type==='textStyle')return `<span class="article-text-style"${attributes(articleTypographyAttributes(m.attrs,{inline:true}))}>${html}</span>`;
       if (m.type === 'link') return `<a href="${esc(m.attrs.href)}" target="_blank" rel="noopener noreferrer">${html}</a>`;
       const tag = {bold:'strong',italic:'em',underline:'u',strike:'s',highlight:'mark',subscript:'sub',superscript:'sup',code:'code'}[m.type];
       return tag ? `<${tag}>${html}</${tag}>` : html;
     },esc(n.text));
-    const align = a.textAlign ? ` style="text-align:${a.textAlign}"` : '';
     switch(n.type) {
       case 'doc': return inner;
-      case 'paragraph': return `<p${align}>${inner || '<br>'}</p>`;
-      case 'heading': {const id = 'section-'+heading++;toc.push({key:id,id,label:articleDocumentText(n),href:'#'+id,className:a.level===3?'ad-toc-sub':''});return `<h${a.level} id="${id}" tabindex="-1"${align}>${inner}</h${a.level}>`;}
+      case 'paragraph': return `<p>${inner || '<br>'}</p>`;
+      case 'heading': {const id = 'section-'+heading++;toc.push({key:id,id,label:articleDocumentText(n),href:'#'+id,className:a.level>=3?'ad-toc-sub':''});return `<h${a.level} id="${id}" tabindex="-1">${inner}</h${a.level}>`;}
       case 'hardBreak': return '<br>';
       case 'bulletList': return `<ul>${inner}</ul>`;
       case 'orderedList': return `<ol start="${a.start}">${inner}</ol>`;
       case 'listItem': return `<li>${inner}</li>`;
       case 'horizontalRule': return '<hr>';
       case 'blockquote': return `<blockquote>${inner}${a.attribution?'<cite>'+esc(a.attribution)+'</cite>':''}</blockquote>`;
+      case 'quoteCard': return `<aside class="article-quote-card"><span class="article-quote-mark" aria-hidden="true">“</span><div>${inner}</div>${a.attribution?'<cite>'+esc(a.attribution)+'</cite>':''}</aside>`;
+      case 'takeaway': return `<aside class="article-takeaway-card">${a.title?'<p class="article-takeaway-title">'+esc(a.title)+'</p>':''}<div>${inner}</div>${a.note?'<p class="article-takeaway-note">'+esc(a.note)+'</p>':''}</aside>`;
       case 'callout': return `<aside class="article-callout" data-kind="${a.kind}">${a.title?'<p class="article-callout-title">'+esc(a.title)+'</p>':''}<div>${inner}</div></aside>`;
       case 'figure': return `<figure><img src="${esc(a.src)}" alt="${esc(a.alt)}" loading="lazy" decoding="async">${a.caption?'<figcaption>'+esc(a.caption)+'</figcaption>':''}</figure>`;
       case 'table': return `<div class="article-table-scroll" role="region" aria-label="Table" tabindex="0"><table><tbody>${inner}</tbody></table></div>`;
@@ -124,7 +146,7 @@ export function registerArticleDocument() {
     connectedCallback() {this.classList.add('cm-article-prose');this.paint();}
     attributeChangedCallback() {this.paint();}
     paint() {
-      try { this.innerHTML = renderArticleDocument(JSON.parse(this.getAttribute('data-document') || '{}')).html; }
+      try { const result=renderArticleDocument(JSON.parse(this.getAttribute('data-document') || '{}'));this.dataset.layout=result.document.attrs?.layout || 'classic';this.innerHTML=result.html; }
       catch { this.textContent = ''; }
     }
   });

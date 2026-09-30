@@ -1,5 +1,6 @@
 import {projectPublishedArticles,articlePublicHref} from './home-articles.mjs';
 import {renderArticleDocument,articleDocumentText} from '../../article-document.mjs';
+import {articleTypographyAttributes} from '../../article-typography.mjs';
 
 export function articleDetailSlug(path = '') {
   return /^\/articles\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/.exec(path)?.[1] || '';
@@ -44,11 +45,13 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
   const updated = Date.parse(copy.updatedAt);
   return {...summary,available:true,sample:payload.sample===true,blocks,sources,languages:Object.keys(item.translations),
     richDocument:rich ? JSON.stringify(rich.document) : '',
+    titleStyle:articleTypographyAttributes(rich?.document.attrs?.titleStyle).style || '',titleStyleKeys:articleTypographyAttributes(rich?.document.attrs?.titleStyle)['data-article-style'] || '',
+    excerptStyle:articleTypographyAttributes(rich?.document.attrs?.excerptStyle).style || '',excerptStyleKeys:articleTypographyAttributes(rich?.document.attrs?.excerptStyle)['data-article-style'] || '',
     seoTitle:text(copy.seoTitle),seoDescription:text(copy.seoDescription),
     toc:rich ? rich.toc : blocks.filter(block=>block.heading).map(block=>({key:block.id,id:block.id,label:block.text,href:'#'+block.id,className:block.h3?'ad-toc-sub':''})),
-    takeaways:texts(copy.takeaways).slice(0,8),author:text(copy.author),caption:text(copy.caption),
+    takeaways:rich?.document.attrs?.takeawaysInDocument?[]:texts(copy.takeaways).slice(0,8),author:text(copy.author),caption:text(copy.caption),
     headerNote:text(copy.headerNote),sidebarQuote:text(copy.sidebarQuote),takeawayNote:text(copy.takeawayNote),
-    headerNoteEnabled:copy.headerNoteEnabled!==false,sidebarQuoteEnabled:copy.sidebarQuoteEnabled!==false,takeawayNoteEnabled:copy.takeawayNoteEnabled!==false,
+    headerNoteEnabled:copy.headerNoteEnabled!==false,sidebarQuoteEnabled:copy.sidebarQuoteEnabled!==false&&!rich?.document.attrs?.sidebarQuoteInDocument,takeawayNoteEnabled:copy.takeawayNoteEnabled!==false&&!rich?.document.attrs?.takeawaysInDocument,
     image:mediaUrl(item.cover?.src) || summary.image,imageAlt:text(copy.coverAlt) || summary.imageAlt,
     date:date.format(published),datetime:published.toISOString(),
     updated: Number.isFinite(updated) && updated>summary.publishedAt && updated<=(now ?? Date.now()) ? date.format(updated) : '',

@@ -384,6 +384,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   };
 
   componentDidMount() {
+    this._articlePreviewUpdate = window.__covermateArticlePreview?.attach?.(this);
     this._editorKeydown = event => this.editorKeydown(event);
     document.addEventListener('keydown', this._editorKeydown, true);
     this._editorInput = event => {
@@ -522,6 +523,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     } catch {/* Invalid or unavailable tab memory never blocks the calculator. */}
   }
   componentWillUnmount() {
+    if (window.__covermateArticlePreview?.update === this._articlePreviewUpdate) delete window.__covermateArticlePreview.update;
     document.removeEventListener('keydown', this._editorKeydown, true);
     document.removeEventListener('input', this._editorInput, true);
     document.removeEventListener('pointerdown', this._editorPointer, true);

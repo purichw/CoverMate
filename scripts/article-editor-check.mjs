@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {articleCanvas,articleField,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
 import {articleUrl,articleVideo,renderArticleDocument,normalizeArticleDocument,legacyArticleDocument} from '../article-document.mjs';
 import {createArticleDraft,parseDraftBackup,publicationDateInput,publicationDateISO} from '../admin/articles/drafts.mjs';
 import {normalizeArticleCatalog,articleListView} from '../admin/articles/model.mjs';
@@ -17,7 +18,7 @@ for(const value of ['https://youtube.com.evil.test/watch?v=12345678901','https:/
 assert.equal(articleVideo('https://youtu.be/12345678901'),'12345678901');
 const raw={type:'doc',content:[{type:'heading',attrs:{level:1,textAlign:'left;color:red'},content:[{type:'text',text:'<img onerror=alert(1)>',marks:[{type:'link',attrs:{href:'javascript:alert(1)'}},{type:'bold'}]}]},{type:'html',text:'<script>x</script>'},{type:'figure',attrs:{src:'javascript:foo'}},{type:'paragraph',content:[{type:'text',text:'Safe',marks:[{type:'link',attrs:{href:'https://example.com'}}]}]}]};
 const safe=renderArticleDocument(raw);
-assert.ok(safe.html.includes('&lt;img'));assert.ok(safe.html.includes('<h2'));assert.ok(!safe.html.includes('javascript:'));assert.ok(!safe.html.includes('<script'));assert.ok(safe.html.includes('noopener noreferrer'));
+assert.ok(safe.html.includes('&lt;img'));assert.ok(safe.html.includes('<h1'));assert.ok(!safe.html.includes('javascript:'));assert.ok(!safe.html.includes('<script'));assert.ok(safe.html.includes('noopener noreferrer'));
 assert.deepEqual(normalizeArticleDocument(safe.document),safe.document);
 assert.doesNotThrow(()=>normalizeArticleDocument({type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'Safe',marks:[null]}]}]}));
 const legacy=legacyArticleDocument([{type:'paragraph',text:'Hello'},{type:'quote',text:'Quote',attribution:'Author'},{type:'list',items:['One','Two']}]);
@@ -64,7 +65,7 @@ if(process.argv.includes('--browser')) {
     await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
     const page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));
     const go=async p=>{await p.goto(server.baseUrl+'/admin#articles');await p.locator('[data-article-state=ready]').waitFor();};
-    const edit=async p=>{await p.locator('[data-article-action=edit]').first().click();await p.locator('.ae-workspace').waitFor();await p.evaluate(()=>document.fonts.ready);};
+    const edit=async p=>{await p.locator('[data-article-action=edit]').first().click();await p.locator('.ae-workspace').waitFor();await articleCanvas(p).locator('.ae-editor-host:visible .tiptap').waitFor();await p.evaluate(()=>document.fonts.ready);};
     const fit=async()=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal overflow');
     const save=async p=>{await p.locator('[data-ae=save]:visible').first().click();await p.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
     let releaseCatalog, catalogRequested;
@@ -74,7 +75,7 @@ if(process.argv.includes('--browser')) {
     await page.goto(server.baseUrl+'/admin#articles');await catalogStarted;
     await page.locator('[data-article-state=loading]').waitFor();
     await page.locator('[data-article-action=create]').click();await page.locator('.ae-workspace').waitFor();
-    await page.locator('[data-field=title]').fill('ร่างระหว่างโหลดคลัง');
+    await articleField(page,'title').fill('ร่างระหว่างโหลดคลัง');
     const lateCatalog=page.waitForResponse(response=>response.url()===server.baseUrl+'/__preview/articles');
     releaseCatalog();await (await lateCatalog).finished();
     assert.equal(await page.locator('[data-field=title]').inputValue(),'ร่างระหว่างโหลดคลัง');
@@ -87,36 +88,50 @@ if(process.argv.includes('--browser')) {
     assert.equal(server.requests.length,0,'Unsaved Create race does not write to the backend');
     report.checks.push('Create during delayed catalog load preserves unsaved text, leave warning and return to list without stale renders');
     await go(page);await edit(page);await fit();
-    assert.equal(await page.locator('.ae-editor-host:visible .tiptap h2').count(),2);
-    assert.equal(await page.locator('.ae-editor-host:visible .tiptap .article-callout').count(),3);
-    await page.locator('.ae-editor-host:visible .tiptap p').first().click();await page.keyboard.press('Home');
-    await page.locator('.ae-editor-host:visible .tiptap').evaluate(el=>{
+    let untouchedWarning=false;
+    const untouchedDialog=dialog=>{untouchedWarning=true;dialog.dismiss();};
+    page.on('dialog',untouchedDialog);await page.locator('[data-ae=back]').click();
+    await page.locator('[data-article-state=ready]').waitFor();
+    assert.equal(untouchedWarning,false,'Opening an existing article does not mark schema defaults as unsaved edits');
+    page.off('dialog',untouchedDialog);await edit(page);
+    const writingHost=await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').elementHandle();
+    const existingTitle=await articleField(page,'title').inputValue();
+    await articleField(page,'title').fill('   ');
+    await articleCanvas(page).locator('.ad-header h1').filter({hasText:'ชื่อบทความ'}).waitFor();
+    assert.equal(await writingHost.evaluate(el=>el.isConnected),true,'Whitespace-only title keeps the live writing host mounted');
+    await articleField(page,'title').fill(existingTitle);
+    await articleCanvas(page).locator('.ad-header h1').filter({hasText:existingTitle}).waitFor();
+    report.checks.push('Initial schema defaults stay clean and a temporarily blank title preserves the same editable document');
+    assert.equal(await articleCanvas(page).locator('.ae-editor-host:visible .tiptap h2').count(),2);
+    assert.equal(await articleCanvas(page).locator('.ae-editor-host:visible .tiptap .article-callout').count(),3);
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap p').first().click();await page.keyboard.press('Home');
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').evaluate(el=>{
       const clipboardData=new DataTransfer();clipboardData.setData('text/html','<p><strong>Paste check</strong><script>window.badPaste=true</script><img src="javascript:alert(1)"></p>');
       el.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
     });
-    assert.equal(await page.evaluate(()=>window.badPaste),undefined);
-    assert.equal(await page.locator('.tiptap img[src^="javascript:"]').count(),0);
-    assert.ok(await page.locator('.tiptap strong').filter({hasText:'Paste check'}).count());
+    assert.equal(await articleCanvas(page).locator('body').evaluate(()=>window.badPaste),undefined);
+    assert.equal(await articleCanvas(page).locator('.tiptap img[src^="javascript:"]').count(),0);
+    assert.ok(await articleCanvas(page).locator('.tiptap strong').filter({hasText:'Paste check'}).count());
     await page.locator('[data-ae=undo]').click();
     await page.screenshot({path:out+'/'+engine+'-desktop-full.png',fullPage:true});
     await page.screenshot({path:out+'/'+engine+'-desktop-top.png'});
-    await page.locator('[data-field=title]').fill('ทดสอบฉบับร่างภาษาไทย');
-    await page.locator('[data-lang=en]').click();await page.locator('[data-field=title]').fill('Draft in English');
+    await articleField(page,'title').fill('ทดสอบฉบับร่างภาษาไทย');
+    await page.locator('[data-lang=en]').click();await articleField(page,'title').fill('Draft in English');
     await page.locator('[data-lang=th]').click();assert.equal(await page.locator('[data-field=title]').inputValue(),'ทดสอบฉบับร่างภาษาไทย');
     report.checks.push('Independent TH/EN title and body documents');
-    await page.locator('.ae-editor-host:visible .tiptap p').first().click();
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap p').first().click();
     await page.keyboard.press('End');await page.keyboard.type(' regression');
-    await page.locator('[data-ae=undo]').click();assert.ok(!(await page.locator('.ae-editor-host:visible .tiptap').innerText()).includes('regression'));
-    await page.locator('[data-ae=redo]').click();assert.ok((await page.locator('.ae-editor-host:visible .tiptap').innerText()).includes('regression'));
+    await page.locator('[data-ae=undo]').click();assert.ok(!(await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').innerText()).includes('regression'));
+    await page.locator('[data-ae=redo]').click();assert.ok((await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').innerText()).includes('regression'));
     await page.locator('[data-ae=callout][data-kind=note]').click();
     await page.locator('.ae-dialog [data-field=title]').fill('หมายเหตุทดสอบ');await page.locator('.ae-modal-form [type=submit]').click();
-    assert.ok(await page.locator('.tiptap .article-callout-title').filter({hasText:'หมายเหตุทดสอบ'}).count());
+    assert.ok(await articleCanvas(page).locator('.tiptap .article-callout-title').filter({hasText:'หมายเหตุทดสอบ'}).count());
     await page.locator('[data-ae=unwrap]').click();
     await page.locator('[data-ae=link]').click();await page.locator('.ae-dialog [data-field=href]').fill('javascript:alert(1)');await page.locator('.ae-modal-form [type=submit]').click();
     assert.ok(await page.locator('.ae-form-error').innerText());await page.locator('.ae-dialog [data-cancel]').click();
-    await page.locator('[data-field=pinned]').check();
-    await page.locator('[data-field=publishedAt]').fill('2026-09-15T10:30');
-    await page.locator('[data-field=tags]').fill('policy-check, covermate');
+    await articleField(page,'pinned').check();
+    await articleField(page,'publishedAt').fill('2026-09-15T10:30');
+    await articleField(page,'tags').fill('policy-check, covermate');
     await save(page);
     await page.locator('[data-ae=preview]').click();await page.locator('.ae-preview-dialog').waitFor();
     const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-prose table').waitFor();
@@ -124,8 +139,8 @@ if(process.argv.includes('--browser')) {
     await page.locator('.ae-preview-dialog [data-ae=mobile]').click();await page.screenshot({path:out+'/'+engine+'-preview.png'});
     await page.locator('.ae-preview-dialog [data-ae=close]').click();
     const second=await context.newPage();second.setDefaultTimeout(10000);await go(second);await edit(second);
-    await page.locator('[data-field=title]').fill('ฉบับล่าสุดจากแท็บหนึ่ง');await save(page);
-    await second.locator('[data-field=title]').fill('ฉบับเก่าจากแท็บสอง');await second.locator('[data-ae=save]:visible').first().click();
+    await articleField(page,'title').fill('ฉบับล่าสุดจากแท็บหนึ่ง');await save(page);
+    await articleField(second,'title').fill('ฉบับเก่าจากแท็บสอง');await second.locator('[data-ae=save]:visible').first().click();
     await second.locator('.ae-feedback').filter({hasText:'อีกแท็บ'}).waitFor();assert.equal(await second.locator('[data-field=title]').inputValue(),'ฉบับเก่าจากแท็บสอง');await second.close();
     report.checks.push('Undo/redo, semantic callout, unsafe link rejection, preview blocks, atomic stale-tab conflict');
     await page.reload();await page.locator('[data-article-state=ready]').waitFor();await edit(page);
@@ -133,19 +148,19 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.locator('[data-field=pinned]').isChecked(),true);
     assert.equal(await page.locator('[data-field=publishedAt]').inputValue(),'2026-09-15T10:30','Bangkok date survives a non-Thai device zone');
     await page.locator('[data-lang=en]').click();assert.equal(await page.locator('[data-field=title]').inputValue(),'Draft in English');await page.locator('[data-lang=th]').click();
-    await page.locator('[data-field=title]').fill('ยังไม่บันทึก');page.once('dialog',d=>d.dismiss());await page.locator('[data-ae=back]').click();assert.ok(await page.locator('.ae-workspace').count());
+    await articleField(page,'title').fill('ยังไม่บันทึก');page.once('dialog',d=>d.dismiss());await page.locator('[data-ae=back]').click();assert.ok(await page.locator('.ae-workspace').count());
     page.once('dialog',d=>d.dismiss());await page.locator('#sideNav [data-module=analytics]').click();assert.ok(await page.locator('.ae-workspace').count());
     await save(page);report.checks.push('Persist/reload, preserved languages, Back and sidebar unsaved warning');
     for(const width of [820,390,320]) {
       await page.setViewportSize({width,height:900});await page.evaluate(()=>scrollTo(0,0));await fit();
-      assert.deepEqual(await page.locator('.ae-editor-host:visible table').evaluate(table=>({table:getComputedStyle(table).display,row:getComputedStyle(table.rows[0]).display,cell:getComputedStyle(table.rows[1].cells[0]).display,size:getComputedStyle(table.rows[0].cells[0]).fontSize})),{table:'table',row:'table-row',cell:'table-cell',size:'14px'},'Article tables keep reader geometry, not Admin stacked rows');
+      assert.deepEqual(await articleCanvas(page).locator('.ae-editor-host:visible table').evaluate(table=>({table:getComputedStyle(table).display,row:getComputedStyle(table.rows[0]).display,cell:getComputedStyle(table.rows[1].cells[0]).display,size:getComputedStyle(table.rows[0].cells[0]).fontSize})),{table:'table',row:'table-row',cell:'table-cell',size:'14px'},'Article tables keep reader geometry, not Admin stacked rows');
       await page.screenshot({path:out+'/'+engine+'-'+width+'-top.png'});
       await page.locator('[data-ae=settings]:visible').click();await page.locator('.ae-settings-dialog').waitFor();
       await page.locator('.ae-settings-dialog [data-field=coverAlt]').fill('ข้อความอธิบายภาพจากมือถือ');
       if(width===390)await page.screenshot({path:out+'/'+engine+'-mobile-settings.png'});
       await page.locator('.ae-settings-dialog .ae-done').click();
       await page.locator('.ae-settings-dialog').waitFor({state:'detached'});assert.equal(await page.locator('[data-field=title]').inputValue(),'ยังไม่บันทึก');
-      if(width===390){await page.locator('.ae-editor-host:visible .article-callout').first().scrollIntoViewIfNeeded();const bounds=await page.locator('.ae-toolbar').boundingBox();assert.ok(bounds.y>=130&&bounds.y<140,'Toolbar stays below shared mobile shell');await page.screenshot({path:out+'/'+engine+'-mobile-body.png'});}
+      if(width===390){await articleCanvas(page).locator('.ae-editor-host:visible .article-callout').first().scrollIntoViewIfNeeded();const bounds=await page.locator('.ae-toolbar').boundingBox();assert.ok(bounds.y>=130&&bounds.y<140,'Toolbar stays below shared mobile shell');await page.screenshot({path:out+'/'+engine+'-mobile-body.png'});}
     }
     await save(page);await page.locator('[data-ae=back]').click();await page.locator('[data-article-state=ready]').waitFor();
     const choose=async(name,label)=>{await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();await page.getByRole('option',{name:label,exact:true}).click();};
@@ -161,8 +176,8 @@ if(process.argv.includes('--browser')) {
     await choose('เรียงตาม','ปักหมุดก่อน');assert.equal(await page.locator('.article-table tbody tr').first().getAttribute('data-article-id'),sample.id);
     report.checks.push('Pin/date persistence, explicit Bangkok time, tag search, pin/date filters, reset and pinned-first ordering');
     await page.locator('[data-article-action=create]').click();await page.locator('.ae-workspace').waitFor();
-    assert.equal(await page.locator('[data-field=title]').inputValue(),'');await page.locator('[data-field=title]').fill('บทความใหม่');
-    await page.locator('.ae-editor-host:visible .tiptap').fill('เนื้อหาใหม่ที่ยังไม่เผยแพร่');await save(page);
+    assert.equal(await page.locator('[data-field=title]').inputValue(),'');await articleField(page,'title').fill('บทความใหม่');
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').fill('เนื้อหาใหม่ที่ยังไม่เผยแพร่');await save(page);
     const download=page.waitForEvent('download');await page.locator('[data-ae=export]').click();const file=await download;await file.saveAs(out+'/draft-backup.json');
     assert.equal(JSON.parse(fs.readFileSync(out+'/draft-backup.json','utf8')).translations.th.title,'บทความใหม่');
     await page.locator('.ae-import-file').setInputFiles(out+'/draft-backup.json');await page.locator('.ae-feedback').filter({hasText:'นำเข้าสำเนา'}).waitFor();

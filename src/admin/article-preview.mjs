@@ -8,11 +8,26 @@ function previewBootstrap(payload) {
   Object.defineProperty(window,'sessionStorage',{value:memory()});
   window.__covermateLiveState=payload.state;
   window.__covermateArticlePreview=payload;
+  // Only private frames need live authoring updates. Keep this out of the
+  // public shell while preserving selection, composition and undo state.
+  payload.attach=component=>{
+    payload.update=(detail,lang=payload.lang)=>new Promise(resolve=>{
+      if(!detail||typeof detail!=='object'){resolve(false);return;}
+      const nextLang=lang==='en'?'en':'th';
+      payload.detail=detail;payload.lang=nextLang;
+      payload.href=payload.origin+'/articles/'+detail.slug+(nextLang==='en'?'?lang=en':'');
+      component.setState({articleDetail:detail,lang:nextLang},()=>{
+        component.syncSeo();requestAnimationFrame(()=>resolve(true));
+      });
+    });
+    return payload.update;
+  };
   window.CoverMateAnalytics={installed:true,enabled:false,getConsent:()=> 'denied',setConsent:()=>{},trackEvent:()=>{}};
   payload.notify=()=>parent.postMessage({type:'covermate:article-preview-action',message:'Preview เท่านั้น — เปิดลิงก์และแชร์ได้จากหน้าที่เผยแพร่แล้ว'},payload.origin);
   for(const type of ['click','auxclick'])document.addEventListener(type,event=>{
     const link=event.target.closest?.('a[href]');
     if(!link || link.getAttribute('href').startsWith('#'))return;
+    if(link.closest('[contenteditable=true]')){event.preventDefault();return;}
     event.preventDefault();event.stopImmediatePropagation();payload.notify();
   },true);
   document.addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();payload.notify();},true);

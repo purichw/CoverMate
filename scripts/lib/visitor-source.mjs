@@ -232,10 +232,10 @@ export function buildVisitorTemplate(sources = readVisitorSources()) {
   // Compact the static CSS blocks before inserting the runtime script.
   const template = sources.template.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
     (_, open, css, close) => open + transformSync(css, { loader: 'css', minifyWhitespace: true }).code + close)
-    // Remove tag indentation only. Keep newlines/word separators and preserve
-    // raw-text blocks verbatim so textareas, code and preformatted copy are safe.
-    .replace(/(<(pre|textarea|script|style)\b[^>]*>[\s\S]*?<\/\2>)|^[\t ]+(?=<)/gim,
-      (match, rawText) => rawText || '');
+    // Omit source-only comments and tag indentation from shipped HTML. Keep
+    // integration markers, word separators and raw-text blocks verbatim.
+    .replace(/(<(pre|textarea|script|style)\b[^>]*>[\s\S]*?<\/\2>)|<!--[\s\S]*?-->|^[\t ]+(?=<)/gim,
+      (match, rawText) => rawText || (match.startsWith('<!-- COVERMATE_') ? match : ''));
   return withDefaultSeo(template.replace(VISITOR_RUNTIME_SLOT, () => runtime.trimEnd()), sources);
 }
 
