@@ -179,6 +179,8 @@ else {
     const admin=await context.newPage();admin.on('pageerror',error=>report.errors.push(error.message));
     await admin.goto(baseUrl+'/admin#operations');
     await admin.locator('.case-mobile-list').waitFor();
+    await admin.locator('.case-filter-toggle').click();
+    await admin.locator('#caseExtraFilters').waitFor({state:'visible'});
     const module=admin.locator('#caseStatusFilter + button');await module.click();
     await admin.screenshot({path:`${out}/${engine}-admin-mobile.png`});
     await admin.keyboard.press('End');await admin.keyboard.press('Escape');assert.equal(await module.getAttribute('aria-expanded'),'false');
