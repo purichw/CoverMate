@@ -92,12 +92,24 @@ try {
   }
   for(const width of[1448,390,320]){
    await page.setViewportSize({width,height:width>700?1086:844});
+   // Breakpoint changes re-render the filters, then enhance selects on a later
+   // frame. Inspect only the controls for the new viewport, not stale nth()s.
+   await page.waitForFunction(width=>{
+    const root=document.querySelector('.case-filterbar');
+    const keys=width<768?['sort']:['status','sort'];
+    return Boolean(root)&&Boolean(root.querySelector('[data-case-search]'))===(width>=768)&&keys.every(key=>{
+     const button=root.querySelector(`select[data-case-filter="${key}"] + button`);
+     return button?.getClientRects().length;
+    });
+   },width);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`No page overflow at ${width}`);
    const geometry=await page.locator('.case-metric').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),i=n.querySelector('.case-metric-icon').getBoundingClientRect();return{align:getComputedStyle(n).textAlign,offset:Math.abs(r.x+r.width/2-i.x-i.width/2),height:r.height};}));
    assert.ok(geometry.every(g=>g.align==='center'&&g.offset<2),`KPI group centered at ${width}`);
    assert.ok(Math.max(...geometry.map(g=>g.height))-Math.min(...geometry.map(g=>g.height))<2,`Equal KPI peers at ${width}`);
    assert.deepEqual(await page.locator('.case-metric strong').allTextContents(),metricKeys.map(k=>String(summary[k])));
-   for(const control of await page.locator('.case-filterbar .cm-select-value:visible').all())assert.equal(await control.evaluate(n=>getComputedStyle(n).textAlign),'center');
+   const selectAlignments=await page.locator('.case-filterbar .cm-select-value:visible').evaluateAll(nodes=>nodes.map(n=>getComputedStyle(n).textAlign));
+   assert.equal(selectAlignments.length,width<768?1:2,'Expected settled controls for the viewport');
+   assert.ok(selectAlignments.every(align=>align==='center'),'Visible select values stay centered');
    if(width>700){assert.ok((await page.locator('.cases-table th').evaluateAll(nodes=>nodes.map(n=>getComputedStyle(n).textAlign))).every(v=>v==='center'));}
   }
   checks.push('Canonical KPI totals, centered KPI icon/text, equal peers, centered visible select values/table headers, no overflow at1448/390/320');
