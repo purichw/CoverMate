@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {articleCanvas,articleField,articleTool,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {installMediaFixture} from './media-upload-browser-check.mjs';
+import {firebaseMock} from './fixtures/ops-portal.mjs';
 
 const server=await startArticlesAdminPreview();
 const pw=loadPlaywright(),engine=process.env.BROWSER || 'chromium';
@@ -12,18 +15,38 @@ const report={engine,environment:'Loopback fixture account/catalog; real editor 
 let page;
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
-  await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
+  await context.route('**/*',async route=>{
+    if(new URL(route.request().url()).origin!==server.baseUrl)return route.abort();
+    if(!route.request().isNavigationRequest())return route.continue();
+    const response=await route.fetch(),headers=response.headers();
+    // Keep the preview's restrictive policy, with the same media hosts as
+    // production. The fixture below intercepts those hosts without network I/O.
+    if(headers['content-security-policy'])headers['content-security-policy']=headers['content-security-policy']
+      .replace("img-src 'self' data: blob:","img-src 'self' data: blob: https://res.cloudinary.com")
+      .replace("connect-src 'self'","connect-src 'self' https://api.cloudinary.com https://res.cloudinary.com");
+    return route.fulfill({response,headers});
+  });
+  await context.route('**/covermate-firebase.js',route=>route.fulfill({contentType:'text/javascript',body:firebaseMock+'\nwindow.CoverMateFirebase.getAdminIdToken=()=>window.CoverMateFirebase.auth.currentUser.getIdToken();'}));
+  const media=await installMediaFixture(context,{token:'ops-regression-token',useActualApi:true});
   page=await context.newPage();page.setDefaultTimeout(10000);
   page.on('pageerror',error=>report.errors.push(error.message));
   await page.goto(server.baseUrl+'/admin#articles');
   await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[data-article-action=create]').click();
-  const body=page.locator('.ae-editor-host:visible .tiptap');
+  const body=articleCanvas(page).locator('.ae-editor-host:visible .tiptap');
   await body.waitFor();
-  const tool=action=>page.locator(`[data-ae="${action}"]:visible`).first().click();
-  const field=key=>page.locator(`.ae-workspace [data-field="${key}"]`);
+  const tool=action=>articleTool(page,action);
+  const field=key=>articleField(page,key);
   const modalField=key=>page.locator(`.ae-modal-form [data-field="${key}"]`);
-  const submit=()=>page.locator('.ae-modal-form [type=submit]').click();
+  const submit=async()=>{await page.locator('.ae-modal-form [type=submit]').click();if(!await page.locator('.ae-modal-form').count())await closeSettings(page);};
+  const submitImage=async source=>{
+    await page.locator('.ae-modal-form [type=submit]').click();
+    const dialog=page.locator('.cm-media-dialog');await dialog.waitFor();
+    if(source){await dialog.locator('input[type=text]').fill(source);await dialog.getByRole('button',{name:'ใช้ URL และจัดกรอบ',exact:true}).click();}
+    await page.waitForFunction(()=>document.querySelector('.cm-media-dialog .cropper-container')&&!document.querySelector('.cm-media-primary').disabled);
+    await dialog.getByRole('button',{name:'ใช้รูปนี้ใน draft',exact:true}).click();
+    await dialog.waitFor({state:'detached'});await closeSettings(page);
+  };
   const close=()=>page.locator('.ae-dialog [data-ae=close]').click();
   const feedback=()=>page.locator('.ae-feedback').innerText();
   const check=name=>{report.checks.push(name);console.log('PASS '+name);};
@@ -32,8 +55,10 @@ try {
     await body.fill(text);await selectAll();await tool('clear');
   };
   const choose=async(name,label)=>{
+    if(name==='หมวดหมู่')await closeSettings(page);
     await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();
     await page.getByRole('option',{name:label,exact:true}).click();
+    if(name==='หมวดหมู่')await closeSettings(page);
   };
   const save=async()=>{
     await tool('save');
@@ -51,7 +76,7 @@ try {
   assert.equal(await body.locator('strong,em').count(),0);
   check('All seven inline marks toggle on/off; clear formatting; empty preview validation');
 
-  for(const [value,tag] of [['หัวข้อ H2','h2'],['หัวข้อ H3','h3'],['ย่อหน้า','p']]) {
+  for(const [value,tag] of [['หัวข้อ H2','h2'],['หัวข้อ H3','h3'],['ย่อหน้า P','p']]) {
     await choose('รูปแบบย่อหน้า',value);assert.equal(await body.locator(tag).filter({hasText:'Selected text'}).innerText(),'Selected text');
   }
   for(const align of ['left','center','right','justify']) {
@@ -81,7 +106,7 @@ try {
   await tool('quote');await modalField('attribution').fill('Edited author');await submit();
   assert.equal(await body.locator('blockquote').getAttribute('data-attribution'),'Edited author');
   await tool('unwrap');assert.equal(await body.locator('blockquote').count(),0);
-  for(const kind of ['summary','keypoints','note','warning']) {
+  for(const kind of ['summary','keypoints','feature','note','warning']) {
     await plain('Callout content');
     await page.locator(`[data-ae=callout][data-kind=${kind}]`).click();
     await modalField('title').fill('');await submit();assert.ok(await page.locator('.ae-form-error').innerText());
@@ -92,21 +117,23 @@ try {
     assert.equal(await body.locator('.article-callout-title').innerText(),'Updated '+kind);
     await tool('unwrap');assert.equal(await body.locator('.article-callout').count(),0);
   }
-  check('Quote attribution create/edit/unwrap; all four callout kinds create/edit/unwrap and validation');
+  check('Quote attribution create/edit/unwrap; all five callout kinds create/edit/unwrap and validation');
 
   await plain('Media');await body.press('End');await tool('image');
-  await modalField('src').fill('/assets/brand/articles-reading-v1.webp');await modalField('alt').fill('');await submit();
+  await modalField('alt').fill('');await submit();
   assert.ok(await page.locator('.ae-form-error').innerText());
-  await modalField('alt').fill('Article image');await modalField('caption').fill('Figure caption');await submit();
+  await modalField('alt').fill('Article image');await modalField('caption').fill('Figure caption');await submitImage('/assets/brand/articles-reading-v1.webp');
   await body.locator('figure img').waitFor();assert.equal(await body.locator('figcaption').innerText(),'Figure caption');
-  await body.locator('figure img').click();await tool('image');await modalField('alt').fill('Edited alt');await submit();
+  await body.locator('figure img').click();await tool('image');await modalField('alt').fill('Edited alt');await submitImage();
   assert.equal(await body.locator('figure img').getAttribute('alt'),'Edited alt');
   assert.equal(await body.locator('figure').count(),1);
-  await tool('cover');await modalField('src').fill('/assets/brand/articles-reading-v1.webp');
-  await modalField('alt').fill('Cover alt');await modalField('caption').fill('Cover caption');await submit();
+  await tool('cover');
+  await modalField('alt').fill('Cover alt');await modalField('caption').fill('Cover caption');await submitImage('/assets/brand/articles-reading-v1.webp');
   assert.equal(await field('coverAlt').inputValue(),'Cover alt');assert.equal(await field('caption').inputValue(),'Cover caption');
   await tool('clear-cover');assert.equal(await page.locator('.ae-cover img').count(),0);
   assert.equal(await body.locator('figure').count(),1,'Removing cover preserves body images');
+  assert.equal(media.crops,3,'Body insert, re-crop and cover each use the shared media API');
+  assert.ok(media.responses.every(response=>response.status===201),'Real media handler accepts every isolated crop');
   await body.locator('p').last().click();await tool('divider');assert.equal(await body.locator('hr').count(),1);
   await tool('undo');assert.equal(await body.locator('hr').count(),0);await tool('redo');assert.equal(await body.locator('hr').count(),1);
   await body.locator('p').last().click();await tool('video');await modalField('src').fill('https://example.com/watch');await submit();
@@ -164,11 +191,21 @@ try {
   while(await page.locator('[data-ae=remove-tag]').count())await page.locator('[data-ae=remove-tag]').last().click();
   await field('tags').fill('QA, health');await tool('add-source');await tool('save');assert.match(await feedback(),/HTTPS/);
   await field('source-label-0').fill('Reference');await field('source-url-0').fill('https://example.com/source');
-  await tool('add-source');await page.locator('[data-ae=remove-source][data-index="1"]').click();
+  await openSettings(page);await page.locator('[data-ae=clear-takeaways]').click();
+  await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways').waitFor({state:'detached'});
+  assert.equal(await field('takeaways').inputValue(),'');
+  assert.equal(await field('takeawayNote').inputValue(),articleNotes.th.takeawayNote);
+  await field('takeaways').fill('Point one\nPoint two');await field('takeawayNoteEnabled').check();
+  await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways li').first().waitFor();
+  await closeSettings(page);
+  await tool('add-source');await openSettings(page);await page.locator('[data-ae=remove-source][data-index="1"]').click();await closeSettings(page);
   await save();
   await tool('preview');const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-sources a').waitFor();assert.equal(await preview.locator('.ad-sources a').getAttribute('href'),'https://example.com/source');
   assert.equal(await preview.locator('.ad-takeaways li').count(),2);
-  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'.ad-takeaways-note'}))assert.equal(await preview.locator(selector).innerText(),articleNotes.th[key]);
+  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'.ad-takeaways-note'})){
+    assert.equal(await preview.locator(selector).textContent(),articleNotes.th[key]);
+    assert.equal(await preview.locator(selector).evaluate(el=>getComputedStyle(el).whiteSpace),'pre-line');
+  }
   assert.equal(await preview.locator('.ad-header-note b').count(),0,'Note HTML renders literally as text');
   await page.screenshot({path:out+'/'+engine+'-preview.png'});await close();
   for(const key of Object.keys(articleNotes.th))await field(key+'Enabled').uncheck();
@@ -201,12 +238,12 @@ try {
   for(const key of Object.keys(articleNotes.th))await field(key+'Enabled').check();
   await field('takeawayNote').fill('วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า');
   await save();
-  await page.locator('[data-field=takeawayNoteEnabled]').scrollIntoViewIfNeeded();
+  await field('takeawayNoteEnabled').scrollIntoViewIfNeeded();
   await page.screenshot({path:out+'/'+engine+'-note-controls.png'});
   await tool('preview');await preview.locator('.ad-takeaways-note').waitFor();
   assert.equal(await preview.locator('.ad-header-note').innerText(),articleNotes.th.headerNote);
-  assert.equal(await preview.locator('.ad-side-note p').innerText(),articleNotes.th.sidebarQuote);
-  assert.equal(await preview.locator('.ad-takeaways-note').innerText(),'วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า','Re-enabled note uses the newly edited text');
+  assert.equal(await preview.locator('.ad-side-note p').textContent(),articleNotes.th.sidebarQuote);
+  assert.equal(await preview.locator('.ad-takeaways-note').textContent(),'วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า','Re-enabled note uses the newly edited text');
   await preview.locator('.ad-takeaways-note').scrollIntoViewIfNeeded();
   await page.screenshot({path:out+'/'+engine+'-notes-restored-preview.png'});await close();
   check('All three notes toggle off/on without losing text; localized visibility saves, exports, reloads and reaches the real full-page preview');
@@ -230,8 +267,8 @@ try {
   const failedSave=await denied.newPage();failedSave.on('pageerror',error=>report.errors.push(error.message));
   await failedSave.goto(server.baseUrl+'/admin#articles');
   await failedSave.locator('[data-article-action=create]').click();
-  await failedSave.locator('[data-field=title]').fill('Preserve me after failed save');
-  await failedSave.locator('.ae-editor-host:visible .tiptap').fill('Unsaved content');
+  await articleField(failedSave,'title').fill('Preserve me after failed save');
+  await articleCanvas(failedSave).locator('.ae-editor-host:visible .tiptap').fill('Unsaved content');
   await failedSave.locator('[data-ae=save]:visible').first().click();
   await failedSave.locator('.ae-feedback[data-error=true]').waitFor();
   assert.match(await failedSave.locator('.ae-feedback').innerText(),/ส่งออกไฟล์สำรอง/);

@@ -5,6 +5,7 @@ import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {adminArticleFixture} from './fixtures/home-articles/admin-feed.mjs';
 import {editorArticleFixture} from './fixtures/home-articles/editor-feed.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {articleField,articleCanvas} from './lib/article-editor-ui.mjs';
 
 // Presentation contract only: existing editor suites own saving, undo and backup.
 // Both surfaces consume the same source-owned sample and real shared renderer.
@@ -38,8 +39,9 @@ const geometry=root=>root.evaluate(element=>{
 });
 
 const typography=root=>root.evaluate(element=>{
+  const prose=element.querySelector('.ae-editor-host:not([hidden]) .tiptap')||element.querySelector('.cm-article-prose');
   const pick=(selector,properties,pseudo)=>{
-    const node=element.querySelector(selector);
+    const node=selector==='.cm-article-prose'?prose:prose.querySelector(selector.replace('.cm-article-prose',' :scope'));
     if(!node)throw Error('Missing typography sample: '+selector);
     const css=getComputedStyle(node,pseudo);
     return Object.fromEntries(properties.map(property=>[property,css[property]]));
@@ -174,11 +176,31 @@ try {
     window.__articlePreviewCspViolations=[];
     document.addEventListener('securitypolicyviolation',event=>window.__articlePreviewCspViolations.push(event.effectiveDirective));
   });
-  for(const page of [editorPage,publicPage]){page.setDefaultTimeout(10000);page.on('pageerror',error=>report.errors.push(error.message));}
+  for(const page of [editorPage,publicPage]){page.setDefaultTimeout(10000);page.setDefaultNavigationTimeout(30000);page.on('pageerror',error=>report.errors.push(error.message));}
   await editorPage.goto(admin.baseUrl+'/admin#articles');
   await editorPage.locator('[data-article-state=ready]').waitFor();
   await editorPage.locator(`[data-article-id="${fixture.id}"] [data-article-action=edit]:visible`).first().click();
   await editorPage.locator('.ae-workspace').waitFor();
+  const canvas=articleCanvas(editorPage).locator('.ad-page');
+  await canvas.locator('.ae-editor-host:not([hidden]) .tiptap table').waitFor();
+  for(const mode of ['desktop','mobile']){
+    await editorPage.locator(`[data-canvas-size=${mode}]`).click();
+    const width=await canvas.evaluate(el=>el.ownerDocument.defaultView.innerWidth);
+    await publicPage.setViewportSize({width,height:1000});
+    await publicPage.goto(reader.baseUrl+'/articles/'+fixture.slug);
+    await ready(publicPage,publicPage.locator('.ad-page'));
+    await canvas.evaluate(el=>el.ownerDocument.fonts.ready);
+    assert.deepEqual(await typography(canvas),await typography(publicPage.locator('.ad-page')),mode+' editable prose styles match the real reader while writing');
+    const selector='.ae-editor-host:not([hidden]) .tiptap';
+    assert.equal(await canvas.locator(selector).getAttribute('contenteditable'),'true');
+    if(mode==='desktop'){
+      const rows=await canvas.locator('.ad-share-links > *').evaluateAll(nodes=>nodes.map(el=>Math.round(el.getBoundingClientRect().top)));
+      assert.equal(new Set(rows).size,1,'All four share actions fit on one row beside the writing column');
+    }
+    await canvas.locator(selector).scrollIntoViewIfNeeded();
+    await editorPage.screenshot({path:`${out}/${engine}-writing-${mode}.png`});
+  }
+  report.checks.push('Editable writing canvas matches public prose typography, callouts and tables at the same desktop/mobile viewport');
   // Vercel injects its feedback toolbar into hosted preview HTML. It must not
   // execute inside the private article frame or send deployment telemetry.
   await editorPage.route(url=>url.pathname==='/'&&url.searchParams.has('lang'),async route=>{
@@ -287,7 +309,7 @@ try {
   report.checks.push('Maximum-length Thai notes and unbroken English words wrap without header/TOC overlap at 1440, 820, 390 and 320px');
   await editorPage.setViewportSize({width:1440,height:1000});
   await editorPage.locator('.ae-preview-dialog [data-ae=close]').click();
-  const title=editorPage.locator('.ae-title-fields [data-field=title]');
+  const title=articleField(editorPage,'title');
   await title.fill('ร่างที่แก้ล่าสุดโดยไม่ต้องบันทึก');
   let rejectNext=true;
   await editorPage.route('**/?lang=th',route=>{

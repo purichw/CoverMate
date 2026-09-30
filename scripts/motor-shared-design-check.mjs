@@ -25,7 +25,7 @@ fs.mkdirSync(out, { recursive: true });
 // Pure projection tests exercise the same component methods used by both routes.
 const sandbox = {
   console, URL, URLSearchParams, setTimeout, clearTimeout,
-  window: { location: { pathname: '/', search: '', origin: 'http://localhost', href: 'http://localhost/' }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } },
+  window: { CoverMateContract:contract, location: { pathname: '/', search: '', origin: 'http://localhost', href: 'http://localhost/' }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } },
   document: { querySelector: () => null, querySelectorAll: () => [], documentElement: { setAttribute() {}, removeAttribute() {} }, body: null },
   DCLogic: class { setState(value, callback) { Object.assign(this.state, value); callback?.(); } }
 };

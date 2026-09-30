@@ -6,6 +6,7 @@ import { extractBundlerTemplate } from "./lib/bundler-template.mjs";
 import { importCoverMateContract } from "./lib/contract-loader.mjs";
 import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
 import { readImageVersions } from "./lib/visitor-source.mjs";
+import { installMediaFixture } from "./media-upload-browser-check.mjs";
 
 const playwright = loadPlaywright();
 const { chromium } = playwright;
@@ -265,6 +266,7 @@ function adminActionContentMock(liveConfig, draftConfig, liveText = {}, draftTex
     window.__covermatePublishCalls = [];
     window.CoverMateFirebase = {
       auth: { currentUser: smokeUser },
+      getAdminIdToken: async () => "smoke-token",
       waitForAuth: async () => smokeUser,
       syncSessionFromCurrentUser: async () => {
         window.localStorage.setItem("covermate-admin-session", JSON.stringify(smokeSession));
@@ -880,6 +882,7 @@ async function verifyAdminBuilderControls() {
   const liveConfig = renamedConfig("Live Builder Smoke");
   const draftConfig = renamedConfig("Draft Builder Smoke");
   const page = await newSmokePage({ viewport: { width: 1280, height: 900 } });
+  const media = await installMediaFixture(page.context(), { token: "smoke-token" });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.route("**/covermate-{firebase.js,public.mjs}", (route) =>
@@ -950,7 +953,20 @@ async function verifyAdminBuilderControls() {
   if (!/ที่อยู่รูปภาพไม่ถูกต้อง/.test(rejectedLogoState.toast)) {
     failures.push("admin builder: invalid media path toast is missing");
   }
+  const originalLogo = rejectedLogoState.logo;
   await changeField(page.locator('[data-cms-field="brand.advisorLogo"]'), "assets/logos/srikrung-logo.png");
+  const cropDialog = page.getByRole("dialog", { name: "แก้ไขรูปภาพ", exact: true });
+  await cropDialog.waitFor();
+  await page.waitForFunction(() => document.querySelector('.cm-media-stage > img')?.cropper?.ready && !document.querySelector('.cm-media-primary')?.disabled);
+  const pendingLogo = await page.evaluate(() => JSON.parse(localStorage.getItem("purich-draft-config-v3") || "{}")?.brand?.advisorLogo || "");
+  if (pendingLogo !== originalLogo) failures.push("admin builder: entering an image URL changed draft before crop confirmation");
+  const cropSaved = page.waitForResponse(response => new URL(response.url()).pathname === "/api/media" && response.request().postDataJSON()?.action === "crop");
+  await cropDialog.getByRole("button", { name: "ใช้รูปนี้ใน draft", exact: true }).click();
+  const cropResponse = await cropSaved, croppedLogo = await cropResponse.json();
+  if (cropResponse.status() !== 201) throw new Error("admin builder: isolated crop failed");
+  await cropDialog.waitFor({ state: "detached" });
+  await page.waitForFunction(url => JSON.parse(localStorage.getItem("purich-draft-config-v3") || "{}")?.brand?.advisorLogo === url, croppedLogo.url);
+  if (media.crops !== 1 || media.sourceUploads !== 0) failures.push("admin builder: bundled logo should create one confirmed derivative without re-uploading the original");
   await changeField(page.locator('[data-cms-field="brand.advisorLogoAlt"]'), "Srikrung broker logo");
   await changeField(page.locator('[data-cms-field="contact.lineUrl"]'), "http://bad.example");
   await waitForBodyText(page, /ลิงก์ติดต่อไม่ถูกต้อง/);
@@ -964,11 +980,16 @@ async function verifyAdminBuilderControls() {
   await clickAdminTab(page, "ธีมและข้อมูล");
   await changeField(page.locator('[data-admin-seo-title="true"]'), "CoverMate smoke SEO title");
   await changeField(page.locator('[data-admin-seo-description="true"]'), "Smoke-tested guarded SEO description for the CoverMate admin rebuild.");
+  await page.waitForFunction(() => {
+    const seo = JSON.parse(localStorage.getItem("purich-draft-config-v3") || "{}")?.seo;
+    return seo?.title?.th === "CoverMate smoke SEO title" && seo?.description?.th === "Smoke-tested guarded SEO description for the CoverMate admin rebuild.";
+  }, null, { timeout: 5000 }).catch(() => {});
   const cmsControlState = await page.evaluate(() => {
     const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
     return {
       logo: config?.brand?.advisorLogo || "",
       logoAlt: config?.brand?.advisorLogoAlt || "",
+      logoEdit: config?.mediaEdits?.["brand.advisorLogo"],
       lineUrl: config?.contact?.lineUrl || "",
       email: config?.contact?.email || "",
       seoTitle: config?.seo?.title?.th || "",
@@ -979,8 +1000,11 @@ async function verifyAdminBuilderControls() {
       lifeLicence: config?.licences?.life?.number || ""
     };
   });
-  if (cmsControlState.logo !== "assets/logos/srikrung-logo.png" || cmsControlState.logoAlt !== "Srikrung broker logo") {
+  if (cmsControlState.logo !== croppedLogo.url || cmsControlState.logoAlt !== "Srikrung broker logo") {
     failures.push(`admin builder: advisor logo metadata did not persist (${cmsControlState.logo} / ${cmsControlState.logoAlt})`);
+  }
+  if (cmsControlState.logoEdit?.source !== "assets/logos/srikrung-logo.png" || cmsControlState.logoEdit?.output !== croppedLogo.url || !isDeepStrictEqual(cmsControlState.logoEdit?.crop, croppedLogo.crop)) {
+    failures.push("admin builder: confirmed logo lost its original source or crop metadata");
   }
   if (cmsControlState.lineUrl !== "https://line.me/ti/p/~covermate-smoke" || cmsControlState.email !== "owner@covermate.example") {
     failures.push(`admin builder: contact controls did not persist validated values (${cmsControlState.lineUrl} / ${cmsControlState.email})`);
@@ -989,7 +1013,7 @@ async function verifyAdminBuilderControls() {
     cmsControlState.seoTitle !== "CoverMate smoke SEO title" ||
     cmsControlState.seoDescription !== "Smoke-tested guarded SEO description for the CoverMate admin rebuild."
   ) {
-    failures.push("admin builder: guarded SEO title/description did not persist");
+    failures.push(`admin builder: guarded SEO title/description did not persist (${JSON.stringify({title:cmsControlState.seoTitle,description:cmsControlState.seoDescription})})`);
   }
   if (!cmsControlState.seoGuard.includes("Canonical: https://covermateinsurance.com/") || !/Admin, Edit และ Preview ยังคงเป็น noindex/.test(cmsControlState.seoGuard)) {
     failures.push("admin builder: SEO canonical/robots guard copy is missing");

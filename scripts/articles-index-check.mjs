@@ -12,7 +12,8 @@ const options={now:Date.parse('2026-09-27'),mediaUrl:cmsMedia};
 const feed=structuredClone(articleIndexFixture);
 const view=(value=feed,search='',lang='th')=>projectArticleIndex(value,{...options,search,lang});
 assert.equal(view().total,12);assert.equal(view().items.length,8);assert.equal(view().pages,2);
-assert.equal(view().featured.key,projectHomeArticles(feed,options).items[0].key);
+assert.equal(view().featured.key,'sample-motor','Index uses its own pinned articles');
+assert.equal(projectHomeArticles(feed,options).items[0].key,'sample-travel-baggage','Home independently fills unpinned slots with latest articles');
 assert.equal(view(feed,'?category=motor').total,4);assert.equal(view(feed,'?category=motor').featured,null);
 assert.equal(view(feed,'?q=สัมภาระ').total,1);
 assert.equal(view(feed,'?q=baggage','en').total,1);
@@ -65,6 +66,7 @@ if(process.argv.includes('--browser')) {
       assert.equal(await page.locator('header > div > a').first().getAttribute('href'),lang==='en'?'/?lang=en':'/');
       assert.match(await page.locator('link[rel=canonical]').getAttribute('href'),/\/articles/);
       assert.match(await page.locator('meta[name=robots]').getAttribute('content'),/noindex/);
+      await page.locator('.ar-sort').scrollIntoViewIfNeeded();
       await page.locator('.ar-sort .cm-select-trigger').waitFor();
       assert.equal(await page.locator('.ar-sort').count(),1,'Only one responsive sort control is mounted');
       assert.equal(await page.locator('.ar-sort').evaluate(el=>!!el.closest('.ar-filter-band')),width>=768,'Sort follows the desktop filter row or mobile results heading');

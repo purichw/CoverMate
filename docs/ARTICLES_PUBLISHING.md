@@ -1,6 +1,9 @@
 # Articles Publication And Visibility
 
-Updated 2026-09-27. This supersedes the earlier local-only parity audit.
+Updated 2026-09-30. The September 27 publication model and its historical
+verification below remain the baseline. The shared image-upload/crop additions
+are **local implementation only**; they have not been deployed or verified
+against a live provider by this change.
 
 ## Operator Workflow
 
@@ -40,6 +43,48 @@ public carousel. Index pins remain unlimited. See `HOME_ARTICLES.md` for details
 Old account/environment-scoped IndexedDB drafts appear in a recovery area and
 can be copied into the central repository without publishing or deleting them.
 JSON import/export remains available for backup and stale-write recovery.
+
+## Shared Image Editing (Local, 2026-09-30)
+
+Cover images and body figures now use `src/admin/media-editor.js`, the same
+dialog used by website CMS image owners. Enter alt text and an optional
+caption/credit, then choose a file or image URL and inspect Crop or Fit whole
+image before applying. New article images default to 1600 × 900 output;
+recropping retains existing output dimensions when available. This does not
+change the visitor's cover or figure layout rules.
+
+Selecting a PNG/JPEG/WebP/SVG uploads the full original immediately through a
+server-signed Cloudinary destination. `/api/media` then verifies the stored
+source through the provider Admin API before returning its reference. Saving
+the crop uploads only the PNG output. Reopening a cover or selected figure uses
+the retained original and crop coordinates; it does not upload another source.
+New external HTTPS sources are imported through Cloudinary so the external
+host does not need to allow browser-canvas CORS. Existing Cloudinary URLs and
+supported local asset paths can be recropped directly.
+
+Image file paste/drop and pasted image URLs/HTML images route through the same
+dialog instead of inserting an unreviewed image or base64 directly. The input
+adapter selects one image at a time; it is not a bulk asset-library import.
+Text pasted alongside HTML images follows the editor's text flow while the
+image receives its separate alt/crop step. Cancellation or upload failure
+preserves the existing article image. An original uploaded before cancellation
+can remain unreferenced; cancellation does not delete provider assets.
+
+Private draft cover/image data and figure attributes retain `sourceUrl`,
+`provider`, output `width`/`height`, optional public
+`sourceAsset: {publicId,version,width,height,bytes,format}`, and native-pixel
+`crop: {mode,x,y,width,height,rotate,scaleX,scaleY,sourceWidth,sourceHeight}`.
+Normalization preserves the association through draft save/reload, export/import,
+and figure move/duplicate. These fields describe a public artwork source; they
+do not authorize provider access. Public article projections and rendered HTML
+exclude the recrop metadata and use the final output URL with alt/caption.
+
+The existing article save/publish sequence is unchanged. Applying an image
+updates the editor draft; it does not publish the article or write CMS content
+through the media endpoint. Old URL-only article images continue to render.
+They cannot recover a full original from an already resized derivative; supply
+the original again when necessary. See `CMS_MEDIA.md` for the complete source
+protocol, compatibility path and orphan-retention policy.
 
 ## Server Contract
 
@@ -91,8 +136,16 @@ sitemap. The existing static sitemap continues to advertise Home/Motor.
   explicit error rather than silent truncation. Filtering/paging uses that
   complete lightweight catalog, not individual full documents.
 - Media fields accept validated HTTPS/internal asset URLs with alt/captions.
-  Article-specific uploads/library/crop, revision-history restore, trash and
-  central author/taxonomy administration are not implemented controls.
+  The local shared upload/crop flow above replaces the earlier URL-only image
+  controls. A browsable asset library, revision-history restore, trash and
+  central author/taxonomy administration remain unimplemented.
+- New uploaded originals are limited to 8,000,000 bytes and 20,000,000 pixels;
+  crop PNGs are limited to 1,500,000 bytes and 2048 px per dimension. The media
+  API independently requires the active owner and server-resolved environment.
+  Prepare/complete/crop each count toward 60 media operations per owner/site/hour.
+  Original preparation/output upload require verified Cloudinary Free usage
+  below 80%. This is not a storage or delivery spending cap. Other provider names
+  fail closed; no alternate backend or automatic paid upgrade is implemented.
 - Visitor bookmarks are device-local; there is no account-synced library.
   YouTube is a link card, not an executable arbitrary embed.
 - To disable safely, use the master switch. Do not delete data collections.
@@ -102,6 +155,21 @@ sitemap. The existing static sitemap continues to advertise Home/Motor.
   were written to production as part of local QA.
 
 ## Verification
+
+For the new local media integration, use the focused
+`scripts/article-media-check.mjs`, `scripts/media-provider-check.mjs`, and
+`scripts/media-upload-browser-check.mjs` checks. Keep their current report and
+screenshots separate from the historical publication evidence below. These
+isolated checks do not establish deployed credentials, live upload success or
+production publication. The September 27 emulator/cloud evidence that follows
+predates the full-original upload changes.
+
+September 30 local verification passed: `article-media-check.mjs --browser`
+exercised cover/body recropping, legacy asset originals, save/reload, URL/file
+paste, file drop, cancellation and stale completion against the real article
+editor with the shared media dialog boundary stubbed. The separate media
+browser checks exercised the actual crop dialog and API validation using an
+isolated provider. No real Cloudinary or production CMS writes occurred.
 
 `scripts/articles-api-check.mjs` exercises real Auth/Firestore emulators and the
 production API: owner/other/inactive/unknown roles, UAT boundaries, independent

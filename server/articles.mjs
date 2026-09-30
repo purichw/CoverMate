@@ -2,7 +2,7 @@ import {serverDb} from './firebase.cjs';
 import {error} from './http.cjs';
 import {articleSettings} from '../article-settings.mjs';
 import {createArticleDraft,ARTICLE_CATEGORIES} from '../admin/articles/drafts.mjs';
-import {articleDocumentText,articleUrl} from '../article-document.mjs';
+import {articleDocumentText,articleUrl,normalizeArticleDocument,normalizeArticleMedia} from '../article-document.mjs';
 
 const identity = value => typeof value==='string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
 const slugOK = value => typeof value==='string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length<=160;
@@ -46,11 +46,11 @@ function publicItem(live,now,{summary=false}={}) {
   const translations={};
   for(const [lang,t] of Object.entries(live.translations||{})) {
     if(!isDue(t,now))continue;
-    translations[lang]=summary?Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt','status','readingMinutes'].map(key=>[key,t[key]])):t;
+    translations[lang]=summary?Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt','status','readingMinutes'].map(key=>[key,t[key]])):{...t,...(t.document?{document:normalizeArticleDocument(t.document,{includeMediaMetadata:false})}:{})};
   }
   if(!Object.keys(translations).length)return null;
   const {id,slug,categoryId,tags,featured,pinned,image,cover}=live;
-  return {id,slug,categoryId,tags,featured,pinned,image,cover,status:'published',translations};
+  return {id,slug,categoryId,tags,featured,pinned,image:normalizeArticleMedia(image,{includeMetadata:false}),cover:normalizeArticleMedia(cover,{includeMetadata:false}),status:'published',translations};
 }
 function editorValue(record) {
   return {...record.draft,revision:record.revision,updatedAt:record.updatedAt,basePublished:!!record.live,slugLocked:!!record.lockedSlug,localDraft:false,cloudDraft:true};

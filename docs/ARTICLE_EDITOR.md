@@ -52,11 +52,20 @@ button or scheduled-unpublish control: these mock details have no corresponding
 supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
 
 - Independent TH/EN documents, titles, excerpts, dates, SEO and cover captions.
-- H2/H3, paragraphs, bold/italic/underline/strike/highlight, sub/superscript,
+- H1–H6, paragraphs, bold/italic/underline/strike/highlight, sub/superscript,
   alignment, ordered/bullet nested lists, safe links, divider and undo/redo.
-- Summary, Key points, note and warning blocks with editable titles; quotes
+- Summary, Key points, note, warning and coverage feature blocks with editable titles; quotes
   with attribution; image figures with alt text and captions.
 - Tables with row/column insertion and removal, header row, cell merge/split.
+- Freely ordered top-level article blocks: select directly on the page or from
+  the block list, move up/down, duplicate, delete, or add a paragraph. Summary
+  cards, botanical quote cards and illustrations can be inserted after any
+  selected block. Placement is body column, sidebar, or full article width.
+  All operations participate in the document's Undo/Redo history.
+- The bulb summary block has an editable title, check list and optional
+  decorative note. The botanical quote block has directly editable rich text
+  and optional attribution. Clearing a note/title/attribution hides that text.
+  Body text stays editable on the actual page; “แก้รายละเอียด” edits card fields.
 - YouTube link cards, not embedded players or arbitrary iframe/HTML.
 - Separate cover, category, tags, author, Home recommendation, pin, sources,
   localized key takeaways, slug, SEO title/description.
@@ -65,7 +74,7 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
   server rejection keeps all editor changes available for correction. Publication
   remains explicit, and removing a live pin requires republishing the change.
 - Optional localized `headerNote`, `sidebarQuote`, and `takeawayNote` create the
-  handwritten header, botanical sidebar quote, and note beside the takeaway
+  decorative header, botanical sidebar quote, and note beside the takeaway
   banner. Fields retain line breaks, are plain text, and can be cleared. Each
   has a localized `headerNoteEnabled`, `sidebarQuoteEnabled`, or
   `takeawayNoteEnabled` switch. Turning it off preserves its text for reuse;
@@ -73,15 +82,73 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
   preserve both values independently for TH/EN. Missing flags default to true
   for older articles. An enabled empty sidebar quote uses the existing CMS
   `articleDetail.note` when configured; disabling it also suppresses that fallback.
-  The takeaway-note switch hides only the handwriting, not the summary/checklist.
-- Desktop settings rail; mobile same settings in a bottom sheet. The toolbar
+  The takeaway-note switch hides only the note, not the summary/checklist.
+- The writing canvas shows the real public article page while editing. The body
+  is directly editable in its reading column; title, cover, summary and decorative
+  notes open their settings on click or keyboard activation. Changes update the
+  canvas before Save or Preview. Desktop/Mobile switches the writing viewport.
+- A settings drawer on desktop and sheet on mobile contain the same metadata.
+  The toolbar
   scrolls horizontally and stays below the shared shell. Bottom save actions
   respect safe-area padding and hide when a detected software keyboard opens.
 
 Images currently use HTTPS URLs or local asset paths. Article-specific uploads,
-inline cropping, revision-history restore, server autosave, duplication actions,
+inline cropping, revision-history restore, server autosave, whole-article duplication,
 and archive/trash are not implemented controls. The offline test adapter has no
 publication capability; the real verified repository supports explicit Publish.
+
+## Typography Controls
+
+Article text uses Google Sans, including decorative notes and botanical quotes.
+This latest font direction replaces the earlier handwritten Sriracha treatment.
+The shared responsive defaults follow the compact hierarchy of the supplied
+mockups; they are CSS design values, not measurements recovered from the images.
+
+| Body role | Desktop (px) | Mobile (px) |
+| --- | ---: | ---: |
+| Paragraph | 18 | 16 |
+| H1 | 36 | 24 |
+| H2 | 26 | 20 |
+| H3 | 22 | 18 |
+| H4 | 20 | 17 |
+| H5 | 18 | 16 |
+| H6 | 16 | 15 |
+
+The page title defaults to 40 px desktop / 24 px mobile, separate from an H1 inserted into
+the body. Selecting P or H1–H6 changes document semantics and the default style;
+it does not remove a previously applied custom text size. Body headings feed the
+TOC regardless of their visual size. H2 is the usual starting level below the
+article title, but all six levels are available.
+
+- **ขนาดข้อความ / มือถือ** apply a numeric size to selected text, or to text
+  typed next when only a caret is active. **คืนขนาดข้อความ** removes the size
+  mark while retaining bold, links and other marks. Text then inherits its
+  block/default size. An empty mobile field uses the main override when set;
+  without a main override, the responsive semantic default applies.
+- **ตัวอักษร / ช่องไฟบล็อก** edits the selected top-level block's size, mobile
+  size, line height, space before/after and internal padding. Blank fields remove
+  that override. **คืนค่าบล็อก** clears these numeric overrides without changing
+  its type, content, placement or independently sized inline text.
+  Card body sizing preserves its title/note hierarchy; custom padding retains
+  an icon gutter so text cannot cover the bulb or coverage illustration.
+- The article settings' **ขนาดและระยะชื่อบทความ** and
+  **ขนาดและระยะคำโปรย** expose the same numeric fields for the real title and
+  deck. These styles belong to the active translation's document. Clearing a
+  field restores that element's default.
+
+All controls update the writing canvas directly and participate in document
+Undo/Redo. Font family is fixed to Google Sans; there is no arbitrary CSS editor.
+
+`article-typography.mjs` owns the shared whitelist: `fontSize` and
+`fontSizeMobile` accept 8–120 px, `lineHeight` accepts 1–3, `spaceBefore` and
+`spaceAfter` accept 0–160 px, and `padding` accepts 0–120 px. Only finite numeric
+values in range are retained, rounded to two decimal places; strings, invalid
+values and unsupported properties are discarded. Zero spacing remains valid.
+Inline `textStyle` marks allow only the two size fields. Supported block nodes
+store the six fields in their attributes; `doc.attrs.titleStyle` and
+`doc.attrs.excerptStyle` hold title/deck overrides. The renderer emits only these
+validated CSS custom properties with explicit units. This contract is shared by
+normalization, backup, server save/publication, the Editor, Preview and reader.
 
 ## Editorial Metadata
 
@@ -111,6 +178,24 @@ and Visitor. Arbitrary HTML, unsafe URLs and unsupported nodes are not rendered.
 Normalization limits depth, node count, text length and table spans. Backups
 and local saves are limited to 2 MB.
 
+Flexible documents have `doc.attrs.layout="blocks"`. Top-level nodes accept
+`placement="body"|"sidebar"|"full"`; normalization omits the default body value
+and rejects placement on nested nodes. `takeaway` stores `title`/`note` plus
+rich list/paragraph content; `quoteCard` stores attribution plus rich content.
+The reader, Preview and TipTap use the same placement CSS and node anatomy.
+Desktop uses a 3:1 content/sidebar grid. A sidebar block occupies the available
+right-hand cell beside its immediately preceding body block; a full-width block
+starts a complete row. Mobile follows document order, with every block stacked.
+This is structured responsive composition, not unrestricted pixel positioning.
+
+Existing metadata summaries/quotes keep their original layout until explicitly
+converted with the settings buttons. Conversion inserts a real document block
+and sets `takeawaysInDocument` or `sidebarQuoteInDocument` in the same history
+transaction. The public projection then suppresses the old summary/quote,
+including the global sidebar fallback. Original metadata remains saved for
+Undo; deleting a converted block does not resurrect that old content. Each
+language owns its flags and document independently.
+
 Preview loads the real public page bundle and its current published website
 configuration into a disposable iframe. It injects only the safely projected
 article draft in memory: no Save or Publish is required. Header, footer, related
@@ -119,7 +204,7 @@ same runtime, templates and styles as Visitor. Desktop/Mobile change the actual
 iframe viewport, including media queries and sticky behavior. Desktop has a
 panoramic cover, reading column, contents/quote rail and full-width takeaway
 banner; mobile places takeaways below the cover and contents after the prose.
-Article title is H1; authored headings start at H2.
+Article title is H1; authored headings support H1–H6, with H2 recommended below it.
 
 Summary and Key points use sage cards, a gold lightbulb badge, and botanical
 decoration. Bulleted lists inside these blocks receive checkmarks; paragraphs
@@ -161,6 +246,8 @@ node scripts/article-editor-metadata-check.mjs
 node scripts/article-editor-layout-check.mjs
 node scripts/article-reader-parity-check.mjs
 node scripts/article-reference-snapshots.mjs
+node scripts/article-blocks-check.mjs --browser
+node scripts/article-typography-check.mjs --browser
 node scripts/articles-admin-preview.mjs
 ```
 
@@ -169,13 +256,19 @@ Tiptap is not included in the Visitor bundle. The preview is loopback-only with
 a synthetic verified account, fixture copy, blocked backend writes and no live
 customer connections. It can save local drafts in that preview origin only.
 
-Targeted Chromium and Playwright WebKit flows pass: 1440/820/390/320 layout,
+Existing pre-typography Chromium and Playwright WebKit checks covered 1440/820/390/320 layout,
 TH/EN, undo/redo, semantic blocks, unsafe links, preview, save/reload, stale-tab
 conflict, unsaved navigation, pin/date/filter persistence, import/export and an
 actual Visitor rich-document round trip. Evidence is under
 `uat-results/article-editor/`. Physical iPhone keyboard/safe-area behavior and
 the older unrelated Admin navigation/reload WebKit failure are not certified.
 No customer/email, full-site release, production auth or deploy suites were run.
+
+The numeric typography contract has a separate targeted check in
+`article-typography-check.mjs`: normalization/escaping, authoring through visible
+controls, reset/undo, save/reopen and desktop/mobile Editor/Preview/reader parity.
+Its presence is not a claim that a current run has passed; use the run report
+for current verification status.
 
 Scoped Axe checks on the writing workspace and mobile settings found no
 WCAG A/AA violations after isolating article table styles from the Admin shell.
@@ -194,3 +287,51 @@ save/reopen and scoped Axe checks. The actual Auth/Firestore emulator journey
 also verifies save, denied/conflicting saves, preview, publication, separate
 draft edits, republication and unpublish through the real API. No production
 content was changed for visual verification.
+
+## Live Writing Canvas
+
+`src/admin/article-canvas.mjs` loads the same private public-page document used by
+Preview. TipTap is instantiated inside that iframe's document, preserving browser
+selection, clipboard and undo behavior. The public body projection stays hidden
+while the editable document occupies its exact reading column. Metadata updates
+use the private runtime update hook without replacing the writing hosts. No
+draft endpoint, public write or analytics event is created by typing.
+
+Blank or temporarily invalid titles/slugs use private display placeholders only;
+they never enter the saved draft. Save, Publish and Import wait for editor
+readiness. Schema defaults do not mark an untouched article dirty; metadata
+edits made during loading remain dirty. A failed canvas load retains the draft
+and offers Retry and JSON export.
+
+The gold-bulb “สรุปประเด็นสำคัญ” shortcut opens the localized Key takeaways field.
+“นำกล่องสรุปออก” clears the checklist and disables its decorative note, removing
+the full-width summary immediately from the writing canvas. The disabled note
+text stays available for reuse. Clearing only the checklist retains an enabled
+nonempty note. A Summary block inserted with the toolbar is a separate
+body block at the authored position. The coverage feature block (`kind: feature`)
+has a hospital icon and editable title/body; it survives the same document
+normalization, backup and publication flow as other callouts.
+
+Focused verification for this change uses `article-reader-parity-check.mjs`
+(editable canvas/Preview/public typography and responsive layout),
+`article-editor-tools-check.mjs`, `article-feature-card-check.mjs`, and the real
+Auth/API/Firestore emulator journey in `articles-cloud-e2e.mjs`. The latter creates
+rich content from an empty Editor through visible controls, saves/reopens it,
+checks Preview and published desktop/mobile views, then unpublishes it. Test
+publication is confined to the isolated `demo-covermate` emulator project.
+
+Typography verification (2026-09-29): `article-typography-check.mjs --browser`
+passed in Chromium and WebKit for H1–H6/P, partial inline sizes, mobile overrides,
+block/title/deck styles, cards, table wrappers, reset/Undo, local save/reopen and
+computed-style equality across Editor/Preview/public reader. The Auth/API/Firestore
+journey passed in both engines (separate successful runs), including UI-authored
+H4/custom sizing, save/reopen, draft/public isolation and publication. The
+Chromium tools check also passed table rows/columns, merge/split and Undo after
+the wrapper change. No production data was changed or deployment performed.
+
+Current visual evidence is under `uat-results/article-typography/` and
+`uat-results/article-reference/`. Editor controls were inspected at 1440 and
+390 px; the latter has no horizontal page overflow. The outer toolbar remains
+in normal flow so it cannot cover text selected inside the independently
+scrolling writing frame. This is browser-engine QA, not a physical-device test.
+Broader site/release checks are outside this typography pass.

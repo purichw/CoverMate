@@ -1,6 +1,6 @@
 # Public Article Reader
 
-Updated 2026-09-28. `/articles/{slug}` and the CMS Preview share the document
+Updated 2026-09-29. `/articles/{slug}`, the CMS writing canvas and Preview share the document
 renderer and article composition. See [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md)
 for the current production publication, visibility, SEO and storage contract.
 
@@ -13,12 +13,19 @@ for the current production publication, visibility, SEO and storage contract.
 - Desktop: reading column plus sticky contents/share sidebar, followed by key
   takeaways. Mobile: cover, takeaways, body, collapsible contents/share, related
   cards. Responsive behavior follows the article container, including CMS Preview.
-- CMS Preview runs this actual page bundle in an isolated viewport, including
+- Flexible block documents can place a summary, illustration, quote or other
+  supported top-level block in the body column, sidebar or across the article.
+  They preserve authored order on mobile. Their automatic contents/share rail
+  stays above the composed body, beside the cover when present. Legacy article
+  layout stays unchanged until the editor opts into block placement.
+- Both the writing canvas and CMS Preview run this actual page bundle in an isolated viewport, including
   the public header/footer, share controls, related published cards and contact
   dock. Unsaved article content is injected only in memory. External actions
   show Preview feedback; no publication, analytics or draft-sharing occurs.
 - Reference composition includes gold bulb/checklist badges, compact prose,
-  panoramic covers, botanical decorations and optional handwritten notes.
+  panoramic covers, botanical decorations and optional decorative notes.
+  Google Sans is used throughout the article, including those notes and quotes;
+  it replaces the earlier handwritten-font treatment under the latest direction.
   `headerNote`, `sidebarQuote`, and `takeawayNote` are localized editable metadata
   with independent `*Enabled` switches (missing flags default to true). Disabled
   notes retain their authored text but produce no text/card in public or Preview.
@@ -54,16 +61,43 @@ HTTP 404; reader errors use the existing 503 recovery. Switching TH/EN reloads
 the detail route so the server rechecks publication for that language.
 
 Legacy `body` blocks remain supported. New localized `document` JSON uses
-`article-document.mjs`: inline formatting, H2/H3, nested lists, alignment,
-quote/attribution, semantic summary/keypoints/note/warning, image/alt/caption,
+`article-document.mjs`: inline formatting, H1–H6, nested lists, alignment,
+quote/attribution, semantic summary/keypoints/note/warning/feature, image/alt/caption,
 tables, divider and validated YouTube link cards. Unknown nodes and raw HTML
 are discarded. Its only HTML boundary is a whitelist renderer with escaped
 text/attributes, mounted by `cm-article-document`; author HTML is never trusted.
-Editor and Visitor reuse `assets/article-document.css`. The custom element sets
+Editor and Visitor reuse `assets/article-document.css`. Semantic heading levels
+control the default hierarchy and TOC; changing a visual size does not change
+heading semantics. The default body is 18 px on desktop and 16 px on mobile.
+The custom element sets
 its own `cm-article-prose` class so template attribute conversion cannot drop
 callout/list/quote styling. Reference links require
 HTTPS. Media URLs pass the shared URL sanitizer and asset versioning. See
 `ARTICLE_EDITOR.md` for the schema and unsupported embed/upload boundaries.
+
+The feature callout renders a compact coverage card with a fixed hospital icon,
+an editable title and body. Summary/keypoints retain the gold bulb and use
+checkmarks only for authored unordered list items. Optional full-width takeaways
+remain independently editable metadata. Sparse articles do not reserve a blank
+cover or sidebar gap; long decorative headers reserve space above the TOC.
+
+`article-typography.mjs` normalizes optional numeric presentation attributes.
+Inline `textStyle` marks support main/mobile font sizes; supported blocks also
+support line height, space before/after and padding. The document's `titleStyle`
+and `excerptStyle` attributes style the real page title and deck. Only whitelisted
+finite numbers are emitted as CSS custom properties: sizes 8–120 px, line height
+1–3, outside spacing 0–160 px and padding 0–120 px. Invalid values, arbitrary CSS
+and unknown properties are omitted. Missing values use the shared responsive
+defaults; a main size override also applies on mobile unless a mobile override
+is set. These styles travel with the localized document through save, backup,
+publication, the editable canvas and Preview. See `ARTICLE_EDITOR.md` for the
+default body scale, authoring controls and reset behavior.
+
+`takeaway` and `quoteCard` document nodes use the same gold-bulb/checklist and
+botanical typography in the editable canvas, Preview and reader. An explicit
+legacy conversion marks its original metadata as represented in the document;
+the old banner/quote and any quote fallback are suppressed rather than doubled.
+See `ARTICLE_EDITOR.md` for placement semantics and reversible conversion.
 
 The exact one-slug Vercel rewrite delegates to the same handler. Visibility,
 no-store, Article JSON-LD, canonical metadata and sitemap behavior follow
@@ -93,9 +127,9 @@ This does not add a website-owner editor route for article bodies.
   and maximum-length notes without overflow or overlap.
 - `scripts/article-reference-snapshots.mjs`: local reference-content screenshots
   and labeled comparison boards; never writes public content.
-- Handwritten notes use self-hosted Sriracha by Cadson Demak, licensed under the
-  [SIL OFL](../assets/fonts/sriracha-OFL.txt). Font source:
-  [Google Fonts](https://github.com/google/fonts/tree/main/ofl/sriracha).
+- `article-typography.mjs`: shared numeric style whitelist and CSS serialization.
+- `scripts/article-typography-check.mjs`: targeted typography authoring,
+  persistence and responsive Editor/Preview/reader checks.
 
 ```sh
 node scripts/generate-visitor-bundle.mjs

@@ -88,11 +88,47 @@ a fake provider with synthetic data; they do not use real Resend credentials.
 
 ## Email rendering
 
-`server/customer-email-template.cjs` composes the shared inline-table frame from
-`server/admin-email-template.cjs`. It supports HTML/plain text and TH/EN using
-the submitted language. The published header logo and service hours are used;
+`server/customer-email-template.cjs` composes the customer frame in
+`server/customer-email-frame.cjs`. Owner and customer frames reuse the escaping,
+URL validation, font stack and inline-table primitives in `server/email-shared.cjs`.
+It supports HTML/plain text and TH/EN using the submitted language.
+The published header logo and service hours are used;
 intentional blanks remain blank. LINE uses the original official icon and a
-validated published LINE URL. A missing/invalid LINE URL falls back to the site.
+validated published LINE URL. An explicitly blank/invalid LINE URL falls back to
+the site; an undefined legacy setting retains the default LINE contact.
+
+Copy follows the public website's direct, helpful voice: `เรา` / `we`,
+`ได้รับข้อมูลแล้ว` / `We've received your enquiry`, without an unverified team
+claim. The centered LINE action pairs a short helper (`ให้เราช่วยได้เร็วขึ้น` /
+`For quicker help`) above `คุยทาง LINE` / `Chat on LINE`; the helper and LINE icon
+are omitted for the website fallback. HTML and plain text preserve the privacy
+reminder and distinguish receipt of an enquiry from confirmation of coverage.
+Logo alternative text is the language-neutral `CoverMate`.
+The reference and service-hours labels and values are centered in both languages.
+
+The September 30 desktop/mobile mockups guide the white card, cream information
+panel, status/check chip, outline icons, LINE action, privacy panel and botanical
+footer. Text remains live HTML, with the existing short copy and public CMS data;
+decorative artwork never contains the reference number or operational text.
+The bilingual note above the LINE button invites additional questions without
+claiming a team or an immediate response. Original PNG motifs and icon sources
+are documented in [`assets/brand/EMAIL-ASSETS.md`](../assets/brand/EMAIL-ASSETS.md).
+
+One content tree handles both widths. Fluid inline-block information columns sit
+side by side when space permits and wrap naturally without a style block. Media
+queries expand stacked rows and adapt spacing, type and the footer artwork on
+small screens. Classic Outlook's MSO fallback places the information in separate
+table rows. Corner rounding, gradients and background illustrations are progressive
+decoration: missing CSS/images must leave all content and destinations readable.
+
+Run `npm run check:customer-email:template` for offline TH/EN renders at 760, 390
+and 320px, stripped-style and blocked-image fallbacks, empty CMS fields, safe links,
+escaping, privacy and message-size checks. This uses synthetic data and local
+assets with external requests blocked; it does not send an email. Browser checks
+are not real Gmail/Outlook/Apple Mail inbox certification.
+
+Use Gregorian years (ค.ศ.) in both Thai and English email date displays. Customer
+receipts currently show no formatted date; case reference strings remain intact.
 
 The standalone Email Studio export is not a runtime dependency. Its arbitrary
 editable content is not sent automatically to unverified recipients. This keeps

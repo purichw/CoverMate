@@ -8,7 +8,7 @@ import { createEditorHistory } from './editor-history.js';
  * Firebase stays lazy; persistence still enforces the verified admin role.
  */
 export function withCmsController(Base, {
-  DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsSet, cmsMedia, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
+  DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
 }) {
   return class CmsController extends Base {
     async firebase() {
@@ -815,20 +815,11 @@ export function withCmsController(Base, {
       });
     }
 
-    async editMedia(path) {
+    async editMedia(path, options = {}) {
       if (!this.hasSession()) return;
-      const slot = cmsImageSlots(this.state.site,this.state.lang).find(item => item.path === path);
-      if (!slot) return;
       try {
         const editor = await import(window.location.origin + '/admin/media-editor.js');
-        await editor.editImage({slot:{...slot,label:cmsAdminMediaLabel(slot)},lang:'th',source:this.state.site.mediaEdits?.[path]?.source || slot.value,
-          getToken:async()=>{const firebase=await this.firebase();return firebase.getAdminIdToken(true);},
-          onApply:result=>{
-            if (!cmsImageSlots(this.state.site,this.state.lang).some(item=>item.path===path) || String(cmsGet(this.state.site,path) || '') !== slot.value) throw Error('รูปนี้ถูกเปลี่ยนระหว่างที่แก้ไข กรุณาปิดแล้วเปิดตัวแก้ไขรูปอีกครั้ง');
-            if (result.url && !cmsMedia(result.url)) throw Error('URL รูปภาพไม่ถูกต้อง');
-            this.upd(config=>{cmsSet(config,path,result.url);config.mediaEdits=config.mediaEdits || {};config.mediaEdits[path]={output:result.url,source:result.sourceUrl};});
-          }
-        });
+        await editor.editCmsMedia(this,path,options,cmsAdminMediaLabel);
       } catch (error) { this.showActionToast({kind:'error',title:'เปิดตัวแก้ไขรูปไม่ได้',body:this.errorMessage(error)}); }
     }
   };

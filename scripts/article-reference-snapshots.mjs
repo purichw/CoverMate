@@ -98,8 +98,23 @@ try {
   await editor.setViewportSize({width:1536,height:1040});await editor.goto(admin.baseUrl+'/admin#articles');await editor.locator('[data-article-state=ready]').waitFor();
   await editor.locator(`[data-article-id="${adminArticleFixture.items[0].id}"] [data-article-action=edit]:visible`).first().click();
   await editor.locator('.ae-workspace').waitFor();
+  await editor.frameLocator('.ae-canvas-frame').locator('.ae-editor-host:not([hidden]) .tiptap').waitFor();
   await editor.locator('.ae-import-file').setInputFiles({name:'reference-layout-draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(articleReferenceFixture))});
   await editor.waitForFunction(expected=>document.querySelector('[data-field=title]')?.value===expected,articleReferenceFixture.translations.th.title);
+  const writing=editor.frameLocator('.ae-canvas-frame');
+  await writing.locator('.ad-header h1').filter({hasText:articleReferenceFixture.translations.th.title}).waitFor();
+  for(const mode of ['desktop','mobile']){
+    await editor.locator(`[data-canvas-size=${mode}]`).click();
+    await settled(editor,writing.locator('.ad-page'));
+    await editor.evaluate(()=>scrollTo(0,0));
+    await writing.locator('.ad-page').evaluate(el=>el.ownerDocument.defaultView.scrollTo(0,0));
+    await snap(editor,`writing-${mode}-top`);
+    await writing.locator('.ad-takeaways').scrollIntoViewIfNeeded();
+    await writing.locator('.ad-takeaways h2').click();
+    await snap(editor,`writing-${mode}-summary-settings`);
+    await editor.locator('.ae-settings-dialog .ae-done').click();
+    await editor.locator('.ae-settings-dialog').waitFor({state:'detached'});
+  }
   const storageBeforePreview=await editor.evaluate(()=>({local:{...localStorage},session:{...sessionStorage}}));
   await editor.locator('[data-ae=preview]:visible').click();
   const previewFrame=editor.locator('iframe.ae-preview-frame');

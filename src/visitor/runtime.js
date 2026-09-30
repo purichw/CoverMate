@@ -315,7 +315,7 @@ function repeatableIndex(list, id, fallbackIndex) {
 // /motor is the dedicated public motor landing page. Home #motor still aliases
 // into the home-page insurer section so older links do not break.
 class Component extends CoverMateCms.withCmsController(DCLogic, {
-  DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsSet, cmsMedia, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
+  DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
 }) {
   state = {
     articleFeed: readHomeArticleFeed(document),
@@ -387,6 +387,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   };
 
   componentDidMount() {
+    this._articlePreviewUpdate = window.__covermateArticlePreview?.attach?.(this);
     this._editorKeydown = event => this.editorKeydown(event);
     document.addEventListener('keydown', this._editorKeydown, true);
     this._editorInput = event => {
@@ -525,6 +526,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     } catch {/* Invalid or unavailable tab memory never blocks the calculator. */}
   }
   componentWillUnmount() {
+    if (window.__covermateArticlePreview?.update === this._articlePreviewUpdate) delete window.__covermateArticlePreview.update;
     document.removeEventListener('keydown', this._editorKeydown, true);
     document.removeEventListener('input', this._editorInput, true);
     document.removeEventListener('pointerdown', this._editorPointer, true);
@@ -1702,6 +1704,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
             this.showActionToast({ kind: 'error', title: title, body: body });
             return;
           }
+          if (field.media && value && value !== saved) { this.editMedia(path,{initialUrl:value});return; }
           const pendingInline = Object.prototype.hasOwnProperty.call(this.textOv || {}, 'cms:' + path);
           if (pendingInline) delete this.textOv['cms:' + path];
           if (value !== saved || pendingInline || wasEdited) this.upd(x => setCmsCopy(x, path, value));
@@ -2448,16 +2451,17 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         toneOptions: ['accent','sage','ink'].map(key => ({key,selected:(it.tone || 'accent') === key,color:key === 'sage' ? 'var(--color-accent-2)' : key === 'ink' ? 'var(--color-neutral-800)' : A.base, choose:()=>updatePairRepeatable(selectedAdminPair,'items',itemId,ii,(_section,list,index)=>{list[index].tone=key;})})),
         hasPhotoControl: cur.type === 'testimonials',
         photoInput: cmsInput(curPath + '.items.@' + itemId + '.photo',{media:true}),
+        editPhoto:()=>this.editMedia(curPath+'.items.@'+itemId+'.photo'),
         photoAltInput: cmsInput(curPath + '.items.@' + itemId + '.photoAlt',{}),
         logoAltInput: cmsInput(curPath + '.items.@' + itemId + '.logoAlt',{}),
         illustration: it.illustration || '',
         illustrationThumb: assetURL(it.illustration || ''),
         hasIllustration: !!it.illustration,
-        onIllustration: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind:'error', title:'ที่อยู่รูปภาพไม่ถูกต้อง', body:'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].illustration = v; }); },
+        editIllustration:()=>this.editMedia(curPath+'.items.@'+itemId+'.illustration'),
         showLogo: !!(sch && sch.itemLogo),
         logo: it.logo || '',
         logoThumb: 'display:block;height:24px;width:24px;flex:0 0 auto;border-radius:6px;background-color:var(--color-bg);background-image:url("' + assetURL(it.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center',
-        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'items', itemId, ii, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
+        editLogo:()=>this.editMedia(curPath+'.items.@'+itemId+'.logo'),
         cells: (cur.type === 'tiers') ? (cur.heads || []).map((hd, ci) => {
           const v = (it.st || [])[ci] || 'n';
           const note = it.cellRemarks?.[hd.id]?.[lk] ?? (v === 'p' ? it[lk]?.note || '' : '');
@@ -2529,7 +2533,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         logo: showLogo ? (cd.logo || '') : '', logoAlt: cd.logoAlt || '',
         hasLogo: !!(showLogo && cd.logo),
         logoThumb: 'display:block;height:22px;width:88px;background-image:url("' + assetURL(cd.logo || '') + '");background-repeat:no-repeat;background-size:contain;background-position:center center',
-        onLogo: (e) => { const v = e.target.value; if (v && !acceptsMediaRef(v)) { this.showActionToast({ kind: 'error', title: 'ที่อยู่รูปภาพไม่ถูกต้อง', body: 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' }); return; } updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logo = v; }); },
+        editLogo:()=>this.editMedia(curPath+'.cards.@'+cardId+'.logo'),
         onLogoAlt: (e) => { const v = e.target.value; updatePairRepeatable(selectedAdminPair, 'cards', cardId, ci, (section, list, idx) => { if (list[idx]) list[idx].logoAlt = v; }); },
         up: () => moveEditableCard(cardId, -1),
         down: () => moveEditableCard(cardId, 1),

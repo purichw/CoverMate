@@ -1,0 +1,48 @@
+# Article carousels and CMS integration - 2026-09-30
+
+The owner authorized push and deployment of this chat's changes. The candidate
+integrates upstream `759024f` in `.tools/admin-shell-consistency-20260926`;
+unrelated changes in the primary checkout are excluded.
+
+## Scope
+
+- Responsive public article index and Admin list/editor presentation.
+- Unlimited ordered index pins in a 10-second carousel. Independent Home pins
+  occupy at most ten slots; newest eligible non-duplicate articles fill the rest.
+- Transactional Home pin limits include draft/live reservations. Unpinning a
+  published article releases its slot only after publishing or unpublishing.
+- Home's article section participates in CMS ordering, with live panel updates.
+- The merged editor retains upstream's real-page writing canvas, rich blocks,
+  typography, crop confirmation and publication boundaries alongside the basic
+  metadata form and responsive settings panel.
+- The shared reader is a versioned generated asset loaded before the component
+  runtime. This keeps the compressed shell under the existing performance cap;
+  bundle validation guards its execution order and generated parity.
+
+No production content migration, sample publication, lead submission, email,
+credential, Rules or environment change is part of this deployment.
+
+## Evidence And Gates
+
+Local browser checks exercise the Home selection cases (0/3/10 pins), duplicate
+exclusion, carousel navigation/timing/pausing, mobile layout, CMS article ordering,
+Undo/Redo/save/reload, list filters and editor controls. Real Auth/Firestore
+emulator checks exercise rich authoring, denied/conflicting saves, publication,
+reader parity, unpublication and independent Home pin limits/concurrency.
+
+Current evidence is stored under ignored `uat-results/home-carousel/`,
+`article-carousel/`, `articles-cloud/`, `editor-panel/` and `admin-controls/`.
+Fixture screenshots prove UI behavior, not production content availability.
+
+Before production: finish the repository checks, verify the hosted preview,
+and require GitHub `verify` on the exact release SHA. The existing Vercel gate
+must hold production aliasing while checks are pending or failed. Do not force
+promotion. After deployment, read back the alias/source SHA and verify served
+assets and public routes. Remote IDs and terminal results belong in an ignored
+release receipt; this document is not a claim that deployment has completed.
+
+## Recovery
+
+The pre-integration source baseline is `759024f`. Verify the currently assigned
+production deployment before recovery and obtain explicit rollback approval.
+No database restoration is needed; optional ordering fields are additive.
