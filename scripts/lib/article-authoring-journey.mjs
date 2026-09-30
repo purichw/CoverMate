@@ -189,7 +189,9 @@ export async function assertReaderArticle(surface,expected) {
 }
 
 async function assertAuthoredTypography(prose) {
-  const actual=await prose.locator('h4 span[data-article-style~=fontSize]').evaluate(el=>{
+  const text=prose.locator('h4 span[data-article-style~=fontSize]');
+  await text.waitFor({state:'visible'});
+  const actual=await text.evaluate(el=>{
     const style=getComputedStyle(el);
     return {fontSize:parseFloat(style.fontSize),lineHeight:parseFloat(style.lineHeight),family:style.fontFamily,mobile:el.ownerDocument.defaultView.innerWidth<768};
   });

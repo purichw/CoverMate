@@ -72,7 +72,7 @@ try {
       await admin.screenshot({path:out+'/'+engine+'-visibility-mobile.png'});
       await admin.setViewportSize({width:1440,height:1000});
       await admin.getByRole('button',{name:'สร้างบทความใหม่',exact:true}).click();
-      const slug='cloud-'+crypto.randomUUID(),title='ทดสอบบทความจาก CMS '+engine;
+      const slug='cloud-'+crypto.randomUUID(),title='ทดสอบบทความจาก CMS '+engine+' '+slug.slice(-8);
       await openArticleSettings(admin);
       await admin.locator('[data-field=title]').fill(title);
       await admin.locator('[data-field=excerpt]').fill('ข้อมูลทดสอบเฉพาะ Emulator ไม่เผยแพร่บนเว็บไซต์จริง');

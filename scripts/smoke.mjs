@@ -69,6 +69,7 @@ function extractDefaultSiteConfig() {
   const defaultsEnd = scriptSource.indexOf("const SCHEMA =");
   if (defaultsEnd < 0) throw new Error("index.html: DEFAULTS boundary missing");
   const sandbox = { result: null };
+  vm.runInNewContext(fs.readFileSync(new URL('../assets/visitor/article-reader.js', import.meta.url), 'utf8'), sandbox);
   vm.runInNewContext(`${scriptSource.slice(0, defaultsEnd)}\nresult = DEFAULTS;`, sandbox);
   return sandbox.result;
 }
@@ -2490,14 +2491,18 @@ for (const [name, width, height] of viewports) {
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
-    if (['เนื้อหา', 'แบรนด์และติดต่อ'].includes(tabName)) {
+    if (tabName === 'แบรนด์และติดต่อ' && await page.locator('.cm-brand-preview > summary').isVisible()) {
       // The live thumbnail owns a disposable iframe. Verify its images before
       // switching tabs, which intentionally removes that document.
+      await page.locator('.cm-brand-preview > summary').click();
       await page.locator('[data-editor-preview][data-preview-ready]').waitFor({state:'attached'});
       await page.waitForFunction(() => {
         const doc = document.querySelector('[data-editor-preview] iframe')?.contentDocument;
         return doc?.body.firstElementChild && [...doc.images].every(image => image.complete && image.naturalWidth > 0);
       });
+    }
+    if (tabName === 'เนื้อหา' && await page.locator('[data-editor-preview]').count()) {
+      failures.push(`${name} /admin/content: content tab duplicates the live page with a thumbnail`);
     }
     const tabState = await page.evaluate(() => ({
       text: document.body.innerText,
