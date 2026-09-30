@@ -95,6 +95,7 @@ try {
   await page.locator('.ar-clear').click();await page.locator('.ar-slide[data-active=true]').waitFor();
   await page.locator('#articles-search').fill('no-results');await page.locator('#articles-search').press('Enter');await page.locator('.ar-empty').waitFor();
   await page.locator('.ar-clear').click();await page.locator('.ar-slide[data-active=true]').waitFor();
+  await page.waitForFunction(()=>document.activeElement?.id==='articles-title');
   assert.equal(await page.evaluate(()=>document.activeElement.id),'articles-title','Clearing filters restores focus even when all articles are pinned');
   // Verify initial autoplay with real wall time in a context without the mocked clock.
   server.setFeed(feed);
