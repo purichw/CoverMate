@@ -3,10 +3,12 @@ import {error} from './http.cjs';
 import {articleSettings} from '../article-settings.mjs';
 import {createArticleDraft,ARTICLE_CATEGORIES} from '../admin/articles/drafts.mjs';
 import {articleDocumentText,articleUrl,normalizeArticleDocument,normalizeArticleMedia} from '../article-document.mjs';
+import {validateArticle} from '../article-validation.mjs';
 
 const identity = value => typeof value==='string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
 const slugOK = value => typeof value==='string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length<=160;
-const fail = message => {throw error(422,'invalid_article',message);};
+const fail = (message,field) => {throw Object.assign(error(422,'invalid_article',message),field?{fields:[{field,language:null,message}]}:{});};
+function validate(input,options){const fields=validateArticle(input,options);if(fields.length)throw Object.assign(error(422,'invalid_article',fields[0].message),{fields});}
 const checkRevision = (value,expected) => {
   if(!Number.isSafeInteger(expected)||expected<0)fail('ไม่พบเลขเวอร์ชัน กรุณาโหลดข้อมูลใหม่');
   if((value?.revision||0)!==expected)throw error(409,'conflict','มีการบันทึกจากอุปกรณ์อื่นแล้ว กรุณาส่งออกสำเนานี้และเปิดเวอร์ชันล่าสุด');
@@ -14,6 +16,7 @@ const checkRevision = (value,expected) => {
 function draftValue(input) {
   if(!input||typeof input!=='object'||!identity(input.id)||!input.translations)fail('ข้อมูลบทความไม่ถูกต้อง');
   if(input.sample===true)fail('ห้ามเผยแพร่ข้อมูลตัวอย่าง');
+  validate(input);
   if(input.slug && !slugOK(input.slug))fail('Slug ใช้ตัวอักษรอังกฤษตัวเล็ก ตัวเลข และขีดกลาง ไม่เกิน 160 ตัว');
   if(!ARTICLE_CATEGORIES[input.categoryId])fail('หมวดหมู่ไม่ถูกต้อง');
   if(!Array.isArray(input.tags)||input.tags.length>20||input.tags.some(t=>typeof t!=='string'||t.length>80))fail('ใส่ได้ไม่เกิน 20 แท็ก แท็กละ 80 ตัวอักษร');
@@ -122,12 +125,12 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
       if(!old&&action!=='save')throw error(404,'not_found','ไม่พบบทความ');
       const at=new Date(now()).toISOString();
       let draft=normalized||old.draft,live=old?.live||null;
-      if(old?.lockedSlug && draft.slug!==old.lockedSlug)fail('URL ของบทความที่เคยเผยแพร่แล้วเปลี่ยนไม่ได้');
+      if(old?.lockedSlug && draft.slug!==old.lockedSlug)fail('URL ของบทความที่เคยเผยแพร่แล้วเปลี่ยนไม่ได้','slug');
       let slugRef;
       if(action==='publish') {
-        if(!slugOK(draft.slug)||!draft.authorName.trim())fail('กรุณากรอก Slug และผู้เขียนก่อนเผยแพร่');
         const langs=input.languages;
         if(!Array.isArray(langs)||!langs.length||langs.some(l=>!['th','en'].includes(l))||new Set(langs).size!==langs.length)fail('เลือกภาษาที่จะเผยแพร่');
+        validate(draft,{publish:true,languages:langs});
         const translations={...live?.translations};
         for(const lang of langs) {
           const t=draft.translations[lang];
@@ -137,7 +140,7 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
         }
         slugRef=r.slugs.doc(draft.slug);
         const holder=(await tx.get(slugRef)).data();
-        if(holder&&holder.id!==id)throw error(409,'slug_conflict','Slug นี้มีบทความอื่นใช้อยู่ กรุณาเลือกชื่อใหม่');
+        if(holder&&holder.id!==id)throw Object.assign(error(409,'slug_conflict','Slug นี้มีบทความอื่นใช้อยู่ กรุณาเลือกชื่อใหม่'),{fields:[{field:'slug',language:null,message:'Slug นี้มีบทความอื่นใช้อยู่ กรุณาเลือกชื่อใหม่'}]});
         live={id,slug:draft.slug,categoryId:draft.categoryId,tags:draft.tags,featured:draft.featured,pinned:draft.pinned,image:draft.image,cover:draft.cover,translations,status:'published'};
       } else if(action==='unpublish') live=null;
       else if(action!=='save')fail('ไม่รู้จักการทำรายการ');
@@ -151,7 +154,7 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
         if(isHomePinned) {
           const catalog=await tx.get(r.catalog);
           const count=catalog.docs.filter(doc=>doc.id!==id && (doc.data().draft?.featured===true || doc.data().live?.featured===true)).length;
-          if(count>=10)fail('ปักหมุดบน Home ได้ไม่เกิน 10 บทความ กรุณานำหมุด Home ของบทความอื่นออกก่อน หากเผยแพร่แล้วต้องเผยแพร่การนำหมุดออกด้วย');
+          if(count>=10)fail('ปักหมุดบน Home ได้ไม่เกิน 10 บทความ กรุณานำหมุด Home ของบทความอื่นออกก่อน หากเผยแพร่แล้วต้องเผยแพร่การนำหมุดออกด้วย','featured');
         }
       }
       const record={draft:{...draft,createdAt:old?.draft.createdAt||at,basePublished:!!live},live,revision:expected+1,updatedAt:at,updatedBy:uid,lockedSlug:old?.lockedSlug||(action==='publish'?draft.slug:null),publishedRevision:action==='publish'?expected+1:old?.publishedRevision||null};

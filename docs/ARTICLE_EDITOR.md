@@ -25,6 +25,65 @@ Existing published articles produce a separate working draft and keep their
 slug read-only. Back, sidebar navigation, logout and browser unload guard unsaved
 changes. Saving during continued typing does not mark later edits saved.
 
+## Field Requirements And SEO (Local, September 30)
+
+`article-validation.mjs` owns the shared field requirements used by the editor
+and article repository. Fields identify **จำเป็น**, **ไม่บังคับ**, or
+**อัตโนมัติ** beside the label. Validation messages appear immediately below the
+corresponding control with `aria-invalid` and `aria-describedby`. A linked
+validation summary reveals the affected field, opening its disclosure/sheet or
+switching language as needed. Invalid input stays in place for correction.
+
+| Field | Publication requirement | Behavior |
+| --- | --- | --- |
+| Title, card excerpt, body | Required per selected language | Whitespace-only values are invalid |
+| Slug, category, author | Required | Shared between languages; published Slug is immutable |
+| Cover | Optional | Separate from body images |
+| Cover Alt, body-image Alt | Required when the corresponding image exists | Localized; body Alt is editable in the image dialog and settings |
+| SEO title, SEO description | Optional | Empty uses the article title and card excerpt respectively |
+| Canonical URL | Automatic, read-only | Derived from Slug and language |
+| Editorial date | Optional | Blank retains first-publication date; input uses Bangkok time |
+| Tags, captions, summaries, notes, attribution | Optional | Existing content and length limits remain in effect |
+| Reference rows | Optional to add | Each added row requires its name and valid HTTPS URL; remove unwanted rows |
+
+Incomplete drafts can still be saved. Malformed dates, unsafe URLs, excessive
+lengths or invalid reference rows must be corrected before saving. Publish is
+disabled until the current translation and shared fields pass validation.
+Selecting additional languages in confirmation revalidates those translations
+and disables confirmation while any selected language is incomplete. Server
+validation remains authoritative; field errors such as slug collision and Home
+pin-cap rejection return `{field,language,message}` and target the same controls.
+Revision/auth/network failures retain the existing form and overall status.
+
+The **SEO และการแชร์** disclosure contains separate title/description overrides,
+effective character counts, canonical URL and a live search-result approximation.
+60/160-character guidance is advisory, not a publication limit; storage limits
+remain 240/600. Google may choose different titles/snippets. Sharing uses the
+article cover and its Alt. Metadata, Open Graph/Twitter and Article JSON-LD are
+derived from the published snapshot, never unsaved or saved-only draft text.
+Article JSON-LD includes the visible headline, publication/modification dates,
+author, category and tags. Tags do not create an obsolete meta-keywords field.
+Only published locales receive hreflang; private previews remain noindex.
+
+Sources: [Google title links](https://developers.google.com/search/docs/appearance/title-link),
+[image guidance](https://developers.google.com/search/docs/appearance/google-images),
+[SEO starter guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
+
+Article buttons explicitly say **บันทึกร่างบทความ / เผยแพร่บทความ**. They operate
+only on the selected article. Website Save/Publish/Reset still affect only website
+state, and article keyboard Save does not bubble to another module's shortcut.
+No article Reset is wired to the website Reset action.
+
+Focused checks: `node scripts/article-validation-check.mjs --browser`
+(Chromium; `COVERMATE_ARTICLES_BROWSER=webkit` for WebKit),
+`node scripts/content-lifecycle-isolation-check.mjs` and
+`node scripts/editor-reset-contract-check.mjs`. The validation browser harness
+uses the actual Admin editor, article repository and public renderer with an
+isolated in-memory database and synthetic identity. It verifies draft save/reload,
+field correction, conditional Alt, SEO publication, multilingual confirmation,
+server conflict and 1440/375 layouts, without production writes or auth testing.
+Evidence: `uat-results/article-validation/`. This change is not yet deployed.
+
 ## Writing
 
 The editor reconciles the September 30 desktop/mobile mock with the existing

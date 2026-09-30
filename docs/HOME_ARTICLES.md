@@ -14,11 +14,17 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   Normal sections can also move across Articles. Draft/Undo/Redo/publication use
   the existing site workflow; article records and visibility settings stay separate.
 - Carousel: three cards per page at 1024px+, two at 768–1023px, one on mobile.
-  Mobile keeps the thumbnail left and text right, rather than stacking ten cards.
-  Full titles wrap; excerpts use two lines on mobile and three on desktop.
-- All-articles link beside the heading on desktop, below/right on mobile.
+  Upright cards use 1.45:1 covers on every viewport, with category/date overlays.
+  Dates use the published translation's timestamp in Bangkok time, localized
+  to TH/EN. Full titles wrap; excerpts use up to three lines.
+- All-articles link beside the heading on desktop, full-width below the carousel
+  on mobile. Mobile cards also show the CMS-owned reading label.
 - One native link per card covers image, title and reading label. Keyboard focus
-  has a visible outline. Shared carousel controls support previous/next, swipe,
+  has a visible outline. Home opts into `[data-carousel-pages]` for compact,
+  clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
+  Mobile shows up to five indicators around the current page, retaining 44px
+  touch targets without overflowing when all ten articles are present.
+  The index carousel retains its previous/next controls. Both support swipe,
   ten-second rotation and pause. Reduced motion starts paused; focus stops rotation.
   Offscreen/hidden tabs and mouse hover pause it. No controls for a single page.
 - Reuses existing Google Sans, page width, gutters, colour tokens and Lucide paths.

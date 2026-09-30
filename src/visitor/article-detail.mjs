@@ -36,7 +36,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
   });
   const rich = copy.document?.type === 'doc' ? renderArticleDocument(copy.document,{mediaUrl}) : null;
   if (rich ? !articleDocumentText(rich.document).trim() : !blocks.some(block=>block.paragraph || block.list)) return missing;
-  const sources = (Array.isArray(copy.sources)?copy.sources:[]).slice(0,20).flatMap((source,index)=>{
+  const sources = (Array.isArray(copy.sources)?copy.sources:[]).slice(0,30).flatMap((source,index)=>{
     try {const url=new URL(source.url);return url.protocol==='https:' && !url.username && !url.password && text(source.label) ? [{key:String(index),label:text(source.label),href:url.href}] : [];}
     catch {return [];}
   });
@@ -54,6 +54,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
     headerNoteEnabled:copy.headerNoteEnabled!==false,sidebarQuoteEnabled:copy.sidebarQuoteEnabled!==false&&!rich?.document.attrs?.sidebarQuoteInDocument,takeawayNoteEnabled:copy.takeawayNoteEnabled!==false&&!rich?.document.attrs?.takeawaysInDocument,
     image:mediaUrl(item.cover?.src) || summary.image,imageAlt:text(copy.coverAlt) || summary.imageAlt,
     date:date.format(published),datetime:published.toISOString(),
+    updatedDatetime:Number.isFinite(updated)&&updated>=summary.publishedAt&&updated<=(now??Date.now())?new Date(updated).toISOString():published.toISOString(),
     updated: Number.isFinite(updated) && updated>summary.publishedAt && updated<=(now ?? Date.now()) ? date.format(updated) : '',
     reading:summary.readingMinutes ? (lang==='en'?summary.readingMinutes+' min read':'อ่าน '+summary.readingMinutes+' นาที') : '',
     categoryHref:articlePublicHref('/articles?category='+encodeURIComponent(summary.categoryId),lang)};

@@ -129,7 +129,7 @@ if(process.argv.includes('--browser')) {
     assert.ok(await articleCanvas(page).locator('.tiptap .article-callout-title').filter({hasText:'หมายเหตุทดสอบ'}).count());
     await page.locator('[data-ae=unwrap]').click();
     await page.locator('[data-ae=link]').click();await page.locator('.ae-dialog [data-field=href]').fill('javascript:alert(1)');await page.locator('.ae-modal-form [type=submit]').click();
-    assert.ok(await page.locator('.ae-form-error').innerText());await page.locator('.ae-dialog [data-cancel]').click();
+    assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());await page.locator('.ae-dialog [data-cancel]').click();
     await articleField(page,'pinned').check();
     await articleField(page,'publishedAt').fill('2026-09-15T10:30');
     await articleField(page,'tags').fill('policy-check, covermate');

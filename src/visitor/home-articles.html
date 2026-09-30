@@ -7,7 +7,6 @@
           <h2 id="home-articles-title" data-cms-copy="homeDesign.articlesTitle">{{ homeCopy.articlesTitle }}</h2>
           <sc-if value="{{ homeCopy.articlesIntro }}"><p data-cms-copy="homeDesign.articlesIntro">{{ homeCopy.articlesIntro }}</p></sc-if>
         </div>
-        <a class="hm-articles-all" href="{{ homeArticles.indexHref }}"><span data-cms-copy="homeDesign.articlesAll">{{ homeCopy.articlesAll }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></a>
       </div>
       <article-carousel data-layout="cards" data-language="{{ articleLanguage }}" role="region" aria-labelledby="home-articles-title">
       <ul class="hm-article-grid">
@@ -18,9 +17,12 @@
                 <div class="hm-article-media">
                   <svg class="hm-article-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
                   <sc-if value="{{ article.image }}"><img sc-camel-src="{{ article.image }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="360" loading="lazy" decoding="async"></sc-if>
+                  <div class="hm-article-meta">
+                    <sc-if value="{{ article.category }}"><span class="hm-article-category">{{ article.category }}</span></sc-if>
+                    <time datetime="{{ article.datetime }}">{{ article.date }}</time>
+                  </div>
                 </div>
                 <div class="hm-article-copy">
-                  <sc-if value="{{ article.category }}"><span class="hm-article-category">{{ article.category }}</span></sc-if>
                   <h3 id="{{ article.titleId }}">{{ article.title }}</h3>
                   <sc-if value="{{ article.excerpt }}"><p class="hm-article-excerpt">{{ article.excerpt }}</p></sc-if>
                   <span class="hm-article-read"><span data-cms-copy="homeDesign.articlesRead">{{ homeCopy.articlesRead }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></span>
@@ -30,14 +32,13 @@
           </li>
         </sc-for>
       </ul>
-      <div class="ar-carousel-controls" data-carousel-controls hidden>
+      <div class="hm-carousel-controls" data-carousel-controls hidden>
+        <div class="hm-carousel-pages" data-carousel-pages></div>
         <button type="button" data-carousel-action="play"><svg class="ar-carousel-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg><svg class="ar-carousel-play" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 3 14 9-14 9V3Z"/></svg></button>
-        <span data-carousel-counter aria-hidden="true"></span>
-        <button type="button" data-carousel-action="previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-        <button type="button" data-carousel-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
       </div>
       <span class="ar-sr-only" data-carousel-announcement aria-live="polite" aria-atomic="true"></span>
       </article-carousel>
+      <a class="hm-articles-all" href="{{ homeArticles.indexHref }}"><span data-cms-copy="homeDesign.articlesAll">{{ homeCopy.articlesAll }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></a>
     </div>
   </section>
 </sc-if>

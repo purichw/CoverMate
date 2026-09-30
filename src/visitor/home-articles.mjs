@@ -47,7 +47,9 @@ export function projectHomeArticles(feed, options = {}) {
   const latest = projectPublishedArticles(feed, options).sort((a,b)=>b.publishedAt-a.publishedAt || a.key.localeCompare(b.key));
   const pins = latest.filter(item=>item.homePinned).slice(0,10);
   const selected = new Set(pins.map(item=>item.key));
-  const items = [...pins,...latest.filter(item=>!selected.has(item.key))].slice(0,10);
+  const date = new Intl.DateTimeFormat(options.lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
+  const items = [...pins,...latest.filter(item=>!selected.has(item.key))].slice(0,10).map(item=>({...item,
+    date:date.format(item.publishedAt),datetime:new Date(item.publishedAt).toISOString()}));
   return {visible:items.length > 0, items, indexHref:articlePublicHref('/articles',options.lang)};
 }
 

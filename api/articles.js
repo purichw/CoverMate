@@ -24,6 +24,6 @@ module.exports = async function articles(req,res) {
     const status=Number(err.status)||503;
     if(status>=500)reportFailure('articles',err);
     const message=status===401?'เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง':status===403?'บัญชีนี้ไม่มีสิทธิ์จัดการบทความในสภาพแวดล้อมนี้':status>=500?'เชื่อมต่อคลังบทความไม่ได้ เนื้อหายังอยู่ กรุณาลองโหลดข้อมูลใหม่':err.message;
-    return json(res,status,{error:err.code||'articles_unavailable',message});
+    return json(res,status,{error:err.code||'articles_unavailable',message,...(status<500&&Array.isArray(err.fields)?{fields:err.fields}:{})});
   }
 };

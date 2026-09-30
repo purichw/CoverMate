@@ -26,6 +26,13 @@ the languages. Only complete selected translations become public. Saving edits
 to a published article does not replace its live content. Republish explicitly.
 Unpublish removes every public translation but retains the editable draft.
 
+The local September 30 validation follow-up labels required/optional fields and
+disables article Publish until its requirements pass. Drafts may be incomplete;
+invalid supplied values must be corrected. API validation errors carry field and
+language identifiers for inline feedback. See `ARTICLE_EDITOR.md` for the field
+matrix, conditional Alt requirements and separate SEO disclosure. This follow-up
+does not publish existing drafts or alter any hosted CMS data.
+
 ### Independent publication boundary
 
 Website Save, Publish, Reset draft, Undo/Redo and version restore never save,

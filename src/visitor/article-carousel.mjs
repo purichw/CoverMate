@@ -17,9 +17,18 @@ export function registerArticleCarousel() {
       on(this,'pointerleave',event=>{if(event.pointerType==='mouse'){this.hovered=false;this.schedule();}});
       on(this,'focusin',()=>{this.playing=false;this.update();});
       on(this,'click',event=>{
+        const page=event.target.closest('[data-carousel-page]');
+        if(page)this.go(Number(page.dataset.carouselPage)*this.pageSize(),true);
         const action=event.target.closest('[data-carousel-action]')?.dataset.carouselAction;
         if(action==='previous'||action==='next')this.go(this.index+(action==='next'?1:-1)*this.pageSize(),true);
         if(action==='play'){this.playing=!(this.pointerPlayState??this.playing);this.pointerPlayState=null;this.update();}
+      });
+      on(this,'keydown',event=>{
+        if(!event.target.closest('[data-carousel-page]'))return;
+        const pages=[...this.querySelectorAll('[data-carousel-page]')],current=pages.indexOf(event.target);
+        const next=event.key==='ArrowRight'?(current+1)%pages.length:event.key==='ArrowLeft'?(current+pages.length-1)%pages.length:event.key==='Home'?0:event.key==='End'?pages.length-1:null;
+        if(next===null)return;
+        event.preventDefault();this.go(next*this.pageSize(),true);pages[next].focus();
       });
       on(this,'pointerdown',event=>{this.pointerPlayState=event.target.closest('[data-carousel-action="play"]')?this.playing:null;if(event.pointerType==='touch'&&event.isPrimary&&!event.target.closest('button'))this.touch={x:event.clientX,y:event.clientY};});
       on(this,'pointercancel',()=>{this.touch=null;this.pointerPlayState=null;});
@@ -60,6 +69,21 @@ export function registerArticleCarousel() {
       });
       const controls=this.querySelector('[data-carousel-controls]');if(controls)controls.hidden=this.slides.length<=size;
       const counter=this.querySelector('[data-carousel-counter]');if(counter)counter.textContent=`${this.index+1}${size>1?'–'+Math.min(this.index+size,this.slides.length):''} / ${this.slides.length}`;
+      const pages=this.querySelector('[data-carousel-pages]');
+      if(pages) {
+        const count=Math.ceil(this.slides.length/size),current=Math.floor(this.index/size);
+        // Keep touch targets full-sized; the indicator window follows the active page.
+        const windowStart=home&&size===1?Math.max(0,Math.min(current-2,count-5)):0;
+        if(pages.children.length!==count)pages.replaceChildren(...Array.from({length:count},(_,index)=>{
+          const button=document.createElement('button');button.type='button';button.dataset.carouselPage=String(index);return button;
+        }));
+        [...pages.children].forEach((button,index)=>{
+          button.hidden=home&&size===1&&(index<windowStart||index>=windowStart+5);
+          const label=english?`Article page ${index+1} of ${count}`:`ชุดบทความ ${index+1} จาก ${count}`;
+          button.setAttribute('aria-label',label);button.title=label;button.tabIndex=index===current?0:-1;
+          if(index===current)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
+        });
+      }
       for(const action of ['previous','next','play']) {
         const button=this.querySelector(`[data-carousel-action="${action}"]`);if(!button)continue;
         const label=action==='previous'?(english?'Previous pinned article':'บทความปักหมุดก่อนหน้า'):action==='next'?(english?'Next pinned article':'บทความปักหมุดถัดไป'):this.playing?(english?'Pause automatic rotation':'หยุดเลื่อนอัตโนมัติ'):(english?'Play every 10 seconds':'เลื่อนอัตโนมัติทุก 10 วินาที');

@@ -125,11 +125,11 @@ if(process.argv.includes('--browser')) {
         return {x:r.x,y:r.y,width:r.width,height:r.height,image:img.toJSON(),copy:copy.toJSON()};
       }));
       if(width<768) {
-        assert.ok(geometry.every(g=>g.image.right<=g.copy.left && Math.abs(g.image.top-g.copy.top)<1),'Mobile image left, copy right');
+        assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Mobile image above copy');
         assert.equal(geometry.length,1,'Mobile shows one carousel card');
       } else assert.equal(new Set(geometry.map(g=>g.y)).size,1,'Desktop/tablet one row');
       for(const node of await page.locator('#articles a').all())assert.ok((await node.getAttribute('href')).endsWith(lang==='en'?'?lang=en':''));
-      await page.locator('.hm-articles-all').focus();await page.keyboard.press(engine==='webkit'?'Alt+Tab':'Tab');
+      await page.locator('.hm-article-link').first().focus();
       assert.equal(await page.evaluate(()=>document.activeElement.className),'hm-article-link');
       assert.equal(await page.locator('.hm-article-link').first().evaluate(n=>getComputedStyle(n).outlineStyle),'solid');
       await page.locator('.hm-article-link').first().blur();

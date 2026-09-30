@@ -54,7 +54,7 @@ try {
   await publish();assert.deepEqual((await home()).slice(0,4),[0,10,11,12].map(i=>ids[i]));
   await visitor.goto(baseUrl+'/'+suffix);await visitor.locator('#articles [data-active=true]').waitFor();
   assert.deepEqual(await visitor.locator('#articles [data-slide-key]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey)),await home());
-  await visitor.locator('#articles').scrollIntoViewIfNeeded();await visitor.locator('#articles [data-carousel-action=next]').click();
+  await visitor.locator('#articles').scrollIntoViewIfNeeded();await visitor.locator('#articles [data-carousel-page="1"]').click();
   assert.equal(await visitor.locator('#articles [data-active=true]').getAttribute('data-slide-key'),ids[10]);
   await visitor.locator('#articles [data-active=true] a').click();await visitor.locator('.ad-prose').waitFor();assert.match(visitor.url(),new RegExp(ids[10]));
   await visitor.goto(baseUrl+'/articles'+suffix);await visitor.locator('.ar-slide[data-active=true]').waitFor();

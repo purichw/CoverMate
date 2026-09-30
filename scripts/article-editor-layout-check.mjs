@@ -44,7 +44,7 @@ try {
   await page.locator('.ae-modal-form [data-field=alt]').fill('รถยนต์ประกอบบทความ');await page.locator('.ae-modal-form [type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('.ae-card-image img').naturalWidth>0);
   assert.match(await page.locator('.ae-card-image img').getAttribute('src'),/motor.jpg/);
-  await panel('metadata');await field('seoDescription').fill('SEO แยกจากคำโปรยบนการ์ด');
+  await panel('seo');await field('seoDescription').fill('SEO แยกจากคำโปรยบนการ์ด');
   assert.equal(await page.locator('[data-card=excerpt]').innerText(),'เตรียมเอกสารและคำถามที่อยากปรึกษา');
   await panel('summary');await field('takeaways').fill('เตรียมกรมธรรม์\nจดคำถาม');
   await page.locator('[data-ae=add-source]').click();assert.equal(await page.locator('[data-panel=summary][open]').count(),1);
@@ -52,7 +52,7 @@ try {
   await field('publishedAt').fill('2026-09-15T10:30');await field('pinned').check();await save();
   await page.reload();await page.locator('[data-article-state=ready]').waitFor();await edit();
   assert.equal(await field('title').inputValue(),'ทบทวนกรมธรรม์กับ CoverMate');assert.equal(await page.locator('.ae-tag').count(),2);
-  assert.equal(await field('pinned').isChecked(),true);await panel('metadata');assert.equal(await field('seoDescription').inputValue(),'SEO แยกจากคำโปรยบนการ์ด');
+  assert.equal(await field('pinned').isChecked(),true);await panel('seo');assert.equal(await field('seoDescription').inputValue(),'SEO แยกจากคำโปรยบนการ์ด');
   report.checks.push('Live TH/EN card; cover clear/replace independent of body; tag enter/dedup/pending-remove/save/reload; independent SEO; disclosures survive refresh');
   // Restore the reference-like fixture copy for comparable visual evidence.
   await field('title').fill(th);await field('excerpt').fill('เริ่มจากข้อมูลสำคัญบนหน้าตารางกรมธรรม์ แล้วค่อยทบทวนความคุ้มครอง วงเงิน และเงื่อนไขที่เกี่ยวข้องกับคุณ');
