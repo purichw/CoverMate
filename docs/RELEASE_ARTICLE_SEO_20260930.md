@@ -29,6 +29,11 @@ installation before tests could start. CI now uses Ubuntu's official HTTPS
 archive for that mirror entry, preserving signed package indexes, both browser
 engines, all checks, and the exact-commit production gate.
 
+The release performance gate found Home's initial scripts 467 bytes above the
+existing 350 KB cap. The visitor build now minifies the unchanged analytics
+source into a hashed asset, with generated-source parity checks and consent/
+analytics browser regression coverage. The performance budget is unchanged.
+
 ## Verification
 
 Before commit, current-source checks passed for generated visitor artifacts,

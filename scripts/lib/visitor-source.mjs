@@ -61,6 +61,12 @@ export function readSelectAsset() {
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
+export function readAnalyticsAsset() {
+  const code = transformSync(readText(new URL('covermate-analytics.js', ROOT)), { minify:true, target:'es2022', charset:'utf8' }).code;
+  const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
+  return { code, file:new URL('assets/visitor/analytics.js', ROOT), url:`/assets/visitor/analytics.js?v=${hash}` };
+}
+
 export function readEditorPreviewAsset() {
   const code = transformSync(readText(new URL('src/visitor/editor-preview.js', ROOT)), { minify:true, format:'esm', target:'es2022' }).code;
   const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
@@ -256,7 +262,7 @@ export function buildVisitorIndex(sources = readVisitorSources()) {
   const template = buildVisitorTemplate(sources);
   const serializedTemplate = `${BUNDLER_TEMPLATE_OPEN}${serializeBundlerTemplate(template)}</script>`;
   // Keep the readable bootstrap source, without shipping its comments/whitespace.
-  const shell = sources.shell.replace(/(<script id="covermate-bootstrap">)([\s\S]*?)(<\/script>)/,
+  const shell = sources.shell.replace('/covermate-analytics.js', readAnalyticsAsset().url).replace(/(<script id="covermate-bootstrap">)([\s\S]*?)(<\/script>)/,
     (_, open, script, close) => open + transformSync(script, { minifyWhitespace: true }).code + close);
   return withDefaultSeo(shell, sources).replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
 }
