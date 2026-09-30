@@ -46,7 +46,7 @@ try {
   const edit=async(id)=>{await list();await admin.locator('[name=query]').fill(id);await admin.locator(`[data-article-action=edit][data-id="${id}"]:visible`).click();await admin.locator('[data-field=featured]').waitFor();};
   const save=async()=>{await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback').filter({hasText:'บันทึก'}).waitFor();};
   const publish=async()=>{await admin.locator('[data-ae=publish]:visible').click();await admin.getByRole('button',{name:'ยืนยันเผยแพร่',exact:true}).click();await admin.locator('.ae-feedback').filter({hasText:'เผยแพร่แล้ว'}).waitFor();};
-  await edit(ids[11]);await admin.getByRole('switch',{name:'ปักหมุดบน Home',exact:true}).check();
+  await edit(ids[11]);await admin.getByRole('switch',{name:'ปักหมุดบน Home'}).check();
   assert.equal(await admin.locator('[data-field=pinned]').isChecked(),false,'Home pin does not change index pin');
   await save();assert.equal((await home()).includes(ids[11]),false,'Draft pin stays private');
   await admin.reload();await admin.locator('[data-article-state=ready]').waitFor();await admin.locator('[name=query]').fill(ids[11]);await admin.locator(`[data-article-action=edit][data-id="${ids[11]}"]:visible`).click();
@@ -71,7 +71,7 @@ try {
   const rejected=candidates[outcomes.findIndex(r=>r.status===422)];
   assert.equal((await call('save',{article:rejected,expectedRevision:rejected.revision},null)).status,401);
   const catalog=await repository.catalog(site);assert.equal(catalog.items.filter(item=>item.featured||item.publishedHomePinned).length,10);
-  await edit(rejected.id);await admin.getByRole('switch',{name:'ปักหมุดบน Home',exact:true}).check();await admin.locator('[data-field=title]').fill('ข้อความที่ต้องไม่หายเมื่อเกินโควตา');
+  await edit(rejected.id);await admin.getByRole('switch',{name:'ปักหมุดบน Home'}).check();await admin.locator('[data-field=title]').fill('ข้อความที่ต้องไม่หายเมื่อเกินโควตา');
   await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback[data-error=true]').filter({hasText:'ไม่เกิน 10'}).waitFor();
   assert.equal(await admin.locator('[data-field=title]').inputValue(),'ข้อความที่ต้องไม่หายเมื่อเกินโควตา');assert.equal(await admin.locator('[data-field=featured]').isChecked(),true);
   await admin.screenshot({path:out+'/admin-limit-desktop.png',fullPage:true});
