@@ -25,9 +25,9 @@ No production CMS Publish, customer mutation, real email send, Firestore Rules,
 stored schema or credential change is included. Role enforcement and existing
 backend contracts remain. Code deployment does not publish the current CMS Draft.
 
-The release branch incorporates main through `759024f` to preserve concurrent
+The release branch incorporates main through `73162cf` to preserve concurrent
 repository updates. Scope is the diff from that main baseline; its existing
-email/media changes are not new work attributed to this chat. The final receipt
+email/media and publishing-scope changes are not new work attributed to this chat. The final receipt
 must distinguish main's production status from candidate build readiness.
 
 ## Required gates and evidence
