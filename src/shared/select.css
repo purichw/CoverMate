@@ -1,4 +1,4 @@
-select:not([multiple]):not([size]) { text-align:center; text-align-last:center; }
+select,select option,select optgroup { text-align:center; text-align-last:center; }
 .cm-select-shell { position:relative; display:inline-grid; vertical-align:middle; min-width:0; max-width:100%; }
 .cm-select-shell[hidden] { display:none!important; }
 .cm-select-shell > select { grid-area:1 / 1; min-width:0; max-width:100%; }

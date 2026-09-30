@@ -2,8 +2,10 @@ import { ADMIN_LOGIN_PATH, adminRedirect, requireVerifiedAdminSession, signOutAd
 import { createCasesWorkspace } from "/admin/ops/cases.js";
 import { homeView } from "/admin/home-view.js";
 import { analyticsView } from "/admin/analytics-view.js";
+import { contentView } from "/admin/content-view.js";
+import { loadCmsOverview, cmsHubLinks } from "/admin/content-model.mjs";
 import { deriveAnalytics } from "/admin/analytics-model.mjs";
-import { ADMIN_MODULES as MODULES, adminNavigation } from "/admin/shell.js";
+import { ADMIN_MODULES as MODULES, adminNavigation, accountIdentity, adminAccountMenu, adminAccountDetails, bindAdminAccounts } from "/admin/shell.js";
 import { createArticlesWorkspace } from "/admin/articles/workspace.mjs";
 import { loadArticleCatalog, loadArticleForEditor, createCloudArticleRepository } from "/admin/articles/data.mjs";
 import {
@@ -13,7 +15,6 @@ import {
 } from "/covermate-contract.js";
 
 const K_ADMIN_EVER = "purich-admin-ever-v7";
-const OWNER_CONTENT_PATH = ownerPathForMode("admin");
 const OWNER_EDIT_PATH = ownerPathForMode("edit");
 const OWNER_PREVIEW_PATH = ownerPathForMode("preview");
 
@@ -81,6 +82,8 @@ const state = {
   pending: "",
   sessionRole: "none",
   home: { loading: true, error: '', summary: null, items: [], checkedAt: null },
+  cms: { loading: true, error: '', connected: false, checkedAt: null, publishedAt: null, draftState: 'unknown', draftUpdatedAt: null, versionCount: null },
+  cmsTipDismissed: false,
   analytics: { loading: true, error: '', rows: [], checkedAt: null, days: 30, view: 'overview' },
   filters: {
     leadStatus: "all",
@@ -113,7 +116,9 @@ async function init() {
   state.sessionRole = normalizeRole(state.session.role);
   articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, repository:createCloudArticleRepository(), session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
   casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
-    renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }), sessionRoleLabel: displayRole(state.sessionRole) });
+    renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }),
+    renderAccount: () => adminAccountMenu(state.session,displayRole(state.sessionRole),iconSvg,{mobile:true}),
+    renderAccountDetails: () => adminAccountDetails(state.session,displayRole(state.sessionRole),iconSvg) });
   const bell = document.createElement('button');
   bell.type = 'button'; bell.className = 'case-button case-icon-button case-top-bell'; bell.dataset.caseAction = 'notifications'; bell.setAttribute('aria-label', 'การแจ้งเตือน');
   bell.addEventListener('click', () => casesWorkspace.openNotifications());
@@ -123,6 +128,7 @@ async function init() {
   menu.setAttribute('aria-haspopup', 'dialog'); menu.setAttribute('aria-expanded', 'false');
   menu.addEventListener('click', () => casesWorkspace.openNavigation()); document.querySelector('.mobilebar').append(menu);
   applySessionChrome();
+  bindAdminAccounts({details:()=>casesWorkspace.openAccount(),preferences:()=>casesWorkspace.openPreferences(),notifications:()=>casesWorkspace.openNotifications()});
   bindEvents();
   normalizeRetiredSettingsUrl();
   render();
@@ -133,14 +139,11 @@ async function init() {
 }
 
 function applySessionChrome() {
-  const name = (state.session && (state.session.name || state.session.email)) || "ผู้ดูแล CoverMate";
-  const initials = name.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "CM";
-  document.getElementById("userName").textContent = name;
-  document.getElementById("userAvatar").textContent = initials;
-  document.getElementById("userMeta").textContent = `${displayRole(normalizeRole(state.session.role))} · ยืนยันสิทธิ์แล้ว`;
+  document.querySelector('[data-admin-account-root]').innerHTML=adminAccountMenu(state.session,displayRole(state.sessionRole),iconSvg);
 }
 
 function bindEvents() {
+  matchMedia('(min-width:1040px)').addEventListener('change', () => { if (state.module === 'content') renderContent({ resetGroups: true }); });
   document.addEventListener("click", handleClick);
   document.addEventListener("submit", handleSubmit);
   document.addEventListener("keydown", handleKeydown);
@@ -169,11 +172,29 @@ function bindEvents() {
 }
 
 async function loadAllData() {
-  if (['articles', 'operations', 'content'].includes(state.module)) { state.loading.clear(); return; }
+  if (state.module === 'content') { state.loading.clear(); return loadContentData(); }
+  if (['articles', 'operations'].includes(state.module)) { state.loading.clear(); return; }
   if (state.module === 'home') { state.loading.clear(); return loadHomeData(); }
   if (state.module === 'analytics') { state.loading.clear(); return loadAnalyticsData(); }
   await Promise.all(DATA_RESOURCES.map((resource) => loadResource(resource)));
   render();
+}
+
+let contentLoadGeneration = 0;
+async function loadContentData() {
+  const generation = ++contentLoadGeneration;
+  state.cms = { ...state.cms, loading: true, error: '', connected: false };
+  if (state.module === 'content') renderContent();
+  try {
+    const overview = await loadCmsOverview(await ensureFirebase());
+    if (generation !== contentLoadGeneration) return;
+    state.cms = overview;
+  } catch {
+    if (generation !== contentLoadGeneration) return;
+    state.cms = { loading: false, connected: false, error: 'ยังเชื่อมต่อข้อมูล CMS ไม่ได้ กรุณาลองอีกครั้ง', checkedAt: null, publishedAt: null, draftState: 'unknown', draftUpdatedAt: null, versionCount: null };
+  }
+  if (state.module === 'content') renderContent();
+  if (state.module === 'home') renderHome();
 }
 
 let analyticsLoadGeneration = 0;
@@ -206,9 +227,10 @@ async function loadHomeData() {
   state.home = { loading: true, error: '', summary: null, items: [], checkedAt: null };
   if (state.module === 'home') renderHome();
   casesWorkspace.refreshNotifications();
+  const cmsRequest = loadContentData();
   const results = await Promise.allSettled([
     apiFetch('cases/summary'),
-    apiFetch('cases?scope=all&sort=newest&limit=3')
+    apiFetch('cases?scope=all&sort=newest&limit=5')
   ]);
   if (generation !== homeLoadGeneration) return;
   const error = results.find(result => result.status === 'rejected');
@@ -220,6 +242,7 @@ async function loadHomeData() {
     checkedAt: error ? null : Date.now()
   };
   if (state.module === 'home') renderHome();
+  await cmsRequest;
 }
 
 async function openHomeCases({ search = '', followUp = 'any', id } = {}) {
@@ -338,7 +361,7 @@ async function ensureFirebase() {
   return window.CoverMateFirebase;
 }
 
-function handleClick(event) {
+async function handleClick(event) {
   if (event.target.closest("[data-public-site]")) {
     clearOwnerMarker();
     return;
@@ -348,8 +371,30 @@ function handleClick(event) {
   if (actionEl) {
     if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
-    if (action === "logout") {if(articlesWorkspace?.active && !articlesWorkspace.canLeave())return;signOutAdmin();}
-    if (action === 'home-refresh' && !state.home.loading) loadHomeData();
+    if (action === "logout") {
+      if (articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
+      if (!(await casesWorkspace.canLeave())) return;
+      signOutAdmin();
+      return;
+    }
+    if (action === 'account') return casesWorkspace.openAccount();
+    if (action === 'cms-refresh' && !state.cms.loading) return loadContentData();
+    if (action === 'cms-articles') return setModule('articles');
+    if (action === 'cms-dismiss-tip') {
+      state.cmsTipDismissed = true;
+      screen.querySelector('.cms-tip')?.remove();
+      screen.querySelector('[data-cms-group] summary')?.focus();
+      return;
+    }
+    if (action === 'cms-toggle-groups') {
+      const groups = [...screen.querySelectorAll('[data-cms-group]')];
+      const expand = groups.some(group => !group.open);
+      groups.forEach(group => { group.open = expand; });
+      actionEl.setAttribute('aria-expanded', String(expand));
+      actionEl.textContent = expand ? 'ย่อทั้งหมด' : 'ดูทั้งหมด';
+      return;
+    }
+    if (action === 'home-refresh' && !state.home.loading && !state.cms.loading) loadHomeData();
     if (action === 'home-cases') openHomeCases();
     if (action === 'home-follow-ups') openHomeCases({ followUp: 'due' });
     if (action === 'home-case') openHomeCases({ id: actionEl.dataset.id });
@@ -489,11 +534,14 @@ function renderHome() {
   const activeKey = screen.contains(document.activeElement) ? focusKey(document.activeElement) : null;
   screen.innerHTML = homeView({
     home: state.home,
+    cms: state.cms,
+    readonly: cmsHubLinks(state.sessionRole).readonly,
     name: state.session?.name || state.session?.email || 'ผู้ดูแล CoverMate',
     role: displayRole(state.sessionRole),
     editPath: OWNER_EDIT_PATH,
     previewPath: OWNER_PREVIEW_PATH,
-    icon: iconSvg
+    icon: iconSvg,
+    account: accountIdentity(state.session, displayRole(state.sessionRole), iconSvg)
   });
   if (activeKey) [...screen.querySelectorAll('button:not(:disabled), a[href]')].find(element => focusKey(element) === activeKey)?.focus({ preventScroll: true });
 }
@@ -752,35 +800,22 @@ function renderAudit() {
   `;
 }
 
-function renderContent() {
-  const editDisabled = state.sessionRole === "readonly";
-  screen.innerHTML = `
-    ${pageHead("จัดการเว็บไซต์", "แก้ไขข้อความและส่วนต่าง ๆ ของเว็บไซต์ พร้อม Preview และ Publish ผ่าน CMS")}
-    <div class="notice" style="margin-bottom:18px;">
-      <strong>เครื่องมือจัดการเว็บไซต์</strong>
-      <div>เริ่มจากคลิกแก้ไขข้อความบนหน้าเว็บ เมนูเครื่องมือจะเปิดแผงเครื่องมือลำดับและการแสดงผล ตั้งค่าแบรนด์ ท้ายเว็บ พร้อม Preview และ Publish</div>
-    </div>
-    <div class="grid three">
-      ${contentCard("แก้ไขเนื้อหา", "คลิกแก้ไขหัวข้อ ข้อความ และป้ายกำกับได้บนหน้าเว็บ เปิดเมนูเครื่องมือ → แผงเครื่องมือ เพื่อจัดลำดับและซ่อนส่วนต่าง ๆ ตั้งค่าแบรนด์ ท้ายเว็บ สำรองและกู้คืนข้อมูล", OWNER_EDIT_PATH, editDisabled)}
-      ${contentCard("Preview ฉบับร่าง", "ดูฉบับร่างก่อน Publish โดยผู้เข้าชมยังเห็นเว็บไซต์เวอร์ชันที่เผยแพร่อยู่", OWNER_PREVIEW_PATH, false)}
-      ${contentCard("เวอร์ชันที่เผยแพร่แล้ว", "ดูประวัติเวอร์ชันและกู้คืนข้อมูลได้ในแผงเครื่องมือ", OWNER_CONTENT_PATH, editDisabled)}
-    </div>
-    <section class="panel" style="margin-top:18px;">
-      <h2>ส่วนที่ผู้ดูแลแก้ไขได้</h2>
-      ${simpleTable(["ส่วนที่จัดการ", "สิทธิ์การแก้ไข"], [
-        ["คำถามที่พบบ่อย (FAQ)", status("แก้ไขได้", "editable")],
-        ["ข้อมูลและรูปที่ปรึกษา", status("แก้ไขได้", "editable")],
-        ["รายละเอียดบริการ", status("แก้ไขได้", "editable")],
-        ["ข้อมูลติดต่อและเวลาทำการ", status("แก้ไขได้", "editable")],
-        ["ประกาศหน้าแรก", status("แก้ไขได้", "editable")],
-        ["โลโก้บริษัทประกัน", status("แก้ไขได้", "editable")],
-        ["ลำดับ การแสดงผล และสีของแต่ละส่วน", status("แก้ไขได้", "editable")],
-        ["Layout ระยะห่าง และองค์ประกอบ", status("แก้ไขผ่านโค้ด", "code-owned")],
-        ["เลขใบอนุญาตและข้อความตัวแทน/นายหน้า", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")],
-        ["การเปิดเผยค่าตอบแทนและข้อกำหนดเรื่องตัวอย่างการเคลม", status("ล็อกข้อความตามข้อกำหนด", "locked-legal-surface")]
-      ], true)}
-    </section>
-  `;
+function renderContent({ resetGroups = false } = {}) {
+  const openGroups = new Map([...screen.querySelectorAll('[data-cms-group]')].map(group => [group.dataset.cmsGroup, group.open]));
+  const active = screen.contains(document.activeElement) ? document.activeElement : null;
+  const focusAction = active?.dataset.action;
+  const focusGroup = active?.closest('[data-cms-group]')?.dataset.cmsGroup;
+  const desktop = matchMedia('(min-width:1040px)').matches;
+  screen.innerHTML = contentView({ cms: state.cms, ...cmsHubLinks(state.session.role, location.search), icon: iconSvg });
+  screen.querySelectorAll('[data-cms-group]').forEach(group => {
+    group.open = resetGroups ? desktop : (openGroups.get(group.dataset.cmsGroup) ?? desktop);
+  });
+  if (state.cmsTipDismissed) screen.querySelector('.cms-tip')?.remove();
+  const toggle = screen.querySelector('[data-action="cms-toggle-groups"]');
+  const expanded = [...screen.querySelectorAll('[data-cms-group]')].every(group => group.open);
+  if (toggle) { toggle.setAttribute('aria-expanded', String(expanded)); toggle.textContent = expanded ? 'ย่อทั้งหมด' : 'ดูทั้งหมด'; }
+  if (focusAction) screen.querySelector('[data-action="' + focusAction + '"]')?.focus({ preventScroll: true });
+  else if (focusGroup) screen.querySelector('[data-cms-group="' + focusGroup + '"] summary')?.focus({ preventScroll: true });
 }
 
 function renderAnalytics() {
@@ -962,6 +997,7 @@ async function setModule(moduleId, options = {}) {
   render();
   if (moduleId === 'home') loadHomeData();
   else if (moduleId === 'analytics') loadAnalyticsData();
+  else if (moduleId === 'content') loadContentData();
   else if (moduleId !== 'operations' && !state.data.leads.length && !state.loading.size) loadAllData();
 }
 
@@ -1126,19 +1162,6 @@ function emptyBlock(text) {
   return `<div class="empty">${escapeHTML(text)}</div>`;
 }
 
-function contentCard(title, copy, href, disabled) {
-  return `
-    <section class="card module-card">
-      <span class="round-icon" aria-hidden="true">${iconSvg("edit")}</span>
-      <h2>${escapeHTML(title)}</h2>
-      <p class="note" style="margin-bottom:18px;">${escapeHTML(copy)}</p>
-      ${disabled
-        ? `<button class="ghost-button" type="button" disabled title="สิทธิ์นี้ไม่สามารถแก้ไขเนื้อหาเว็บไซต์ได้">ดูอย่างเดียว</button>`
-        : `<a class="ghost-button" href="${escapeHTML(href)}" target="_blank" rel="noreferrer">เปิด</a>`}
-    </section>
-  `;
-}
-
 function field(label, value) {
   return `<div><span class="field-label">${escapeHTML(label)}</span><span class="field-value">${escapeHTML(String(value || "-"))}</span></div>`;
 }
@@ -1211,6 +1234,7 @@ async function syncRouteFromLocation() {
   render();
   if (next.module === 'home') loadHomeData();
   if (next.module === 'analytics') loadAnalyticsData();
+  if (next.module === 'content') loadContentData();
 }
 
 function normalizeRetiredSettingsUrl() {
@@ -1259,6 +1283,10 @@ function cssEscape(value) {
 
 function iconSvg(name) {
   const paths = {
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+    logout: '<path d="M10 17v4H3V3h7v4M8 12h13m-5-5 5 5-5 5"/>',
+    chevronDown: '<path d="m6 9 6 6 6-6"/>',
+    close: '<path d="m6 6 12 12M6 18 18 6"/>',
     home: '<path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V20h14v-9.5"></path><path d="M9 20v-6h6v6"></path>',
     users: '<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.9"></path><path d="M16 3.2a4 4 0 0 1 0 7.6"></path>',
     user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',

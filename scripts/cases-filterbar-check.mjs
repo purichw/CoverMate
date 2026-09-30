@@ -10,6 +10,7 @@ const browser = await launchChromium(loadPlaywright().chromium);
 const output = 'uat-results/cases-filterbar';
 fs.mkdirSync(output, { recursive:true });
 const errors = [], checks = [], fixture = createCasesFixture();
+const selectDelayMs = Math.max(0, Math.min(1000, Number(process.env.CASES_SELECT_DELAY_MS) || 0));
 try {
   const context = await browser.newContext({ reducedMotion:'reduce' });
   await context.route('**/*', route => new URL(route.request().url()).origin === preview.baseUrl ? route.continue() : route.abort());
@@ -36,17 +37,28 @@ try {
     await page.goto('about:blank');
     await page.goto(preview.baseUrl+'/admin#operations');
     await page.locator('.case-list[aria-busy="false"]').waitFor();
-    await trigger('status').waitFor();
+    await trigger('sort').waitFor();
     await page.evaluate(() => document.fonts.ready);
-    const boxes = await Promise.all([trigger('status'),page.locator('.case-filter-toggle'),trigger('sort')].map(control => control.boundingBox()));
+    const controls=width>700?[trigger('status'),page.locator('.case-filter-toggle'),trigger('sort')]:[page.locator('.case-filter-toggle'),trigger('sort')];
+    const boxes = await Promise.all(controls.map(control => control.boundingBox()));
     assert.ok(boxes.every(box => Math.abs(box.y-boxes[0].y)<1 && box.height>=44), 'Controls share one row with touch targets');
     assert.ok(boxes.slice(1).every((box, index) => box.x>=boxes[index].x+boxes[index].width), 'Controls do not overlap');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth), false);
-    assert.equal(await page.locator('.case-filter-controls .cm-select-value').evaluateAll(nodes => nodes.some(n=>n.scrollWidth>n.clientWidth+1)), false, 'Default labels fit');
+    assert.equal(await page.locator('.case-filter-controls .cm-select-value:visible').evaluateAll(nodes => nodes.some(n=>n.scrollWidth>n.clientWidth+1)), false, 'Default labels fit');
     assert.equal(await field('sort').count(),1);
     assert.equal(await page.locator('.case-list-toolbar select').count(),0);
+    if(width===390&&selectDelayMs)await page.evaluate(delay=>{
+      const raf=window.requestAnimationFrame;
+      window.__restoreFilterbarQaRaf=()=>{window.requestAnimationFrame=raf;delete window.__restoreFilterbarQaRaf;};
+      window.requestAnimationFrame=callback=>raf(time=>setTimeout(()=>callback(time),delay));
+    },selectDelayMs);
     await page.locator('.case-filter-toggle').click();
     await page.locator('#caseExtraFilters').waitFor();
+    // The disclosure renders synchronously; its custom select is enhanced on
+    // the next animation frame. Wait for that control, not just its container.
+    await trigger('status').waitFor({state:'visible'});
+    assert.equal(await trigger('status').isVisible(),true,'Status remains accessible in expanded mobile filters');
+    if(width===390&&selectDelayMs)await page.evaluate(()=>window.__restoreFilterbarQaRaf?.());
     if(width!==320) {
       const bar = await page.locator('.case-filterbar').boundingBox();
       const list = await page.locator('.case-list-toolbar').boundingBox();
@@ -80,7 +92,7 @@ try {
   assert.equal(await trigger('sort').evaluate(n=>n===document.activeElement),true);
   assert.deepEqual(errors,[]);
   assert.deepEqual(preview.requests,[]);
-  fs.writeFileSync(`${output}/report.json`,JSON.stringify({passed:true,source:'Read-only local fixtures; no production writes',checks,errors},null,2));
+  fs.writeFileSync(`${output}/report.json`,JSON.stringify({passed:true,source:'Read-only local fixtures; no production writes',selectDelayMs,checks,errors},null,2));
   console.log('PASS: one-row filters at 1440/390/320px; combined status/follow-up/sort and closed-scope transition; no overflow or console errors.');
 } finally {
   await browser.close();

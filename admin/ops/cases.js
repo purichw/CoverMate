@@ -8,6 +8,14 @@ const localInput = value => value ? new Date(Date.parse(value) + 7 * 3600000).to
 const badge = value => `<span class="case-status" data-status="${value}"><i aria-hidden="true"></i>${STATUS[value]}</span>`;
 const paths = { bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>', file: '<path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h6"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/>', phone: '<path d="M7 3 3 5c-1 7 9 17 16 16l2-4-5-3-2 2-6-6 2-2z"/>', check: '<circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/>', close: '<path d="m6 6 12 12M6 18 18 6"/>', filter: '<path d="M3 6h18M6 12h12M9 18h6M7 3v6m10 0v6m-5 0v6"/>', chevron: '<path d="m9 5 7 7-7 7"/>', menu: '<path d="M3 6h18M3 12h18M3 18h18"/>', refresh: '<path d="M20 7a9 9 0 1 0 1 8M20 3v5h-5"/>' };
 const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.file}</svg>`;
+Object.assign(paths, {
+  search: '<circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/>',
+  users: '<circle cx="9" cy="7" r="4"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M17 3a4 4 0 0 1 0 8m2 3a6 6 0 0 1 3 5v2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
+  chart: '<path d="M3 3v18h18M7 17v-6m5 6V6m5 11v-9"/>',
+  book: '<path d="M12 5v16M12 5C8 2 4 3 2 4v16c3-2 6-1 10 1 4-2 7-3 10-1V4c-2-1-6-2-10 1Z"/>',
+  sprout: '<path d="M12 22V12M12 16C5 16 3 12 3 7c6 0 9 3 9 9Zm0-4c0-6 3-9 9-9 0 6-3 9-9 9Z"/>'
+});
 const btn = (action, label, extra = '', cls = '') => `<button type="button" class="case-button ${cls}" data-case-action="${action}" ${extra}>${label}</button>`;
 const editable = r => ({ contact: structuredClone(r.contact), interestType: r.interestType, enquiryTopic: r.enquiryTopic, workingNote: r.workingNote, status: r.status, followUp: structuredClone(r.followUp) });
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -20,7 +28,7 @@ const notificationBody = n => {
     .replace(/ is ready to review\.$/, n.type === 'follow_up_due' ? ' · ถึงกำหนดติดตามแล้ว' : ' · พร้อมให้ตรวจสอบ');
 };
 
-export function createCasesWorkspace({ root, api, session, searchInput, navigate, renderNavigation, sessionRoleLabel }) {
+export function createCasesWorkspace({ root, api, session, searchInput, navigate, renderNavigation, renderAccount, renderAccountDetails }) {
   const s = { active: false, rows: [], summary: null, list: null, loading: true, error: '', summaryError: '', scope: 'open', status: '', followUp: 'any', closedMonth: false, search: '', sort: '', cursor: '', pages: [], panel: null, record: null, draft: null, activities: [], activityOffset: null, legacy: null, saving: false, errorSave: '', conflict: null, notifications: [], unreadCount: 0, notificationError: '', unreadOnly: false, notificationCursor: null, preferences: null, capabilities: null, expandedFilters: false, generation: 0 };
   const overlay = document.createElement('div'); overlay.className = 'case-overlay'; document.body.append(overlay);
   let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, testEmailKey, testEmailSending = false, testEmailMessage = '', testEmailFailed = false, panelGeneration = 0, summaryGeneration = 0;
@@ -113,42 +121,66 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   }
   function filter(changes) { Object.assign(s, changes, { cursor: '', pages: [] }); writeCaseLocation(); load({ listOnly: true }); }
   function summaryCards() {
-    const cards = [['new', 'เคสใหม่', 'รอติดต่อครั้งแรก', 'file'], ['followUpsDue', 'ถึงกำหนดติดตาม', `เลยกำหนด ${s.summary?.overdue ?? '—'} เคส`, 'calendar'], ['noAnswer', 'ยังติดต่อไม่ได้', 'รอติดต่ออีกครั้ง', 'phone'], ['closedThisMonth', 'ปิดเคสเดือนนี้', 'ดำเนินการแล้วหรือไม่ไปต่อ', 'check']];
-    return `<div class="case-metrics">${cards.map(([key, label, sub, glyph]) => `<button class="case-metric cm-stat-card" data-case-action="metric" data-metric="${key}" ${!s.summary ? 'disabled' : ''}><span class="case-metric-icon">${icon(glyph)}</span><span><strong>${s.summary?.[key] ?? '—'}</strong><span>${label}</span><small>${sub}</small></span></button>`).join('')}</div>${s.summaryError ? `<div class="case-inline-error" role="alert">โหลดข้อมูลสรุปไม่ได้ ${btn('retry', 'ลองอีกครั้ง')}</div>` : ''}`;
+    const cards = [['new', 'เคสใหม่', 'รอติดต่อครั้งแรก', 'file'], ['followUpsDue', 'ถึงกำหนดติดตาม', 'เลยกำหนด ' + (s.summary?.overdue ?? '—') + ' เคส', 'calendar'], ['noAnswer', 'ยังติดต่อไม่ได้', 'รอติดต่ออีกครั้ง', 'phone'], ['closedThisMonth', 'ปิดเคสเดือนนี้', 'ดำเนินการแล้วหรือไม่ไปต่อ', 'check']];
+    return '<div class="case-metrics">' + cards.map(([key, label, sub, glyph]) => '<button type="button" class="case-metric cm-stat-card" data-case-action="metric" data-metric="' + key + '" ' + (!s.summary ? 'disabled' : '') + '><span class="case-metric-icon">' + icon(glyph) + '</span><strong>' + (s.summary?.[key] ?? '—') + '</strong><span class="case-metric-label">' + label + '</span><small>' + sub + '</small></button>').join('') + '</div>' + (s.summaryError ? '<div class="case-inline-error" role="alert">โหลดข้อมูลสรุปไม่ได้ ' + btn('retry', 'ลองอีกครั้ง') + '</div>' : '');
+  }
+  function statusFilter() {
+    return '<label class="case-filter-select case-status-filter"><span class="case-sr-only">สถานะ</span><select id="caseStatusFilter" data-case-filter="status"><option value="">สถานะ: ทั้งหมด</option>' + Object.entries(STATUS).filter(([value]) => s.scope === 'all' || closed(value) === (s.scope === 'closed')).map(([value, label]) => '<option value="' + value + '" ' + (s.status === value ? 'selected' : '') + '>' + label + '</option>').join('') + '</select></label>';
+  }
+  function emptyList() {
+    if (s.summary?.total !== 0) return '<div class="case-empty case-no-results"><span class="case-empty-search" aria-hidden="true">' + icon('search') + '</span><h2>ไม่พบเคสที่ตรงกัน</h2><p>ลองค้นหาด้วยชื่อ เบอร์โทร หรือเลขเคสอื่น<br>หรือเปลี่ยนตัวกรองเพื่อดูรายการเพิ่มเติม</p>' + btn('clear-filters', 'ล้างการค้นหาและตัวกรอง') + '</div>';
+    return '<div class="case-empty case-first-empty"><div class="case-empty-art" aria-hidden="true"><span class="case-empty-halo"></span><span class="case-empty-document">' + icon('file') + '</span><span class="case-empty-person">' + icon('users') + '</span></div><h2>ยังไม่มีเคสลูกค้า</h2><p>เริ่มเพิ่มเคสเพื่อเก็บข้อมูลลูกค้า นัดติดตาม<br>และบันทึกความคืบหน้าในที่เดียว</p><div class="case-empty-actions">' + btn('new', '+ เพิ่มเคส', '', 'case-primary') + '<details class="case-start-guide"><summary>' + icon('book') + 'วิธีเริ่มใช้งาน</summary><ol><li>กด “เพิ่มเคส” แล้วกรอกชื่อและช่องทางติดต่อ</li><li>เลือกเรื่องที่สนใจ พร้อมบันทึกข้อมูลที่ลูกค้าแจ้ง</li><li>ตั้งวันติดตามและบันทึกเคส จากนั้นเปิดเคสเพื่ออัปเดตความคืบหน้าได้</li></ol></details></div><div class="case-empty-benefits"><span>' + icon('users') + 'เก็บข้อมูลลูกค้า<br>อย่างเป็นระบบ</span><span>' + icon('clock') + 'วางแผนและนัดหมาย<br>การติดตามครั้งถัดไป</span><span>' + icon('chart') + 'ดูความคืบหน้า<br>ของงานลูกค้า</span></div><p class="case-empty-mobile-note">' + icon('sprout') + 'ดูแลทุกโอกาส สร้างความมั่นใจให้ลูกค้า</p></div>';
   }
   function render() {
     if (!s.active) return;
     if (!['admin', 'administrator', 'owner'].includes(session.role)) { root.innerHTML = '<div class="case-empty"><h1>เคสลูกค้า</h1><p>ส่วนนี้สำหรับเจ้าของที่ยืนยันสิทธิ์แล้ว</p></div>'; return; }
-    // Each load renders both its pending and completed list. Preserve the filter
-    // only while it still owns focus; a later response must not steal focus back.
+    // Preserve the control that owns focus through both pending and resolved reads.
     const active = document.activeElement;
     const focusedFilter = root.contains(active)
       ? (active.matches('select') ? active : active.closest('.cm-select-shell')?.querySelector('select'))?.dataset.caseFilter
       : null;
-    const activeCount = Number(s.followUp !== 'any') + Number(s.closedMonth);
+    const searchFocus = root.contains(active) && active.matches('[data-case-search]') ? { start: active.selectionStart, end: active.selectionEnd } : null;
+    const focusedAction = root.contains(active) && active.matches('button[data-case-action]') ? [active.dataset.caseAction, active.dataset.scope || '', active.dataset.metric || '', active.dataset.id || ''] : null;
+    const guideOpen = root.querySelector('.case-start-guide')?.open;
+    const compact = matchMedia('(max-width:767px)').matches;
+    if (compact && focusedFilter === 'status') s.expandedFilters = true;
+    const activeCount = Number(!!s.status) + Number(s.followUp !== 'any') + Number(s.closedMonth);
     root.classList.add('cases-screen');
-    root.innerHTML = `<div class="case-page-head"><div><h1>เคสลูกค้า</h1><p>รวมเคสและงานติดตามลูกค้า</p></div><div class="case-head-actions">${btn('new', '+ เพิ่มเคส', '', 'case-primary')}</div></div>
-      ${summaryCards()}<div class="case-filterbar"><div class="case-scopes" role="group" aria-label="ขอบเขตเคส">${['open', 'all', 'closed'].map(scope => btn('scope', `${title(scope)}${s.summary ? ` <span>(${s.summary[scope === 'all' ? 'total' : scope]})</span>` : ''}`, `data-scope="${scope}" aria-pressed="${s.scope === scope}"`, s.scope === scope ? 'selected' : '')).join('')}</div>
-      <div class="case-filter-controls" role="group" aria-label="กรองและเรียงเคส">
-      <label class="case-filter-select"><span class="case-sr-only">สถานะ</span><select id="caseStatusFilter" data-case-filter="status"><option value="">ทุกสถานะ</option>${Object.entries(STATUS).filter(([value]) => s.scope === 'all' || closed(value) === (s.scope === 'closed')).map(([value, label]) => `<option value="${value}" ${s.status === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
-      ${btn('filters', `${icon('filter')}<span class="case-filter-label">ตัวกรอง</span>${activeCount ? `<span class="case-filter-count">${activeCount}</span>` : ''}`, `aria-expanded="${s.expandedFilters}" aria-controls="caseExtraFilters" aria-label="ตัวกรองเพิ่มเติม${activeCount ? ` (${activeCount})` : ''}" title="ตัวกรองเพิ่มเติม${activeCount ? ` (${activeCount})` : ''}"`, 'case-filter-toggle')}
-      <label class="case-filter-select"><span class="case-sr-only">เรียงเคส</span><select data-case-filter="sort"><option value="" ${!s.sort ? 'selected' : ''}>${['due', 'overdue'].includes(s.followUp) ? 'กำหนดติดตามใกล้สุด' : s.scope === 'closed' ? 'ปิดล่าสุดก่อน' : 'ใหม่สุดก่อน'}</option><option value="newest" ${s.sort === 'newest' ? 'selected' : ''}>ใหม่สุดก่อน</option><option value="follow_up" ${s.sort === 'follow_up' ? 'selected' : ''}>กำหนดติดตามใกล้สุด</option><option value="closed" ${s.sort === 'closed' ? 'selected' : ''}>ปิดล่าสุดก่อน</option></select></label>
-      ${btn('retry', icon('refresh'), 'aria-label="รีเฟรชเคส" title="รีเฟรชเคส"', 'case-icon-button')}</div></div>
-      <div id="caseExtraFilters" class="case-extra-filters" ${s.expandedFilters ? '' : 'hidden'}><label>กำหนดติดตาม<select data-case-filter="followUp">${['any', 'due', 'today', 'overdue'].map(v => `<option value="${v}" ${s.followUp === v ? 'selected' : ''}>${title(v)}</option>`).join('')}</select></label><small>วันที่และเวลาทั้งหมดใช้เวลาไทย (UTC+7)</small></div>
-      ${s.closedMonth ? `<div class="case-chips">${btn('clear-month', 'ปิดเคสเดือนนี้ ×', 'aria-label="ล้างตัวกรองปิดเคสเดือนนี้"')}</div>` : ''}
-      <section class="case-list" aria-label="เคสลูกค้า" aria-busy="${s.loading}"><div class="case-list-toolbar"><span>${s.loading ? 'กำลังโหลดเคส…' : s.list ? `${s.list.filteredTotal} เคส` : 'โหลดเคสไม่ได้'}</span></div>
-      ${s.error ? `<div class="case-empty" role="alert"><h2>โหลดเคสไม่ได้</h2><p>${esc(s.error)}</p>${btn('retry', 'ลองอีกครั้ง')}</div>` : s.loading ? '<div class="case-skeleton" aria-label="กำลังโหลด"><div></div><div></div><div></div></div>' : !s.rows.length ? `<div class="case-empty"><h2>${s.summary?.total ? 'ไม่พบเคสที่ตรงกัน' : 'ยังไม่มีเคส'}</h2><p>${s.summary?.total ? 'ลองเปลี่ยนขอบเขตเคสหรือล้างตัวกรอง' : 'คำถามจากเว็บไซต์จะแสดงที่นี่ หรือเพิ่มเคสที่รับเองได้เลย'}</p>${btn(s.summary?.total ? 'clear-filters' : 'new', s.summary?.total ? 'ล้างตัวกรอง' : '+ เพิ่มเคส')}</div>` : `<table class="cases-table"><thead><tr><th>เคส</th><th>ช่องทางติดต่อ</th><th>สถานะ</th><th>กำหนดติดตาม</th><th>อัปเดตล่าสุด</th></tr></thead><tbody>${s.rows.map(row).join('')}</tbody></table><div class="case-mobile-list">${s.rows.map(card).join('')}</div>`}
-      ${s.list && !s.loading && s.list.filteredTotal ? `<div class="case-pagination"><span>แสดง ${s.pages.length * 20 + 1}–${s.pages.length * 20 + s.rows.length} จาก ${s.list.filteredTotal}</span><div>${btn('previous', 'ก่อนหน้า', s.pages.length ? '' : 'disabled')}${btn('next', 'ถัดไป', s.list.nextCursor ? '' : 'disabled')}</div></div>` : ''}</section>`;
+    const scopeButtons = ['open', 'all', 'closed'].map(scope => btn('scope', title(scope) + (s.summary ? ' <span>(' + s.summary[scope === 'all' ? 'total' : scope] + ')</span>' : ''), 'data-scope="' + scope + '" aria-pressed="' + (s.scope === scope) + '"', s.scope === scope ? 'selected' : '')).join('');
+    const sort = '<label class="case-filter-select case-sort-filter"><span class="case-sr-only">เรียงเคส</span><select data-case-filter="sort"><option value="" ' + (!s.sort ? 'selected' : '') + '>' + (['due', 'overdue'].includes(s.followUp) ? 'กำหนดติดตามใกล้สุด' : s.scope === 'closed' ? 'ปิดล่าสุดก่อน' : 'ใหม่สุดก่อน') + '</option><option value="newest" ' + (s.sort === 'newest' ? 'selected' : '') + '>ใหม่สุดก่อน</option><option value="follow_up" ' + (s.sort === 'follow_up' ? 'selected' : '') + '>กำหนดติดตามใกล้สุด</option><option value="closed" ' + (s.sort === 'closed' ? 'selected' : '') + '>ปิดล่าสุดก่อน</option></select></label>';
+    const filterToggle = btn('filters', icon('filter') + '<span class="case-filter-label">ตัวกรอง</span>' + (activeCount ? '<span class="case-filter-count">' + activeCount + '</span>' : '') + '<span class="case-filter-caret" aria-hidden="true"></span>', 'aria-expanded="' + s.expandedFilters + '" aria-controls="caseExtraFilters" aria-label="ตัวกรองเพิ่มเติม' + (activeCount ? ' (' + activeCount + ')' : '') + '"', 'case-filter-toggle');
+    const table = '<table class="cases-table"><caption class="case-sr-only">รายการเคสลูกค้า</caption><thead><tr><th scope="col">เลขที่เคส</th><th scope="col">ชื่อ–นามสกุล</th><th scope="col">ช่องทางติดต่อ</th><th scope="col">ความสนใจ / ประเภท</th><th scope="col">สถานะ</th><th scope="col">นัดติดตาม</th><th scope="col">จัดการ</th></tr></thead><tbody>' + (!s.loading && !s.error ? s.rows.map(row).join('') : '') + '</tbody></table>';
+    root.innerHTML = '<div class="case-page-head"><div><h1>เคสลูกค้า</h1><p>จัดการข้อมูลและติดตามทุกโอกาสของลูกค้าในที่เดียว</p></div><p class="case-head-note">ดูแลทุกความสนใจ<br>ให้เป็นอนาคตที่มั่นคง</p><div class="case-head-actions">' + btn('new', '+ เพิ่มเคส', '', 'case-primary') + '</div></div>' +
+      summaryCards() + '<div class="case-filterbar"><div class="case-scopes" role="group" aria-label="ขอบเขตเคส">' + scopeButtons + '</div><div class="case-filter-controls" role="group" aria-label="กรองและเรียงเคส">' +
+      (!compact ? '<label class="case-list-search">' + icon('search') + '<span class="case-sr-only">ค้นหาในรายการเคส</span><input type="search" data-case-search value="' + esc(s.search) + '" placeholder="ค้นหาในรายการเคส…" autocomplete="off"></label>' + statusFilter() : '') + filterToggle + sort + btn('retry', icon('refresh'), 'aria-label="รีเฟรชเคส" title="รีเฟรชเคส"', 'case-icon-button') + '</div></div>' +
+      '<div id="caseExtraFilters" class="case-extra-filters" ' + (s.expandedFilters ? '' : 'hidden') + '>' + (compact ? statusFilter() : '') + '<label>กำหนดติดตาม<select data-case-filter="followUp">' + ['any', 'due', 'today', 'overdue'].map(v => '<option value="' + v + '" ' + (s.followUp === v ? 'selected' : '') + '>' + title(v) + '</option>').join('') + '</select></label><small>วันที่และเวลาทั้งหมดใช้เวลาไทย (UTC+7)</small></div>' +
+      (s.closedMonth ? '<div class="case-chips">' + btn('clear-month', 'ปิดเคสเดือนนี้ ×', 'aria-label="ล้างตัวกรองปิดเคสเดือนนี้"') + '</div>' : '') +
+      '<section class="case-list" data-list-state="' + (s.loading ? 'loading' : s.error ? 'error' : s.rows.length ? 'ready' : 'empty') + '" aria-label="เคสลูกค้า" aria-busy="' + s.loading + '"><div class="case-list-toolbar"><span>' + (s.loading ? 'กำลังโหลดเคส…' : s.list ? 'ทั้งหมด ' + s.list.filteredTotal + ' เคส' : 'โหลดเคสไม่ได้') + '</span></div>' +
+      table +
+      (s.error ? '<div class="case-empty" role="alert"><h2>โหลดเคสไม่ได้</h2><p>' + esc(s.error) + '</p>' + btn('retry', 'ลองอีกครั้ง') + '</div>' : s.loading ? '<div class="case-skeleton" aria-label="กำลังโหลด"><div></div><div></div><div></div></div>' : !s.rows.length ? emptyList() : '<div class="case-mobile-list">' + s.rows.map(card).join('') + '</div>') +
+      (s.list && !s.loading && s.list.filteredTotal ? '<div class="case-pagination"><span>แสดง ' + (s.pages.length * 20 + 1) + '–' + (s.pages.length * 20 + s.rows.length) + ' จาก ' + s.list.filteredTotal + '</span><div>' + btn('previous', 'ก่อนหน้า', s.pages.length ? '' : 'disabled') + btn('next', 'ถัดไป', s.list.nextCursor ? '' : 'disabled') + '</div></div>' : '') + '</section>';
     syncButtons(); updateSelected();
+    if (guideOpen && root.querySelector('.case-start-guide')) root.querySelector('.case-start-guide').open = true;
     if (focusedFilter) {
       window.CoverMateSelect?.refresh();
-      const replacement = root.querySelector(`select[data-case-filter="${CSS.escape(focusedFilter)}"]`);
+      const replacement = root.querySelector('select[data-case-filter="' + CSS.escape(focusedFilter) + '"]');
       const trigger = replacement?.nextElementSibling;
       (trigger?.matches('.cm-select-trigger') ? trigger : replacement)?.focus({ preventScroll: true });
+    } else if (searchFocus) {
+      const replacement = root.querySelector('[data-case-search]');
+      replacement?.focus({ preventScroll: true });
+      replacement?.setSelectionRange(searchFocus.start, searchFocus.end);
+    } else if (focusedAction) {
+      [...root.querySelectorAll('button[data-case-action]')].find(node => [node.dataset.caseAction, node.dataset.scope || '', node.dataset.metric || '', node.dataset.id || ''].every((value, i) => value === focusedAction[i]))?.focus({ preventScroll: true });
     }
   }
-  function row(r) { return `<tr data-case-id="${esc(r.id)}" data-case-action="open" data-id="${esc(r.id)}"><td><button class="case-name" data-case-action="open" data-id="${esc(r.id)}">${esc(r.contact.name)}</button><small>${esc(r.caseNumber)} · ${title(r.interestType)}</small><small>รับเรื่อง ${date(r.submittedAt)}</small></td><td>${esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact)}${r.contact.phone && r.contact.lineId ? `<small>LINE ${esc(r.contact.lineId)}</small>` : ''}</td><td>${badge(r.status)}</td><td>${followLabel(r)}</td><td>${date(r.updatedAt)}<small>${r.source === 'website' ? 'จากเว็บไซต์' : 'เพิ่มเอง'}</small></td></tr>`; }
-  function card(r) { return `<button class="case-card" data-case-action="open" data-id="${esc(r.id)}" data-case-id="${esc(r.id)}"><span class="case-card-top"><strong>${esc(r.contact.name)}</strong>${badge(r.status)}</span><span class="case-card-contact">${esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact)}${icon('chevron')}</span><span class="case-card-meta">${esc(r.caseNumber)} · ${title(r.interestType)}</span><span class="case-card-due">${followLabel(r)}</span></button>`; }
+  function row(r) {
+    return '<tr data-case-id="' + esc(r.id) + '" data-case-action="open" data-id="' + esc(r.id) + '"><td class="case-number">' + esc(r.caseNumber) + '<small>รับเรื่อง ' + date(r.submittedAt) + '</small></td><td><button type="button" class="case-name" data-case-action="open" data-id="' + esc(r.id) + '">' + esc(r.contact.name) + '</button><small>อัปเดต ' + date(r.updatedAt) + '</small></td><td>' + esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact || '—') + (r.contact.phone && r.contact.lineId ? '<small>LINE ' + esc(r.contact.lineId) + '</small>' : '') + '<small>' + (r.source === 'website' ? 'จากเว็บไซต์' : 'เพิ่มเอง') + '</small></td><td>' + title(r.interestType) + '</td><td>' + badge(r.status) + '</td><td>' + followLabel(r) + '</td><td class="case-row-action">' + btn('open', icon('chevron'), 'data-id="' + esc(r.id) + '" aria-label="เปิดเคส ' + esc(r.caseNumber) + '"', 'case-icon-button') + '</td></tr>';
+  }
+  function card(r) {
+    const isClosed = closed(r.status);
+    return '<article class="case-card" data-case-id="' + esc(r.id) + '"><button type="button" class="case-card-open" data-case-action="open" data-id="' + esc(r.id) + '"><span class="case-card-icon ' + (isClosed ? 'is-closed' : '') + '">' + icon(isClosed ? 'check' : r.followUp ? 'calendar' : 'file') + '</span><span class="case-card-content"><span class="case-card-top">' + badge(r.status) + '<time>' + date(r.updatedAt) + '</time></span><strong>' + esc(r.contact.name) + '</strong><span class="case-card-meta">' + title(r.interestType) + ' · ' + esc(r.caseNumber) + '</span></span><span class="case-card-chevron">' + icon('chevron') + '</span></button><div class="case-card-footer"><span class="case-card-contact">' + (r.contact.phone ? icon('phone') + contactLink('phone', r.contact.phone) : esc(r.contact.email || r.contact.lineId || r.contact.rawContact || '—')) + '</span><span class="case-card-due">' + (isClosed ? icon('check') + 'ปิดเคส ' + date(r.closedAt) : followLabel(r)) + '</span></div></article>';
+  }
   function followLabel(r) { return r.followUp ? `<span class="${r.followUp.dueAt <= (s.summary?.asOf || new Date().toISOString()) ? 'case-due' : ''}">${icon('calendar')}${date(r.followUp.dueAt)}</span>` : '<span class="case-muted">ยังไม่ได้นัดติดตาม</span>'; }
   function updateSelected() { root.querySelectorAll('[data-case-id]').forEach(n => n.classList.toggle('case-selected', n.dataset.caseId === s.record?.id)); document.body.classList.toggle('case-detail-open', ['detail', 'new'].includes(s.panel)); }
   async function openCase(id, { skipGuard = false, fromLocation = false } = {}) {
@@ -179,14 +211,15 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     renderPanel(); updateSelected();
   }
   function panelShell(titleText, body, footer = '') {
-    overlay.innerHTML = `<div class="case-scrim" data-case-action="close"></div><section class="case-panel" role="dialog" aria-modal="true" aria-labelledby="casePanelTitle" tabindex="-1"><header><div><h2 id="casePanelTitle">${titleText}</h2></div>${btn('close', icon('close'), 'aria-label="ปิดหน้าต่าง"', 'case-icon-button')}</header><div class="case-panel-body">${body}</div>${footer ? `<footer>${footer}</footer>` : ''}</section>`;
+    overlay.innerHTML = `<div class="case-scrim" data-case-action="close"></div><section class="case-panel" data-case-panel="${s.panel}" role="dialog" aria-modal="true" aria-labelledby="casePanelTitle" tabindex="-1"><header><div><h2 id="casePanelTitle">${titleText}</h2></div>${btn('close', icon('close'), 'aria-label="ปิดหน้าต่าง"', 'case-icon-button')}</header><div class="case-panel-body">${body}</div>${footer ? `<footer>${footer}</footer>` : ''}</section>`;
     overlay.classList.add('is-open'); document.body.classList.add('case-modal-open');
     syncModalMode();
     queueMicrotask(() => overlay.querySelector('.case-panel')?.focus());
   }
   function renderPanel() {
     if (!s.panel) return;
-    if (s.panel === 'navigation') return panelShell('Admin Portal', `<nav class="case-mobile-navigation" aria-label="เมนู Admin">${renderNavigation()}</nav><div class="admin-mobile-account"><strong>${esc(session.name || session.email)}</strong><small>${esc(sessionRoleLabel)} · ยืนยันสิทธิ์แล้ว</small><button class="logout" type="button" data-action="logout">ออกจากระบบ</button></div>`);
+    if (s.panel === 'navigation') return panelShell('Admin Portal', `<nav class="case-mobile-navigation" aria-label="เมนู Admin">${renderNavigation()}</nav><div class="admin-mobile-account">${renderAccount()}</div>`);
+    if (s.panel === 'account') return panelShell('ข้อมูลบัญชี', renderAccountDetails());
     if (s.panel === 'loading') return panelShell('กำลังโหลดเคส…', '<div class="case-skeleton"><div></div><div></div></div>');
     if (s.panel === 'error') return panelShell('เปิดเคสไม่ได้', `<p role="alert">${esc(s.errorSave)}</p>${btn('close', 'ปิด')}`);
     if (s.panel === 'notifications') return renderNotifications();
@@ -289,7 +322,8 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   async function closePanel({ preserveLocation = false } = {}) { if (!(await guard())) return; panelGeneration++; s.panel = null; document.querySelector('.case-menu-trigger')?.setAttribute('aria-expanded', 'false'); s.draft = null; s.record = null; s.reopening = false; if (!preserveLocation) { linkedCaseId = null; writeCaseLocation(); } overlay.innerHTML = ''; overlay.classList.remove('is-open'); document.body.classList.remove('case-modal-open', 'case-detail-open'); document.querySelector('.app').inert = false; updateSelected(); if (returnFocus?.isConnected) returnFocus.focus(); else root.querySelector('button')?.focus(); }
   async function openNotifications() {
     if (!(await guard())) return;
-    s.draft = null; s.record = null; s.panel = 'notifications'; s.notificationCursor = null; s.notifications = []; s.notificationLoading = true; s.notificationError = ''; returnFocus = document.activeElement; renderPanel(); updateSelected();
+    if (!s.panel) returnFocus = document.activeElement;
+    s.draft = null; s.record = null; s.panel = 'notifications'; s.notificationCursor = null; s.notifications = []; s.notificationLoading = true; s.notificationError = ''; renderPanel(); updateSelected();
     await loadNotifications();
   }
   async function loadNotifications(more = false) {
@@ -376,6 +410,14 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     } catch (e) { announce(e.message || 'ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง'); }
   }
   root.addEventListener('click', click); overlay.addEventListener('click', click); overlay.addEventListener('input', input);
+  function setSearch(value) {
+    s.search = String(value ?? '');
+    searchInput.value = s.search;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => filter({ search: s.search }), 250);
+  }
+  root.addEventListener('input', e => { if (e.target.matches('[data-case-search]')) setSearch(e.target.value); });
+  matchMedia('(max-width:767px)').addEventListener('change', () => { if (s.active) render(); });
   root.addEventListener('change', e => { const key = e.target.dataset.caseFilter; if (key) filter({ [key]: e.target.value, ...(key === 'followUp' && e.target.value !== 'any' ? { scope: 'open', ...(closed(s.status) ? { status: '' } : {}), closedMonth: false } : {}) }); });
   document.addEventListener('keydown', e => {
     if (!s.panel) return;
@@ -408,8 +450,11 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   return {
     mount() { if (s.active) { render(); return; } s.active = true; s.reopening = false; locationKey = null; if (configuredView) { configuredView = false; writeCaseLocation(); } render(); if (!['admin', 'administrator', 'owner'].includes(session.role)) return; syncLocation({ initial: true }).then(() => { if (s.active) load(); }); loadCapabilities(); refreshNotifications(); pollTimer = setInterval(checkVisible, 300000); },
     async leave() { if (!(await guard())) return false; await closePanel({ preserveLocation: true }); s.active = false; s.generation++; summaryGeneration++; clearTimeout(searchTimer); clearInterval(pollTimer); root.classList.remove('cases-screen'); return true; },
-    setSearch(value) { s.search = value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(() => filter({ search: s.search }), 250); },
+    setSearch,
     newCase, openCase, openNotifications, refreshNotifications, configureView, syncLocation,
+    canLeave: guard,
+    async openAccount() { if (!(await guard())) return; if(!s.panel)returnFocus=document.activeElement;s.draft=null;s.record=null;s.panel='account';renderPanel();updateSelected(); },
+    async openPreferences() { if (!(await guard())) return; if(!s.panel)returnFocus=document.activeElement;s.draft=null;s.record=null;await preferences();updateSelected(); },
     restoreLocation() { writeCaseLocation({ replace: true }); },
     async openNavigation() { if (!(await guard())) return; s.draft = null; s.record = null; s.panel = 'navigation'; returnFocus = document.activeElement; renderPanel(); updateSelected(); },
     get active() { return s.active; }

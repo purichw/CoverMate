@@ -56,16 +56,17 @@ export async function requireVerifiedAdminSession(options = {}) {
   return null;
 }
 
-export function signOutAdmin() {
+export async function signOutAdmin() {
   clearAdminSession();
   try {
-    import(window.location.origin + "/covermate-firebase.js").then(() => {
-      if (window.CoverMateFirebase && window.CoverMateFirebase.signOut) {
-        window.CoverMateFirebase.signOut();
-      }
-    }).catch(() => {});
+    await import(window.location.origin + "/covermate-firebase.js");
+    if (window.CoverMateFirebase && window.CoverMateFirebase.signOut) {
+      // Navigation can unload this document before Firebase clears its persisted
+      // session, so finish sign-out before requesting the login destination.
+      await window.CoverMateFirebase.signOut();
+    }
   } catch {
-    // Local session has already been cleared.
+    // Keep the existing local cleanup and login fallback if Firebase is unavailable.
   }
   window.location.replace(adminRedirect(ADMIN_LOGIN_PATH));
 }

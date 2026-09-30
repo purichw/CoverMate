@@ -2,6 +2,15 @@
 
 Last updated: 2026-09-30
 
+## Admin and Home Articles Refresh
+
+The owner authorized pushing and deploying this chat's Home Articles, centered
+controls, Admin account, CMS hub, Home and Cases work. See
+[the scoped release record](RELEASE_ADMIN_REFRESH_20260930.md) for runtime scope
+and required gates. Exact-SHA CI, hosted read-only UAT and production readback
+are recorded in `uat-results/admin-release-20260930/`. No production CMS Draft
+publication, customer mutation, Rules or credential change is part of rollout.
+
 ## Website / Article Lifecycle Isolation — Release Candidate
 
 After release `759024f`, the owner requested explicit separation of website
@@ -25,6 +34,12 @@ The full GitHub `verify` job gates production alias assignment. Final CI,
 deployment identity and read-only hosted evidence belong in ignored
 `uat-results/content-scope-release/receipt.json`. No hosted content mutation is
 needed. Prefer a forward fix; any rollback needs separate authorization.
+
+The first release CI exposed a media-test timing race after Cancel: the native
+dialog leaves the accessibility tree before its queued close handler removes the
+DOM node. The fixture now waits for DOM removal before reopening. The original
+failure reproduced locally; the full media upload/crop/retry/cancel/mobile check
+passes with this stronger wait. Product behavior and assertions are unchanged.
 
 ## Admin Cards, Email Templates And Full-original Media Release
 

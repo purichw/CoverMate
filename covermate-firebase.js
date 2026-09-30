@@ -134,8 +134,9 @@ function stateRef(name) {
   return firestoreMod.doc(db, "sites", SITE_ID, "states", name);
 }
 
-async function loadSiteState(name) {
-  const snap = await firestoreMod.getDoc(stateRef(name));
+async function loadSiteState(name, options = {}) {
+  const read = options.source === 'server' ? firestoreMod.getDocFromServer : firestoreMod.getDoc;
+  const snap = await read(stateRef(name));
   loadedRevisions.set(name, snap.exists() ? Number(snap.data().revision || 0) : 0);
   return snap.exists() ? (snap.data() || null) : null;
 }
@@ -277,13 +278,14 @@ async function publishSiteStateNow(config, text, metadata = {}) {
   return { id: ref.id, ...version };
 }
 
-async function loadVersions(limitCount = HISTORY_LIMIT) {
+async function loadVersions(limitCount = HISTORY_LIMIT, options = {}) {
   const q = firestoreMod.query(
     firestoreMod.collection(db, "sites", SITE_ID, "versions"),
     firestoreMod.orderBy("ts", "desc"),
     firestoreMod.limit(limitCount)
   );
-  const snap = await firestoreMod.getDocs(q);
+  const read = options.source === 'server' ? firestoreMod.getDocsFromServer : firestoreMod.getDocs;
+  const snap = await read(q);
   return snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
 }
 

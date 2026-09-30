@@ -73,8 +73,8 @@ body[data-module="analytics"] #screen { padding:16px 28px 24px;max-width:1640px;
 .analytics-data-scroll { max-height:230px;overflow:auto;margin-top:6px;border-top:1px solid var(--analytics-line); }
 .analytics-data-scroll table { width:100%;border-collapse:collapse;font-size:12px; }
 .analytics-data-scroll th,.analytics-data-scroll td { padding:7px 9px;border-bottom:1px solid #eee5d9;text-align:left;font-weight:400; }
-.analytics-data-scroll thead th { font-weight:600;color:#544b3e; }
-.analytics-data-scroll th:last-child,.analytics-data-scroll td:last-child { text-align:right; }
+.analytics-data-scroll thead th { font-weight:600;color:#544b3e;text-align:center; }
+.analytics-data-scroll tbody th:last-child,.analytics-data-scroll td:last-child { text-align:right; }
 .analytics-service-content { display:flex;align-items:center;gap:13px; }
 .analytics-donut { position:relative;width:118px;flex:0 0 118px; }
 .analytics-donut svg { width:100%;height:auto;display:block;stroke:none; }

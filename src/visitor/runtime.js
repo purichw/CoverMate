@@ -1417,6 +1417,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       if (anchor && !owner && anchor.indexOf('-focus') < 0) this.scrollToAnchor(anchor, { smooth: false, waitForFonts: true });
       if (editMode) this.enableEdit();
       if (owner && routePage === 'home' && !this._editorArticleFeedRequested) this.loadEditorArticleFeed();
+      if (pathMode === 'admin') import(location.origin + '/admin/cms-entry.mjs').then(({ applyCmsEntry }) => applyCmsEntry(this)).catch(() => {});
     });
   }
 

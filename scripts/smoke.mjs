@@ -180,6 +180,8 @@ function adminPortalSessionMock() {
         return { ok: true, user, admin: { role: "owner", active: true }, session };
       },
       hydrateLocalContent: async () => null,
+      loadSiteState: async () => ({ config: ${JSON.stringify(defaultSiteConfig)}, text: {}, updatedAt: '2026-09-30T00:00:00.000Z' }),
+      loadVersions: async () => [],
       signOut: async () => {}
     };
     window.dispatchEvent(new CustomEvent("covermate-firebase-ready"));
@@ -191,6 +193,12 @@ function adminPortalSessionMock() {
 function adminOpsApiMock(route) {
   const url = new URL(route.request().url());
   const resource = url.pathname.replace(/^\/api\/ops\/?/, "").split("/").filter(Boolean)[0];
+  if (resource === 'cases') {
+    const body = url.pathname.endsWith('/summary')
+      ? { total: 0, new: 0, open: 0, followUpsDue: 0, closedThisMonth: 0 }
+      : { items: [], total: 0, nextCursor: null };
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  }
   const rows = {
     leads: [
       {
@@ -337,7 +345,10 @@ async function waitForBodyText(page, pattern, timeout = 30000) {
     },
     { source: pattern.source, flags: pattern.flags },
     { timeout }
-  );
+  ).catch(async error => {
+    console.error('Page state:', await page.evaluate(() => ({ url: location.href, boot: document.body?.dataset.boot, text: document.body?.innerText.slice(0, 1800) })));
+    throw error;
+  });
 }
 
 async function readDraftSection(page, id) {
@@ -552,7 +563,9 @@ async function newSmokePage(options) {
   if (localSmoke) {
     const rootIndex = new URL("../index.html", import.meta.url).pathname;
     for (const routePath of ["/motor", "/admin/content", "/admin/edit", "/admin/preview"]) {
-      await context.route(`**${routePath}**`, (route) =>
+      // Match document routes exactly; /admin/content-model.mjs and other
+      // modules must still load their JavaScript rather than the root HTML.
+      await context.route(url => url.origin === baseOrigin && url.pathname === routePath, (route) =>
         route.fulfill({ status: 200, contentType: "text/html", path: rootIndex })
       );
     }
@@ -1453,8 +1466,9 @@ async function verifyStaticSeoFiles() {
   }
 }
 
-if (smokeSuite === "admin-builder" || smokeSuite === "admin-actions") {
-  if (smokeSuite === "admin-actions") await verifyAdminActionWorkflow();
+if (["admin-builder", "admin-actions", "public-chrome"].includes(smokeSuite)) {
+  if (smokeSuite === "public-chrome") await verifyPublicRouteSuppressesStaleOwnerChrome();
+  else if (smokeSuite === "admin-actions") await verifyAdminActionWorkflow();
   else await verifyAdminBuilderControls();
   await browser.close();
   if (failures.length) {
@@ -2213,13 +2227,13 @@ for (const [name, width, height] of viewports) {
     clientWidth: document.documentElement.clientWidth,
     robots: document.querySelector('meta[name="robots"]')?.getAttribute("content") || ""
   }));
-  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("เจ้าของ / Admin · ยืนยันสิทธิ์แล้ว")) {
+  if (!adminState.text.includes("Admin Portal") || !adminState.text.includes("เจ้าของ / Admin") || !adminState.text.includes("ยืนยันสิทธิ์แล้ว")) {
     failures.push(`${name} /admin: authenticated Admin Portal Home did not render`);
   }
   if (
-    !adminState.text.includes("เชื่อมต่องานลูกค้าแล้ว") ||
+    !adminState.text.includes("เชื่อมต่อข้อมูลแล้ว") ||
     !adminState.text.includes("CMS เว็บไซต์") ||
-    !adminState.text.includes("รายงานจากข้อมูล CoverMate")
+    !adminState.text.includes("รายงานจากเคส")
   ) {
     failures.push(`${name} /admin: single-shell live system status copy is missing`);
   }
@@ -2252,10 +2266,13 @@ for (const [name, width, height] of viewports) {
   const mobileMenu = page.locator('.case-menu-trigger');
   const hasMobileMenu = await mobileMenu.isVisible();
   if (hasMobileMenu) await mobileMenu.click();
+  const navigationAccount = page.locator(`${hasMobileMenu ? '.admin-mobile-account' : '.sidebar'} .admin-account`);
+  await navigationAccount.locator(':scope > summary').click();
   const navigationLogout = page.locator(`${hasMobileMenu ? '.admin-mobile-account' : '.sidebar'} [data-action="logout"]`);
   if (!(await navigationLogout.isVisible())) {
     failures.push(`${name} /admin: Log out action is not reachable through the shared navigation`);
   }
+  await page.keyboard.press('Escape');
   if (hasMobileMenu) {
     await page.keyboard.press('Escape');
     await page.locator('.case-panel').waitFor({ state: 'detached' });
@@ -2887,6 +2904,7 @@ for (const [name, width, height] of viewports) {
   await waitForBodyText(page, /Admin Portal/);
   const mobileSignOut = await page.locator('.case-menu-trigger').isVisible();
   if (mobileSignOut) await page.locator('.case-menu-trigger').click();
+  await page.locator(`${mobileSignOut ? '.admin-mobile-account' : '.sidebar'} .admin-account > summary`).click();
   await page.locator(`${mobileSignOut ? '.admin-mobile-account' : '.sidebar'} [data-action="logout"]`).click();
   await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {

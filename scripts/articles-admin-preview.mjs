@@ -11,12 +11,13 @@ import { articleIndexFixture } from './fixtures/home-articles/index-feed.mjs';
 import { renderPublicPage } from '../server/seo-page.mjs';
 import cases from '../server/cases-contract.cjs';
 
-export async function startArticlesAdminPreview({state,feed=structuredClone(articleIndexFixture)} = {}) {
+export async function startArticlesAdminPreview({state,feed=structuredClone(articleIndexFixture),cms=null} = {}) {
   state ||= {config:JSON.parse(vm.runInNewContext(await fs.readFile(path.join(REPO_ROOT,'src/visitor/defaults.js'),'utf8')+'\nJSON.stringify(DEFAULTS)')),text:{}};
   let catalog = structuredClone(adminArticleFixture), failure = 0, delay = 0;
   const legacy = createLegacyOpsState(), fixture = createCasesFixture();
   const requests = [];
   const result = await startStaticServer({
+    ownerRoutesToRoot: true,
     headers: { 'Cache-Control': 'no-store', 'X-Frame-Options':'DENY', 'Content-Security-Policy': "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self'; form-action 'none'; frame-src 'none'" },
     async onRequest(req, res) {
       const url = new URL(req.url, 'http://localhost');
@@ -31,7 +32,15 @@ export async function startArticlesAdminPreview({state,feed=structuredClone(arti
         const seed = `<script>localStorage.setItem('covermate-admin-session',JSON.stringify({firebase:true,uid:'article-preview',email:'preview@example.test',name:'CoverMate Preview',role:'admin',exp:Date.now()+3600000}));</script>`;
         return send('text/html', html.replace('<head>', '<head>' + seed));
       }
-      if (url.pathname === '/covermate-firebase.js') return send('text/javascript', firebaseMock);
+      if (url.pathname === '/covermate-firebase.js') return send('text/javascript', firebaseMock + (cms ? `
+        Object.assign(window.CoverMateFirebase,{
+          loadSiteState:async name=>(await fetch('/__preview/cms/'+encodeURIComponent(name))).json(),
+          loadVersions:async limit=>(await (await fetch('/__preview/cms/versions')).json()).slice(0,limit)
+        });` : ''));
+      if (cms && url.pathname.startsWith('/__preview/cms/')) {
+        const key=url.pathname.split('/').at(-1);
+        return send('application/json', JSON.stringify(cms[key] ?? null));
+      }
       if (url.pathname === '/admin/articles/data.mjs') return send('text/javascript', `export const createCloudArticleRepository=()=>null; export async function loadArticleCatalog(){const response=await fetch('/__preview/articles');if(!response.ok){const error=new Error('Preview failure');error.status=response.status;throw error;}return response.json();} export async function loadArticleForEditor(id){return (await (await fetch('/__preview/article/'+encodeURIComponent(id))).json());}`);
       if(url.pathname.startsWith('/__preview/article/')) return send('application/json',JSON.stringify(editorArticleFixture(catalog.items.find(item=>item.id===decodeURIComponent(url.pathname.split('/').at(-1))))));
       if (url.pathname === '/__preview/articles') {

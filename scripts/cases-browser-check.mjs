@@ -239,7 +239,7 @@ try {
   await page.locator('#globalSearch').fill('no-matching-fixture');
   await page.getByText('ไม่พบเคสที่ตรงกัน', { exact: true }).waitFor();
   assert.equal(await page.locator('.case-metric strong').first().textContent(), '3', 'Global metrics remain independent of search.');
-  await page.getByRole('button', { name: 'ล้างตัวกรอง', exact: true }).click(); await page.locator('.case-name').first().waitFor();
+  await page.getByRole('button', { name: 'ล้างการค้นหาและตัวกรอง', exact: true }).click(); await page.locator('.case-name').first().waitFor();
   failList = true; await page.getByRole('button', { name: 'รีเฟรชเคส', exact: true }).click(); await page.getByRole('heading', { name: 'โหลดเคสไม่ได้', exact: true }).waitFor();
   assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), ['—', '—', '—', '—']);
   failList = false; await page.locator('.case-list').getByRole('button', { name: 'ลองอีกครั้ง', exact: true }).click(); await page.locator('.case-name').first().waitFor();

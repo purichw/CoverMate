@@ -29,16 +29,24 @@ try {
     const select = key => page.locator(`select[data-case-filter="${key}"]`);
     const trigger = key => page.locator(`select[data-case-filter="${key}"] + button`);
     async function choose(field, value) {
+      // Mobile Cases keeps status inside the filter disclosure. Other screens
+      // retain their existing form containers and should not toggle that panel.
+      const inExtra=await field.evaluate(el=>Boolean(el.closest('#caseExtraFilters')));
+      if(inExtra&&await page.locator('#caseExtraFilters').getAttribute('hidden')!==null)await page.locator('.case-filter-toggle').click();
+      const control=field.locator('xpath=following-sibling::button');
+      await control.waitFor({state:'visible'});
       const index = await field.evaluate((el,value)=>[...el.options].findIndex(o=>o.value===value),value);
       assert.ok(index>=0,`Known option ${value}`);
-      await field.locator('xpath=following-sibling::button').click();
+      await control.click();
       await page.locator(`[role="option"][data-index="${index}"]`).click();
       assert.equal(await field.inputValue(),value);
     }
     async function caseAction(action, expected={}) {
-      const pending = page.waitForResponse(res => new URL(res.url()).pathname==='/api/ops/cases');
-      await action();
-      const response = await pending, params = new URL(response.url()).searchParams;
+      const [response]=await Promise.all([
+        page.waitForResponse(res => new URL(res.url()).pathname==='/api/ops/cases'),
+        action()
+      ]);
+      const params = new URL(response.url()).searchParams;
       assert.equal(response.status(),200);
       for(const [key,value] of Object.entries(expected))assert.equal(params.get(key),value,key);
       const data = await response.json();
@@ -83,7 +91,7 @@ try {
     const empty = await caseAction(()=>choose(select('status'),'new'),{status:'new',followUp:'due',sort:'newest'});
     assert.equal(empty.filteredTotal,0);
     await page.getByRole('heading',{name:'ไม่พบเคสที่ตรงกัน'}).waitFor();
-    await caseAction(()=>page.getByRole('button',{name:'ล้างตัวกรอง',exact:true}).click(),{scope:'open',followUp:'any'});
+    await caseAction(()=>page.getByRole('button',{name:'ล้างการค้นหาและตัวกรอง',exact:true}).click(),{scope:'open',followUp:'any'});
     assert.equal(await select('status').inputValue(),'');assert.equal(await select('sort').inputValue(),'');
 
     mark('Cases failure/retry, URL Back and reload, modal dropdown/cancel');

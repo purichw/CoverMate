@@ -12,7 +12,7 @@ import C from '../server/cases-contract.cjs';
 
 const output = path.resolve('uat-results/admin-shell');
 fs.mkdirSync(output, { recursive: true });
-const sources = ['admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/home-view.js', 'admin/analytics-view.js', 'admin/analytics-model.mjs', 'admin/analytics.css', 'admin/ops/cases.css', 'admin/ops/cases.js', 'admin/ops/app.js', 'covermate-contract.js'];
+const sources = ['admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/home-view.js', 'admin/content-view.js', 'admin/content-model.mjs', 'admin/content.css', 'admin/analytics-view.js', 'admin/analytics-model.mjs', 'admin/analytics.css', 'admin/ops/cases.css', 'admin/ops/cases.js', 'admin/ops/app.js', 'covermate-contract.js'];
 const hashes = () => Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
 const report = { passed: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), sourceHashes: hashes(), environment: 'Local fixtures only; synthetic identity and records; all external requests and writes blocked', checks: [], screenshots: [], geometry: [], errors: [], mutations: [] };
 const modules = ['home', 'operations', 'content', 'articles', 'analytics'];
@@ -51,6 +51,7 @@ try {
     await page.waitForFunction(id => document.body.dataset.boot === 'ready' && document.body.dataset.module === id, module);
     await page.evaluate(() => document.fonts.ready);
     if (module === 'home') await page.locator('.admin-home:not([data-home-state="loading"])').waitFor();
+    if (module === 'content') await page.locator('.admin-content:not([data-cms-state="loading"])').waitFor();
     if (module === 'operations') await page.locator('.case-list[aria-busy="false"]').waitFor();
     if (module === 'analytics') await page.locator('.admin-analytics:not([data-analytics-state="loading"])').waitFor();
   }
@@ -87,7 +88,8 @@ try {
         assert.equal(await page.locator('#dataMode').isVisible(), false);
         assert.equal(await page.getByText('เชื่อมต่อ CMS แล้ว', { exact: true }).count(), 0);
         assert.equal(await page.getByText('รีวิวลูกค้า', { exact: true }).count(), 0);
-        assert.equal(await page.locator('.module-card a').count(), 3);
+        assert.equal(await page.locator('.cms-tool a').count(), 3);
+        assert.equal(await page.locator('[data-cms-state="error"]').count(), 1, 'Shell fixture has no CMS document API, so the hub reports unavailable reads');
         assert.deepEqual(reads.slice(readStart).filter(resource => ['leads', 'tasks', 'audit'].includes(resource)), []);
       }
       assert.equal(await page.locator('.case-top-bell').isVisible(), true);
@@ -105,9 +107,11 @@ try {
         assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
         assert.equal(await page.locator('.case-mobile-navigation [aria-current="page"]').getAttribute('data-module'), module);
         assert.equal(await page.locator('.case-mobile-navigation .nav-button').count(), modules.length);
+        await page.locator('.admin-account-mobile > summary').click();
         assert.match(await page.locator('.admin-mobile-account').innerText(), /เจ้าของ \/ Admin/);
         assert.equal(await page.locator('.admin-mobile-account [data-action="logout"]').isVisible(), true);
         if (width === 390 && module === 'content') await capture('mobile-navigation-390');
+        await page.keyboard.press('Escape'); // Close the nested account disclosure first.
         await page.keyboard.press('Escape');
         await page.locator('.case-panel').waitFor({ state: 'detached' });
         assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
@@ -126,7 +130,7 @@ try {
   assert.match(await page.locator('#userMeta').innerText(), /เจ้าของ \/ Admin/);
   await page.locator('#sideNav [data-module="content"]').click();
   await ready('content');
-  assert.equal(await page.locator('.module-card').filter({ has: page.getByRole('heading', { name: 'แก้ไขเนื้อหา', exact: true }) }).locator('a').count(), 1);
+  assert.equal(await page.locator('.cms-tool.edit a').count(), 1);
   await page.goBack();
   await ready('home');
   await page.goForward();
@@ -159,7 +163,7 @@ try {
     assert.equal(await page.locator('#globalSearch').inputValue(), 'no-matching-stub-audit-case');
     assert.equal(await page.locator('[data-case-action="open"]').count(), 0);
   }
-  report.checks.push('Content and Analytics case search reaches filtered Cases; retained CMS links work as navigation targets; no decorative Analytics tabs, unused Reviews entry or unsupported CMS health badge; changed screens pass axe.');
+  report.checks.push('Content and Analytics case search reaches filtered Cases; CMS links remain navigation targets and missing CMS document APIs report unavailable status; no decorative Analytics tabs or unused Reviews entry; changed screens pass axe.');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.case-menu-trigger').click();
@@ -183,7 +187,7 @@ try {
   await page.locator('.case-mobile-navigation [data-module="content"]').click();
   await ready('content');
   assert.equal(await page.locator('#dataMode').isVisible(), false);
-  report.checks.push('Analytics API failure preserves navigation; Content retains real CMS destinations without claiming CMS connection health or displaying unrelated case-load status.');
+  report.checks.push('Analytics API failure preserves navigation; Content retains real CMS destinations and accurately reports unavailable CMS reads without unrelated case-load status.');
   apiError = false;
   // Synthetic lower-privilege session; no real login or authorization bypass is installed.
   await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('covermate-admin-session')); s.role = 'readonly'; localStorage.setItem('covermate-admin-session', JSON.stringify(s)); });
@@ -191,11 +195,13 @@ try {
   await ready('content');
   assert.match(await page.locator('#userMeta').innerText(), /ดูอย่างเดียว/);
   await page.locator('.case-menu-trigger').click();
+  await page.locator('.admin-account-mobile > summary').click();
   assert.match(await page.locator('.admin-mobile-account').innerText(), /ดูอย่างเดียว/);
   assert.doesNotMatch(await page.locator('.admin-mobile-account').innerText(), /เจ้าของ/);
   await page.locator('.case-mobile-navigation [data-module="content"]').click();
   await ready('content');
-  assert.equal(await page.locator('.module-card').filter({ has: page.getByRole('heading', { name: 'แก้ไขเนื้อหา', exact: true }) }).getByRole('button', { name: 'ดูอย่างเดียว' }).isDisabled(), true);
+  assert.equal(await page.locator('.cms-tool.edit .cms-tool-action').isDisabled(), true);
+  assert.equal(await page.locator('.cms-readonly').isVisible(), true);
   await page.locator('.case-menu-trigger').click();
   await page.locator('.case-mobile-navigation [data-module="operations"]').click();
   await page.getByText('ส่วนนี้สำหรับเจ้าของที่ยืนยันสิทธิ์แล้ว').waitFor();
@@ -213,5 +219,5 @@ try {
   report.finishedAt = new Date().toISOString();
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
   await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); });
 }
