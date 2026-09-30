@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
-import {createArticleRepository} from '../server/articles.mjs';
-import {createPageHandler} from '../server/seo-page.mjs';
-import {startNfrServer} from './nfr-server.mjs';
 import {launchChromium,loadPlaywright} from './lib/playwright.mjs';
 import {authorRichArticle,assertPersistedArticle,assertEditorArticle,assertReaderArticle,openArticleSettings,closeArticleSettings} from './lib/article-authoring-journey.mjs';
 
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.COVERMATE_TEST_MODE!=='emulator')throw Error('Isolated emulators required');
-const require=createRequire(import.meta.url),db=require('../server/firebase.cjs').serverDb();
+const require=createRequire(import.meta.url),firebase=require('../server/firebase.cjs'),baseDb=firebase.serverDb();
+const scope='article-cloud-'+crypto.randomUUID();
+// Keep repeat runs independent without clearing earlier local fixtures.
+const db=new Proxy(baseDb,{get(target,key){if(key==='doc')return path=>target.doc(path.replace(/^sites\/covermate-uat(?=\/|$)/,'sites/'+scope));const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+firebase.serverDb=()=>db;
+const {createArticleRepository}=await import('../server/articles.mjs');
+const {createPageHandler}=await import('../server/seo-page.mjs');
+const {startNfrServer}=await import('./nfr-server.mjs');
 const {isEmulator}=require('../server/firebase.cjs');
 const {makeMediaHandler}=require('../api/media.js');
 assert.ok(isEmulator(),'Media authorization must use the isolated Auth and Firestore emulators');

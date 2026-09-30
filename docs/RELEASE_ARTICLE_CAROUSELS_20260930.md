@@ -42,10 +42,11 @@ Current evidence is stored under ignored `uat-results/home-carousel/`,
 `article-carousel/`, `articles-cloud/`, `editor-panel/` and `admin-controls/`.
 Fixture screenshots prove UI behavior, not production content availability.
 
-The API release fixture uses a per-run Firestore namespace and refreshes the
-settings revision after Home pin reservations. Stale-revision rejection remains
-an explicit assertion. Browser authoring scrolls the actual writing frame into
-view before interacting or checking a reopened draft, including WebKit.
+API and cloud-browser release fixtures use per-run Firestore namespaces. The API
+fixture refreshes settings revisions after Home pin reservations; stale-revision
+rejection remains an explicit assertion. Browser authoring scrolls the actual
+writing frame into view before interacting or checking a reopened draft,
+including WebKit, and reads typography only once the canvas node is rendered.
 
 Before production: finish the repository checks, verify the hosted preview,
 and require GitHub `verify` on the exact release SHA. The existing Vercel gate

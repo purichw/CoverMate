@@ -193,10 +193,19 @@ export async function assertReaderArticle(surface,expected) {
 async function assertAuthoredTypography(prose) {
   const text=prose.locator('h4 span[data-article-style~=fontSize]');
   await text.waitFor({state:'visible'});
-  const actual=await text.evaluate(el=>{
-    const style=getComputedStyle(el);
-    return {fontSize:parseFloat(style.fontSize),lineHeight:parseFloat(style.lineHeight),family:style.fontFamily,mobile:el.ownerDocument.defaultView.innerWidth<768};
-  });
+  // Closing a format dialog can replace the inline node during the canvas paint.
+  // Resolve the locator again until styles belong to a connected, rendered node.
+  let actual;
+  const deadline=Date.now()+5000;
+  do {
+    actual=await text.evaluate(el=>{
+      const view=el.ownerDocument.defaultView,style=view.getComputedStyle(el);
+      return {connected:el.isConnected,rendered:el.getClientRects().length>0,fontSize:parseFloat(style.fontSize),lineHeight:parseFloat(style.lineHeight),family:style.fontFamily,mobile:view.innerWidth<768};
+    });
+    if(actual.connected&&actual.rendered&&Number.isFinite(actual.fontSize)&&Number.isFinite(actual.lineHeight))break;
+    await new Promise(resolve=>setTimeout(resolve,50));
+  } while(Date.now()<deadline);
+  assert.ok(actual.connected&&actual.rendered&&Number.isFinite(actual.fontSize)&&Number.isFinite(actual.lineHeight),'Typography settles on a rendered node: '+JSON.stringify(actual));
   const expected=authoredArticle.typography;
   assert.equal(actual.fontSize,actual.mobile?expected.fontSizeMobile:expected.fontSize,'UI-authored text size renders in the editor, preview and published page');
   assert.ok(Math.abs(actual.lineHeight/actual.fontSize-expected.lineHeight)<.01,'UI-authored block line height renders after storage');
