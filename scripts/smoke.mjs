@@ -1564,7 +1564,7 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && expectedAuthRedirect) {
       const parsed = new URL(url);
       if (parsed.origin === baseOrigin &&
-          (["/admin/ops/app.js", "/admin/home.css", "/admin/shell.css", "/admin/shell.js", "/assets/visitor/select.js", "/assets/visitor/select.css"].includes(parsed.pathname) ||
+          (["/admin/ops/app.js", "/admin/ops/cases.css", "/admin/home.css", "/admin/analytics.css", "/admin/content.css", "/admin/shell.css", "/admin/shell.js", "/admin/articles/articles.css", "/admin/stat-card.css", "/assets/visitor/select.js", "/assets/visitor/select.css"].includes(parsed.pathname) ||
            (request.resourceType() === "font" && /^\/assets\/fonts\/[^/]+\.woff2$/.test(parsed.pathname)))) {
         authRedirectAborts.push({ request, redirect: expectedAuthRedirect, navigation: requestNavigation.get(request) });
         return;
