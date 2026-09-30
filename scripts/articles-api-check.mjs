@@ -1,16 +1,19 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {createArticleDraft} from '../admin/articles/drafts.mjs';
-import {createArticleRepository} from '../server/articles.mjs';
-import {createPageHandler} from '../server/seo-page.mjs';
 import {extractBundlerTemplate} from '../server/bundler-template.mjs';
-import {startNfrServer} from './nfr-server.mjs';
 
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.COVERMATE_TEST_MODE!=='emulator')throw Error('Isolated emulators required');
-const require=createRequire(import.meta.url),db=require('../server/firebase.cjs').serverDb();
+const require=createRequire(import.meta.url),firebase=require('../server/firebase.cjs'),baseDb=firebase.serverDb();
+const run='article-'+crypto.randomUUID(),scope='api-'+run,tokens={};
+// Isolate fixture documents without replacing Auth, API or Firestore transactions.
+const db=new Proxy(baseDb,{get(target,key){if(key==='doc')return path=>target.doc(path.replace(/^sites\/covermate-uat(?=\/|$)/,'sites/'+scope));const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+firebase.serverDb=()=>db;
+const {createArticleRepository}=await import('../server/articles.mjs');
+const {createPageHandler}=await import('../server/seo-page.mjs');
+const {startNfrServer}=await import('./nfr-server.mjs');
 let now;const repository=createArticleRepository({db,now:()=>now??Date.now()});
 const {server,baseUrl}=await startNfrServer({pageHandler:createPageHandler({readPublished:async()=>({config:{sections:[]},text:{}}),readArticles:site=>repository.feed(site),readArticle:(site,slug)=>repository.detail(site,slug)})});
-const run='article-'+crypto.randomUUID(),tokens={};
 try {
   for(const role of ['owner','owner2','advisor','ops','readonly','inactive','unknown']) {
     const account=await fetch('http://127.0.0.1:9098/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:`${run}-${role}@example.test`,password:crypto.randomUUID(),returnSecureToken:true})}).then(r=>r.json());
@@ -27,12 +30,13 @@ try {
   const denied=await fetch(baseUrl+'/api/articles?action=catalog',{headers:{Authorization:'Bearer '+tokens.owner}});assert.equal(denied.status,403,'UAT owner cannot access production');
   assert.equal((await fetch(baseUrl+'/api/articles?action=feed',{headers:{Authorization:'Bearer '+tokens.owner}})).status,403,'UAT owner feed cannot read production');
   let flags=(await call('catalog')).body.settings;
-  const flag=async changes=>{const result=await call('settings',{settings:{...flags,...changes},expectedRevision:flags.revision});assert.equal(result.status,200,JSON.stringify(result));flags=result.body;};
+  const flag=async changes=>{flags=(await call('catalog')).body.settings;const result=await call('settings',{settings:{...flags,...changes},expectedRevision:flags.revision});assert.equal(result.status,200,JSON.stringify(result));flags=result.body;};
   await flag({enabled:false});
   assert.equal((await fetch(baseUrl+'/articles?cm_env=uat')).status,404);
   let draft=createArticleDraft();draft.id=run;draft.slug=run;draft.authorName='Emulator QA';draft.categoryId='general';draft.featured=true;draft.pinned=true;
   Object.assign(draft.translations.th,{title:'บทความทดสอบใน Emulator',excerpt:'ทดสอบการเผยแพร่จริงจากคลังทดสอบ',document:{type:'doc',content:[{type:'heading',attrs:{level:2},content:[{type:'text',text:'หัวข้อทดสอบ'}]},{type:'paragraph',content:[{type:'text',text:'เนื้อหาจากคลังกลางทดสอบ'}]}]},takeaways:['ข้อสรุปทดสอบ']});
   let result=await call('save',{article:draft,expectedRevision:0});assert.equal(result.status,200,JSON.stringify(result));draft=result.body;
+  assert.equal((await call('settings',{settings:flags,expectedRevision:flags.revision})).status,409,'Home slot reservation invalidates stale settings revisions');
   assert.equal((await call('read',null,'owner2','&id='+run)).body.translations.th.title,draft.translations.th.title,'Second owner reads same persisted draft');
   assert.equal((await repository.feed('covermate-uat')).items.some(i=>i.id===run),false,'Draft does not leak');
   assert.equal((await call('feed')).body.items.some(i=>i.id===run),false,'Owner canvas endpoint does not expose a draft');
@@ -76,9 +80,9 @@ try {
   now=future+1;assert.ok((await repository.detail('covermate-uat',run)).item);assert.equal((await repository.catalog('covermate-uat')).items.find(i=>i.id===run).status,'published');
   draft=(await call('unpublish',{id:run,expectedRevision:draft.revision})).body;
   assert.equal(await repository.detail('covermate-uat',run),null);assert.ok((await call('read',null,'owner','&id='+run)).body.translations.th.document);
-  const direct=path=>fetch('http://127.0.0.1:8088/v1/projects/demo-covermate/databases/(default)/documents/sites/covermate-uat/'+path,{headers:{Authorization:'Bearer '+tokens.owner}});
+  const direct=path=>fetch('http://127.0.0.1:8088/v1/projects/demo-covermate/databases/(default)/documents/sites/'+scope+'/'+path,{headers:{Authorization:'Bearer '+tokens.owner}});
   for(const path of ['articles/'+run,'articleCatalog/'+run,'articleSlugs/'+run,'articleSettings/current'])assert.equal((await direct(path)).status,403,'No direct SDK access: '+path);
-  assert.ok((await db.collection('sites/covermate-uat/articleAudit').where('articleId','==',run).get()).size>=5);
+  assert.ok((await db.doc('sites/covermate-uat').collection('articleAudit').where('articleId','==',run).get()).size>=5);
   console.log('PASS real article API: roles, UAT isolation, shared drafts, CAS conflicts, publication/locales, live isolation, slug reservation, scheduling, all 8 toggle combinations, no-store, direct URL/Firestore guards, unpublish and audit.');
   } else console.log('PASS owner feed API: authentication, roles, UAT isolation, published-only projection and unpublished-edit isolation.');
 } finally {await new Promise(resolve=>server.close(resolve));}
