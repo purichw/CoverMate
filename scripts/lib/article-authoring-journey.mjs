@@ -15,6 +15,7 @@ export const authoredArticle = {
 };
 
 export async function authorRichArticle(page,{out,engine}) {
+  await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true});
   const field=key=>page.locator(`[data-field="${key}"]`);
   const tool=action=>page.locator(`[data-ae="${action}"]:visible`).first().click();
@@ -129,6 +130,7 @@ export function assertPersistedArticle(actual,expected,{published=false}={}) {
 }
 
 export async function assertEditorArticle(page) {
+  await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true}),a=authoredArticle;
   assert.equal(await body.locator('h2').innerText(),a.heading);
   assert.equal(await body.locator('h4').innerText(),a.subheading);

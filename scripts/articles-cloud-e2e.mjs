@@ -175,6 +175,13 @@ try {
       assert.equal((await db.doc('abuseLimits/media-covermate-uat-'+account.localId).get()).data().count,2,'Real media authorization/reservation is retained');
       report.push({engine,realAuth:true,realApi:true,realFirestore:true,media:{boundary:'Only external Cloudinary storage is in memory; real media Auth, crop validation and Firestore reservation',crops:media.crops,statuses:media.statuses},authoredFromEmptyEditor:true,richDocumentRoundTrip:true,richPreviewAndPublicDesktopMobile:true,saveReopenPreview:true,publishDraftIsolationRepublish:true,toggles:true,directRoutesBlocked:true,unpublishRetainsContent:true,deniedSavePreservesInput:true,staleSaveBackupRecovery:true,navigationCancellations:navigationCancellations.length,errors});
       console.log('PASS article cloud browser journey: '+engine);
+    } catch(error) {
+      for(const page of browser.contexts().flatMap(context=>context.pages())){
+        if(!await page.locator('.ae-canvas-frame').count())continue;
+        await page.screenshot({path:out+'/'+engine+'-authoring-failed.png'}).catch(()=>{});
+        console.error('Canvas failure:',await page.locator('.ae-canvas-frame').evaluate(frame=>({hidden:frame.hidden,status:frame.closest('.ae-canvas')?.innerText,frameRect:frame.getBoundingClientRect().toJSON(),editors:[...frame.contentDocument.querySelectorAll('.tiptap')].map(el=>({html:el.outerHTML,rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display}))})).catch(()=>null));
+      }
+      throw error;
     } finally {await browser.close();}
   }
   fs.writeFileSync(out+'/report.json',JSON.stringify(report,null,2));
