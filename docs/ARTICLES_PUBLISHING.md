@@ -26,6 +26,21 @@ the languages. Only complete selected translations become public. Saving edits
 to a published article does not replace its live content. Republish explicitly.
 Unpublish removes every public translation but retains the editable draft.
 
+### Independent publication boundary
+
+Website Save, Publish, Reset draft, Undo/Redo and version restore never save,
+publish or reset article drafts. Article Save/Publish/Unpublish affects only the
+selected article and its catalog/slug/audit records; it leaves website drafts,
+website published content, website version history and other article drafts intact.
+Article visibility settings remain separately saved under `articleSettings`.
+Both modules can have pending work at the same time without one action including
+the other's changes. Shared website headings/artwork around article pages remain
+website CMS content, distinct from article body/cover/title data.
+
+The September 30 follow-up makes this existing storage separation explicit in
+the UI and adds `check:content-isolation` to CI. No collection migration, bulk
+publication, draft reset or hosted data write is part of that change.
+
 Dates are Bangkok-local inputs and stored as UTC. Empty means the first publish
 time; republishing does not silently reset that date. A future date stays private
 until due. Publication is time-gated on each server read, not a browser timer or
