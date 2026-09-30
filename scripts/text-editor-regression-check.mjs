@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 
 import { buildVisitorRuntime } from "./lib/visitor-source.mjs";
+import contract from "../covermate-contract.js";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -23,6 +24,7 @@ const sandbox = {
   clearTimeout,
   requestAnimationFrame: (fn) => fn(),
   window: {
+    CoverMateContract: contract,
     location: { protocol: "http:", pathname: "/", search: "", hash: "", origin: "http://localhost", href: "http://localhost/" },
     localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     addEventListener: () => {},

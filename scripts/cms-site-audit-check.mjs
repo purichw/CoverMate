@@ -14,7 +14,7 @@ import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 const contract = await importCoverMateContract();
 const sandbox = {
   console, URL, URLSearchParams, setTimeout, clearTimeout, requestAnimationFrame: fn => fn(),
-  window: {location:{protocol:'http:',pathname:'/',search:'',hash:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},addEventListener:()=>{},removeEventListener:()=>{}},
+  window: {CoverMateContract:contract,location:{protocol:'http:',pathname:'/',search:'',hash:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},addEventListener:()=>{},removeEventListener:()=>{}},
   document: {querySelector:()=>null,querySelectorAll:()=>[],documentElement:{setAttribute:()=>{},removeAttribute:()=>{}},body:null,head:{querySelector:()=>null,appendChild:()=>{}},createElement:()=>({setAttribute:()=>{},remove:()=>{}})},
   DCLogic: class { setState(update,callback) { Object.assign(this.state, typeof update === 'function' ? update(this.state) : update); callback?.(); } }
 };

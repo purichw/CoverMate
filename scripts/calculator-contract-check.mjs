@@ -7,11 +7,12 @@ import { validContactEmail } from '../covermate-submission.mjs';
 import { buildVisitorRuntime } from './lib/visitor-source.mjs';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 
+const contract=await importCoverMateContract();
 const timers=new Map();let timerId=0;
 const memory=new Map();
 const sandbox={console,URL,URLSearchParams,
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
-  window:{innerWidth:1440,location:{pathname:'/',search:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},sessionStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value),removeItem:key=>memory.delete(key)}},
+  window:{CoverMateContract:contract,innerWidth:1440,location:{pathname:'/',search:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},sessionStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value),removeItem:key=>memory.delete(key)}},
   document:{querySelector:()=>null,querySelectorAll:()=>[],documentElement:{setAttribute(){},removeAttribute(){}},body:null},
   DCLogic:class{setState(value,callback){Object.assign(this.state,typeof value==='function'?value(this.state):value);callback?.();}}
 };
@@ -57,7 +58,6 @@ app.state.site.calculatorDesign.photo='';
 assert.equal(app.renderVals().calculatorFieldsView[0].label,'Custom CMS label');
 assert.equal(app.renderVals().calculatorPhoto,'');
 app.state.routePage='motor';assert.equal(app.renderVals().sections.some(s=>s.isFit),false);
-const contract=await importCoverMateContract();
 const slots=contract.cmsImageSlots(app.state.site);
 assert.ok(slots.some(slot=>JSON.stringify(slot).includes('calculatorDesign.photo')));
 assert.deepEqual([slots.find(s=>s.path==='calculatorDesign.photo').width,slots.find(s=>s.path==='calculatorDesign.photo').height],[800,600]);

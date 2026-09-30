@@ -57,10 +57,10 @@ assert.deepEqual(overrides.items.find(item => item.id === overrideItem.id).cellR
 assert.equal(overrides.items.find(item => item.id === overrideItem.id).th.tag, '', 'Explicit blank tag stays blank');
 assert.equal(overrides.items.find(item => item.id === unknownItem.id).th.tag, '', 'Custom classes receive no inferred coverage claim');
 report.checks.push('Pure contract: no coverage changes/input mutation, idempotent legacy migration, explicit blank TH and custom EN remarks, blank/custom class tags');
-const runtimeSandbox = { URL, DCLogic: class {}, window: { location: { origin: 'http://localhost', pathname: '/' } } };
+const runtimeSandbox = { URL, DCLogic: class {}, window: { CoverMateContract:contract, location: { origin: 'http://localhost', pathname: '/' } } };
 vm.runInNewContext(buildVisitorRuntime() + '\nthis.Component = Component;', runtimeSandbox);
 const runtimeConfig = runtimeSandbox.Component.prototype.normalizeConfig.call(runtimeSandbox.Component.prototype, legacyBefore, { repeatableIds: true });
-assert.deepEqual(JSON.parse(JSON.stringify(tiers(runtimeConfig).items.map(item => item.cellRemarks))), tiers(migratedConfig).items.map(item => item.cellRemarks), 'Embedded visitor normalization works before external CoverMateContract exists');
+assert.deepEqual(JSON.parse(JSON.stringify(tiers(runtimeConfig).items.map(item => item.cellRemarks))), tiers(migratedConfig).items.map(item => item.cellRemarks), 'Embedded visitor normalization matches the loaded shared contract');
 if (process.argv.includes('--contract-only')) {
   console.log('PASS motor comparison remark migration contract');
   process.exit(0);
