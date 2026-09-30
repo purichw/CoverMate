@@ -49,7 +49,7 @@
 .cm-article-prose tr { display:table-row;margin:0;border:0;border-radius:0;overflow:visible;background:transparent; }
 .cm-article-prose td,.cm-article-prose th { display:table-cell;min-width:80px;min-height:0;border:1px solid #d4ddce;padding:12px;vertical-align:top;white-space:normal;text-transform:none;height:auto;font-weight:400;background:#fff;color:#30342e;font-size:inherit;line-height:inherit;text-align:left; }
 .cm-article-prose td::before { display:none;content:none; }
-.cm-article-prose th { font-weight:700;background:#eaf0e4; }:is(.cm-article-prose,.ad-page .cm-article-prose) :is(td,th) p { margin:0; }
+.cm-article-prose th { font-weight:700;background:#eaf0e4;text-align:center; }:is(.cm-article-prose,.ad-page .cm-article-prose) :is(td,th) p { margin:0; }
 .cm-article-prose .article-video { display:flex;align-items:center;gap:20px;padding:22px;border:1px solid #d2dcd8;border-radius:8px;background:#f3f6f4;margin:24px 0;text-decoration:none; }
 .article-video > span:first-child { font-size:26px; }.article-video small { display:block;font-size:12px;color:#66665f; }
 .ae-editor-host { container:covermate-article / inline-size; }

@@ -36,17 +36,19 @@ try {
     await page.goto('about:blank');
     await page.goto(preview.baseUrl+'/admin#operations');
     await page.locator('.case-list[aria-busy="false"]').waitFor();
-    await trigger('status').waitFor();
+    await trigger('sort').waitFor();
     await page.evaluate(() => document.fonts.ready);
-    const boxes = await Promise.all([trigger('status'),page.locator('.case-filter-toggle'),trigger('sort')].map(control => control.boundingBox()));
+    const controls=width>700?[trigger('status'),page.locator('.case-filter-toggle'),trigger('sort')]:[page.locator('.case-filter-toggle'),trigger('sort')];
+    const boxes = await Promise.all(controls.map(control => control.boundingBox()));
     assert.ok(boxes.every(box => Math.abs(box.y-boxes[0].y)<1 && box.height>=44), 'Controls share one row with touch targets');
     assert.ok(boxes.slice(1).every((box, index) => box.x>=boxes[index].x+boxes[index].width), 'Controls do not overlap');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth), false);
-    assert.equal(await page.locator('.case-filter-controls .cm-select-value').evaluateAll(nodes => nodes.some(n=>n.scrollWidth>n.clientWidth+1)), false, 'Default labels fit');
+    assert.equal(await page.locator('.case-filter-controls .cm-select-value:visible').evaluateAll(nodes => nodes.some(n=>n.scrollWidth>n.clientWidth+1)), false, 'Default labels fit');
     assert.equal(await field('sort').count(),1);
     assert.equal(await page.locator('.case-list-toolbar select').count(),0);
     await page.locator('.case-filter-toggle').click();
     await page.locator('#caseExtraFilters').waitFor();
+    assert.equal(await trigger('status').isVisible(),true,'Status remains accessible in expanded mobile filters');
     if(width!==320) {
       const bar = await page.locator('.case-filterbar').boundingBox();
       const list = await page.locator('.case-list-toolbar').boundingBox();

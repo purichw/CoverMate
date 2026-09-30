@@ -290,7 +290,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* — tables — */
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
-  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  text-align: center; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 60%, transparent);
   padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
 }
@@ -1284,12 +1284,12 @@ textarea.input { min-height: 90px; resize: vertical; }
       <div style="max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--gut);display:flex;flex-direction:column;gap:clamp(24px,3vw,40px)">
         <div data-reveal="" style="display:flex;flex-direction:column;gap:var(--space-2);max-width:56ch;min-width:0">
           <div style="font-size:clamp(13px,1.15vw,16px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.kickerFg }}" data-content-path="{{ s.copy.kicker }}"><span data-content-path="{{ s.copy.kicker }}">{{ s.kicker }}</span></div>
-          <h2 style="margin:0;font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-weight:700;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
+          <h2 style="margin:0;font-weight:700;font-size:clamp(27px,3.6vw,44px);line-height:1.24;white-space:pre-line;text-wrap:pretty" data-content-path="{{ s.copy.title }}"><span data-content-path="{{ s.copy.title }}">{{ s.title }}</span></h2>
           <p style="margin:0;font-size:16px;line-height:1.65;color:{{ s.muted }};max-width:52ch;text-wrap:pretty" data-content-path="{{ s.copy.body }}"><span data-content-path="{{ s.copy.body }}">{{ s.body }}</span></p>
         </div>
 
         <div class="cm-tier-table" data-om="desk" data-reveal="1" role="region" aria-label="{{ s.title }}" tabindex="0" style="flex-direction:column;border-radius:var(--radius-lg);overflow:hidden;background:{{ s.card }};color:{{ s.cardFg }};box-shadow:var(--shadow-sm)">
-          <div style="display:grid;grid-template-columns:{{ s.tierGrid }};gap:var(--space-3);align-items:end;padding:var(--space-4)">
+          <div style="display:grid;grid-template-columns:{{ s.tierGrid }};gap:var(--space-3);align-items:end;padding:var(--space-4);text-align:center">
             <span style="font-size:11.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:{{ s.cardMuted }}"><span data-cms-copy="publicCopy.tierClassLabel">{{ s.tierColLabel }}</span></span>
             <sc-for list="{{ s.tierHeads }}" as="h" hint-placeholder-count="5">
               <span style="font-size:12.5px;font-weight:600;line-height:1.4;text-align:center;text-wrap:pretty"><span data-content-path="{{ h.copy }}">{{ h.label }}</span></span>
@@ -1298,7 +1298,7 @@ textarea.input { min-height: 90px; resize: vertical; }
           </div>
           <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="4">
             <div style="display:grid;grid-template-columns:{{ s.tierGrid }};gap:var(--space-3);align-items:center;padding:clamp(15px,1.7vw,21px) var(--space-4);border-top:1px solid {{ s.line }}">
-              <span style="font-family:'Google Sans','Google Sans Thai','Noto Sans Thai',system-ui,sans-serif;font-weight:700;font-size:clamp(18px,1.5vw,21px);line-height:1.2" data-content-path="{{ it.copy.label }}"><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></span>
+              <span style="font-weight:700;font-size:clamp(18px,1.5vw,21px);line-height:1.2" data-content-path="{{ it.copy.label }}"><span data-content-path="{{ it.copy.label }}">{{ it.label }}</span></span>
               <sc-for list="{{ it.cells }}" as="cell" hint-placeholder-count="5">
                 <span style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0">
                   <span style="width:30px;height:30px;flex:0 0 auto;border-radius:999px;background:{{ cell.bg }};display:flex;align-items:center;justify-content:center">

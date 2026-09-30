@@ -124,7 +124,7 @@ try {
     // Change the test-only URL so a Home-to-Home scenario switch performs a new
     // document navigation instead of retaining the already-rendered fixture.
     homeNavigation += 1;
-    await page.goto(`${baseUrl}/admin?home_qa_navigation=${homeNavigation}#home`);
+    await page.goto(`${baseUrl}/admin?home_qa_navigation=${homeNavigation}#home`, { waitUntil: 'domcontentloaded' });
     await waitForHomeState(expected);
   }
 
@@ -167,7 +167,7 @@ try {
   report.assets = await page.evaluate(async () => {
     const images = [...document.images].map(image => ({ element: 'img', url: image.currentSrc || image.src, image }));
     const backgrounds = [];
-    for (const selector of ['.home-heading', '.home-encouragement']) {
+    for (const selector of ['.home-heading', '.home-tip-art']) {
       const element = document.querySelector(selector);
       for (const pseudo of [null, '::before', '::after']) {
         const background = getComputedStyle(element, pseudo).backgroundImage;
@@ -183,7 +183,7 @@ try {
     }));
   });
   assert.ok(report.assets.some(asset => asset.element === '.home-heading::before'), 'Home heading has its decorative landscape asset.');
-  assert.ok(report.assets.some(asset => asset.element === '.home-encouragement::before'), 'Home encouragement has its decorative landscape asset.');
+  assert.ok(report.assets.some(asset => asset.element === '.home-tip-art'), 'Home guidance has its decorative botanical asset.');
   assert.deepEqual(report.assets.filter(asset => !asset.loaded), [], 'All Home logo and CSS landscape assets decode successfully.');
   report.checks.push('Home image elements and decorative CSS background assets load and decode from local project files.');
 
@@ -358,5 +358,5 @@ try {
   report.apiRequests = apiRequests;
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); });
 }

@@ -439,7 +439,7 @@
       padding: 0 22px;
       color: var(--muted);
       background: var(--bg-strong);
-      text-align: left;
+      text-align: center;
       font-size: 12px;
       font-weight: 900;
       letter-spacing: .18em;
@@ -998,11 +998,12 @@
   <link rel="stylesheet" href="/admin/ops/cases.css" />
   <link rel="stylesheet" href="/admin/home.css" />
   <link rel="stylesheet" href="/admin/analytics.css" />
+  <link rel="stylesheet" href="/admin/content.css" />
   <link rel="stylesheet" href="/admin/shell.css" />
   <link rel="stylesheet" href="/admin/articles/articles.css" />
   <link rel="stylesheet" href="/admin/stat-card.css" />
   <!-- COVERMATE_SELECT_ASSETS_START -->
-  <link rel="stylesheet" href="/assets/visitor/select.css?v=274268adc3909dd8">
+  <link rel="stylesheet" href="/assets/visitor/select.css?v=4badf022f2b61c5a">
   <script type="module" src="/assets/visitor/select.js?v=7ed47a9bd7409057"></script>
   <!-- COVERMATE_SELECT_ASSETS_END -->
   <!-- COVERMATE_BOOT_STYLE_START -->
@@ -1034,17 +1035,7 @@
         <span class="brand-sub">ADMIN PORTAL</span>
       </a>
       <nav class="nav" id="sideNav"></nav>
-      <div class="sidebar-footer">
-        <p class="eyebrow">เข้าสู่ระบบด้วยสิทธิ์</p>
-        <div class="user">
-          <span class="avatar" id="userAvatar">CM</span>
-          <span>
-            <strong id="userName">ผู้ดูแล CoverMate</strong>
-            <span id="userMeta">กำลังตรวจสอบสิทธิ์</span>
-          </span>
-        </div>
-        <button class="logout" type="button" data-action="logout">ออกจากระบบ</button>
-      </div>
+      <div class="sidebar-footer" data-admin-account-root></div>
     </aside>
 
     <div class="mobilebar">

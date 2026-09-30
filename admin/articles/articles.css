@@ -57,7 +57,7 @@ body[data-module="articles"] .screen { padding:28px; }
 .article-results { min-width:0; }
 .article-table { width:100%;table-layout:fixed;border-spacing:0;border-collapse:separate;background:var(--surface);border:1px solid var(--line);border-radius:8px; }
 .article-table .col-image { width:7%; }.article-table .col-title { width:27%; }.article-table .col-category { width:12%; }.article-table .col-status { width:14%; }.article-table .col-date { width:13%; }.article-table .col-author { width:12%; }.article-table .col-actions { width:15%; }
-.article-table th { background:var(--surface-soft);color:var(--text);font-size:12px;font-weight:600;padding:13px 10px;text-align:left; }
+.article-table th { background:var(--surface-soft);color:var(--text);font-size:12px;font-weight:600;padding:13px 10px;text-align:center; }
 .article-table th:first-child { border-top-left-radius:8px; }.article-table th:last-child { border-top-right-radius:8px; }
 .article-table td { padding:14px 10px;border-top:1px solid var(--line);vertical-align:middle;font-size:13px;overflow-wrap:anywhere; }
 .article-table tbody tr:hover { background:#fffdf9; }

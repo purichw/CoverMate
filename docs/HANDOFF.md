@@ -1,6 +1,15 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-28
+Last updated: 2026-09-30
+
+## Admin and Home Articles Refresh
+
+The owner authorized pushing and deploying this chat's Home Articles, centered
+controls, Admin account, CMS hub, Home and Cases work. See
+[the scoped release record](RELEASE_ADMIN_REFRESH_20260930.md) for runtime scope
+and required gates. Exact-SHA CI, hosted read-only UAT and production readback
+are recorded in `uat-results/admin-release-20260930/`. No production CMS Draft
+publication, customer mutation, Rules or credential change is part of rollout.
 
 ## Article Presentation and Full-page Preview
 

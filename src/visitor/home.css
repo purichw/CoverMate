@@ -58,6 +58,21 @@ html[data-covermate-route] {
   .hm-article-copy { padding-inline:4px; }
   .hm-article-copy h3 { font-size:16px; }
 }
+@media(min-width:1024px) {
+  .hm-articles .hm-wrap { padding-block:40px; }
+  .hm-articles-heading { margin-bottom:24px; }
+  .hm-articles-heading .hm-section-copy { gap:8px; }
+  .hm-articles-heading .hm-eyebrow { font-size:16px; }
+  .hm-articles-heading h2 { font-size:36px; line-height:1.3; }
+  .hm-articles-heading .hm-section-copy > p:not(.hm-eyebrow) { font-size:16px; line-height:1.5; }
+  .hm-articles-all { min-height:68px; padding:16px 24px; gap:12px; font-size:18px; }
+  .hm-articles .hm-article-media { aspect-ratio:2/1; }
+  .hm-articles .hm-article-copy { gap:10px; padding:12px 8px 4px; }
+  .hm-articles .hm-article-category { font-size:14px; }
+  .hm-articles .hm-article-copy h3 { font-size:24px; line-height:1.35; }
+  .hm-articles .hm-article-excerpt { font-size:16px; line-height:1.5; }
+  .hm-articles .hm-article-read { font-size:18px; }
+}
 @media(max-width:767px) {
   .hm-articles .hm-wrap { padding-block:24px; }
   .hm-articles-heading { flex-direction:column; align-items:stretch; gap:12px; margin-bottom:16px; }
@@ -236,7 +251,7 @@ html[data-covermate-route] {
 .hm-tier-table-row { display:grid; grid-template-columns:minmax(230px,1.5fr) repeat(var(--tier-count),minmax(0,1fr)); min-width:calc(230px + var(--tier-count) * 140px); }
 .hm-tier-table-row > * { min-width:0; }
 .hm-tier-table-head { min-height:110px; }
-.hm-tier-table-intro { padding:20px 18px; display:flex; flex-direction:column; justify-content:center; gap:4px; background:linear-gradient(120deg,#a74612,#954017); color:#fff; }
+.hm-tier-table-intro { padding:20px 18px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; background:linear-gradient(120deg,#a74612,#954017); color:#fff; }
 .hm-tier-table-intro h3 { font-size:18px; text-wrap:balance; }
 .hm-tier-table-intro p { font-size:14px; color:#ffe8d2; }
 .hm-tier-column-heading { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:2px; padding:10px 8px; border-left:1px solid #e9e3d9; }
