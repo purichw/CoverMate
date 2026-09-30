@@ -24,6 +24,11 @@ to the browser. Error pages now load the existing browser module from its static
 URL. The shared renderer and generated status pages stay aligned; error-page
 language/recovery interaction tests cover this follow-up.
 
+The hosted runner's Azure Ubuntu package mirror stalled browser dependency
+installation before tests could start. CI now uses Ubuntu's official HTTPS
+archive for that mirror entry, preserving signed package indexes, both browser
+engines, all checks, and the exact-commit production gate.
+
 ## Verification
 
 Before commit, current-source checks passed for generated visitor artifacts,
