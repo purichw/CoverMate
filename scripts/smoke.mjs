@@ -2486,7 +2486,7 @@ for (const [name, width, height] of viewports) {
     ["เนื้อหา", "แก้ไข : Hero"],
     ["แบรนด์และติดต่อ", "แบรนด์และข้อมูลติดต่อ"],
     ["ธีมและข้อมูล", "SEO"],
-    ["ประวัติเวอร์ชัน", "ประวัติ Publish ล่าสุด 20 รายการ"]
+    ["ประวัติเวอร์ชัน", "ประวัติ Publish หน้าเว็บ 20 รายการ · แยกจากบทความ"]
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
