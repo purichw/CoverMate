@@ -109,8 +109,8 @@ async function main() {
     const ready = async () => { await page.locator('.cm-media-dialog .cropper-container').waitFor(); await page.waitForFunction(() => document.querySelector('.cm-media-stage > img')?.cropper?.ready && !document.querySelector('.cm-media-primary').disabled); };
     const cancel = async () => {
       await dialog.getByRole('button', { name: 'ยกเลิก', exact: true }).last().click();
-      // Closing removes the dialog's accessible role before its close event
-      // disposes the cropper/DOM. Wait for that cleanup before opening another.
+      // close() hides the native dialog before its queued close handler removes
+      // it. Wait for that cleanup, not its disappearance from the role tree.
       await page.locator('.cm-media-dialog').waitFor({ state: 'detached' });
     };
     const save = async () => {
