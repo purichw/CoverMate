@@ -176,7 +176,7 @@ if(process.argv.includes('--browser')) {
     await save(page);await page.locator('[data-ae=back]').click();await page.locator('[data-article-state=ready]').waitFor();
     await page.locator('[data-article-action=filters]').click();
     const choose=async(name,label)=>{await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();await page.getByRole('option',{name:label,exact:true}).click();};
-    await choose('ปักหมุด','ปักหมุดแล้ว');assert.equal(await page.locator('.article-table tbody tr').count(),1);
+    await choose('ปักหมุด','ปักหมุดหน้ารวม');assert.equal(await page.locator('.article-table tbody tr').count(),1);
     await page.locator('[name=query]').fill('policy-check');assert.equal(await page.locator('.article-table tbody tr').count(),1);
     await page.locator('.article-extra-filters summary').click();
     await page.locator('[name=dateFrom]').fill('2026-09-15');await page.locator('[name=dateTo]').fill('2026-09-15');
