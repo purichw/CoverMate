@@ -4,6 +4,9 @@ import sharp from 'sharp';
 import AxeBuilder from '@axe-core/playwright';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {articleCanvas,articleField,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
+import {installMediaFixture} from './media-upload-browser-check.mjs';
+import {firebaseMock} from './fixtures/ops-portal.mjs';
 
 const out='uat-results/article-editor-redesign';
 await fs.mkdir(out,{recursive:true});
@@ -11,12 +14,20 @@ const server=await startArticlesAdminPreview(),browser=await launchChromium(load
 const report={environment:'Loopback design fixtures; real editor and IndexedDB. No production writes.',capturedAt:new Date().toISOString(),checks:[],errors:[]};
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
-  await context.route('**/*',r=>new URL(r.request().url()).origin===server.baseUrl?r.continue():r.abort());
+  await context.route('**/*',async route=>{
+    if(new URL(route.request().url()).origin!==server.baseUrl)return route.abort();
+    if(!route.request().isNavigationRequest())return route.continue();
+    const response=await route.fetch(),headers=response.headers();
+    if(headers['content-security-policy'])headers['content-security-policy']=headers['content-security-policy'].replace("img-src 'self' data: blob:","img-src 'self' data: blob: https://res.cloudinary.com").replace("connect-src 'self'","connect-src 'self' https://api.cloudinary.com https://res.cloudinary.com");
+    return route.fulfill({response,headers});
+  });
+  await context.route('**/covermate-firebase.js',route=>route.fulfill({contentType:'text/javascript',body:firebaseMock+'\nwindow.CoverMateFirebase.getAdminIdToken=()=>window.CoverMateFirebase.auth.currentUser.getIdToken();'}));
+  await installMediaFixture(context,{token:'ops-regression-token',useActualApi:true});
   const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>report.errors.push(e.message));
-  const field=key=>page.locator(`.ae-workspace [data-field=${key}]`);
-  const edit=async()=>{await page.locator('[data-article-action=edit]').first().click();await page.locator('.ae-workspace').waitFor();await page.evaluate(()=>document.fonts.ready);};
-  const panel=async key=>{const closed=page.locator(`[data-panel=${key}]:not([open]) > summary`);if(await closed.count())await closed.click();};
-  const save=async()=>{await page.locator('[data-ae=save]:visible').first().click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
+  const field=key=>articleField(page,key);
+  const edit=async()=>{await page.locator('[data-article-action=edit]').first().click();await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor();await page.evaluate(()=>document.fonts.ready);};
+  const panel=async key=>{await openSettings(page);const closed=page.locator(`[data-panel=${key}]:not([open]) > summary`);if(await closed.count())await closed.click();};
+  const save=async()=>{await closeSettings(page);await page.locator('[data-ae=save]:visible').first().click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
   const fit=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No page overflow');
   await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await edit();
   await page.waitForFunction(()=>document.querySelector('[data-field=title]').clientHeight<70);
@@ -35,15 +46,23 @@ try {
   assert.equal(await page.locator('.ae-tag').count(),2,'Pending tag and remove can commit in one click without losing the removal');
   assert.match(await page.locator('.ae-tag-list').innerText(),/เตรียมเอกสาร/);
   await page.locator('[data-ae=clear-cover]').click();assert.equal(await page.locator('.ae-card-image img').isVisible(),false);
-  assert.ok(await page.locator('.ae-editor-host:visible .tiptap img').count(),'Removing cover leaves body image intact');
-  await page.locator('[data-ae=cover]').click();await page.locator('.ae-modal-form [data-field=src]').fill('/assets/article-preview/missing.jpg');
-  await page.locator('.ae-modal-form [data-field=alt]').fill('ภาพทดสอบที่โหลดไม่สำเร็จ');await page.locator('.ae-modal-form [type=submit]').click();
+  assert.ok(await articleCanvas(page).locator('.ae-editor-host:visible .tiptap img').count(),'Removing cover leaves body image intact');
+  await page.locator('[data-ae=cover]').click();
+  await page.locator('.ae-modal-form [data-field=alt]').fill('รถยนต์ประกอบบทความ');await page.locator('.ae-modal-form [type=submit]').click();
+  const crop=page.locator('.cm-media-dialog');await crop.waitFor();
+  await crop.locator('input[type=text]').fill('/assets/brand/articles-reading-v1.webp');await crop.getByRole('button',{name:'ใช้ URL และจัดกรอบ',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('.cm-media-dialog .cropper-container')&&!document.querySelector('.cm-media-primary').disabled);
+  await crop.getByRole('button',{name:'ใช้รูปนี้ใน draft',exact:true}).click();await crop.waitFor({state:'detached'});
+  await page.waitForFunction(()=>document.querySelector('.ae-card-image img').naturalWidth>0);
+  const coverSrc=await page.locator('.ae-card-image img').getAttribute('src');
+  await page.route(coverSrc,route=>route.fulfill({status:404,body:'Missing image'}));
+  await page.locator('.ae-card-image img').evaluate(img=>{img.src+='?failed-image-fixture';});
   await page.waitForFunction(()=>document.querySelector('.ae-card-image img').dataset.failedSrc);
   assert.equal(await page.locator('.ae-card-image img').isVisible(),false);assert.equal(await page.locator('.ae-card-image > svg').isVisible(),true);
-  await page.locator('[data-ae=cover]').click();await page.locator('.ae-modal-form [data-field=src]').fill('/assets/article-preview/motor.jpg');
-  await page.locator('.ae-modal-form [data-field=alt]').fill('รถยนต์ประกอบบทความ');await page.locator('.ae-modal-form [type=submit]').click();
+  await page.unroute(coverSrc);await page.locator('.ae-card-image img').evaluate(img=>{delete img.dataset.failedSrc;img.removeAttribute('src');});
+  await field('title').fill('ทบทวนกรมธรรม์กับ CoverMate');
   await page.waitForFunction(()=>document.querySelector('.ae-card-image img').naturalWidth>0);
-  assert.match(await page.locator('.ae-card-image img').getAttribute('src'),/motor.jpg/);
+  assert.equal(await page.locator('.ae-card-image img').getAttribute('src'),coverSrc);
   await panel('seo');await field('seoDescription').fill('SEO แยกจากคำโปรยบนการ์ด');
   assert.equal(await page.locator('[data-card=excerpt]').innerText(),'เตรียมเอกสารและคำถามที่อยากปรึกษา');
   await panel('summary');await field('takeaways').fill('เตรียมกรมธรรม์\nจดคำถาม');
@@ -64,7 +83,7 @@ try {
     await page.locator('[data-lang=en]').click();await field('title').fill('Understanding your existing insurance policy and preparing questions for a conversation with your adviser');
     assert.ok(await field('title').evaluate(el=>el.scrollHeight<=el.clientHeight+2),'Long title fits');
     await page.locator('[data-lang=th]').click();
-    if(width===390){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/mobile-top.png'});await page.screenshot({path:out+'/mobile-full.png',fullPage:true});await page.locator('.ae-editor-host:visible .article-callout').first().scrollIntoViewIfNeeded();await page.screenshot({path:out+'/mobile-writing.png'});}
+    if(width===390){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/mobile-top.png'});await page.screenshot({path:out+'/mobile-full.png',fullPage:true});await articleCanvas(page).locator('.ae-editor-host:visible .article-callout').first().scrollIntoViewIfNeeded();await page.screenshot({path:out+'/mobile-writing.png'});}
     await page.locator('[data-ae=settings]:visible').click();await page.locator('.ae-settings-dialog').waitFor();await fit();
     await page.locator('.ae-settings-dialog [data-field=featured]').check();
     if(width===390){await page.locator('.ae-settings-dialog').evaluate(el=>el.scrollTop=0);await page.screenshot({path:out+'/mobile-settings.png'});}

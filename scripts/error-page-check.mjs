@@ -22,6 +22,8 @@ for(let status=400;status<=599;status++)for(const lang of ['th','en']){
   assert.ok(html.includes('data-error-status="'+status+'"'));
   assert.ok(html.includes('class="error-code"'));assert.ok(html.includes('class="hero"'));
   assert.ok(!html.includes('__bundler/template'));assert.ok(!html.includes('googletagmanager'));
+  assert.ok(html.includes('<script type="module" src="/src/error-page/client.js"></script>'),'Browser code is loaded as a static module, never inlined from a server-transpiled file');
+  assert.ok(!html.includes('require('),'Server CommonJS must not leak into error page scripts');
 }
 assert.equal(errorModel(undefined).code,'APP_ERROR');
 assert.equal(errorModel(504,config,'en',{retrySafe:true}).publicCode,'GATEWAY_TIMEOUT');

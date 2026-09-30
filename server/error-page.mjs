@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import { errorModel, ERROR_CODES } from '../src/error-page/model.mjs';
 export { ERROR_CODES };
 const css = fs.readFileSync(new URL('../src/error-page/styles.css', import.meta.url), 'utf8');
-const client = fs.readFileSync(new URL('../src/error-page/client.js', import.meta.url), 'utf8');
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const icons = {
   arrow:'<path d="M5 12h14m-6-6 6 6-6 6"/>',
@@ -32,5 +31,5 @@ export function renderErrorPage(code = 404, { config = {}, lang = 'th', publishe
   <div class="message"><span class="eyebrow">${text('eyebrow')}</span><p class="error-code">${text('codeLabel')} <span>${m.code==='APP_ERROR'?'APP_ERROR':m.code+' · '+m.publicCode}</span></p><h1 id="error-title" data-copy="title">${e(m.title)}</h1><p class="description" data-copy="body">${e(m.body)}</p><div class="actions"><a class="button primary" data-home href="${m.homeHref}">${icon('home')}${text('home')}${icon('arrow')}</a><button type="button" class="button secondary" data-secondary hidden>${text('retry')}</button></div></div></section>
   <section class="popular" aria-labelledby="popular-label" ${m.tiles.length?'':'hidden'}><h2 id="popular-label">${text('popular')}</h2><div class="tiles">${m.allTiles.map(tile=>`<a class="tile" data-tile="${tile.key}" href="${e(tile.href)}" ${m.tiles.some(item=>item.key===tile.key)?'':'hidden'}><span class="medallion ${tile.tone}">${icon(tile.icon)}</span>${text(tile.key)}${icon('chevron')}</a>`).join('')}</div></section>
   <aside class="support" ${m.contactHref?'':'hidden'}><span class="medallion sage support-icon">${icon('headset')}</span><div class="support-copy"><h2>${text('helpTitle')}</h2><p>${text('helpBody')}</p></div><div class="support-contact"><a class="button" data-contact href="${e(m.contactHref)}">${icon('chat')}${text('contactLabel')}${icon('arrow')}</a><p class="hours" ${m.hours?'':'hidden'}>${icon('clock')}${text('hours')}</p></div></aside></div></main>
-  <script type="application/json" id="error-config">${seed}</script><script type="module">${client}</script></body></html>`;
+  <script type="application/json" id="error-config">${seed}</script><script type="module" src="/src/error-page/client.js"></script></body></html>`;
 }

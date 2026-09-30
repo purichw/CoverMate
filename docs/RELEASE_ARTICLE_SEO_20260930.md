@@ -18,6 +18,12 @@
 No production CMS content, sample articles, roles, Rules, environment variables,
 customer data, or email configuration are changed by this release.
 
+Hosted preview uncovered a server-packaging bug on unavailable article pages:
+inlining a `.js` file read from the function bundle exposed CommonJS `require`
+to the browser. Error pages now load the existing browser module from its static
+URL. The shared renderer and generated status pages stay aligned; error-page
+language/recovery interaction tests cover this follow-up.
+
 ## Verification
 
 Before commit, current-source checks passed for generated visitor artifacts,
