@@ -90,11 +90,14 @@ if(process.argv.includes('--browser')){
     assert.ok(await widePreview.evaluate(el=>el.ownerDocument.defaultView.innerWidth)>1100,'Full desktop Preview exercises wide typography');
     assert.deepEqual(Object.values(await scale(widePreview)).map(item=>item.size),[36,26,22,20,18,16,18],'Full desktop Preview retains the wide semantic scale');
     await page.locator('.ae-preview-dialog [data-ae=close]').click();
+    // The dialog close handler restores opener focus; finish that before typing
+    // into the writing iframe so the native keys cannot race focus restoration.
+    await page.locator('.ae-preview-dialog').waitFor({state:'detached'});
     report.checks.push('UI creates H1–H6 and P; compact semantic defaults and loaded Google Sans at narrow/wide writing widths and full desktop Preview');
     await page.locator('[data-canvas-size=desktop]').click();
     const inline=()=>body().locator('p').filter({hasText:'Normal BOLD rest'});
     const mac=await page.evaluate(()=>/Mac/.test(navigator.platform));
-    await inline().click();await page.keyboard.press(mac?'Meta+ArrowLeft':'Home');for(let i=0;i<7;i++)await page.keyboard.press('ArrowRight');for(let i=0;i<4;i++)await page.keyboard.press('Shift+ArrowRight');
+    await inline().click();await body().press(mac?'Meta+ArrowLeft':'Home');for(let i=0;i<7;i++)await body().press('ArrowRight');for(let i=0;i<4;i++)await body().press('Shift+ArrowRight');
     assert.equal(await body().evaluate(el=>el.ownerDocument.getSelection().toString()),'BOLD','Native keyboard selects the target word');
     await tool('bold');
     await (await revealArticleControl(page,'[data-text-size]')).fill('27.5');await (await revealArticleControl(page,'[data-text-size-mobile]')).fill('18.5');await tool('apply-text-size');
