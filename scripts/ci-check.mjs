@@ -12,6 +12,7 @@ const commands = [
   ["npm", ["run", "check:nfr"]],
   ["npm", ["run", "check:public-request"]],
   ["npm", ["run", "build:visitor"]],
+  ["node", ["scripts/startup-performance-check.mjs"]],
   ["npm", ["run", "build:errors"]],
   ["npm", ["run", "check:errors"]],
   ["npm", ["run", "check:editor-history"]],
@@ -87,7 +88,6 @@ const commands = [
   ["npm", ["run", "check:customer-email:template"]],
   ["npm", ["run", "check:customer-email:browser"]],
   ["npm", ["run", "check:performance"]],
-  ["node", ["scripts/startup-performance-check.mjs"]],
   ["git", ["diff", "--check"]]
 ];
 

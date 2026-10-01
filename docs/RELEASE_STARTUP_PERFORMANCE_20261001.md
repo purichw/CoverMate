@@ -24,6 +24,8 @@ WebKit verification additionally showed a failed classic-script preload being re
 
 The preceding upstream CI also exposed a Home-pin E2E synchronization bug: its broad save-text selector matched the saving-in-progress message, permitting reload to abort the request (`ECONNRESET`). The test now waits for the exact successful cloud-draft message before checking persistence. The application save contract and all persistence assertions are unchanged.
 
+The new resource-count test initially disabled HTTP caching through Playwright routing, causing older Chromium to refetch identical image URLs. External HTTPS is now blocked via CDP without disabling the cache; the unchanged single-request assertion passes on CI's Chromium 141 as well as current Chrome. This test runs immediately after the Visitor build to expose startup regressions before the longer browser suite.
+
 ## Recovery
 
 The preceding production source is `cd47b71705cfe6e7a9def89d324a62ab7a38bdaf`. There is no data migration to reverse. If a deployment regression is confirmed, prepare a scoped revert for owner approval and preserve the exact-SHA CI gate; do not force-promote or reset CMS/article drafts.
