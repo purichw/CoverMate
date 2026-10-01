@@ -3,10 +3,12 @@ import {error} from './http.cjs';
 import {articleSettings} from '../article-settings.mjs';
 import {createArticleDraft,ARTICLE_CATEGORIES} from '../admin/articles/drafts.mjs';
 import {articleDocumentText,articleUrl,normalizeArticleDocument,normalizeArticleMedia} from '../article-document.mjs';
+import {validateArticle} from '../article-validation.mjs';
 
 const identity = value => typeof value==='string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
 const slugOK = value => typeof value==='string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length<=160;
-const fail = message => {throw error(422,'invalid_article',message);};
+const fail = (message,field) => {throw Object.assign(error(422,'invalid_article',message),field?{fields:[{field,language:null,message}]}:{});};
+function validate(input,options){const fields=validateArticle(input,options);if(fields.length)throw Object.assign(error(422,'invalid_article',fields[0].message),{fields});}
 const checkRevision = (value,expected) => {
   if(!Number.isSafeInteger(expected)||expected<0)fail('ไม่พบเลขเวอร์ชัน กรุณาโหลดข้อมูลใหม่');
   if((value?.revision||0)!==expected)throw error(409,'conflict','มีการบันทึกจากอุปกรณ์อื่นแล้ว กรุณาส่งออกสำเนานี้และเปิดเวอร์ชันล่าสุด');
@@ -14,6 +16,7 @@ const checkRevision = (value,expected) => {
 function draftValue(input) {
   if(!input||typeof input!=='object'||!identity(input.id)||!input.translations)fail('ข้อมูลบทความไม่ถูกต้อง');
   if(input.sample===true)fail('ห้ามเผยแพร่ข้อมูลตัวอย่าง');
+  validate(input);
   if(input.slug && !slugOK(input.slug))fail('Slug ใช้ตัวอักษรอังกฤษตัวเล็ก ตัวเลข และขีดกลาง ไม่เกิน 160 ตัว');
   if(!ARTICLE_CATEGORIES[input.categoryId])fail('หมวดหมู่ไม่ถูกต้อง');
   if(!Array.isArray(input.tags)||input.tags.length>20||input.tags.some(t=>typeof t!=='string'||t.length>80))fail('ใส่ได้ไม่เกิน 20 แท็ก แท็กละ 80 ตัวอักษร');
@@ -60,6 +63,8 @@ function catalogValue(record,now) {
   value.status=!dates.length?'draft':dates.some(t=>t<=now)?'published':'scheduled';
   value.scheduledAt=value.status==='scheduled'?new Date(Math.min(...dates)).toISOString():null;
   value.hasUnpublishedChanges=record.publishedRevision!==record.revision;
+  value.publishedPinned=record.live?.pinned===true;
+  value.publishedHomePinned=record.live?.featured===true;
   value.translations=Object.fromEntries(Object.entries(value.translations).map(([lang,t])=>[lang,Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt'].map(key=>[key,t[key]]))]));
   return value;
 }
@@ -83,9 +88,25 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
     const r=refs(site);
     return db.runTransaction(async tx=>{
       const old=(await tx.get(r.settings)).data();checkRevision(old,expected);
-      const value={...articleSettings(input),revision:expected+1};
+      const value={...articleSettings(input),pinnedOrder:articleSettings(old).pinnedOrder,revision:expected+1};
       tx.set(r.settings,{...value,updatedAt:new Date(now()).toISOString(),updatedBy:uid});
       tx.create(r.audit.doc(),{action:'settings',actor:uid,at:new Date(now()).toISOString(),before:articleSettings(old),after:value});
+      return value;
+    });
+  }
+  async function reorderPins(site,order,expected,uid) {
+    if(!Array.isArray(order)||order.some(id=>!identity(id))||new Set(order).size!==order.length)fail('ลำดับบทความไม่ถูกต้อง');
+    const r=refs(site);
+    return db.runTransaction(async tx=>{
+      const old=(await tx.get(r.settings)).data();
+      if(!Number.isSafeInteger(expected)||expected<0)fail('ไม่พบเลขเวอร์ชัน กรุณาโหลดข้อมูลใหม่');
+      if((old?.revision||0)!==expected)throw error(409,'conflict','ลำดับหรือการแสดงผลถูกแก้ไขจากที่อื่น กรุณาโหลดรายการล่าสุดแล้วจัดลำดับอีกครั้ง');
+      const catalog=await tx.get(r.catalog);
+      const pins=catalog.docs.filter(doc=>doc.data().draft?.pinned||doc.data().live?.pinned).map(doc=>doc.id);
+      if(pins.length!==order.length||pins.some(id=>!order.includes(id)))throw error(409,'pins_changed','รายการปักหมุดเปลี่ยนแล้ว กรุณาโหลดรายการล่าสุดแล้วจัดลำดับอีกครั้ง');
+      const value={...articleSettings(old),pinnedOrder:order,revision:expected+1};
+      tx.set(r.settings,{...value,updatedAt:new Date(now()).toISOString(),updatedBy:uid});
+      tx.create(r.audit.doc(),{action:'pin-order',actor:uid,at:new Date(now()).toISOString(),before:articleSettings(old).pinnedOrder,after:order});
       return value;
     });
   }
@@ -104,12 +125,12 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
       if(!old&&action!=='save')throw error(404,'not_found','ไม่พบบทความ');
       const at=new Date(now()).toISOString();
       let draft=normalized||old.draft,live=old?.live||null;
-      if(old?.lockedSlug && draft.slug!==old.lockedSlug)fail('URL ของบทความที่เคยเผยแพร่แล้วเปลี่ยนไม่ได้');
+      if(old?.lockedSlug && draft.slug!==old.lockedSlug)fail('URL ของบทความที่เคยเผยแพร่แล้วเปลี่ยนไม่ได้','slug');
       let slugRef;
       if(action==='publish') {
-        if(!slugOK(draft.slug)||!draft.authorName.trim())fail('กรุณากรอก Slug และผู้เขียนก่อนเผยแพร่');
         const langs=input.languages;
         if(!Array.isArray(langs)||!langs.length||langs.some(l=>!['th','en'].includes(l))||new Set(langs).size!==langs.length)fail('เลือกภาษาที่จะเผยแพร่');
+        validate(draft,{publish:true,languages:langs});
         const translations={...live?.translations};
         for(const lang of langs) {
           const t=draft.translations[lang];
@@ -119,11 +140,25 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
         }
         slugRef=r.slugs.doc(draft.slug);
         const holder=(await tx.get(slugRef)).data();
-        if(holder&&holder.id!==id)throw error(409,'slug_conflict','Slug นี้มีบทความอื่นใช้อยู่ กรุณาเลือกชื่อใหม่');
+        if(holder&&holder.id!==id)throw Object.assign(error(409,'slug_conflict','Slug นี้มีบทความอื่นใช้อยู่ กรุณาเลือกชื่อใหม่'),{fields:[{field:'slug',language:null,message:'Slug นี้มีบทความอื่นใช้อยู่ กรุณาเลือกชื่อใหม่'}]});
         live={id,slug:draft.slug,categoryId:draft.categoryId,tags:draft.tags,featured:draft.featured,pinned:draft.pinned,image:draft.image,cover:draft.cover,translations,status:'published'};
       } else if(action==='unpublish') live=null;
       else if(action!=='save')fail('ไม่รู้จักการทำรายการ');
+      // Draft and live selections reserve one Home slot until both are unpinned.
+      // The settings document serializes concurrent additions to the last slot.
+      const wasHomePinned=old?.draft?.featured===true || old?.live?.featured===true;
+      const isHomePinned=draft.featured===true || live?.featured===true;
+      let pinSettings;
+      if(wasHomePinned!==isHomePinned) {
+        pinSettings=articleSettings((await tx.get(r.settings)).data());
+        if(isHomePinned) {
+          const catalog=await tx.get(r.catalog);
+          const count=catalog.docs.filter(doc=>doc.id!==id && (doc.data().draft?.featured===true || doc.data().live?.featured===true)).length;
+          if(count>=10)fail('ปักหมุดบน Home ได้ไม่เกิน 10 บทความ กรุณานำหมุด Home ของบทความอื่นออกก่อน หากเผยแพร่แล้วต้องเผยแพร่การนำหมุดออกด้วย','featured');
+        }
+      }
       const record={draft:{...draft,createdAt:old?.draft.createdAt||at,basePublished:!!live},live,revision:expected+1,updatedAt:at,updatedBy:uid,lockedSlug:old?.lockedSlug||(action==='publish'?draft.slug:null),publishedRevision:action==='publish'?expected+1:old?.publishedRevision||null};
+      if(pinSettings)tx.set(r.settings,{...pinSettings,revision:pinSettings.revision+1,updatedAt:at,updatedBy:uid});
       tx.set(ref,record);
       tx.set(r.catalog.doc(id),{draft:catalogValue(record,now()),live:publicItem(live,Infinity,{summary:true}),revision:record.revision,updatedAt:at,publishedRevision:record.publishedRevision,lockedSlug:record.lockedSlug});
       if(slugRef)tx.set(slugRef,{id});
@@ -132,9 +167,9 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
     });
   }
   return {
-    settings,changeSettings,get,mutate,
+    settings,changeSettings,reorderPins,get,mutate,
     async catalog(site){return {available:true,complete:true,settings:await settings(site),items:(await records(site)).map(record=>catalogValue(record,now()))};},
-    async feed(site){const flags=await settings(site);return {available:true,settings:flags,items:flags.enabled?(await records(site)).map(record=>publicItem(record.live,now(),{summary:true})).filter(Boolean):[]};},
+    async feed(site){const flags=await settings(site),items=flags.enabled?(await records(site)).map(record=>publicItem(record.live,now(),{summary:true})).filter(Boolean):[];const ids=new Set(items.filter(item=>item.pinned).map(item=>item.id));return {available:true,settings:{...flags,pinnedOrder:flags.pinnedOrder.filter(id=>ids.has(id))},items};},
     async detail(site,slug){if(!slugOK(slug)||!(await settings(site)).enabled)return null;const r=refs(site),holder=(await r.slugs.doc(slug).get()).data();if(!holder)return null;const record=(await r.items.doc(holder.id).get()).data();const item=publicItem(record?.live,now());return item?{available:true,item}:null;}
   };
 }

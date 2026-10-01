@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-import { parseBundlerTemplateParts } from "./lib/bundler-template.mjs";
+import { parseBundlerTemplateParts, restoreTemplateScriptMarkers } from "./lib/bundler-template.mjs";
 
 const htmlFiles = [
   "index.html",
@@ -114,6 +114,12 @@ for (const file of htmlFiles) {
       }
       if (file === "index.html" && !template.includes("const DEFAULTS =")) {
         failures.push(`${file}: embedded template is missing DEFAULTS payload`);
+      }
+      if (file === "index.html") {
+        const firstScript = restoreTemplateScriptMarkers(template).match(/<script\s+src="([^"]+)"/i)?.[1];
+        if (!/^\/assets\/visitor\/article-reader\.js\?v=[a-f0-9]{16}$/.test(firstScript || '')) {
+          failures.push(`${file}: article reader must load before the component runtime`);
+        }
       }
       const inlineEvents = template.match(inlineEventPattern) || [];
       if (inlineEvents.length) {

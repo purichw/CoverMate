@@ -14,20 +14,25 @@ const project=value=>projectHomeArticles(value,options);
 for(const value of [null,{},[],{available:true},{available:true,items:[]},{...feed,available:false}])assert.equal(project(value).visible,false);
 assert.equal(readHomeArticleFeed({querySelector:()=>({textContent:'{'})}),null);
 assert.equal(readHomeArticleFeed({querySelector:()=>null}),null);
-assert.deepEqual(project(feed).items.map(x=>x.key),feed.featuredIds);
+assert.deepEqual(project(feed).items.map(x=>x.key),feed.featuredIds.toReversed());
 assert.deepEqual(project({...feed,featuredIds:[]}).items.map(x=>x.key),feed.featuredIds.toReversed());
 assert.equal(project({...feed,items:[feed.items[0]]}).items.length,1);
 assert.equal(project({...feed,items:[...feed.items,...feed.items]}).items.length,3);
-assert.equal(projectHomeArticles(feed,{...options,lang:'en'}).items[0].href,'/articles/motor-cover-types?lang=en');
+assert.equal(projectHomeArticles(feed,{...options,lang:'en'}).items[0].href,'/articles/travel-cover-checklist?lang=en');
 for(const mutate of [item=>item.status='draft',item=>item.slug='../bad',item=>item.translations.th.status='draft',item=>item.translations.th.publishedAt='2099-01-01',item=>item.translations.th.title='',item=>delete item.translations.th]) {
   const bad=structuredClone(feed.items[0]);mutate(bad);assert.equal(project({...feed,items:[bad]}).visible,false);
 }
-const unsafe=structuredClone(feed);unsafe.items[0].image.src='javascript:alert(1)';assert.equal(project(unsafe).items[0].image,'');
+const unsafe=structuredClone(feed);unsafe.items[0].image.src='javascript:alert(1)';assert.equal(project(unsafe).items.find(item=>item.key===unsafe.items[0].id).image,'');
 const long=structuredClone(feed);long.items[0].translations.en.title='Policy'.repeat(45);long.items[0].translations.en.category='Coverage'.repeat(12);
 assert.equal(homeArticleInsertionIndex([{id:'tiers',type:'tiers'},{id:'talk'}]),1);
 assert.equal(homeArticleInsertionIndex([{id:'tiers',type:'tiers'},{id:'faq'}]),1);
 assert.equal(homeArticleInsertionIndex([{id:'tiers',homeType:'tiers'},{id:'faq'}]),1);
 assert.equal(homeArticleInsertionIndex([{id:'faq'}]),1);
+const slots=[{id:'hero'},{id:'talk'},{id:'faq'}];
+assert.equal(homeArticleInsertionIndex(slots,'hero'),0);
+assert.equal(homeArticleInsertionIndex(slots,''),3);
+assert.equal(homeArticleInsertionIndex([slots[0],slots[2]],'talk',slots),1,'Hidden anchor keeps the configured position');
+assert.equal(homeArticleInsertionIndex(slots,'removed'),1,'Invalid anchor falls back to the legacy slot');
 
 const defaults=JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js','utf8')+'\nJSON.stringify(DEFAULTS)'));
 const baseline=sanitizeStateDoc({config:defaults,text:{}},{repeatableIds:true});
@@ -40,7 +45,7 @@ assert.equal(JSON.stringify(input),before);assert.equal(migrated.cmsContentVersi
 assert.deepEqual(migrated.homeDesign.articlesTitle,input.homeDesign.articlesTitle);
 for(const key of ['sections','contact','brand','footer','motorPage','licences'])assert.deepEqual(migrated[key],input[key]);
 assert.deepEqual(migrateCmsContent(migrated),migrated);
-const sandbox={console,URL,URLSearchParams,setTimeout:()=>0,clearTimeout(){},requestAnimationFrame:fn=>fn(),
+const sandbox={console,URL,URLSearchParams,customElements:{get:()=>true},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame:fn=>fn(),
   window:{CoverMateContract:contract,innerWidth:1440,location:{pathname:'/',search:'',origin:'http://localhost',href:'http://localhost/'},localStorage:{getItem:()=>null,setItem(){},removeItem(){}}},
   document:{querySelector:()=>null,querySelectorAll:()=>[],documentElement:{setAttribute(){},removeAttribute(){}},body:null},
   DCLogic:class{setState(value,callback){Object.assign(this.state,typeof value==='function'?value(this.state):value);callback?.();}}
@@ -52,12 +57,41 @@ const originalSections=JSON.stringify(app.state.site.sections);
 let view=app.renderVals();assert.equal(view.homeArticles.visible,true);
 const order=view.sectionGroups.flatMap(group=>group.sections.map(s=>s.id));
 assert.equal(order.indexOf('articles')+1,order.indexOf('talk'));
+assert.ok(view.secList.find(row=>row.id==='articles').canMove);
+assert.equal(view.secList.find(row=>row.id==='articles').canToggle,false,'Visibility retains its separate Articles settings owner');
+const renderedOrder=()=>app.renderVals().sectionGroups.flatMap(group=>group.sections.map(s=>s.id));
+const rows=()=>app.renderVals().secList.filter(row=>row.canMove);
+const articleRow=()=>rows().find(row=>row.id==='articles');
+articleRow().up();
+assert.equal(renderedOrder().indexOf('articles'),order.indexOf('articles')-1);
+assert.equal(JSON.stringify(app.state.site.sections),originalSections,'Article placement does not rewrite the section records');
+articleRow().down();assert.deepEqual(renderedOrder(),order);
+app.renderVals().secList.find(row=>row.id==='talk').up();
+assert.equal(renderedOrder().indexOf('talk')+1,renderedOrder().indexOf('articles'),'Other sections can cross Articles');
+articleRow().up();assert.deepEqual(renderedOrder(),order);
+while(!articleRow().first)articleRow().up();
+assert.equal(renderedOrder()[0],'articles');
+while(!articleRow().last)articleRow().down();
+assert.equal(renderedOrder().at(-1),'articles');
+assert.equal(app.state.site.homeDesign.articlesBefore,'');
+const roundTrip=sanitizeStateDoc({config:app.state.site,text:{}},{repeatableIds:true}).config;
+assert.equal(roundTrip.homeDesign.articlesBefore,'','Explicit last slot survives sanitization');
+roundTrip.homeDesign.articlesBefore='removed';
+assert.equal(sanitizeStateDoc({config:roundTrip,text:{}}).config.homeDesign.articlesBefore,undefined);
+app.state.site.homeDesign.articlesBefore='talk';
+for(const settings of [{enabled:false},{showHome:false}]) {
+  app.state.articleFeed={...feed,settings};
+  assert.equal(renderedOrder().includes('articles'),false);
+  assert.equal(articleRow().canMove,true,'Hidden Articles keeps a recoverable order control');
+}
+app.state.articleFeed=feed;
 const field=view.cmsGroups.find(g=>g.key==='Home articles').fields.find(f=>f.path==='homeDesign.articlesTitle.th');
 field.change({target:{value:'OWNER TITLE'}});field.commit({target:{value:'OWNER TITLE'}});
 assert.equal(app.renderVals().homeCopy.articlesTitle,'OWNER TITLE');
 app.state.lang='en';assert.notEqual(app.renderVals().homeCopy.articlesTitle,'OWNER TITLE');
 assert.equal(JSON.stringify(app.state.site.sections),originalSections);
 app.state.routePage='motor';assert.equal(app.renderVals().homeArticles.visible,false);
+assert.equal(app.renderVals().secList.some(row=>row.id==='articles'),false,'Home-only placement does not add a Motor row');
 console.log('PASS article projection, publication/language gating, ordering, safe links/media, CMS migration and ownership.');
 
 if(process.argv.includes('--browser')) {
@@ -85,17 +119,17 @@ if(process.argv.includes('--browser')) {
       assert.equal(await page.locator('.hm-article-card').count(),3);
       assert.equal(await page.locator('#articles a').count(),4,'One focus stop per card, plus index');
       assert.equal(await page.locator('.hm-articles-all > span').textContent(),lang==='th'?'ดูบทความทั้งหมด':'View all articles');
-      await page.waitForFunction(()=>[...document.querySelectorAll('.hm-article-media img')].every(img=>img.complete&&img.naturalWidth>0));
-      const geometry=await page.locator('.hm-article-card').evaluateAll(nodes=>nodes.map(n=>{
+      await page.waitForFunction(()=>[...document.querySelectorAll('#articles [data-active=true] img')].every(img=>img.complete&&img.naturalWidth>0));
+      const geometry=await page.locator('.hm-article-card:visible').evaluateAll(nodes=>nodes.map(n=>{
         const r=n.getBoundingClientRect(),img=n.querySelector('.hm-article-media').getBoundingClientRect(),copy=n.querySelector('.hm-article-copy').getBoundingClientRect();
         return {x:r.x,y:r.y,width:r.width,height:r.height,image:img.toJSON(),copy:copy.toJSON()};
       }));
       if(width<768) {
-        assert.ok(geometry.every(g=>g.image.right<=g.copy.left && Math.abs(g.image.top-g.copy.top)<1),'Mobile image left, copy right');
-        assert.ok(geometry[1].y>=geometry[0].y+geometry[0].height);
+        assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Mobile image above copy');
+        assert.equal(geometry.length,1,'Mobile shows one carousel card');
       } else assert.equal(new Set(geometry.map(g=>g.y)).size,1,'Desktop/tablet one row');
       for(const node of await page.locator('#articles a').all())assert.ok((await node.getAttribute('href')).endsWith(lang==='en'?'?lang=en':''));
-      await page.locator('.hm-articles-all').focus();await page.keyboard.press(engine==='webkit'?'Alt+Tab':'Tab');
+      await page.locator('.hm-article-link').first().focus();
       assert.equal(await page.evaluate(()=>document.activeElement.className),'hm-article-link');
       assert.equal(await page.locator('.hm-article-link').first().evaluate(n=>getComputedStyle(n).outlineStyle),'solid');
       await page.locator('.hm-article-link').first().blur();
@@ -117,7 +151,7 @@ if(process.argv.includes('--browser')) {
     server.setFeed(unsafeText);await ready();assert.equal(await page.locator('.hm-article-copy h3 img').count(),0);
     assert.equal(await page.evaluate(()=>window.__articleInjection),undefined);
     server.setFeed(long);await page.setViewportSize({width:320,height:900});await ready('/?lang=en');await assertFit();
-    const missing=structuredClone(feed);missing.items[0].image.src='assets/article-preview/missing.jpg';missing.items[1].image.src='';
+    const missing=structuredClone(feed);missing.items[2].image.src='assets/article-preview/missing.jpg';missing.items[1].image.src='';
     server.setFeed(missing);await ready();await page.locator('#articles').scrollIntoViewIfNeeded();
     await page.waitForFunction(()=>document.querySelector('.hm-article-media img')?.hasAttribute('data-failed'));
     assert.equal(await page.locator('.hm-article-media img').first().isVisible(),false);await assertFit();

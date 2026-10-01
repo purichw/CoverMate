@@ -51,12 +51,9 @@ export async function checkEditorParity({page,panel,poll,shot,assertFit,baseUrl,
   async function select(id){
     await openPanel();
     await panel().getByRole('button',{name:'เนื้อหา',exact:true}).click();
-    if(page.viewportSize().width>1000) await panel().locator(`[data-content-row="${id}"] button`).click();
-    else {
-      await panel().getByRole('combobox',{name:'เลือกส่วนที่แก้ไขเนื้อหา'}).and(page.locator('button')).click();
-      const name=await panel().locator(`[data-editor-content-section] option[value="${id}"]`).innerText();
-      await page.getByRole('option',{name,exact:true}).click();
-    }
+    await panel().getByRole('combobox',{name:'เลือกส่วนที่แก้ไขเนื้อหา'}).and(page.locator('button')).click();
+    const name=await panel().locator(`[data-editor-content-section] option[value="${id}"]`).innerText();
+    await page.getByRole('option',{name,exact:true}).click();
   }
   async function reveal(locator){
     const ancestors=locator.locator('xpath=ancestor::details');

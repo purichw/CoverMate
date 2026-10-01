@@ -60,10 +60,11 @@ if(process.argv.includes('--browser')) {
   const browser=engine==='chromium'?await launchChromium(pw.chromium):await pw[engine].launch();
   const out='uat-results/article-editor';fs.mkdirSync(out,{recursive:true});
   const report={engine,url:server.baseUrl+'/admin#articles',checks:[],errors:[],passed:false,environment:'Loopback, synthetic verified account, local IndexedDB only'};
+  let page;
   try {
     const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce',timezoneId:'America/Los_Angeles'});
     await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
-    const page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));
+    page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));
     const go=async p=>{await p.goto(server.baseUrl+'/admin#articles');await p.locator('[data-article-state=ready]').waitFor();};
     const edit=async p=>{await p.locator('[data-article-action=edit]').first().click();await p.locator('.ae-workspace').waitFor();await articleCanvas(p).locator('.ae-editor-host:visible .tiptap').waitFor();await p.evaluate(()=>document.fonts.ready);};
     const fit=async()=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal overflow');
@@ -128,7 +129,7 @@ if(process.argv.includes('--browser')) {
     assert.ok(await articleCanvas(page).locator('.tiptap .article-callout-title').filter({hasText:'หมายเหตุทดสอบ'}).count());
     await page.locator('[data-ae=unwrap]').click();
     await page.locator('[data-ae=link]').click();await page.locator('.ae-dialog [data-field=href]').fill('javascript:alert(1)');await page.locator('.ae-modal-form [type=submit]').click();
-    assert.ok(await page.locator('.ae-form-error').innerText());await page.locator('.ae-dialog [data-cancel]').click();
+    assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());await page.locator('.ae-dialog [data-cancel]').click();
     await articleField(page,'pinned').check();
     await articleField(page,'publishedAt').fill('2026-09-15T10:30');
     await articleField(page,'tags').fill('policy-check, covermate');
@@ -156,6 +157,7 @@ if(process.argv.includes('--browser')) {
       assert.deepEqual(await articleCanvas(page).locator('.ae-editor-host:visible table').evaluate(table=>({table:getComputedStyle(table).display,row:getComputedStyle(table.rows[0]).display,cell:getComputedStyle(table.rows[1].cells[0]).display,size:getComputedStyle(table.rows[0].cells[0]).fontSize})),{table:'table',row:'table-row',cell:'table-cell',size:'14px'},'Article tables keep reader geometry, not Admin stacked rows');
       await page.screenshot({path:out+'/'+engine+'-'+width+'-top.png'});
       await page.locator('[data-ae=settings]:visible').click();await page.locator('.ae-settings-dialog').waitFor();
+      if(await page.locator('.ae-settings-dialog [data-panel=metadata]:not([open])').count())await page.locator('.ae-settings-dialog [data-panel=metadata] > summary').click();
       await page.locator('.ae-settings-dialog [data-field=coverAlt]').fill('ข้อความอธิบายภาพจากมือถือ');
       if(width===390)await page.screenshot({path:out+'/'+engine+'-mobile-settings.png'});
       await page.locator('.ae-settings-dialog .ae-done').click();
@@ -172,8 +174,9 @@ if(process.argv.includes('--browser')) {
       }
     }
     await save(page);await page.locator('[data-ae=back]').click();await page.locator('[data-article-state=ready]').waitFor();
+    await page.locator('[data-article-action=filters]').click();
     const choose=async(name,label)=>{await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();await page.getByRole('option',{name:label,exact:true}).click();};
-    await choose('ปักหมุด','ปักหมุดแล้ว');assert.equal(await page.locator('.article-table tbody tr').count(),1);
+    await choose('ปักหมุด','ปักหมุดหน้ารวม');assert.equal(await page.locator('.article-table tbody tr').count(),1);
     await page.locator('[name=query]').fill('policy-check');assert.equal(await page.locator('.article-table tbody tr').count(),1);
     await page.locator('.article-extra-filters summary').click();
     await page.locator('[name=dateFrom]').fill('2026-09-15');await page.locator('[name=dateTo]').fill('2026-09-15');

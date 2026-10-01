@@ -84,7 +84,7 @@ const before=saved.revision;
 for(const [key,max] of Object.entries({headerNote:500,sidebarQuote:1000,takeawayNote:500})){
   for(const invalid of [42,null,{},'x'.repeat(max+1)]){
     const rejected=structuredClone(saved);rejected.translations.th[key]=invalid;
-    await assert.rejects(repository.mutate(site,'save',rejected,before,actor),error=>error.status===422 && error.message.includes(key));
+    await assert.rejects(repository.mutate(site,'save',rejected,before,actor),error=>error.status===422 && error.fields?.some(issue=>issue.field===key&&issue.language==='th'));
   }
 }
 for(const lang of ['th','en'])for(const key of visibilityKeys)for(const invalid of [null,0,1,'false',[],{}]){

@@ -66,25 +66,21 @@ Home/Motor performance budgets also passed. This candidate is not deployed.
 
 ## Content workspace
 
-Local candidate, 2026-09-28. The Content tab composes three desktop regions:
-an inert preview of the selected real Visitor section, the actual page-ordered
-section list, and grouped canonical fields. Each region scrolls independently;
-save/preview/publish and history actions stay outside these scroll regions.
-At 1000px and below the preview comes first, followed by the section select and
-full-width fields. The desktop list is replaced by the same section choices in
-the shared accessible select, not squeezed into two narrow mobile columns.
-
-The reference's full-page canvas is reconciled to a selected-section snapshot
-inside Content. Page Outline retains the actual canvas and scroll-to-selection;
-full Draft Preview is still the interactive whole-page view. The snapshot has
-no owner-only status/Remark controls, scripts, executable embeds or submitting
-forms. Contact form contents stay visible as inert elements. Hidden sections
-show an explicit state instead of a stale image.
+Local candidate, 2026-09-30. Content uses the same panel dimensions, action bars
+and scroll surface as the other tabs. The redundant embedded preview and second
+desktop section list have been removed. The shared section select follows the
+actual page order on every viewport; grouped fields fill the available width.
+Selecting a section scrolls the real website to it. Desktop keeps that website
+beside the panel; mobile retains the standard bottom sheet, not an expanded
+Content-only sheet. Full Draft Preview remains an optional whole-page command.
 
 `editor-content.html` owns navigation and grouped composition, not persistence.
 `editor-contact.html` is shared by Structure and Content; both consume the same
-field models/commit handlers. `editor-preview.html` is shared by every Content
-section including Hero. Existing field/language primitives remain canonical.
+field models/commit handlers. Existing field/language primitives remain canonical.
+Plain copy updates canonical Draft on each input, so the actual website changes
+before blur, while focus, caret and grouped Undo/Redo remain intact. URLs, email
+and media references retain validation-on-commit buffers; raw JSON editors keep
+their explicit Save action. This never writes Live or implicitly publishes.
 
 - Main copy, notes, destinations and display settings are grouped by section.
 - Comparison columns remain stable-ID insurance items; coverage rows remain
@@ -99,6 +95,11 @@ section including Hero. Existing field/language primitives remain canonical.
 - No arbitrary Add section, unsupported deletion, carousel, or dummy overflow
   controls are added from the reference. Existing schema-backed additions stay.
 - This is still one site-wide Draft and Publish, not per-section publication.
+- Home Articles is a movable outline/content row, including when the feed is
+  disabled, empty or unavailable. `homeDesign.articlesBefore` stores its next
+  section ID; empty means the last movable position. The existing Articles
+  module still owns visibility and publication. Its read-only published feed is
+  loaded for the owner canvas; no article drafts are copied into the Home CMS.
 
 `npm run check:editor-content` exercises ordered
 navigation, table/row/Remark edits, visibility, FAQ add/delete/cancel/Undo/focus,
@@ -106,6 +107,12 @@ Contact, Footer, reload and full Draft Preview. It checks 1440/768/390/320px and
 Home/Motor data ownership. Evidence is saved in `uat-results/editor-content/`.
 It never publishes or touches production data. This pass does not certify hosted
 authorization, actual phone keyboards, or production publishing.
+
+2026-09-30 local verification: Hero and Content browser checks passed, including
+live copy before blur, middle-of-text caret retention, Undo/Redo, Draft reload,
+Home/Motor ownership and equal panel dimensions across tabs at 1440/768/390/320px.
+Desktop and mobile screenshots were inspected. Broader whole-site suites and
+deployment were not run for this focused change.
 
 Local Content, existing panel, Hero and page-switch browser checks passed on
 2026-09-28. Current route/content contracts, CMS controller, text-edit regression,
@@ -121,14 +128,14 @@ Selecting Hero in Page Outline opens Content. The outline retains ordering and
 visibility controls, but there is no duplicate Hero copy form in the inspector.
 Content has a section selector and reusable TH/EN and field primitives.
 
-Hero uses the same Content workspace and preview as other sections. Main copy
+Hero uses the same Content panel and actual page canvas as other sections. Main copy
 is expanded; supporting copy, destination links and real background/media
 settings use collapsible groups. Global LINE and advisor shortcuts edit their
 existing owners, not Hero-specific duplicates. Home uses `sections.@hero`;
 Motor uses `motorPage.hero`. Shared statement/media use `homeDesign` where the
 actual page renderer uses it. Empty optional copy remains valid.
 
-`editor-preview.js` lazily snapshots the actual rendered section into a sandboxed,
+The Brand tab still uses `editor-preview.js` to snapshot the rendered section into a sandboxed,
 inert iframe with the page styles and assets. Desktop/Tablet/Mobile select real
 1280/768/390px layout widths, scaled to fit. It does not run scripts, boot a second
 app, navigate, submit forms or write CMS. Hidden sections show a hidden state.
@@ -160,7 +167,8 @@ this UI remain outside this candidate check.
   and submission-button fields. No customer submission or notification behavior
   changes.
 
-Inputs use the existing CMS buffer and commit-on-blur commands. Save, Preview,
+Copy inputs update the live Draft renderer while typing; validated destinations
+retain the existing CMS buffer and commit-on-blur commands. Save, Preview,
 Publish, Reset and history keep their existing confirmation and persistence
 contracts. TH/EN selects content language; Admin controls remain Thai.
 

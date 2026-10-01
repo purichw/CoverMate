@@ -22,7 +22,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     return Object.fromEntries([...new Set([...Object.keys(defaults || {}), ...Object.keys(value)])].map(key => [key, merge(defaults?.[key], value[key])]));
   };
   const motor = merge(motorDefaults, site.motorPage) || {};
-  const pageSeo = isArticle ? {title:article?.seoTitle || article?.title || (lang==='en'?'Article unavailable':'ไม่พบบทความ'),description:article?.seoDescription || article?.excerpt || ''} : path === '/articles' ? {title:site.articlesPage?.title || {th:'บทความจาก CoverMate',en:'CoverMate articles'},description:site.articlesPage?.intro} : path === '/motor' ? motor.seo || {} : seo;
+  const pageSeo = isArticle ? {title:clean(article?.seoTitle) || article?.title || (lang==='en'?'Article unavailable':'ไม่พบบทความ'),description:clean(article?.seoDescription) || article?.excerpt || ''} : path === '/articles' ? {title:site.articlesPage?.title || {th:'บทความจาก CoverMate',en:'CoverMate articles'},description:site.articlesPage?.intro} : path === '/motor' ? motor.seo || {} : seo;
   const media = site.brand?.media || {};
   const brand = localized(site.brand?.name) || 'CoverMate';
   const service = path === '/motor' ? 'motor' : 'home';
@@ -61,7 +61,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     { '@type': 'WebPage', '@id': canonical + '#webpage', url: canonical, name: title, description, inLanguage: language, isPartOf: { '@id': websiteId }, about: { '@id': orgId }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}) }
   ];
   if (serviceName) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
-  if(isArticle&&article?.available)graph.push({'@type':'Article','@id':canonical+'#article',headline:title,description,inLanguage:language,mainEntityOfPage:canonical,publisher:{'@id':orgId},datePublished:article.datetime,...(image?{image}:{}),...(article.author?{author:{'@type':article.author===brand?'Organization':'Person',name:article.author}}:{})});
+  if(isArticle&&article?.available)graph.push({'@type':'Article','@id':canonical+'#article',headline:clean(article.title)||title,description,inLanguage:language,mainEntityOfPage:canonical,publisher:{'@id':orgId},datePublished:article.datetime,...(article.updatedDatetime?{dateModified:article.updatedDatetime}:{}),...(article.category?{articleSection:clean(article.category)}:{}),...(Array.isArray(article.tags)&&article.tags.length?{keywords:article.tags.map(clean).filter(Boolean)}:{}),...(image?{image}:{}),...(article.author?{author:{'@type':article.author===brand?'Organization':'Person',name:article.author}}:{})});
   return {
     title, language, canonical,
     meta: {

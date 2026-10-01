@@ -1,0 +1,103 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {createRequire} from 'node:module';
+import {createArticleDraft} from '../admin/articles/drafts.mjs';
+import {createArticleRepository} from '../server/articles.mjs';
+import {createPageHandler} from '../server/seo-page.mjs';
+import {startNfrServer} from './nfr-server.mjs';
+import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+
+if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.COVERMATE_TEST_MODE!=='emulator')throw Error('Isolated emulators required');
+const require=createRequire(import.meta.url),db=require('../server/firebase.cjs').serverDb(),repository=createArticleRepository({db});
+const config=JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js','utf8')+'\nJSON.stringify(DEFAULTS);'));
+const site='covermate-uat',run=crypto.randomUUID(),email=`pins-${run}@example.test`,password=crypto.randomUUID();
+const signup=await fetch('http://127.0.0.1:9098/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,returnSecureToken:true})}).then(r=>r.json());
+await db.doc('admins/'+signup.localId).set({role:'owner',active:true,uatOnly:true,name:'Pin Order QA'});
+for(const name of ['live','draft'])await db.doc('sites/'+site+'/states/'+name).set({config,text:{},revision:1});
+const {server,baseUrl}=await startNfrServer({pageHandler:createPageHandler({readPublished:async()=>({config,text:{}}),readArticles:site=>repository.feed(site),readArticle:(site,slug)=>repository.detail(site,slug)})});
+const suffix='?cm_env=uat&cm_emulator=1',out='uat-results/article-carousel';fs.mkdirSync(out,{recursive:true});
+let browser;
+try {
+  const ids=[];
+  for(let i=0;i<17;i++) {
+    let draft=createArticleDraft();draft.id=`pin-${run}-${i}`;draft.slug=draft.id;draft.authorName='Emulator Editor';draft.pinned=true;
+    Object.assign(draft.translations.th,{title:`บทความปักหมุด ${i+1} · การเลือกความคุ้มครอง`,excerpt:'ข้อมูลทดสอบเฉพาะ Emulator',document:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'บทความทดสอบที่เผยแพร่แล้ว'}]}]},publishedAt:i===16?'2099-01-01T00:00:00Z':'2026-01-01T00:00:00Z'});
+    draft=await repository.mutate(site,'save',draft,0,signup.localId);
+    if(i!==15)draft=await repository.mutate(site,'publish',{id:draft.id,languages:['th']},draft.revision,signup.localId);
+    ids.push(draft.id);
+  }
+  const firstDraft=await repository.get(site,ids[0]);firstDraft.translations.th.title='ชื่อร่างที่ยังไม่เผยแพร่';firstDraft.pinned=false;
+  await repository.mutate(site,'save',firstDraft,firstDraft.revision,signup.localId);
+  const call=async(order,revision,token=signup.idToken,env='uat')=>{
+    const response=await fetch(`${baseUrl}/api/articles?cm_env=${env}&action=pin-order`,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({order,expectedRevision:revision})});
+    return {status:response.status,body:await response.json()};
+  };
+  let settings=await repository.settings(site);settings=await repository.changeSettings(site,{enabled:true,showHome:true,showNavigation:true},settings.revision,signup.localId);
+  assert.equal((await call(ids,settings.revision,null)).status,401);
+  assert.equal((await call(ids,settings.revision,signup.idToken,'production')).status,403);
+  await db.doc('admins/'+signup.localId).update({role:'readonly'});assert.equal((await call(ids,settings.revision)).status,403);
+  await db.doc('admins/'+signup.localId).update({role:'owner'});
+  assert.equal((await call([...ids,ids[0]],settings.revision)).status,422);
+  assert.equal((await call(['missing-id'],settings.revision)).status,409);
+  assert.equal((await call(ids,null)).status,422);
+  let result=await call([...ids].reverse(),settings.revision);assert.equal(result.status,200,JSON.stringify(result));settings=result.body;
+  assert.equal(settings.pinnedOrder.length,17,'No three/five/ten pin limit');
+  assert.equal((await call(ids,settings.revision-1)).status,409);
+  settings=await repository.changeSettings(site,{enabled:true,showHome:false,showNavigation:true,pinnedOrder:[]},settings.revision,signup.localId);
+  assert.deepEqual(settings.pinnedOrder,[...ids].reverse(),'Visibility saves cannot erase order');
+  const feed=await repository.feed(site);assert.equal(feed.items.length,15);assert.equal(feed.settings.pinnedOrder.length,15,'Draft/future IDs not exposed');
+  assert.equal(feed.items.find(item=>item.id===ids[0]).pinned,true,'Draft unpin does not unpin live');
+  assert.equal((await repository.catalog(site)).items.find(item=>item.id===ids[0]).publishedPinned,true);
+
+  browser=await launchChromium(loadPlaywright().chromium,{headless:true});
+  const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),visitorContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+  const admin=await context.newPage(),visitor=await visitorContext.newPage(),errors=[];
+  for(const page of [admin,visitor]){page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push(error.message));}
+  admin.on('dialog',dialog=>dialog.accept());
+  await admin.goto(baseUrl+'/'+suffix);
+  await admin.evaluate(async({email,password})=>{
+    await import('/covermate-firebase.js');const sdk=await import('https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js');
+    await sdk.signInWithEmailAndPassword(window.CoverMateFirebase.auth,email,password);
+    if(!(await window.CoverMateFirebase.syncSessionFromCurrentUser()).ok)throw Error('Auth failed');
+  },{email,password});
+  await admin.goto(baseUrl+'/admin'+suffix+'#articles');await admin.locator('[data-article-state=ready]').waitFor({timeout:60000});
+  await admin.locator('[name=query]').fill('no matching articles');
+  await admin.locator('[data-article-action=pin-order]').click();
+  const dialog=admin.locator('.article-pin-dialog');await dialog.waitFor();
+  assert.equal(await dialog.locator('li').count(),17,'Pin manager ignores list filters and pagination');
+  await dialog.screenshot({path:out+'/admin-desktop.png'});
+  const first=dialog.locator('li').first();const firstId=await first.getAttribute('data-pin-id');
+  await first.locator('input').fill('3');
+  await dialog.locator('[data-pin=save]').click();await dialog.locator('[data-pin-status]').filter({hasText:'บันทึกลำดับแล้ว'}).waitFor();
+  const ordered=await dialog.locator('li').evaluateAll(rows=>rows.map(row=>row.dataset.pinId));
+  assert.equal(ordered[2],firstId,'Typing a position and clicking Save directly works');
+  assert.deepEqual((await repository.settings(site)).pinnedOrder,ordered);
+  await dialog.getByRole('button',{name:'ปิด',exact:true}).click();
+  await admin.reload();await admin.locator('[data-article-state=ready]').waitFor();await admin.locator('[data-article-action=pin-order]').click();
+  assert.deepEqual(await dialog.locator('li').evaluateAll(rows=>rows.map(row=>row.dataset.pinId)),ordered,'Order persists across reload');
+  await visitor.goto(baseUrl+'/articles'+suffix);await visitor.locator('.ar-slide[data-active=true]').waitFor();
+  const publicOrder=ordered.filter(id=>!ids.slice(15).includes(id));
+  assert.deepEqual(await visitor.locator('.ar-slide').evaluateAll(rows=>rows.map(row=>row.dataset.slideKey)),publicOrder,'Visitor reads real saved order');
+  assert.equal(await visitor.getByText('ชื่อร่างที่ยังไม่เผยแพร่',{exact:true}).count(),0);
+  await visitor.locator('[data-carousel-action=next]').click();assert.equal(await visitor.locator('.ar-slide[data-active=true]').getAttribute('data-slide-key'),publicOrder[1]);
+  await admin.setViewportSize({width:390,height:844});await dialog.screenshot({path:out+'/admin-mobile.png'});
+  assert.equal(await dialog.evaluate(el=>el.scrollWidth>el.clientWidth),false);
+  await dialog.locator('[data-pin=down]').first().click();
+  const pending=await dialog.locator('li').evaluateAll(rows=>rows.map(row=>row.dataset.pinId));
+  await db.doc('admins/'+signup.localId).update({active:false});
+  await dialog.locator('[data-pin=save]').click();await dialog.locator('[data-pin-status]').filter({hasText:'ไม่มีสิทธิ์'}).waitFor();
+  assert.deepEqual(await dialog.locator('li').evaluateAll(rows=>rows.map(row=>row.dataset.pinId)),pending,'Denied save preserves staged order');
+  await db.doc('admins/'+signup.localId).update({active:true});
+  await dialog.locator('[data-pin=save]').click();await dialog.locator('[data-pin-status]').filter({hasText:'บันทึกลำดับแล้ว'}).waitFor();
+  settings=await repository.settings(site);await repository.reorderPins(site,[...pending].reverse(),settings.revision,signup.localId);
+  await dialog.locator('[data-pin=down]').first().click();await dialog.locator('[data-pin=save]').click();
+  await dialog.locator('[data-pin-status][data-error]').waitFor();assert.equal(await dialog.locator('[data-pin=save]').isDisabled(),true);
+  await dialog.locator('[data-pin=reload]').click();await dialog.locator('[data-pin-status]').filter({hasText:'โหลดรายการล่าสุดแล้ว'}).waitFor();
+  assert.deepEqual(await dialog.locator('li').evaluateAll(rows=>rows.map(row=>row.dataset.pinId)),[...pending].reverse());
+  await dialog.locator('[data-pin=down]').first().click();await admin.keyboard.press('Escape');await dialog.waitFor({state:'detached'});
+  assert.deepEqual((await repository.settings(site)).pinnedOrder,[...pending].reverse(),'Cancel does not save');
+  const audit=await db.collection('sites/'+site+'/articleAudit').where('action','==','pin-order').get();assert.ok(audit.size>=3);
+  assert.deepEqual(errors,[]);
+  console.log('PASS real Admin/API/visitor loop: 17 pins, position/up/down, reload persistence, mobile, cancel, draft isolation, scheduled privacy, auth denial/retry, conflict/reload, settings preservation and audit.');
+} finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}

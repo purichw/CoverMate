@@ -12,7 +12,8 @@ const options={now:Date.parse('2026-09-27'),mediaUrl:cmsMedia};
 const feed=structuredClone(articleIndexFixture);
 const view=(value=feed,search='',lang='th')=>projectArticleIndex(value,{...options,search,lang});
 assert.equal(view().total,12);assert.equal(view().items.length,8);assert.equal(view().pages,2);
-assert.equal(view().featured.key,projectHomeArticles(feed,options).items[0].key);
+assert.equal(view().featured.key,'sample-motor','Index uses its own pinned articles');
+assert.equal(projectHomeArticles(feed,options).items[0].key,'sample-travel-baggage','Home independently fills unpinned slots with latest articles');
 assert.equal(view(feed,'?category=motor').total,4);assert.equal(view(feed,'?category=motor').featured,null);
 assert.equal(view(feed,'?q=สัมภาระ').total,1);
 assert.equal(view(feed,'?q=baggage','en').total,1);
@@ -65,7 +66,19 @@ if(process.argv.includes('--browser')) {
       assert.equal(await page.locator('header > div > a').first().getAttribute('href'),lang==='en'?'/?lang=en':'/');
       assert.match(await page.locator('link[rel=canonical]').getAttribute('href'),/\/articles/);
       assert.match(await page.locator('meta[name=robots]').getAttribute('content'),/noindex/);
+      await page.locator('.ar-sort').scrollIntoViewIfNeeded();
       await page.locator('.ar-sort .cm-select-trigger').waitFor();
+      assert.equal(await page.locator('.ar-sort').count(),1,'Only one responsive sort control is mounted');
+      assert.equal(await page.locator('.ar-sort').evaluate(el=>!!el.closest('.ar-filter-band')),width>=768,'Sort follows the desktop filter row or mobile results heading');
+      const geometry=await page.evaluate(()=>{
+        const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+        const search=rect('.ar-search'),sort=rect('.ar-sort'),media=rect('.ar-item .ar-media'),badge=rect('.ar-item .hm-article-category');
+        return {searchY:search.y,sortY:sort.y,mediaRight:media.right,badgeX:badge.x,mediaTop:media.y,badgeY:badge.y};
+      });
+      if(width>=768) {
+        assert.ok(Math.abs(geometry.searchY-geometry.sortY)<8,'Desktop search and sort share one row');
+        assert.ok(geometry.badgeY>=geometry.mediaTop&&geometry.badgeY<geometry.mediaTop+20,'Category overlays the desktop thumbnail');
+      } else assert.ok(geometry.badgeX>geometry.mediaRight,'Mobile category is in the card text column');
       await page.locator('.ar-consult').scrollIntoViewIfNeeded();
       await page.waitForFunction(()=>[...document.querySelectorAll('.ar-media img')].every(img=>img.complete&&img.naturalWidth));
       await page.evaluate(()=>scrollTo(0,0));
@@ -105,14 +118,21 @@ if(process.argv.includes('--browser')) {
       const escaped=structuredClone(feed);escaped.items[0].translations.th.title='<img src=x onerror=alert(1)>';escaped.items[0].image.src='assets/missing-article.jpg';
       server.setFeed(escaped);await ready();assert.equal(await page.locator('.ar-featured h3').textContent(),escaped.items[0].translations.th.title);assert.equal(await page.locator('.ar-featured h3 img').count(),0);
       await page.waitForFunction(()=>document.querySelector('.ar-featured img')?.hasAttribute('data-failed'));
+      assert.equal(await page.locator('.ar-featured .ar-media').isVisible(),false,'Broken covers leave a text-led card, not an empty image panel');
+      const noCovers=structuredClone(feed);noCovers.items.forEach(item=>item.image={src:'',alt:''});
+      server.setFeed(noCovers);await ready();
+      assert.equal(await page.locator('.ar-media:visible').count(),0,'Explicitly blank covers do not render fake thumbnail blocks');await fit();
       report.checks.push('Empty, unavailable, missing image fallback and escaped content');
-      server.setFeed(feed);await page.goto(server.baseUrl+'/');await page.locator('#articles').waitFor();assert.equal(await page.locator('.hm-article-card').count(),3);
+      server.setFeed(feed);await page.goto(server.baseUrl+'/');await page.locator('#articles').waitFor();assert.equal(await page.locator('.hm-article-card').count(),10);
       await page.locator('.hm-articles-all').click();await page.locator('.ar-index').waitFor();assert.equal(new URL(page.url()).pathname,'/articles');
+      await page.locator('.ar-featured .ar-card-link').click();await page.locator('.ad-prose').waitFor();
+      assert.equal(new URL(page.url()).pathname,'/articles/motor-cover-types');
+      await page.locator('.ad-breadcrumb a').nth(1).click();await page.locator('.ar-index').waitFor();
       await page.locator('header > div > a').first().click();await page.locator('#talk').waitFor();assert.equal(new URL(page.url()).pathname,'/');
       await page.goto(server.baseUrl+'/motor');await page.locator('#tiers').waitFor();assert.equal(await page.locator('.ar-index').count(),0);
-      assert.equal((await page.request.get(server.baseUrl+'/articles/motor-cover-types')).status(),501);
+      assert.equal((await page.request.get(server.baseUrl+'/articles/motor-cover-types')).status(),200);
       assert.equal((await page.request.get(server.baseUrl+'/api/page?route=/unknown')).status(),403);
-      report.checks.push('Home → index → Home and Motor smoke, detail route remains explicitly pending');
+      report.checks.push('Home → index → detail → index → Home and Motor smoke');
       assert.deepEqual(report.errors,[]);
       fs.writeFileSync(`${out}/${engine}-report.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report));
     }

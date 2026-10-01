@@ -61,6 +61,12 @@ export function readSelectAsset() {
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
+export function readAnalyticsAsset() {
+  const code = transformSync(readText(new URL('covermate-analytics.js', ROOT)), { minify:true, target:'es2022', charset:'utf8' }).code;
+  const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
+  return { code, file:new URL('assets/visitor/analytics.js', ROOT), url:`/assets/visitor/analytics.js?v=${hash}` };
+}
+
 export function readEditorPreviewAsset() {
   const code = transformSync(readText(new URL('src/visitor/editor-preview.js', ROOT)), { minify:true, format:'esm', target:'es2022' }).code;
   const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
@@ -93,15 +99,18 @@ export function readContactPayloadAsset() {
   return { code, file };
 }
 
-function readArticleReaderRuntime() {
-  const helpers = ['articleDetailSlug', 'readArticleDetail', 'articleShareUrl', 'articleSaved', 'toggleSavedArticle'];
+const ARTICLE_READER_HELPERS = ['articleDetailSlug', 'readArticleDetail', 'articleShareUrl', 'articleSaved', 'toggleSavedArticle'];
+const ARTICLE_READER_BINDINGS = `const {registerArticleDocument,registerArticleCarousel,${ARTICLE_READER_HELPERS.join(',')}} = CoverMateArticleReader;`;
+export function readArticleReaderAsset() {
+  const helpers = ARTICLE_READER_HELPERS;
   // Bundle only browser entry points; full publication projection stays server-side.
   const code = buildSync({
-    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
+    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
     bundle: true, write: false, treeShaking: true, minify: true, format: 'iife',
     globalName: 'CoverMateArticleReader', target: 'es2022', charset: 'utf8'
   }).outputFiles[0].text;
-  return code + `\nconst {registerArticleDocument,${helpers.join(',')}} = CoverMateArticleReader;`;
+  const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
+  return {code,file:new URL('assets/visitor/article-reader.js',ROOT),url:`/assets/visitor/article-reader.js?v=${hash}`};
 }
 
 export function readImageVersions(root = new URL("assets/", ROOT)) {
@@ -157,6 +166,7 @@ export function readVisitorSources() {
       .replace('<!-- COVERMATE_ARTICLE_DETAIL_TEMPLATE -->', () => readText(new URL('src/visitor/article-detail.html', ROOT)))
       .replaceAll('<!-- COVERMATE_ARTICLE_CTA -->', () => readText(new URL('src/visitor/article-cta.html', ROOT)))
       .replaceAll('<!-- COVERMATE_ARTICLE_CARD -->', () => readText(new URL('src/visitor/article-card.html', ROOT)))
+      .replaceAll('<!-- COVERMATE_ARTICLE_SORT -->', () => readText(new URL('src/visitor/article-sort.html', ROOT)))
       .replaceAll('<!-- COVERMATE_TIER_CELL -->', () => readText(new URL('src/visitor/tier-cell.html', ROOT)))
       .replaceAll('<!-- COVERMATE_PROOF_CREDENTIALS -->', () => readText(new URL('src/visitor/proof-credentials.html', ROOT)))
       .replace('<!-- COVERMATE_EDITOR_CONTENT -->', () => readText(new URL('src/visitor/editor-content.html', ROOT)))
@@ -193,7 +203,7 @@ export function readVisitorSources() {
     submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),
     homeArticlesSource: readText(new URL('src/visitor/home-articles.mjs', ROOT)).replace(/^export /gm, ''),
     articlesIndexSource: readText(new URL('src/visitor/articles-index.mjs', ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, ''),
-    articleDetailSource: readArticleReaderRuntime(),
+    articleDetailSource: readArticleReaderAsset().code + '\n' + ARTICLE_READER_BINDINGS,
     cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],
     seoSource: readText(new URL('covermate-seo.mjs', ROOT)).split('\nexport function renderSeoHead')[0].replace(/^export /gm, ''),
     imageVersions: readImageVersions()
@@ -224,13 +234,15 @@ export function buildVisitorTemplate(sources = readVisitorSources()) {
   const defaults = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
   // Keep source and diagnostic builds readable; compact only shipped output.
   // No output format: esbuild retains top-level Component while compacting locals.
-  const runtime = transformSync(buildVisitorRuntime({ ...sources, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' }), {
+  const runtime = transformSync(buildVisitorRuntime({ ...sources, articleDetailSource: ARTICLE_READER_BINDINGS, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' }), {
     minifyWhitespace: true, minifyIdentifiers: true, charset: 'utf8'
   }).code
     // Existing seed/export tools use these two boundaries in the generated HTML.
     .replace(/\bconst (DEFAULTS|SCHEMA)=/g, 'const $1 =');
   // Compact the static CSS blocks before inserting the runtime script.
-  const template = sources.template.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
+  // The component runtime scans inert scripts as soon as it loads, so its
+  // reader dependency must execute before the first runtime script.
+  const template = sources.template.replace('<script src=', `<script src="${readArticleReaderAsset().url}"></script>\n<script src=`).replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
     (_, open, css, close) => open + transformSync(css, { loader: 'css', minifyWhitespace: true }).code + close)
     // Omit source-only comments and tag indentation from shipped HTML. Keep
     // integration markers, word separators and raw-text blocks verbatim.
@@ -250,7 +262,7 @@ export function buildVisitorIndex(sources = readVisitorSources()) {
   const template = buildVisitorTemplate(sources);
   const serializedTemplate = `${BUNDLER_TEMPLATE_OPEN}${serializeBundlerTemplate(template)}</script>`;
   // Keep the readable bootstrap source, without shipping its comments/whitespace.
-  const shell = sources.shell.replace(/(<script id="covermate-bootstrap">)([\s\S]*?)(<\/script>)/,
+  const shell = sources.shell.replace('/covermate-analytics.js', readAnalyticsAsset().url).replace(/(<script id="covermate-bootstrap">)([\s\S]*?)(<\/script>)/,
     (_, open, script, close) => open + transformSync(script, { minifyWhitespace: true }).code + close);
   return withDefaultSeo(shell, sources).replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
 }

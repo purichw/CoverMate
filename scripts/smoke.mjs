@@ -69,6 +69,7 @@ function extractDefaultSiteConfig() {
   const defaultsEnd = scriptSource.indexOf("const SCHEMA =");
   if (defaultsEnd < 0) throw new Error("index.html: DEFAULTS boundary missing");
   const sandbox = { result: null };
+  vm.runInNewContext(fs.readFileSync(new URL('../assets/visitor/article-reader.js', import.meta.url), 'utf8'), sandbox);
   vm.runInNewContext(`${scriptSource.slice(0, defaultsEnd)}\nresult = DEFAULTS;`, sandbox);
   return sandbox.result;
 }
@@ -475,7 +476,7 @@ async function selectAdminSection(page, id) {
       return panel && ((panel.innerText || '').includes(`#${sectionId}`) ||
         panel.querySelector(`[data-admin-section-row="${sectionId}"][data-selected="true"]`) &&
         panel.querySelector('[data-editor-inspector] [data-contact-field]') ||
-        panel.querySelector(`[data-content-row="${sectionId}"][data-selected="true"]`));
+        panel.querySelector(`[data-content-detail="${sectionId}"]`));
     },
     id,
     { timeout: 5000 }
@@ -500,6 +501,12 @@ const failures = [];
 
 async function newSmokePage(options) {
   const context = await browser.newContext(options);
+  // Static smoke uses synthetic Auth/CMS adapters, including the private feed.
+  // Real authorization and repository data are exercised by emulator journeys.
+  await context.route(`${baseOrigin}/api/articles?action=feed`, route => {
+    if(route.request().method() !== 'GET')throw Error('Smoke article feed is read-only');
+    return route.fulfill({json:{available:true,settings:{enabled:false,showHome:true,showNavigation:true},items:[]}});
+  });
   const page = await context.newPage();
   const pendingResources = new Set();
   let resourceActivity = 0;
@@ -1557,7 +1564,7 @@ for (const [name, width, height] of viewports) {
     if (failureText === "net::ERR_ABORTED" && expectedAuthRedirect) {
       const parsed = new URL(url);
       if (parsed.origin === baseOrigin &&
-          (["/admin/ops/app.js", "/admin/home.css", "/admin/shell.css", "/admin/shell.js", "/assets/visitor/select.js", "/assets/visitor/select.css"].includes(parsed.pathname) ||
+          (["/admin/ops/app.js", "/admin/ops/cases.css", "/admin/home.css", "/admin/analytics.css", "/admin/content.css", "/admin/shell.css", "/admin/shell.js", "/admin/articles/articles.css", "/admin/stat-card.css", "/assets/visitor/select.js", "/assets/visitor/select.css"].includes(parsed.pathname) ||
            (request.resourceType() === "font" && /^\/assets\/fonts\/[^/]+\.woff2$/.test(parsed.pathname)))) {
         authRedirectAborts.push({ request, redirect: expectedAuthRedirect, navigation: requestNavigation.get(request) });
         return;
@@ -2507,14 +2514,18 @@ for (const [name, width, height] of viewports) {
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
-    if (['เนื้อหา', 'แบรนด์และติดต่อ'].includes(tabName)) {
+    if (tabName === 'แบรนด์และติดต่อ' && await page.locator('.cm-brand-preview > summary').isVisible()) {
       // The live thumbnail owns a disposable iframe. Verify its images before
       // switching tabs, which intentionally removes that document.
+      await page.locator('.cm-brand-preview > summary').click();
       await page.locator('[data-editor-preview][data-preview-ready]').waitFor({state:'attached'});
       await page.waitForFunction(() => {
         const doc = document.querySelector('[data-editor-preview] iframe')?.contentDocument;
         return doc?.body.firstElementChild && [...doc.images].every(image => image.complete && image.naturalWidth > 0);
       });
+    }
+    if (tabName === 'เนื้อหา' && await page.locator('[data-editor-preview]').count()) {
+      failures.push(`${name} /admin/content: content tab duplicates the live page with a thumbnail`);
     }
     const tabState = await page.evaluate(() => ({
       text: document.body.innerText,

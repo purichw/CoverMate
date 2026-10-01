@@ -49,13 +49,14 @@ try {
   };
   const close=()=>page.locator('.ae-dialog [data-ae=close]').click();
   const feedback=()=>page.locator('.ae-feedback').innerText();
+  const fieldError=key=>page.locator('.ae-field').filter({has:page.locator(`[data-field="${key}"]`)}).locator('.ae-field-error').innerText();
   const check=name=>{report.checks.push(name);console.log('PASS '+name);};
   const selectAll=async()=>{await body.click();await body.press('ControlOrMeta+a');};
   const plain=async(text='Selected text')=>{
     await body.fill(text);await selectAll();await tool('clear');
   };
   const choose=async(name,label)=>{
-    if(name==='หมวดหมู่')await openSettings(page);
+    if(name==='หมวดหมู่')await closeSettings(page);
     await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();
     await page.getByRole('option',{name:label,exact:true}).click();
     if(name==='หมวดหมู่')await closeSettings(page);
@@ -98,7 +99,7 @@ try {
   assert.equal(await body.locator('a').getAttribute('href'),'/articles');
   await tool('unlink');assert.equal(await body.locator('a').count(),0);
   await tool('link');await modalField('href').fill('javascript:alert(1)');await submit();
-  assert.ok(await page.locator('.ae-form-error').innerText());await close();
+  assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());await close();
   check('Insert, edit and remove safe links; unsafe URL rejected without losing text');
 
   await plain('A quotation');await tool('quote');await modalField('attribution').fill('QA author');await submit();
@@ -109,7 +110,7 @@ try {
   for(const kind of ['summary','keypoints','feature','note','warning']) {
     await plain('Callout content');
     await page.locator(`[data-ae=callout][data-kind=${kind}]`).click();
-    await modalField('title').fill('');await submit();assert.ok(await page.locator('.ae-form-error').innerText());
+    await modalField('title').fill('');await submit();assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());
     await modalField('title').fill('QA '+kind);await submit();
     assert.equal(await body.locator('.article-callout').getAttribute('data-kind'),kind);
     await page.locator(`[data-ae=callout][data-kind=${kind}]`).click();
@@ -121,7 +122,7 @@ try {
 
   await plain('Media');await body.press('End');await tool('image');
   await modalField('alt').fill('');await submit();
-  assert.ok(await page.locator('.ae-form-error').innerText());
+  assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());
   await modalField('alt').fill('Article image');await modalField('caption').fill('Figure caption');await submitImage('/assets/brand/articles-reading-v1.webp');
   await body.locator('figure img').waitFor();assert.equal(await body.locator('figcaption').innerText(),'Figure caption');
   await body.locator('figure img').click();await tool('image');await modalField('alt').fill('Edited alt');await submitImage();
@@ -137,7 +138,7 @@ try {
   await body.locator('p').last().click();await tool('divider');assert.equal(await body.locator('hr').count(),1);
   await tool('undo');assert.equal(await body.locator('hr').count(),0);await tool('redo');assert.equal(await body.locator('hr').count(),1);
   await body.locator('p').last().click();await tool('video');await modalField('src').fill('https://example.com/watch');await submit();
-  assert.ok(await page.locator('.ae-form-error').innerText());
+  assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());
   await modalField('src').fill('https://youtu.be/12345678901');await modalField('title').fill('QA video');await submit();
   assert.equal(await body.locator('a.article-video').count(),1);
   const video=body.locator('.article-video');await video.click();await tool('video');
@@ -171,6 +172,7 @@ try {
   await table.locator('td').first().click();await page.keyboard.type('QA table content');
   check('Table insert, add/delete rows/columns, header, merge/split, delete cancel/confirm and undo');
 
+  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
   await field('slug').fill('qa-toolbar');await field('authorName').fill('QA author');
   await choose('หมวดหมู่','ประกันสุขภาพ');
   await field('featured').check();await field('pinned').check();
@@ -183,11 +185,12 @@ try {
     for(const [key,value] of Object.entries(articleNotes[lang]))await field(key).fill(value);
   }
   await page.locator('[data-lang=th]').click();
-  await openSettings(page);await page.locator('.ae-seo summary').click();await closeSettings(page);await field('seoTitle').fill('SEO QA');await field('seoDescription').fill('SEO description');
+  await field('seoTitle').fill('SEO QA');await field('seoDescription').fill('SEO description');
   await field('takeaways').fill(Array.from({length:9},(_,i)=>'Point '+i).join('\n'));
-  await tool('save');assert.match(await feedback(),/8/);await field('takeaways').fill('Point one\nPoint two');
-  await field('tags').fill(Array.from({length:21},(_,i)=>'tag'+i).join(','));await tool('save');assert.match(await feedback(),/20/);
-  await field('tags').fill('QA, health');await tool('add-source');await tool('save');assert.match(await feedback(),/HTTPS/);
+  await tool('save');assert.match(await fieldError('takeaways'),/8/);await field('takeaways').fill('Point one\nPoint two');
+  await field('tags').fill(Array.from({length:21},(_,i)=>'tag'+i).join(','));await tool('save');assert.match(await fieldError('tags'),/20/);
+  while(await page.locator('[data-ae=remove-tag]').count())await page.locator('[data-ae=remove-tag]').last().click();
+  await field('tags').fill('QA, health');await tool('add-source');await tool('save');assert.match(await fieldError('source-url-0'),/HTTPS/);
   await field('source-label-0').fill('Reference');await field('source-url-0').fill('https://example.com/source');
   await openSettings(page);await page.locator('[data-ae=clear-takeaways]').click();
   await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways').waitFor({state:'detached'});
@@ -225,7 +228,8 @@ try {
   await page.reload();await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[name=query]').fill('Toolbar interaction QA');await page.locator('[data-article-action=edit]').first().click();
   assert.equal(await field('slug').inputValue(),'qa-toolbar');assert.equal(await field('pinned').isChecked(),true);
-  await openSettings(page);await page.locator('.ae-seo summary').click();await closeSettings(page);assert.equal(await field('seoDescription').inputValue(),'SEO description');
+  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
+  assert.equal(await field('seoDescription').inputValue(),'SEO description');
   for(const lang of ['th','en']){
     await page.locator(`[data-lang=${lang}]`).click();
     for(const [key,value] of Object.entries(articleNotes[lang]))assert.equal(await field(key).inputValue(),value,'Saved '+lang+' '+key+' reloads into the editor');

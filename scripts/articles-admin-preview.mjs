@@ -11,7 +11,7 @@ import { articleIndexFixture } from './fixtures/home-articles/index-feed.mjs';
 import { renderPublicPage } from '../server/seo-page.mjs';
 import cases from '../server/cases-contract.cjs';
 
-export async function startArticlesAdminPreview({state,feed=structuredClone(articleIndexFixture),cms=null} = {}) {
+export async function startArticlesAdminPreview({state,feed=structuredClone(articleIndexFixture),cms=null,onRequest} = {}) {
   state ||= {config:JSON.parse(vm.runInNewContext(await fs.readFile(path.join(REPO_ROOT,'src/visitor/defaults.js'),'utf8')+'\nJSON.stringify(DEFAULTS)')),text:{}};
   let catalog = structuredClone(adminArticleFixture), failure = 0, delay = 0;
   const legacy = createLegacyOpsState(), fixture = createCasesFixture();
@@ -20,6 +20,7 @@ export async function startArticlesAdminPreview({state,feed=structuredClone(arti
     ownerRoutesToRoot: true,
     headers: { 'Cache-Control': 'no-store', 'X-Frame-Options':'DENY', 'Content-Security-Policy': "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self'; form-action 'none'; frame-src 'none'" },
     async onRequest(req, res) {
+      if(onRequest&&await onRequest(req,res))return true;
       const url = new URL(req.url, 'http://localhost');
       const send = (type, data, status = 200) => { res.writeHead(status, { 'Content-Type': type }); res.end(data); return true; };
       if (!['GET', 'HEAD'].includes(req.method)) { requests.push({ path: url.pathname, method: req.method }); return send('application/json', '{"error":"Preview is read-only"}', 405); }

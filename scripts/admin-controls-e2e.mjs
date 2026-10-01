@@ -120,6 +120,7 @@ try {
     const articleField = name=>page.locator(`.article-toolbar select[name="${name}"]`);
     const counts = ()=>page.locator('.article-stat dd').allTextContents();
     assert.deepEqual(await counts(),['6','3','2','1']);
+    if(width<700)await page.locator('[data-article-action="filters"]').click();
     await choose(articleField('category'),'health');await choose(articleField('status'),'scheduled');
     await choose(articleField('pinned'),'unpinned');await choose(articleField('sort'),'oldest');
     assert.equal(await page.locator('.article-table tbody tr').count(),1);
@@ -152,10 +153,8 @@ try {
     await editor.locator(':scope > p').first().click();
     await choose(page.locator('[data-format="block"]'),'h3');
     assert.ok(await editor.locator('h3').count()>0);
-    await page.locator('.ae-actions [data-ae="settings"]').click();
     await choose(page.locator('select[data-field="categoryId"]'),'health');
     assert.equal(await page.locator('select[data-field="categoryId"]').inputValue(),'health');
-    await page.locator('.ae-settings-dialog .ae-done').click();
     await page.locator('[data-ae="back"]').click();
     await page.locator('[data-article-state="ready"]').waitFor();
 

@@ -1,6 +1,6 @@
 # Article Editor
 
-Updated 2026-09-29. Publication and cloud-storage behavior is specified in
+Updated 2026-09-30. Publication and cloud-storage behavior is specified in
 [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md); this document covers authoring
 and reader presentation.
 
@@ -25,7 +25,90 @@ Existing published articles produce a separate working draft and keep their
 slug read-only. Back, sidebar navigation, logout and browser unload guard unsaved
 changes. Saving during continued typing does not mark later edits saved.
 
+## Field Requirements And SEO (Local, September 30)
+
+`article-validation.mjs` owns the shared field requirements used by the editor
+and article repository. Fields identify **จำเป็น**, **ไม่บังคับ**, or
+**อัตโนมัติ** beside the label. Validation messages appear immediately below the
+corresponding control with `aria-invalid` and `aria-describedby`. A linked
+validation summary reveals the affected field, opening its disclosure/sheet or
+switching language as needed. Invalid input stays in place for correction.
+
+| Field | Publication requirement | Behavior |
+| --- | --- | --- |
+| Title, card excerpt, body | Required per selected language | Whitespace-only values are invalid |
+| Slug, category, author | Required | Shared between languages; published Slug is immutable |
+| Cover | Optional | Separate from body images |
+| Cover Alt, body-image Alt | Required when the corresponding image exists | Localized; body Alt is editable in the image dialog and settings |
+| SEO title, SEO description | Optional | Empty uses the article title and card excerpt respectively |
+| Canonical URL | Automatic, read-only | Derived from Slug and language |
+| Editorial date | Optional | Blank retains first-publication date; input uses Bangkok time |
+| Tags, captions, summaries, notes, attribution | Optional | Existing content and length limits remain in effect |
+| Reference rows | Optional to add | Each added row requires its name and valid HTTPS URL; remove unwanted rows |
+
+Incomplete drafts can still be saved. Malformed dates, unsafe URLs, excessive
+lengths or invalid reference rows must be corrected before saving. Publish is
+disabled until the current translation and shared fields pass validation.
+Selecting additional languages in confirmation revalidates those translations
+and disables confirmation while any selected language is incomplete. Server
+validation remains authoritative; field errors such as slug collision and Home
+pin-cap rejection return `{field,language,message}` and target the same controls.
+Revision/auth/network failures retain the existing form and overall status.
+
+The **SEO และการแชร์** disclosure contains separate title/description overrides,
+effective character counts, canonical URL and a live search-result approximation.
+60/160-character guidance is advisory, not a publication limit; storage limits
+remain 240/600. Google may choose different titles/snippets. Sharing uses the
+article cover and its Alt. Metadata, Open Graph/Twitter and Article JSON-LD are
+derived from the published snapshot, never unsaved or saved-only draft text.
+Article JSON-LD includes the visible headline, publication/modification dates,
+author, category and tags. Tags do not create an obsolete meta-keywords field.
+Only published locales receive hreflang; private previews remain noindex.
+
+Sources: [Google title links](https://developers.google.com/search/docs/appearance/title-link),
+[image guidance](https://developers.google.com/search/docs/appearance/google-images),
+[SEO starter guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
+
+Article buttons explicitly say **บันทึกร่างบทความ / เผยแพร่บทความ**. They operate
+only on the selected article. Website Save/Publish/Reset still affect only website
+state, and article keyboard Save does not bubble to another module's shortcut.
+No article Reset is wired to the website Reset action.
+
+Focused checks: `node scripts/article-validation-check.mjs --browser`
+(Chromium; `COVERMATE_ARTICLES_BROWSER=webkit` for WebKit),
+`node scripts/content-lifecycle-isolation-check.mjs` and
+`node scripts/editor-reset-contract-check.mjs`. The validation browser harness
+uses the actual Admin editor, article repository and public renderer with an
+isolated in-memory database and synthetic identity. It verifies draft save/reload,
+field correction, conditional Alt, SEO publication, multilingual confirmation,
+server conflict and 1440/375 layouts, without production writes or auth testing.
+Evidence: `uat-results/article-validation/`. This change is not yet deployed.
+
 ## Writing
+
+The editor reconciles the September 30 desktop/mobile mock with the existing
+writer. Basic information groups title, stable slug, card excerpt, category,
+removable tags and the separate cover above the rich-text surface. It can be
+folded without unmounting fields or either language document. The desktop rail
+contains actual publication state, the editorial date, pin/Home switches and a
+live card preview. Author, image descriptions, SEO, takeaways, references and
+handwritten notes remain available in named disclosures. Disclosure state stays
+open across language/media/source refreshes.
+
+Mobile keeps the same full writer and existing settings sheet, with content,
+settings and full-page preview shortcuts plus safe-area save/publish actions.
+The sheet moves the same controls instead of maintaining a second form. Tags
+accept Enter or comma-separated input and commit on blur/save; removing a tag
+never drops text currently being entered. Validation reveals a folded invalid
+field. A late stylesheet/font load recalculates title/excerpt height.
+
+The live card uses the active draft language, category, cover, excerpt, editorial
+date and body reading time. It does not save or publish. Its action opens the
+existing real Visitor preview. Missing/failed cover images keep a stable frame;
+the body image is independent. Card excerpts and SEO descriptions stay separate.
+There is no pretend autosave, publication-status selector, slug-availability
+button or scheduled-unpublish control: these mock details have no corresponding
+supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
 
 - Independent TH/EN documents, titles, excerpts, dates, SEO and cover captions.
 - H1–H6, paragraphs, bold/italic/underline/strike/highlight, sub/superscript,
@@ -45,6 +128,10 @@ changes. Saving during continued typing does not mark later edits saved.
 - YouTube link cards, not embedded players or arbitrary iframe/HTML.
 - Separate cover, category, tags, author, Home recommendation, pin, sources,
   localized key takeaways, slug, SEO title/description.
+- Independent `ปักหมุดบน Home` (`featured`, preserving existing values) and
+  index pin switches. Home pins reserve at most ten draft/live article slots;
+  server rejection keeps all editor changes available for correction. Publication
+  remains explicit, and removing a live pin requires republishing the change.
 - Optional localized `headerNote`, `sidebarQuote`, and `takeawayNote` create the
   decorative header, botanical sidebar quote, and note beside the takeaway
   banner. Fields retain line breaks, are plain text, and can be cleared. Each
@@ -59,13 +146,15 @@ changes. Saving during continued typing does not mark later edits saved.
   is directly editable in its reading column; title, cover, summary and decorative
   notes open their settings on click or keyboard activation. Changes update the
   canvas before Save or Preview. Desktop/Mobile switches the writing viewport.
-- A settings drawer on desktop and sheet on mobile contain the same metadata.
-  The toolbar
+- Desktop places basic metadata beside publication/settings, with the real-page
+  writing canvas spanning the full width below them. This keeps Desktop mode at
+  reader scale instead of squeezing it into the metadata column. Mobile uses a
+  settings sheet with the same fields. The toolbar
   scrolls horizontally and stays below the shared shell. Bottom save actions
   respect safe-area padding and hide when a detected software keyboard opens.
 
-Images currently use HTTPS URLs or local asset paths. Article-specific uploads,
-inline cropping, revision-history restore, server autosave, whole-article duplication,
+Images support HTTPS URLs, local assets and uploads through the configured media
+provider, with explicit crop confirmation. Revision-history restore, server autosave, whole-article duplication,
 and archive/trash are not implemented controls. The offline test adapter has no
 publication capability; the real verified repository supports explicit Publish.
 
@@ -124,10 +213,11 @@ normalization, backup, server save/publication, the Editor, Preview and reader.
 
 ## Editorial Metadata
 
-`pinned` is separate from `featured`: pinned records lead the public index's
-default ordering and the newest pin occupies its featured slot; Home uses its
-own recommendation flag and existing `featuredIds` ordering. Explicit title or
-oldest sorting overrides pins. Public search also includes tags.
+`pinned` is separate from `featured`: eligible published pins form the public
+index carousel in the Admin-managed pin order. There is no per-carousel pin cap;
+Home uses its own recommendation flag and existing `featuredIds` ordering.
+Explicit title/oldest sorting or search puts pins in normal results. Public
+search also includes tags. See [ADMIN_ARTICLES.md](ADMIN_ARTICLES.md).
 
 Each translation has nullable ISO `publishedAt`. Input/display use Asia/Bangkok,
 regardless of device timezone. A future date remains draft metadata: it does
@@ -214,6 +304,7 @@ node scripts/articles-admin-check.mjs
 node scripts/articles-index-check.mjs
 node scripts/article-detail-check.mjs
 node scripts/article-editor-metadata-check.mjs
+node scripts/article-editor-layout-check.mjs
 node scripts/article-reader-parity-check.mjs
 node scripts/article-reference-snapshots.mjs
 node scripts/article-blocks-check.mjs --browser
@@ -244,9 +335,19 @@ Scoped Axe checks on the writing workspace and mobile settings found no
 WCAG A/AA violations after isolating article table styles from the Admin shell.
 This automated check is not a complete accessibility or screen-reader audit.
 
-The server-authorized repository, revision conflicts, audit history and separate
-draft/public projections are implemented. Pin/date changes use that publication
-boundary. Media uploads and scheduled jobs remain separate future capabilities.
+The production repository already enforces authorization, revision conflicts,
+audit records and separate draft/public projections. Pin/date changes use that
+publish/revision boundary; the carousel ordering has its own authorized settings
+revision. Do not add media-upload, autosave or expiry controls without their
+corresponding supported persistence operations.
+
+September 30 redesign evidence is in `uat-results/article-editor-redesign/`:
+paired reference/development captures, full desktop/mobile pages, writing and
+settings views, 1440/820/390/320 layout checks, live-card updates, metadata/tag
+save/reopen and scoped Axe checks. The actual Auth/Firestore emulator journey
+also verifies save, denied/conflicting saves, preview, publication, separate
+draft edits, republication and unpublish through the real API. No production
+content was changed for visual verification.
 
 ## Live Writing Canvas
 

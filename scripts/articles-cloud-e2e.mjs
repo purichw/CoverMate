@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
-import {createArticleRepository} from '../server/articles.mjs';
-import {createPageHandler} from '../server/seo-page.mjs';
-import {startNfrServer} from './nfr-server.mjs';
 import {launchChromium,loadPlaywright} from './lib/playwright.mjs';
 import {authorRichArticle,assertPersistedArticle,assertEditorArticle,assertReaderArticle,openArticleSettings,closeArticleSettings} from './lib/article-authoring-journey.mjs';
 
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.COVERMATE_TEST_MODE!=='emulator')throw Error('Isolated emulators required');
-const require=createRequire(import.meta.url),db=require('../server/firebase.cjs').serverDb();
+const require=createRequire(import.meta.url),firebase=require('../server/firebase.cjs'),baseDb=firebase.serverDb();
+const scope='article-cloud-'+crypto.randomUUID();
+// Keep repeat runs independent without clearing earlier local fixtures.
+const db=new Proxy(baseDb,{get(target,key){if(key==='doc')return path=>target.doc(path.replace(/^sites\/covermate-uat(?=\/|$)/,'sites/'+scope));const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+firebase.serverDb=()=>db;
+const {createArticleRepository}=await import('../server/articles.mjs');
+const {createPageHandler}=await import('../server/seo-page.mjs');
+const {startNfrServer}=await import('./nfr-server.mjs');
 const {isEmulator}=require('../server/firebase.cjs');
 const {makeMediaHandler}=require('../api/media.js');
 assert.ok(isEmulator(),'Media authorization must use the isolated Auth and Firestore emulators');
@@ -60,7 +64,6 @@ try {
       await admin.locator('[data-article-state=ready]').waitFor({timeout:60000}).catch(async e=>{await admin.screenshot({path:out+'/'+engine+'-failed.png'});console.error('CMS state:',admin.url(),(await admin.locator('body').innerText()).slice(-3000),{pending:[...pending],errors},await admin.evaluate(()=>({firebase:!!window.CoverMateFirebase,user:!!window.CoverMateFirebase?.auth.currentUser})));throw e;});
       console.log(engine+': catalog ready');
       const visibility=admin.locator('.article-visibility');
-      await visibility.locator('summary').click();
       assert.equal(await visibility.locator('[name=enabled]').isChecked(),false);
       await visibility.locator('[name=enabled]').check();
       await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();
@@ -73,7 +76,7 @@ try {
       await admin.screenshot({path:out+'/'+engine+'-visibility-mobile.png'});
       await admin.setViewportSize({width:1440,height:1000});
       await admin.getByRole('button',{name:'สร้างบทความใหม่',exact:true}).click();
-      const slug='cloud-'+crypto.randomUUID(),title='ทดสอบบทความจาก CMS '+engine;
+      const slug='cloud-'+crypto.randomUUID(),title='ทดสอบบทความจาก CMS '+engine+' '+slug.slice(-8);
       await openArticleSettings(admin);
       await admin.locator('[data-field=title]').fill(title);
       await admin.locator('[data-field=excerpt]').fill('ข้อมูลทดสอบเฉพาะ Emulator ไม่เผยแพร่บนเว็บไซต์จริง');
@@ -149,7 +152,7 @@ try {
       await publish(admin);
       await visitor.reload();await visitor.getByRole('heading',{name:title+' แก้ไข',exact:true}).waitFor();
       await admin.locator('[data-ae=back]').click();
-      await admin.locator('[data-article-state=ready]').waitFor();await visibility.locator('summary').click();
+      await admin.locator('[data-article-state=ready]').waitFor();
       for(const key of ['showHome','showNavigation']) {
         await visibility.locator('[name='+key+']').uncheck();
         await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();
@@ -176,6 +179,13 @@ try {
       assert.equal((await db.doc('abuseLimits/media-covermate-uat-'+account.localId).get()).data().count,2,'Real media authorization/reservation is retained');
       report.push({engine,realAuth:true,realApi:true,realFirestore:true,media:{boundary:'Only external Cloudinary storage is in memory; real media Auth, crop validation and Firestore reservation',crops:media.crops,statuses:media.statuses},authoredFromEmptyEditor:true,richDocumentRoundTrip:true,richPreviewAndPublicDesktopMobile:true,saveReopenPreview:true,publishDraftIsolationRepublish:true,toggles:true,directRoutesBlocked:true,unpublishRetainsContent:true,deniedSavePreservesInput:true,staleSaveBackupRecovery:true,navigationCancellations:navigationCancellations.length,errors});
       console.log('PASS article cloud browser journey: '+engine);
+    } catch(error) {
+      for(const page of browser.contexts().flatMap(context=>context.pages())){
+        if(!await page.locator('.ae-canvas-frame').count())continue;
+        await page.screenshot({path:out+'/'+engine+'-authoring-failed.png'}).catch(()=>{});
+        console.error('Canvas failure:',await page.locator('.ae-canvas-frame').evaluate(frame=>({hidden:frame.hidden,status:frame.closest('.ae-canvas')?.innerText,frameRect:frame.getBoundingClientRect().toJSON(),editors:[...frame.contentDocument.querySelectorAll('.tiptap')].map(el=>({html:el.outerHTML,rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display}))})).catch(()=>null));
+      }
+      throw error;
     } finally {await browser.close();}
   }
   fs.writeFileSync(out+'/report.json',JSON.stringify(report,null,2));

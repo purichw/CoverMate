@@ -15,6 +15,7 @@ export const authoredArticle = {
 };
 
 export async function authorRichArticle(page,{out,engine}) {
+  await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true});
   const field=key=>page.locator(`[data-field="${key}"]`);
   const tool=action=>page.locator(`[data-ae="${action}"]:visible`).first().click();
@@ -129,6 +130,7 @@ export function assertPersistedArticle(actual,expected,{published=false}={}) {
 }
 
 export async function assertEditorArticle(page) {
+  await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true}),a=authoredArticle;
   assert.equal(await body.locator('h2').innerText(),a.heading);
   assert.equal(await body.locator('h4').innerText(),a.subheading);
@@ -143,9 +145,11 @@ export async function assertEditorArticle(page) {
 }
 
 export async function openArticleSettings(page){
-  if(!await page.locator('.ae-settings-dialog').count())await page.locator('.ae-actions [data-ae=settings]').click();
+  await page.locator('.ae-settings').waitFor({state:'attached'});
+  if(!await page.locator('.ae-settings').isVisible())await page.locator('.ae-actions [data-ae=settings]').click();
+  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
 }
-export async function closeArticleSettings(page){await page.locator('.ae-settings-dialog .ae-done').click();}
+export async function closeArticleSettings(page){if(await page.locator('.ae-settings-dialog[open]').count())await page.locator('.ae-settings-dialog .ae-done').click();}
 
 export async function assertReaderArticle(surface,expected) {
   const a=authoredArticle,prose=surface.locator('.ad-prose .cm-article-prose:visible');
@@ -187,10 +191,21 @@ export async function assertReaderArticle(surface,expected) {
 }
 
 async function assertAuthoredTypography(prose) {
-  const actual=await prose.locator('h4 span[data-article-style~=fontSize]').evaluate(el=>{
-    const style=getComputedStyle(el);
-    return {fontSize:parseFloat(style.fontSize),lineHeight:parseFloat(style.lineHeight),family:style.fontFamily,mobile:el.ownerDocument.defaultView.innerWidth<768};
-  });
+  const text=prose.locator('h4 span[data-article-style~=fontSize]');
+  await text.waitFor({state:'visible'});
+  // Closing a format dialog can replace the inline node during the canvas paint.
+  // Resolve the locator again until styles belong to a connected, rendered node.
+  let actual;
+  const deadline=Date.now()+5000;
+  do {
+    actual=await text.evaluate(el=>{
+      const view=el.ownerDocument.defaultView,style=view.getComputedStyle(el);
+      return {connected:el.isConnected,rendered:el.getClientRects().length>0,fontSize:parseFloat(style.fontSize),lineHeight:parseFloat(style.lineHeight),family:style.fontFamily,mobile:view.innerWidth<768};
+    });
+    if(actual.connected&&actual.rendered&&Number.isFinite(actual.fontSize)&&Number.isFinite(actual.lineHeight))break;
+    await new Promise(resolve=>setTimeout(resolve,50));
+  } while(Date.now()<deadline);
+  assert.ok(actual.connected&&actual.rendered&&Number.isFinite(actual.fontSize)&&Number.isFinite(actual.lineHeight),'Typography settles on a rendered node: '+JSON.stringify(actual));
   const expected=authoredArticle.typography;
   assert.equal(actual.fontSize,actual.mobile?expected.fontSizeMobile:expected.fontSize,'UI-authored text size renders in the editor, preview and published page');
   assert.ok(Math.abs(actual.lineHeight/actual.fontSize-expected.lineHeight)<.01,'UI-authored block line height renders after storage');

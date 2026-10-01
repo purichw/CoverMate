@@ -46,6 +46,7 @@ try {
     await page.locator('[data-language-switch=en]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');
     await measure('Articles EN',12);
     await page.goto(admin.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();
+    if(width<700)await page.locator('[data-article-action=filters]').click();
     await measure('CMS list');
     if(centerOnly) {
       await page.goto(admin.baseUrl+'/admin#operations');await page.locator('.case-list[aria-busy="false"]').waitFor();

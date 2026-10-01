@@ -1,10 +1,11 @@
-<a class="ar-card-link" href="{{ article.href }}" aria-labelledby="{{ article.titleId }}">
+<a class="ar-card-link" data-category="{{ article.categoryId }}" href="{{ article.href }}" aria-labelledby="{{ article.titleId }}">
   <div class="hm-article-media ar-media">
     <svg class="hm-article-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
-    <sc-if value="{{ article.image }}"><img sc-camel-src="{{ article.image }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="400" loading="lazy" decoding="async"></sc-if>
+    <sc-if value="{{ article.hasImage }}"><img sc-camel-src="{{ article.image }}" data-carousel-src="{{ article.carouselImage }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="400" loading="lazy" decoding="async"></sc-if>
   </div>
   <div class="ar-card-copy">
-    <sc-if value="{{ article.category }}"><span class="hm-article-category">{{ article.category }}</span></sc-if>
+    <sc-if value="{{ article.featuredLabel }}"><span class="ar-featured-label"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleStarPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>{{ article.featuredLabel }}</span></sc-if>
+    <sc-if value="{{ article.category }}"><span class="hm-article-category"><sc-if value="{{ article.categoryPaths }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ article.categoryPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>{{ article.category }}</span></sc-if>
     <h3 id="{{ article.titleId }}">{{ article.title }}</h3>
     <sc-if value="{{ article.excerpt }}"><p class="ar-excerpt">{{ article.excerpt }}</p></sc-if>
     <div class="ar-meta">
