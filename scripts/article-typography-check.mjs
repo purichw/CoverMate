@@ -57,6 +57,8 @@ if(process.argv.includes('--browser')){
     await context.route('**/*',route=>origins.has(new URL(route.request().url()).origin)?route.continue():route.abort());
     page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push(error.message));
     await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await page.locator('[data-article-action=create]').click();
+    // WebKit defers offscreen iframe painting until the writing area is visible.
+    await page.locator('.ae-canvas').scrollIntoViewIfNeeded();
     const body=()=>articleCanvas(page).locator('.ae-editor-host:not([hidden]) .tiptap');await body().waitFor();
     const tool=action=>articleTool(page,action),doc=async()=>canonical(await body().evaluate(el=>el.editor.getJSON()));
     const choose=async(selector,value)=>{
@@ -90,6 +92,9 @@ if(process.argv.includes('--browser')){
     assert.ok(await widePreview.evaluate(el=>el.ownerDocument.defaultView.innerWidth)>1100,'Full desktop Preview exercises wide typography');
     assert.deepEqual(Object.values(await scale(widePreview)).map(item=>item.size),[36,26,22,20,18,16,18],'Full desktop Preview retains the wide semantic scale');
     await page.locator('.ae-preview-dialog [data-ae=close]').click();
+    // The dialog's close event restores focus asynchronously; let it finish
+    // before native keyboard selection in the writing frame.
+    await page.locator('.ae-preview-dialog').waitFor({state:'detached'});
     report.checks.push('UI creates H1–H6 and P; compact semantic defaults and loaded Google Sans at narrow/wide writing widths and full desktop Preview');
     await page.locator('[data-canvas-size=desktop]').click();
     const inline=()=>body().locator('p').filter({hasText:'Normal BOLD rest'});
@@ -116,7 +121,8 @@ if(process.argv.includes('--browser')){
     await body().locator('table p').first().click();await page.keyboard.insertText('Table sizing sample');
     await editStyle('block-style',{fontSize:21,fontSizeMobile:16,lineHeight:1.7,spaceBefore:0,spaceAfter:10,padding:8});
     assert.equal((await doc()).content.find(node=>node.type==='table').attrs.fontSize,21,'Table wrapper styles persist as table node attributes');
-    await save();const first=await exported('saved');await page.reload();await page.locator('[data-article-state=ready]').waitFor();await page.locator('[name=query]').fill('Typography controls QA');await page.locator('[data-article-action=edit]').first().click();await body().waitFor();assert.deepEqual(await doc(),canonical(first.translations.th.document),'Save/reopen preserves typography');
+    await save();const first=await exported('saved');await page.reload();await page.locator('[data-article-state=ready]').waitFor();await page.locator('[name=query]').fill('Typography controls QA');await page.locator('[data-article-action=edit]').first().click();
+    await page.locator('.ae-canvas').scrollIntoViewIfNeeded();await body().waitFor();assert.deepEqual(await doc(),canonical(first.translations.th.document),'Save/reopen preserves typography');
     const reopened=await exported('reopened');assert.deepEqual(reopened.translations,first.translations,'Reopened export matches saved document and metadata');report.checks.push('Author → save local draft → reload → reopen → export equality');
     const published={...reopened,status:'published',translations:Object.fromEntries(Object.entries(reopened.translations).map(([lang,t])=>[lang,{...t,status:'published',publishedAt:'2026-09-01T00:00:00Z',author:reopened.authorName}]))};
     reader=await startArticleDetailPreview({feed:{available:true,sample:true,items:[published]},details:{sample:true,items:[published]}});origins.add(reader.baseUrl);const publicPage=await context.newPage();
@@ -142,6 +148,7 @@ if(process.argv.includes('--browser')){
       await publicPage.setViewportSize({width:previewWidth,height:1000});await publicPage.evaluate(()=>document.fonts.ready);
       const previewActual=await samples(preview);assert.deepEqual(previewActual,await samples(publicPage.locator('.ad-page')),mode+' Preview matches the public reader at its own width');assertAuthored(previewActual,previewWidth);
       await page.locator('.ae-preview-dialog [data-ae=close]').click();
+      await page.locator('.ae-preview-dialog').waitFor({state:'detached'});
     }
     report.checks.push('Desktop/mobile inline/block/title/deck computed styles match Editor, Preview and public reader; all six TOC targets valid');
     await publicPage.close();assert.deepEqual(server.requests,[],'No public API writes');assert.deepEqual(report.errors,[]);report.passed=true;console.log('PASS article typography UI: '+engine);
