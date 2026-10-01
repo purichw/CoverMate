@@ -6,8 +6,22 @@ import {appendEnvironmentSearch} from '../../covermate-environment.mjs';
 export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,onError}) {
   const frame=root.querySelector('.ae-canvas-frame'),status=root.querySelector('.ae-canvas-status');
   const controller=new AbortController();let stopped=false,timer,ready=false,latest;
-  let resolvePaint=Promise.resolve();
+  let resolvePaint=Promise.resolve(),startedWriting=false;
+  const writingSection=root.closest('.ae-writing');
+  function revealWriting(){
+    if(!ready||startedWriting||!root.getClientRects().length)return;
+    const win=frame.contentWindow,prose=frame.contentDocument.querySelector('.ad-prose');
+    if(!prose)return;
+    // Start at editable content without moving the outer Admin page. The full
+    // reader and its metadata remain reachable within the same writing frame.
+    win.scrollTo({top:Math.max(0,prose.getBoundingClientRect().top+win.scrollY-24),behavior:'instant'});
+    startedWriting=true;
+  }
+  writingSection?.addEventListener('toggle',revealWriting);
   const style=`
+    /* Public navigation/contact controls belong to full-page Preview. Keep
+       this private writing surface focused on the editable article. */
+    header,.cm-footer,.cm-visitor-dock,.cm-cookie-settings-fallback{display:none!important}
     cm-article-document{display:none!important}
     .ad-page .ae-editor-host{padding:0;min-height:0;container:none}
     .ae-editor-host[hidden]{display:none!important}
@@ -82,6 +96,7 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
       await onReady({document:doc,createEditor:frame.contentWindow.CoverMateArticleWritingEditor});
       ready=true;decorate();update();status.textContent='เขียนบนหน้าจริง · คลิกข้อความหรือกล่องเพื่อแก้ไข · ยังไม่เผยแพร่';
       frame.hidden=false;
+      requestAnimationFrame(revealWriting);
     } catch(error){
       if(stopped||error.name==='AbortError')return;
       status.textContent='เปิดพื้นที่เขียนไม่สำเร็จ ร่างยังอยู่ ';onError(error);
@@ -95,5 +110,5 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
   root.dataset.size=matchMedia('(max-width:767px)').matches?'mobile':'desktop';
   root.querySelectorAll('[data-canvas-size]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.canvasSize===root.dataset.size)));
   load();
-  return {update,destroy(){stopped=true;clearTimeout(timer);controller.abort();}};
+  return {update,destroy(){stopped=true;clearTimeout(timer);controller.abort();writingSection?.removeEventListener('toggle',revealWriting);}};
 }

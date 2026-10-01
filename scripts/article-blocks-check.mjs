@@ -6,7 +6,7 @@ import {projectArticleDetail} from '../src/visitor/article-detail.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {articleCanvas,articleField,articleTool,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
 
 const p=text=>({type:'paragraph',content:[{type:'text',text}]}),list=items=>({type:'bulletList',content:items.map(text=>({type:'listItem',content:[p(text)]}))});
 const canonical=normalizeArticleDocument;
@@ -130,7 +130,9 @@ if(process.argv.includes('--browser')){
       await tool('preview');const preview=page.frameLocator('.ae-preview-frame').locator('.ad-page');await preview.locator('.article-quote-card').waitFor();
       await page.locator(`.ae-preview-modes [data-ae=${mode}]`).click();
       await preview.evaluate(el=>el.ownerDocument.fonts.ready);
-      assert.deepEqual((await styles(preview)).map(({width,...rest})=>rest),(await styles(canvas)).map(({width,...rest})=>rest),mode+' Preview uses the same authored blocks and typography');
+      const previewWidth=await preview.evaluate(el=>el.ownerDocument.defaultView.innerWidth);
+      await readerPage.setViewportSize({width:previewWidth,height:1000});await readerPage.evaluate(()=>document.fonts.ready);
+      assert.deepEqual(await styles(preview),await styles(readerPage.locator('.ad-page')),mode+' Preview and public blocks match text, width and typography at the Preview width');
       await page.locator('.ae-preview-dialog [data-ae=close]').click();
     }
     await readerPage.close();report.checks.push('Desktop/mobile Editor, Preview and public reader share authored blocks, styling and editor/reader geometry');
@@ -158,7 +160,7 @@ if(process.argv.includes('--browser')){
     await save();
     report.checks.push('Explicit legacy conversion is reversible without lost metadata, duplicate summaries or sidebar fallback');
     for(const width of [390,320]){
-      await page.setViewportSize({width,height:900});await page.locator('[data-canvas-size=mobile]').click();
+      await page.setViewportSize({width,height:900});await (await revealArticleControl(page,'[data-canvas-size=mobile]')).click();
       await body().locator('.article-takeaway-card').scrollIntoViewIfNeeded();
       const overflow=await articleCanvas(page).locator('.ad-page').evaluate(el=>({document:document.documentElement.scrollWidth>innerWidth+1,page:el.scrollWidth>el.clientWidth+1}));
       assert.deepEqual(overflow,{document:false,page:false},'Mobile block layout stays within viewport at '+width);

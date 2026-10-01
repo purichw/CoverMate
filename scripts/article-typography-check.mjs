@@ -5,7 +5,7 @@ import {createArticleDraft,parseDraftBackup} from '../admin/articles/drafts.mjs'
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {articleCanvas,articleField,articleTool,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
 
 const p=text=>({type:'paragraph',content:[{type:'text',text}]}),canonical=normalizeArticleDocument;
 const style={fontSize:27.5,fontSizeMobile:18,lineHeight:1.65,spaceBefore:0,spaceAfter:14,padding:12};
@@ -73,23 +73,31 @@ if(process.argv.includes('--browser')){
     for(let level=1;level<=6;level++){await body().locator('p').filter({hasText:'Heading '+level}).click();await choose('select[data-format=block]','h'+level);assert.equal(await body().locator('h'+level).innerText(),'Heading '+level);}
     await body().locator('h6').click();await choose('select[data-format=block]','paragraph');assert.equal(await body().locator('h6').count(),0,'H6 can return to paragraph');await choose('select[data-format=block]','h6');
     assert.deepEqual((await doc()).content.slice(0,6).map(node=>node.attrs.level),[1,2,3,4,5,6]);
-    const scale=()=>body().evaluate(el=>Object.fromEntries(['h1','h2','h3','h4','h5','h6','p'].map(tag=>{const css=getComputedStyle(el.querySelector(tag));return [tag,{size:parseFloat(css.fontSize),family:css.fontFamily,lineHeight:css.lineHeight}];})));
-    for(const mode of ['desktop','mobile']){
-      await page.locator(`[data-canvas-size=${mode}]`).click();await body().evaluate(el=>el.ownerDocument.fonts.ready);const actual=await scale();report.defaults.push({mode,...actual});
+    const scale=(root=body())=>root.evaluate(el=>Object.fromEntries(['h1','h2','h3','h4','h5','h6','p'].map(tag=>{const css=getComputedStyle(el.querySelector(tag));return [tag,{size:parseFloat(css.fontSize),family:css.fontFamily,lineHeight:css.lineHeight}];})));
+    for(const {mode,outerWidth} of [{mode:'desktop',outerWidth:1440},{mode:'desktop',outerWidth:2200},{mode:'mobile',outerWidth:1440}]){
+      await page.setViewportSize({width:outerWidth,height:1050});
+      await page.locator(`[data-canvas-size=${mode}]`).click();await body().evaluate(el=>el.ownerDocument.fonts.ready);
+      const width=await articleCanvas(page).locator('.ad-page').evaluate(el=>el.clientWidth),actual=await scale();report.defaults.push({mode,outerWidth,width,...actual});
+      if(outerWidth===2200)assert.ok(width>767,'Wide writing fixture exercises the non-mobile writing column');
       for(const [tag,typography] of Object.entries(actual))assert.match(typography.family,/Google Sans/,mode+' '+tag+' uses Google Sans');
       assert.ok(actual.p.size<22,'Default body is reduced from the oversized 22px treatment');
-      assert.deepEqual(Object.values(actual).map(item=>item.size),mode==='desktop'?[36,26,22,20,18,16,18]:[24,20,18,17,16,15,16],'Semantic default size hierarchy follows the article scale');
+      assert.deepEqual(Object.values(actual).map(item=>item.size),width<=767?[24,20,18,17,16,15,16]:width<=1100?[32,26,22,20,18,16,18]:[36,26,22,20,18,16,18],'Semantic default size hierarchy follows the actual article width');
       const loaded=await body().evaluate(el=>[...el.ownerDocument.fonts].some(font=>font.family.replace(/["']/g,'').startsWith('Google Sans')&&font.status==='loaded'));
       assert.equal(loaded,true,'A local Google Sans FontFace actually loaded for '+mode);
     }
-    report.checks.push('UI creates H1–H6 and P; compact semantic defaults and loaded Google Sans on desktop/mobile');
+    await tool('preview');await page.locator('.ae-preview-modes [data-ae=desktop]').click();
+    const widePreview=page.frameLocator('.ae-preview-frame').locator('cm-article-document');await widePreview.locator('h6').waitFor();await widePreview.evaluate(el=>el.ownerDocument.fonts.ready);
+    assert.ok(await widePreview.evaluate(el=>el.ownerDocument.defaultView.innerWidth)>1100,'Full desktop Preview exercises wide typography');
+    assert.deepEqual(Object.values(await scale(widePreview)).map(item=>item.size),[36,26,22,20,18,16,18],'Full desktop Preview retains the wide semantic scale');
+    await page.locator('.ae-preview-dialog [data-ae=close]').click();
+    report.checks.push('UI creates H1–H6 and P; compact semantic defaults and loaded Google Sans at narrow/wide writing widths and full desktop Preview');
     await page.locator('[data-canvas-size=desktop]').click();
     const inline=()=>body().locator('p').filter({hasText:'Normal BOLD rest'});
     const mac=await page.evaluate(()=>/Mac/.test(navigator.platform));
     await inline().click();await page.keyboard.press(mac?'Meta+ArrowLeft':'Home');for(let i=0;i<7;i++)await page.keyboard.press('ArrowRight');for(let i=0;i<4;i++)await page.keyboard.press('Shift+ArrowRight');
     assert.equal(await body().evaluate(el=>el.ownerDocument.getSelection().toString()),'BOLD','Native keyboard selects the target word');
     await tool('bold');
-    await page.locator('[data-text-size]').fill('27.5');await page.locator('[data-text-size-mobile]').fill('18.5');await tool('apply-text-size');
+    await (await revealArticleControl(page,'[data-text-size]')).fill('27.5');await (await revealArticleControl(page,'[data-text-size-mobile]')).fill('18.5');await tool('apply-text-size');
     let line=(await doc()).content.find(node=>node.content?.some(child=>child.text?.includes('BOLD')));
     let bold=line.content.find(node=>node.text==='BOLD');assert.ok(bold,'Only the intended word is selected');
     assert.ok(bold.marks.some(mark=>mark.type==='bold'),'Sizing preserves existing bold');assert.deepEqual(bold.marks.find(mark=>mark.type==='textStyle').attrs,{fontSize:27.5,fontSizeMobile:18.5});
@@ -102,7 +110,7 @@ if(process.argv.includes('--browser')){
     await editStyle('title-style',{fontSize:36,fontSizeMobile:25,lineHeight:1.3});await editStyle('excerpt-style',{fontSize:19,fontSizeMobile:16,lineHeight:1.6});
     report.checks.push('Partial inline decimal sizing preserves bold and adjacent text; block/title/excerpt styles, zero spacing, reset and Undo');
     await closeSettings(page);await body().locator('p').filter({hasText:'Block spacing sample'}).click();await tool('add-paragraph');await page.keyboard.insertText('Card sizing sample');
-    await page.locator('[data-ae=callout][data-kind=summary]').click();await page.locator('.ae-modal-form [data-field=title]').fill('Card heading');await page.locator('.ae-modal-form [type=submit]').click();
+    await (await revealArticleControl(page,'[data-ae=callout][data-kind=summary]')).click();await page.locator('.ae-modal-form [data-field=title]').fill('Card heading');await page.locator('.ae-modal-form [type=submit]').click();
     await editStyle('block-style',{fontSize:23,fontSizeMobile:17,lineHeight:1.8,padding:8});
     await tool('add-paragraph');await tool('table');await page.locator('[data-command=insertTable]').click();
     await body().locator('table p').first().click();await page.keyboard.insertText('Table sizing sample');
@@ -117,15 +125,23 @@ if(process.argv.includes('--browser')){
       const pairs=[...Array.from({length:6},(_,i)=>['h'+(i+1),prose.querySelector('h'+(i+1))]),['inline',prose.querySelector('strong')],['block',[...prose.querySelectorAll('p')].find(node=>node.textContent==='Block spacing sample')],['card',prose.querySelector('.article-callout > div > p')],['cardTitle',prose.querySelector('.article-callout-title')],['tableWrapper',prose.querySelector('.article-table-scroll')],['table',prose.querySelector('table p')],['title',el.querySelector('.ad-header h1')],['excerpt',el.querySelector('.ad-deck')]];
       return Object.fromEntries(pairs.map(([key,node])=>{if(!node)throw Error('Missing '+key);const target=key==='inline'?node.querySelector('span')||node:node,css=getComputedStyle(target);return [key,{text:node.textContent,...Object.fromEntries(['fontFamily','fontSize','fontWeight','lineHeight','marginTop','marginBottom','paddingTop','paddingLeft'].map(key=>[key,css[key]]))}];}));
     });
+    const assertAuthored=(actual,width)=>{
+      const mobile=width<=767;
+      assert.equal(actual.inline.fontSize,mobile?'18.5px':'27.5px');assert.equal(actual.block.fontSize,mobile?'19px':'24px');assert.equal(actual.block.paddingTop,'12px');assert.equal(actual.block.marginTop,'0px');assert.equal(actual.block.marginBottom,'14px');assert.equal(actual.title.fontSize,mobile?'25px':'36px');assert.equal(actual.excerpt.fontSize,mobile?'16px':'19px');
+      assert.equal(actual.card.fontSize,mobile?'17px':'23px');assert.equal(actual.cardTitle.fontSize,mobile?'17px':'20px','Card heading keeps its own role scale');assert.equal(actual.table.fontSize,mobile?'16px':'21px');assert.equal(actual.tableWrapper.paddingTop,'8px');assert.equal(actual.tableWrapper.marginTop,'0px');assert.equal(actual.tableWrapper.marginBottom,'10px');
+    };
     for(const mode of ['desktop','mobile']){
       await page.locator(`[data-canvas-size=${mode}]`).click();const canvas=articleCanvas(page).locator('.ad-page'),width=await canvas.evaluate(el=>el.ownerDocument.defaultView.innerWidth);
       await publicPage.setViewportSize({width,height:1000});await publicPage.goto(reader.baseUrl+'/articles/'+published.slug);await publicPage.locator('cm-article-document h6').waitFor();await publicPage.evaluate(()=>document.fonts.ready);await canvas.evaluate(el=>el.ownerDocument.fonts.ready);
       const actual=await samples(canvas);assert.deepEqual(actual,await samples(publicPage.locator('.ad-page')),mode+' authored typography matches public reader');
-      assert.equal(actual.inline.fontSize,mode==='mobile'?'18.5px':'27.5px');assert.equal(actual.block.fontSize,mode==='mobile'?'19px':'24px');assert.equal(actual.block.paddingTop,'12px');assert.equal(actual.block.marginTop,'0px');assert.equal(actual.block.marginBottom,'14px');assert.equal(actual.title.fontSize,mode==='mobile'?'25px':'36px');assert.equal(actual.excerpt.fontSize,mode==='mobile'?'16px':'19px');
-      assert.equal(actual.card.fontSize,mode==='mobile'?'17px':'23px');assert.equal(actual.cardTitle.fontSize,mode==='mobile'?'17px':'20px','Card heading keeps its own role scale');assert.equal(actual.table.fontSize,mode==='mobile'?'16px':'21px');assert.equal(actual.tableWrapper.paddingTop,'8px');assert.equal(actual.tableWrapper.marginTop,'0px');assert.equal(actual.tableWrapper.marginBottom,'10px');
+      assertAuthored(actual,width);
       const ids=await publicPage.locator('.ad-toc nav a').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('href')));assert.equal(ids.length,6);assert.equal(new Set(ids).size,6);for(const id of ids)assert.equal(await publicPage.locator(id).count(),1,'Public TOC links to one unique heading');
-      await tool('preview');const preview=page.frameLocator('.ae-preview-frame').locator('.ad-page');await preview.locator('h6').waitFor();await page.locator(`.ae-preview-modes [data-ae=${mode}]`).click();await preview.evaluate(el=>el.ownerDocument.fonts.ready);assert.deepEqual(actual,await samples(preview),mode+' Preview renders exactly the same typography');await page.locator('.ae-preview-dialog [data-ae=close]').click();
       await canvas.locator('.ad-prose').screenshot({path:`${out}/${engine}-canvas-${mode}.png`});await publicPage.locator('.ad-prose').screenshot({path:`${out}/${engine}-reader-${mode}.png`});report.styles.push({mode,...actual});
+      await tool('preview');const preview=page.frameLocator('.ae-preview-frame').locator('.ad-page');await preview.locator('h6').waitFor();await page.locator(`.ae-preview-modes [data-ae=${mode}]`).click();await preview.evaluate(el=>el.ownerDocument.fonts.ready);
+      const previewWidth=await preview.evaluate(el=>el.ownerDocument.defaultView.innerWidth);
+      await publicPage.setViewportSize({width:previewWidth,height:1000});await publicPage.evaluate(()=>document.fonts.ready);
+      const previewActual=await samples(preview);assert.deepEqual(previewActual,await samples(publicPage.locator('.ad-page')),mode+' Preview matches the public reader at its own width');assertAuthored(previewActual,previewWidth);
+      await page.locator('.ae-preview-dialog [data-ae=close]').click();
     }
     report.checks.push('Desktop/mobile inline/block/title/deck computed styles match Editor, Preview and public reader; all six TOC targets valid');
     await publicPage.close();assert.deepEqual(server.requests,[],'No public API writes');assert.deepEqual(report.errors,[]);report.passed=true;console.log('PASS article typography UI: '+engine);

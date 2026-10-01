@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {articleCanvas,articleField,articleTool,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
 import {installMediaFixture} from './media-upload-browser-check.mjs';
@@ -33,6 +33,7 @@ try {
   await page.goto(server.baseUrl+'/admin#articles');
   await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[data-article-action=create]').click();
+  await revealArticleControl(page,'.ae-canvas-frame');
   const body=articleCanvas(page).locator('.ae-editor-host:visible .tiptap');
   await body.waitFor();
   const tool=action=>articleTool(page,action);
@@ -57,7 +58,7 @@ try {
   };
   const choose=async(name,label)=>{
     if(name==='หมวดหมู่')await closeSettings(page);
-    await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();
+    await (await revealArticleControl(page,`.cm-select-trigger[aria-label="${name}"]`)).click();
     await page.getByRole('option',{name:label,exact:true}).click();
     if(name==='หมวดหมู่')await closeSettings(page);
   };
@@ -109,11 +110,11 @@ try {
   await tool('unwrap');assert.equal(await body.locator('blockquote').count(),0);
   for(const kind of ['summary','keypoints','feature','note','warning']) {
     await plain('Callout content');
-    await page.locator(`[data-ae=callout][data-kind=${kind}]`).click();
+    await (await revealArticleControl(page,`[data-ae=callout][data-kind=${kind}]`)).click();
     await modalField('title').fill('');await submit();assert.ok(await page.locator('.ae-dialog .ae-field-error:visible').first().innerText());
     await modalField('title').fill('QA '+kind);await submit();
     assert.equal(await body.locator('.article-callout').getAttribute('data-kind'),kind);
-    await page.locator(`[data-ae=callout][data-kind=${kind}]`).click();
+    await (await revealArticleControl(page,`[data-ae=callout][data-kind=${kind}]`)).click();
     await modalField('title').fill('Updated '+kind);await submit();
     assert.equal(await body.locator('.article-callout-title').innerText(),'Updated '+kind);
     await tool('unwrap');assert.equal(await body.locator('.article-callout').count(),0);
@@ -172,7 +173,7 @@ try {
   await table.locator('td').first().click();await page.keyboard.type('QA table content');
   check('Table insert, add/delete rows/columns, header, merge/split, delete cancel/confirm and undo');
 
-  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
+  await openSettings(page);
   await field('slug').fill('qa-toolbar');await field('authorName').fill('QA author');
   await choose('หมวดหมู่','ประกันสุขภาพ');
   await field('featured').check();await field('pinned').check();
@@ -228,7 +229,7 @@ try {
   await page.reload();await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[name=query]').fill('Toolbar interaction QA');await page.locator('[data-article-action=edit]').first().click();
   assert.equal(await field('slug').inputValue(),'qa-toolbar');assert.equal(await field('pinned').isChecked(),true);
-  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
+  await openSettings(page);
   assert.equal(await field('seoDescription').inputValue(),'SEO description');
   for(const lang of ['th','en']){
     await page.locator(`[data-lang=${lang}]`).click();
@@ -269,6 +270,7 @@ try {
   await failedSave.goto(server.baseUrl+'/admin#articles');
   await failedSave.locator('[data-article-action=create]').click();
   await articleField(failedSave,'title').fill('Preserve me after failed save');
+  await revealArticleControl(failedSave,'.ae-canvas-frame');
   await articleCanvas(failedSave).locator('.ae-editor-host:visible .tiptap').fill('Unsaved content');
   await failedSave.locator('[data-ae=save]:visible').first().click();
   await failedSave.locator('.ae-feedback[data-error=true]').waitFor();

@@ -1,6 +1,6 @@
 # Article Editor
 
-Updated 2026-09-30. Publication and cloud-storage behavior is specified in
+Updated 2026-10-01. Publication and cloud-storage behavior is specified in
 [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md); this document covers authoring
 and reader presentation.
 
@@ -69,8 +69,9 @@ Sources: [Google title links](https://developers.google.com/search/docs/appearan
 [image guidance](https://developers.google.com/search/docs/appearance/google-images),
 [SEO starter guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
 
-Article buttons explicitly say **บันทึกร่างบทความ / เผยแพร่บทความ**. They operate
-only on the selected article. Website Save/Publish/Reset still affect only website
+Article buttons use the accessible names **บันทึกร่างบทความ / เผยแพร่บทความ**;
+the visible Save label is shortened to **บันทึกร่าง** beside the article heading.
+They operate only on the selected article. Website Save/Publish/Reset still affect only website
 state, and article keyboard Save does not bubble to another module's shortcut.
 No article Reset is wired to the website Reset action.
 
@@ -86,18 +87,33 @@ Evidence: `uat-results/article-validation/`. This change is not yet deployed.
 
 ## Writing
 
-The editor reconciles the September 30 desktop/mobile mock with the existing
-writer. Basic information groups title, stable slug, card excerpt, category,
-removable tags and the separate cover above the rich-text surface. It can be
-folded without unmounting fields or either language document. The desktop rail
-contains actual publication state, the editorial date, pin/Home switches and a
-live card preview. Author, image descriptions, SEO, takeaways, references and
-handwritten notes remain available in named disclosures. Disclosure state stays
-open across language/media/source refreshes.
+The editor follows the updated desktop/mobile reference while retaining the
+existing writer. At widths of 1200 px and above, basic information and the rich
+writing canvas share the left column. The right column contains the separate
+cover with its Alt and caption, publication state/date/pin controls, a live card
+preview and advanced metadata disclosures. Basic information groups title,
+stable slug, card excerpt, category and removable tags. The heading keeps three
+actions: Preview, Save article draft and Publish article.
 
-Mobile keeps the same full writer and existing settings sheet, with content,
-settings and full-page preview shortcuts plus safe-area save/publish actions.
-The sheet moves the same controls instead of maintaining a second form. Tags
+Below 1200 px, these sections appear inline in this order: basic information,
+cover, writing, publication, card preview, then advanced metadata. Cover,
+writing, publication and card use native disclosures that start open on desktop
+and folded on narrower screens. Basic information has its existing fold toggle.
+The DOM and keyboard order follow this visual sequence; responsive rearrangement
+moves metadata panels while the live writing iframe stays mounted in place.
+Folding preserves the fields and both language documents; language, media and
+source refreshes preserve each disclosure's open or closed state.
+
+The common writing controls stay visible inside the writing section. Secondary
+formatting and numeric text sizing are grouped in a folded formatting disclosure;
+callouts, block insertion/order/placement and block help are grouped in a separate
+folded block-tools disclosure. These expose the existing controls and document
+operations without removing advanced capabilities.
+
+The settings shortcut beside the backup actions still opens the optional sheet.
+The sheet moves the same settings controls instead of maintaining a second form;
+mobile authors can also edit those controls directly in the inline disclosures.
+Full-page Preview and safe-area Save/Publish remain available. Tags
 accept Enter or comma-separated input and commit on blur/save; removing a tag
 never drops text currently being entered. Validation reveals a folded invalid
 field. A late stylesheet/font load recalculates title/excerpt height.
@@ -146,11 +162,15 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
   is directly editable in its reading column; title, cover, summary and decorative
   notes open their settings on click or keyboard activation. Changes update the
   canvas before Save or Preview. Desktop/Mobile switches the writing viewport.
-- Desktop places basic metadata beside publication/settings, with the real-page
-  writing canvas spanning the full width below them. This keeps Desktop mode at
-  reader scale instead of squeezing it into the metadata column. Mobile uses a
-  settings sheet with the same fields. The toolbar
-  scrolls horizontally and stays below the shared shell. Bottom save actions
+  The private writing frame starts at the body and hides public navigation,
+  footer and floating contact controls. Full-page Preview retains that public
+  chrome; only the writing frame's own scroll moves when it first opens.
+- Desktop places the real-page writing canvas below basic metadata in the left
+  column, alongside the cover/publication/settings rail. Desktop/Mobile canvas
+  modes retain their independent reader viewport within the writing frame.
+  On narrow screens the writing section opens inline; the settings sheet is an
+  optional shortcut to the same fields. Toolbar disclosures stay in normal flow
+  below the shared shell. Bottom save actions
   respect safe-area padding and hide when a detected software keyboard opens.
 
 Images support HTTPS URLs, local assets and uploads through the configured media
