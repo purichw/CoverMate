@@ -34,5 +34,9 @@
   .cm-line-panel-body { padding:16px; }
   .cm-line-action { font-size:15px; gap:4px; }
 }
-@media (max-width:767px) { .cm-line-contact { display:none; } }
+@media (max-width:767px) {
+  [data-hero-line].hm-button .cm-line-mark,
+  .cm-visitor-dock [data-cm-sticky] .cm-line-mark { --line-size:28px; }
+  .cm-line-contact { display:none; }
+}
 @media print { .cm-line-contact { display:none; } }
