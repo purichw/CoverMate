@@ -41,14 +41,9 @@ export function renderPublicPage(html, config, options) {
   } catch { /* A missing or invalid logo keeps a text identity. */ }
   rendered = rendered.replace(/<img data-covermate-boot-logo[^>]*>/,
     '<img data-covermate-boot-logo data-published' + (logoUrl ? ' src="' + escape(logoUrl) + '"' : ' hidden') + ' width="1200" height="375" alt="CoverMate">');
-  // Discover boot dependencies before the bundled template is unpacked. These
-  // hints fetch only; script execution still follows the existing guarded boot.
-  const hints = [
-    '<link rel="preload" as="script" href="/assets/vendor/react-18.3.1.min.js">',
-    '<link rel="preload" as="script" href="/assets/vendor/react-dom-18.3.1.min.js">'
-  ];
-  if (!options?.privatePage) hints.push('<link rel="modulepreload" href="/covermate-public.mjs">');
-  rendered = rendered.replace('</head>', hints.join('\n') + '\n</head>');
+  // Prefetch the public adapter without executing it. Classic-script preloads
+  // are omitted because WebKit can retain failed preloads across Retry.
+  if (!options?.privatePage) rendered = rendered.replace('</head>', '<link rel="modulepreload" href="/covermate-public.mjs">\n</head>');
   if (options?.publishedState && !options.privatePage) {
     const { config, text } = sanitizeStateDoc(options.publishedState);
     const snapshot = JSON.stringify({ siteId: options.siteId, state: { config, text } })

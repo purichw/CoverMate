@@ -109,8 +109,7 @@ assert.ok(!seeded.body.includes('must-not-embed'), 'Embed public config/text onl
 const ownerSeed = response(); await handler({ method: 'GET', url: '/admin/edit', headers: {} }, ownerSeed);
 assert.ok(!ownerSeed.body.includes('id="covermate-published-state"'), 'Never seed public content into owner workspace');
 for (const res of [seeded, ownerSeed]) {
-  assert.match(res.body.split('</head>')[0], /rel="preload" as="script" href="\/assets\/vendor\/react-18\.3\.1\.min\.js"/);
-  assert.match(res.body.split('</head>')[0], /rel="preload" as="script" href="\/assets\/vendor\/react-dom-18\.3\.1\.min\.js"/);
+  assert.doesNotMatch(res.body.split('</head>')[0], /rel="preload" as="script" href="\/assets\/vendor\/react/, 'Classic boot scripts retain retry-safe loading');
 }
 assert.match(seeded.body.split('</head>')[0], /rel="modulepreload" href="\/covermate-public\.mjs"/);
 assert.doesNotMatch(ownerSeed.body, /rel="modulepreload" href="\/covermate-public\.mjs"/, 'Owner boot does not prefetch the public adapter');

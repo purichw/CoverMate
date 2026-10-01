@@ -93,14 +93,15 @@ try {
       });
       const page = await context.newPage();page.setDefaultTimeout(15000);
       let injectedBootFailure=false;
-      page.on('pageerror', error => {
+      const recordError = error => {
         if(injectedBootFailure && /failed to load \/assets\/vendor\/react|__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED/.test(error.message)) return;
         report.errors.push(error.message);
-      });
-      const ready = async () => {
-        await page.waitForFunction(() => !document.documentElement.hasAttribute('data-covermate-booting'));
-        await page.locator('#covermate-boot').waitFor({ state: 'detached' });
-        await page.locator('main h1').waitFor({ state: 'visible' });
+      };
+      page.on('pageerror', recordError);
+      const ready = async (target = page) => {
+        await target.waitForFunction(() => !document.documentElement.hasAttribute('data-covermate-booting'));
+        await target.locator('#covermate-boot').waitFor({ state: 'detached' });
+        await target.locator('main h1').waitFor({ state: 'visible' });
       };
       for (const route of ['/', '/motor']) {
         await page.goto(baseUrl+route+'?lang=en');await ready();
@@ -125,14 +126,32 @@ try {
       await page.evaluate(()=>window.dispatchEvent(new ErrorEvent('error',{message:'Script error.'})));
       assert.equal(await page.locator('#covermate-boot[data-error]').count(),0);await ready();
       // Known boot failures retain the existing accessible retry surface.
-      let failOnce=true;
+      // A fresh context prevents WebKit from reusing an earlier preload without a request.
+      const failedPage=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+      failedPage.setDefaultTimeout(15000);failedPage.on('pageerror',recordError);
+      await failedPage.route('**/*',route=>new URL(route.request().url()).origin===baseUrl?route.continue():route.abort());
+      let failScripts=true;
+      const criticalRequests=[];
       injectedBootFailure=true;
-      await page.route('**/assets/vendor/react-18.3.1.min.js',route=>{if(failOnce){failOnce=false;return route.abort()}return route.continue()});
-      await page.goto(baseUrl+'/motor?lang=en',{waitUntil:'domcontentloaded'});
-      await page.locator('#covermate-boot[data-error]').waitFor();
-      assert.equal(await page.locator('#__bundler_err').count(),0);
-      injectedBootFailure=false;
-      await page.getByRole('button',{name:'Try again',exact:true}).click();await ready();
+      // Fail both preload and execution requests until the explicit retry.
+      await failedPage.route('**/assets/vendor/react-18.3.1.min.js',route=>{criticalRequests.push({url:route.request().url(),aborted:failScripts});return failScripts?route.abort():route.continue();});
+      await failedPage.goto(baseUrl+'/motor?lang=en',{waitUntil:'domcontentloaded'});
+      try { await failedPage.locator('#covermate-boot[data-error]').waitFor(); }
+      catch(error) {
+        report.bootFailure={engine,criticalRequests,state:await failedPage.evaluate(()=>({url:location.href,boot:window.CoverMateBoot?.pending,react:!!window.React,loader:document.querySelector('#covermate-boot')?.outerHTML,body:document.body.innerText.slice(0,600)}))};
+        await failedPage.screenshot({path:`${out}/${engine}-boot-failure.png`});throw error;
+      }
+      assert.ok(criticalRequests.some(request=>request.aborted),'Critical script failure was actually injected');
+      assert.equal(await failedPage.locator('#__bundler_err').count(),0);
+      failScripts=false;injectedBootFailure=false;
+      await failedPage.getByRole('button',{name:'Try again',exact:true}).click();
+      try { await ready(failedPage); }
+      catch(error) {
+        report.retryFailure={engine,criticalRequests,state:await failedPage.evaluate(()=>({url:location.href,boot:window.CoverMateBoot?.pending,react:!!window.React,loader:document.querySelector('#covermate-boot')?.outerHTML,body:document.body.innerText.slice(0,600)}))};
+        await failedPage.screenshot({path:`${out}/${engine}-retry-failure.png`});throw error;
+      }
+      assert.ok(criticalRequests.some(request=>!request.aborted),'Retry fetches the restored script');
+      await failedPage.close();
       report.engines.push({ engine, version: browser.version(), result: 'PASS', cases: ['Home/Motor after repeated opaque and known errors','typed contact data preserved','FAQ and TH/EN still work','opaque boot event','critical boot failure and retry'] });
     } finally { await browser.close(); }
   }

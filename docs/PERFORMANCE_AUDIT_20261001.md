@@ -28,7 +28,7 @@ The signed-out Admin route redirected to login, which reached LCP around 1.8 sec
 ## Changes
 
 1. Use the shared `versionedAssetUrl` policy for the server-rendered boot logo, matching the hydrated header URL. Preserve CMS branding, language, explicit clearing, and external/signed URLs.
-2. Add resource hints for React/ReactDOM before template unpacking, including the CMS editor surface. Prefetch the public adapter only on public pages; hints do not execute scripts or bypass authentication.
+2. Prefetch the public adapter only on public pages; the hint does not execute scripts or bypass authentication. An initial React/ReactDOM preload experiment was removed during release verification after WebKit retained a failed preload across Retry. The measurements below precede that removal; final deployed timing must be measured separately.
 3. Lazy-load the large footer logo, advisor photo, and provider logos. Keep images and content unchanged; reserve intrinsic space for the standard logo and provider boxes.
 4. Start public site and article-feed reads together. Keep Home's article-outage fallback, article-route errors, owner isolation, and the existing publication/cache policy intact.
 5. Add regression assertions for resource identity, concurrent reads, preloads, error paths, and footer loading. Update loader failure fixtures to fail or stall all requests during the first navigation, including preload requests, until explicit retry.
