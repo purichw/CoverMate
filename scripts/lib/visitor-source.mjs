@@ -24,6 +24,7 @@ const LAYOUT_STYLE = /<style id="covermate-layout">([\s\S]*?)<\/style>/;
 
 export const VISITOR_SOURCE_PATHS = Object.freeze({
   index: new URL("index.html", ROOT),
+  publicIndex: new URL("server/visitor-public.html", ROOT),
   shell: new URL("src/visitor/shell.html", ROOT),
   template: new URL("src/visitor/template.html", ROOT),
   defaults: new URL("src/visitor/defaults.js", ROOT),
@@ -229,6 +230,27 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
     .replace(VISITOR_ASSET_VERSIONS_SLOT, () => JSON.stringify(sources.imageVersions || readImageVersions()));
 }
 
+function publicVisitorSources(sources) {
+  // Explicit source boundaries fail closed when the shared template changes.
+  const replaceRegion = (source, start, end, replacement = '') => {
+    assertSingleSlot(source, start, 'public build');
+    assertSingleSlot(source, end, 'public build');
+    const a = source.indexOf(start), b = source.indexOf(end);
+    if (b < a) throw new Error('Invalid owner boundary: ' + start);
+    return source.slice(0, a) + replacement + source.slice(b + end.length);
+  };
+  let runtime = sources.runtime;
+  for (const label of ['LISTENERS', 'FIELDS', 'OUTLINE', 'DIRTY', 'BRAND_VALUES', 'VALUES']) {
+    runtime = replaceRegion(runtime, '// COVERMATE_OWNER_' + label + '_BEGIN', '// COVERMATE_OWNER_' + label + '_END');
+  }
+  runtime = replaceRegion(runtime, '/* COVERMATE_OWNER_BASE_BEGIN */', '/* COVERMATE_OWNER_BASE_END */', 'DCLogic');
+  const template = replaceRegion(sources.template, '<!-- COVERMATE_OWNER_UI_BEGIN -->', '<!-- COVERMATE_OWNER_UI_END -->')
+    .replace(/<link rel="stylesheet" href="\/assets\/visitor\/editor-(?:tools|panel)\.css[^"]*">/g, '')
+    .replace('<html ', '<html data-covermate-surface="public" ');
+  return { ...sources, runtime, template, cmsController: '', adminLabels: '',
+    shell: sources.shell.replace('<html ', '<html data-covermate-surface="public" ') };
+}
+
 export function buildVisitorTemplate(sources = readVisitorSources()) {
   assertSingleSlot(sources.template, VISITOR_RUNTIME_SLOT, "src/visitor/template.html");
   const defaults = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
@@ -257,7 +279,8 @@ function withDefaultSeo(html, sources) {
   return html.replace('<!-- COVERMATE_SEO_HEAD -->', () => '<!-- COVERMATE_SEO_START -->\n' + renderSeoHead(createSeoModel(site)) + '\n<!-- COVERMATE_SEO_END -->');
 }
 
-export function buildVisitorIndex(sources = readVisitorSources()) {
+export function buildVisitorIndex(sources = readVisitorSources(), { publicOnly = false } = {}) {
+  if (publicOnly) sources = publicVisitorSources(sources);
   assertSingleSlot(sources.shell, VISITOR_TEMPLATE_SLOT, "src/visitor/shell.html");
   const template = buildVisitorTemplate(sources);
   const serializedTemplate = `${BUNDLER_TEMPLATE_OPEN}${serializeBundlerTemplate(template)}</script>`;

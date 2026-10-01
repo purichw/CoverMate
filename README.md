@@ -13,10 +13,13 @@ build. The media backend is Cloudinary Free; Firebase Auth and Firestore remain
 in use, while Firebase Storage is not used. See
 [`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md) for the media/cost contract.
 
-Visitor code is source-authored in `src/visitor/` and generated into the
-deployable `index.html`. Edit `src/visitor/*`, then run
-`npm run build:visitor`; `npm run check:bundles` verifies the generated artifact
-has not drifted.
+Visitor code is source-authored in `src/visitor/`. The generator produces
+`server/visitor-public.html` for public routes and `index.html` for owner
+editing/offline compatibility from the same renderer. Edit `src/visitor/*`,
+then run `npm run build:visitor`; `npm run check:bundles` verifies both artifacts
+and their public/owner boundaries. See
+[`docs/PERFORMANCE_AUDIT_20261002.md`](docs/PERFORMANCE_AUDIT_20261002.md) for the
+latest local performance changes and deployment limitations.
 
 The broad local/CI quality gate is `npm run check:ci`. It validates generated
 visitor artifacts, shared contracts, security headers/rules invariants,
@@ -109,7 +112,7 @@ Routes:
   product
 - `/#motor` public anchor into the home motor-insurance / insurer section;
   old `/#insurers` links resolve to the same section
-- `/#admin`, `/#edit`, and `/#preview` owner modes inside the visitor bundle
+- `/#admin`, `/#edit`, and `/#preview` legacy links to canonical owner routes
 - `/admin/content?page=motor`, `/admin/edit?page=motor`, and
   `/admin/preview?page=motor` owner modes scoped to the dedicated motor page
 - `/admin/login` owner auth gate

@@ -1,6 +1,19 @@
 # CoverMate Handoff
 
-Last updated: 2026-09-30
+Last updated: 2026-10-02
+
+## Visitor Performance Release
+
+The owner authorized push/deploy of the Visitor/owner bundle split, fixed-name
+server timing metrics, and Singapore region configuration for page/article
+functions. See [the October 2 audit](PERFORMANCE_AUDIT_20261002.md) for scope,
+local measurements, and verification. Preserve current main's article-authoring
+and consent-copy work during integration. Public rendering and CMS ownership
+stay shared; no Rules, schema, cache TTL, or content migration is required.
+Exact-SHA CI, hosted read-only UAT, production alias/source readback, and final
+performance evidence are required before calling this live. Receipts are in
+`uat-results/performance-release-20261002/`. Prefer a small forward fix if
+verification fails; do not bypass CI or restore CMS content during release.
 
 ## Admin and Home Articles Refresh
 

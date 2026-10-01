@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { sanitizeStateDoc } from '../covermate-contract.js';
+import { createPageHandler } from '../server/seo-page.mjs';
 import { buildVisitorIndex } from './lib/visitor-source.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
@@ -11,6 +12,7 @@ import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 const config = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)'));
 const state = sanitizeStateDoc({ config, text: {} }, { repeatableIds: true });
 const html = buildVisitorIndex();
+const publicHtml = buildVisitorIndex(undefined, { publicOnly: true });
 const session = { firebase: true, uid: 'cms-entry-owner', email: 'entry@example.invalid', name: 'CMS entry fixture', role: 'owner', exp: Date.now() + 86400000 };
 const seed = `<script>localStorage.setItem('covermate-admin-session',${JSON.stringify(JSON.stringify(session))});</script>`;
 const firebase = `
@@ -26,12 +28,15 @@ const firebase = `
   };
 `;
 let writes = 0;
-const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true, onRequest: (request, response) => {
+const handler = createPageHandler({
+  readPublished: async () => state,
+  readHtml: ({privatePage}) => (privatePage ? html : publicHtml).replace('<head>', '<head>' + seed)
+});
+const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true, onRequest: async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (!['GET', 'HEAD'].includes(request.method)) { writes++; response.writeHead(403); response.end('No writes'); return true; }
-  if (['/', '/admin/content', '/admin/preview'].includes(pathname)) {
-    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    response.end(html.replace('<head>', '<head>' + seed)); return true;
+  if (['/', '/motor', '/admin/content', '/admin/edit', '/admin/preview'].includes(pathname)) {
+    await handler(request, response); return true;
   }
   if (pathname === '/covermate-firebase.js') {
     response.writeHead(200, { 'Content-Type': 'application/javascript' }); response.end(firebase); return true;
@@ -87,8 +92,32 @@ try {
   await page.goto(baseUrl + '/?cms_tab=versions&cms_section=talk');
   await page.waitForFunction(() => document.documentElement.dataset.covermateRoute === 'home' && !document.getElementById('covermate-boot'));
   assert.equal(await panel.count(), 0, 'Public route ignores editor-entry query');
+  assert.equal(await page.locator('html').getAttribute('data-covermate-surface'), 'public');
+  for (const [hash, path, target] of [
+    ['admin', '/admin/content', 'aside[data-editor-panel]'],
+    ['edit', '/admin/edit', '[data-admin-owner-bar]'],
+    ['preview', '/admin/preview', '[data-admin-preview-bar]']
+  ]) {
+    await page.goto(baseUrl + '/?lang=en&cm_env=uat#' + hash);
+    await page.waitForURL(url => url.pathname === path);
+    await page.locator(target).first().waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('lang'), 'en');
+    assert.equal(new URL(page.url()).searchParams.get('cm_env'), 'uat');
+    assert.equal(await page.locator('html').getAttribute('data-covermate-surface'), null, 'Legacy entry loads the complete owner bundle');
+  }
+  await page.goto(baseUrl + '/motor?lang=en&cm_env=uat');
+  await page.waitForFunction(() => document.documentElement.dataset.covermateRoute === 'motor' && !document.getElementById('covermate-boot'));
+  const ownerNavigations = [];
+  page.on('request', request => { if (request.isNavigationRequest() && new URL(request.url()).pathname === '/admin/content') ownerNavigations.push(request.url()); });
+  await page.evaluate(() => { location.hash = 'admin'; });
+  await page.waitForURL(url => url.pathname === '/admin/content');
+  await panel.waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('page'), 'motor');
+  assert.equal(new URL(page.url()).searchParams.get('lang'), 'en');
+  assert.equal(new URL(page.url()).searchParams.get('cm_env'), 'uat');
+  assert.equal(ownerNavigations.length, 1, 'Paired popstate/hashchange events trigger one owner navigation');
   assert.equal(writes, 0); assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ passed: true, checks: ['section/content entry', 'five brand groups and Navigation', 'theme and version history', 'mobile contact inspector and fields', 'context preserved', 'invalid targets ignored', 'verified-session gate', 'public and Preview isolation'], writes }));
+  console.log(JSON.stringify({ passed: true, checks: ['section/content entry', 'five brand groups and Navigation', 'theme and version history', 'mobile contact inspector and fields', 'context preserved', 'invalid targets ignored', 'verified-session gate', 'public and Preview isolation', 'legacy hash owner entry before and after public boot'], writes }));
 } finally {
   await context.close(); await browser.close();
   server.closeAllConnections(); await new Promise(resolve => server.close(resolve));

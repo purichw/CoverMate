@@ -53,6 +53,14 @@
   <script id="covermate-bootstrap">
 
 document.addEventListener('DOMContentLoaded', async function() {
+  if (document.documentElement.dataset.covermateSurface === 'public') {
+    const contract = window.CoverMateContract;
+    const mode = contract?.ownerModeFromHash(window.location.hash);
+    if (mode) {
+      window.location.replace(contract.ownerPathForMode(mode, contract.routePageFromLocationParts(location.pathname, location.search), location.search));
+      return;
+    }
+  }
   const BOOT_ATTR = 'data-covermate-booting';
   const BOOT_GUARD_ID = 'covermate-hydration-guard';
   const FIRST_BOOT_REVEAL_MS = 4500;

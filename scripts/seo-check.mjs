@@ -113,6 +113,16 @@ for (const res of [seeded, ownerSeed]) {
 }
 assert.match(seeded.body.split('</head>')[0], /rel="modulepreload" href="\/covermate-public\.mjs"/);
 assert.doesNotMatch(ownerSeed.body, /rel="modulepreload" href="\/covermate-public\.mjs"/, 'Owner boot does not prefetch the public adapter');
+assert.match(seeded.body, /data-covermate-surface="public"/);
+assert.doesNotMatch(extractBundlerTemplate(seeded.body), /<aside[^>]+data-editor-panel|withCmsController|editor-panel\.css/);
+for (const path of ['/admin/content', '/admin/edit', '/admin/preview']) {
+  const res = response();
+  await createPageHandler({ readPublished: () => { throw new Error('Owner must not read published content'); } })({method:'GET',url:path,headers:{}},res);
+  assert.equal(res.statusCode, 200);
+  assert.doesNotMatch(res.body, /data-covermate-surface="public"/);
+  assert.match(extractBundlerTemplate(res.body), /data-editor-panel/);
+  assert.match(res.headers['Server-Timing'], /^render;dur=\d+\.\d, total;dur=\d+\.\d$/);
+}
 
 // Slow, independent CMS and article reads must overlap, not form a waterfall.
 const started = [], siteRead = Promise.withResolvers(), feedRead = Promise.withResolvers();
@@ -129,6 +139,9 @@ feedRead.resolve({available:true,settings:{enabled:true,showHome:true,showNaviga
 await concurrentRequest;
 assert.equal(concurrentResponse.statusCode, 200);
 assert.equal(concurrentResponse.headers['Cache-Control'], 'private, no-store', 'Article publication freshness is unchanged');
+for (const metric of ['published', 'articles', 'render', 'total']) {
+  assert.match(concurrentResponse.headers['Server-Timing'], new RegExp('(?:^|, )' + metric + ';dur=\\d+\\.\\d(?:,|$)'));
+}
 for (const route of ['/', '/articles', '/articles/example', '/admin/edit']) {
   let feedReads = 0;
   const res = response();
@@ -143,8 +156,12 @@ assert.equal(offline.statusCode, 503); assert.equal(offline.headers['Retry-After
 assert.ok(offline.body.includes('data-error-status="503"'), 'CMS outages use the independent recovery page');
 assert.ok(offline.body.includes('data-secondary'), 'The recovery page offers a retry action');
 assert.ok(!offline.body.includes('id="covermate-published-state"'), 'Outages must not advertise defaults as published state');
+assert.match(offline.headers['Server-Timing'], /published;dur=\d+\.\d, total;dur=\d+\.\d/);
 
 const vercel = JSON.parse(fs.readFileSync('vercel.json'));
+assert.deepEqual(vercel.functions['api/page.js'].regions, ['sin1']);
+assert.deepEqual(vercel.functions['api/articles.js'].regions, ['sin1']);
+assert.ok(vercel.functions['api/page.js'].includeFiles.includes('server/visitor-public.html'));
 const { default: homeMiddleware, config: middlewareConfig } = await import('../middleware.js');
 assert.equal(middlewareConfig.matcher, '/', 'Only Home needs a before-filesystem rewrite');
 const homeRewrite = homeMiddleware(new Request('https://covermateinsurance.com/?lang=en&utm_source=line&route=/admin/edit'));

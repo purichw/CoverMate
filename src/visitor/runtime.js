@@ -314,9 +314,9 @@ function repeatableIndex(list, id, fallbackIndex) {
 
 // /motor is the dedicated public motor landing page. Home #motor still aliases
 // into the home-page insurer section so older links do not break.
-class Component extends CoverMateCms.withCmsController(DCLogic, {
+class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsController(DCLogic, {
   DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
-}) {
+}) /* COVERMATE_OWNER_BASE_END */ {
   state = {
     articleFeed: readHomeArticleFeed(document),
     articleSearchDraft: null,
@@ -388,6 +388,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
 
   componentDidMount() {
     this._articlePreviewUpdate = window.__covermateArticlePreview?.attach?.(this);
+    // Owner listeners do not run in the public-only build.
+    // COVERMATE_OWNER_LISTENERS_BEGIN
     this._editorKeydown = event => this.editorKeydown(event);
     document.addEventListener('keydown', this._editorKeydown, true);
     this._editorInput = event => {
@@ -400,6 +402,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     document.addEventListener('input', this._editorInput, true);
     this._editorPointer = () => { this._editorGesture = null; this._editorHistory?.breakGroup(); };
     document.addEventListener('pointerdown', this._editorPointer, true);
+    // COVERMATE_OWNER_LISTENERS_END
     this.restoreCalculatorSession();
     this.migrate();
     this._consentChange = () => this.setState({ analyticsConsent: window.CoverMateAnalytics?.getConsent() || 'unknown' });
@@ -533,7 +536,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     this.contactFlow?.dispose();
     clearTimeout(this._contactRetryTimer);
     Object.values(this.calculatorTimers || {}).forEach(clearTimeout);
-    this.clearInlineMedia();
+    this.clearInlineMedia?.();
     window.removeEventListener('covermate:analytics-consent', this._consentChange);
     this._dockObserver?.disconnect();
     document.removeEventListener('pointerdown', this._lineDismiss);
@@ -575,7 +578,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     }
     window.CoverMateSelect?.refresh();
     if (!this._selectLoader && [...document.querySelectorAll('select')].some(select => { const r=select.getBoundingClientRect(); return r.height && r.top < innerHeight + 600 && r.bottom > 0; })) this._selectLoader=import(location.origin+'/assets/visitor/select.js').catch(()=>{this._selectLoader=null;});
-    this.syncInlineMedia();
+    this.syncInlineMedia?.();
     this.syncVisitorDock();
     this.syncEditorPanelViewport();
     this.syncOutlineHighlight();
@@ -1331,6 +1334,18 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
   }
 
   applyMode() {
+    // Public payloads intentionally omit authoring tools. Legacy hash entry
+    // still reaches the canonical, session-gated owner page on a full load.
+    if (document.documentElement.dataset.covermateSurface === 'public') {
+      const mode = window.CoverMateContract.ownerModeFromPath(location.pathname) || window.CoverMateContract.ownerModeFromHash(location.hash);
+      if (mode) {
+        if (this._ownerNavigationPending) return;
+        this._ownerNavigationPending = true;
+        this._routeLocation = location.href;
+        location.replace(window.CoverMateContract.ownerPathForMode(mode, this.routePageFromLocation(location.pathname, location.search), location.search));
+        return;
+      }
+    }
     if(window.__covermateArticlePreview){
       const src=adaptLegacyHomeCopy(this.loadLive().config,this.loadLive().text);
       this.textOv=clone(src.text || {});this._modeApplied=true;
@@ -1401,7 +1416,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       this._ownerWorkspace = false;
       try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (e) {}
     }
-    if (!editMode) this.disableEdit();
+    if (!editMode) this.disableEdit?.();
     const pageSelection = switchedPage ? { sel:window.CoverMateContract.CMS_EDITABLE_PAGES.find(page=>page.id===routePage)?.section, outlineQuery:'', outlineNotice:'', mobileInspector:false } : {};
     this.setState({ ...pageSelection, site: src.config, routePage: routePage, articleSearchDraft:null, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
       if (switchedPage) document.querySelector('[data-admin-panel-scroll]')?.scrollTo(0, 0);
@@ -1680,6 +1695,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const hasLine = !!site.contact.lineUrl;
     const cmsText = path => t(cmsGet(site, path));
     const copyTemplate = (path, values) => cmsText(path).replace(/\{\{(situation|income|lifeNeed|policy|month)\}\}/g, (_, key) => String(values[key] == null ? '' : values[key]));
+    // COVERMATE_OWNER_FIELDS_BEGIN
     const cmsInput = (path, field) => {
       const saved = cmsGet(site, path) || '';
       const edits = S.cmsEdits || {};
@@ -1725,6 +1741,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       })
     }));
 
+    // COVERMATE_OWNER_FIELDS_END
     const routePage = ['motor','articles','article'].includes(S.routePage) ? S.routePage : 'home';
     const motorPageConfig = this.getMotorPage(site);
     const isHome = routePage === 'home' && !S.motor && !S.life;
@@ -2183,6 +2200,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     };
     // Use the visitor's route projection, retaining hidden rows for recovery.
     // Fixed presentation rows keep their existing CMS owners, never new sections.
+    // COVERMATE_OWNER_OUTLINE_BEGIN
     const orderedAdminPairs = workSections.filter(Boolean).map(s => {
       const motorKey = routePage === 'motor' && ['hero','trust','cover'].find(key => motorPageConfig[key]?.id === s.id);
       return { source: motorKey ? 'motorPage' : 'sections', motorKey, s, id:s.id, ownerId:s.id };
@@ -2597,6 +2615,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     ].map((group,index)=>({...group,number:index+1,open:index===0,inspect:()=>this.inspectBrandLocation(group.preview)}));
     const brandOtherGroups = cmsGroups.filter(group=>!['Brand images','Licences','Advisor profile','Home licences','Footer design'].includes(group.key));
 
+    // COVERMATE_OWNER_OUTLINE_END
     const f = S.form.qtype === 'compare' ? { ...S.form, qtype:'quote' } : S.form;
     const QUERY = Object.fromEntries(['quote', 'assess', 'review', 'renewal', 'service', 'claim', 'general'].map(key => [key, cmsText('formOptions.query.' + key)]));
     const COVER = Object.fromEntries(['life', 'health', 'motor', 'accident', 'savings', 'unsure'].map(key => [key, cmsText('formOptions.coverage.' + key)]));
@@ -2659,12 +2678,15 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
     const submissionCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Contact submission').map(field=>[field.path.split('.')[1],cmsText(field.path)]));
     const submissionLineKind = submissionKind === 'rate_limited' ? 'failure' : submissionKind;
 
+    // COVERMATE_OWNER_DIRTY_BEGIN
     const _live = this.loadLive();
     const _liveSig = this.sig(_live.config, _live.text);
     const dirty = this.sig(site, this.textOv) !== _liveSig;
     const ownerSession = this.hasSession();
+    // COVERMATE_OWNER_DIRTY_END
 
     return {
+      adminOpen: S.admin, editMode: S.editMode,
       enhancedContact,
       contactFlowPanel:enhancedContact && !['editing','invalid'].includes(submissionKind),
       submissionCopy, submissionKind, submissionPending,
@@ -2723,6 +2745,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       thBg: th ? A.action : 'transparent', thFg: th ? A.on : 'var(--color-neutral-700)',
       enBg: !th ? A.action : 'transparent', enFg: !th ? A.on : 'var(--color-neutral-700)',
       callLabel: cmsText('ui.callLabel'),
+      // COVERMATE_OWNER_BRAND_VALUES_BEGIN
       cmsGroups: cmsGroups,
       brandEditorGroups,brandOtherGroups,brandLocations,brandPreviewId,
       chooseBrandLocation:e=>this.inspectBrandLocation(e.target.value),
@@ -2770,6 +2793,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         up: () => { if (!index) return; this.upd(x => { const list = routePage === 'motor' ? x.motorPage.nav : x.header.nav; const item = list.splice(index, 1)[0]; list.splice(index - 1, 0, item); }); }
       })),
       addNavItem: () => this.upd(x => { (routePage === 'motor' ? x.motorPage.nav : x.header.nav).push({ label: { th: '', en: '' }, href: '' }); }),
+      // COVERMATE_OWNER_BRAND_VALUES_END
       consultationConsent: cmsText('ui.consultationConsent'),
       submitPendingText: cmsText('ui.submitPending'),
       submitSuccessText: cmsText('ui.submitSuccess'),
@@ -3055,7 +3079,8 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
         return copyTemplate('publicCopy.renewalPreview', { policy: k, month: m });
       })(),
 
-      adminOpen: S.admin, adminClosed: !S.admin,
+      // COVERMATE_OWNER_VALUES_BEGIN
+      adminClosed: !S.admin,
       ownerDockStatus: S.admin ? 'กำลังแก้ไขหน้าเว็บ · เปิดแผงเครื่องมือ' : 'กำลังแก้ไขหน้าเว็บ',
       ownerDockStatusCompact: S.admin ? 'แก้ไข · แผงเครื่องมือ' : 'กำลังแก้ไข',
       openAdmin: (event) => {
@@ -3165,7 +3190,6 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       goVersions: () => this.openVersionsTab(),
       tabVerBg: S.tab === 'versions' ? A.action : 'transparent', tabVerFg: S.tab === 'versions' ? A.on : 'var(--color-neutral-700)',
       closeAdmin: () => this.closeEditorPanel(),
-      editMode: S.editMode,
       exitEdit: () => {
         this._ownerWorkspace = false;
         try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (err) {}
@@ -3305,6 +3329,7 @@ class Component extends CoverMateCms.withCmsController(DCLogic, {
       onIo: (e) => this.setState({ io: e.target.value }),
       doExport: () => this.setState({ io: JSON.stringify({ config: this.state.site, text: this.textOv || {} }, null, 2) }),
       doImport: () => { try { const o = JSON.parse(this.state.io); const cfg = o && o.config && o.config.sections ? o.config : o; const txt = o && o.config ? (o.text || {}) : (this.textOv || {}); if (cfg && cfg.sections) { this.textOv = clone(txt); this.save(cfg); } } catch (e) { this.setState({ io: 'JSON ไม่ถูกต้อง ยังไม่มีข้อมูลเปลี่ยนแปลง' }); } }
+      // COVERMATE_OWNER_VALUES_END
     };
   }
 }
