@@ -45,7 +45,7 @@ try {
   await admin.evaluate(async({email,password})=>{await import('/covermate-firebase.js');const sdk=await import('https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js');await sdk.signInWithEmailAndPassword(window.CoverMateFirebase.auth,email,password);if(!(await window.CoverMateFirebase.syncSessionFromCurrentUser()).ok)throw Error('Auth failed');},{email,password});
   const list=async()=>{await admin.goto('about:blank');await admin.goto(baseUrl+'/admin'+suffix+'#articles');await admin.locator('[data-article-state=ready]').waitFor({timeout:60000});};
   const edit=async(id)=>{await list();await admin.locator('[name=query]').fill(id);await admin.locator(`[data-article-action=edit][data-id="${id}"]:visible`).click();await admin.locator('[data-field=featured]').waitFor();};
-  const save=async()=>{await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback').filter({hasText:'บันทึก'}).waitFor();};
+  const save=async()=>{await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback:not([data-error=true])').filter({hasText:/^บันทึกฉบับร่างในคลังแล้ว/}).waitFor();};
   const publish=async()=>{await admin.locator('[data-ae=publish]:visible').click();await admin.getByRole('button',{name:'ยืนยันเผยแพร่',exact:true}).click();await admin.locator('.ae-feedback').filter({hasText:'เผยแพร่แล้ว'}).waitFor();};
   await edit(ids[11]);await admin.getByRole('switch',{name:'ปักหมุดบน Home'}).check();
   assert.equal(await admin.locator('[data-field=pinned]').isChecked(),false,'Home pin does not change index pin');

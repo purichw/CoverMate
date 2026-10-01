@@ -22,6 +22,8 @@ The first integrated CI run exposed a second one-request failure fixture in the 
 
 WebKit verification additionally showed a failed classic-script preload being reused across Retry without another network request. The release therefore omits the new React/ReactDOM preload hints instead of changing production retry semantics. Failure injection uses a fresh browser context and asserts both an actual blocked request and a restored request on Retry; failure diagnostics remain recorded. The public module hint, deduplicated logo, lazy footer and concurrent server reads remain.
 
+The preceding upstream CI also exposed a Home-pin E2E synchronization bug: its broad save-text selector matched the saving-in-progress message, permitting reload to abort the request (`ECONNRESET`). The test now waits for the exact successful cloud-draft message before checking persistence. The application save contract and all persistence assertions are unchanged.
+
 ## Recovery
 
 The preceding production source is `cd47b71705cfe6e7a9def89d324a62ab7a38bdaf`. There is no data migration to reverse. If a deployment regression is confirmed, prepare a scoped revert for owner approval and preserve the exact-SHA CI gate; do not force-promote or reset CMS/article drafts.
