@@ -34,6 +34,9 @@ try {
     page.on('request', request => requests.push(new URL(request.url()).pathname + new URL(request.url()).search));
     await page.goto(baseUrl + route + '?lang=' + lang);
     await page.waitForFunction(() => document.documentElement.hasAttribute('data-covermate-route') && !document.documentElement.hasAttribute('data-covermate-booting'));
+    assert.equal(await page.locator('html').getAttribute('data-covermate-surface'), 'public');
+    assert.equal(await page.locator('aside[data-editor-panel], [data-admin-owner-bar]').count(), 0);
+    assert.equal(requests.some(url => /editor-(panel|tools|preview|versions)\.(css|js)|covermate-firebase\.js/.test(url)), false, 'Public boot never downloads owner tooling');
     const header = page.locator('header img[data-cms-image]').first();
     await header.evaluate(image => image.decode());
     const headerUrl = new URL(await header.getAttribute('src'), baseUrl);

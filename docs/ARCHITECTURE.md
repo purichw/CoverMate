@@ -1,18 +1,25 @@
 # CoverMate Architecture
 
-Last updated: 2026-09-24. This document maps the current source. See
+Last updated: 2026-10-02. This document maps the current source. See
 [HANDOFF.md](HANDOFF.md) for deployed versus candidate status and
 [REFACTOR_20260924.md](REFACTOR_20260924.md) for refactor verification evidence.
 
 ## Current Shape
 
 CoverMate uses a generated visitor bundle on Vercel. Its source lives in
-`src/visitor/`; `scripts/generate-visitor-bundle.mjs` generates `index.html`
-and `server/asset-versions.json`. The SEO implementation
-serves `/` and `/motor` through `api/page.js`: it reads published CMS metadata
+`src/visitor/`; `scripts/generate-visitor-bundle.mjs` generates the public-only
+`server/visitor-public.html`, full owner `index.html`, and `server/asset-versions.json`.
+The SEO implementation serves `/`, `/motor`, `/articles`, and article detail
+through `api/page.js`: it reads published CMS metadata
 and replaces both initial document heads using `covermate-seo.mjs`. The visual
 body remains client-rendered. Admin login/launcher remain static HTML; owner
-editor routes use the same server wrapper without reading public/draft data.
+editor routes use the same server wrapper with the full owner artifact, without
+reading public/draft data. Fixed-name `Server-Timing` metrics identify published,
+article-feed/detail, and render time without exposing content or account data.
+`api/page.js` and `api/articles.js` are configured for `sin1`, near the existing
+Firestore database in `asia-southeast3`; other functions are unchanged. Region
+changes require deployment. See [the performance audit](PERFORMANCE_AUDIT_20261002.md)
+for measured versus pending-deploy evidence.
 See [SEO](SEO.md) for cache, outage, language and deployment boundaries.
 
 The current visitor bundle is maintained against the product specs, repository docs, Firestore CMS contract, and owner-approved product decisions, including Firebase Auth/Firestore, Admin Analytics, private admin namespace routes, real lead submission paths, and the split between the home page plus the dedicated `/motor` campaign page.
@@ -30,8 +37,8 @@ bundle keeps browser-local caches only as last-known fallback state.
 ```mermaid
 flowchart TD
   Browser["Browser"] --> Vercel["Vercel static hosting"]
-  Vercel --> SEO["/ and /motor: api/page.js"]
-  SEO --> Public["index.html with published CMS head"]
+  Vercel --> SEO["Public pages: api/page.js"]
+  SEO --> Public["server/visitor-public.html with published CMS head"]
   SEO --> Live
   Vercel --> Login["/admin/login/index.html"]
   Vercel --> Launcher["/admin/index.html"]
@@ -66,11 +73,12 @@ flowchart TD
 
 ## Source Surfaces
 
-`src/visitor/*` owns the public visitor site and owner CMS modes, and generates
-`index.html`:
+`src/visitor/*` owns the shared renderer and generates public and owner artifacts:
 
 - `/`
 - `/motor`
+- `/articles`
+- `/articles/:slug`
 - `/#motor`
 - `/#life`
 - `/#motor-focus`
@@ -90,8 +98,12 @@ hydration, and DOM projection. `src/visitor/cms-controller.js` adds the owner
 commands through `withCmsController`: queued draft persistence, save/publish,
 reset, media actions, shortcuts, and edit history. `editor-history.js` owns the
 bounded Draft snapshot history; it does not publish content. Use
-`npm run build:visitor` to regenerate `index.html`; `npm run
-check:visitor-source` verifies the generated artifact matches source.
+`npm run build:visitor` to regenerate both HTML artifacts; `npm run
+check:visitor-source` verifies they match source. Public builds omit the CMS
+controller, owner panel markup/styles, and owner-only render projections using
+explicit checked `COVERMATE_OWNER_*` source boundaries. Never hand-edit or
+maintain a separate public renderer. Shared visitor content stays outside these
+boundaries; changes must pass `scripts/public-bundle-check.mjs` and browser tests.
 
 `home.html` and `home.css` own the new Home projection, composed into the shared
 template without replacing Motor. The generator compacts defaults, CSS, and
@@ -99,7 +111,9 @@ runtime code while keeping authored source readable. Performance and release
 evidence belongs in HANDOFF and the release checks, not this ownership map.
 
 Legacy incoming `/#edit`, `/#admin`, and `/#preview` remain session-gated for
-compatibility, but current admin UI must generate `/admin/...` paths instead.
+compatibility: public builds navigate to the canonical owner route on a full
+load, preserving Motor, language, and UAT context. The same applies to hash
+changes after public boot. Current admin UI must generate `/admin/...` paths.
 
 `/motor` is the dedicated motor-insurance campaign page in the same bundle. It
 has its own local motor-page nav and canonical metadata while reusing shared
@@ -198,7 +212,7 @@ marker restoration/masking, and serialization for maintenance scripts. Scripts
 that read or rewrite `<script type="__bundler/template">` must import this
 module instead of carrying local JSON-string scanners.
 
-`scripts/lib/visitor-source.mjs` owns the `src/visitor/*` to `index.html`
+`scripts/lib/visitor-source.mjs` owns the `src/visitor/*` to public/owner HTML
 composition boundary. Validation and targeted regression scripts that need the
 visitor template/runtime should import this module instead of parsing generated
 `index.html`. It also hashes local image bytes into the generated runtime's

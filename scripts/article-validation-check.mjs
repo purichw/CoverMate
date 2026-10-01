@@ -9,7 +9,7 @@ import {createSeoModel,renderSeoHead} from '../covermate-seo.mjs';
 import {renderPublicPage} from '../server/seo-page.mjs';
 import {articleUrl} from '../article-document.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
-import {articleCanvas,articleField,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
 import {launchChromium,loadPlaywright} from './lib/playwright.mjs';
 
 // Actual repository and public projection, isolated at the Firestore transport.
@@ -94,7 +94,7 @@ if(process.argv.includes('--browser')) {
   await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
   const publish=()=>page.locator('[data-ae=publish]:visible').first();
   const fieldError=key=>page.locator(`[data-field="${key}"]`).locator('..').locator('.ae-field-error');
-  const edit=async()=>{if(page.url()===server.baseUrl+'/admin#articles')await page.reload();else await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await page.locator('[data-article-action=edit][data-id="browser-validation"]:visible').first().click();await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor({timeout:30000});};
+  const edit=async()=>{if(page.url()===server.baseUrl+'/admin#articles')await page.reload();else await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await page.locator('[data-article-action=edit][data-id="browser-validation"]:visible').first().click();await revealArticleControl(page,'.ae-canvas-frame');await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor({timeout:30000});};
   const save=async()=>{await closeSettings(page);await page.locator('[data-ae=save]:visible').first().click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างในคลังแล้ว'}).waitFor();};
   try{
     await edit();assert.ok(await publish().isDisabled());assert.match(await fieldError('title').textContent(),/กรุณา/);
@@ -106,12 +106,12 @@ if(process.argv.includes('--browser')) {
     await page.locator('.ae-basic').scrollIntoViewIfNeeded();await page.screenshot({path:out+'/'+engine+'-desktop-errors.png'});
     await articleField(page,'slug').fill('seo-proof');
     await page.locator('[data-ae=validation-field][data-key=coverAlt]').click();assert.equal(await page.locator('[data-field=coverAlt]').getAttribute('aria-invalid'),'true');
-    await page.locator('[data-field=coverAlt]').fill('รถยนต์บนถนนเลียบชายฝั่ง');
-    await page.locator('[data-field=figure-alt-0]').fill('อุปกรณ์ตรวจสุขภาพบนโต๊ะ');await closeSettings(page);
+    await articleField(page,'coverAlt').fill('รถยนต์บนถนนเลียบชายฝั่ง');
+    await articleField(page,'figure-alt-0').fill('อุปกรณ์ตรวจสุขภาพบนโต๊ะ');await closeSettings(page);
     assert.ok(await publish().isEnabled());
     await articleField(page,'publishedAt').fill('1800-01-01T10:00');assert.ok(await publish().isDisabled());assert.match(await fieldError('publishedAt').textContent(),/วันที่/);
     await articleField(page,'publishedAt').fill('');assert.ok(await publish().isEnabled());
-    await page.locator('[data-ae=add-takeaway]').click();
+    await articleTool(page,'add-takeaway');
     const summaryDialog=page.getByRole('dialog',{name:'สรุปแบบหลอดไฟ',exact:true});
     await summaryDialog.locator('[data-field=title]').fill('');await summaryDialog.locator('[data-field=items]').fill('ตรวจความคุ้มครองที่มีอยู่');
     assert.equal(await summaryDialog.locator('[data-field=title]').getAttribute('aria-required'),'false','Summary title can still be intentionally hidden');

@@ -4,6 +4,7 @@ import { parseBundlerTemplateParts, restoreTemplateScriptMarkers } from "./lib/b
 
 const htmlFiles = [
   "index.html",
+  "server/visitor-public.html",
   "admin/index.html",
   "admin/login/index.html",
   "admin/analytics/index.html",
@@ -112,10 +113,11 @@ for (const file of htmlFiles) {
       if (templateJson.includes("__COVERMATE_RESOURCE_") && !html.includes("restoreTemplateResourceRefs")) {
         failures.push(`${file}: embedded template masks resource refs but the wrapper does not restore them`);
       }
-      if (file === "index.html" && !template.includes("const DEFAULTS =")) {
+      const visitorBundle = ["index.html", "server/visitor-public.html"].includes(file);
+      if (visitorBundle && !template.includes("const DEFAULTS =")) {
         failures.push(`${file}: embedded template is missing DEFAULTS payload`);
       }
-      if (file === "index.html") {
+      if (visitorBundle) {
         const firstScript = restoreTemplateScriptMarkers(template).match(/<script\s+src="([^"]+)"/i)?.[1];
         if (!/^\/assets\/visitor\/article-reader\.js\?v=[a-f0-9]{16}$/.test(firstScript || '')) {
           failures.push(`${file}: article reader must load before the component runtime`);

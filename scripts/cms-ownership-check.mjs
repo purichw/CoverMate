@@ -36,6 +36,17 @@ assert.ok(withConsentCopy.cookieConsent.reject.th);
 withConsentCopy.cookieConsent.title={th:'หัวข้อคุกกี้จาก CMS',en:'Owner cookie heading'};
 assert.deepEqual(migrateCmsContent(withConsentCopy).cookieConsent,withConsentCopy.cookieConsent,'Consent CMS copy survives normalization');
 assert.deepEqual(migrateCmsContent(withConsentCopy).sections,migrated.sections,'Cookie copy does not rewrite form or privacy content');
+const previousCookieCopy=structuredClone(migrated);
+previousCookieCopy.cmsContentVersion=24;
+previousCookieCopy.cookieConsent.title={th:'คุกกี้วิเคราะห์การใช้งาน',en:'Analytics cookies'};
+previousCookieCopy.cookieConsent.body={th:'ขอใช้ Google Analytics เพื่อปรับปรุงเว็บไซต์ คุณปฏิเสธได้และยังใช้งานได้ตามปกติ',en:'May we use Google Analytics to improve this site? You can decline and still use everything.'};
+const refreshedCookieCopy=migrateCmsContent(previousCookieCopy);
+assert.deepEqual(refreshedCookieCopy.cookieConsent,migrated.cookieConsent,'Previous bundled wording refreshes in both languages; disclosure and action labels remain unchanged');
+assert.deepEqual(refreshedCookieCopy.sections,previousCookieCopy.sections,'Consent wording leaves unrelated CMS content intact');
+assert.deepEqual(migrateCmsContent(refreshedCookieCopy),refreshedCookieCopy,'Consent wording refresh is idempotent');
+previousCookieCopy.cookieConsent.title={th:'ข้อความของเจ้าของ',en:''};
+previousCookieCopy.cookieConsent.body={th:'',en:'Our own explanation'};
+assert.deepEqual(migrateCmsContent(previousCookieCopy).cookieConsent,previousCookieCopy.cookieConsent,'Custom consent copy and deliberate blanks survive the wording refresh');
 
 const v5 = structuredClone(migrated);
 v5.cmsContentVersion = 5;

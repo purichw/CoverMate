@@ -96,11 +96,19 @@ export function createPublishedReader({ fetcher = fetch, now = Date.now, timeout
   };
 }
 
-export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readArticle = async () => null, readArticles = null, readHtml = () => fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') } = {}) {
+export function createPageHandler({ readPublished = createPublishedReader({ includeState: true }), readArticle = async () => null, readArticles = null, readHtml = ({ privatePage } = {}) => fs.readFileSync(new URL(privatePage ? '../index.html' : './visitor-public.html', import.meta.url), 'utf8') } = {}) {
   // The same legacy motor defaults as the visitor, used only for absent fields.
   const source = fs.readFileSync(new URL('../src/visitor/defaults.js', import.meta.url), 'utf8');
   const motorDefaults = JSON.parse(source.slice(source.indexOf('{'), source.lastIndexOf('}') + 1)).motorPage;
   return async (req, res) => {
+    const startedAt = performance.now(), timings = [];
+    const measure = async (name, read) => {
+      const start = performance.now();
+      try { return await read(); }
+      finally { timings.push([name, performance.now() - start]); }
+    };
+    const sendTiming = () => res.setHeader('Server-Timing', [...timings, ['total', performance.now() - startedAt]]
+      .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`).join(', '));
     res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     const sendError = (status, config = {}) => {
@@ -108,6 +116,7 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
       if (status < 500) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
       res.setHeader('Cache-Control', 'private, no-store');
       const language = new URL(req.url, 'https://covermateinsurance.com').searchParams.get('lang');
+      sendTiming();
       res.end(req.method === 'HEAD' ? '' : renderErrorPage(status, { config, lang: language, published:!!config?.sections, retrySafe:['GET','HEAD'].includes(req.method) }));
     };
     if (!['GET', 'HEAD'].includes(req.method)) {
@@ -128,8 +137,8 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
       // The public site and article feed are independent reads. Keep failures
       // separate so Home can still render when the article service is unavailable.
       const [published, articles] = await Promise.all([
-        owner ? null : readPublished(environment.siteId),
-        !owner && readArticles ? articleReadWithinDeadline(() => readArticles(environment.siteId))
+        owner ? null : measure('published', () => readPublished(environment.siteId)),
+        !owner && readArticles ? measure('articles', () => articleReadWithinDeadline(() => readArticles(environment.siteId)))
           .then(feed => ({feed}), error => ({error})) : null
       ]);
       const state = published && (validStateDoc(published) ? published : { config: published, text: {} });
@@ -142,16 +151,17 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
       }
       let article=null;
       if(articleSlug) {
-        const payload=await articleReadWithinDeadline(()=>readArticle(environment.siteId,articleSlug));
+        const payload=await measure('detail', () => articleReadWithinDeadline(()=>readArticle(environment.siteId,articleSlug)));
         article=projectArticleDetail(payload,{slug:articleSlug,lang:url.searchParams.get('lang')==='en'?'en':'th',mediaUrl:value=>{
           const safe=cmsMedia(value);return safe ? versionedAsset(/^(https?:|\/)/i.test(safe)?safe:'/'+safe) : '';
         }});
         if(!article.available) {sendError(404,loadedConfig);return;}
       }
       rendering = true;
-      const html = renderPublicPage(readHtml(), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, article, articleFeed, publishedState: state, siteId: environment.siteId });
+      const html = await measure('render', () => renderPublicPage(readHtml({ privatePage: owner }), state?.config || {}, { path: route, lang: url.searchParams.get('lang'), privatePage: owner, noindex, motorDefaults, article, articleFeed, publishedState: state, siteId: environment.siteId }));
       if (!noindex && !articleSlug && !readArticles) res.setHeader('Cache-Control', PUBLIC_HTML_CACHE_CONTROL);
       res.statusCode = 200;
+      sendTiming();
       res.end(req.method === 'HEAD' ? '' : html);
     } catch {
       // Recovery UI is independent of the failing visitor bundle/CMS request.

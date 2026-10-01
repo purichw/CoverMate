@@ -9,7 +9,7 @@ import {homeArticleFixture} from './fixtures/home-articles/feed.mjs';
 export async function startHomeArticlesPreview({state,feed = structuredClone(homeArticleFixture),details = null} = {}) {
   state ||= {config:JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js','utf8')+'\nJSON.stringify(DEFAULTS)')),text:{}};
   const handler=createPageHandler({readPublished:async()=>state,readArticle:async(_site,slug)=>({available:true,sample:true,item:details?.items?.find(item=>item.slug===slug)}),readHtml:()=>{
-    const html=fs.readFileSync('index.html','utf8');
+    const html=fs.readFileSync('server/visitor-public.html','utf8');
     const seed='<script type="application/json" id="covermate-article-feed">'+JSON.stringify(feed).replace(/</g,'\\u003c')+'</script>';
     return replaceBundlerTemplate(html,extractBundlerTemplate(html).replace('</head>',seed+'</head>'));
   }});

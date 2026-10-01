@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {normalizeArticleDocument} from '../../article-document.mjs';
+import {articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './article-editor-ui.mjs';
 
 // Start with the empty CMS editor: no injected JSON, imported draft or sample article.
 export const authoredArticle = {
@@ -15,10 +16,10 @@ export const authoredArticle = {
 };
 
 export async function authorRichArticle(page,{out,engine}) {
-  await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
+  await (await revealArticleControl(page,'.ae-canvas-frame')).scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true});
-  const field=key=>page.locator(`[data-field="${key}"]`);
-  const tool=action=>page.locator(`[data-ae="${action}"]:visible`).first().click();
+  const field=key=>articleField(page,key);
+  const tool=action=>articleTool(page,action);
   const modalField=key=>page.locator(`.ae-modal-form [data-field="${key}"]`);
   const submit=()=>page.locator('.ae-modal-form [type=submit]').click();
   const cropBundledImage=async()=>{
@@ -40,7 +41,7 @@ export async function authorRichArticle(page,{out,engine}) {
     return result;
   };
   const choose=async(name,label)=>{
-    await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();
+    await (await revealArticleControl(page,`.cm-select-trigger[aria-label="${name}"]`)).click();
     await page.getByRole('option',{name:label,exact:true}).click();
   };
   const a=authoredArticle;
@@ -53,14 +54,14 @@ export async function authorRichArticle(page,{out,engine}) {
   const mac=await page.evaluate(()=>/Mac/.test(navigator.platform));
   await body.locator('h4').click();await page.keyboard.press(mac?'Meta+ArrowLeft':'Home');await page.keyboard.press(mac?'Meta+Shift+ArrowRight':'Shift+End');
   assert.equal(await body.evaluate(el=>el.ownerDocument.getSelection().toString()),a.subheading,'Keyboard selection covers the heading');
-  await page.locator('[data-text-size]').fill(String(a.typography.fontSize));
-  await page.locator('[data-text-size-mobile]').fill(String(a.typography.fontSizeMobile));await tool('apply-text-size');
+  await (await revealArticleControl(page,'[data-text-size]')).fill(String(a.typography.fontSize));
+  await (await revealArticleControl(page,'[data-text-size-mobile]')).fill(String(a.typography.fontSizeMobile));await tool('apply-text-size');
   const sizedHeading=await body.evaluate(el=>el.editor.getJSON().content.find(node=>node.type==='heading'&&node.attrs.level===4));
   assert.equal(sizedHeading.content[0].marks?.find(mark=>mark.type==='textStyle')?.attrs.fontSize,a.typography.fontSize,'Toolbar applies the entered font size to the selected heading: '+JSON.stringify(sizedHeading));
   await tool('block-style');await modalField('lineHeight').fill(String(a.typography.lineHeight));await submit();
   await assertAuthoredTypography(body);
   await body.locator('p').filter({hasText:a.point}).click();
-  await page.locator('[data-ae=callout][data-kind=keypoints]').click();
+  await (await revealArticleControl(page,'[data-ae=callout][data-kind=keypoints]')).click();
   await modalField('title').fill('สิ่งที่ควรรู้ก่อนเลือก');await submit();
   await body.locator('.article-callout p').filter({hasText:a.point}).click();await tool('bulletList');
   await body.locator('li p').filter({hasText:a.point}).click();
@@ -69,7 +70,7 @@ export async function authorRichArticle(page,{out,engine}) {
   await body.locator('p').filter({hasText:a.quote}).click();await tool('quote');
   await modalField('attribution').fill('ทีม CoverMate');await submit();
   await body.locator('p').filter({hasText:paragraphs.at(-1)}).click();
-  await page.locator('[data-ae=callout][data-kind=feature]').click();
+  await (await revealArticleControl(page,'[data-ae=callout][data-kind=feature]')).click();
   await modalField('title').fill('ประกันสุขภาพแบบเหมาจ่าย');await submit();
   await openArticleSettings(page);
   await tool('cover');await modalField('alt').fill('ภาพประกอบบทความที่เลือกจาก Editor');
@@ -83,7 +84,7 @@ export async function authorRichArticle(page,{out,engine}) {
   const canvas=page.frameLocator('.ae-canvas-frame'),sameEditor=await body.elementHandle();
   await canvas.locator('.ad-takeaways').waitFor();
   await canvas.locator('.ad-takeaways h2').click();
-  await page.locator('[data-ae=clear-takeaways]').click();
+  await tool('clear-takeaways');
   await canvas.locator('.ad-takeaways').waitFor({state:'detached'});
   assert.equal(await field('takeaways').inputValue(),'');
   assert.equal(await field('takeawayNote').inputValue(),a.notes.takeawayNote,'Removing the summary preserves its disabled note for reuse');
@@ -130,7 +131,7 @@ export function assertPersistedArticle(actual,expected,{published=false}={}) {
 }
 
 export async function assertEditorArticle(page) {
-  await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
+  await (await revealArticleControl(page,'.ae-canvas-frame')).scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true}),a=authoredArticle;
   assert.equal(await body.locator('h2').innerText(),a.heading);
   assert.equal(await body.locator('h4').innerText(),a.subheading);
@@ -145,11 +146,9 @@ export async function assertEditorArticle(page) {
 }
 
 export async function openArticleSettings(page){
-  await page.locator('.ae-settings').waitFor({state:'attached'});
-  if(!await page.locator('.ae-settings').isVisible())await page.locator('.ae-actions [data-ae=settings]').click();
-  while(await page.locator('.ae-settings details:not([open])').count())await page.locator('.ae-settings details:not([open]) > summary').first().click();
+  await openSettings(page);
 }
-export async function closeArticleSettings(page){if(await page.locator('.ae-settings-dialog[open]').count())await page.locator('.ae-settings-dialog .ae-done').click();}
+export async function closeArticleSettings(page){await closeSettings(page);}
 
 export async function assertReaderArticle(surface,expected) {
   const a=authoredArticle,prose=surface.locator('.ad-prose .cm-article-prose:visible');

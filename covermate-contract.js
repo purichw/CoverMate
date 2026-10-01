@@ -447,7 +447,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 24;
+const CMS_CONTENT_VERSION = 25;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -677,8 +677,8 @@ const CMS_CONTENT_FIELDS = [
     ['statement',"",""],
     ['skip','ข้ามไปยังเนื้อหา','Skip to content']
   ].map(([key,th,en])=>({path:'errorPage.'+key,label:key.replace(/([A-Z])/g,' $1'),group:'Error page',localized:true,seed:{th,en}})),
-  {path:'cookieConsent.title',label:'Banner heading',group:'Cookie consent',localized:true,seed:{th:'คุกกี้วิเคราะห์การใช้งาน',en:'Analytics cookies'}},
-  {path:'cookieConsent.body',label:'Banner explanation',group:'Cookie consent',localized:true,seed:{th:'ขอใช้ Google Analytics เพื่อปรับปรุงเว็บไซต์ คุณปฏิเสธได้และยังใช้งานได้ตามปกติ',en:'May we use Google Analytics to improve this site? You can decline and still use everything.'}},
+  {path:'cookieConsent.title',label:'Banner heading',group:'Cookie consent',localized:true,seed:{th:'ช่วยให้เว็บไซต์ของเราใช้งานดีขึ้น',en:'Help us improve this website'}},
+  {path:'cookieConsent.body',label:'Banner explanation',group:'Cookie consent',localized:true,seed:{th:'เมื่อคุณอนุญาต เราจะใช้คุกกี้ Google Analytics เพื่อเข้าใจการใช้งานและปรับปรุงให้ค้นหาข้อมูลบนเว็บไซต์ได้ง่ายขึ้น',en:'With your permission, we’ll use Google Analytics cookies to understand how the website is used and make information easier to find.'}},
   {path:'cookieConsent.accept',label:'Allow analytics',group:'Cookie consent',localized:true,seed:{th:'อนุญาต',en:'Allow'}},
   {path:'cookieConsent.reject',label:'Decline analytics',group:'Cookie consent',localized:true,seed:{th:'ไม่อนุญาต',en:'Decline'}},
   {path:'cookieConsent.settings',label:'Footer settings button',group:'Cookie consent',localized:true,seed:{th:'ตั้งค่าคุกกี้',en:'Cookie settings'}},
@@ -1065,6 +1065,17 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Refresh only the previous bundled wording; owner edits and blanks stay intact.
+  if (previousVersion < 25) {
+    const oldCookieCopy = {
+      title: {th:'คุกกี้วิเคราะห์การใช้งาน',en:'Analytics cookies'},
+      body: {th:'ขอใช้ Google Analytics เพื่อปรับปรุงเว็บไซต์ คุณปฏิเสธได้และยังใช้งานได้ตามปกติ',en:'May we use Google Analytics to improve this site? You can decline and still use everything.'}
+    };
+    for (const field of CMS_CONTENT_FIELDS.filter(field => ['cookieConsent.title','cookieConsent.body'].includes(field.path))) {
+      const key = field.path.split('.')[1];
+      for (const lang of ['th','en']) if (cmsGet(next,field.path+'.'+lang) === oldCookieCopy[key][lang]) cmsSet(next,field.path+'.'+lang,field.seed[lang]);
+    }
+  }
   if (previousVersion < 24) CMS_CONTENT_FIELDS.filter(field => field.path === 'articleDetail.xShare').forEach(field => {
     for (const lang of ['th','en']) if (cmsGet(next,field.path+'.'+lang) === undefined) cmsSet(next,field.path+'.'+lang,field.seed[lang]);
   });

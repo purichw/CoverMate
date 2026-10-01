@@ -32,7 +32,7 @@
     "build:media": "node scripts/build-media-editor.mjs",
     "check:visitor-source": "node scripts/generate-visitor-bundle.mjs --check",
     "check:contracts": "node scripts/contract-regression-check.mjs",
-    "check:bundles": "npm run check:visitor-source && node scripts/validate-bundles.mjs",
+    "check:bundles": "npm run check:visitor-source && node scripts/validate-bundles.mjs && node scripts/public-bundle-check.mjs",
     "check:ci": "node scripts/ci-check.mjs",
     "check:security": "node scripts/security-contract-check.mjs",
     "check:performance": "node scripts/performance-budget-check.mjs",
