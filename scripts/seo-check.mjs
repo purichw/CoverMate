@@ -6,6 +6,7 @@ import { createPageHandler, createPublishedReader, renderPublicPage } from '../s
 import { extractBundlerTemplate } from './lib/bundler-template.mjs';
 import { resolveCoverMateEnvironment } from '../covermate-environment.mjs';
 import { toFirestoreFields } from './lib/uat-env.mjs';
+import { versionedAssetUrl } from '../covermate-contract.js';
 
 const config = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)'));
 config.seo.title = { th: 'Home TH', en: 'Home EN' };
@@ -16,6 +17,12 @@ const html = fs.readFileSync('index.html', 'utf8');
 const bootImage = (media, lang = 'th') => renderPublicPage(html,
   { ...config, brand: { ...config.brand, media } }, { path: '/', lang }).match(/<img data-covermate-boot-logo[^>]*>/)?.[0];
 assert.match(bootImage({}, 'en'), /covermate-advisory-logo-en\.png/);
+const imageVersions = JSON.parse(fs.readFileSync('server/asset-versions.json', 'utf8'));
+for (const lang of ['th', 'en']) {
+  const image = 'assets/brand/covermate-advisory-logo-' + lang + '.png';
+  const expected = versionedAssetUrl(image, imageVersions, 'https://covermateinsurance.com');
+  assert.ok(bootImage({headerLogo:{[lang]:image}},lang).includes('src="'+expected+'"'), 'Boot and header share one versioned image URL');
+}
 assert.match(bootImage({ headerLogo: { th: 'https://example.com/th.png', en: 'https://example.com/en.png' } }, 'en'), /src="https:\/\/example.com\/en\.png"/);
 assert.match(bootImage({ headerLogo: 'https://example.com/legacy.png' }), /legacy\.png/);
 for (const logo of ['', null, 'javascript:alert(1)']) {
@@ -101,6 +108,35 @@ assert.ok(!seeded.body.includes('</script><script>window.injected=true'));
 assert.ok(!seeded.body.includes('must-not-embed'), 'Embed public config/text only, not state metadata');
 const ownerSeed = response(); await handler({ method: 'GET', url: '/admin/edit', headers: {} }, ownerSeed);
 assert.ok(!ownerSeed.body.includes('id="covermate-published-state"'), 'Never seed public content into owner workspace');
+for (const res of [seeded, ownerSeed]) {
+  assert.match(res.body.split('</head>')[0], /rel="preload" as="script" href="\/assets\/vendor\/react-18\.3\.1\.min\.js"/);
+  assert.match(res.body.split('</head>')[0], /rel="preload" as="script" href="\/assets\/vendor\/react-dom-18\.3\.1\.min\.js"/);
+}
+assert.match(seeded.body.split('</head>')[0], /rel="modulepreload" href="\/covermate-public\.mjs"/);
+assert.doesNotMatch(ownerSeed.body, /rel="modulepreload" href="\/covermate-public\.mjs"/, 'Owner boot does not prefetch the public adapter');
+
+// Slow, independent CMS and article reads must overlap, not form a waterfall.
+const started = [], siteRead = Promise.withResolvers(), feedRead = Promise.withResolvers();
+const concurrentHandler = createPageHandler({
+  readPublished: () => { started.push('site'); return siteRead.promise; },
+  readArticles: () => { started.push('articles'); return feedRead.promise; }
+});
+const concurrentResponse = response();
+const concurrentRequest = concurrentHandler({method:'GET',url:'/',headers:{}},concurrentResponse);
+await Promise.resolve();
+assert.deepEqual(started, ['site', 'articles'], 'Both reads start before either resolves');
+siteRead.resolve(publishedState);
+feedRead.resolve({available:true,settings:{enabled:true,showHome:true,showNavigation:true},items:[]});
+await concurrentRequest;
+assert.equal(concurrentResponse.statusCode, 200);
+assert.equal(concurrentResponse.headers['Cache-Control'], 'private, no-store', 'Article publication freshness is unchanged');
+for (const route of ['/', '/articles', '/articles/example', '/admin/edit']) {
+  let feedReads = 0;
+  const res = response();
+  await createPageHandler({readPublished:async()=>publishedState,readArticles:async()=>{feedReads++;throw new Error('Article service unavailable');}})({method:'GET',url:route,headers:{}},res);
+  assert.equal(res.statusCode, route.startsWith('/articles') ? 503 : 200, route);
+  assert.equal(feedReads, route.startsWith('/admin') ? 0 : 1, 'Owner rendering never reads the public feed');
+}
 const missingRoute = response(); await handler({ method: 'GET', url: '/not-a-route', headers: {} }, missingRoute);
 assert.equal(missingRoute.statusCode, 404);
 const offline = response(); await createPageHandler({ readPublished: async () => { throw new Error('offline'); } })({ method: 'GET', url: '/', headers: {} }, offline);

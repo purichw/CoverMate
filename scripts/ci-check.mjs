@@ -87,6 +87,7 @@ const commands = [
   ["npm", ["run", "check:customer-email:template"]],
   ["npm", ["run", "check:customer-email:browser"]],
   ["npm", ["run", "check:performance"]],
+  ["node", ["scripts/startup-performance-check.mjs"]],
   ["git", ["diff", "--check"]]
 ];
 

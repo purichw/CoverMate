@@ -75,7 +75,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       <form class="article-toolbar" role="search" aria-label="ค้นหาและกรองบทความ" data-filters-open="${mobileFiltersOpen}">
         <label class="article-search"><span class="article-sr">ค้นหาบทความ</span>${icon('search')}<input name="query" type="search" placeholder="ค้นหาชื่อบทความ..." value="${esc(s.query)}" autocomplete="off"></label>
         <div class="article-filters" id="articleFilterFields"></div>
-        <details class="article-extra-filters"><summary>ผู้เขียน / ช่วงวันที่บทความ</summary><div class="article-date-filters"></div></details>
+        <details class="article-extra-filters" open><summary>ผู้เขียน / ช่วงวันที่บทความ</summary><div class="article-date-filters"></div></details>
         <div class="article-toolbar-actions">${button('filters',icon('sliders')+'<span data-filter-count></span>',`aria-label="ตัวกรองเพิ่มเติม" title="ตัวกรองเพิ่มเติม" aria-controls="articleFilterFields" aria-expanded="${mobileFiltersOpen}"`,'article-mobile-filter-button')}${button('reset', icon('close'), 'aria-label="ล้างตัวกรอง" title="ล้างตัวกรอง"')}${button('reload', icon('refresh'), 'aria-label="โหลดรายการใหม่" title="โหลดรายการใหม่"')}</div>
       </form>
       <div class="article-results" aria-busy="true"></div>
