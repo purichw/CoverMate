@@ -25,7 +25,7 @@ export async function revealArticleControl(page,selector){
   if(await control.evaluate(el=>Boolean(el.closest('.ae-settings,.ae-settings-panel'))))await ensureSettingsVisible(page);
   else{
     await closeSettings(page);
-    if(await control.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," ae-basic ")]').count()&&!await control.isVisible())await page.locator('[data-ae=toggle-basic]').click();
+    if(await control.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," ae-basic ")]').count()&&await page.locator('[data-ae=toggle-basic]').getAttribute('aria-expanded')==='false')await page.locator('[data-ae=toggle-basic]').click();
   }
   await revealDetails(control);
   return control;

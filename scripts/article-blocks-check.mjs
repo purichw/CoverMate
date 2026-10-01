@@ -130,7 +130,9 @@ if(process.argv.includes('--browser')){
       await tool('preview');const preview=page.frameLocator('.ae-preview-frame').locator('.ad-page');await preview.locator('.article-quote-card').waitFor();
       await page.locator(`.ae-preview-modes [data-ae=${mode}]`).click();
       await preview.evaluate(el=>el.ownerDocument.fonts.ready);
-      assert.deepEqual((await styles(preview)).map(({width,...rest})=>rest),(await styles(canvas)).map(({width,...rest})=>rest),mode+' Preview uses the same authored blocks and typography');
+      const previewWidth=await preview.evaluate(el=>el.ownerDocument.defaultView.innerWidth);
+      await readerPage.setViewportSize({width:previewWidth,height:1000});await readerPage.evaluate(()=>document.fonts.ready);
+      assert.deepEqual(await styles(preview),await styles(readerPage.locator('.ad-page')),mode+' Preview and public blocks match text, width and typography at the Preview width');
       await page.locator('.ae-preview-dialog [data-ae=close]').click();
     }
     await readerPage.close();report.checks.push('Desktop/mobile Editor, Preview and public reader share authored blocks, styling and editor/reader geometry');
