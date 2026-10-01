@@ -70,7 +70,7 @@
 .cm-calc-control { display:flex; min-width:0; border:1px solid #cfcdc3; border-radius:6px; background:#fffdfb; overflow:hidden; }
 .cm-calc-control:focus-within { outline:2px solid var(--calc-action); outline-offset:3px; }
 .cm-calculator .cm-calc-control :is(input,select) { width:100%; min-width:0; border:0!important; border-radius:0!important; background:transparent; padding:10px 12px; height:46px; font-size:16px!important; line-height:1.5; color:#252521; outline:none; }
-.cm-calc-control > span { flex:none; display:grid; place-items:center; padding:0 10px; border-left:1px solid #e7e4da; background:#f8f5ef; color:#6b685e; font-size:13px; }
+.cm-calc-control > span:not(.cm-select-shell) { flex:none; display:grid; place-items:center; padding:0 10px; border-left:1px solid #e7e4da; background:#f8f5ef; color:#6b685e; font-size:13px; }
 .cm-calc-more { border-top:1px solid #e5e1d6; margin-top:auto; }
 .cm-calc-more > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; color:var(--calc-action); font-size:14px; font-weight:600; list-style:none; cursor:pointer; }
 .cm-calc-more > summary::-webkit-details-marker { display:none; }
@@ -148,7 +148,7 @@
   .cm-calc-tooltip summary { width:32px; height:44px; }
   .cm-calc-tooltip > p { right:auto; left:-50px; width:200px; }
   .cm-calculator .cm-calc-control :is(input,select) { padding:8px; }
-  .cm-calc-control > span { font-size:11px; padding-inline:6px; }
+  .cm-calc-control > span:not(.cm-select-shell) { font-size:11px; padding-inline:6px; }
   .cm-calc-result-heading { gap:12px; }
   .cm-calc-result h3 { font-size:20px; }
   .cm-calc-result output { font-size:36px; }

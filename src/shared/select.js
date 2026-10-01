@@ -1,5 +1,6 @@
 // Native selects remain the form/state owners. The custom surface only dispatches
 // their existing events; React-owned selects must already have a cm-select-shell.
+import {createElement,ChevronDown,Check} from 'lucide';
 const controls = new Map();
 let openControl, popup, active = -1, serial = 0, search = '', searchedAt = 0;
 const eligible = select => !select.multiple && select.size <= 1;
@@ -96,6 +97,7 @@ function open(control) {
     row.setAttribute('aria-selected', String(option.selected));
     row.setAttribute('aria-disabled', String(!enabled(option)));
     row.textContent = option.label;
+    if(option.selected)row.append(createElement(Check,{'aria-hidden':'true',focusable:'false',class:'cm-select-option-icon'}));
     popup.append(row);
   });
   // Stay inside a modal's DOM for its inert/focus boundary, but use the top layer
@@ -220,7 +222,7 @@ function enhance(select) {
   button.setAttribute('aria-controls', menuId);
   const text = document.createElement('span');
   text.className = 'cm-select-value';
-  button.append(text);
+  button.append(text,createElement(ChevronDown,{'aria-hidden':'true',focusable:'false',class:'cm-select-chevron'}));
   shell.append(button);
   select.tabIndex = -1;
   select.setAttribute('aria-hidden', 'true');

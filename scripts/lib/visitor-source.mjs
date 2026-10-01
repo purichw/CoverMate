@@ -57,7 +57,7 @@ export function readContactStyleAssets() {
 }
 
 export function readSelectAsset() {
-  const code = transformSync(readText(new URL('src/shared/select.js', ROOT)), { minify:true, format:'esm', target:'es2022' }).code;
+  const code = buildSync({entryPoints:[fileURLToPath(new URL('src/shared/select.js', ROOT))],bundle:true,write:false,minify:true,format:'esm',target:'es2022'}).outputFiles[0].text;
   const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
