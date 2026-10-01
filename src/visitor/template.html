@@ -1583,10 +1583,10 @@ textarea.input { min-height: 90px; resize: vertical; }
   <div class="cm-footer-inner">
     <div class="cm-footer-grid" data-cm-footer-grid="true">
       <div class="cm-footer-brand">
-        <sc-if value="{{ hasFooterLogo }}"><img class="cm-footer-logo" sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" data-cms-image="{{ footerLogoPath }}"></sc-if>
+        <sc-if value="{{ hasFooterLogo }}"><img class="cm-footer-logo" sc-camel-src="{{ footerBrandLogo }}" alt="{{ brandLogoAlt }}" data-cms-image="{{ footerLogoPath }}" loading="lazy" decoding="async" width="1200" height="375"></sc-if>
         <p class="cm-footer-tagline" data-cms-copy="footer.tagline">{{ footTagline }}</p>
         <div class="cm-footer-advisor">
-          <sc-if value="{{ hasAdvisorPhoto }}"><img data-cms-image="brand.media.photo" sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}"></sc-if>
+          <sc-if value="{{ hasAdvisorPhoto }}"><img data-cms-image="brand.media.photo" sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" loading="lazy" decoding="async"></sc-if>
           <div><p class="cm-footer-name" data-cms-copy="brand.fullName">{{ brandFull }}</p><p class="cm-footer-credential" data-cms-copy="brand.credential">{{ brandCred }}</p></div>
         </div>
       </div>
@@ -1594,11 +1594,11 @@ textarea.input { min-height: 90px; resize: vertical; }
         <div class="cm-footer-heading"><span class="{{ footerIcons.licence.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.licence.image }}"><img sc-camel-src="{{ footerIcons.licence.image }}" alt="" data-cms-image="{{ footerIcons.licence.path }}"></sc-if><sc-if value="{{ !footerIcons.licence.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.licence.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.licenceHeading">{{ footerLicenceHeading }}</h3><p data-cms-copy="footer.licenceHelper">{{ footerCopy.licenceHelper }}</p></div></div>
         <div class="cm-footer-licence-list">
           <sc-if value="{{ hasLifeLicence }}"><div class="cm-footer-licence">
-            <sc-if value="{{ hasLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" data-cms-image="licences.life.logo"></span></sc-if>
+            <sc-if value="{{ hasLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" data-cms-image="licences.life.logo" loading="lazy" decoding="async" width="52" height="54"></span></sc-if>
             <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerLifeLabel }}</span><span>{{ footerLifeNumber }}</span></span>
           </div></sc-if>
           <sc-if value="{{ hasNonLifeLicence }}"><div class="cm-footer-licence">
-            <sc-if value="{{ hasNonLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" data-cms-image="licences.nonLife.logo"></span></sc-if>
+            <sc-if value="{{ hasNonLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" data-cms-image="licences.nonLife.logo" loading="lazy" decoding="async" width="52" height="54"></span></sc-if>
             <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerNonLifeLabel }}</span><span>{{ footerNonLifeNumber }}</span></span>
           </div></sc-if>
         </div>

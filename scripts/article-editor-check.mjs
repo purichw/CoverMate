@@ -178,7 +178,8 @@ if(process.argv.includes('--browser')) {
     const choose=async(name,label)=>{await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();await page.getByRole('option',{name:label,exact:true}).click();};
     await choose('ปักหมุด','ปักหมุดหน้ารวม');assert.equal(await page.locator('.article-table tbody tr').count(),1);
     await page.locator('[name=query]').fill('policy-check');assert.equal(await page.locator('.article-table tbody tr').count(),1);
-    await page.locator('.article-extra-filters summary').click();
+    assert.equal(await page.locator('.article-extra-filters').evaluate(el=>el.open),true,'Author/date filters are expanded by default');
+    for(const name of ['dateFrom','dateTo']) assert.equal(await page.locator(`[name=${name}]`).evaluate(el=>getComputedStyle(el).textAlign),'center');
     await page.locator('[name=dateFrom]').fill('2026-09-15');await page.locator('[name=dateTo]').fill('2026-09-15');
     assert.equal(await page.locator('.article-table tbody tr').count(),1);await fit();
     await page.screenshot({path:out+'/'+engine+'-mobile-filter.png'});

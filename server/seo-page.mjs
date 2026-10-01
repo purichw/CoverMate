@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
 import { resolveCoverMateEnvironment, isVercelPreviewHost } from '../covermate-environment.mjs';
-import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy, cmsMedia } from '../covermate-contract.js';
+import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy, cmsMedia, versionedAssetUrl } from '../covermate-contract.js';
 import {articleDetailSlug,projectArticleDetail} from '../src/visitor/article-detail.mjs';
 import { extractBundlerTemplate, replaceBundlerTemplate } from './bundler-template.mjs';
 import { renderErrorPage } from './error-page.mjs';
@@ -37,10 +37,13 @@ export function renderPublicPage(html, config, options) {
   const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let logoUrl = '';
   try {
-    if (typeof logo === 'string' && logo.trim() && ['http:', 'https:'].includes(new URL(logo, 'https://covermateinsurance.com/').protocol)) logoUrl = versionedAsset(logo.trim());
+    if (typeof logo === 'string' && logo.trim() && ['http:', 'https:'].includes(new URL(logo, 'https://covermateinsurance.com/').protocol)) logoUrl = versionedAssetUrl(logo.trim(), assetVersions, 'https://covermateinsurance.com');
   } catch { /* A missing or invalid logo keeps a text identity. */ }
   rendered = rendered.replace(/<img data-covermate-boot-logo[^>]*>/,
     '<img data-covermate-boot-logo data-published' + (logoUrl ? ' src="' + escape(logoUrl) + '"' : ' hidden') + ' width="1200" height="375" alt="CoverMate">');
+  // Prefetch the public adapter without executing it. Classic-script preloads
+  // are omitted because WebKit can retain failed preloads across Retry.
+  if (!options?.privatePage) rendered = rendered.replace('</head>', '<link rel="modulepreload" href="/covermate-public.mjs">\n</head>');
   if (options?.publishedState && !options.privatePage) {
     const { config, text } = sanitizeStateDoc(options.publishedState);
     const snapshot = JSON.stringify({ siteId: options.siteId, state: { config, text } })
@@ -122,13 +125,19 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
     if (noindex || !readArticles && (route === '/articles' || articleSlug)) res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     let loadedConfig, rendering = false;
     try {
-      const published = owner ? null : await readPublished(environment.siteId);
+      // The public site and article feed are independent reads. Keep failures
+      // separate so Home can still render when the article service is unavailable.
+      const [published, articles] = await Promise.all([
+        owner ? null : readPublished(environment.siteId),
+        !owner && readArticles ? articleReadWithinDeadline(() => readArticles(environment.siteId))
+          .then(feed => ({feed}), error => ({error})) : null
+      ]);
       const state = published && (validStateDoc(published) ? published : { config: published, text: {} });
       loadedConfig = state?.config;
       let articleFeed=null;
       if(!owner&&readArticles) {
-        try{articleFeed=await articleReadWithinDeadline(()=>readArticles(environment.siteId));}
-        catch(error){if(route==='/articles'||articleSlug)throw error;articleFeed={available:false,settings:{enabled:false,showHome:false,showNavigation:false},items:[]};}
+        if(articles.error){if(route==='/articles'||articleSlug)throw articles.error;articleFeed={available:false,settings:{enabled:false,showHome:false,showNavigation:false},items:[]};}
+        else articleFeed=articles.feed;
         if((route==='/articles'||articleSlug)&&articleFeed.settings?.enabled!==true){sendError(404,loadedConfig);return;}
       }
       let article=null;

@@ -81,21 +81,23 @@ try {
   assert.ok((await slow.locator('#covermate-boot [role=status]').innerText()).includes('นานกว่าปกติ'));
   await slow.screenshot({path:out+'/slow-mobile.png'});await ready(slow);await slow.close();report.checks.push('Slow state and reduced-motion recovery');
   // A failed critical script gives a real retry, never the unrendered template.
-  const failure=await browser.newPage({viewport:{width:320,height:568}});let failOnce=true;
-  await failure.route('**/assets/vendor/react-18.3.1.min.js',r=>{if(failOnce){failOnce=false;return r.abort()}return r.continue()});
+  const failure=await browser.newPage({viewport:{width:320,height:568}});let failScripts=true;
+  // Preload and execution can make separate requests. Fail the resource for the
+  // entire first navigation, then restore it for the user's explicit retry.
+  await failure.route('**/assets/vendor/react-18.3.1.min.js',r=>failScripts?r.abort():r.continue());
   await failure.goto(baseUrl+'/motor?lang=en',{waitUntil:'domcontentloaded'});
   await failure.locator('#covermate-boot[data-error]').waitFor();
   const retry=failure.getByRole('button',{name:'Try again',exact:true});assert.ok(await retry.isVisible());
   assert.ok((await retry.boundingBox()).height>=44);assert.equal(await failure.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await failure.screenshot({path:out+'/error-mobile-en.png'});
   await failure.keyboard.press('Tab');assert.equal(await retry.evaluate(el=>el===document.activeElement),true);
-  await failure.keyboard.press('Enter');await ready(failure);await failure.close();report.checks.push('Critical failure + keyboard retry reloads successfully');
+  failScripts=false;await failure.keyboard.press('Enter');await ready(failure);await failure.close();report.checks.push('Critical failure + keyboard retry reloads successfully');
   // A request that never settles must still offer a way out after ten seconds.
-  const stalled=await browser.newPage({viewport:{width:320,height:568}});let stallOnce=true;
+  const stalled=await browser.newPage({viewport:{width:320,height:568}});let stallScripts=true;
   let releaseStall;
   const stalledRequest=new Promise(resolve=>{releaseStall=resolve});
   await stalled.route('**/assets/vendor/react-18.3.1.min.js',async r=>{
-    if(stallOnce){stallOnce=false;await stalledRequest;return r.abort().catch(()=>{})}
+    if(stallScripts){await stalledRequest;return r.abort().catch(()=>{})}
     return r.continue();
   });
   await stalled.goto(baseUrl,{waitUntil:'domcontentloaded'});
@@ -103,7 +105,7 @@ try {
   await stalledRetry.waitFor({state:'visible'});
   assert.ok((await stalled.locator('#covermate-boot [role=status]').innerText()).includes('ยังโหลดไม่เสร็จ'));
   assert.equal(await stalled.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  await stalledRetry.click();releaseStall();await ready(stalled);await stalled.close();report.checks.push('Unsettled request exposes retry after ten seconds and recovers');
+  stallScripts=false;await stalledRetry.click();releaseStall();await ready(stalled);await stalled.close();report.checks.push('Unsettled request exposes retry after ten seconds and recovers');
   // Missing or unavailable brand images retain a readable identity.
   const missingLogo=await browser.newPage();
   await missingLogo.route('**/assets/brand/covermate-advisory-logo-*',r=>r.abort());
