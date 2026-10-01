@@ -33,7 +33,7 @@ try {
       assert.ok(Math.abs(control.textCenterError)<1&&Math.abs(control.iconCenterError)<1,surface+' label and arrow center on the painted field: '+control.label);
       assert.ok(control.iconInset>=10&&control.textIconGap>=1,surface+' icon has edge/text clearance');
       if(page.viewportSize().width<=767)assert.ok(control.height>=44,surface+' keeps mobile touch height');
-      if(centerOnly||surface.startsWith('Articles')||surface==='CMS list')assert.equal(control.truncated,false,surface+' default selection fits: '+control.label);
+      if(centerOnly||surface.startsWith('Articles')||surface==='CMS list')assert.equal(control.truncated,false,surface+' default selection fits: '+JSON.stringify(control));
     }
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,surface+' has no page overflow');
     report.checks.push({surface,width:page.viewportSize().width,controls});
