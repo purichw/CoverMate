@@ -39,6 +39,10 @@ body[data-module="articles"] .screen { padding:28px; }
 .article-extra-filters summary { cursor:pointer;min-height:32px;padding:6px 0; }
 .article-date-filters { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:8px; }
 .article-filter input { width:100%;min-width:0;height:44px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-size:14px; }
+.article-date-filters input[type="date"] { position:relative;padding-inline:28px;text-align:center; }
+.article-date-filters input[type="date"]::-webkit-datetime-edit { padding:0;text-align:center; }
+.article-date-filters input[type="date"]::-webkit-date-and-time-value { text-align:center; }
+.article-date-filters input[type="date"]::-webkit-calendar-picker-indicator { position:absolute;right:8px;width:16px;margin:0;padding:0; }
 .article-editorial-tags { display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-size:11px;color:#255687; }
 .article-editorial-tags:empty { display:none; }
 .article-editorial-tags span { border-left:2px solid #93b4cf;padding-left:5px; }
