@@ -1,6 +1,6 @@
 # CMS Content Ownership
 
-Updated: 2026-09-27. Current source schema: `CMS_CONTENT_VERSION = 23` in
+Updated: 2026-10-02. Current source schema: `CMS_CONTENT_VERSION = 25` in
 `covermate-contract.js`. The entries below retain their schema-history scope;
 consult [HANDOFF.md](HANDOFF.md) for source versus release status. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
@@ -25,6 +25,10 @@ It preserves form/privacy copy and has no production write. Required consent
 labels and disclosures use a localized fallback when blank, so CMS cannot hide
 the meaning of allow/refuse/withdraw. Tracking gates and consent duration remain
 code-owned; see ANALYTICS.md.
+Version 25 refreshes only the exact previous bundled consent heading and banner
+explanation in TH/EN. Owner-written copy and stored blanks are preserved; the
+disclosures, action labels and analytics gate are unchanged. This is a read-time
+normalization, not a production CMS Publish or database write.
 Version 14 adds `contactSubmission.*` under Brand & contact > Contact submission.
 These Home status-panel labels are separate from form/privacy copy. Missing-only
 migration preserves deliberate blanks and has no production write. See
