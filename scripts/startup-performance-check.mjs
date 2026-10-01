@@ -25,7 +25,11 @@ try {
   for (const [route, lang, width] of [['/','th',390], ['/','en',1440], ['/articles','th',390]]) {
     const context = await browser.newContext({viewport:{width,height:900}});
     const page = await context.newPage(), requests = [];
-    await page.route('**/*', request => new URL(request.request().url()).origin === baseUrl ? request.continue() : request.abort());
+    // Playwright routing disables the HTTP cache and distorts duplicate-download
+    // measurements. Block external HTTPS at the network layer instead.
+    const network=await context.newCDPSession(page);
+    await network.send('Network.enable');
+    await network.send('Network.setBlockedURLs',{urls:['https://*']});
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => requests.push(new URL(request.url()).pathname + new URL(request.url()).search));
     await page.goto(baseUrl + route + '?lang=' + lang);
