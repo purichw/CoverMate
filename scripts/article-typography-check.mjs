@@ -5,7 +5,7 @@ import {createArticleDraft,parseDraftBackup} from '../admin/articles/drafts.mjs'
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {articleCanvas,articleField,articleTool,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
 
 const p=text=>({type:'paragraph',content:[{type:'text',text}]}),canonical=normalizeArticleDocument;
 const style={fontSize:27.5,fontSizeMobile:18,lineHeight:1.65,spaceBefore:0,spaceAfter:14,padding:12};
@@ -89,7 +89,7 @@ if(process.argv.includes('--browser')){
     await inline().click();await page.keyboard.press(mac?'Meta+ArrowLeft':'Home');for(let i=0;i<7;i++)await page.keyboard.press('ArrowRight');for(let i=0;i<4;i++)await page.keyboard.press('Shift+ArrowRight');
     assert.equal(await body().evaluate(el=>el.ownerDocument.getSelection().toString()),'BOLD','Native keyboard selects the target word');
     await tool('bold');
-    await page.locator('[data-text-size]').fill('27.5');await page.locator('[data-text-size-mobile]').fill('18.5');await tool('apply-text-size');
+    await (await revealArticleControl(page,'[data-text-size]')).fill('27.5');await (await revealArticleControl(page,'[data-text-size-mobile]')).fill('18.5');await tool('apply-text-size');
     let line=(await doc()).content.find(node=>node.content?.some(child=>child.text?.includes('BOLD')));
     let bold=line.content.find(node=>node.text==='BOLD');assert.ok(bold,'Only the intended word is selected');
     assert.ok(bold.marks.some(mark=>mark.type==='bold'),'Sizing preserves existing bold');assert.deepEqual(bold.marks.find(mark=>mark.type==='textStyle').attrs,{fontSize:27.5,fontSizeMobile:18.5});
@@ -102,7 +102,7 @@ if(process.argv.includes('--browser')){
     await editStyle('title-style',{fontSize:36,fontSizeMobile:25,lineHeight:1.3});await editStyle('excerpt-style',{fontSize:19,fontSizeMobile:16,lineHeight:1.6});
     report.checks.push('Partial inline decimal sizing preserves bold and adjacent text; block/title/excerpt styles, zero spacing, reset and Undo');
     await closeSettings(page);await body().locator('p').filter({hasText:'Block spacing sample'}).click();await tool('add-paragraph');await page.keyboard.insertText('Card sizing sample');
-    await page.locator('[data-ae=callout][data-kind=summary]').click();await page.locator('.ae-modal-form [data-field=title]').fill('Card heading');await page.locator('.ae-modal-form [type=submit]').click();
+    await (await revealArticleControl(page,'[data-ae=callout][data-kind=summary]')).click();await page.locator('.ae-modal-form [data-field=title]').fill('Card heading');await page.locator('.ae-modal-form [type=submit]').click();
     await editStyle('block-style',{fontSize:23,fontSizeMobile:17,lineHeight:1.8,padding:8});
     await tool('add-paragraph');await tool('table');await page.locator('[data-command=insertTable]').click();
     await body().locator('table p').first().click();await page.keyboard.insertText('Table sizing sample');

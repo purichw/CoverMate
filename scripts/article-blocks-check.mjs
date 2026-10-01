@@ -6,7 +6,7 @@ import {projectArticleDetail} from '../src/visitor/article-detail.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {articleCanvas,articleField,articleTool,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
 
 const p=text=>({type:'paragraph',content:[{type:'text',text}]}),list=items=>({type:'bulletList',content:items.map(text=>({type:'listItem',content:[p(text)]}))});
 const canonical=normalizeArticleDocument;
@@ -158,7 +158,7 @@ if(process.argv.includes('--browser')){
     await save();
     report.checks.push('Explicit legacy conversion is reversible without lost metadata, duplicate summaries or sidebar fallback');
     for(const width of [390,320]){
-      await page.setViewportSize({width,height:900});await page.locator('[data-canvas-size=mobile]').click();
+      await page.setViewportSize({width,height:900});await (await revealArticleControl(page,'[data-canvas-size=mobile]')).click();
       await body().locator('.article-takeaway-card').scrollIntoViewIfNeeded();
       const overflow=await articleCanvas(page).locator('.ad-page').evaluate(el=>({document:document.documentElement.scrollWidth>innerWidth+1,page:el.scrollWidth>el.clientWidth+1}));
       assert.deepEqual(overflow,{document:false,page:false},'Mobile block layout stays within viewport at '+width);

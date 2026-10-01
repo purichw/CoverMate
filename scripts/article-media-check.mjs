@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {normalizeArticleMedia,normalizeArticleDocument,renderArticleDocument} from '../article-document.mjs';
 import {createArticleDraft,parseDraftBackup} from '../admin/articles/drafts.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
-import {articleCanvas,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleTool,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
 import {articleImageSize} from '../src/admin/article-media-input.mjs';
 
@@ -90,7 +90,7 @@ if(process.argv.includes('--browser')) {
     assert.ok((await writer.innerText()).includes('Newer text while crop is open'));
     await page.locator('[data-media-cancel]').click();
     await save();await edit();
-    const figure=articleCanvas(page).locator('.ae-editor-host:visible .tiptap figure').filter({hasText:'Pasted credit'});await figure.locator('img').click();await page.locator('[data-ae=image]').first().click();await details('Pasted image','Pasted credit');
+    const figure=articleCanvas(page).locator('.ae-editor-host:visible .tiptap figure').filter({hasText:'Pasted credit'});await figure.locator('img').click();await articleTool(page,'image');await details('Pasted image','Pasted credit');
     assert.equal(await page.evaluate(()=>window.__articleMediaCalls.at(-1).source),media.sourceUrl,'Body figure re-crops original after save/reopen');
     await page.locator('[data-media-cancel]').click();
     assert.deepEqual(errors,[]);

@@ -891,7 +891,8 @@ html:not([data-covermate-route]) .hm-contact-more > h3 { display:none; }
   header .hm-menu-button { display:inline-flex; }
 }
 .hm-menu-panel { height:100dvh; padding-bottom:calc(24px + env(safe-area-inset-bottom)); overscroll-behavior:contain; }
-.hm-menu-panel .hm-button { background:var(--color-accent-700); color:#fff; }
+.hm-menu-panel .hm-button { min-height:48px; padding:3px 16px; gap:8px; flex:none; font-size:15px; line-height:1.5; background:var(--color-accent-700); color:#fff; }
+.hm-menu-panel .cm-line-mark { --line-size:28px; }
 @media(any-pointer:coarse) {
   [data-cm-sticky] { display:flex !important; }
   .hm-text-link,.hm-context > summary { min-height:44px; }
