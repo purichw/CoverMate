@@ -95,7 +95,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   async function waitForPageStyles() {
     for (;;) {
       const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-      if ((await Promise.all(links.map(stylesheetReady))).some(loaded => !loaded)) throw new Error('Page stylesheet failed to load');
+      await Promise.all(links.map(async link => {
+        if (!await stylesheetReady(link)) throw new Error('Page stylesheet failed to load');
+      }));
       await new Promise(requestAnimationFrame);
       // Discover fonts from the fully styled, mounted page before reading ready.
       // An earlier fonts.ready promise may have resolved before Home CSS arrived.
