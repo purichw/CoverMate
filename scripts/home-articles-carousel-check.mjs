@@ -108,7 +108,10 @@ try {
   await page.mouse.move(1,1);
   const clockStart=new Date();await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
   await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[3],'Reduced motion does not auto-rotate');
+  // Media-query change delivery is asynchronous; wait before advancing fake time.
+  await page.evaluate(()=>{window.carouselMotionReady=new Promise(resolve=>document.querySelector('#articles article-carousel').motion.addEventListener('change',resolve,{once:true}));});
   await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.evaluate(()=>window.carouselMotionReady.then(()=>{delete window.carouselMotionReady;}));
   await page.clock.runFor(9000);assert.equal((await active())[0],keys(feed)[3]);
   await page.clock.runFor(2000);assert.equal((await active())[0],keys(feed)[6]);
   await carousel.locator('[data-carousel-page="3"]').click();

@@ -18,6 +18,7 @@ const report={origin,sha,at:new Date().toISOString(),writes:0,assets:[],routes:[
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 for(const path of ['/article-media.mjs','/article-image-assets.mjs','/admin/articles/lifecycle.mjs','/admin/articles/editor.js','/assets/visitor/article-reader.js','/assets/visitor/articles-index.css','/assets/visitor/article-detail.css','/assets/visitor/home.css']){
   const response=await fetch(origin+path+'?release='+sha,{headers});
+  assert.equal(new URL(response.url).origin,origin,'Hosted protection requires the project automation credential');
   assert.equal(response.status,200,path);
   const bytes=Buffer.from(await response.arrayBuffer());
   assert.equal(hash(bytes),hash(fs.readFileSync('.'+path)),path+' must match the candidate');
