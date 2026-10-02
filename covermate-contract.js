@@ -451,7 +451,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 25;
+const CMS_CONTENT_VERSION = 26;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -1125,6 +1125,11 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Service pages were introduced after v25. Seed before sanitization turns
+  // absent registered fields into empty strings; preserve every owner value.
+  if (previousVersion < 26) CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('servicePages.')).forEach(field => {
+    for (const lang of ['th','en']) if (cmsGet(next,field.path+'.'+lang) === undefined) cmsSet(next,field.path+'.'+lang,field.seed[lang]);
+  });
   // Refresh only the previous bundled wording; owner edits and blanks stay intact.
   if (previousVersion < 25) {
     const oldCookieCopy = {

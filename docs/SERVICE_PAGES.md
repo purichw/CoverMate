@@ -12,6 +12,9 @@ Home callback form (`/#talk`, preserving English/UAT context).
 - `covermate-contract.js` owns localized `servicePages.health.*` and
   `servicePages.life.*` fields and missing-only defaults. Explicit empty values
   survive normalization; existing site drafts are not published by this change.
+- CMS schema v26 seeds absent service fields for existing versioned live/draft
+  records before sanitization. This includes v19 and v25 records; present blanks
+  and owner edits are preserved independently for each language.
 - Both pages are registered in the existing CMS page picker. Content exposes
   hero copy, service/checklist/preparation copy, steps, FAQs, related/contact labels
   and SEO fields. Checklist inputs use one item per line. Inline copy editing uses
