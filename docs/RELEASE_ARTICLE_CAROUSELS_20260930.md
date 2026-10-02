@@ -1,5 +1,13 @@
 # Article carousels and CMS integration - 2026-09-30
 
+Historical release record. The candidate, local evidence and recovery baseline
+below describe September 30 and are not current pending work. Current live
+source is `aa8b68d` (2026-10-02); see [HANDOFF.md](HANDOFF.md) for the successful
+CI and promoted deployment. Current presentation and checks are owned by
+[HOME_ARTICLES.md](HOME_ARTICLES.md), [ARTICLES_INDEX.md](ARTICLES_INDEX.md)
+and [ARTICLE_EDITOR.md](ARTICLE_EDITOR.md). No new visual smoke was run for
+this documentation update.
+
 The owner authorized push and deployment of this chat's changes. The candidate
 integrates upstream `4d429ca` in `.tools/admin-shell-consistency-20260926`;
 unrelated changes in the primary checkout are excluded.
@@ -38,8 +46,9 @@ Undo/Redo/save/reload, list filters and editor controls. Real Auth/Firestore
 emulator checks exercise rich authoring, denied/conflicting saves, publication,
 reader parity, unpublication and independent Home pin limits/concurrency.
 
-Current evidence is stored under ignored `uat-results/home-carousel/`,
-`article-carousel/`, `articles-cloud/`, `editor-panel/` and `admin-controls/`.
+The evidence from that release work was stored under ignored
+`uat-results/home-carousel/`, `article-carousel/`, `articles-cloud/`,
+`editor-panel/` and `admin-controls/`.
 Fixture screenshots prove UI behavior, not production content availability.
 
 API and cloud-browser release fixtures use per-run Firestore namespaces. The API
@@ -53,10 +62,19 @@ and require GitHub `verify` on the exact release SHA. The existing Vercel gate
 must hold production aliasing while checks are pending or failed. Do not force
 promotion. After deployment, read back the alias/source SHA and verify served
 assets and public routes. Remote IDs and terminal results belong in an ignored
-release receipt; this document is not a claim that deployment has completed.
+release receipt. This historical candidate record did not claim a completed
+deployment; current status is linked above.
+
+For current Home paging changes, `scripts/home-articles-pins-e2e.mjs` is the
+focused real Auth/Firestore publication check as well as part of the emulator
+suite. It now expects three active mobile cards and advances by three, while
+the independent index still has one active card. The isolated-emulator command
+and current carousel behavior are documented in `HOME_ARTICLES.md`; do not
+reuse the historical layout or timing expectations above as current checks.
 
 ## Recovery
 
-The pre-integration source baseline is `759024f`. Verify the currently assigned
-production deployment before recovery and obtain explicit rollback approval.
+The historical pre-integration source baseline was `759024f`; it is not a
+current rollback target. Verify the currently assigned production deployment
+before recovery and obtain explicit rollback approval.
 No database restoration is needed; optional ordering fields are additive.

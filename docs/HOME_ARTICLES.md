@@ -1,8 +1,10 @@
 # Home Articles: First Page
 
-Home section baseline: 2026-09-27. Placement and owner-canvas integration updated
-locally on 2026-09-30; this is not a deployment claim. Article publication and
-management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
+Current contract reviewed against live source `aa8b68d` on 2026-10-02. The
+compact cards, three-row mobile pages and current autoplay behavior are included
+in that release; see [HANDOFF.md](HANDOFF.md) for its CI and deployment evidence.
+Article publication and management are documented in `ARTICLES_PUBLISHING.md`
+and `ADMIN_ARTICLES.md`. This documentation refresh did not run new visual smoke.
 
 ## Presentation
 
@@ -18,12 +20,16 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   Desktop/tablet covers sit left of the copy; mobile uses centered square
   thumbnails beside the text. Full pages reserve stable row heights; a partial
   last mobile page collapses unused rows instead of leaving blank spaces.
+  When the feed changes, the retained article is aligned to a valid page boundary
+  so the remaining active cards stay visible, including after removal.
   Category/date metadata sits with the copy, not over the cover.
   Dates use the published translation's timestamp in Bangkok time, localized
   to TH/EN. Titles show up to three lines and excerpts up to two; the complete
   title remains the link's accessible name and the full content is in the article.
   Card corners continue to follow the site's CMS theme radius; the compact
   composition and heading sizes remain specific to this section.
+  The heading uses 28px/1.3, reducing to 22px below 768px. The section has a
+  1264px maximum width with 32px horizontal padding, reducing to 20px on mobile.
 - All-articles link beside the heading on desktop and above the carousel on
   mobile. Every card shows the CMS-owned reading label. Mobile titles use 16px
   type and excerpts use 13px/1.5 for the compact row composition.
@@ -32,12 +38,15 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
   Mobile shows up to four page indicators for the ten-article feed, retaining 44px
   touch targets without overflowing when all ten articles are present.
+  Desktop shows up to five indicators; tablet shows a moving window of five
+  for its single-card pages. Hidden cards are inert and excluded from navigation.
   The index carousel retains its previous/next controls. Both support swipe and
   automatic ten-second rotation without a Play/Pause button. Pointer navigation
   restarts the interval; hover does not stop rotation. Focused cards/keyboard
   controls, offscreen and hidden tabs pause temporarily and resume automatically.
   Reduced motion disables autoplay, not manual navigation. No controls for a single page.
-- Reuses existing Google Sans, page width, gutters, colour tokens and Lucide paths.
+- Reuses existing Google Sans, colour tokens and Lucide paths; section geometry
+  is owned by `src/visitor/home.css`.
 - Missing/failed images retain their reserved frame with a neutral file icon.
 
 ## Ownership And Readiness
@@ -79,9 +88,9 @@ The payload contains no drafts, private content or complete editor documents:
 }
 ```
 
-Absent/unavailable/empty feeds hide the entire section, so this stage cannot add
-dead article links to production. Only published, non-future, titled translations
-are selected. No cross-language fallback. `featured` is the existing persisted
+Absent/unavailable/empty feeds hide the entire section. Only published,
+non-future, titled translations are selected. No cross-language fallback.
+`featured` is the existing persisted
 **Pin to Home** flag, now labeled `ปักหมุดบน Home` in CMS; old selections survive.
 Select Home pins newest-first, then fill remaining slots with latest unique
 articles, up to ten total. Zero pins gives ten latest, three pins gives seven
@@ -126,9 +135,10 @@ and `BROWSER=webkit` with the installed Playwright browser path.
 
 Sample titles/photos live in `scripts/fixtures/home-articles/`, excluded from
 Vercel by the existing ignore file. The preview maps photos to local asset URLs;
-image sources/licence are documented alongside them. Clicking sample links opens
-an explicitly unfinished-page notice from the **preview harness only**, with a
-return link. This is not an implemented article list/detail page.
+image sources/licence are documented alongside them. The standalone Home preview
+without detail fixtures returns a labeled 501 notice for sample article links.
+The index and detail harnesses supply detail fixtures through the implemented
+public reader; that Home-only preview limitation is not a production limitation.
 
 Tests cover selection/order, draft/scheduled/translation filtering, URL safety,
 CMS migration/idempotency/custom copy preservation, insertion without reordering,
@@ -138,8 +148,13 @@ Reports and contextual section screenshots are in `uat-results/home-articles/`.
 Current carousel screenshots and real CMS/API/emulator evidence are in
 `uat-results/home-carousel/`. The pin E2E uses a run-specific Firestore namespace
 without clearing shared emulator content; all article operations use the real
-repository and transactions. It verifies the final-slot race and preserves form
-content when the eleventh pin is rejected. No production records are changed.
+repository and transactions. `scripts/home-articles-pins-e2e.mjs` verifies the
+first three mobile cards, advancement to the next three, an actual reader link,
+independent index pins, the final-slot race and preserved form content when the
+eleventh pin is rejected. It is also included in `npm run check:emulators`.
+When Home paging or pin behavior changes, include this focused emulator check
+alongside the browser carousel check; `check:ci` alone does not
+cover its real publication journey. No production records are changed.
 The focused owner order loop uses a local synthetic owner and sample published
 feed, writes only an in-memory site Draft, and checks moves, reciprocal moves,
 Undo/Redo, Save/reload/full Draft Preview, mobile controls, copy parity and

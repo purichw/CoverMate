@@ -38,7 +38,7 @@ for (const site of [
   { ...heroConfig, sections: [{ type: 'products' }, { type: 'hero' }] },
   ...['', null, 'javascript:alert(1)', 'https://example.com/x" onload="alert(1)'].map(art => ({ ...heroConfig, homeDesign: { botanicalIllustration: art } }))
 ]) assert.deepEqual(imagePreloads(site), [], 'Respect disabled, reordered, cleared and invalid CMS hero art');
-for (const options of [{ path: '/motor' }, { path: '/articles' }, { privatePage: true }]) assert.deepEqual(imagePreloads(heroConfig, options), [], 'Only preload artwork on its visible public Home route');
+for (const options of [{ path: '/motor' }, { path: '/health' }, { path: '/life' }, { path: '/articles' }, { privatePage: true }]) assert.deepEqual(imagePreloads(heroConfig, options), [], 'Only preload artwork on its visible public Home route');
 for (const path of ['/', '/motor']) for (const lang of ['th', 'en']) {
   const model = createSeoModel(config, { path, lang });
   const canonical = 'https://covermateinsurance.com' + path + (lang === 'en' ? '?lang=en' : '');
@@ -101,6 +101,20 @@ for (const lang of ['th', 'en']) {
 }
 const noSources = createSeoModel(editorialConfig, { path: '/articles/health-cover', article: { ...article, sources: [] }, articleFeed });
 assert.equal('citation' in noSources.graph['@graph'].find(entry => entry['@type'] === 'Article'), false);
+const authorSchema = extra => createSeoModel(editorialConfig, { path:'/articles/health-cover', article:{...article,author:'Purich Worawarachai',...extra}, articleFeed }).graph['@graph'].find(entry=>entry['@type']==='Article');
+const authorDetails={authorDetailsEnabled:true,authorBio:'Profile supplied by the author.',authorUrl:'https://example.org/about'};
+assert.deepEqual(authorSchema(authorDetails).author,{'@type':'Person',name:'Purich Worawarachai',description:authorDetails.authorBio,url:authorDetails.authorUrl});
+assert.deepEqual(authorSchema({...authorDetails,authorDetailsEnabled:false}).author,{'@type':'Person',name:'Purich Worawarachai'},'Hidden profile details stay out of structured data');
+for(const authorUrl of ['javascript:alert(1)','http://example.org/about','https://user:secret@example.org/about']) assert.equal(authorSchema({...authorDetails,authorUrl}).author.url,undefined);
+assert.equal(authorSchema(authorDetails).reviewedBy,undefined,'Author metadata does not imply expert review');
+for (const route of ['/health','/life']) for(const lang of ['th','en']) {
+  const model=createSeoModel(config,{path:route,lang});
+  assert.equal(model.canonical,'https://covermateinsurance.com'+route+(lang==='en'?'?lang=en':''));
+  assert.ok(model.title && model.meta.description);
+  assert.ok(model.graph['@graph'].some(entry=>entry['@type']==='Service'));
+  assert.equal(model.graph['@graph'].some(entry=>entry['@type']==='Article'),false);
+  assert.equal(model.alternates['x-default'],'https://covermateinsurance.com'+route);
+}
 const blankTrailConfig = { ...editorialConfig, articleDetail: { home: { th: '' }, all: { th: '' } } };
 assert.equal(createSeoModel(blankTrailConfig, { path: '/articles/health-cover', article, articleFeed }).graph['@graph'].some(entry => entry['@type'] === 'BreadcrumbList'), false, 'Do not invent hidden CMS breadcrumb labels');
 for (const options of [{ noindex: true }, { privatePage: true }, { articleFeed: { settings: { enabled: false } } }]) {
@@ -150,6 +164,9 @@ function response() {
 const handler = createPageHandler({ readPublished: read, readHtml: () => html });
 for (const [url, host, noindex] of [
   ['/motor?lang=en', 'covermateinsurance.com', false],
+  ['/health', 'covermateinsurance.com', false],
+  ['/life?lang=en', 'covermateinsurance.com', false],
+  ['/api/page?route=/health&lang=en', 'covermateinsurance.com', false],
   ['/api/page?route=/motor&lang=en', 'covermateinsurance.com', false],
   ['/motor?lang=en', 'covermate-git-uat-example.vercel.app', true],
   ['/motor?lang=en&cm_env=production', 'covermate-git-uat-example.vercel.app', true],
@@ -252,7 +269,8 @@ for (const route of ['/', '/motor', '/admin/content', '/admin/edit', '/admin/pre
   assert.equal(vercel.rewrites.find(rule => rule.source === route).destination, '/api/page?route=' + route);
 }
 const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
-assert.equal((sitemap.match(/<loc>/g) || []).length, 4);
+assert.equal((sitemap.match(/<loc>/g) || []).length, 8);
+for(const route of ['/health','/life']) for(const suffix of ['','?lang=en']) assert.ok(sitemap.includes('https://covermateinsurance.com'+route+suffix+'</loc>'));
 assert.ok(!sitemap.includes('vercel.app') && !sitemap.includes('admin') && !sitemap.includes('<lastmod>'));
 assert.ok(fs.readFileSync('robots.txt', 'utf8').includes('Sitemap: https://covermateinsurance.com/sitemap.xml'));
 console.log('PASS: SEO routes/languages, raw + hydrated head model, CMS edits/blanks/escaping, cache isolation/timeout, noindex, redirects, sitemap.');

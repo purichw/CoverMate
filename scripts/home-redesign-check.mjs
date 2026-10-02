@@ -20,7 +20,7 @@ let responseMode = 'error', submissions = [];
 try {
   const context = await browser.newContext({ viewport:{width:1440,height:900}, reducedMotion:'reduce' });
   await context.route('**/v1/projects/**/documents/sites/**/states/live', route => route.fulfill({json:{fields:toFirestoreFields(live)}}));
-  await context.route('**/covermate-public.mjs', route => route.fulfill({contentType:'application/javascript', body:fs.readFileSync('covermate-public.mjs','utf8').replace('async function appCheckToken() {', 'async function appCheckToken() { return "isolated-browser-fixture";')}));
+  await context.route('**/covermate-public.mjs', route => route.fulfill({contentType:'application/javascript', body:fs.readFileSync('src/public/adapter.mjs','utf8').replace('async function appCheckToken() {', 'async function appCheckToken() { return "isolated-browser-fixture";')}));
   await context.route('**/api/leads?*', async route => {
     submissions.push(route.request().postDataJSON());
     if (responseMode === 'error') return route.fulfill({status:503,json:{message:'Synthetic test failure'}});

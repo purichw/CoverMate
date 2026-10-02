@@ -34,7 +34,7 @@ else {
     for(const [width,height,lang] of sizes) {
       const context=await browser.newContext({viewport:{width,height},reducedMotion:'reduce'});
       await context.route('**/*',r=>new URL(r.request().url()).origin===baseUrl?r.continue():r.fulfill({status:403,body:'External traffic blocked'}));
-      await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('covermate-public.mjs','utf8').replace('    appCheckToken(),',"    Promise.resolve('local-fixture'),")}));
+      await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('src/public/adapter.mjs','utf8').replace('    appCheckToken(),',"    Promise.resolve('local-fixture'),")}));
       const page=await context.newPage();page.on('pageerror',e=>{report.errors.push(e.message);console.error('Page error: '+e.stack);});
       let mode='hold',pending;const posts=[];
       const answer=async route=> {

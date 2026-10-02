@@ -54,7 +54,7 @@ try {
       if(url.origin==='https://covermateinsurance.com'&&url.pathname.startsWith('/assets/brand/'))return route.fulfill({status:200,contentType:'image/png',body:fs.readFileSync('.'+url.pathname)});
       return route.fulfill({status:403,body:'External requests disabled'});
     });
-    await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('covermate-public.mjs','utf8').replace('    appCheckToken(),',"    Promise.resolve('local-fixture'),")}));
+    await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('src/public/adapter.mjs','utf8').replace('    appCheckToken(),',"    Promise.resolve('local-fixture'),")}));
     const posts=[];let outcome='success';
     await context.route('**/api/leads?*',r=>{posts.push({body:JSON.parse(r.request().postData()),key:r.request().headers()['idempotency-key']});return r.fulfill({status:outcome==='success'?200:503,contentType:'application/json',body:JSON.stringify(outcome==='success'?{accepted:true,reference:'CM-LOCAL-EMAIL'}:{error:'not_configured'})});});
     const page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));

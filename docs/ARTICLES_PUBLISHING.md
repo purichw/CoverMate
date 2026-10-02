@@ -1,9 +1,10 @@
 # Articles Publication And Visibility
 
-Updated 2026-09-30. The September 27 publication model and its historical
-verification below remain the baseline. The shared image-upload/crop additions
-are **local implementation only**; they have not been deployed or verified
-against a live provider by this change.
+Updated 2026-10-02 against live source `aa8b68d`, which includes the shared
+image-upload/crop additions. See [HANDOFF.md](HANDOFF.md) for CI and deployment
+evidence. The September 27 publication model and dated verification below remain
+the baseline; this documentation refresh adds no new live-provider, authenticated
+publication or visual-test evidence.
 
 ## Operator Workflow
 
@@ -30,7 +31,7 @@ Draft from the list. Archive/Trash remove public access and clear both pin types
 Restore is private and unpinned until explicitly published again. Trash is
 reversible: no article, media or URL reservation is physically deleted.
 
-The local September 30 validation follow-up labels required/optional fields and
+The September 30 validation follow-up labels required/optional fields and
 disables article Publish until its requirements pass. Drafts may be incomplete;
 invalid supplied values must be corrected. API validation errors carry field and
 language identifiers for inline feedback. See `ARTICLE_EDITOR.md` for the field
@@ -78,7 +79,7 @@ Old account/environment-scoped IndexedDB drafts appear in a recovery area and
 can be copied into the central repository without publishing or deleting them.
 JSON import/export remains available for backup and stale-write recovery.
 
-## Shared Image Editing (Local, 2026-09-30)
+## Shared Image Editing
 
 Cover images and body figures now use `src/admin/media-editor.js`, the same
 dialog used by website CMS image owners. Enter alt text and an optional
@@ -182,7 +183,7 @@ sitemap. The existing static sitemap continues to advertise Home/Motor.
   explicit error rather than silent truncation. Filtering/paging uses that
   complete lightweight catalog, not individual full documents.
 - Media fields accept validated HTTPS/internal asset URLs with alt/captions.
-  The local shared upload/crop flow above replaces the earlier URL-only image
+  The shared upload/crop flow above replaces the earlier URL-only image
   controls. A browsable asset library, revision-history restore, permanent
   deletion and central author/taxonomy administration remain unimplemented.
 - New uploaded originals are limited to 8,000,000 bytes and 20,000,000 pixels;
@@ -202,7 +203,7 @@ sitemap. The existing static sitemap continues to advertise Home/Motor.
 
 ## Verification
 
-For the new local media integration, use the focused
+For the shared media integration, use the focused
 `scripts/article-media-check.mjs`, `scripts/media-provider-check.mjs`, and
 `scripts/media-upload-browser-check.mjs` checks. Keep their current report and
 screenshots separate from the historical publication evidence below. These

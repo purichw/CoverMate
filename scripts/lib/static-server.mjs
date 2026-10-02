@@ -6,7 +6,7 @@ import notFound from '../../api/not-found.js';
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OWNER_ROOT_ROUTES = new Set(["admin/content", "admin/edit", "admin/preview"]);
-const PUBLIC_ROOT_ROUTES = new Set(["motor"]);
+const PUBLIC_ROOT_ROUTES = new Set(["motor", "health", "life"]);
 
 export function contentType(filePath) {
   const ext = path.extname(filePath).toLowerCase();

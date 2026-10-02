@@ -1,8 +1,5 @@
 # CoverMate
 
-Articles CMS publication and visibility controls:
-[`docs/ARTICLES_PUBLISHING.md`](docs/ARTICLES_PUBLISHING.md).
-
 CoverMate visitor and admin surfaces for Vercel, with Firebase Auth/Firestore
 and serverless APIs. Primary domain: `https://covermateinsurance.com`.
 
@@ -19,7 +16,8 @@ editing/offline compatibility from the same renderer. Edit `src/visitor/*`,
 then run `npm run build:visitor`; `npm run check:bundles` verifies both artifacts
 and their public/owner boundaries. See
 [`docs/PERFORMANCE_AUDIT_20261002.md`](docs/PERFORMANCE_AUDIT_20261002.md) for the
-latest local performance changes and deployment limitations.
+performance implementation and its original verification scope; use
+[`docs/HANDOFF.md`](docs/HANDOFF.md) for the current deployment checkpoint.
 
 The broad local/CI quality gate is `npm run check:ci`. It validates generated
 visitor artifacts, shared contracts, security headers/rules invariants,
@@ -27,7 +25,8 @@ Firestore/UAT boundaries, browser boot behavior, analytics/API assumptions,
 performance budgets, Admin/Operations regressions, and the local smoke suite.
 `npm run check:refactor` is the focused gate for CMS controller/history,
 Operations boundaries, independent fixtures and freshness policy. Real local
-Auth/Rules/API/browser integration is covered by `npm run check:emulators`.
+Auth/Rules/API/browser integration is covered by the separate
+`npm run check:emulators` command, including article publication workflows.
 
 Start with [`PROJECT_MAP.md`](PROJECT_MAP.md) for the route, data, admin,
 asset, deployment, and verification map.
@@ -36,11 +35,23 @@ Current workspace state can be ahead of production. Check `git status` and the
 release guardrail in [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 before assuming changes are live.
 
-GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
-manual workflow dispatches.
+GitHub Actions runs `npm run check:ci` and then `npm run check:emulators` as
+separate required steps in the `verify` job on pushes to `main`, pull requests,
+and manual workflow dispatches. The current release process and evidence
+requirements live in [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md).
 
 ## Project Documents
 
+- [`docs/HOME_ARTICLES.md`](docs/HOME_ARTICLES.md) - compact Home article rows,
+  responsive carousel, placement and publication-feed ownership
+- [`docs/ARTICLES_INDEX.md`](docs/ARTICLES_INDEX.md) and
+  [`docs/ARTICLE_DETAIL.md`](docs/ARTICLE_DETAIL.md) - public article list,
+  pinned carousel and reader
+- [`docs/ADMIN_ARTICLES.md`](docs/ADMIN_ARTICLES.md) and
+  [`docs/ARTICLE_EDITOR.md`](docs/ARTICLE_EDITOR.md) - Articles management,
+  rich editor, full-page preview and save/publish controls
+- [`docs/ARTICLES_PUBLISHING.md`](docs/ARTICLES_PUBLISHING.md) - publication,
+  visibility, Home/index pins and the independent website/article lifecycle
 - [`docs/COPY_VOICE_AUDIT_20260927.md`](docs/COPY_VOICE_AUDIT_20260927.md) -
   public TH/EN voice direction, reviewed copy, local preview and guarded CMS update
 - [`docs/CMS_CONTENT_OWNERSHIP.md`](docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing) -
@@ -70,8 +81,8 @@ manual workflow dispatches.
 - [`docs/CMS_MEDIA.md`](docs/CMS_MEDIA.md) - image slots, crop/upload workflow,
   `build:media`, Cloudinary Free cost guard and owner/UAT security
 
-- [`docs/HOME_REDESIGN.md`](docs/HOME_REDESIGN.md) - no-portrait Home
-  implementation, local preview, CMS owners and verification boundaries
+- [`docs/HOME_REDESIGN.md`](docs/HOME_REDESIGN.md) - current Home composition,
+  source and CMS owners, and historical design verification boundaries
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - static/export architecture,
   boundaries, deployment shape, and future options
@@ -110,6 +121,8 @@ Routes:
 - `/` public visitor site
 - `/motor` dedicated motor-insurance campaign page inside the same CoverMate
   product
+- `/articles` public article index and `/articles/{slug}` reader; availability
+  follows saved Articles visibility settings and eligible published translations
 - `/#motor` public anchor into the home motor-insurance / insurer section;
   old `/#insurers` links resolve to the same section
 - `/#admin`, `/#edit`, and `/#preview` legacy links to canonical owner routes
@@ -117,7 +130,9 @@ Routes:
   `/admin/preview?page=motor` owner modes scoped to the dedicated motor page
 - `/admin/login` owner auth gate
 - `/admin` private Admin Portal shell with Home, Operations, Website content,
-  Analytics, and Settings
+  Articles, and Analytics; account details and notification preferences live in
+  the shared account menu
+- `/admin#articles` Articles management and rich editor inside that shell
 - `/admin/ops` compatibility entry into the same Admin Portal shell, defaulting
   to Operations
 

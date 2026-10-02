@@ -104,6 +104,12 @@
 .ad-sources ul { padding-left:24px; }
 .ad-sources li + li { margin-top:8px; }
 .ad-sources a { color:var(--color-accent-700,#954119); text-decoration:underline; }
+.ad-author a { color:inherit; text-decoration:underline; text-underline-offset:3px; }
+.ad-author-details,.ad-editorial-note { margin-top:24px; padding-top:20px; border-top:1px solid #e3e1d8; font-size:15px; line-height:1.65; }
+.ad-author-details h2,.ad-editorial-note h2 { font-size:18px; line-height:1.5; margin-bottom:10px; }
+.ad-author-details .ad-author-name { font-weight:600; margin-bottom:6px; }
+.ad-author-bio,.ad-editorial-note p { color:var(--ad-muted); white-space:pre-line; overflow-wrap:anywhere; }
+.ad-author-details .ad-author-profile { display:inline-flex; align-items:center; min-height:44px; color:var(--color-accent-700,#954119); text-decoration:underline; text-underline-offset:3px; }
 .ad-takeaways { position:relative; isolation:isolate; display:grid; grid-template-columns:minmax(0,1fr) 290px; column-gap:24px; grid-column:1/-1; grid-row:3; overflow:hidden; background:#e9f2df; margin-inline:28px; padding:22px 38px 24px; border-radius:14px; }
 .ad-takeaways:not(:has(.ad-takeaways-note)) { grid-template-columns:minmax(0,1fr); }
 .ad-takeaways::after { content:""; position:absolute; z-index:-1; right:0; bottom:-52px; width:270px; height:330px; background:url('/assets/brand/home-botanical-v1.webp') center/contain no-repeat; opacity:.5; pointer-events:none; }

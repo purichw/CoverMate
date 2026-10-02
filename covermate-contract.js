@@ -15,9 +15,11 @@ export const ADMIN_ANALYTICS_PATH = "/admin/analytics";
 export const ADMIN_PUBLIC_EXIT_PATH = "/";
 export const PUBLIC_HOME_PATH = "/";
 export const PUBLIC_MOTOR_PATH = "/motor";
+export const PUBLIC_HEALTH_PATH = "/health";
+export const PUBLIC_LIFE_PATH = "/life";
 export const PUBLIC_ARTICLES_PATH = "/articles";
 export const ADMIN_OWNER_PAGE_QUERY = "page";
-export const PUBLIC_ROUTE_PATHS = new Set([PUBLIC_HOME_PATH, PUBLIC_MOTOR_PATH, PUBLIC_ARTICLES_PATH]);
+export const PUBLIC_ROUTE_PATHS = new Set([PUBLIC_HOME_PATH, PUBLIC_MOTOR_PATH, PUBLIC_HEALTH_PATH, PUBLIC_LIFE_PATH, PUBLIC_ARTICLES_PATH]);
 export const ADMIN_OWNER_ROUTE_MAP = Object.freeze({
   "/admin/content": "admin",
   "/admin/edit": "edit",
@@ -36,7 +38,9 @@ export const ROUTE_PAGE_HOME = "home";
 export const ROUTE_PAGE_MOTOR = "motor";
 export const CMS_EDITABLE_PAGES = Object.freeze([
   Object.freeze({ id: ROUTE_PAGE_HOME, label: 'หน้าแรก', path: PUBLIC_HOME_PATH, section: 'hero' }),
-  Object.freeze({ id: ROUTE_PAGE_MOTOR, label: 'ประกันรถยนต์', path: PUBLIC_MOTOR_PATH, section: 'motor' })
+  Object.freeze({ id: ROUTE_PAGE_MOTOR, label: 'ประกันรถยนต์', path: PUBLIC_MOTOR_PATH, section: 'motor' }),
+  Object.freeze({ id: 'health', label: 'ประกันสุขภาพ', path: PUBLIC_HEALTH_PATH, section: 'service-content' }),
+  Object.freeze({ id: 'life', label: 'ประกันชีวิต', path: PUBLIC_LIFE_PATH, section: 'service-content' })
 ]);
 export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics"]);
 export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
@@ -106,7 +110,7 @@ export function routePageFromLocationParts(path = "", search = "") {
 
 export function cleanPublicExitPath(path = PUBLIC_HOME_PATH) {
   const clean = normalizePath(path);
-  return clean === PUBLIC_MOTOR_PATH ? PUBLIC_MOTOR_PATH : PUBLIC_HOME_PATH;
+  return CMS_EDITABLE_PAGES.some(page => page.path === clean) ? clean : PUBLIC_HOME_PATH;
 }
 
 export function adminPortalRouteStateFromLocation(path = "", hash = "") {
@@ -447,7 +451,7 @@ function normalizeTierRemarks(config, options = {}) {
   return next;
 }
 
-const CMS_CONTENT_VERSION = 25;
+const CMS_CONTENT_VERSION = 26;
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -457,6 +461,62 @@ function localizedCmsFields(prefix,group,entries,legacyInline) {
   });
 }
 const CMS_CONTENT_FIELDS = [
+  ...['health','life'].flatMap(page => localizedCmsFields('servicePages.'+page, page === 'health' ? 'หน้าประกันสุขภาพ' : 'หน้าประกันชีวิต', [
+    ['navLabel','ชื่อหน้าในเมนู',page === 'health' ? 'ประกันสุขภาพ' : 'ประกันชีวิต',page === 'health' ? 'Health insurance' : 'Life insurance'],
+    ['eyebrow','ข้อความเหนือหัวข้อ','ปรึกษาประกันกับ CoverMate','Insurance advice from CoverMate'],
+    ['cta','ปุ่มติดต่อ','คุยทาง LINE','Talk on LINE'],
+    ['formCta','ปุ่มฝากคำถาม','ฝากคำถามให้ติดต่อกลับ','Request a callback'],
+    ['processTitle','หัวข้อขั้นตอน','เริ่มคุยกับเราอย่างไร','How a consultation works'],
+    ['step1Title','ขั้นตอน 1 — หัวข้อ','เล่าสิ่งที่อยากดูแล','Tell us what matters to you'],
+    ['step1Body','ขั้นตอน 1 — คำอธิบาย','บอกเป้าหมาย งบประมาณ และสิ่งที่ยังสงสัย เริ่มจากคำถามสั้น ๆ ได้ ไม่ต้องเลือกแผนมาก่อน','Share your priorities, budget and questions. You do not need to choose a plan before contacting us.'],
+    ['step2Title','ขั้นตอน 2 — หัวข้อ','อ่านข้อมูลและเงื่อนไขร่วมกัน','Review the details together'],
+    ['step2Body','ขั้นตอน 2 — คำอธิบาย','เราช่วยอธิบายทางเลือกของ AIA ตามความต้องการ พร้อมชี้ผลประโยชน์ ข้อจำกัด และข้อมูลที่ควรถามเพิ่ม','We explain relevant AIA options, benefits, limitations and points that need clarification.'],
+    ['step3Title','ขั้นตอน 3 — หัวข้อ','ตัดสินใจเมื่อเข้าใจครบ','Decide when you understand the options'],
+    ['step3Body','ขั้นตอน 3 — คำอธิบาย','อ่านเอกสารเสนอขายและเงื่อนไขก่อนตัดสินใจ การรับประกันและผลประโยชน์ขึ้นอยู่กับบริษัทและกรมธรรม์','Read the sales documents and policy terms before deciding. Underwriting and benefits are subject to the insurer and the policy.'],
+    ['faqTitle','หัวข้อคำถาม','คำถามก่อนเริ่มปรึกษา','Before you get in touch'],
+    ['faq3Question','คำถาม 3','ปรึกษาแล้วต้องซื้อเลยไหม','Do I have to buy after a consultation?'],
+    ['faq3Answer','คำตอบ 3','สอบถามเพื่อทำความเข้าใจก่อนได้ ไม่มีค่าปรึกษา เมื่อมีแผนที่สนใจ ควรอ่านเอกสารและเงื่อนไขให้ครบก่อนตัดสินใจ','You can ask questions first, with no consultation fee. If a plan interests you, read its documents and terms before deciding.'],
+    ['relatedTitle','หัวข้อบทความ','อ่านประกอบก่อนตัดสินใจ','Further reading'],
+    ['allArticles','ปุ่มบทความทั้งหมด','ดูบทความทั้งหมด','View all articles'],
+    ['contactTitle','หัวข้อติดต่อ','มีคำถาม เริ่มคุยกับเราได้','Start with your questions'],
+    ['contactBody','คำอธิบายติดต่อ','ส่งเรื่องที่ต้องการปรึกษาทาง LINE หรือฝากช่องทางติดต่อกลับ เราตอบในเวลาทำการที่ระบุด้านล่าง','Message us on LINE or leave your contact details. We reply during the business hours shown below.'],
+    ['disclosure','ขอบเขตการให้บริการ','CoverMate ให้ข้อมูลประกันชีวิตและสุขภาพในบทบาทตัวแทน AIA ข้อมูลหน้านี้เป็นแนวทางเตรียมตัว ไม่ใช่การรับรองความคุ้มครองหรือผลการเคลม','CoverMate provides life and health insurance information as an AIA agent. This page helps you prepare for a conversation; it does not guarantee cover or claims outcomes.'],
+    ['referenceTitle','หัวข้อแหล่งข้อมูล','ข้อมูลจากบริษัทประกัน','Information from the insurer']
+  ])),
+  ...localizedCmsFields('servicePages.health','หน้าประกันสุขภาพ',[
+    ['seoTitle','ชื่อหน้า SEO','ปรึกษาประกันสุขภาพ AIA และทบทวนความคุ้มครอง | CoverMate','AIA health insurance advice and cover review | CoverMate'],
+    ['seoDescription','คำอธิบาย SEO','ปรึกษาประกันสุขภาพกับ CoverMate ตัวแทน AIA ช่วยอ่านสิทธิเดิม วงเงิน เงื่อนไขและงบระยะยาว พร้อมรายการเตรียมตัวก่อนคุย ไม่มีค่าปรึกษา','Discuss health insurance with CoverMate, an AIA agent. Review existing benefits, limits, terms and your budget. No consultation fee.'],
+    ['title','หัวข้อหลัก','ประกันสุขภาพ\nเริ่มจากความคุ้มครองที่คุณต้องการ','Health insurance,\nbuilt around your needs'],
+    ['intro','คำอธิบายหลัก','มีสวัสดิการอยู่แล้ว หรือกำลังเลือกแผนแรก เราช่วยอ่านความคุ้มครองและเงื่อนไขของ AIA ให้เห็นว่าแผนตอบโจทย์ตรงไหน และมีอะไรที่ต้องเตรียมจ่ายเอง','Whether you already have employee benefits or are choosing your first plan, we help you understand AIA cover, policy terms and costs you may need to pay yourself.'],
+    ['helpTitle','หัวข้อบริการ','เราช่วยคุณดูอะไรบ้าง','What we can help you review'],
+    ['helpBody','คำอธิบายบริการ','เริ่มจากสิทธิรักษาพยาบาลและกรมธรรม์ที่มีอยู่ แล้วคุยถึงโรงพยาบาลที่ตั้งใจใช้และงบที่จ่ายต่อได้ เราช่วยอธิบายตารางผลประโยชน์ของแผนที่สนใจ เพื่อให้คำถามเรื่องวงเงินและข้อจำกัดชัดเจนก่อนสมัคร','Start with existing healthcare benefits and policies, your preferred hospitals and a budget you can maintain. We explain benefit tables for the plans you are considering so that limits and restrictions are clear before you apply.'],
+    ['checkTitle','หัวข้อเช็กลิสต์','อ่านให้ครบ มากกว่าแค่ค่าเบี้ย','Look beyond the premium'],
+    ['checkItems','รายการที่ควรเช็ก — หนึ่งรายการต่อบรรทัด','วงเงินรวม ค่าห้อง และข้อจำกัดแยกแต่ละรายการ\nความรับผิดส่วนแรกและค่าใช้จ่ายร่วม ถ้ามี\nระยะเวลารอคอย ข้อยกเว้น และเงื่อนไขเฉพาะบุคคล\nเงื่อนไขต่ออายุและงบชำระเบี้ยในระยะยาว','Overall limits, room benefits and individual benefit limits\nDeductibles and copayments, where applicable\nWaiting periods, exclusions and individual terms\nRenewal conditions and your longer-term premium budget'],
+    ['prepareTitle','หัวข้อเตรียมตัว','ก่อนคุย เตรียมเท่าที่มี','What to prepare'],
+    ['prepareItems','รายการเตรียมตัว — หนึ่งรายการต่อบรรทัด','อายุและเป้าหมายความคุ้มครองของคนที่ต้องการทำประกัน\nตารางสวัสดิการหรือกรมธรรม์เดิม หากมี\nงบประมาณและโรงพยาบาลที่ตั้งใจใช้\nคำถามเรื่องสุขภาพหรือเงื่อนไขที่ต้องการให้ช่วยอธิบาย','The applicant’s age and cover priorities\nExisting employee benefit or policy summaries, if available\nYour budget and preferred hospitals\nQuestions about health disclosures or policy terms'],
+    ['privacyNote','คำแนะนำข้อมูลส่วนตัว','เริ่มต้นด้วยข้อมูลทั่วไปก่อน ไม่ต้องส่งเลขบัตรประชาชนหรือเวชระเบียนผ่านแบบฟอร์มติดต่อ เราจะอธิบายช่องทางที่เหมาะสมหากต้องใช้เอกสารเพิ่มเติม','Start with general information. Do not send ID numbers or medical records through the contact form. We will explain the appropriate channel if further documents are needed.'],
+    ['faq1Question','คำถาม 1','มีประกันกลุ่มแล้ว ยังควรดูอะไรเพิ่ม','What should I check if I already have group cover?'],
+    ['faq1Answer','คำตอบ 1','เริ่มจากวงเงินและเงื่อนไขของสวัสดิการเดิม รวมถึงความต่อเนื่องเมื่อเปลี่ยนงาน แล้วค่อยประเมินส่วนที่ต้องการเพิ่ม ไม่จำเป็นต้องเริ่มจากซื้อแผนใหม่ทันที','Review your current benefit limits, terms and what happens when you change jobs. Then identify any gaps you want to address; a new policy is not automatically the first step.'],
+    ['faq2Question','คำถาม 2','มีประวัติรักษาหรือโรคประจำตัว ปรึกษาได้ไหม','Can I ask for advice if I have a medical history?'],
+    ['faq2Answer','คำตอบ 2','ปรึกษาเรื่องการเตรียมข้อมูลได้ ควรตอบคำถามสุขภาพตามจริงและครบถ้วน บริษัทเป็นผู้พิจารณารับประกันและเงื่อนไข เราไม่สามารถรับรองล่วงหน้าว่าจะอนุมัติหรือคุ้มครองทุกกรณี','We can help you prepare the information requested. Answer health questions accurately and fully. The insurer decides acceptance and terms; we cannot promise approval or cover for every situation.']
+  ]),
+  ...localizedCmsFields('servicePages.life','หน้าประกันชีวิต',[
+    ['seoTitle','ชื่อหน้า SEO','ปรึกษาประกันชีวิต AIA วางแผนความคุ้มครองครอบครัว | CoverMate','AIA life insurance advice for your family | CoverMate'],
+    ['seoDescription','คำอธิบาย SEO','คุยเรื่องประกันชีวิตกับ CoverMate ตัวแทน AIA เริ่มจากคนที่คุณดูแล ภาระครอบครัว ความคุ้มครองเดิม และงบที่จ่ายต่อได้ ไม่มีค่าปรึกษา','Explore life insurance with CoverMate, an AIA agent. Start with family responsibilities, existing cover and a budget you can maintain. No consultation fee.'],
+    ['title','หัวข้อหลัก','ประกันชีวิต\nวางแผนเพื่อคนที่คุณดูแล','Life insurance,\nfor the people who count on you'],
+    ['intro','คำอธิบายหลัก','เริ่มจากสิ่งที่อยากให้ครอบครัวดำเนินต่อได้ เราช่วยจัดภาพความต้องการและอธิบายทางเลือกของ AIA โดยดูภาระ ความคุ้มครองเดิม และงบของคุณร่วมกัน','Start with what you want your family to be able to continue doing. We help clarify your priorities and explain AIA options alongside your responsibilities, existing cover and budget.'],
+    ['helpTitle','หัวข้อบริการ','เปลี่ยนคำถามกว้าง ๆ ให้เป็นแผนที่อ่านรู้เรื่อง','Make your priorities easier to understand'],
+    ['helpBody','คำอธิบายบริการ','เราช่วยแยกเป้าหมาย เช่น เงินดูแลคนในครอบครัว ภาระหนี้ หรือค่าใช้จ่ายในช่วงเวลาหนึ่ง แล้วอ่านจำนวนเงินเอาประกัน ระยะเวลาคุ้มครอง และระยะเวลาชำระเบี้ยของแบบที่สนใจร่วมกัน ไม่ใช้สูตรเดียวตัดสินความต้องการของทุกคน','We help separate goals such as family living costs, debts or expenses over a particular period. Together, we review sums assured, cover periods and premium-payment periods for relevant plans, rather than applying one formula to everyone.'],
+    ['checkTitle','หัวข้อเช็กลิสต์','เรื่องที่ควรชัดก่อนเลือกแบบประกัน','Questions to settle before choosing a plan'],
+    ['checkItems','รายการที่ควรเช็ก — หนึ่งรายการต่อบรรทัด','ใครพึ่งพารายได้ของคุณ และมีภาระต่อเนื่องอะไรบ้าง\nมีเงินสำรองและความคุ้มครองเดิมสำหรับเป้าหมายนี้เท่าไร\nระยะเวลาคุ้มครองและระยะเวลาชำระเบี้ยต่างกันอย่างไร\nผลประโยชน์ ข้อยกเว้น และข้อมูลผู้รับประโยชน์','Who depends on your income, and which commitments continue\nExisting savings and cover allocated to this purpose\nThe difference between cover and premium-payment periods\nBenefits, exclusions and beneficiary details'],
+    ['prepareTitle','หัวข้อเตรียมตัว','เริ่มจากข้อมูลที่คุณมี','Start with the information you have'],
+    ['prepareItems','รายการเตรียมตัว — หนึ่งรายการต่อบรรทัด','เป้าหมายและคนที่คุณต้องการดูแล\nรายจ่ายจำเป็นและภาระที่ต้องรับผิดชอบ\nสรุปกรมธรรม์เดิมและงบชำระเบี้ยที่วางไว้\nคำถามเกี่ยวกับแบบประกันหรือเงื่อนไขที่ยังไม่เข้าใจ','Your goals and the people you want to provide for\nEssential expenses and ongoing commitments\nExisting policy summaries and your premium budget\nQuestions about plans or terms you do not yet understand'],
+    ['privacyNote','คำแนะนำข้อมูลส่วนตัว','ยังไม่ต้องส่งเลขบัตรประชาชน เลขบัญชี หรือเอกสารรายได้ผ่านแบบฟอร์มติดต่อ เริ่มจากเป้าหมายและคำถามทั่วไปได้','Do not send ID numbers, bank details or income documents through the contact form. You can begin with your goals and general questions.'],
+    ['faq1Question','คำถาม 1','ควรมีทุนประกันเท่าไร','How much life cover do I need?'],
+    ['faq1Answer','คำตอบ 1','ต้องดูภาระ คนที่พึ่งพารายได้ ระยะเวลาที่ต้องดูแล และความคุ้มครองเดิมร่วมกัน เริ่มจากจัดข้อมูลเหล่านี้ก่อน แล้วค่อยประเมินงบที่จ่ายต่อได้','Consider responsibilities, dependants, how long support may be needed and existing cover together. Organise this information first, then consider a sustainable premium budget.'],
+    ['faq2Question','คำถาม 2','มีกรมธรรม์เดิมอยู่แล้ว ควรยกเลิกก่อนไหม','Should I cancel an existing policy first?'],
+    ['faq2Answer','คำตอบ 2','อย่าเพิ่งยกเลิกเพียงเพราะกำลังดูแผนใหม่ ควรอ่านสิทธิเดิม ผลกระทบของการเปลี่ยน และเงื่อนไขของแผนใหม่ให้ครบก่อนตัดสินใจ บริษัทเป็นผู้พิจารณารับประกันใหม่','Do not cancel simply because you are exploring another plan. Review existing benefits, the consequences of a change and the new plan’s terms before deciding. Any new application is subject to underwriting.']
+  ]),
   {path:'advisor.fullName',label:'Full name (real advisor only)',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
   {path:'advisor.role',label:'Personal role',group:'Advisor profile',localized:true,seed:{th:'',en:''}},
   {path:'advisor.photo',label:'Home advisor portrait',group:'Advisor profile',media:true,seed:''},
@@ -1065,6 +1125,11 @@ function migrateCmsContent(config) {
   const next = JSON.parse(JSON.stringify(config || {}));
   if (Number(next.cmsContentVersion || 0) >= CMS_CONTENT_VERSION) return mergeGuidesIntoFaq(next);
   const previousVersion = Number(next.cmsContentVersion || 0);
+  // Service pages were introduced after v25. Seed before sanitization turns
+  // absent registered fields into empty strings; preserve every owner value.
+  if (previousVersion < 26) CMS_CONTENT_FIELDS.filter(field => field.path.startsWith('servicePages.')).forEach(field => {
+    for (const lang of ['th','en']) if (cmsGet(next,field.path+'.'+lang) === undefined) cmsSet(next,field.path+'.'+lang,field.seed[lang]);
+  });
   // Refresh only the previous bundled wording; owner edits and blanks stay intact.
   if (previousVersion < 25) {
     const oldCookieCopy = {
@@ -1232,7 +1297,7 @@ function sanitizeCmsFields(config) {
     while (taskIds.has(id)) id += '-copy';
     taskIds.add(id);
     const target = String(task.target || '').trim();
-    return { id, on:task.on !== false, label:{ th:String(task.label?.th || '').trim().slice(0, 160), en:String(task.label?.en || '').trim().slice(0, 160) }, target:/^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(target) ? target : '' };
+    return { id, on:task.on !== false, label:{ th:String(task.label?.th || '').trim().slice(0, 160), en:String(task.label?.en || '').trim().slice(0, 160) }, target:/^(#[A-Za-z0-9_-]+|\/(?:motor|health|life)?(?:#[A-Za-z0-9_-]+)?)$/.test(target) ? target : '' };
   });
   ['header', 'motorPage'].forEach(key => {
     const owner = config[key];
@@ -1241,7 +1306,7 @@ function sanitizeCmsFields(config) {
       let href = String(item.href || '').trim();
       if (key === 'header' && href === '#insurers') href = '#motor';
       const label = typeof item.label === 'string' ? item.label : { th: String(item.label && item.label.th || '').trim().slice(0, 80), en: String(item.label && item.label.en || '').trim().slice(0, 80) };
-      return { ...item, label, href: /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(href) ? href : '' };
+      return { ...item, label, href: /^(#[A-Za-z0-9_-]+|\/(?:motor|health|life)?(?:#[A-Za-z0-9_-]+)?)$/.test(href) ? href : '' };
     });
   });
   // Reuse the loaded contract instead of embedding its media normalizer twice.
@@ -1311,7 +1376,7 @@ export function sanitizeCmsMediaAndLinks(config) {
       if (card.licenceRole !== undefined && !['','life','broker'].includes(card.licenceRole)) card.licenceRole = '';
     });
     for (const owner of [section,section.th,section.en].filter(Boolean)) for (const key of ['cta1href','cta2href','claimHref']) {
-      if (Object.hasOwn(owner,key)) owner[key] = /^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(String(owner[key] || '')) ? owner[key] : '';
+      if (Object.hasOwn(owner,key)) owner[key] = /^(#[A-Za-z0-9_-]+|\/(?:motor|health|life)?(?:#[A-Za-z0-9_-]+)?)$/.test(String(owner[key] || '')) ? owner[key] : '';
     }
   }
   const slots = [...cmsImageSlots(config,'th'), ...cmsImageSlots(config,'en')];
@@ -1915,6 +1980,8 @@ const contract = {
   ADMIN_PUBLIC_EXIT_PATH,
   PUBLIC_HOME_PATH,
   PUBLIC_MOTOR_PATH,
+  PUBLIC_HEALTH_PATH,
+  PUBLIC_LIFE_PATH,
   ADMIN_OWNER_PAGE_QUERY,
   PUBLIC_ROUTE_PATHS,
   ADMIN_OWNER_ROUTE_MAP,

@@ -39,7 +39,7 @@ if(process.argv.includes('--serve')) {
       const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
       const submissions=[];
       // Exercise the real browser payload helper against a local fake receipt, never Firebase.
-      await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('covermate-public.mjs','utf8').replace('    appCheckToken(),',"    Promise.resolve('local-fixture'),")}));
+      await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('src/public/adapter.mjs','utf8').replace('    appCheckToken(),',"    Promise.resolve('local-fixture'),")}));
       await context.route('**/api/leads?*',r=>{
         assert.equal(new URL(r.request().url()).origin,baseUrl);
         submissions.push(r.request().postDataJSON());

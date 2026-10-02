@@ -81,7 +81,7 @@ for(const value of [null,{}, {accepted:true,reference:''}, {id:'a'.repeat(64)}])
 }
 
 // Exercise the shipped adapter without App Check, Firebase or external networking.
-const source=fs.readFileSync('covermate-public.mjs','utf8');
+const source=fs.readFileSync('src/public/adapter.mjs','utf8');
 let response={ok:true,status:200,headers:new Headers()},data=receipt,networkError,tokenError,posts=0;
 const scope={crypto,TextEncoder,URL,location:{origin:'https://example.test',pathname:'/'},cleanText,cleanLeadChoice,validContactEmail,sanitizeNeedsSnapshot:v=>v,DOMException,Date,setTimeout,clearTimeout,
   appCheckToken:async()=>{if(tokenError)throw tokenError;return 'fixture';},environment:{name:'uat'},

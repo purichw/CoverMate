@@ -44,9 +44,11 @@ const L = (th, en) => ({ th: th, en: en });
 
 // COVERMATE_DEFAULTS_SOURCE
 // COVERMATE_CMS_SCHEMA_SOURCE
+// COVERMATE_LOGO_VARIANTS_SOURCE
 // COVERMATE_ADMIN_LABELS_SOURCE
 // COVERMATE_SEO_SOURCE
 // COVERMATE_HOME_ARTICLES_SOURCE
+// COVERMATE_SERVICE_PAGE_SOURCE
 // COVERMATE_ARTICLES_INDEX_SOURCE
 // COVERMATE_ARTICLE_DETAIL_SOURCE
 registerArticleDocument();
@@ -386,6 +388,20 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     toast: null
   };
 
+  constructor(...args) {
+    super(...args);
+    // The shell hydrates published CMS data before constructing this component.
+    // Avoid mounting the full default Home and then replacing it with Live.
+    // Cold-cache/error fallback and every owner surface keep their existing path.
+    if (document.documentElement?.dataset?.covermateSurface === 'public' && window.__covermateRemoteContent?.live && !window.__covermateArticlePreview) {
+      const loaded = this.loadLive();
+      const source = adaptLegacyHomeCopy(loaded.config, loaded.text);
+      const routePage = this.routePageFromLocation(location.pathname, location.search);
+      this._initialPublished = { url: location.href, source };
+      this.state = { ...this.state, site: source.config, routePage, motor: routePage === 'motor' || location.hash === '#motor-focus', life: location.hash === '#life-focus' };
+    }
+  }
+
   componentDidMount() {
     this._articlePreviewUpdate = window.__covermateArticlePreview?.attach?.(this);
     // Owner listeners do not run in the public-only build.
@@ -405,7 +421,10 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     // COVERMATE_OWNER_LISTENERS_END
     this.restoreCalculatorSession();
     this.migrate();
-    this._consentChange = () => this.setState({ analyticsConsent: window.CoverMateAnalytics?.getConsent() || 'unknown' });
+    this._consentChange = () => {
+      const analyticsConsent = window.CoverMateAnalytics?.getConsent() || 'unknown';
+      if (analyticsConsent !== this.state.analyticsConsent) this.setState({ analyticsConsent });
+    };
     window.addEventListener('covermate:analytics-consent', this._consentChange);
     this._consentChange();
     this._dockObserver = window.ResizeObserver ? new ResizeObserver(() => this.syncVisitorDock()) : null;
@@ -424,8 +443,8 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     this._onScroll = () => {
       const y = window.scrollY || 0;
       const past = y > 24;
-      if (past !== this._past) { this._past = past; this.setState({ scrolled: past }); }
-      this.sweep();
+      if (past !== this.state.scrolled) this.setState({ scrolled: past });
+      this.scheduleSweep();
     };
     window.addEventListener('scroll', this._onScroll, { passive: true });
     window.addEventListener('resize', this._onScroll, { passive: true });
@@ -437,8 +456,13 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     };
     window.addEventListener('resize', this._homeResize, { passive: true });
     this._touchQuery.addEventListener('change', this._homeResize);
-    this._raf = requestAnimationFrame(() => this.sweep());
-    this._timer = setInterval(() => this.sweep(), 400);
+    this.scheduleSweep();
+    // Public maintenance follows actual DOM/viewport changes, not an idle 400ms
+    // loop. Owner inline editing still needs its existing reconciliation timer.
+    if (document.documentElement?.dataset?.covermateSurface !== 'public') this._timer = setInterval(() => this.scheduleSweep(), 400);
+    this._mediaSettled = event => { if (event.target?.tagName === 'IMG') this.scheduleSweep(); };
+    document.addEventListener('load', this._mediaSettled, true);
+    document.addEventListener('error', this._mediaSettled, true);
     this._homeKeydown = event => {
       if (!this.state.menuOpen) return;
       if (event.key === 'Escape') { event.preventDefault(); this.toggleMenu(false); }
@@ -465,6 +489,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       this.scrollToAnchor(anchor);
     };
     this._homeToggle = event => {
+      this.scheduleSweep();
       const el = event.target;
       if (!el.matches?.('.hm-cover-card') || !el.open) return;
       el.parentElement.querySelectorAll('.hm-cover-card[open]').forEach(other => { if (other !== el) other.open = false; });
@@ -489,6 +514,17 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     window.addEventListener('covermate:remote-content-ready', this._remoteRoute);
     this.applyMode();
     this.syncSeo();
+  }
+
+  componentDidUpdate() { this.scheduleSweep(); }
+
+  scheduleSweep() {
+    if (this._sweepPending) return;
+    this._sweepPending = true;
+    this._raf = requestAnimationFrame(() => {
+      this._sweepPending = false;
+      this.sweep();
+    });
   }
 
   updateCalculatorInput(mode, key, raw, blur = false) {
@@ -549,6 +585,8 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     document.removeEventListener('keydown', this._homeKeydown);
     document.removeEventListener('click', this._homeAnchorClick);
     document.removeEventListener('toggle', this._homeToggle, true);
+    document.removeEventListener('load', this._mediaSettled, true);
+    document.removeEventListener('error', this._mediaSettled, true);
     window.removeEventListener('resize', this._homeResize);
     this._touchQuery?.removeEventListener('change', this._homeResize);
     window.removeEventListener('scroll', this._onScroll);
@@ -908,7 +946,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     const queryUat = ['uat', 'staging', 'preview'].includes(new URLSearchParams(window.location.search).get('cm_env'));
     const uat = previewHost || (!productionHost && queryUat) || document.documentElement.dataset.covermateEnvironment === 'uat' || window.__covermateRemoteContent?.environment === 'uat';
     const model = createSeoModel(site, {
-      path: this.state.routePage === 'article' ? window.location.pathname : this.state.routePage === 'articles' ? '/articles' : this.state.routePage === 'motor' ? '/motor' : '/',
+      path: this.state.routePage === 'article' ? window.location.pathname : ['articles','motor','health','life'].includes(this.state.routePage) ? '/' + this.state.routePage : '/',
       article:this.state.articleDetail,articleFeed:this.state.articleFeed,
       lang: this.state.lang, privatePage: owner, noindex: owner || uat, motorDefaults: DEFAULTS.motorPage, assetPath: assetURL
     });
@@ -1213,6 +1251,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     }
     const clean = String(path || '').replace(/\/+$/, '') || '/';
     if (clean === '/motor') return 'motor';
+    if (clean === '/health' || clean === '/life') return clean.slice(1);
     if (clean === '/articles') return 'articles';
     if (articleDetailSlug(clean)) return 'article';
     if (this.ownerModeFromPath(clean)) {
@@ -1232,7 +1271,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
 
   localizedPublicHref(value) {
     if (value === '#insurers' && this.state.routePage !== 'motor') return '#motor';
-    if (!/^\/(?:motor|articles(?:\/[^?#]*)?)?(?:[?#]|$)/.test(value || '')) return value;
+    if (!/^\/(?:motor|health|life|articles(?:\/[^?#]*)?)?(?:[?#]|$)/.test(value || '')) return value;
     const url = new URL(value, window.__covermateArticlePreview?.origin || window.location.origin);
     if (url.pathname === '/' && url.hash === '#insurers') url.hash = '#motor';
     if (this.state.lang === 'en') url.searchParams.set('lang', 'en');
@@ -1393,8 +1432,11 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       }
       return;
     }
-    const loaded = owner ? this.loadDraft() : this.loadLive();
-    const src = adaptLegacyHomeCopy(loaded.config, loaded.text);
+    const initial = this._initialPublished;
+    this._initialPublished = null;
+    const prepared = !owner && initial?.url === location.href ? initial.source : null;
+    const loaded = prepared ? null : (owner ? this.loadDraft() : this.loadLive());
+    const src = prepared || adaptLegacyHomeCopy(loaded.config, loaded.text);
     if (owner) this.initEditorHistory(src);
     this._modeApplied = true;
     this.textOv = clone(src.text || {});
@@ -1418,7 +1460,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     }
     if (!editMode) this.disableEdit?.();
     const pageSelection = switchedPage ? { sel:window.CoverMateContract.CMS_EDITABLE_PAGES.find(page=>page.id===routePage)?.section, outlineQuery:'', outlineNotice:'', mobileInspector:false } : {};
-    this.setState({ ...pageSelection, site: src.config, routePage: routePage, articleSearchDraft:null, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, () => {
+    const finishMode = () => {
       if (switchedPage) document.querySelector('[data-admin-panel-scroll]')?.scrollTo(0, 0);
       this.syncSeo();
       requestAnimationFrame(() => {
@@ -1433,7 +1475,9 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       if (editMode) this.enableEdit();
       if (owner && routePage === 'home' && !this._editorArticleFeedRequested) this.loadEditorArticleFeed();
       if (pathMode === 'admin') import(location.origin + '/admin/cms-entry.mjs').then(({ applyCmsEntry }) => applyCmsEntry(this)).catch(() => {});
-    });
+    };
+    if (prepared) finishMode();
+    else this.setState({ ...pageSelection, site: src.config, routePage: routePage, articleSearchDraft:null, admin: admin, editMode: editMode, preview: preview, motor: routePage === 'motor' || h === '#motor-focus', life: h === '#life-focus', adminEver: ever }, finishMode);
   }
 
 
@@ -1715,9 +1759,9 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
           const wasEdited = Object.prototype.hasOwnProperty.call(pending, path);
           delete pending[path];
           this.setState({ cmsEdits: pending });
-          if (value && ((field.media && !cmsMedia(value)) || (field.url && !acceptsHttpsUrl(value, true)) || (field.email && !acceptsEmail(value)) || (field.nav && !/^(#[A-Za-z0-9_-]+|\/(?:motor)?(?:#[A-Za-z0-9_-]+)?)$/.test(value)))) {
+          if (value && ((field.media && !cmsMedia(value)) || (field.url && !acceptsHttpsUrl(value, true)) || (field.email && !acceptsEmail(value)) || (field.nav && !/^(#[A-Za-z0-9_-]+|\/(?:motor|health|life)?(?:#[A-Za-z0-9_-]+)?)$/.test(value)))) {
             const title = field.email ? 'อีเมลไม่ถูกต้อง' : field.media ? 'ที่อยู่รูปภาพไม่ถูกต้อง' : 'ลิงก์ติดต่อไม่ถูกต้อง';
-            const body = field.email ? 'กรอกอีเมลให้ถูกต้อง หรือเว้นว่าง' : field.nav ? 'ใช้ลิงก์ส่วนของหน้า เช่น #talk หรือเส้นทาง / และ /motor' : field.media ? 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' : 'กรอก URL ที่ขึ้นต้นด้วย HTTPS ให้ถูกต้อง หรือเว้นว่าง';
+            const body = field.email ? 'กรอกอีเมลให้ถูกต้อง หรือเว้นว่าง' : field.nav ? 'ใช้ลิงก์ส่วนของหน้า เช่น #talk หรือเส้นทาง /, /motor, /health และ /life' : field.media ? 'ใช้ Path แบบ assets/... หรือ URL รูปที่ขึ้นต้นด้วย HTTPS' : 'กรอก URL ที่ขึ้นต้นด้วย HTTPS ให้ถูกต้อง หรือเว้นว่าง';
             this.showActionToast({ kind: 'error', title: title, body: body });
             return;
           }
@@ -1742,13 +1786,16 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     }));
 
     // COVERMATE_OWNER_FIELDS_END
-    const routePage = ['motor','articles','article'].includes(S.routePage) ? S.routePage : 'home';
+    const routePage = ['motor','health','life','articles','article'].includes(S.routePage) ? S.routePage : 'home';
     const motorPageConfig = this.getMotorPage(site);
     const isHome = routePage === 'home' && !S.motor && !S.life;
     const isMotor = routePage === 'motor' || S.motor;
     const isArticles = routePage === 'articles';
     const isArticleDetail = routePage === 'article', isArticleRoute = isArticles || isArticleDetail;
-    const sharedDesign = isHome || isMotor || isArticleRoute;
+    const isServicePage = routePage === 'health' || routePage === 'life';
+    const standaloneRoute = isArticleRoute || isServicePage;
+    const servicePage = isServicePage ? projectServicePage(site,routePage,lk,{mediaUrl:assetURL,articleFeed:S.articleFeed,href:value=>this.localizedPublicHref(value)}) : null;
+    const sharedDesign = isHome || isMotor || standaloneRoute;
     const homeAdvisor = {
       name:isHome ? cmsText('advisor.fullName') : '', role:cmsText('advisor.role'),
       photo:assetURL(cmsMedia(site.advisor?.photo || '')), photoAlt:cmsText('advisor.photoAlt') || cmsText('advisor.fullName'),
@@ -2019,7 +2066,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     const homeArticles = projectHomeArticles(isHome ? S.articleFeed : null, {lang:lk, mediaUrl:value => assetURL(cmsMedia(value))});
     const articleSlot = homeArticleInsertionIndex(workSections, homeDesign.articlesBefore);
     const articleBefore = workSections[articleSlot]?.id || '';
-    const displaySections = isArticleRoute ? [] : sections.slice();
+    const displaySections = standaloneRoute ? [] : sections.slice();
     if (homeArticles.visible) displaySections.splice(homeArticleInsertionIndex(sections,articleBefore,workSections), 0, {id:'articles', key:'articles', homeArticles:true,homeStyle:'--hm-card:'+(site.theme.radius === 'sharp' ? 8 : 16)+'px'});
     const articleIndex = projectArticleIndex(isArticles ? S.articleFeed : null, {search:window.location.search,lang:lk,mediaUrl:value=>assetURL(cmsMedia(value))});
     const articleCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Articles index' && field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
@@ -2201,7 +2248,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     // Use the visitor's route projection, retaining hidden rows for recovery.
     // Fixed presentation rows keep their existing CMS owners, never new sections.
     // COVERMATE_OWNER_OUTLINE_BEGIN
-    const orderedAdminPairs = workSections.filter(Boolean).map(s => {
+    const orderedAdminPairs = isServicePage ? [{id:'service-content',kind:'service',fixed:true,s:{id:'service-content',type:'service',on:true}}] : workSections.filter(Boolean).map(s => {
       const motorKey = routePage === 'motor' && ['hero','trust','cover'].find(key => motorPageConfig[key]?.id === s.id);
       return { source: motorKey ? 'motorPage' : 'sections', motorKey, s, id:s.id, ownerId:s.id };
     });
@@ -2256,17 +2303,17 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     const secList = adminSectionPairs.map((pair, adminOrder) => {
       const s = pair.s;
       const meta = SECTION_ADMIN_META[pair.id] || SECTION_ADMIN_META[s.type] || { group: 'ส่วนของหน้า', title: (TYPE_LABEL[s.type]?.th || s.type), role: 'ส่วนของเว็บไซต์ที่แก้ไขได้' };
-      const isLicence = pair.kind === 'licences', isFooter = pair.kind === 'footer', isArticleSection = pair.kind === 'articles';
+      const isLicence = pair.kind === 'licences', isFooter = pair.kind === 'footer', isArticleSection = pair.kind === 'articles', isServiceSection = pair.kind === 'service';
       const visible = s.on !== false && (!isLicence || countVisible(routeCards(s)) > 0);
-      const scope = isFooter ? 'ใช้ร่วมกันทุกหน้า' : pair.source === 'motorPage' ? 'เฉพาะหน้าประกันรถ' : motorPageConfig.sections.includes(pair.ownerId) ? 'ใช้ร่วมกับ' + (isMotor ? 'หน้าแรก' : 'ประกันรถยนต์') : 'เฉพาะหน้าแรก';
+      const scope = isFooter ? 'ใช้ร่วมกันทุกหน้า' : isServiceSection ? 'เฉพาะหน้า'+servicePage.copy.navLabel+' · รายการเช็กลิสต์ใช้หนึ่งรายการต่อบรรทัด' : pair.source === 'motorPage' ? 'เฉพาะหน้าประกันรถ' : motorPageConfig.sections.includes(pair.ownerId) ? 'ใช้ร่วมกับ' + (isMotor ? 'หน้าแรก' : 'ประกันรถยนต์') : 'เฉพาะหน้าแรก';
       return {
         key: pair.id, id: pair.id, order:adminOrder + 1, on: visible, sel: activeAdminSel === pair.id,
-        name: meta.title || (TYPE_LABEL[s.type]?.th || s.type), group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
+        name: isServiceSection ? servicePage.copy.navLabel : meta.title || (TYPE_LABEL[s.type]?.th || s.type), group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
         sub: isFooter ? 'Footer' : '#' + (pair.id === 'insurers' && isHome ? 'motor' : pair.id),
         summary: isArticleSection ? homeArticles.items.length + ' บทความบนหน้าแรก' : isFooter ? 'ส่วนท้ายหน้า' : isLicence ? countVisible(routeCards(s)) + (isMotor ? ' การ์ดนายหน้า' : ' การ์ดใบอนุญาต') : sectionSummary(s),
-        scope, position:pair.fixed ? 'อยู่ท้ายหน้าเสมอ' : '',
+        scope, position:pair.fixed && !isServiceSection ? 'อยู่ท้ายหน้าเสมอ' : '',
         dependency:isLicence ? 'แสดงตามส่วนบริษัทประกันและการ์ดใบอนุญาตแต่ละใบ' : '',
-        canEditContent:isFooter || isArticleSection || !!SCHEMA[s.type], canMove:!pair.fixed, canToggle:!isLicence && !isArticleSection, hasLayout:!pair.fixed && !isArticleSection,
+        canEditContent:isFooter || isArticleSection || isServiceSection || !!SCHEMA[s.type], canMove:!pair.fixed, canToggle:!isLicence && !isArticleSection && !isServiceSection, hasLayout:!pair.fixed && !isArticleSection,
         statusLabel: isArticleSection && S.editorArticleFeedLoading ? 'กำลังโหลด' : isArticleSection && S.editorArticleFeedError ? 'โหลดไม่ได้' : visible ? 'แสดงอยู่' : isArticleSection ? (S.articleFeed?.settings?.enabled===false ? 'ปิดระบบ' : S.articleFeed?.settings?.showHome===false ? 'ปิดบน Home' : 'ไม่มีบทความ') : isLicence && s.on === false ? 'ซ่อนส่วนบริษัทประกันอยู่' : isLicence ? 'ไม่มีการ์ดที่แสดงอยู่' : 'ซ่อนอยู่',
         statusBg: visible ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)',
         statusFg: visible ? 'var(--color-accent-2-900)' : 'var(--color-accent-800)',
@@ -2573,7 +2620,15 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const path=field.path+'.'+lk,input=cmsInput(path,field);
       return {key:path,path,label:cmsAdminLabel(field.label),big:true,small:false,...input,onInput:input.change};
     }) : [];
-    const contentFieldGroups = isContactInspector ? [] : [
+    const serviceContentFields = isServicePage ? ownedCopyFields(routePage === 'health' ? 'หน้าประกันสุขภาพ' : 'หน้าประกันชีวิต') : [];
+    const contentFieldGroups = isContactInspector ? [] : selectedAdminPair?.kind === 'service' ? [
+      {key:'hero',label:'หัวข้อและคำอธิบายหลัก',open:true,fields:serviceContentFields.filter(field=>/\.(navLabel|eyebrow|title|intro|cta|formCta)\./.test(field.path))},
+      {key:'details',label:'บริการและรายการเตรียมตัว',open:true,fields:serviceContentFields.filter(field=>/\.(helpTitle|helpBody|checkTitle|checkItems|prepareTitle|prepareItems|privacyNote|disclosure)\./.test(field.path))},
+      {key:'process',label:'ขั้นตอนการปรึกษา',fields:serviceContentFields.filter(field=>/\.(processTitle|step\d(?:Title|Body))\./.test(field.path))},
+      {key:'faq',label:'คำถามที่พบบ่อย',fields:serviceContentFields.filter(field=>/\.faq(?:Title|\d(?:Question|Answer))\./.test(field.path))},
+      {key:'contact',label:'บทความและการติดต่อ',fields:serviceContentFields.filter(field=>/\.(relatedTitle|allArticles|contactTitle|contactBody|referenceTitle)\./.test(field.path))},
+      {key:'seo',label:'การแสดงผลบน Google',fields:serviceContentFields.filter(field=>/\.seo(?:Title|Description)\./.test(field.path))}
+    ] : [
       {key:'main',label:'ข้อความหลัก',open:true,fields:[...editFields.filter(field=>!['note','cta1','cta2'].includes(field.key)),...footerFields,...(cur?.type==='articles' ? ownedCopyFields('Home articles') : [])]},
       {key:'comparison',label:'หัวตารางและข้อความประกอบ',open:true,fields:cur?.type==='tiers' && sharedDesign ? ownedCopyFields('Motor comparison') : []},
       {key:'notes',label:'ข้อความกำกับ / หมายเหตุ',open:false,fields:editFields.filter(field=>field.key==='note')},
@@ -2727,9 +2782,9 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       contactMultipleErrors:enhancedContact && Object.keys(submission.fields).filter(key=>key!=='form').length>1,
       contactErrorLinks:enhancedContact?Object.entries(submission.fields).filter(([key])=>key!=='form').map(([key,value])=>({href:'#contact-'+key,label:submissionCopy[value],focus:event=>{event.preventDefault();document.getElementById('contact-'+key)?.focus();}})):[],
       th: th, en: !th,
-      isHome: isHome, notHome: !isHome, isArticles, isArticleDetail, homeRoute:routePage,
-      headerHomeHref:isArticleRoute?this.localizedPublicHref('/'):'#top',
-      footerPrivacyHref:isArticleRoute?this.localizedPublicHref('/#privacy'):'#privacy',
+      isHome: isHome, notHome: !isHome, isArticles, isArticleDetail, isServicePage, servicePage, homeRoute:routePage,
+      headerHomeHref:standaloneRoute?this.localizedPublicHref('/'):'#top',
+      footerPrivacyHref:standaloneRoute?this.localizedPublicHref('/#privacy'):'#privacy',
       homeAdvisor,
       sharedDesign:sharedDesign, legacyDesign:!sharedDesign, heroProof:heroProof,
       ...calculatorView,
@@ -2872,7 +2927,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       articleNext:event=>this.navigateArticles(articleIndex.nextHref,event),
       articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,true),
       articleReload:()=>window.location.reload(),
-      homeLicenceSections: sharedDesign && !isArticleRoute ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
+      homeLicenceSections: sharedDesign && !standaloneRoute ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
       licenceFilePaths: ICONS.file,
       sectionGroups: displaySections.reduce((groups, section) => {
         const cluster = isHome && ['about','review','how'].includes(section.id);
@@ -2883,8 +2938,11 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       }, []),
       brandLogoAlt: [t(site.brand.name), t(site.brand.role)].filter(Boolean).join(' '),
       brandWordmarkLogo: assetURL(t(media.headerLogo)),
+      brandWordmarkSrcset: logoResponsiveSrcset(t(media.headerLogo), IMAGE_VERSIONS, window.__covermateArticlePreview?.origin || window.location.origin),
+      logoResponsiveSizes: LOGO_RESPONSIVE_SIZES,
       headerLogoPath:'brand.media.headerLogo.'+lk,
       footerBrandLogo: assetURL(t(media.footerLogo)),
+      footerBrandSrcset: logoResponsiveSrcset(t(media.footerLogo), IMAGE_VERSIONS, window.__covermateArticlePreview?.origin || window.location.origin),
       footerLogoPath:'brand.media.footerLogo.'+lk,
       hasHeaderLogo: !!t(media.headerLogo), hasFooterLogo: !!t(media.footerLogo),
       brandMarkLogo: assetURL(media.mark),
@@ -2914,7 +2972,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       headerBg: S.scrolled ? 'color-mix(in srgb, var(--color-bg) 88%, transparent)' : 'var(--color-bg)',
       markScale: S.scrolled ? 'scale(.88)' : 'none',
       showNav: H.show && H.showNav, showHeaderCta: H.showCta && hasLine && !!t(H.cta), headerCta: t(H.cta),
-      navItems: routePage === 'motor' ? motorNavItems : isArticleRoute ? publicNavItems.map(item=>({...item,href:item.href.startsWith('#')?this.localizedPublicHref('/'+item.href):item.href})) : publicNavItems,
+      navItems: routePage === 'motor' ? motorNavItems : standaloneRoute ? publicNavItems.map(item=>({...item,href:item.href.startsWith('#')?this.localizedPublicHref('/'+item.href):item.href})) : publicNavItems,
       showTalkAnchor: showTalkAnchor,
       showPrivacyAnchor: showPrivacyAnchor,
       showFooterPrivacyNav: showPrivacyAnchor,
@@ -3235,7 +3293,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       editorPanelExpanded:!!S.editorPanelExpanded,
       expandEditorPanel:() => this.setState({editorPanelExpanded:!this.state.editorPanelExpanded}),
       inspectorFullContent:() => selectedAdminPair?.kind === 'footer' ? openAdminGroup('Footer design') : this.setState({tab:'content',sel:activeAdminSel}, () => requestAnimationFrame(() => {const panel=document.querySelector('[data-admin-panel-scroll]');if(panel)panel.scrollTop=0;})),
-      adminPageName:isMotor ? 'ประกันรถยนต์' : 'หน้าแรก',
+      adminPageName:isServicePage ? servicePage.copy.navLabel : isMotor ? 'ประกันรถยนต์' : 'หน้าแรก',
       curName:secList.find(row=>row.id===activeAdminSel)?.name || '', curId:activeAdminSel,
       contentShortcuts,
       contentScope:secList.find(row=>row.id===activeAdminSel)?.scope || '',
@@ -3293,12 +3351,12 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       onEmail: (e) => { const v = e.target.value; if (v && !acceptsEmail(v)) this.showActionToast({ kind: 'error', title: 'อีเมลไม่ถูกต้อง', body: 'กรอกอีเมลให้ถูกต้อง' }); this.upd(x => { x.contact.email = v; }); },
       onHours: (e) => { const v = e.target.value; this.upd(x => { x.contact.hours[lk] = v; }); },
       onArea: (e) => { const v = e.target.value; this.upd(x => { x.contact.area[lk] = v; }); },
-      seoTitle: (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).title || {})[lk] || '',
-      seoDescription: (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).description || {})[lk] || '',
+      seoTitle: isServicePage ? servicePage.copy.seoTitle : (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).title || {})[lk] || '',
+      seoDescription: isServicePage ? servicePage.copy.seoDescription : (((routePage === 'motor' ? motorPageConfig.seo : site.seo) || {}).description || {})[lk] || '',
       seoCanonical: 'Canonical: https://covermateinsurance.com' + this.publicPathForRoutePage(routePage),
-      seoRobots: (routePage === 'motor' ? 'หน้า /motor แสดงในผลค้นหาได้ ส่วน Admin, Edit และ Preview ยังคงเป็น noindex' : 'หน้าแรกแสดงในผลค้นหาได้ ส่วน Admin, Edit และ Preview ยังคงเป็น noindex'),
-      onSeoTitle: (e) => { const v = e.target.value; if (v.length > 68) this.showActionToast({ kind: 'error', title: 'ชื่อหน้า SEO ยาวเกินไป', body: 'ชื่อหน้าควรยาวไม่เกิน 68 ตัวอักษร' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.title = target.title || {}; target.title[lk] = v; }); },
-      onSeoDescription: (e) => { const v = e.target.value; if (v.length > 155) this.showActionToast({ kind: 'error', title: 'Meta description ยาวเกินไป', body: 'คำอธิบายควรยาวไม่เกิน 155 ตัวอักษร' }); this.upd(x => { const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.description = target.description || {}; target.description[lk] = v; }); },
+      seoRobots: ((isMotor || isServicePage) ? 'หน้า '+this.publicPathForRoutePage(routePage)+' แสดงในผลค้นหาได้ ส่วน Admin, Edit และ Preview ยังคงเป็น noindex' : 'หน้าแรกแสดงในผลค้นหาได้ ส่วน Admin, Edit และ Preview ยังคงเป็น noindex'),
+      onSeoTitle: (e) => { const v = e.target.value; if (v.length > 68) this.showActionToast({ kind: 'error', title: 'ชื่อหน้า SEO ยาวเกินไป', body: 'ชื่อหน้าควรยาวไม่เกิน 68 ตัวอักษร' }); this.upd(x => { if(isServicePage){cmsSet(x,'servicePages.'+routePage+'.seoTitle.'+lk,v);return;} const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.title = target.title || {}; target.title[lk] = v; }); },
+      onSeoDescription: (e) => { const v = e.target.value; if (v.length > 155) this.showActionToast({ kind: 'error', title: 'Meta description ยาวเกินไป', body: 'คำอธิบายควรยาวไม่เกิน 155 ตัวอักษร' }); this.upd(x => { if(isServicePage){cmsSet(x,'servicePages.'+routePage+'.seoDescription.'+lk,v);return;} const target = routePage === 'motor' ? ((x.motorPage = x.motorPage || {}).seo = x.motorPage.seo || {}) : (x.seo = x.seo || {}); target.description = target.description || {}; target.description[lk] = v; }); },
       onFootTag: (e) => { const v = e.target.value; this.upd(x => { x.footer.tagline[lk] = v; }); },
       onFootLegal: (e) => { const v = e.target.value; this.upd(x => { x.footer.legal[lk] = v; }); },
       footCols: String(F.columns),

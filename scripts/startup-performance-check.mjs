@@ -4,6 +4,10 @@ import vm from 'node:vm';
 import { createPageHandler } from '../server/seo-page.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
+import { readImageVersions } from './lib/visitor-source.mjs';
+import { logoResponsiveSrcset, LOGO_RESPONSIVE_SIZES } from '../src/visitor/logo-variants.mjs';
+
+const imageVersions = readImageVersions();
 
 const config = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)'));
 config.brand.media = {
@@ -32,6 +36,9 @@ try {
     await network.send('Network.setBlockedURLs',{urls:['https://*']});
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => requests.push(new URL(request.url()).pathname + new URL(request.url()).search));
+    await page.addInitScript(() => document.addEventListener('load', event => {
+      if (event.target.matches?.('[data-covermate-boot-logo]')) window.__startupBootLogo = event.target.currentSrc;
+    }, true));
     await page.goto(baseUrl + route + '?lang=' + lang);
     await page.waitForFunction(() => document.documentElement.hasAttribute('data-covermate-route') && !document.documentElement.hasAttribute('data-covermate-booting'));
     assert.equal(await page.locator('html').getAttribute('data-covermate-surface'), 'public');
@@ -39,9 +46,19 @@ try {
     assert.equal(requests.some(url => /editor-(panel|tools|preview|versions)\.(css|js)|covermate-firebase\.js/.test(url)), false, 'Public boot never downloads owner tooling');
     const header = page.locator('header img[data-cms-image]').first();
     await header.evaluate(image => image.decode());
-    const headerUrl = new URL(await header.getAttribute('src'), baseUrl);
+    const originalLogo = '/assets/brand/covermate-advisory-logo-' + lang + '.png';
+    const expectedSrcset = logoResponsiveSrcset(originalLogo, imageVersions, baseUrl);
+    assert.ok(expectedSrcset, 'The exact known logo has current delivery variants');
+    assert.equal(await header.getAttribute('srcset'), expectedSrcset, 'Header uses the hash-guarded known-asset mapping');
+    assert.equal(await header.getAttribute('sizes'), LOGO_RESPONSIVE_SIZES, 'Header and boot share candidate selection sizes');
+    const allowedCandidates = expectedSrcset.split(', ').map(candidate => new URL(candidate.split(' ')[0], baseUrl).href);
+    const headerUrl = new URL(await header.evaluate(image => image.currentSrc));
+    assert.ok(allowedCandidates.includes(headerUrl.href), 'The browser selected a current known candidate');
+    assert.equal(await page.evaluate(() => window.__startupBootLogo), headerUrl.href, 'Boot and rendered header select the same image');
     assert.equal(requests.filter(url => url === headerUrl.pathname + headerUrl.search).length, 1, 'Boot and rendered header download the logo once');
-    assert.equal(requests.filter(url => url.includes('covermate-advisory-logo-'+lang+'.png')).length, 1, 'No alternate cache-busting URL duplicates the logo');
+    const logoRequests = requests.filter(url => new RegExp('/covermate-advisory-logo-' + lang + '(?:-(?:480|720))?\\.(?:png|webp)(?:\\?|$)').test(url));
+    assert.equal(logoRequests.length, 1, 'No original, second derivative, or alternate cache-busting URL duplicates the logo');
+    assert.ok(headerUrl.pathname.endsWith('-480.webp'), 'DPR1 fixture uses the smaller logo instead of the 1200px original');
     const footer = page.locator('.cm-footer-logo');
     assert.equal(await footer.getAttribute('loading'), 'lazy');
     if (route === '/') assert.equal(requests.some(url => url.includes('covermate-footer-logo-')), false, 'A distant footer does not compete with first content');
@@ -57,7 +74,7 @@ try {
     assert.equal(await footer.isVisible(), true, 'Deferred branding loads when the footer is reached');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
     await page.screenshot({path:`${output}/${route === '/' ? 'home' : 'articles'}-${lang}-${width}-footer.png`});
-    results.push({route,lang,width,logoRequests:1,footerLoaded:true});
+    results.push({route,lang,width,logoRequests:1,selectedLogo:headerUrl.pathname,footerLoaded:true});
     await context.close();
   }
   assert.deepEqual(errors, []);

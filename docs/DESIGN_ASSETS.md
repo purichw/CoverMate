@@ -111,6 +111,25 @@ and copy; only its obsolete green wordmark is replaced. Its SVG embeds the same
 updated wordmark. Static metadata has a new cache version; runtime social media
 and root favicons use asset hashes, without overriding custom CMS URLs.
 
+## Responsive Logo Delivery
+
+The approved 1200 × 375 TH/EN header PNGs remain the CMS source. Public boot,
+header, and compatible footer images may select the 480 × 150 or 720 × 225
+lossless WebP derivatives through `src/visitor/logo-variants.mjs`. The original
+is retained in `srcset` for higher pixel densities and zoom. All three uses share
+one conservative `sizes` value based on the loading logo so the browser can
+reuse the same response when the page appears. This changes delivery only, not
+the element size, crop, colors, logo artwork, or CMS slot.
+
+The helper activates only for the exact bundled original path and source hash.
+Custom uploads, query-based transforms, blanks, and a replaced original remain
+on the original URL. When intentionally replacing approved artwork, regenerate
+the derivatives and update the guarded source hash together; otherwise they
+automatically stop being selected. Resize with Sharp, encode with
+`webp({lossless:true,effort:6})`, and run `node scripts/logo-variants-check.mjs`.
+The check verifies all visible pixels and alpha against the resized PNG (WebP
+can discard RGB values beneath fully transparent pixels).
+
 ## Font Policy
 
 All visible website text must use the Google Sans family across both Thai and

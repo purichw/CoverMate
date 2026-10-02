@@ -1,13 +1,13 @@
 # CoverMate Interaction Map
 
-Last updated: 2026-09-24. This document maps source behavior; see
+Last updated: 2026-10-02. This document maps source behavior; see
 [HANDOFF.md](HANDOFF.md) for deployed versus candidate status and
 [REFACTOR_20260924.md](REFACTOR_20260924.md) for refactor checks.
 
 ## Visitor Journey
 
-1. Visitor lands on `/`, `/motor`, `/#motor`, `/#life`, or an unexposed
-   compatibility hash.
+1. Visitor lands on `/`, `/motor`, `/articles`, `/articles/{slug}`, `/#motor`,
+   `/#life`, or an unexposed compatibility hash.
 2. Visitor scans enabled CMS content: offer, credibility bar, coverage categories,
    policy-review offer, calculator, process, insurer proof, motor tier comparison, claim
    help, renewal reminders, claim stories, about/license copy, consolidated FAQ, fee transparency,
@@ -29,9 +29,9 @@ the same global navbar as `/`; `/#motor` re-aims to `#insurers`, while `/#life`
 re-aims to `#cover` after hydration. Home renders coverage as a compact
 standalone section. `#guides` aliases to FAQ after consolidation.
 
-Public navbar clicks are same-page anchor jumps, not route transitions. Clicking
-items such as `ขั้นตอน` / `#how` must scroll to the section without reloading or
-rebuilding the visitor DOM, which prevents a visible page flicker.
+Public same-page navbar anchors scroll without reloading or rebuilding the
+visitor DOM. Article links navigate to the public index or reader; saved
+Articles visibility controls whether those links and Home cards appear.
 
 `/#motor-focus` and `/#life-focus` are legacy unexposed compatibility variants.
 They are not the current motor campaign strategy and must not appear in header
@@ -92,10 +92,12 @@ After login, `/admin` must show the single Admin Portal shell.
 
 Home actions:
 
-- `หน้าแรก`, `งานลูกค้า`, `จัดการเว็บไซต์`, `Analytics`, and `ตั้งค่า` switch
+- `หน้าแรก`, `งานลูกค้า`, `จัดการเว็บไซต์`, `บทความ`, and `Analytics` switch
   inside the same document through sidebar state.
 - `งานลูกค้า` mounts owner-only Cases; old Dashboard/Leads/Tasks/Audit tabs are
   not current navigation.
+- The shared account menu opens account details, notification preferences and
+  notifications, and keeps log out available.
 - The edit quick action opens `/admin/edit`.
 - The preview quick action opens `/admin/preview`.
 - `ดูเว็บจริง` opens the clean public route in a new browser tab without
@@ -112,6 +114,25 @@ and retain `Save draft`, `Preview`, `Publish`. TH/EN selects website content,
 not Admin UI language. See [ADMIN_LANGUAGE.md](ADMIN_LANGUAGE.md).
 
 This page is an intentional admin step and should not disappear after login.
+
+## Articles Journey
+
+1. Visitors open eligible published articles from the Home carousel or
+   `/articles`; `/articles/{slug}` reads only due published translations.
+   Presentation and navigation live in [HOME_ARTICLES.md](HOME_ARTICLES.md),
+   [ARTICLES_INDEX.md](ARTICLES_INDEX.md) and [ARTICLE_DETAIL.md](ARTICLE_DETAIL.md).
+2. A verified owner opens `/admin#articles`, selects or creates an article,
+   edits the full draft, saves it, and uses full-page Preview before confirmed
+   Publish. Saving edits to an existing publication does not replace its live
+   snapshot. See [ADMIN_ARTICLES.md](ADMIN_ARTICLES.md) and
+   [ARTICLE_EDITOR.md](ARTICLE_EDITOR.md).
+3. Visibility settings save separately from article drafts. Their master switch
+   gates public article URLs; Home and navigation have independent preferences.
+4. Website Save/Publish/Reset/Undo/version restore never saves or publishes
+   article drafts. Article Save/Publish/Unpublish never changes website state,
+   website versions or other article drafts. Shared headings/artwork stay in
+   website CMS. [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md) owns the complete
+   publication and visibility contract.
 
 ## Motor Page Admin Flow
 
@@ -329,6 +350,7 @@ not a local session cache alone. Modern Cases requires owner access.
 | --- | --- | --- |
 | `/admin/login` | Login page remains available | Login page remains available |
 | `/admin` | Show Admin Portal shell | Redirect to `/admin/login` |
+| `/admin#articles` | Show Articles workspace in the shared shell | Redirect to `/admin/login` |
 | `/admin/analytics` | Show analytics dashboard | Redirect to `/admin/login` |
 | `/admin/ops` | Show Admin Portal shell defaulted to Operations | Redirect to `/admin/login` |
 | `/admin/edit` | Show edit mode | Redirect to `/admin/login` |

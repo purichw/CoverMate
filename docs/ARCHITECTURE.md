@@ -27,7 +27,8 @@ The current visitor bundle is maintained against the product specs, repository d
 Downloaded offline prototype HTML is not automatically portable. Some exports can depend on sidecar runtime files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw template placeholders like `{{ brandName }}`. Treat those files as historical references until they are compiled into self-contained HTML or shipped with a complete dependency folder.
 
 Backend APIs use Vercel functions: `/api/ops/*`, `/api/analytics`, `/api/leads`
-and `/api/telemetry`, plus `/api/page` and `/api/media`.
+and `/api/telemetry`, plus `/api/page`, `/api/media`, `/api/articles` and
+`/api/article-sitemap`.
 The media API uses signed Cloudinary uploads with a Free-plan quota guard;
 see [CMS_MEDIA.md](CMS_MEDIA.md). Admin identity is
 backed by Firebase Auth plus Firestore `admins/{uid}` allowlist checks, and CMS
@@ -128,7 +129,15 @@ must stay out of the header nav and sitemap.
 checks Firestore `admins/{uid}` before writing the browser-local
 `covermate-admin-session` cache and redirecting to `/admin`.
 
-`covermate-public.mjs` owns lightweight REST hydration of published CMS content
+`src/public/adapter.mjs` owns the readable public adapter; `build:visitor` emits
+the minified root `covermate-public.mjs` at its unchanged browser URL.
+`src/public/environment.mjs` similarly emits `covermate-environment.mjs` for
+shared browser/server environment resolution. These are minification-only
+outputs: import specifiers, module identity and contact retry URLs are preserved.
+`check:visitor-source` checks both generated files. Source-based fixtures read
+`src/public/adapter.mjs` and still serve it at the canonical root URL.
+
+`covermate-public.mjs` provides lightweight REST hydration of published CMS content
 and lead submissions through `/api/leads`. Firebase Auth and Firestore SDKs are
 not loaded for public first paint. App Check is loaded when a visitor submits.
 `covermate-firebase-config.mjs` owns public Firebase identifiers and the strictly
@@ -163,8 +172,22 @@ only. It uses measurement ID `G-5TF3C235EF`, loads only on
 never sends form field values or visitor contact details.
 
 `admin/index.html` owns the private post-login Admin Portal Home. It is the
-required hub shown before choosing Operations, Website content, Analytics,
-Settings, public-site exit, or logout.
+required hub shown before choosing Operations, Website content, Articles,
+Analytics or public-site exit. `admin/shell.js` owns the shared desktop/mobile
+navigation and account menu for account details, notification preferences,
+notifications and logout.
+
+`/admin#articles` mounts `admin/articles/workspace.mjs` and the rich article
+editor. `/api/articles` and `server/articles.mjs` own revision-checked drafts,
+publication snapshots, visibility settings and published feeds for Home,
+`/articles` and `/articles/{slug}`. Their `articles`, `articleCatalog`,
+`articleSlugs`, `articleSettings` and `articleAudit` collections stay separate
+from website `states` and `versions` in the active site namespace. Website
+Save/Publish/Reset/Undo/version restore never writes article drafts or
+publications; article Save/Publish/Unpublish never writes website state or
+versions. Shared page headings/artwork remain website CMS content. See
+[ADMIN_ARTICLES.md](ADMIN_ARTICLES.md), [ARTICLE_EDITOR.md](ARTICLE_EDITOR.md)
+and [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md).
 
 `admin/analytics/index.html` owns the private analytics dashboard. It is
 source-authored rather than imported from an offline prototype, uses `admin/session.js` for

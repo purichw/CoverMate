@@ -9,7 +9,7 @@ module.exports=async function sitemap(req,res) {
     const env=environment.resolveCoverMateEnvironment({host,search,vercelEnv:process.env.VERCEL_ENV});
     if(env.isUat){res.setHeader('X-Robots-Tag','noindex, nofollow, noarchive');res.end('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');return;}
     const feed=await articles.createArticleRepository().feed(env.siteId);
-    const paths=['/','/motor','/?lang=en','/motor?lang=en'];
+    const paths=['/','/motor','/health','/life','/?lang=en','/motor?lang=en','/health?lang=en','/life?lang=en'];
     if(feed.settings.enabled) {
       paths.push('/articles','/articles?lang=en');
       for(const item of feed.items)for(const lang of Object.keys(item.translations))paths.push('/articles/'+item.slug+(lang==='en'?'?lang=en':''));

@@ -1,5 +1,9 @@
 # CoverMate Analytics
 
+The saved SEO landing-page/contact report and interpretation limits are in
+[SEO_REPORTING.md](SEO_REPORTING.md). It complements the Admin case dashboard;
+it does not join individual customers with Google search queries.
+
 Last updated: 2026-09-23
 
 ## Visitor Cookie Consent

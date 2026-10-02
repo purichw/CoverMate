@@ -6,6 +6,7 @@ import {articleDetailSlug,projectArticleDetail} from '../src/visitor/article-det
 import { extractBundlerTemplate, replaceBundlerTemplate } from './bundler-template.mjs';
 import { renderErrorPage } from './error-page.mjs';
 import { PUBLISHED_READER_TTL_MS, PUBLIC_HTML_CACHE_CONTROL } from '../covermate-freshness.mjs';
+import { logoResponsiveSrcset, LOGO_RESPONSIVE_SIZES } from '../src/visitor/logo-variants.mjs';
 
 const START = '<!-- COVERMATE_SEO_START -->', END = '<!-- COVERMATE_SEO_END -->';
 const assetVersions = JSON.parse(fs.readFileSync(new URL('./asset-versions.json', import.meta.url), 'utf8'));
@@ -39,8 +40,9 @@ export function renderPublicPage(html, config, options) {
   try {
     if (typeof logo === 'string' && logo.trim() && ['http:', 'https:'].includes(new URL(logo, 'https://covermateinsurance.com/').protocol)) logoUrl = versionedAssetUrl(logo.trim(), assetVersions, 'https://covermateinsurance.com');
   } catch { /* A missing or invalid logo keeps a text identity. */ }
+  const logoSrcset = logoResponsiveSrcset(logo, assetVersions, 'https://covermateinsurance.com');
   rendered = rendered.replace(/<img data-covermate-boot-logo[^>]*>/,
-    '<img data-covermate-boot-logo data-published' + (logoUrl ? ' src="' + escape(logoUrl) + '"' : ' hidden') + ' width="1200" height="375" alt="CoverMate">');
+    '<img data-covermate-boot-logo data-published' + (logoUrl ? ' src="' + escape(logoUrl) + '"' : ' hidden') + (logoSrcset ? ' srcset="' + escape(logoSrcset) + '" sizes="' + escape(LOGO_RESPONSIVE_SIZES) + '"' : '') + ' width="1200" height="375" alt="CoverMate">');
   // Home's CMS background is otherwise discovered only after the template
   // mounts. Preload the exact rendered asset only when the first visible
   // section is a hero; other routes, hidden/reordered heroes and owner tools
@@ -137,7 +139,7 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
     const route = url.pathname === '/api/page' ? url.searchParams.get('route') : url.pathname;
     const owner = ['/admin/content', '/admin/edit', '/admin/preview'].includes(route);
     const articleSlug=articleDetailSlug(route);
-    if (!['/', '/motor', '/articles'].includes(route) && !articleSlug && !owner) {
+    if (!['/', '/motor', '/health', '/life', '/articles'].includes(route) && !articleSlug && !owner) {
       sendError(404); return;
     }
     const environment = resolveCoverMateEnvironment({ headers: req.headers, url: req.url });

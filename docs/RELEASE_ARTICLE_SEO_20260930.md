@@ -1,5 +1,15 @@
 # Home Carousel and Article SEO Release
 
+Historical release record for 2026-09-30. The layout and verification notes below
+describe that candidate, including the emulator port conflict at the time.
+Current live source `aa8b68d` has successful CI and a promoted production
+deployment; see [HANDOFF.md](HANDOFF.md). Current Home cards are 2/1/3 across
+desktop/tablet/mobile page sizes, with three stacked mobile rows and the
+all-articles link above them. Current autoplay has no Play/Pause control.
+[HOME_ARTICLES.md](HOME_ARTICLES.md) and [ARTICLES_INDEX.md](ARTICLES_INDEX.md)
+own the current contracts; [ARTICLE_EDITOR.md](ARTICLE_EDITOR.md) owns the editor.
+This documentation update did not rerun visual smoke or the historical checks.
+
 ## Scope
 
 - Reconcile the Home article carousel with the supplied desktop/mobile mockup:
@@ -50,6 +60,14 @@ article rendering/media, responsive layout, and private-page noindex. Hosted
 checks are read-only; local/emulator editor evidence must not be represented as
 an authenticated production publication test.
 
-Deployment is not claimed by this document. Record the final commit, CI run,
-Vercel deployment, alias readback, and read-only smoke results in the ignored
+This historical candidate record did not claim a completed deployment. Record
+each release's final commit, CI run, Vercel deployment, alias readback, and
+read-only smoke results in the ignored
 release evidence after those checks finish.
+
+Current shared-carousel verification must include the affected Home publication
+journey, `scripts/home-articles-pins-e2e.mjs`, when its behavior changes. The
+focused command in `HOME_ARTICLES.md` requires isolated Auth/Firestore emulators
+and preserves independent Home/index pins; it also runs in `check:emulators`.
+The current fixture checks mobile pages of three and a real reader link rather
+than the historical single-card assumption.

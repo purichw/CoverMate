@@ -16,7 +16,7 @@ const {baseUrl} = await startStaticServer({port:Number(process.env.PORT || 0),on
     res.writeHead(403,{'content-type':'text/plain'});res.end('Read-only local design preview.');return true;
   }
   if (url.pathname === '/covermate-public.mjs') {
-    const source = fs.readFileSync('covermate-public.mjs','utf8').replace('${publicFirestoreRoot()}','${location.origin}/__comparison-preview');
+    const source = fs.readFileSync('src/public/adapter.mjs','utf8').replace('${publicFirestoreRoot()}','${location.origin}/__comparison-preview');
     res.writeHead(200,{'content-type':'application/javascript'});res.end(source);return true;
   }
   if (url.pathname.startsWith('/__comparison-preview/')) {
