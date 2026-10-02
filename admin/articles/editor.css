@@ -78,6 +78,13 @@
 .ae-preview-link { width:100%;color:#974119;background:#fff3e6;border-color:#ecd5bd; }
 .ae-cover { display:grid;place-items:center;width:100%;aspect-ratio:16/9;background:#f1ede3;border-radius:6px;overflow:hidden;color:#9e9c8a; }.ae-cover img { display:block;width:100%;height:100%;object-fit:cover; }.ae-cover > svg { width:36px;height:36px; }
 .ae-cover-editor { position:relative;display:grid;gap:8px; }.ae-cover-actions { display:flex;justify-content:flex-end;flex-wrap:wrap;align-items:center;gap:6px 10px; }.ae-cover-actions .ae-text-button { margin-right:auto;order:-1; }
+.ae-image-profiles { display:grid;gap:6px;margin:12px 0;font-size:12px; }
+.ae-image-profiles > div { display:flex;justify-content:space-between;gap:12px; }
+.ae-image-profiles dd { margin:0;white-space:nowrap;color:var(--ae-muted);font-variant-numeric:tabular-nums; }
+.ae-card-meta > [hidden] { display:none; }
+.ae-date-control { display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:6px;align-items:stretch; }
+.ae-date-control input { min-width:0;width:100%; }
+.ae-date-control .ae-button { width:42px;min-width:42px;padding:0;align-self:stretch; }
 .ae-cover .ae-image-fallback svg { width:28px;height:28px; }
 .ae-toggle { display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;font-size:13px;font-weight:600;padding-top:6px;border-top:1px solid #e7dccb;cursor:pointer; }
 .ae-toggle > span { min-width:0;overflow-wrap:anywhere; }

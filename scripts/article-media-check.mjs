@@ -14,7 +14,7 @@ assert.deepEqual(articleImageSize({width:8000,height:4500}),{width:2048,height:1
 assert.deepEqual(articleImageSize({width:1200,height:1600}),{width:1200,height:1600});
 assert.deepEqual(normalizeArticleMedia(media),media,'Original, crop and hosted output survive normalized draft');
 assert.deepEqual(normalizeArticleMedia({...media,src:'data:image/png;base64,AA=='}),{src:''});
-assert.deepEqual(normalizeArticleMedia({...media,sourceUrl:'data:image/png;base64,AA=='}),{src:media.src});
+assert.deepEqual(normalizeArticleMedia({...media,sourceUrl:'data:image/png;base64,AA=='}),{src:media.src,width:1600,height:900});
 for(const sourceUrl of ['/assets/brand/example.png','/favicon.svg','/favicon.ico'])assert.equal(normalizeArticleMedia({...media,sourceUrl}).sourceUrl,sourceUrl,'Legacy internal original remains available for re-crop');
 for(const sourceUrl of ['/admin/private.png','/assets/../admin/private.png','/favicon.svg/other'])assert.equal(normalizeArticleMedia({...media,sourceUrl}).sourceUrl,undefined);
 assert.equal(normalizeArticleMedia({...media,crop:{...media.crop,x:NaN}}).crop,undefined);
@@ -35,7 +35,7 @@ for(const sourceAsset of [{...media.sourceAsset,width:25000,height:801},{...medi
 for(const crop of [{...panorama.crop,sourceHeight:801},{...media.crop,sourceWidth:4000.5}])assert.equal(normalizeArticleMedia({...media,crop}).crop,undefined,'Crop source dimensions must be integer pixels within 20 MP');
 const publicDocument=renderArticleDocument(body).document;
 assert.equal(publicDocument.content[1].attrs.sourceUrl,undefined,'Public document does not expose private re-crop metadata');
-assert.deepEqual(normalizeArticleMedia(media,{includeMetadata:false}),{src:media.src});
+assert.deepEqual(normalizeArticleMedia(media,{includeMetadata:false}),{src:media.src,width:1600,height:900});
 assert.ok(!JSON.stringify(draft).includes('data:image'));
 console.log('PASS article hosted-media metadata: original/crop round trip, unsafe data rejection, backup and public projection.');
 

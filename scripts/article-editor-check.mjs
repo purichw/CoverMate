@@ -31,7 +31,7 @@ const fixture=structuredClone(sample);fixture.status='published';fixture.transla
 const projected=projectArticleDetail({available:true,item:fixture},{slug:fixture.slug,mediaUrl:value=>articleUrl(value,true)});
 assert.equal(projected.available,true);assert.deepEqual(JSON.parse(projected.richDocument),normalizeArticleDocument(sample.translations.th.document));
 assert.equal(projected.toc.length,2);
-const imported=parseDraftBackup(JSON.stringify(draft));assert.notEqual(imported.id,draft.id);assert.equal(imported.basePublished,false);assert.equal(imported.revision,0);
+const imported=parseDraftBackup(JSON.stringify(draft));assert.notEqual(imported.id,draft.id);assert.equal(imported.basePublished,false);assert.equal(imported.revision,0);assert.equal(imported.publicationStatus,'draft');
 assert.throws(()=>parseDraftBackup('{"schemaVersion":99}'));
 assert.throws(()=>parseDraftBackup('null'));
 assert.equal(publicationDateISO('2026-09-15T10:30'),'2026-09-15T03:30:00.000Z');

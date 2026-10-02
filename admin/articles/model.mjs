@@ -1,4 +1,5 @@
-export const ARTICLE_STATUS = Object.freeze({ published: 'เผยแพร่แล้ว', draft: 'ฉบับร่าง', scheduled: 'ตั้งเวลาเผยแพร่', unknown: 'ไม่ทราบสถานะ' });
+export const ARTICLE_STATUS = Object.freeze({published:'Published',draft:'Draft',scheduled:'Scheduled',archived:'Archived',trashed:'Trash',unknown:'Unknown'});
+export const ARTICLE_VIEWS = Object.freeze({active:'Active',published:'Published',unpublished:'Unpublished',archived:'Archived',trashed:'Trash'});
 export const ARTICLE_SORT = Object.freeze({ updated: 'อัปเดตล่าสุด', oldest: 'อัปเดตเก่าสุด', published: 'วันที่บทความใหม่สุด', earliest: 'วันที่บทความเก่าสุด', pinned: 'ปักหมุดก่อน', title: 'ชื่อบทความ ก–ฮ' });
 const text = value => typeof value === 'string' ? value : '';
 const time = value => Number.isFinite(Date.parse(value)) ? Date.parse(value) : 0;
@@ -25,9 +26,10 @@ export function normalizeArticleCatalog(payload) {
     }));
     const primary = translations.th.title ? translations.th : translations.en;
     // A working copy does not unpublish the original article in the catalog.
-    const status = record.localDraft===true && record.basePublished===true ? 'published' : ['published', 'draft', 'scheduled'].includes(record.status) ? record.status : 'unknown';
+    const lifecycle=['archived','trashed'].includes(record.lifecycle)?record.lifecycle:'active';
+    const status = lifecycle!=='active'?lifecycle:record.localDraft===true && record.basePublished===true ? 'published' : ['published', 'draft', 'scheduled'].includes(record.status) ? record.status : 'unknown';
     return {
-      id: record.id, slug: text(record.slug), status, translations,
+      id: record.id, slug: text(record.slug), status, lifecycle,revision:record.revision,translations,
       pinned:record.pinned===true,featured:record.featured===true,localDraft:record.localDraft===true,basePublished:record.basePublished===true,
       publishedPinned:record.publishedPinned===true,
       publishedHomePinned:record.publishedHomePinned===true,
@@ -46,10 +48,11 @@ export function normalizeArticleCatalog(payload) {
   return { available: true, items, categories, sample: payload.sample === true };
 }
 
-export function articleListView(items, { query = '', category = '', status = '', pinned = '', author = '', dateFrom = '', dateTo = '', sort = 'updated', page = 1 } = {}) {
+export function articleListView(items, { view='active', query = '', category = '', status = '', pinned = '', author = '', dateFrom = '', dateTo = '', sort = 'updated', page = 1 } = {}) {
   const needle = query.trim().normalize('NFC').toLocaleLowerCase('th');
   const from=dateFrom?Date.parse(dateFrom+'T00:00:00+07:00'):null,to=dateTo?Date.parse(dateTo+'T23:59:59.999+07:00'):null;
-  const filtered = items.filter(item => (!category || item.categoryId === category) && (!status || item.status === status) &&
+  const inView=item=>view==='archived'||view==='trashed'?item.lifecycle===view:(item.lifecycle||'active')==='active'&&(view==='published'?item.status==='published':view==='unpublished'?['draft','scheduled'].includes(item.status):true);
+  const filtered = items.filter(item => inView(item) && (!category || item.categoryId === category) && (!status || item.status === status) &&
     (!pinned || (pinned==='home'?(item.featured||item.publishedHomePinned):item.pinned===(pinned==='pinned'))) && (!author || item.author===author) &&
     (from===null || item.publishedAt && item.publishedAt>=from) && (to===null || item.publishedAt && item.publishedAt<=to) &&
     (!needle || [item.title, item.excerpt, item.slug, item.author, ...(item.tags || []), ...Object.values(item.translations).flatMap(t => [t.title, t.excerpt])]
@@ -65,9 +68,10 @@ export function articleListView(items, { query = '', category = '', status = '',
   const pages = Math.max(1, Math.ceil(filtered.length / 5));
   const current = Math.min(pages, Math.max(1, Math.floor(Number(page) || 1)));
   const start = (current - 1) * 5;
-  const counts = { all: items.length, published: 0, draft: 0, scheduled: 0 };
+  const counts = { all: items.length, published: 0, draft: 0, scheduled: 0, archived:0,trashed:0 };
   for (const item of items) if (item.status in counts) counts[item.status]++;
-  return { items: filtered.slice(start, start + 5), total: filtered.length, counts, page: current, pages, start: filtered.length ? start + 1 : 0, end: Math.min(start + 5, filtered.length) };
+  const views={active:counts.all-counts.archived-counts.trashed,published:counts.published,unpublished:counts.draft+counts.scheduled,archived:counts.archived,trashed:counts.trashed};
+  return { items: filtered.slice(start, start + 5), total: filtered.length, counts, views,page: current, pages, start: filtered.length ? start + 1 : 0, end: Math.min(start + 5, filtered.length) };
 }
 
 export function articlePageNumbers(current, total) {

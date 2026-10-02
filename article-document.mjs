@@ -1,5 +1,6 @@
 // Shared, versioned document boundary. No author-supplied HTML reaches the DOM.
 import {normalizeArticleTypography,articleTypographyAttributes} from './article-typography.mjs';
+import {articleImageDelivery} from './article-media.mjs';
 export const ARTICLE_DOCUMENT_VERSION = 1;
 export const articleEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function articleUrl(value, image = false) {
@@ -13,14 +14,15 @@ export function articleUrl(value, image = false) {
 // figure does not disconnect it from the original used for re-cropping.
 export function normalizeArticleMedia(value = {}, {includeMetadata = true} = {}) {
   const src=articleUrl(value?.src,true), result={src};
-  if(!src||!includeMetadata)return result;
+  if(!src)return result;
+  const integer=(n,max)=>Number.isSafeInteger(n)&&n>0&&n<=max;
+  for(const key of ['width','height'])if(integer(value[key],20000))result[key]=value[key];
+  if(!includeMetadata)return result;
   const sourceUrl=articleUrl(value.sourceUrl,true);
   const internal=sourceUrl?.startsWith('/')&&/^\/(?:assets\/.+|favicon\.(?:svg|ico))$/.test(new URL(sourceUrl,'https://covermate.invalid').pathname);
   if(!sourceUrl?.startsWith('https://')&&!internal)return result;
   result.sourceUrl=sourceUrl;
   if(/^[a-z][a-z0-9_-]{0,39}$/.test(value.provider || ''))result.provider=value.provider;
-  const integer=(n,max)=>Number.isSafeInteger(n)&&n>0&&n<=max;
-  for(const key of ['width','height'])if(integer(value[key],20000))result[key]=value[key];
   const asset=value.sourceAsset;
   if(asset&&typeof asset==='object'&&typeof asset.publicId==='string'&&/^[A-Za-z0-9_./-]{1,300}$/.test(asset.publicId)&&!asset.publicId.includes('..')&&integer(asset.version,Number.MAX_SAFE_INTEGER)&&integer(asset.width,Number.MAX_SAFE_INTEGER)&&integer(asset.height,Number.MAX_SAFE_INTEGER)&&asset.width*asset.height<=20000000&&integer(asset.bytes,8000000)&&/^(png|jpg|jpeg|webp|svg)$/.test(asset.format || '')) {
     result.sourceAsset=Object.fromEntries(['publicId','version','width','height','bytes','format'].map(key=>[key,asset[key]]));
@@ -150,7 +152,7 @@ export function renderArticleDocument(input, options) {
       case 'quoteCard': return `<aside class="article-quote-card"><span class="article-quote-mark" aria-hidden="true">“</span><div>${inner}</div>${a.attribution?'<cite>'+esc(a.attribution)+'</cite>':''}</aside>`;
       case 'takeaway': return `<aside class="article-takeaway-card">${a.title?'<p class="article-takeaway-title">'+esc(a.title)+'</p>':''}<div>${inner}</div>${a.note?'<p class="article-takeaway-note">'+esc(a.note)+'</p>':''}</aside>`;
       case 'callout': return `<aside class="article-callout" data-kind="${a.kind}">${a.title?'<p class="article-callout-title">'+esc(a.title)+'</p>':''}<div>${inner}</div></aside>`;
-      case 'figure': return `<figure><img src="${esc(a.src)}" alt="${esc(a.alt)}" loading="lazy" decoding="async">${a.caption?'<figcaption>'+esc(a.caption)+'</figcaption>':''}</figure>`;
+      case 'figure': {const image=articleImageDelivery(a,'banner');return `<figure><img src="${esc(image.src)}"${image.srcset?` srcset="${esc(image.srcset)}" sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1100px) 66vw, 880px"`:''} alt="${esc(a.alt)}" loading="lazy" decoding="async">${a.caption?'<figcaption>'+esc(a.caption)+'</figcaption>':''}</figure>`;}
       case 'table': return `<div class="article-table-scroll" role="region" aria-label="Table" tabindex="0"><table><tbody>${inner}</tbody></table></div>`;
       case 'tableRow': return `<tr>${inner}</tr>`;
       case 'tableCell': case 'tableHeader': {const tag=n.type==='tableHeader'?'th':'td';return `<${tag} colspan="${a.colspan}" rowspan="${a.rowspan}">${inner}</${tag}>`;}

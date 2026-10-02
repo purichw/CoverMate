@@ -47,7 +47,7 @@ body[data-module="articles"] .screen { padding:28px; }
 .article-editorial-tags:empty { display:none; }
 .article-editorial-tags span { border-left:2px solid #93b4cf;padding-left:5px; }
 .article-filter { display:grid;gap:4px;flex:1 1 0;min-width:0; }
-.article-filter > span:first-child { font-size:12px;color:var(--muted); }
+.article-filter > span:first-child { font-size:12px;color:var(--muted);text-align:center; }
 .article-filter select { width:100%;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:8px 12px;color:var(--text);font-size:13px; }
 .article-visibility { padding:22px 0 24px;border-block:1px solid var(--line);margin:24px 0; }
 .article-visibility form { display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:16px;align-items:center; }
@@ -87,6 +87,19 @@ body[data-module="articles"] .screen { padding:28px; }
 .article-settings-error[hidden],.article-settings-error button[hidden] { display:none; }
 .article-local-error:empty { display:none; }.article-local-error { color:var(--danger);font-size:14px; }
 .article-list-head { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:4px; }
+.article-view-switch { display:flex;gap:16px;overflow-x:auto;margin-top:16px;border-bottom:1px solid var(--line);scrollbar-width:thin; }
+.article-view-switch .article-button { flex:none;gap:6px;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;padding:10px 2px;white-space:nowrap; }
+.article-view-switch .article-button[aria-pressed=true] { color:var(--accent-strong);border-bottom-color:var(--accent-strong); }
+.article-view-switch .article-button > span { min-width:22px;text-align:center;font-size:12px;line-height:22px;border-radius:4px;background:var(--surface-soft);color:var(--muted); }
+.article-action-notice { color:var(--article-success);font-size:14px;line-height:1.6; }
+.article-action-notice:empty { display:none; }
+.article-actions-popover .article-danger { color:var(--danger); }
+.article-lifecycle-dialog .article-dialog-body h3 { margin-top:0;font-size:18px; }
+.article-lifecycle-dialog .article-dialog-body p { font-size:14px;line-height:1.7; }
+.article-lifecycle-error { color:var(--danger); }
+.article-lifecycle-progress:empty { display:none; }
+.article-lifecycle-footer { display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:16px 20px;border-top:1px solid var(--line); }
+.article-lifecycle-dialog [hidden] { display:none; }
 .article-mobile-filter-button { display:none; }
 .article-mobile-filter-button [data-filter-count]:empty { display:none; }
 .article-filter .cm-select-trigger { border-color:var(--line);background:var(--surface); }

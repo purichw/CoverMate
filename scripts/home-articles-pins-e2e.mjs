@@ -46,7 +46,7 @@ try {
   const list=async()=>{await admin.goto('about:blank');await admin.goto(baseUrl+'/admin'+suffix+'#articles');await admin.locator('[data-article-state=ready]').waitFor({timeout:60000});};
   const edit=async(id)=>{await list();await admin.locator('[name=query]').fill(id);await admin.locator(`[data-article-action=edit][data-id="${id}"]:visible`).click();await admin.locator('[data-field=featured]').waitFor();};
   const save=async()=>{await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback:not([data-error=true])').filter({hasText:/^บันทึกฉบับร่างในคลังแล้ว/}).waitFor();};
-  const publish=async()=>{await admin.locator('[data-ae=publish]:visible').click();await admin.getByRole('button',{name:'ยืนยันเผยแพร่',exact:true}).click();await admin.locator('.ae-feedback').filter({hasText:'เผยแพร่แล้ว'}).waitFor();};
+  const publish=async()=>{await admin.locator('[data-ae=publish]:visible').click();await admin.getByRole('dialog').getByRole('button',{name:'Publish article',exact:true}).click();await admin.locator('.ae-feedback').filter({hasText:'เผยแพร่แล้ว'}).waitFor();};
   await edit(ids[11]);await admin.getByRole('switch',{name:'ปักหมุดบน Home'}).check();
   assert.equal(await admin.locator('[data-field=pinned]').isChecked(),false,'Home pin does not change index pin');
   await save();assert.equal((await home()).includes(ids[11]),false,'Draft pin stays private');

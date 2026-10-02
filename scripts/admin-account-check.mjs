@@ -94,10 +94,10 @@ try {
 
   await context.setOffline(true);
   await page.waitForFunction(() => document.querySelector('#userName').closest('[data-account-online]').dataset.accountOnline === 'false');
-  assert.equal(await desktop.locator('summary [data-account-network]').innerText(), 'ออฟไลน์');
+  assert.equal(await desktop.locator('summary [data-account-network]').innerText(), 'Offline');
   await context.setOffline(false);
   await page.waitForFunction(() => document.querySelector('#userName').closest('[data-account-online]').dataset.accountOnline === 'true');
-  assert.equal(await desktop.locator('summary [data-account-network]').innerText(), 'ออนไลน์');
+  assert.equal(await desktop.locator('summary [data-account-network]').innerText(), 'Online');
   report.checks.push('Connectivity indicator updates for actual browser offline/online events.');
 
   for (const width of [390, 320]) {

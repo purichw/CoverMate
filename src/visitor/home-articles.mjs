@@ -1,5 +1,6 @@
 // Read-only publication summaries, separate from the Home CMS document.
 // Only the server's live projection may populate the public feed.
+import {articleImageDelivery} from '../../article-media.mjs';
 export function articlePublicHref(path,lang='th') {
   const url=new URL(path,'https://covermateinsurance.com');
   if(lang==='en')url.searchParams.set('lang','en');
@@ -30,11 +31,12 @@ export function projectPublishedArticles(feed, {lang = 'th', now = Date.now(), m
         !Number.isFinite(publishedAt) || publishedAt > now) return [];
     ids.add(id); slugs.add(slug);
     const position = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0,Math.min(100,value)) : 50;
-    return [{key:id, slug, publishedAt, title:text(copy.title), excerpt:text(copy.excerpt),
+    const image=articleImageDelivery({...item.image,src:mediaUrl(item.image?.src)});
+    return [{key:id, slug, publishedAt, showDate:copy.showDate!==false, title:text(copy.title), excerpt:text(copy.excerpt),
       pinned:item.pinned===true,homePinned:item.featured===true,tags:Array.isArray(item.tags)?item.tags.filter(tag=>typeof tag==='string').slice(0,20):[],
       categoryId:text(item.categoryId) || text(item.translations?.th?.category) || text(item.translations?.en?.category) || text(copy.category),
       readingMinutes:Number.isSafeInteger(copy.readingMinutes) && copy.readingMinutes > 0 ? copy.readingMinutes : null,
-      category:text(copy.category), image:mediaUrl(item.image?.src), imageAlt:text(copy.imageAlt),
+      category:text(copy.category), image:image.src, imageSrcset:image.srcset, imageAlt:text(copy.imageAlt),
       imageStyle:'object-position:' + position(item.image?.x) + '% ' + position(item.image?.y) + '%',
       href:articlePublicHref('/articles/'+slug,locale), titleId:'home-article-' + slug,
       rank:featured.includes(id) ? featured.indexOf(id) : item.featured===true ? featured.length : Number.MAX_SAFE_INTEGER}];
@@ -49,7 +51,8 @@ export function projectHomeArticles(feed, options = {}) {
   const selected = new Set(pins.map(item=>item.key));
   const date = new Intl.DateTimeFormat(options.lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
   const items = [...pins,...latest.filter(item=>!selected.has(item.key))].slice(0,10).map(item=>({...item,
-    date:date.format(item.publishedAt),datetime:new Date(item.publishedAt).toISOString()}));
+    date:item.showDate?date.format(item.publishedAt):'',datetime:new Date(item.publishedAt).toISOString(),
+    reading:!item.showDate&&item.readingMinutes?(options.lang==='en'?item.readingMinutes+' min read':'อ่าน '+item.readingMinutes+' นาที'):''}));
   return {visible:items.length > 0, items, indexHref:articlePublicHref('/articles',options.lang)};
 }
 

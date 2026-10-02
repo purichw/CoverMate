@@ -38,6 +38,7 @@ const commands = [
   ["node", ["scripts/article-detail-check.mjs", "--browser"]],
   ["node", ["scripts/article-editor-check.mjs", "--browser"]],
   ["node", ["scripts/article-media-check.mjs", "--browser"]],
+  ["node", ["scripts/article-delivery-check.mjs", "--browser"]],
   ["node", ["scripts/article-editor-tools-check.mjs"]],
   ["node", ["scripts/article-editor-metadata-check.mjs"]],
   ["node", ["scripts/article-validation-check.mjs", "--browser"]],

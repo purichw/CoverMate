@@ -58,9 +58,21 @@ if(process.argv.includes('--browser')) {
       assert.equal(await page.locator('h1').count(),1);assert.equal(await page.locator('#talk').count(),0);
       assert.equal(await page.locator('.ad-toc nav a').count(),5);assert.equal(await page.locator('.ad-related .ar-item').count(),4);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No page overflow');
+      const contentsLayout=await page.evaluate(()=>{
+        const toc=document.querySelector('.ad-toc'),summary=toc.querySelector('summary'),box=summary.getBoundingClientRect();
+        const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
+        return {visible:summary.contains(document.elementFromPoint(box.x+box.width/2,box.y+box.height/2)),toc:toc.getBoundingClientRect().toJSON(),cover:rect('.ad-cover'),takeaways:rect('.ad-takeaways'),body:rect('.ad-prose'),share:rect('.ad-share-panel')};
+      });
+      if(width>=768)assert.ok(contentsLayout.visible,'Desktop TOC title is not covered by the header background');
+      else {
+        assert.ok(contentsLayout.toc.top>=contentsLayout.cover.bottom-1,'Mobile contents follows the cover');
+        assert.ok(contentsLayout.toc.bottom<=contentsLayout.takeaways.top+1,'Mobile contents precedes key takeaways');
+        assert.ok(contentsLayout.takeaways.bottom<=contentsLayout.body.top+1,'Key takeaways still precede the body');
+        assert.ok(contentsLayout.share.top>=contentsLayout.body.bottom-1,'Sharing stays after the body');
+      }
       assert.equal(await page.title(),item.translations[lang].title);
       await page.locator('.ad-related').scrollIntoViewIfNeeded();
-      await page.waitForFunction(()=>[...document.querySelectorAll('.hm-article-media img')].every(img=>img.complete&&img.naturalWidth));
+      await page.waitForFunction(()=>[...document.querySelectorAll('.ad-cover img,.ad-related .ar-media img')].every(img=>img.complete&&img.naturalWidth));
       await page.evaluate(()=>scrollTo(0,0));
       await page.screenshot({path:`${out}/${engine}-${width}-${lang}.png`,fullPage:true});
       report.checks.push({width,lang,noOverflow:true,headings:5,related:4});await page.close();
@@ -102,6 +114,36 @@ if(process.argv.includes('--browser')) {
     await mobile.locator('.ad-toc summary').click();await mobile.locator('.ad-toc nav a').first().click();
     assert.match(mobile.url(),/#section-0$/);assert.equal(await mobile.evaluate(()=>document.activeElement.id),'section-0');
     await mobile.close();report.checks.push('Mobile contents expands and moves keyboard focus to heading; storage denial and native share payload tested');
+    const richFeed=structuredClone(articleDetailFixture),richItem=richFeed.items.find(item=>item.slug===slug);
+    richItem.translations.th.document={type:'doc',attrs:{layout:'blocks',takeawaysInDocument:true},content:[
+      {type:'paragraph',content:[{type:'text',text:'Introduction before the authored summary.'}]},
+      {type:'takeaway',attrs:{title:'Key takeaways'},content:[{type:'paragraph',content:[{type:'text',text:'Authored summary content.'}]}]},
+      {type:'heading',attrs:{level:2},content:[{type:'text',text:'First topic'}]},
+      {type:'paragraph',content:[{type:'text',text:'Article body.'}]}
+    ]};
+    const richPage=await newPage();await richPage.setViewportSize({width:390,height:844});
+    for(const withCover of [true,false]) {
+      if(!withCover){richItem.cover={src:''};richItem.image={src:''};}
+      server.setDetails(richFeed);await ready(richPage);
+      assert.equal(await richPage.locator('.ad-toc').count(),1,'There is only one interactive contents instance');
+      assert.equal(await richPage.locator('.ad-cover').count(),withCover?1:0);
+      const blocks=await richPage.evaluate(()=>{
+        const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+        return {tocBottom:rect('.ad-toc').bottom,bodyTop:rect('.ad-prose').top,bodyBottom:rect('.ad-prose').bottom,shareTop:rect('.ad-share-panel').top,order:[...document.querySelector('cm-article-document').children].map(node=>node.tagName)};
+      });
+      assert.ok(blocks.tocBottom<=blocks.bodyTop,'Mobile contents precedes a flexible document, with or without cover');
+      assert.ok(blocks.shareTop>=blocks.bodyBottom,'Flexible document sharing stays after the body');
+      assert.deepEqual(blocks.order,['P','ASIDE','H2','P'],'Author-controlled summary placement is untouched');
+      await richPage.locator('.ad-toc summary').press('Enter');
+      await richPage.locator('.ad-toc a').first().click();
+      assert.equal(await richPage.evaluate(()=>document.activeElement.tagName),'H2');
+    }
+    richItem.translations.th.document.content=richItem.translations.th.document.content.filter(node=>node.type!=='heading');
+    server.setDetails(richFeed);await ready(richPage);
+    assert.equal(await richPage.locator('.ad-toc').count(),0,'Articles without headings do not show an empty contents control');
+    assert.ok(await richPage.locator('.ad-share-panel').isVisible(),'Sharing survives when contents is absent');
+    await richPage.close();server.setDetails(structuredClone(articleDetailFixture));
+    report.checks.push('Mobile rich blocks retain authored order; contents precedes body with/without cover; keyboard toggle/focus and no-heading state');
     const response=await page.request.get(server.baseUrl+path);assert.equal(response.status(),200);assert.match(response.headers()['x-robots-tag'],/noindex/);assert.match(response.headers()['cache-control'],/no-store/);
     assert.equal((await page.request.get(server.baseUrl+'/articles/missing')).status(),404);
     const drafts=structuredClone(articleDetailFixture);drafts.items.find(item=>item.slug===slug).status='draft';server.setDetails(drafts);

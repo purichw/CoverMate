@@ -46,18 +46,18 @@ export function cmsHubLinks(role, search = '') {
   const editPath = ownerPathForMode('edit', 'home', search);
   const previewPath = ownerPathForMode('preview', 'home', search);
   const historyPath = editor('versions');
-  const editable = (label, href, extra = {}) => ({ label, href, badge: readonly ? 'ดูอย่างเดียว' : 'แก้ไขได้', tone: 'editable', disabled: readonly, ...extra });
+  const editable = (label, href, extra = {}) => ({ label, href, badge: readonly ? 'Read-only' : 'Editable', tone: 'editable', disabled: readonly, ...extra });
   return {
     readonly, previewPath, historyPath,
     tools: [
       { id: 'edit', title: 'แก้ไขเนื้อหา', description: 'จัดการข้อความ รูปภาพ และเนื้อหาบนเว็บไซต์ ผ่านเครื่องมือ CMS ได้อย่างง่ายดาย', actionLabel: 'เริ่มแก้ไขเนื้อหา', href: editPath, disabled: readonly },
-      { id: 'preview', title: 'Preview ฉบับร่าง', description: 'ดูตัวอย่างหน้าเว็บไซต์ก่อนเผยแพร่ ตรวจสอบความถูกต้องในทุกอุปกรณ์', actionLabel: 'เปิดดูตัวอย่าง', href: previewPath },
-      { id: 'history', title: 'เวอร์ชันที่เผยแพร่แล้ว', description: 'ดูประวัติการเผยแพร่ และนำเวอร์ชันก่อนหน้ากลับมาเป็นฉบับร่าง', actionLabel: 'ดูประวัติทั้งหมด', href: historyPath, disabled: readonly }
+      { id: 'preview', title: 'Draft preview', description: 'ดูตัวอย่างหน้าเว็บไซต์ก่อนเผยแพร่ ตรวจสอบความถูกต้องในทุกอุปกรณ์', actionLabel: 'เปิดดูตัวอย่าง', href: previewPath },
+      { id: 'history', title: 'Version history', description: 'ดูประวัติการเผยแพร่ และนำเวอร์ชันก่อนหน้ากลับมาเป็นฉบับร่าง', actionLabel: 'ดูประวัติทั้งหมด', href: historyPath, disabled: readonly }
     ],
     groups: [
       { id: 'content', title: 'เนื้อหาและข้อความ', description: 'จัดการเนื้อหาหลักที่แสดงบนเว็บไซต์', icon: 'file', items: [
         editable('หน้าแรก', editor('sections', 'hero')), editable('เกี่ยวกับเรา', editor('content', 'about')),
-        editable('รายละเอียดบริการ', editor('content', 'cover')), editable('บทความ / ข่าวสาร', '', { action: 'cms-articles', disabled: false, badge: readonly ? 'ดูอย่างเดียว' : 'จัดการบทความ' }),
+        editable('รายละเอียดบริการ', editor('content', 'cover')), editable('บทความ / ข่าวสาร', '', { action: 'cms-articles', disabled: false, badge: readonly ? 'Read-only' : 'จัดการบทความ' }),
         editable('คำถามที่พบบ่อย (FAQ)', editor('content', 'faq')), editable('แบบฟอร์มติดต่อ', editor('sections', 'talk'))
       ] },
       { id: 'brand', title: 'แบรนด์และติดต่อ', description: 'ข้อมูลธุรกิจ การติดต่อ และภาพลักษณ์องค์กร', icon: 'image', items: [
@@ -74,7 +74,7 @@ export function cmsHubLinks(role, search = '') {
       { id: 'structure', title: 'โครงสร้างและการแสดงผล', description: 'การตั้งค่าเว็บไซต์และองค์ประกอบหลัก', icon: 'settings', items: [
         editable('เมนูและลิงก์นำทาง', editor('brand', '', 'Navigation')), editable('ลำดับและการแสดงส่วนต่าง ๆ', editor('sections')),
         editable('ธีม สี และ SEO', editor('theme')), editable('สำรองและนำเข้าข้อมูล', editor('theme')),
-        { label: 'Layout และองค์ประกอบหลัก', badge: 'แก้ผ่านโค้ด', tone: 'code' }
+        { label: 'Layout และองค์ประกอบหลัก', badge: 'Code required', tone: 'code' }
       ] }
     ]
   };

@@ -16,12 +16,13 @@
               <a class="hm-article-link" href="{{ article.href }}" aria-labelledby="{{ article.titleId }}">
                 <div class="hm-article-media">
                   <svg class="hm-article-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
-                  <sc-if value="{{ article.image }}"><img sc-camel-src="{{ article.image }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="360" loading="lazy" decoding="async"></sc-if>
+                  <sc-if value="{{ article.image }}"><img sizes="(max-width: 767px) 136px, (max-width: 1023px) calc(38vw - 34px), (max-width: 1264px) calc(19vw - 25px), 216px" srcset="{{ article.imageSrcset }}" sc-camel-src="{{ article.image }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="360" loading="lazy" decoding="async"></sc-if>
                 </div>
                 <div class="hm-article-copy">
                   <div class="hm-article-meta">
                     <sc-if value="{{ article.category }}"><span class="hm-article-category">{{ article.category }}</span></sc-if>
-                    <time datetime="{{ article.datetime }}">{{ article.date }}</time>
+                    <sc-if value="{{ article.date }}"><time datetime="{{ article.datetime }}">{{ article.date }}</time></sc-if>
+                    <sc-if value="{{ article.reading }}"><span class="hm-article-reading">{{ article.reading }}</span></sc-if>
                   </div>
                   <h3 id="{{ article.titleId }}">{{ article.title }}</h3>
                   <sc-if value="{{ article.excerpt }}"><p class="hm-article-excerpt">{{ article.excerpt }}</p></sc-if>

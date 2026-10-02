@@ -101,7 +101,10 @@ export function registerArticleCarousel() {
       const size=this.pageSize();
       for(const index of new Set([...Array.from({length:size},(_,offset)=>this.index+offset),(this.index+size)%this.slides.length,(this.index+this.slides.length-1)%this.slides.length])) {
         const image=this.slides[index]?.querySelector('img[data-carousel-src]');
-        if(image?.dataset.carouselSrc&&!image.getAttribute('src'))image.src=image.dataset.carouselSrc;
+        if(image?.dataset.carouselSrc&&!image.getAttribute('src')){
+          if(image.dataset.carouselSrcset)image.srcset=image.dataset.carouselSrcset;
+          image.src=image.dataset.carouselSrc;
+        }
       }
     }
     schedule() {

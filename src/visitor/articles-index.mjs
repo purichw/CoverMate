@@ -2,7 +2,8 @@ import {projectPublishedArticles} from './home-articles.mjs';
 
 export function articleCardSummary(item, lang = 'th') {
   const date = new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
-  return {...item,hasImage:!!item.image,titleId:'article-title-'+item.slug,date:date.format(item.publishedAt),datetime:new Date(item.publishedAt).toISOString(),
+  return {...item,hasImage:!!item.image,titleId:'article-title-'+item.slug,date:item.showDate===false?'':date.format(item.publishedAt),datetime:new Date(item.publishedAt).toISOString(),
+    imageSizes:'(max-width: 767px) calc(32vw - 18px), (max-width: 1100px) calc(50vw - 48px), 300px',
     reading:item.readingMinutes ? (lang === 'en' ? item.readingMinutes+' min read' : 'อ่าน '+item.readingMinutes+' นาที') : ''};
 }
 

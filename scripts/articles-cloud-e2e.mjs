@@ -66,9 +66,9 @@ try {
       const visibility=admin.locator('.article-visibility');
       assert.equal(await visibility.locator('[name=enabled]').isChecked(),false);
       await visibility.locator('[name=enabled]').check();
-      await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();
+      await visibility.getByRole('button',{name:'Save display settings'}).click();
       await poll(async()=>(await repository.settings('covermate-uat')).enabled===true);
-      await visibility.locator('[data-settings-status]').filter({hasText:'บันทึกแล้ว'}).waitFor();
+      await visibility.locator('[data-settings-status]').filter({hasText:'Saved'}).waitFor();
       await admin.screenshot({path:out+'/'+engine+'-visibility-desktop.png'});
       await admin.setViewportSize({width:390,height:844});
       await visibility.scrollIntoViewIfNeeded();
@@ -112,7 +112,7 @@ try {
       await admin.locator('[data-ae=back]').click();
       await admin.getByRole('button',{name:'แก้ไข: '+title,exact:true}).click();
       await admin.locator('[data-ae=preview]').click();
-      const previewDialog=admin.getByRole('dialog',{name:'Preview · ฉบับร่างยังไม่เผยแพร่',exact:true});
+      const previewDialog=admin.getByRole('dialog',{name:'Preview · Unpublished draft',exact:true});
       const preview=previewDialog.frameLocator('.ae-preview-frame');
       await preview.getByRole('heading',{name:title,exact:true}).waitFor();
       await preview.locator('header').waitFor();
@@ -155,7 +155,7 @@ try {
       await admin.locator('[data-article-state=ready]').waitFor();
       for(const key of ['showHome','showNavigation']) {
         await visibility.locator('[name='+key+']').uncheck();
-        await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();
+        await visibility.getByRole('button',{name:'Save display settings'}).click();
         await poll(async()=>(await repository.settings('covermate-uat'))[key]===false);
         await visitor.goto(baseUrl+'/'+suffix);await visitor.locator('#hero h1').waitFor();
         if(key==='showHome')assert.equal(await visitor.locator(`a[href*="/articles/${slug}"]`).count(),0);
@@ -163,13 +163,13 @@ try {
         assert.equal((await visitor.request.get(baseUrl+'/articles/'+slug+suffix)).status(),200,'Individual flags do not disable URLs');
       }
       await visibility.locator('[name=enabled]').uncheck();
-      await visibility.getByRole('button',{name:'บันทึกการแสดงผล'}).click();
+      await visibility.getByRole('button',{name:'Save display settings'}).click();
       await poll(async()=>(await repository.settings('covermate-uat')).enabled===false);
       for(const path of ['/articles','/articles/'+slug])assert.equal((await visitor.request.get(baseUrl+path+suffix)).status(),404);
       await admin.reload();await admin.locator('[data-article-state=ready]').waitFor();
       await admin.getByRole('button',{name:'แก้ไข: '+title+' แก้ไข',exact:true}).click();
       await admin.locator('[data-ae=unpublish]').click();
-      await admin.getByRole('button',{name:'ยืนยันถอนเผยแพร่',exact:true}).click();
+      await admin.getByRole('dialog').getByRole('button',{name:'Unpublish article',exact:true}).click();
       await admin.locator('.ae-feedback').filter({hasText:'ถอนเผยแพร่แล้ว'}).waitFor();
       assert.ok((await repository.get('covermate-uat',published.item.id)).translations.th.document);
       await admin.screenshot({path:out+'/'+engine+'-editor.png'});
@@ -191,7 +191,7 @@ try {
   fs.writeFileSync(out+'/report.json',JSON.stringify(report,null,2));
 } finally {await new Promise(resolve=>server.close(resolve));}
 async function poll(check){for(let i=0;i<80;i++){if(await check())return;await new Promise(r=>setTimeout(r,200));}throw Error('Backend readback timed out');}
-async function publish(page){await page.locator('.ae-actions [data-ae=publish]').click();await page.getByRole('button',{name:'ยืนยันเผยแพร่',exact:true}).click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับเผยแพร่แล้ว'}).waitFor();}
+async function publish(page){await page.locator('.ae-actions [data-ae=publish]').click();await page.getByRole('dialog').getByRole('button',{name:'Publish article',exact:true}).click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับเผยแพร่แล้ว'}).waitFor();}
 
 // The application and Auth/Firestore/API checks remain real. Only the external
 // storage boundary is replaced, so CI cannot upload public Cloudinary assets.

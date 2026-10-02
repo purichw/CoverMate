@@ -60,12 +60,12 @@ try {
   }
   const form=page.locator('[data-article-settings]'),save=form.locator('[type=submit]'),state=form.locator('[data-settings-status]');
   const checked=key=>form.locator(`[name=${key}]`);
-  const saveSettings=async()=>{await save.click();await state.filter({hasText:'บันทึกแล้ว'}).waitFor();};
+  const saveSettings=async()=>{await save.click();await state.filter({hasText:'Saved'}).waitFor();};
   const fit=async()=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No page overflow');
   const capture=async(name,fullPage=true)=>{await page.screenshot({path:`${out}/${name}.png`,fullPage});report.screenshots.push({name,viewport:page.viewportSize(),fullPage,url:page.url(),capturedAt:new Date().toISOString()});};
   const choose=async(name,value)=>{await page.locator(`.cm-select-trigger[aria-label="${name}"]`).click();await page.getByRole('option',{name:value,exact:true}).click();};
   assert.equal(await save.isDisabled(),true);
-  await checked('showHome').uncheck();assert.match(await state.innerText(),/ยังไม่บันทึก/);
+  await checked('showHome').uncheck();assert.match(await state.innerText(),/Unsaved changes/);
   assert.equal((await repository.settings(site)).showHome,true,'Changing a switch stages, not saves');
   await capture('desktop-dirty');
   await saveSettings();assert.equal((await repository.settings(site)).showHome,false);
@@ -73,7 +73,7 @@ try {
   await page.reload();await ready();assert.equal(await checked('showHome').isChecked(),false);
   await checked('showHome').check();await saveSettings();
   await checked('enabled').uncheck();assert.equal(await checked('showHome').isDisabled(),true);assert.equal(await checked('showHome').isChecked(),true);
-  assert.match(await form.locator('#articleSettingState-showHome').innerText(),/พักไว้/);
+  assert.equal(await form.locator('#articleSettingState-showHome').innerText(),'Paused');
   acceptDialog=false;await save.click();assert.equal((await repository.settings(site)).enabled,true,'Master-off cancellation does not save');
   acceptDialog=true;await saveSettings();
   assert.equal((await visitor.goto(baseUrl+'/articles'+suffix)).status(),404);
@@ -95,7 +95,7 @@ try {
   await form.getByRole('button',{name:'โหลดการตั้งค่าล่าสุด'}).click();await ready();assert.equal(await checked('showNavigation').isChecked(),false);
   await checked('showHome').check();await checked('showNavigation').check();await saveSettings();
   report.checks.push('Permission-denied save retains edits; retry succeeds; stale revision conflict blocks overwrite and offers explicit reload');
-  await choose('หมวดหมู่','ประกันสุขภาพ');await choose('สถานะ','เผยแพร่แล้ว');
+  await choose('หมวดหมู่','ประกันสุขภาพ');await choose('Status','Published');
   assert.equal(await page.locator('tbody tr').count(),1);assert.equal(await page.locator('[data-stat=all] dd').innerText(),'6');
   await page.locator('[data-article-action=pin-order]').click();await page.locator('.article-pin-dialog li').first().waitFor();assert.equal(await page.locator('.article-pin-dialog li').count(),2);
   await page.keyboard.press('Escape');await page.locator('.article-pin-dialog').waitFor({state:'detached'});
@@ -105,15 +105,61 @@ try {
   await page.locator('[data-article-action=create]').click();await page.locator('.ae-workspace').waitFor();
   await page.locator('[data-ae=back]').click();await ready();
   report.checks.push('Compound category/status filters, catalog-wide stats, pagination, pin manager ignores list filters, Create editor/list return');
+  const view=async name=>{await page.locator(`[data-view=${name}]`).click();};
+  const search=page.locator('.article-search input');
+  const openAction=async(index,action)=>{
+    await search.fill(specs[index][1]);
+    const row=page.locator(`[data-article-id="${ids[index]}"]`);
+    await row.locator('.article-more summary').click();
+    await row.locator(`[data-article-action=${action}]`).click();
+    await page.locator('.article-lifecycle-dialog').waitFor();
+  };
+  const confirm=async()=>{await page.locator('[data-lifecycle=confirm]').click();await page.locator('.article-lifecycle-dialog').waitFor({state:'detached'});await ready();};
+  await view('published');await openAction(0,'unpublish');
+  const beforeCancel=await repository.get(site,ids[0]);
+  await page.locator('footer [data-lifecycle=cancel]').click();
+  assert.deepEqual(await repository.get(site,ids[0]),beforeCancel,'Cancel does not mutate the article');
+  await page.locator(`[data-article-id="${ids[0]}"] .article-more summary`).click();
+  await capture('desktop-actions',false);
+  await page.keyboard.press('Escape');
+  await openAction(0,'unpublish');await confirm();
+  assert.equal((await visitor.goto(baseUrl+'/articles/'+ids[0]+suffix)).status(),404);
+  await view('unpublished');assert.equal(await page.locator(`[data-article-id="${ids[0]}"]`).count(),1);
+  await view('active');await openAction(1,'archive');await capture('archive-confirmation',false);await confirm();
+  assert.equal((await repository.get(site,ids[1])).lifecycle,'archived');
+  assert.equal((await visitor.goto(baseUrl+'/articles/'+ids[1]+suffix)).status(),404);
+  await view('archived');assert.equal(await page.locator(`[data-article-id="${ids[1]}"]`).count(),1);
+  await page.reload();await ready();await view('archived');await openAction(1,'restore');await confirm();
+  assert.equal((await repository.get(site,ids[1])).basePublished,false,'Restore remains private');
+  await view('active');await openAction(2,'trash');
+  await db.doc('admins/'+signup.localId).update({active:false});await page.locator('[data-lifecycle=confirm]').click();
+  await page.locator('.article-lifecycle-error:not([hidden])').waitFor();
+  assert.equal((await repository.get(site,ids[2])).lifecycle,'active','Denied deletion retains the article');
+  await db.doc('admins/'+signup.localId).update({active:true});await page.locator('footer [data-lifecycle=cancel]').click();
+  await openAction(2,'trash');await confirm();await view('trashed');
+  await openAction(2,'restore');
+  let concurrent=await repository.get(site,ids[2]);await repository.mutate(site,'restore',{id:ids[2]},concurrent.revision,signup.localId);
+  await page.locator('[data-lifecycle=confirm]').click();await page.locator('.article-lifecycle-error:not([hidden])').waitFor();
+  assert.equal(await page.locator('[data-lifecycle=confirm]').isDisabled(),true,'Stale confirmation cannot be replayed');
+  await page.locator('[data-lifecycle=reload]').click();await ready();
+  assert.equal(await page.locator(`[data-article-id="${ids[2]}"]`).count(),0);
+  await view('active');await openAction(4,'unpublish');await confirm();
+  assert.equal((await repository.get(site,ids[4])).publicationStatus,'draft','Cancel schedule keeps a private draft');
+  await search.fill('');await view('unpublished');assert.equal(await page.locator('tbody tr').count(),5);
+  await view('published');assert.equal(await page.locator('tbody tr').count(),1);
+  await view('active');
+  report.checks.push('Real lifecycle loop: cancel/no write, Unpublish, Archive/404, reload, Restore to private Draft, Trash, denied action, stale restore conflict/reload, Cancel schedule, English views/counts');
   for(const width of [1440,820,390,320]) {
     await page.setViewportSize({width,height:width>820?1000:844});await page.evaluate(()=>scrollTo(0,0));await fit();
     if(width===1440){await capture('desktop');await capture('desktop-viewport',false);}
     if(width===390){await capture('mobile');await capture('mobile-top',false);await page.locator('.article-list-head').scrollIntoViewIfNeeded();await capture('mobile-list',false);}
   }
   await page.setViewportSize({width:390,height:844});
-  await page.locator('[data-article-action=filters]').click();await choose('หมวดหมู่','ประกันสุขภาพ');await choose('สถานะ','ตั้งเวลาเผยแพร่');
-  assert.equal(await page.locator('tbody tr').count(),1);await page.locator('[data-article-action=filters]').click();assert.equal(await page.locator('[data-filter-count]').innerText(),'2');
+  await page.locator('[data-article-action=filters]').click();await choose('หมวดหมู่','ประกันสุขภาพ');await choose('Status','Draft');
+  assert.equal(await page.locator('tbody tr').count(),2);await page.locator('[data-article-action=filters]').click();assert.equal(await page.locator('[data-filter-count]').innerText(),'2');
   await page.locator('.article-toolbar [data-article-action=reset]').click();
+  await openAction(2,'trash');await capture('mobile-trash-confirmation',false);await confirm();await view('trashed');
+  await openAction(2,'restore');await confirm();await view('active');await search.fill('');
   await page.locator('.article-more summary').first().click();await page.getByRole('button',{name:'ดูข้อมูลบทความ',exact:true}).click();await page.locator('.article-dialog').waitFor();await page.keyboard.press('Escape');
   await page.locator('[data-article-action=filters]').click();await fit();await capture('mobile-filters',false);
   for(const width of [390,1440]) {

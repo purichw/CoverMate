@@ -137,7 +137,7 @@ try {
   await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างในคลังแล้ว'}).waitFor();
   assert.deepEqual(website,websiteBeforeArticles,'Article Save preserves Website Draft/Live');
   await publish().click();
-  const articleConfirm=page.getByRole('dialog',{name:'ยืนยันเผยแพร่บทความ',exact:true});await articleConfirm.waitFor();
+  const articleConfirm=page.getByRole('dialog',{name:'Publish article',exact:true});await articleConfirm.waitFor();
   assert.match(await articleConfirm.innerText(),/เฉพาะบทความนี้/);assert.match(await articleConfirm.innerText(),/ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน/);
   await shot('article-publish-desktop',articleConfirm);
   assert.equal(article.published,null,'Opening confirmation saves the article draft but does not publish');
@@ -145,7 +145,7 @@ try {
   assert.equal(article.published,null,'Cancel leaves publication unchanged');
   await page.setViewportSize({width:390,height:844});await publish().click();await articleConfirm.waitFor();
   await shot('article-publish-mobile',articleConfirm);
-  await articleConfirm.getByRole('button',{name:'ยืนยันเผยแพร่',exact:true}).click();await articleConfirm.waitFor({state:'detached'});
+  await articleConfirm.getByRole('button',{name:'Publish article',exact:true}).click();await articleConfirm.waitFor({state:'detached'});
   await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับเผยแพร่แล้ว'}).waitFor();
   assert.ok(article.published);assert.deepEqual(website,websiteBeforeArticles);assert.deepEqual(otherArticle,otherBefore);
   assert.ok(calls.slice(websiteCalls).every(call=>call.domain==='article'),'Article Save/Publish never call the website repository');

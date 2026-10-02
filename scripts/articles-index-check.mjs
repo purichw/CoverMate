@@ -55,6 +55,21 @@ if(process.argv.includes('--browser')) {
       if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();
     };
     const fit=async()=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal page overflow');
+    const assertListCardContents=async()=>{
+      const cards=await page.locator('.ar-grid .ar-item').evaluateAll(items=>items.map(item=>{
+        const card=item.getBoundingClientRect(),media=item.querySelector('.ar-media').getBoundingClientRect();
+        const parts=[...item.querySelectorAll('h3,.ar-excerpt,.ar-meta')].map(node=>{
+          const r=node.getBoundingClientRect();
+          return {name:node.className||node.tagName,inside:r.width>0&&r.height>0&&r.left>=card.left&&r.right<=card.right&&r.top>=card.top&&r.bottom<=card.bottom};
+        });
+        return {parts,mediaRatio:media.width/media.height};
+      }));
+      assert.ok(cards.length,'Article grid has cards to inspect');
+      for(const card of cards) {
+        assert.ok(card.parts.every(part=>part.inside),'Article title, excerpt and metadata must remain inside the visible card: '+JSON.stringify(card));
+        if(page.viewportSize().width>=768)assert.ok(Math.abs(card.mediaRatio-1.5)<.02,'Desktop list covers keep their 3:2 ratio');
+      }
+    };
     for(const [width,lang] of process.argv.includes('--interactions-only')?[]:[[1440,'th'],[820,'th'],[390,'th'],[320,'en']]) {
       await page.setViewportSize({width,height:1000});await ready('/articles'+(lang==='en'?'?lang=en':''));await fit();
       assert.equal(await page.locator('.ar-grid .ar-item:visible').count(),8);
@@ -72,7 +87,7 @@ if(process.argv.includes('--browser')) {
       assert.equal(await page.locator('.ar-sort').evaluate(el=>!!el.closest('.ar-filter-band')),width>=768,'Sort follows the desktop filter row or mobile results heading');
       const geometry=await page.evaluate(()=>{
         const rect=selector=>document.querySelector(selector).getBoundingClientRect();
-        const search=rect('.ar-search'),sort=rect('.ar-sort'),media=rect('.ar-item .ar-media'),badge=rect('.ar-item .hm-article-category');
+        const search=rect('.ar-search'),sort=rect('.ar-sort'),media=rect('.ar-item .ar-media'),badge=rect('.ar-item .ar-card-category');
         return {searchY:search.y,sortY:sort.y,mediaRight:media.right,badgeX:badge.x,mediaTop:media.y,badgeY:badge.y};
       });
       if(width>=768) {
@@ -81,6 +96,13 @@ if(process.argv.includes('--browser')) {
       } else assert.ok(geometry.badgeX>geometry.mediaRight,'Mobile category is in the card text column');
       await page.locator('.ar-consult').scrollIntoViewIfNeeded();
       await page.waitForFunction(()=>[...document.querySelectorAll('.ar-media img')].every(img=>img.complete&&img.naturalWidth));
+      await assertListCardContents();
+      assert.equal(await page.locator('.ar-card-link [class*="hm-article-"]').count(),0,'Index cards must not inherit Home card presentation');
+      const cardBoxes=()=>page.locator('.ar-card-link').evaluateAll(cards=>cards.map(card=>card.getBoundingClientRect().toJSON()));
+      const beforeHomeStyles=await cardBoxes();
+      const homeStyle=await page.addStyleTag({content:'.hm-article-media{height:999px!important;min-height:999px!important}.hm-article-category{font-size:80px!important}'});
+      assert.deepEqual(await cardBoxes(),beforeHomeStyles,'Home card styling cannot change index card geometry');
+      await homeStyle.evaluate(node=>node.remove());
       await page.evaluate(()=>scrollTo(0,0));
       await page.screenshot({path:`${out}/${engine}-${width}-${lang}.png`,fullPage:true});
       report.checks.push({width,lang,cards:8,noOverflow:true});
@@ -94,6 +116,7 @@ if(process.argv.includes('--browser')) {
       await page.goBack();await page.waitForURL(server.baseUrl+'/articles');assert.equal(await page.locator('.ar-item:visible').count(),8);
       await page.locator('.ar-category').filter({hasText:'ประกันสุขภาพ'}).click();assert.match(page.url(),/category=health/);
       assert.equal(await page.locator('.ar-item:visible').count(),4);assert.equal(await page.locator('.ar-featured').count(),0);
+      await assertListCardContents();
       await page.locator('#articles-search').fill('not-found');await page.locator('#articles-search').press('Enter');
       await page.locator('.ar-empty').waitFor();assert.equal(await page.locator('.ar-item').count(),0);
       assert.equal(await page.locator('#articles-search').inputValue(),'not-found');

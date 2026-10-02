@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { readBootSurface } from './lib/boot-surface.mjs';
+import {buildArticleImages} from './build-article-images.mjs';
 
 import {
   buildVisitorIndex,
@@ -75,4 +76,5 @@ function main() {
 
 function readPublicIndex() { return fs.readFileSync(VISITOR_SOURCE_PATHS.publicIndex, 'utf8'); }
 
+await buildArticleImages({check:process.argv.includes('--check')});
 main();

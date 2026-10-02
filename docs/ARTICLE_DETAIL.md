@@ -1,6 +1,6 @@
 # Public Article Reader
 
-Updated 2026-09-29. `/articles/{slug}`, the CMS writing canvas and Preview share the document
+Updated 2026-10-02. `/articles/{slug}`, the CMS writing canvas and Preview share the document
 renderer and article composition. See [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md)
 for the current production publication, visibility, SEO and storage contract.
 
@@ -11,12 +11,16 @@ for the current production publication, visibility, SEO and storage contract.
 - Article header: breadcrumbs, category, title, description, publication date,
   optional reading time/author/update date, local save and sharing.
 - Desktop: reading column plus sticky contents/share sidebar, followed by key
-  takeaways. Mobile: cover, takeaways, body, collapsible contents/share, related
-  cards. Responsive behavior follows the article container, including CMS Preview.
+  takeaways. The raised sidebar paints above the decorative header background.
+  Mobile: cover, collapsible contents, takeaways, body, sharing, related cards.
+  The single TOC stays before the reading content without duplicating links or
+  moving authored rich-text blocks. Responsive behavior follows the article
+  container, including CMS Preview.
 - Flexible block documents can place a summary, illustration, quote or other
   supported top-level block in the body column, sidebar or across the article.
   They preserve authored order on mobile. Their automatic contents/share rail
-  stays above the composed body, beside the cover when present. Legacy article
+  stays beside the cover when present on desktop; on mobile, contents precede
+  the composed body and sharing follows it. Legacy article
   layout stays unchanged until the editor opts into block placement.
 - Both the writing canvas and CMS Preview run this actual page bundle in an isolated viewport, including
   the public header/footer, share controls, related published cards and contact

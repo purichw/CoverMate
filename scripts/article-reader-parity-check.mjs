@@ -35,7 +35,7 @@ async function ready(page,root) {
 const geometry=root=>root.evaluate(element=>{
   const rect=selector=>{const box=element.querySelector(selector).getBoundingClientRect();return {left:box.left,right:box.right,top:box.top,bottom:box.bottom,width:box.width,height:box.height};};
   const css=getComputedStyle(element),box=element.getBoundingClientRect();
-  return {viewport:innerWidth,container:box.width-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)-parseFloat(css.borderLeftWidth)-parseFloat(css.borderRightWidth),layout:getComputedStyle(element.querySelector('.ad-layout')).display,cover:rect('.ad-cover'),sidebar:rect('.ad-sidebar'),body:rect('.ad-prose'),takeaways:rect('.ad-takeaways')};
+  return {viewport:innerWidth,container:box.width-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)-parseFloat(css.borderLeftWidth)-parseFloat(css.borderRightWidth),layout:getComputedStyle(element.querySelector('.ad-layout')).display,cover:rect('.ad-cover'),sidebar:rect('.ad-sidebar'),toc:rect('.ad-toc'),share:rect('.ad-share-panel'),body:rect('.ad-prose'),takeaways:rect('.ad-takeaways')};
 });
 
 const typography=root=>root.evaluate(element=>{
@@ -115,11 +115,12 @@ function assertDesktop(box,label) {
 
 function assertMobile(box,label) {
   assert.ok(box.container<=767,label+' uses a mobile-sized content container');
-  assert.ok(Math.abs(box.sidebar.left-box.body.left)<=2,label+' stacks the sidebar in the reading column');
-  assert.ok(Math.abs(box.sidebar.width-box.body.width)<=2,label+' gives the sidebar the reading-column width while allowing a full-bleed hero');
-  assert.ok(box.takeaways.top>=box.cover.bottom-2,label+' places takeaways after the hero');
+  assert.ok(Math.abs(box.toc.left-box.body.left)<=2,label+' aligns the contents in the reading column');
+  assert.ok(Math.abs(box.toc.width-box.body.width)<=2,label+' gives contents the reading-column width while allowing a full-bleed hero');
+  assert.ok(box.toc.top>=box.cover.bottom-2,label+' places contents after the hero');
+  assert.ok(box.takeaways.top>=box.toc.bottom-2,label+' places contents before the takeaways');
   assert.ok(box.takeaways.bottom<=box.body.top+2,label+' places takeaways before the body');
-  assert.ok(box.sidebar.top>=box.body.bottom-2,label+' places the contents/share section after the body');
+  assert.ok(box.share.top>=box.body.bottom-2,label+' keeps sharing after the body');
 }
 
 async function assertNoOverflow(page,root,label) {
@@ -266,7 +267,7 @@ try {
   await assertNoOverflow(editorPage,preview,'CMS mobile mode');await assertNoOverflow(publicPage,published,'Public mobile reader');
   report.comparisons.push({mode:'mobile-in-desktop',preview:mobile,public:await geometry(published)});
   await capture(editorPage,preview,'preview-mobile-in-desktop');await capture(publicPage,published,'public-mobile');
-  report.checks.push('Mobile toggle changes real layout at a desktop viewport, with takeaways before body and sidebar after body');
+  report.checks.push('Mobile toggle changes real layout at a desktop viewport: contents, takeaways, body, then sharing');
 
   for(const width of [390,320]) {
     await editorPage.setViewportSize({width,height:900});await ready(editorPage,preview);

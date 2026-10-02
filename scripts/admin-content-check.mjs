@@ -183,10 +183,10 @@ try {
     assert.equal(await page.locator('[data-cms-state]').getAttribute('data-cms-state'), ['partial', 'error'].includes(current) ? 'error' : 'ready');
     const body = await page.locator('.admin-content').innerText();
     if (current === 'synced') assert.match(body, /ไม่มีการเปลี่ยนแปลงรอเผยแพร่/);
-    if (current === 'missing') assert.match(body, /ยังไม่มีฉบับร่าง/);
+    if (current === 'missing') assert.match(body, /No draft/);
     if (['partial', 'error'].includes(current)) assert.match(body, /ยังอ่านประวัติไม่ได้/);
     if (current === 'partial') assert.match(body, /1 ฉบับรอเผยแพร่/);
-    if (current === 'error') assert.match(body, /ยังตรวจสอบฉบับร่างไม่ได้/);
+    if (current === 'error') assert.match(body, /Draft status unknown/);
   }
   report.checks.push('Refresh preserves expanded groups and focus; dismissed recommendation stays dismissed; synced/missing/partial/error/recovered states do not fabricate draft or history counts.');
 

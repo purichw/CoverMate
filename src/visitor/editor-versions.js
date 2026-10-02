@@ -116,7 +116,7 @@ export function buildVersionHistoryView(editor) {
     const actor = entry.createdBy?.name || entry.createdBy?.email || 'ไม่ระบุผู้บันทึก';
     const id = String(entry.id), date = new Date(entry.ts);
     return { id, key:id, shortId:id.length>12?id.slice(0,6)+'…'+id.slice(-4):id, snapshot, ts:entry.ts,
-      stamp:entry.ts && Number.isFinite(date.getTime()) ? date.toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}) : 'ไม่ระบุวันที่', actor, isLive, status:isLive?'ตรงกับ Live':'เผยแพร่แล้ว',
+      stamp:entry.ts && Number.isFinite(date.getTime()) ? date.toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}) : 'ไม่ระบุวันที่', actor, isLive, status:isLive?'Live':'Published',
       summary:previous ? (groups.slice(0,3).join(' · ') || 'เนื้อหาไม่เปลี่ยนจากครั้งก่อน') : 'รายการเก่าสุดในประวัติที่โหลด',
       selected:S.selectedVersion===entry.id, open:()=>openVersionDetails(editor,entry.id), restore:()=>editor.restoreVersion(entry.id),
       hasOrigin:!!(entry.restoredFrom || entry.undoOf), origin:entry.restoredFrom ? 'กู้คืนจาก: '+String(entry.restoredFrom) : entry.undoOf ? 'ย้อนการเผยแพร่: '+String(entry.undoOf) : '' };

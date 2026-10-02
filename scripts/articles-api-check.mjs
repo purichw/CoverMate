@@ -80,6 +80,49 @@ try {
   now=future+1;assert.ok((await repository.detail('covermate-uat',run)).item);assert.equal((await repository.catalog('covermate-uat')).items.find(i=>i.id===run).status,'published');
   draft=(await call('unpublish',{id:run,expectedRevision:draft.revision})).body;
   assert.equal(await repository.detail('covermate-uat',run),null);assert.ok((await call('read',null,'owner','&id='+run)).body.translations.th.document);
+  for(const action of ['archive','trash','restore','unpublish']) {
+    for(const role of ['missing','advisor','ops','readonly','inactive','unknown'])assert.equal((await call(action,{id:run,expectedRevision:draft.revision},role)).status,role==='missing'?401:403,action+' requires an active owner');
+    assert.equal((await fetch(baseUrl+'/api/articles?action='+action,{method:'POST',headers:{Authorization:'Bearer '+tokens.owner,'Content-Type':'application/json'},body:JSON.stringify({id:run,expectedRevision:draft.revision})})).status,403,'UAT owner cannot mutate production');
+  }
+  draft.translations.th.publishedAt='2026-09-01T00:00:00Z';
+  draft=(await call('save',{article:draft,expectedRevision:draft.revision})).body;
+  draft=(await call('publish',{id:run,expectedRevision:draft.revision,languages:['th']})).body;
+  assert.equal(draft.publicationStatus,'published');
+  const beforeArchive=structuredClone(draft),untouched=await repository.get('covermate-uat',dup.id);
+  let pinSettings=(await call('catalog')).body.settings;
+  const pinIds=(await call('catalog')).body.items.filter(item=>item.pinned||item.publishedPinned).map(item=>item.id);
+  assert.equal((await call('pin-order',{order:pinIds,expectedRevision:pinSettings.revision})).status,200);
+  pinSettings=(await call('catalog')).body.settings;
+  result=await call('archive',{id:run,expectedRevision:draft.revision});assert.equal(result.status,200);draft=result.body;
+  assert.equal(draft.lifecycle,'archived');assert.equal(draft.basePublished,false);
+  assert.deepEqual(draft.translations,beforeArchive.translations,'Archive preserves authored content');
+  assert.equal(draft.featured,false);assert.equal(draft.pinned,false);
+  assert.equal((await call('catalog')).body.items.find(item=>item.id===run).status,'archived');
+  assert.equal((await repository.feed('covermate-uat')).items.some(item=>item.id===run),false);
+  assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat')).status,404);
+  assert.equal((await call('catalog')).body.settings.pinnedOrder.includes(run),false,'Archive removes pin ordering');
+  assert.equal((await call('pin-order',{order:pinIds,expectedRevision:pinSettings.revision})).status,409,'Archive invalidates stale pin settings');
+  for(const action of ['save','publish','unpublish','archive']) {
+    const body=action==='save'?{article:draft}:{id:run,languages:['th']};
+    assert.equal((await call(action,{...body,expectedRevision:draft.revision})).status,409,'Inactive article rejects '+action);
+  }
+  assert.equal((await call('restore',{id:run,expectedRevision:beforeArchive.revision})).status,409,'Stale recovery cannot overwrite the lifecycle');
+  result=await call('restore',{id:run,expectedRevision:draft.revision});assert.equal(result.status,200);draft=result.body;
+  assert.equal(draft.lifecycle,'active');assert.equal(draft.publicationStatus,'draft');assert.equal(draft.slugLocked,true);
+  assert.equal(await repository.detail('covermate-uat',run),null,'Restore never republishes');
+  assert.equal((await call('restore',{id:run,expectedRevision:draft.revision})).status,409,'Cannot restore an active article');
+  assert.equal((await call('publish',{id:dup.id,expectedRevision:dup.revision,languages:['th']})).status,409,'Archived URL remains reserved');
+  draft=(await call('publish',{id:run,expectedRevision:draft.revision,languages:['th']})).body;
+  assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat')).status,200,'Explicit republish works');
+  draft=(await call('trash',{id:run,expectedRevision:draft.revision})).body;
+  assert.equal(draft.lifecycle,'trashed');assert.equal(await repository.detail('covermate-uat',run),null);
+  assert.equal((await call('trash',{id:run,expectedRevision:draft.revision})).status,409);
+  assert.deepEqual((await call('read',null,'owner2','&id='+run)).body.translations,beforeArchive.translations,'A second owner can recover retained content');
+  draft=(await call('restore',{id:run,expectedRevision:draft.revision})).body;
+  assert.equal(draft.lifecycle,'active');assert.equal(draft.basePublished,false);
+  assert.deepEqual(await repository.get('covermate-uat',dup.id),untouched,'Other articles remain byte-for-byte unchanged');
+  const events=(await db.doc('sites/covermate-uat').collection('articleAudit').where('articleId','==',run).get()).docs.map(doc=>doc.data());
+  for(const action of ['archive','trash','restore'])assert.ok(events.some(event=>event.action===action&&event.actor&&event.revision&&event.lifecycle),'Audited '+action);
   const direct=path=>fetch('http://127.0.0.1:8088/v1/projects/demo-covermate/databases/(default)/documents/sites/'+scope+'/'+path,{headers:{Authorization:'Bearer '+tokens.owner}});
   for(const path of ['articles/'+run,'articleCatalog/'+run,'articleSlugs/'+run,'articleSettings/current'])assert.equal((await direct(path)).status,403,'No direct SDK access: '+path);
   assert.ok((await db.doc('sites/covermate-uat').collection('articleAudit').where('articleId','==',run).get()).size>=5);

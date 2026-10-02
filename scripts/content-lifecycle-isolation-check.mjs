@@ -171,7 +171,15 @@ assert.deepEqual(await articles.settings(site),flags,'Website reset cannot reset
 a=await articleAction('Article unpublish',()=>articles.mutate(site,'unpublish',{id:a.id},a.revision,uid));
 assert.equal(await articles.detail(site,a.slug),null);
 assert.equal((await articles.get(site,a.id)).translations.th.title,'Pending article changes','Unpublish preserves the article draft');
-await articleAction('Article publish after website reset',()=>articles.mutate(site,'publish',{id:a.id,languages:['th']},a.revision,uid));
+a=await articleAction('Article publish after website reset',()=>articles.mutate(site,'publish',{id:a.id,languages:['th']},a.revision,uid));
 assert.equal((await articles.detail(site,a.slug)).item.translations.th.title,'Pending article changes');
+a=await articleAction('Article archive',()=>articles.mutate(site,'archive',{id:a.id},a.revision,uid));
+assert.equal(await articles.detail(site,a.slug),null);
+a=await articleAction('Restore archived article',()=>articles.mutate(site,'restore',{id:a.id},a.revision,uid));
+assert.equal(a.basePublished,false);
+a=await articleAction('Article trash',()=>articles.mutate(site,'trash',{id:a.id},a.revision,uid));
+a=await articleAction('Restore trashed article',()=>articles.mutate(site,'restore',{id:a.id},a.revision,uid));
+assert.equal(a.basePublished,false);
+assert.equal(a.translations.th.title,'Pending article changes');
 
 console.log('PASS content lifecycle isolation: '+checks.length+' real website/article operations; independent documents, revisions, caches, drafts, publication, reset and visibility.');

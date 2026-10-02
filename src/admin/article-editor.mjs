@@ -13,6 +13,7 @@ import {ARTICLE_TYPE_LIMITS,normalizeArticleTypography} from '../../article-typo
 import {closeHistory} from '@tiptap/pm/history';
 import {validateArticle,articleFieldContract,articleImages} from '../../article-validation.mjs';
 import {createSeoModel} from '../../covermate-seo.mjs';
+import {ARTICLE_IMAGE_PROFILES,articleImageDelivery} from '../../article-media.mjs';
 
 const glyphs={Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,ArrowRight,ChevronDown,CalendarDays,Clock3,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone};
 const icon = name => createElement(glyphs[name],{width:20,height:20,'aria-hidden':'true'}).outerHTML;
@@ -20,6 +21,7 @@ const btn=(action,name,label='',extra='')=>`<button type="button" class="ae-butt
 let fieldSequence=0;
 const field=(key,label,value='',type='text',extra='')=>{
   const id='ae-field-'+(++fieldSequence),contract=articleFieldContract(key);
+  if(key==='publishedAt')return `<div class="ae-field"><label for="${id}" class="ae-field-label">${label}<small class="ae-field-kind">${contract.kind}</small></label><div class="ae-date-control"><input id="${id}" aria-label="${esc(label)}" data-field="${key}" type="${type}" value="${esc(value)}" ${extra}>${btn('clear-date','X','ไม่แสดงวันที่')}</div></div>`;
   return `<label class="ae-field"><span class="ae-field-label">${label}<small class="ae-field-kind">${contract.kind}</small></span>${type==='textarea'?`<textarea id="${id}" aria-label="${esc(label)}" data-field="${key}" rows="${key==='title'?1:key==='excerpt'?2:3}" ${extra}>${esc(value)}</textarea>`:`<input id="${id}" aria-label="${esc(label)}" data-field="${key}" type="${type}" value="${esc(value)}" ${extra}>`}</label>`;
 };
 const calloutLabels={summary:'สรุปประเด็นสำคัญ',keypoints:'สิ่งที่ควรรู้',note:'หมายเหตุ',warning:'ข้อควรระวัง',feature:'ความคุ้มครองที่น่าสนใจ'};
@@ -63,7 +65,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   function dirty(){
     syncDocuments();
     if(changed()&&!busy&&root.querySelector('.ae-feedback')?.dataset.error!=='true')setStatus('');
-    root.querySelectorAll('[data-save-state]').forEach(el=>{el.dataset.dirty=String(changed());el.textContent=changed()?'ยังไม่ได้บันทึก':draft.updatedAt?(cloud?'บันทึกในคลังแล้ว · ':'บันทึกบนเครื่องแล้ว · ')+new Date(draft.updatedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'ฉบับร่างใหม่';});
+    root.querySelectorAll('[data-save-state]').forEach(el=>{el.dataset.dirty=String(changed());el.textContent=changed()?'Unsaved changes':draft.updatedAt?(cloud?'Saved · ':'Saved locally · ')+new Date(draft.updatedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'New draft';});
     root.querySelectorAll('[data-ae="save"]').forEach(el=>{el.disabled=busy||!writingReady;});
     const invalid=refreshValidation();
     root.querySelectorAll('[data-ae="publish"]').forEach(el=>{el.disabled=busy||!cloud||!writingReady||invalid.length>0;});
@@ -167,7 +169,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     card.querySelector('h3').textContent=t.title||'ชื่อบทความ';
     card.querySelector('[data-card=excerpt]').textContent=t.excerpt;
     card.querySelector('[data-card=category]').textContent=ARTICLE_CATEGORIES[draft.categoryId]?.[lang==='en'?1:0]||t.category;
-    const date=card.querySelector('[data-card=date]');date.textContent=t.publishedAt?new Date(t.publishedAt).toLocaleDateString(lang==='th'?'th-TH-u-ca-gregory':'en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'}):'ยังไม่ระบุวันที่';
+    const date=card.querySelector('[data-card=date]');date.parentElement.hidden=!t.publishedAt;date.textContent=t.publishedAt?new Date(t.publishedAt).toLocaleDateString(lang==='th'?'th-TH-u-ca-gregory':'en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'}):'';
     card.querySelector('[data-card=reading]').textContent=`${Math.max(1,Math.ceil(length/700))} นาที`;
     const img=card.querySelector('img');img.hidden=!draft.cover.src||img.dataset.failedSrc===draft.cover.src;img.alt=t.coverAlt;
     if(draft.cover.src&&img.getAttribute('src')!==draft.cover.src)img.src=draft.cover.src;
@@ -183,8 +185,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   function settings(){
     const t=locale();
     const section=(key,title,glyph,body)=>`<details class="ae-disclosure ae-responsive-section ae-${['card','cover'].includes(key)?key+'-section':key}" data-panel="${key}" ${compactLayout.matches?'':'open'}><summary><span>${icon(glyph)}${title}</span>${icon('ChevronDown')}</summary><div class="ae-panel-body">${body}</div></details>`;
-    return section('publication','การเผยแพร่และตั้งค่า','Settings2',`<div class="ae-publication-state"><span class="ae-status-dot" data-live="${draft.basePublished}"></span>${draft.basePublished?'มีฉบับเผยแพร่แล้ว':'ยังไม่เผยแพร่'}<span class="ae-draft-label">กำลังแก้ไขร่าง</span></div>${field('publishedAt','วันที่บทความ · '+lang.toUpperCase()+' (เวลาไทย)',publicationDateInput(t.publishedAt),'datetime-local','min="1900-01-01T00:00" max="9999-12-31T23:59"')}<small>${cloud?'เว้นว่างเพื่อใช้วันเผยแพร่ครั้งแรก วันที่ในอนาคตจะแสดงเมื่อถึงกำหนดหลังยืนยันเผยแพร่':'วันที่ที่จะแสดงหลังเผยแพร่ ไม่ใช่การตั้งเวลาส่งขึ้นเว็บไซต์'}</small><label class="ae-toggle"><span>ปักหมุดบน Home</span><input type="checkbox" role="switch" data-field="featured" aria-describedby="aeHomePinHelp" ${draft.featured?'checked':''}></label><label class="ae-toggle"><span>ปักหมุดในหน้ารวมบทความ</span><input type="checkbox" role="switch" data-field="pinned" ${draft.pinned?'checked':''}></label><details class="ae-pin-help"><summary>การปักหมุดทำงานอย่างไร</summary><small id="aeHomePinHelp">Home ปักหมุดได้สูงสุด 10 บทความ แยกจากหมุดหน้ารวมบทความ ช่องที่เหลือเติมด้วยบทความล่าสุดที่ไม่ซ้ำ หมุดในร่างนับรวมในโควตา หากนำหมุดที่เผยแพร่แล้วออก ต้องเผยแพร่การเปลี่ยนแปลงด้วย</small></details><button type="button" class="ae-text-button ae-unpublish" data-ae="unpublish" ${cloud&&draft.basePublished?'':'hidden'}>ถอนเผยแพร่บทความ</button>`)
-      +section('cover','ภาพปกบทความ','Image',`<div class="ae-cover-editor">${coverControls()}</div><small>อัตราส่วน 16:9 · จัดกรอบใหม่ได้จากภาพต้นฉบับ</small>${field('coverAlt','Alt ภาพปก',t.coverAlt)}${field('caption','คำบรรยายภาพปก',t.caption)}`)
+    return section('publication','การเผยแพร่และตั้งค่า','Settings2',`<div class="ae-publication-state"><span class="ae-status-dot" data-live="${draft.basePublished}"></span>${draft.basePublished?(draft.publicationStatus==='scheduled'?'Scheduled':'Published'):'Unpublished'}<span class="ae-draft-label">Editing draft</span></div>${field('publishedAt','วันที่บทความ · '+lang.toUpperCase()+' (เวลาไทย)',publicationDateInput(t.publishedAt),'datetime-local','min="1900-01-01T00:00" max="9999-12-31T23:59"')}<small>${cloud?'วันที่ในอนาคตใช้ตั้งเวลาเผยแพร่ ล้างวันที่แล้ว Publish อีกครั้งเพื่อยกเลิกเวลา':'เว้นว่างเพื่อไม่แสดงวันที่'}</small><label class="ae-toggle"><span>ปักหมุดบน Home</span><input type="checkbox" role="switch" data-field="featured" aria-describedby="aeHomePinHelp" ${draft.featured?'checked':''}></label><label class="ae-toggle"><span>ปักหมุดในหน้ารวมบทความ</span><input type="checkbox" role="switch" data-field="pinned" ${draft.pinned?'checked':''}></label><details class="ae-pin-help"><summary>การปักหมุดทำงานอย่างไร</summary><small id="aeHomePinHelp">Home ปักหมุดได้สูงสุด 10 บทความ แยกจากหมุดหน้ารวมบทความ ช่องที่เหลือเติมด้วยบทความล่าสุดที่ไม่ซ้ำ หมุดในร่างนับรวมในโควตา หากนำหมุดที่เผยแพร่แล้วออก ต้องเผยแพร่การเปลี่ยนแปลงด้วย</small></details><button type="button" class="ae-text-button ae-unpublish" data-ae="unpublish" ${cloud&&draft.basePublished?'':'hidden'}>${draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article'}</button>`)
+      +section('cover','ภาพปกบทความ','Image',`<div class="ae-cover-editor">${coverControls()}</div><small>อัตราส่วน 16:9 · จัดกรอบใหม่ได้จากภาพต้นฉบับ</small>${articleImageDelivery(draft.cover).srcset?`<dl class="ae-image-profiles">${ARTICLE_IMAGE_PROFILES.map(({label,width})=>`<div><dt>${label}</dt><dd>${Math.min(width,articleImageDelivery(draft.cover).maxWidth||1600)} px</dd></div>`).join('')}</dl>`:'<small>รูปที่อัปโหลดผ่าน Cloudinary จะมีขนาด thumbnail และ banner แยกอัตโนมัติ</small>'}${field('coverAlt','Alt ภาพปก',t.coverAlt)}${field('caption','คำบรรยายภาพปก',t.caption)}`)
       +section('card','ตัวอย่างบทความ','Eye',`<article class="ae-card-preview"><div class="ae-card-image"><img alt="" hidden>${icon('Image')}<span data-card="category"></span></div><div class="ae-card-copy"><h3></h3><p data-card="excerpt"></p><div class="ae-card-meta"><span>${icon('CalendarDays')}<span data-card="date"></span></span><span>${icon('Clock3')}<span data-card="reading"></span></span></div></div></article><button type="button" class="ae-button ae-preview-link" data-ae="card-preview">ดูตัวอย่างหน้าเต็ม ${icon('ArrowRight')}</button>`)
       +`
       ${disclosure('metadata','ผู้เขียนและภาพในเนื้อหา',`${field('authorName','ผู้เขียน',draft.authorName)}<div data-image-alt-fields></div>`)}
@@ -223,8 +225,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     ['subscript','Subscript','ตัวห้อย','subscript'],['superscript','Superscript','ตัวยก','superscript'],['clear','RemoveFormatting','ล้างรูปแบบ'],['undo','Undo2','เลิกทำ'],['redo','Redo2','ทำซ้ำ']
   ];
   root.innerHTML=`<div class="ae-workspace">
-    <div class="ae-breadcrumb">${btn('back','ArrowLeft','บทความ')}<span> / ${draft.basePublished?'แก้ไขบทความ':'ฉบับร่าง'}</span></div>
-    <div class="ae-heading"><div class="ae-heading-copy"><h1>${draft.basePublished?'แก้ไขบทความ':'เขียนบทความ'}</h1><p>จัดเนื้อหาให้ครบ แล้วเผยแพร่ความรู้ที่เป็นประโยชน์</p></div><div class="ae-mobile-language"></div><div class="ae-actions">${btn('preview','Eye','ดูตัวอย่าง')}${btn('save','Save','บันทึกร่าง')}<button class="ae-button ae-primary" type="button" data-ae="publish" ${cloud?'':'disabled'} aria-describedby="aeStorageNotice">${icon('Upload')}เผยแพร่บทความ</button></div></div>
+    <div class="ae-breadcrumb">${btn('back','ArrowLeft','บทความ')}<span> / ${draft.basePublished?'แก้ไขบทความ':'Draft'}</span></div>
+    <div class="ae-heading"><div class="ae-heading-copy"><h1>${draft.basePublished?'แก้ไขบทความ':'เขียนบทความ'}</h1><p>จัดเนื้อหาให้ครบ แล้วเผยแพร่ความรู้ที่เป็นประโยชน์</p></div><div class="ae-mobile-language"></div><div class="ae-actions">${btn('preview','Eye','Preview')}${btn('save','Save','Save draft')}<button class="ae-button ae-primary" type="button" data-ae="publish" ${cloud?'':'disabled'} aria-describedby="aeStorageNotice">${icon('Upload')}เผยแพร่บทความ</button></div></div>
     <div class="ae-storage-notice" id="aeStorageNotice">${icon('Info')}<span>${cloud?'บันทึกและเผยแพร่เฉพาะบทความนี้ แยกจากร่างหน้าเว็บและบทความอื่น':'ร่างเก็บบนเบราว์เซอร์นี้เท่านั้น ยังไม่เชื่อมระบบเผยแพร่'}${initial?.sample?' · เนื้อหาตัวอย่าง':''}</span><span class="ae-save-status" data-save-state></span></div>
     <p class="ae-feedback" role="status" aria-live="polite"></p>
     <div class="ae-grid"><div class="ae-main-column"><section class="ae-basic" aria-label="ข้อมูลบทความ"><div class="ae-writing-head"><h2><button type="button" class="ae-basic-toggle" data-ae="toggle-basic" aria-expanded="true" aria-controls="aeBasicFields"><span>${icon('FileText')}ข้อมูลบทความ</span>${icon('ChevronDown')}</button></h2><div class="ae-language" role="group" aria-label="ภาษาเนื้อหา"><button type="button" data-lang="th" aria-pressed="true">TH</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
@@ -239,13 +241,13 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       <div class="ae-writing-footer"><span data-save-state></span><span class="ae-count"></span></div>
     </div></details></div><aside class="ae-settings" aria-label="ตั้งค่าบทความ">${settings()}</aside></div>
     <div class="ae-file-actions">${btn('settings','Settings2','ตั้งค่าบทความ')}${btn('export','Download','ส่งออกฉบับร่าง')}${btn('import','Upload','นำเข้าฉบับร่าง')}<input class="ae-import-file" type="file" accept=".json,application/json" hidden></div>
-    <div class="ae-mobile-save">${btn('save','Save','บันทึกร่าง')}<button type="button" class="ae-button ae-primary" data-ae="publish" ${cloud?'':'disabled'} aria-describedby="aeStorageNotice">เผยแพร่</button></div>
+    <div class="ae-mobile-save">${btn('save','Save','Save draft')}<button type="button" class="ae-button ae-primary" data-ae="publish" ${cloud?'':'disabled'} aria-describedby="aeStorageNotice">Publish article</button></div>
   </div>`;
   root.querySelector('.ae-feedback').insertAdjacentHTML('afterend','<div class="ae-validation-summary" id="aePublishValidation" aria-live="polite" hidden></div>');
   root.querySelector('.ae-canvas').insertAdjacentHTML('afterend','<p class="ae-field-error ae-document-error" data-document-error hidden></p>');
   root.querySelector('#aeContentTitle').insertAdjacentHTML('beforeend','<small class="ae-field-kind" data-required="true">จำเป็น</small>');
-  root.querySelectorAll('[data-ae=save]').forEach(el=>{el.setAttribute('aria-label','บันทึกร่างบทความ');el.title='บันทึกเฉพาะร่างบทความนี้';});
-  root.querySelectorAll('[data-ae=publish]').forEach(el=>{el.innerHTML=icon('Upload')+'<span>เผยแพร่บทความ</span>';el.setAttribute('aria-label','เผยแพร่บทความ');el.setAttribute('aria-describedby','aeStorageNotice aePublishValidation');});
+  root.querySelectorAll('[data-ae=save]').forEach(el=>{el.setAttribute('aria-label','Save article draft');el.title='บันทึกเฉพาะร่างบทความนี้';});
+  root.querySelectorAll('[data-ae=publish]').forEach(el=>{el.innerHTML=icon('Upload')+'<span>เผยแพร่บทความ</span>';el.setAttribute('aria-label','Publish article');el.setAttribute('aria-describedby','aeStorageNotice aePublishValidation');});
   root.querySelector('.ae-layout-add').insertAdjacentHTML('afterbegin','<button type="button" class="ae-button" data-ae="add-paragraph">+ เพิ่มย่อหน้า</button>');
   root.querySelector('[data-format="block"]').innerHTML='<option value="mixed" disabled>หลายรูปแบบ</option><option value="paragraph">ย่อหน้า P</option>'+[1,2,3,4,5,6].map(level=>`<option value="h${level}">หัวข้อ H${level}</option>`).join('');
   root.querySelector('.ae-format-row').insertAdjacentHTML('afterend','<div class="ae-type-row"><span class="ae-font-label">Google Sans</span><label>ขนาดข้อความ (px)<input type="number" data-text-size min="8" max="120" step="any" placeholder="อัตโนมัติ" aria-label="ขนาดข้อความ"></label><label>มือถือ (px)<input type="number" data-text-size-mobile min="8" max="120" step="any" placeholder="ใช้ค่าหลัก" aria-label="ขนาดข้อความบนมือถือ"></label><button type="button" class="ae-button" data-ae="apply-text-size">ใช้กับข้อความที่เลือก</button><button type="button" class="ae-text-button" data-ae="reset-text-size">คืนขนาดข้อความ</button><small>เลือกข้อความก่อนปรับ หรือวางเคอร์เซอร์เพื่อตั้งขนาดข้อความที่จะพิมพ์</small></div>');
@@ -348,7 +350,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   function currentDetail(){
     const t=locale(),item={...structuredClone(draft),slug:/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(draft.slug)?draft.slug:'draft-preview',status:'published'};
     const empty=!articleDocumentText(t.document).trim();
-    item.translations[lang]={...t,title:t.title.trim() || (lang==='th'?'ชื่อบทความ':'Article title'),document:empty?{type:'doc',attrs:t.document.attrs,content:[{type:'paragraph',content:[{type:'text',text:' '}]}]}:t.document,status:'published',publishedAt:t.publishedAt || new Date().toISOString(),author:draft.authorName,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
+    item.translations[lang]={...t,title:t.title.trim() || (lang==='th'?'ชื่อบทความ':'Article title'),document:empty?{type:'doc',attrs:t.document.attrs,content:[{type:'paragraph',content:[{type:'text',text:' '}]}]}:t.document,status:'published',showDate:!!t.publishedAt,publishedAt:t.publishedAt || new Date().toISOString(),author:draft.authorName,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
     // A placeholder makes the empty private canvas render; it never enters the draft.
     if(empty)item.translations[lang].document.content[0].content[0].text=lang==='th'?'เริ่มเขียนบทความ':'Start writing';
     const detail=projectArticleDetail({available:true,item},{slug:item.slug,lang,now:Math.max(Date.now(),Date.parse(item.translations[lang].publishedAt)),mediaUrl:value=>articleUrl(value,true)});
@@ -544,8 +546,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     if(action==='publish'&&issues().length){refreshValidation();focusIssue(issues()[0]);return;}
     const opener=document.activeElement;
     if(!await save()||changed())return;
-    const title=action==='publish'?'ยืนยันเผยแพร่บทความ':'ถอนเผยแพร่บทความ';
-    const d=modal(title,`<form class="ae-modal-form">${action==='publish'?`<fieldset class="ae-choice-group"><legend>ภาษาที่ต้องการเผยแพร่</legend><div class="ae-choice-options">${['th','en'].map(l=>`<label class="ae-checkbox"><input type="checkbox" name="language" value="${l}" ${l===lang?'checked':''}><span>${l.toUpperCase()}</span></label>`).join('')}</div></fieldset><p>เผยแพร่เฉพาะบทความนี้ตามฉบับที่บันทึกล่าสุด ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน วันที่ในอนาคตจะแสดงเมื่อถึงกำหนด หากปิดระบบบทความไว้ หน้าบ้านยังไม่แสดง</p>`:'<p>นำบทความนี้ออกจากหน้าบ้านทุกภาษา โดยเก็บร่างไว้ ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน</p>'}<p class="ae-form-error" role="alert"></p><div class="ae-modal-actions"><button class="ae-button" type="button" data-cancel>ยกเลิก</button><button class="ae-button ae-primary" type="submit">${action==='publish'?'ยืนยันเผยแพร่':'ยืนยันถอนเผยแพร่'}</button></div></form>`,{opener});
+    const title=action==='publish'?'Publish article':draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article';
+    const d=modal(title,`<form class="ae-modal-form">${action==='publish'?`<fieldset class="ae-choice-group"><legend>ภาษาที่ต้องการเผยแพร่</legend><div class="ae-choice-options">${['th','en'].map(l=>`<label class="ae-checkbox"><input type="checkbox" name="language" value="${l}" ${l===lang?'checked':''}><span>${l.toUpperCase()}</span></label>`).join('')}</div></fieldset><p>เผยแพร่เฉพาะบทความนี้ตามฉบับที่บันทึกล่าสุด ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน วันที่ในอนาคตจะแสดงเมื่อถึงกำหนด หากปิดระบบบทความไว้ หน้าบ้านยังไม่แสดง</p>`:'<p>นำบทความนี้ออกจากหน้าบ้านทุกภาษา โดยเก็บร่างไว้ ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน</p>'}<p class="ae-form-error" role="alert"></p><div class="ae-modal-actions"><button class="ae-button" type="button" data-cancel>ยกเลิก</button><button class="ae-button ae-primary" type="submit">${action==='publish'?'Publish article':draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article'}</button></div></form>`,{opener});
     d.querySelector('[data-cancel]').onclick=()=>d.close();
     function validateLanguages(){
       if(action!=='publish')return [];
@@ -566,7 +568,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       const snapshot=JSON.parse(saved);busy=true;dirty();d.querySelectorAll('button,input').forEach(el=>el.disabled=true);
       try {
         const result=await (action==='publish'?repository.publish(draft.id,draft.revision,languages):repository.unpublish(draft.id,draft.revision));
-        const meta={revision:result.revision,updatedAt:result.updatedAt,basePublished:result.basePublished,slugLocked:result.slugLocked};
+        const meta={revision:result.revision,updatedAt:result.updatedAt,basePublished:result.basePublished,publicationStatus:result.publicationStatus,slugLocked:result.slugLocked};
         Object.assign(draft,meta);saved=JSON.stringify({...snapshot,...meta});refreshSettings();d.close();
         setStatus(action==='publish'?'บันทึกฉบับเผยแพร่แล้ว ตามภาษา วันที่ และการเปิดระบบที่กำหนด':'ถอนเผยแพร่แล้ว เนื้อหาและร่างยังอยู่ในคลัง');
       } catch(error){if(error.fields?.length){d.close();receiveFailure(error);}else d.querySelector('.ae-form-error').textContent=error.message;}
@@ -581,10 +583,10 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     syncDocuments();const t=locale();
     if(!t.title.trim()||!articleDocumentText(t.document).trim()){setStatus('กรุณาใส่ชื่อและเนื้อหาบทความก่อนดูตัวอย่าง',true);return;}
     const item={...structuredClone(draft),slug:draft.slug || 'draft-preview',status:'published'};
-    item.translations[lang]={...t,status:'published',publishedAt:t.publishedAt || new Date().toISOString(),author:draft.authorName,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
+    item.translations[lang]={...t,status:'published',showDate:!!t.publishedAt,publishedAt:t.publishedAt || new Date().toISOString(),author:draft.authorName,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
     const detail=projectArticleDetail({available:true,sample:true,item},{slug:item.slug,lang,now:Math.max(Date.now(),Date.parse(item.translations[lang].publishedAt)),mediaUrl:value=>articleUrl(value,true)});
     if(!detail.available){setStatus('ดูตัวอย่างไม่ได้ ตรวจลิงก์บทความและเนื้อหา',true);return;}
-    const d=modal('Preview · ฉบับร่างยังไม่เผยแพร่',`<div class="ae-preview-modes" role="group" aria-label="ขนาดตัวอย่าง">${btn('desktop','Monitor','Desktop','aria-pressed="true"')}${btn('mobile','Smartphone','Mobile','aria-pressed="false"')}</div><p class="ae-preview-status" role="status">กำลังโหลดหน้าเว็บไซต์…</p><div class="ae-preview-scroll"><iframe class="ae-preview-frame" title="Preview บทความบนเว็บไซต์" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" hidden></iframe></div>`,{wide:true});
+    const d=modal('Preview · Unpublished draft',`<div class="ae-preview-modes" role="group" aria-label="ขนาดตัวอย่าง">${btn('desktop','Monitor','Desktop','aria-pressed="true"')}${btn('mobile','Smartphone','Mobile','aria-pressed="false"')}</div><p class="ae-preview-status" role="status">กำลังโหลดหน้าเว็บไซต์…</p><div class="ae-preview-scroll"><iframe class="ae-preview-frame" title="Preview บทความบนเว็บไซต์" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" hidden></iframe></div>`,{wide:true});
     const frame=d.querySelector('iframe'),status=d.querySelector('.ae-preview-status'),controller=new AbortController();
     const message=event=>{if(event.source===frame.contentWindow&&event.origin===location.origin&&event.data?.type==='covermate:article-preview-action')status.textContent=event.data.message;};
     window.addEventListener('message',message);
@@ -682,6 +684,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     if(action==='clear-takeaways'){locale().takeaways=[];locale().takeawayNoteEnabled=false;refreshSettings();dirty();return;}
     if(action==='export'){exportDraft();return;}
     if(action==='import'){root.querySelector('.ae-import-file').click();return;}
+    if(action==='clear-date'){const input=(settingsDialog||root).querySelector('[data-field=publishedAt]');if(input){input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}return;}
     if(action==='clear-cover'){draft.cover={src:''};draft.image={src:''};serverFields=serverFields.filter(issue=>!['cover','coverAlt','imageAlt'].includes(issue.field));refreshSettings();dirty();return;}
     if(action==='remove-tag'){commitTags();draft.tags.splice(Number(el.dataset.index),1);renderTags();root.querySelector('[data-field=tags]').focus();dirty();return;}
     if(action==='add-source'){if(locale().sources.length<30){locale().sources.push({label:'',url:''});refreshSettings();dirty();}return;}

@@ -30,6 +30,14 @@ publication eligibility and routing are unchanged; pin order is now CMS-owned.
 
 ## Presentation And Behavior
 
+- Home and `/articles` have independent card templates and presentation rules.
+  `article-card.html` uses `ar-*` media/category classes owned by
+  `articles-index.css`, with reader-specific overrides in `article-detail.css`.
+  Do not reuse `hm-article-*` layout classes in list/pinned/related cards.
+  Shared article data and brand tokens do not imply shared card geometry.
+- Desktop list covers retain a 3:2 ratio with title, excerpt and metadata inside
+  each card. Mobile retains its existing image-left layout; Home compact-card
+  changes must not alter either list breakpoint.
 - Existing public header, language controls, footer, official LINE logo and
   CMS-owned contact destination are reused. Home anchor links return to Home.
 - CMS-owned intro, generated reading image, search, category chips,

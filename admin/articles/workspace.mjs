@@ -1,7 +1,8 @@
-import { ARTICLE_STATUS, ARTICLE_SORT, normalizeArticleCatalog, articleListView, articlePageNumbers } from './model.mjs';
+import { ARTICLE_STATUS, ARTICLE_SORT, ARTICLE_VIEWS, normalizeArticleCatalog, articleListView, articlePageNumbers } from './model.mjs';
 import {createDraftRepository,parseDraftBackup} from './drafts.mjs';
 import {canEditContent} from '/covermate-roles.mjs';
 import {openPinOrder} from './pin-order.mjs';
+import {articleLifecycleActions,openArticleLifecycle} from './lifecycle.mjs';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const format = (value, options) => value ? new Intl.DateTimeFormat('th-TH-u-ca-gregory', { timeZone: 'Asia/Bangkok', ...options }).format(value) : 'ยังไม่มีข้อมูล';
@@ -18,6 +19,11 @@ const glyphs = {
   clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
   checkCircle: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
   eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  // Lucide EyeOff, Archive, Trash2 and ArchiveRestore, using this workspace's SVG renderer.
+  eyeOff:'<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  archive:'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+  trash:'<path d="M10 11v6M14 11v6M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  restore:'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h2M20 8v11a2 2 0 0 1-2 2h-2m-7-6 3-3 3 3M12 12v9"/>',
   more: '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   close: '<path d="m18 6-12 12M6 6l12 12"/>',
@@ -26,10 +32,10 @@ const glyphs = {
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
 };
 export function createArticlesWorkspace({ root, load, loadArticle, repository:cloudRepository, session, icon: sharedIcon, searchInput, loginUrl }) {
-  const defaults={query:'',category:'',status:'',pinned:'',author:'',dateFrom:'',dateTo:'',sort:'updated',page:1};
+  const defaults={view:'active',query:'',category:'',status:'',pinned:'',author:'',dateFrom:'',dateTo:'',sort:'updated',page:1};
   const s = { active: false, loaded: false, phase: 'loading', catalog: null,...defaults };
   let generation = 0, dialog, dialogOpener;
-  let editor, pinDialog, opening = false, localError = '';
+  let editor, pinDialog, lifecycleDialog, opening = false, localError = '',notice='';
   const editable = canEditContent(session?.role) && Boolean(session?.uid);
   const repository = cloudRepository || (editable ? createDraftRepository({uid:session.uid,environment:new URLSearchParams(location.search).get('cm_env') || 'production'}) : null);
   const cloud=repository?.cloud===true;
@@ -63,7 +69,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       ${cloud?`<section class="article-visibility" aria-labelledby="articleVisibilityTitle"><form data-article-settings>
         <div class="article-visibility-heading"><span class="article-section-icon">${icon('globe')}</span><div><h2 id="articleVisibilityTitle">การแสดงบทความบนเว็บไซต์</h2><p>ตั้งค่าหน้าบทความ เมนู และส่วนบทความบนหน้าแรก</p></div></div>
         <span class="article-settings-state" data-settings-status role="status" aria-live="polite"></span>
-        <button class="article-button article-settings-save" type="submit">${icon('save')}<span>บันทึกการแสดงผล</span></button>
+        <button class="article-button article-settings-save" type="submit">${icon('save')}<span>Save display settings</span></button>
         <div class="article-visibility-fields">${visibilityFields.map(([key,label,description,glyph])=>`<label class="article-visibility-option" data-setting="${key}"><span class="article-setting-icon">${icon(glyph)}</span><span class="article-setting-copy"><strong id="articleSetting-${key}">${label}</strong><span id="articleSettingHelp-${key}">${description}</span></span><input type="checkbox" role="switch" name="${key}" aria-labelledby="articleSetting-${key}" aria-describedby="articleSettingHelp-${key} articleSettingState-${key}"><span class="article-setting-state" id="articleSettingState-${key}"></span></label>`).join('')}</div>
         <div class="article-settings-note">${icon('info')}<p>การตั้งค่านี้มีผลหลังบันทึก ไม่เปลี่ยนเนื้อหาหรือสถานะเผยแพร่ของบทความ</p><div class="article-settings-impact" aria-label="ส่วนของเว็บไซต์ที่เกี่ยวข้อง"><span>${icon('home')}Home</span><span>${icon('menu')}เมนูนำทาง</span><span>${icon('file')}หน้าบทความ</span></div></div>
         <div class="article-settings-error" hidden><p role="alert"></p>${button('reload',icon('refresh')+'โหลดการตั้งค่าล่าสุด')}</div>
@@ -71,7 +77,9 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       <p class="article-local-error" role="status"></p>
       <div class="article-recovery" hidden></div>
       <p class="article-sample" hidden>ข้อมูลตัวอย่างสำหรับตรวจดีไซน์เท่านั้น ไม่ใช่บทความที่เผยแพร่จริง</p>
-      <header class="article-list-head"><div><h2>รายการบทความ</h2><p id="articleEditorNotice">${cloud?'ฉบับร่างไม่เปลี่ยนหน้าเว็บจนกว่าจะยืนยันเผยแพร่':'จัดการบทความและฉบับร่างบนเครื่อง'}</p></div>${cloud?button('pin-order',icon('pin')+'จัดลำดับปักหมุด','disabled'):''}</header>
+      <header class="article-list-head"><div><h2>รายการบทความ</h2><p id="articleEditorNotice">${cloud?'ฉบับร่างไม่เปลี่ยนหน้าเว็บจนกว่าจะยืนยันเผยแพร่':'จัดการบทความและฉบับร่างบนเครื่อง'}</p></div>${cloud?button('pin-order',icon('pin')+'Pin order','disabled'):''}</header>
+      <nav class="article-view-switch" aria-label="มุมมองบทความ"></nav>
+      <p class="article-action-notice" role="status" aria-live="polite"></p>
       <form class="article-toolbar" role="search" aria-label="ค้นหาและกรองบทความ" data-filters-open="${mobileFiltersOpen}">
         <label class="article-search"><span class="article-sr">ค้นหาบทความ</span>${icon('search')}<input name="query" type="search" placeholder="ค้นหาชื่อบทความ..." value="${esc(s.query)}" autocomplete="off"></label>
         <div class="article-filters" id="articleFilterFields"></div>
@@ -96,13 +104,13 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       input.checked=flags[key];input.disabled=disabled||paused;
       const state=form.querySelector(`#articleSettingState-${key}`);
       state.dataset.state=!known?'unknown':paused?'paused':flags[key]?'on':'off';
-      state.innerHTML=!known?'ยังไม่มีข้อมูล':paused?'พักไว้เมื่อปิดระบบ':flags[key]?icon('checkCircle')+'เปิด':icon('close')+'ปิด';
+      state.innerHTML=!known?'Unknown':paused?'Paused':flags[key]?icon('checkCircle')+'On':icon('close')+'Off';
     }
     const state=form.querySelector('[data-settings-status]');
     state.dataset.state=settingsError?'error':settingsBusy?'saving':dirty?'dirty':'saved';
-    state.textContent=settingsBusy?'กำลังบันทึก…':settingsError?'ยังไม่ได้บันทึก':!editable?'ไม่มีสิทธิ์แก้ไขการตั้งค่า':!known?s.phase==='loading'?'กำลังโหลดการตั้งค่า':'ยังโหลดการตั้งค่าไม่ได้':dirty?'มีการเปลี่ยนแปลงที่ยังไม่บันทึก':settingsSaved?'บันทึกแล้ว':'ตรงกับการตั้งค่าบนเว็บไซต์';
+    state.textContent=settingsBusy?'Saving...':settingsError?'Save failed':!editable?'Read-only':!known?s.phase==='loading'?'Loading settings':'Settings unavailable':dirty?'Unsaved changes':settingsSaved?'Saved':'Synced';
     form.querySelector('[type=submit]').disabled=disabled||!dirty||settingsConflict;
-    form.querySelector('[type=submit] span').textContent=settingsBusy?'กำลังบันทึก…':'บันทึกการแสดงผล';
+    form.querySelector('[type=submit] span').textContent=settingsBusy?'Saving...':'Save display settings';
     const error=form.querySelector('.article-settings-error');error.hidden=!settingsError;
     error.querySelector('p').textContent=settingsError;
     error.querySelector('button').hidden=!settingsConflict;
@@ -112,7 +120,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
     if (!s.active) return;
     root.querySelector('.article-filters').innerHTML =
       select('category', 'หมวดหมู่', [['', 'หมวดหมู่ทั้งหมด'], ...(s.catalog?.categories || [])], s.category) +
-      select('status', 'สถานะ', [['', 'สถานะทั้งหมด'], ...Object.entries(ARTICLE_STATUS).filter(([key]) => key !== 'unknown' || s.catalog?.items.some(item => item.status === 'unknown'))], s.status) +
+      select('status', 'Status', [['', 'All statuses'], ...Object.entries(ARTICLE_STATUS).filter(([key]) => s.view==='archived'||s.view==='trashed'?key===s.view:s.view==='published'?key==='published':s.view==='unpublished'?['draft','scheduled'].includes(key):!['archived','trashed'].includes(key)&&(key!=='unknown'||s.catalog?.items.some(item=>item.status==='unknown')))], s.status) +
       select('pinned','ปักหมุด',[['','ทั้งหมด'],['pinned','ปักหมุดหน้ารวม'],['unpinned','ไม่ปักหมุดหน้ารวม'],['home','ปักหมุดบน Home']],s.pinned) +
       select('sort', 'เรียงตาม', Object.entries(ARTICLE_SORT), s.sort);
     root.querySelector('.article-date-filters').innerHTML=select('author','ผู้เขียน',[['','ผู้เขียนทั้งหมด'],...[...new Set(s.catalog?.items.map(item=>item.author) || [])].sort().map(name=>[name,name])],s.author)+
@@ -121,10 +129,12 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
   }
 
   function resultRow(item) {
+    const inactive=item.lifecycle!=='active';
     const more = `<details class="article-more"><summary class="article-button" aria-label="ตัวเลือก: ${esc(item.title)}" title="ตัวเลือกบทความ">${icon('more')}</summary><div class="article-actions-popover">
       ${button('inspect', icon('eye') + 'ดูข้อมูลบทความ', `data-id="${esc(item.id)}"`)}
-      <button class="article-button" type="button" data-article-action="edit" data-id="${esc(item.id)}" ${editable?'':'disabled'} title="${editorReason}">${icon('edit')}แก้ไขเนื้อหา</button>
-      <small>${editorReason}</small></div></details>`;
+      ${!inactive?`<button class="article-button" type="button" data-article-action="edit" data-id="${esc(item.id)}" ${editable?'':'disabled'} title="${editorReason}">${icon('edit')}แก้ไขเนื้อหา</button>`:''}
+      ${cloud?articleLifecycleActions(item).map(({action,label,icon:glyph})=>button(action,icon(glyph)+label,`data-id="${esc(item.id)}" ${editable?'':'disabled'}`,action==='trash'?'article-danger':'')).join(''):''}
+      <small>${inactive?'กู้คืนเป็นฉบับร่างก่อนแก้ไขหรือเผยแพร่':editorReason}</small></div></details>`;
     return `<tr data-article-id="${esc(item.id)}">
       <td class="article-image-cell">${media(item)}</td>
       <td class="article-title-cell"><button type="button" class="article-title" data-article-action="inspect" data-id="${esc(item.id)}">${esc(item.title)}</button><div class="article-editorial-tags">${item.pinned?'<span>ปักหมุดหน้ารวม</span>':''}${item.featured?'<span>ปักหมุด Home</span>':item.publishedHomePinned?'<span title="ฉบับเผยแพร่ยังปักหมุดอยู่">Home · รอถอนหมุด</span>':''}${item.localDraft?`<span>${item.basePublished?'ร่างแก้ไขบนเครื่อง':'ร่างบนเครื่อง'}</span>`:''}</div><p>${esc(item.excerpt)}</p><div class="article-mobile-tags"><span class="article-category">${esc(item.category)}</span>${statusBadge(item)}</div></td>
@@ -133,7 +143,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       <td class="article-updated-cell"><span class="article-sr">อัปเดตล่าสุด </span>${date(item.updatedAt)}<small>${clock(item.updatedAt)}</small>${item.publishedAt?`<small>บทความ: ${date(item.publishedAt)}</small>`:''}</td>
       <td class="article-author-cell"><span class="article-sr">ผู้เขียน </span>${esc(item.author)}</td>
       <td class="article-action-cell"><div class="article-row-actions">${button('inspect', icon('eye'), `data-id="${esc(item.id)}" aria-label="ดูข้อมูล: ${esc(item.title)}" title="ดูข้อมูลบทความ"`, 'article-desktop-action')}
-        <button type="button" class="article-button article-desktop-action" data-article-action="edit" data-id="${esc(item.id)}" ${editable?'':'disabled'} title="${editorReason}" aria-label="แก้ไข: ${esc(item.title)}">${icon('edit')}</button>${more}</div></td>
+        ${!inactive?`<button type="button" class="article-button article-desktop-action" data-article-action="edit" data-id="${esc(item.id)}" ${editable?'':'disabled'} title="${editorReason}" aria-label="แก้ไข: ${esc(item.title)}">${icon('edit')}</button>`:''}${more}</div></td>
     </tr>`;
   }
 
@@ -144,9 +154,11 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
     root.querySelector('.articles-workspace').dataset.articleState = s.phase;
     root.querySelector('.article-sample').hidden = !s.catalog?.sample;
     root.querySelector('.article-local-error').textContent = localError;
+    root.querySelector('.article-action-notice').textContent=notice;
+    root.querySelector('.article-view-switch').innerHTML=Object.entries(ARTICLE_VIEWS).map(([key,label])=>button('view',`${label}<span>${s.phase==='ready'?view.views[key]:'-'}</span>`,`data-view="${key}" aria-pressed="${s.view===key}" ${s.phase==='ready'?'':'disabled'}`)).join('');
     root.querySelector('.article-summary').innerHTML = [
-      ['all', 'บทความทั้งหมด', 'file'], ['published', 'เผยแพร่แล้ว', 'checkCircle'], ['draft', 'ฉบับร่าง', 'file'], ['scheduled', 'ตั้งเวลาเผยแพร่', 'clock']
-    ].map(([key, title, glyph]) => `<div class="article-stat cm-stat-card" data-stat="${key}"><dt><span class="article-stat-icon" aria-hidden="true">${icon(glyph)}</span><span class="article-stat-label">${key === 'scheduled' ? '<span>ตั้งเวลา</span><wbr><span>เผยแพร่</span>' : title}</span></dt><dd>${s.phase === 'ready' ? view.counts[key] : '<span aria-label="ยังไม่มีข้อมูล">-</span>'}</dd></div>`).join('');
+      ['all', 'All articles', 'file'], ['published', 'Published', 'checkCircle'], ['draft', 'Draft', 'file'], ['scheduled', 'Scheduled', 'clock']
+    ].map(([key, title, glyph]) => `<div class="article-stat cm-stat-card" data-stat="${key}"><dt><span class="article-stat-icon" aria-hidden="true">${icon(glyph)}</span><span class="article-stat-label">${title}</span></dt><dd>${s.phase === 'ready' ? view.counts[key] : '<span aria-label="ยังไม่มีข้อมูล">-</span>'}</dd></div>`).join('');
     root.querySelectorAll('.article-toolbar input,.article-toolbar select').forEach(el => { el.disabled = s.phase !== 'ready'; });
     root.querySelectorAll('[data-article-action="reload"]').forEach(el=>{el.disabled=s.phase==='loading';});
     const pinButton=root.querySelector('[data-article-action="pin-order"]');if(pinButton)pinButton.disabled=!editable||s.phase!=='ready'||!visibility;
@@ -166,7 +178,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       return;
     }
     result.innerHTML = view.total ? `<table class="article-table"><caption class="article-sr">รายการบทความ</caption><colgroup><col class="col-image"><col class="col-title"><col class="col-category"><col class="col-status"><col class="col-date"><col class="col-author"><col class="col-actions"></colgroup>
-      <thead><tr>${['รูปภาพ', 'ชื่อบทความ', 'หมวดหมู่', 'สถานะ', 'อัปเดตล่าสุด', 'ผู้เขียน', 'การจัดการ'].map(label => `<th scope="col">${label}</th>`).join('')}</tr></thead>
+      <thead><tr>${['รูปภาพ', 'ชื่อบทความ', 'หมวดหมู่', 'Status', 'อัปเดตล่าสุด', 'ผู้เขียน', 'การจัดการ'].map(label => `<th scope="col">${label}</th>`).join('')}</tr></thead>
       <tbody>${view.items.map(resultRow).join('')}</tbody></table>` : `<div class="article-empty">${icon(s.query || s.category || s.status ? 'search' : 'file')}<h2>${s.catalog.items.length ? 'ไม่พบบทความที่ตรงกับตัวกรอง' : 'ยังไม่มีบทความ'}</h2><p>${s.catalog.items.length ? 'ลองใช้คำค้นอื่น หรือปรับหมวดหมู่และสถานะ' : 'ยังไม่มีบทความในคลังข้อมูลนี้'}</p>${s.catalog.items.length ? button('reset', 'ล้างตัวกรอง') : ''}</div>`;
     result.insertAdjacentHTML('beforeend', `<footer class="article-pagination"><p role="status" aria-live="polite">แสดง ${view.start}–${view.end} จาก ${view.total} บทความ</p>
       ${view.total ? `<nav aria-label="หน้ารายการบทความ">${button('page', icon('left'), `data-page="${view.page - 1}" aria-label="หน้าก่อนหน้า" title="หน้าก่อนหน้า" ${view.page === 1 ? 'disabled' : ''}`)}
@@ -270,6 +282,20 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
     const target = event.target.closest('[data-article-action]');
     if (!target) return;
     const action = target.dataset.articleAction;
+    if(action==='view') {
+      s.view=target.dataset.view;s.status='';s.page=1;filters();results();
+      root.querySelector(`[data-view="${s.view}"]`)?.focus({preventScroll:true});return;
+    }
+    if(['unpublish','archive','trash','restore'].includes(action)) {
+      const item=s.catalog?.items.find(item=>item.id===target.dataset.id);
+      if(!cloud||!editable||!item||!articleLifecycleActions(item).some(entry=>entry.action===action)||!leaveSettings())return;
+      proposedVisibility=null;renderVisibility();
+      const disclosure=target.closest('details');if(disclosure)disclosure.open=false;
+      lifecycleDialog=openArticleLifecycle({item,action,repository,opener:disclosure?.querySelector('summary')||target,icon,
+        onClose:()=>{lifecycleDialog=null;},onReload:reload,
+        onChanged:async()=>{notice={unpublish:'ถอนเผยแพร่แล้ว เนื้อหายังอยู่ในฉบับร่าง',archive:'เก็บบทความถาวรแล้ว กู้คืนได้จาก Archived',trash:'ย้ายไป Trash แล้ว ยังสามารถกู้คืนได้',restore:'กู้คืนเป็นฉบับร่างแล้ว ยังไม่เผยแพร่และไม่ปักหมุด'}[action];await reload();root.querySelector(`[data-view="${s.view}"]`)?.focus({preventScroll:true});}});
+      return;
+    }
     if(action==='pin-order') {
       if(!editable||!cloud||s.phase!=='ready'||!visibility||!leaveSettings())return;
       proposedVisibility=null;settingsError='';settingsConflict=false;renderVisibility();
@@ -329,13 +355,13 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
   }
   return {
     get active() { return s.active; }, setSearch,
-    canLeave() { return !opening && (!pinDialog||pinDialog.canLeave()) && leaveSettings() && (!editor || editor.canLeave()); },
+    canLeave() { return !opening && (!lifecycleDialog||lifecycleDialog.canLeave()) && (!pinDialog||pinDialog.canLeave()) && leaveSettings() && (!editor || editor.canLeave()); },
     mount() {
       if (s.active && (editor || opening || root.querySelector('.articles-workspace'))) return;
       s.active = true; searchInput.value = s.query; shell();
       if (!s.loaded) reload();
     },
-    leave() { s.active = false; proposedVisibility=null;closeDialog();pinDialog?.destroy();pinDialog=null; editor?.destroy();editor=null;searchInput.disabled=false; }
+    leave() { s.active = false; proposedVisibility=null;closeDialog();lifecycleDialog?.destroy();lifecycleDialog=null;pinDialog?.destroy();pinDialog=null; editor?.destroy();editor=null;searchInput.disabled=false; }
   };
 
   async function openEditor(id) {
@@ -345,6 +371,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
     try {
       const source=id ? await repository.get(id) || await loadArticle?.(id) : null;
       if(id && !source)throw Error('ยังโหลดเนื้อหาเต็มจากคลังบทความไม่ได้ จึงยังไม่เปิดแก้ไขบทความนี้');
+      if(source?.lifecycle&&source.lifecycle!=='active')throw Error('บทความนี้ถูกเก็บถาวรหรือย้ายไปถังขยะ กรุณาโหลดรายการล่าสุดแล้วกู้คืนก่อนแก้ไข');
       const {mountArticleEditor}=await import('./editor.js');
       if(!s.active)return;
       searchInput.disabled=true;

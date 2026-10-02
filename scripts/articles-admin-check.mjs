@@ -16,14 +16,21 @@ assert.deepEqual(await adapter.catalog(),{available:true,complete:true,items:[]}
 await adapter.save({id:'draft'},2);await adapter.publish('draft',3,['th']);await adapter.settings({enabled:false,showHome:true,showNavigation:true},4);
 assert.deepEqual(calls.map(c=>c[0]),['catalog','save','publish','settings']);
 assert.equal(calls[1][1].expectedRevision,2);
+for(const action of ['unpublish','archive','trash','restore']){await adapter[action]('draft',9);assert.deepEqual(calls.at(-1),[action,{id:'draft',expectedRevision:9}]);}
 assert.equal(adminPortalRouteStateFromLocation('/admin', '#articles').module, 'articles');
 assert.equal(adminPortalUrl('articles'), '/admin#articles');
 assert.equal(ADMIN_MODULES.findIndex(item => item.id === 'articles'), 3);
-assert.deepEqual(articleListView(catalog.items).counts, { all: 6, published: 3, draft: 2, scheduled: 1 });
+assert.deepEqual(articleListView(catalog.items).counts, { all: 6, published: 3, draft: 2, scheduled: 1, archived:0,trashed:0 });
 assert.equal(articleListView(catalog.items, { category: 'health', status: 'scheduled' }).total, 1);
 assert.equal(articleListView(catalog.items, { query: 'Five things' }).total, 1, 'Search translated title');
 assert.equal(articleListView(catalog.items, { query: 'ไม่มีคำนี้' }).total, 0);
 assert.equal(articleListView(catalog.items, { page: 99 }).page, 2);
+const lifecycleCatalog=normalizeArticleCatalog({...fixture,items:[...fixture.items,{...fixture.items[0],id:'archived',lifecycle:'archived'},{...fixture.items[0],id:'trashed',lifecycle:'trashed'}]});
+assert.equal(articleListView(lifecycleCatalog.items).total,6,'Default view excludes archived/trash');
+assert.equal(articleListView(lifecycleCatalog.items,{view:'published'}).total,3);
+assert.equal(articleListView(lifecycleCatalog.items,{view:'unpublished'}).total,3,'Unpublished includes draft and scheduled');
+assert.equal(articleListView(lifecycleCatalog.items,{view:'archived'}).items[0].id,'archived');
+assert.equal(articleListView(lifecycleCatalog.items,{view:'trashed',query:'Five things'}).total,0,'Lifecycle view composes with search');
 assert.equal(articleListView([], { page: 99 }).start, 0);
 assert.equal(articleListView(catalog.items, { sort: 'oldest' }).items[0].id, 'sample-renew');
 assert.deepEqual(fixture, adminArticleFixture, 'Model never mutates source');
@@ -106,7 +113,7 @@ if (process.argv.includes('--browser')) {
     await page.locator('#globalSearch').press('Enter');assert.match(page.url(), /#articles$/);
     assert.equal(await search.inputValue(), 'ประกันกลุ่ม');
     await page.getByRole('button', { name: 'ล้างตัวกรอง', exact: true }).click();
-    await choose('หมวดหมู่', 'ประกันสุขภาพ');await choose('สถานะ', 'ตั้งเวลาเผยแพร่');
+    await choose('หมวดหมู่', 'ประกันสุขภาพ');await choose('Status', 'Scheduled');
     assert.equal(await page.locator('.article-table tbody tr').count(), 1);
     assert.equal(await page.locator('.article-stat[data-stat="all"] dd').innerText(), '6', 'Summary remains catalog-wide');
     await page.getByRole('button', { name: 'โหลดรายการใหม่', exact: true }).click();
@@ -135,7 +142,7 @@ if (process.argv.includes('--browser')) {
     assert.deepEqual(axe.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
     await page.setViewportSize({ width: 390, height: 844 });await go();
     await page.getByRole('button',{name:'ตัวกรองเพิ่มเติม',exact:true}).click();
-    await choose('หมวดหมู่','ประกันสุขภาพ');await choose('สถานะ','ตั้งเวลาเผยแพร่');
+    await choose('หมวดหมู่','ประกันสุขภาพ');await choose('Status','Scheduled');
     assert.equal(await page.locator('.article-table tbody tr').count(),1);
     await page.locator('[data-article-action=filters]').click();
     assert.equal(await page.locator('[data-filter-count]').innerText(),'2');

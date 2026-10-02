@@ -22,6 +22,7 @@ The eye/title action opens read-only metadata, not a public article preview.
 - `admin/articles/model.mjs`: read projection, safe image URLs, filtering,
   ordering, counts and pagination.
 - `admin/articles/workspace.mjs`: workspace interactions and metadata dialog.
+- `admin/articles/lifecycle.mjs`: confirmed lifecycle actions, recovery and conflict feedback.
 - `admin/articles/pin-order.mjs`: staged pin ordering, save/retry/conflict recovery.
 - `admin/articles/articles.css`: scoped presentation only; existing tokens,
   Google Sans and logo assets are reused.
@@ -38,7 +39,8 @@ reference contributes a visible website-display settings group, with three
 repeated switch tiles, descriptions, state labels and explicit save feedback.
 Settings and the article list are separate page sections, not nested cards.
 The real pin-order dialog is beside the list heading. No reference-only commerce
-navigation, trash tab, or obsolete "Editor coming soon" notice is added.
+navigation or obsolete "Editor coming soon" notice is added. The October 2 local
+follow-up adds working Archived/Trash views backed by the article API.
 
 Visibility is **staged until Save**, not immediately applied by the switches:
 
@@ -84,7 +86,7 @@ The list requires a **complete authorized snapshot**, not one backend page:
   complete: true,
   settings: { enabled, showHome, showNavigation, pinnedOrder: [], revision },
   items: [{
-    id, slug, categoryId, status, authorName,
+    id, slug, categoryId, status, publicationStatus, lifecycle, revision, authorName,
     updatedAt, scheduledAt, pinned, publishedPinned, featured, tags,
     image: { src, x, y },
     translations: {
@@ -152,7 +154,7 @@ legacy-navigation/reload flow remains unverified on a real device.
 
 ## Pin Ordering
 
-**จัดลำดับปักหมุด** opens every draft/live pin, independent of list filtering and
+**Pin order** opens every active draft/live pin, independent of list filtering and
 pagination. Move using up/down or enter a position, then save. Cancel/Escape and
 navigation protect unsaved changes. Failed saves retain the proposed order;
 409 conflicts require an explicit latest-catalog reload. Mobile uses the same
@@ -163,6 +165,41 @@ draft edits. `publishedPinned` retains a live pin in the manager when an unpubli
 draft has unpinned it. Draft/future pins can be positioned but do not appear in the
 public carousel until eligible. The carousel excludes missing public translations.
 `scripts/articles-pins-e2e.mjs` verifies this with the actual API and emulators.
+
+## Article Lifecycle (Local, October 2)
+
+View buttons use **Active / Published / Unpublished / Archived / Trash**. Active
+includes all non-archived/non-trashed records, not only public articles.
+Unpublished combines Draft and Scheduled. The Status filter can narrow those
+states and composes with search/category/pins/author/date/sort. Counts on the
+view buttons and summary cards describe the complete catalog, not filtered rows.
+
+The row menu exposes Unpublish (or Cancel schedule), Archive and Move to Trash
+as applicable. Archived/trashed rows cannot be edited or published until Restore
+to Draft. Every transition requires confirmation, identifies the article and
+explains its public effect. Cancel does not write. Failed requests retain the
+dialog; denied or stale operations require explicit reload. Busy actions block
+duplicate submission and navigation. Existing visibility edits warn before leaving.
+
+- Unpublish removes every public translation and retains the editable draft.
+- Archive removes the article from Active and all public surfaces.
+- Move to Trash is reversible soft deletion, not permanent record/media deletion.
+- Archive/Trash/Restore clear both Home and index pins. Restore returns a private
+  Draft, never automatically republishes or reclaims pins. Published URLs stay reserved.
+
+English is used for standard states and commands across Articles, the Editor,
+CMS status badges and account Online/Offline. Thai descriptions, errors, content
+field labels and domain-specific customer-workflow terms remain. Display settings
+use On/Off/Paused, Unsaved changes/Saving/Saved/Synced and Save display settings.
+These commands remain separate from Save draft / Publish article.
+
+Verification uses actual isolated Auth/Firestore and API routes in
+`articles-api-check.mjs` and `articles-management-e2e.mjs`, including lifecycle
+cancel/confirm/reload, public exclusion, stale revision/permission rejection,
+scheduled cancellation and mobile restore. `content-lifecycle-isolation-check.mjs`
+also verifies no website or unrelated article changes. Current local screenshots
+and provenance are in `uat-results/articles-management/`. No production writes,
+deployment, permanent deletion or data migration is part of this follow-up.
 
 ## Scaling Boundary
 

@@ -1,15 +1,15 @@
 <a class="ar-card-link" data-category="{{ article.categoryId }}" href="{{ article.href }}" aria-labelledby="{{ article.titleId }}">
-  <div class="hm-article-media ar-media">
-    <svg class="hm-article-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
-    <sc-if value="{{ article.hasImage }}"><img sc-camel-src="{{ article.image }}" data-carousel-src="{{ article.carouselImage }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="400" loading="lazy" decoding="async"></sc-if>
+  <div class="ar-media">
+    <svg class="ar-media-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
+    <sc-if value="{{ article.hasImage }}"><img sizes="{{ article.imageSizes }}" srcset="{{ article.imageSrcset }}" sc-camel-src="{{ article.image }}" data-carousel-srcset="{{ article.carouselSrcset }}" data-carousel-src="{{ article.carouselImage }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="400" loading="lazy" decoding="async"></sc-if>
   </div>
   <div class="ar-card-copy">
     <sc-if value="{{ article.featuredLabel }}"><span class="ar-featured-label"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleStarPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>{{ article.featuredLabel }}</span></sc-if>
-    <sc-if value="{{ article.category }}"><span class="hm-article-category"><sc-if value="{{ article.categoryPaths }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ article.categoryPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>{{ article.category }}</span></sc-if>
+    <sc-if value="{{ article.category }}"><span class="ar-card-category"><sc-if value="{{ article.categoryPaths }}"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ article.categoryPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></sc-if>{{ article.category }}</span></sc-if>
     <h3 id="{{ article.titleId }}">{{ article.title }}</h3>
     <sc-if value="{{ article.excerpt }}"><p class="ar-excerpt">{{ article.excerpt }}</p></sc-if>
     <div class="ar-meta">
-      <time datetime="{{ article.datetime }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2ZM7 14h3"/></svg>{{ article.date }}</time>
+      <sc-if value="{{ article.date }}"><time datetime="{{ article.datetime }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2ZM7 14h3"/></svg>{{ article.date }}</time></sc-if>
       <sc-if value="{{ article.reading }}"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ article.reading }}</span></sc-if>
       <span class="ar-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></span>
     </div>

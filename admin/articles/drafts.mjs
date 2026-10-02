@@ -18,6 +18,7 @@ export function createArticleDraft(source = {}, author = 'CoverMate') {
   const draft = {
     schemaVersion:1,id:text(source.id) || 'local-'+crypto.randomUUID(),slug:text(source.slug),
     basePublished:source.basePublished === true || source.status === 'published',
+    publicationStatus:source.publicationStatus||(['published','scheduled'].includes(source.status)?source.status:source.basePublished?'published':'draft'),
     slugLocked:source.slugLocked===true,
     categoryId:text(source.categoryId) || 'general',tags:Array.isArray(source.tags) ? source.tags.filter(tag=>typeof tag==='string').slice(0,20) : [],
     authorName:text(source.authorName) || author,featured:source.featured === true,pinned:source.pinned === true,
@@ -44,7 +45,7 @@ export function parseDraftBackup(raw) {
   const value = JSON.parse(raw);
   if (value?.schemaVersion !== 1 || !value.translations || !['th','en'].some(lang=>value.translations[lang]?.document?.type === 'doc')) throw Error('ไฟล์นี้ไม่ใช่ฉบับร่าง Article Editor');
   if (['th','en'].some(lang=>value.translations[lang]?.title && typeof value.translations[lang].title !== 'string')) throw Error('รูปแบบชื่อบทความไม่ถูกต้อง');
-  return createArticleDraft({...value,id:'local-'+crypto.randomUUID(),basePublished:false,slugLocked:false,cloudDraft:false,status:'draft',revision:0,updatedAt:null});
+  return createArticleDraft({...value,id:'local-'+crypto.randomUUID(),basePublished:false,publicationStatus:'draft',slugLocked:false,cloudDraft:false,status:'draft',revision:0,updatedAt:null});
 }
 
 // Local drafts are per verified account and environment; never a public source.

@@ -27,7 +27,7 @@ export function accountIdentity(session, role, icon, ids = false) {
     <span class="admin-account-avatar" ${ids?'id="userAvatar"':''}>${accountEscape(initials)}<i aria-hidden="true"></i></span>
     <span class="admin-account-copy"><strong ${ids?'id="userName"':''}>${accountEscape(name)}</strong>
       <span class="admin-account-role">${icon('shield')}<span ${ids?'id="userMeta"':''}>${accountEscape(role)}</span></span>
-      <span class="admin-account-status" title="การเชื่อมต่ออินเทอร์เน็ตของอุปกรณ์"><i aria-hidden="true"></i><span data-account-network>${online?'ออนไลน์':'ออฟไลน์'}</span></span>
+      <span class="admin-account-status" title="การเชื่อมต่ออินเทอร์เน็ตของอุปกรณ์"><i aria-hidden="true"></i><span data-account-network>${online?'Online':'Offline'}</span></span>
     </span></span>`;
 }
 
@@ -75,7 +75,7 @@ export function bindAdminAccounts(actions) {
   const syncConnection = () => {
     const online = navigator.onLine;
     document.querySelectorAll('[data-account-online]').forEach(node => node.dataset.accountOnline=String(online));
-    document.querySelectorAll('[data-account-network]').forEach(node => node.textContent=online?'ออนไลน์':'ออฟไลน์');
+    document.querySelectorAll('[data-account-network]').forEach(node => node.textContent=online?'Online':'Offline');
   };
   window.addEventListener('online',syncConnection);
   window.addEventListener('offline',syncConnection);

@@ -583,7 +583,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     this.syncEditorPanelViewport();
     this.syncOutlineHighlight();
     document.querySelectorAll('.hm-logo-tile img').forEach(img => { if (img.complete && !img.naturalWidth) img.setAttribute('data-failed', 'true'); });
-    document.querySelectorAll('.hm-advisor-photo,.hm-article-media img').forEach(img => { if (img.complete) img.toggleAttribute('data-failed', !img.naturalWidth); });
+    document.querySelectorAll('.hm-advisor-photo,.hm-article-media img,.ar-media img').forEach(img => { if (img.complete) img.toggleAttribute('data-failed', !img.naturalWidth); });
     const nodes = document.querySelectorAll('[data-reveal]:not(.om-in)');
     if (!nodes.length) return;
     const h = window.innerHeight || 800;
@@ -2026,7 +2026,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     const articleAddress = changes => articleIndexAddress(window.location.search,{page:null,...changes});
     const articleCategoryPaths = key => ICONS[({motor:'car',health:'pulse',life:'heart',finance:'coins',claim:'file',travel:'plane',critical:'heartOutline'})[key]] || ICONS.file;
     articleIndex.items = articleIndex.items.map(item=>({...item,categoryPaths:articleCategoryPaths(item.categoryId)}));
-    articleIndex.featuredItems=articleIndex.featuredItems.map((item,index)=>({...item,carouselImage:item.image,image:index===0?item.image:null,categoryPaths:articleCategoryPaths(item.categoryId),featuredLabel:articleCopy.featured}));
+    articleIndex.featuredItems=articleIndex.featuredItems.map((item,index)=>({...item,carouselImage:item.image,carouselSrcset:item.imageSrcset,imageSrcset:index===0?item.imageSrcset:null,image:index===0?item.image:null,imageSizes:'(max-width: 767px) calc(36vw - 19px), (max-width: 1100px) calc(48vw - 28px), 600px',categoryPaths:articleCategoryPaths(item.categoryId),featuredLabel:articleCopy.featured}));
     const articleCategories = [{key:'',label:articleCopy.all},...articleIndex.categories].map(category=>{
       const href=articleAddress({category:category.key});
       return {...category,href,selected:category.key===articleIndex.category?'true':'false',className:category.key===articleIndex.category?'ar-category is-current':'ar-category',
@@ -3115,16 +3115,16 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
 
       preview: S.preview,
       dirty: dirty, clean: !dirty,
-      statusText: S.remoteError ? S.remoteError : (S.remoteBusy ? (S.remoteAction === 'publish' ? 'กำลัง Publish เว็บจริง...' : 'กำลังบันทึก Draft...') : (dirty ? 'มีการแก้ไขที่ยังไม่ Publish' : 'เรียบร้อย')),
-      editorSaveStatus: S.remoteError || (S.remoteBusy ? (S.remoteAction === 'publish' ? 'กำลัง Publish...' : S.remoteAction === 'reset' ? 'กำลัง Reset Draft...' : 'กำลังบันทึก Draft...') : Object.keys(S.cmsEdits || {}).length ? 'กำลังแก้ไข · ออกจากช่องเพื่อบันทึก Draft' : S.savedFlash ? 'บันทึก Draft แล้ว' : S.pubFlash ? 'Publish แล้ว' : dirty ? 'มีการแก้ไขใน Draft · ยังไม่ Publish' : 'ตรงกับเวอร์ชันที่ Publish'),
+      statusText: S.remoteError ? S.remoteError : (S.remoteBusy ? (S.remoteAction === 'publish' ? 'Publishing website...' : 'Saving draft...') : (dirty ? 'Unpublished changes' : 'Synced')),
+      editorSaveStatus: S.remoteError || (S.remoteBusy ? (S.remoteAction === 'publish' ? 'Publishing...' : S.remoteAction === 'reset' ? 'Resetting draft...' : 'Saving draft...') : Object.keys(S.cmsEdits || {}).length ? 'Editing · ออกจากช่องเพื่อบันทึก Draft' : S.savedFlash ? 'Draft saved' : S.pubFlash ? 'Published' : dirty ? 'Unpublished changes' : 'Synced'),
       editorSaveTone: S.remoteError ? 'error' : S.remoteBusy ? 'busy' : Object.keys(S.cmsEdits || {}).length ? 'draft' : S.savedFlash || S.pubFlash ? 'saved' : dirty ? 'draft' : 'clean',
       statusDot: S.remoteError ? 'var(--color-accent-800)' : (dirty ? A.base : 'var(--color-accent-2)'),
       publishBg: (dirty && !S.remoteBusy) ? A.base : 'var(--color-neutral-300)',
       publishFg: (dirty && !S.remoteBusy) ? A.on : 'var(--color-neutral-600)',
       publishHover: (dirty && !S.remoteBusy) ? ('transform:translateY(-1px);background:' + A.deep) : '',
-      publishLabel: S.remoteAction === 'publish' ? 'กำลัง Publish...' : 'Publish',
+      publishLabel: S.remoteAction === 'publish' ? 'Publishing...' : 'Publish',
       previewLabel: 'Preview',
-      saveLabel: S.remoteAction === 'save' ? 'กำลังบันทึก...' : 'Save draft',
+      saveLabel: S.remoteAction === 'save' ? 'Saving...' : 'Save draft',
       editorUndo: () => this.stepEditorHistory('undo'),
       editorRedo: () => this.stepEditorHistory('redo'),
       requestResetDraft: () => this.requestResetDraft(),

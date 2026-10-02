@@ -202,7 +202,7 @@ export function readVisitorSources() {
     calculatorSource: readText(new URL('covermate-calculator.mjs', ROOT)).replace(/^export /gm, ''),
     recommendationSource: readText(new URL('covermate-recommendations.mjs', ROOT)).replace(/^export /gm, ''),
     submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),
-    homeArticlesSource: readText(new URL('src/visitor/home-articles.mjs', ROOT)).replace(/^export /gm, ''),
+    homeArticlesSource: ['article-image-assets.mjs','article-media.mjs','src/visitor/home-articles.mjs'].map(file=>readText(new URL(file,ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, '')).join('\n'),
     articlesIndexSource: readText(new URL('src/visitor/articles-index.mjs', ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, ''),
     articleDetailSource: readArticleReaderAsset().code + '\n' + ARTICLE_READER_BINDINGS,
     cmsSchema: contract.split('// COVERMATE_CMS_SCHEMA_BEGIN')[1].split('// COVERMATE_CMS_SCHEMA_END')[0],

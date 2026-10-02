@@ -14,7 +14,7 @@ Open `/admin#articles` as a verified owner. Expand **การแสดงบท
   entries. CMS access and all drafts/live snapshots remain intact.
 - **แสดงบทความบน Home**: controls the Home section independently of direct URLs.
 - **แสดงเมนูบทความ**: controls shared desktop/mobile/footer navigation, not URLs.
-- Choose values and press **บันทึกการแสดงผล**. Unsaved settings warn on leave;
+- Choose values and press **Save display settings**. Unsaved settings warn on leave;
   failed writes preserve the proposed values. A stale revision requires reload.
 
 Initial settings: master off, Home/navigation on. No configuration/environment
@@ -25,6 +25,10 @@ Create/edit an article, save the draft, preview, then choose Publish and confirm
 the languages. Only complete selected translations become public. Saving edits
 to a published article does not replace its live content. Republish explicitly.
 Unpublish removes every public translation but retains the editable draft.
+The October 2 local follow-up also exposes Archive, Move to Trash and Restore to
+Draft from the list. Archive/Trash remove public access and clear both pin types.
+Restore is private and unpinned until explicitly published again. Trash is
+reversible: no article, media or URL reservation is physically deleted.
 
 The local September 30 validation follow-up labels required/optional fields and
 disables article Publish until its requirements pass. Drafts may be incomplete;
@@ -36,7 +40,7 @@ does not publish existing drafts or alter any hosted CMS data.
 ### Independent publication boundary
 
 Website Save, Publish, Reset draft, Undo/Redo and version restore never save,
-publish or reset article drafts. Article Save/Publish/Unpublish affects only the
+publish or reset article drafts. Article Save/Publish/Unpublish/Archive/Trash/Restore affects only the
 selected article and its catalog/slug/audit records; it leaves website drafts,
 website published content, website version history and other article drafts intact.
 Article visibility settings remain separately saved under `articleSettings`.
@@ -48,11 +52,19 @@ The September 30 follow-up makes this existing storage separation explicit in
 the UI and adds `check:content-isolation` to CI. No collection migration, bulk
 publication, draft reset or hosted data write is part of that change.
 
-Dates are Bangkok-local inputs and stored as UTC. Empty means the first publish
-time; republishing does not silently reset that date. A future date stays private
+Dates are Bangkok-local inputs and stored as UTC. Empty is persisted in the draft
+and publishes `showDate:false` per language. Visitor Home/index/related/detail
+omit the date element (and visible modified date); reading time starts at the
+leading edge, with no reserved date slot. Existing live records without the flag
+retain their date until republished. Preview follows the draft immediately.
+Internal `publishedAt` remains available for ordering, visibility and SEO, retaining
+the first past publication time on an undated republish. Clearing a future date
+and publishing cancels that schedule and uses the current internal time instead.
+Save alone never changes the live date. A future date stays private
 until due. Publication is time-gated on each server read, not a browser timer or
 cron delivery job. Do not expect already-open pages to refresh without navigation.
-Published slugs remain reserved and immutable, including after unpublishing.
+Published slugs remain reserved and immutable, including after unpublishing,
+archiving or moving to Trash.
 
 Pins, Home recommendation, category, tags, author, cover, separate TH/EN body,
 takeaways, sources and SEO fields pass through the same server publication model.
@@ -113,13 +125,14 @@ protocol, compatibility path and orphan-retention policy.
 `api/articles.js` reuses existing verified Firebase identity, revoked/disabled
 account checks, active owner allowlist and UAT-only restriction. No client role
 or local session alone authorizes a write. GET reads catalog/full draft; POST
-handles save, publish, unpublish, settings and `pin-order`. All API responses are no-store.
+handles save, publish, unpublish, archive, trash, restore, settings and `pin-order`.
+All API responses are no-store.
 
 Under `sites/{covermate|covermate-uat}`:
 
 | Collection | Purpose |
 | --- | --- |
-| `articles` | Private normalized draft and live document snapshots |
+| `articles` | Private normalized draft/live snapshots, lifecycle and revision |
 | `articleCatalog` | Private lightweight catalog and public-summary projection |
 | `articleSlugs` | Atomically reserved published URLs |
 | `articleSettings/current` | Three flags, ordered pin IDs and revision |
@@ -130,6 +143,17 @@ Only the authorized server API writes them. Transactions atomically update the
 draft/live/catalog/slug/audit documents. Expected revisions reject stale writes
 with HTTP 409. Neither API failure nor missing credentials falls back to local
 publication or demonstration content.
+
+Record-level `lifecycle` is `active`, `archived` or `trashed`, independent of
+publication timing. Missing lifecycle defaults to active for existing records;
+no migration is required. Catalog and full draft reads expose lifecycle,
+publicationStatus and revision. Archive/Trash/Restore atomically clear the live
+snapshot and pins, update catalog and audit actor/action/previous/new lifecycle,
+and preserve the editable draft and locked slug. Inactive save/publish/unpublish
+requests are rejected. Restore of an already active record is rejected.
+Public feed/detail reads independently exclude inactive records, even if a stale
+live snapshot remains. Pin membership changes invalidate the settings revision
+and removed index pins leave the saved order, so stale reorder requests conflict.
 
 `pin-order` accepts `{order: string[], expectedRevision}`. It requires an exact
 permutation of current draft/live pins and saves the ordered IDs plus audit in
@@ -159,8 +183,8 @@ sitemap. The existing static sitemap continues to advertise Home/Motor.
   complete lightweight catalog, not individual full documents.
 - Media fields accept validated HTTPS/internal asset URLs with alt/captions.
   The local shared upload/crop flow above replaces the earlier URL-only image
-  controls. A browsable asset library, revision-history restore, trash and
-  central author/taxonomy administration remain unimplemented.
+  controls. A browsable asset library, revision-history restore, permanent
+  deletion and central author/taxonomy administration remain unimplemented.
 - New uploaded originals are limited to 8,000,000 bytes and 20,000,000 pixels;
   crop PNGs are limited to 1,500,000 bytes and 2048 px per dimension. The media
   API independently requires the active owner and server-resolved environment.

@@ -24,19 +24,19 @@ const link = (label, href, classes, disabled = false, suffix = '') => disabled |
 
 export function contentView({ cms, groups, tools, readonly, icon, previewPath, historyPath }) {
   const state = cms.loading ? 'loading' : cms.error ? 'error' : cms.connected ? 'ready' : 'unknown';
-  const connectionTitle = cms.loading ? 'กำลังตรวจสอบ CMS' : cms.error ? 'เชื่อมต่อ CMS ไม่สำเร็จ' : cms.connected ? 'เชื่อมต่อ CMS สำเร็จ' : 'ยังไม่ได้ตรวจสอบ CMS';
+  const connectionTitle = cms.loading ? 'Connecting to CMS' : cms.error ? 'CMS connection failed' : cms.connected ? 'CMS connected' : 'CMS not checked';
   const connectionCopy = cms.loading ? 'กำลังอ่านข้อมูลเว็บไซต์' : cms.checkedAt ? `ตรวจสอบล่าสุด ${date(cms.checkedAt)}` : 'ตรวจสอบสถานะเว็บไซต์และฉบับร่าง';
-  const draftTitle = cms.loading ? 'กำลังอ่านฉบับร่าง' : ({ changed: 'มีฉบับร่างรอเผยแพร่', synced: 'ฉบับร่างตรงกับเว็บไซต์', missing: 'ยังไม่มีฉบับร่าง', unknown: 'ยังตรวจสอบฉบับร่างไม่ได้' }[cms.draftState] || 'ยังตรวจสอบฉบับร่างไม่ได้');
+  const draftTitle = cms.loading ? 'Loading draft' : ({ changed: 'Unpublished changes', synced: 'Synced', missing: 'No draft', unknown: 'Draft status unknown' }[cms.draftState] || 'Draft status unknown');
   const draftCopy = cms.loading ? 'กรุณารอสักครู่' : cms.draftState === 'changed' ? 'ฉบับร่างเว็บไซต์ 1 ฉบับ' : cms.draftState === 'synced' ? 'ไม่มีการเปลี่ยนแปลงรอเผยแพร่' : cms.draftState === 'missing' ? 'เริ่มแก้ไขเพื่อสร้างฉบับร่าง' : 'เปิดเครื่องมือแก้ไขเพื่อตรวจสอบ';
   const draftDate = date(cms.draftUpdatedAt);
   const publicationDate = date(cms.publishedAt);
   const historyCopy = cms.loading ? 'กำลังอ่านประวัติ' : cms.versionCount === null ? 'ยังอ่านประวัติไม่ได้' : cms.versionCount === 0 ? 'ยังไม่มีประวัติเวอร์ชัน' : `${cms.versionCount} เวอร์ชันล่าสุด`;
   const historyDisabled = Boolean(tools.find(tool => tool.id === 'history')?.disabled);
   const toolIcons = { edit: icon('edit'), preview: glyph('eye'), history: glyph('history') };
-  const badge = item => `<span class="cms-item-badge ${escape(item.tone || 'editable')}">${item.tone === 'locked' ? glyph('lock') : item.tone === 'code' ? glyph('code') : ''}${escape(readonly && item.tone === 'editable' ? 'ดูอย่างเดียว' : item.badge)}</span>`;
+  const badge = item => `<span class="cms-item-badge ${escape(item.tone || 'editable')}">${item.tone === 'locked' ? glyph('lock') : item.tone === 'code' ? glyph('code') : ''}${escape(readonly && item.tone === 'editable' ? 'Read-only' : item.badge)}</span>`;
   const groupBadge = group => {
     const tone = readonly ? 'locked' : group.items.some(item => item.tone === 'code') ? 'code' : group.items.some(item => item.tone === 'locked') ? 'locked' : 'editable';
-    const label = readonly ? 'ดูอย่างเดียว' : tone === 'code' ? 'มีส่วนแก้โค้ด' : tone === 'locked' ? 'มีส่วนล็อก' : 'แก้ไขได้';
+    const label = readonly ? 'Read-only' : tone === 'code' ? 'Code required' : tone === 'locked' ? 'Partially locked' : 'Editable';
     return `<span class="cms-group-badge cms-item-badge ${tone}">${label}</span>`;
   };
   const itemRow = item => {

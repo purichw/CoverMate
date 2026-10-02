@@ -42,7 +42,7 @@ switching language as needed. Invalid input stays in place for correction.
 | Cover Alt, body-image Alt | Required when the corresponding image exists | Localized; body Alt is editable in the image dialog and settings |
 | SEO title, SEO description | Optional | Empty uses the article title and card excerpt respectively |
 | Canonical URL | Automatic, read-only | Derived from Slug and language |
-| Editorial date | Optional | Blank retains first-publication date; input uses Bangkok time |
+| Editorial date | Optional | Blank hides the public date; clear (X) removes it; input uses Bangkok time |
 | Tags, captions, summaries, notes, attribution | Optional | Existing content and length limits remain in effect |
 | Reference rows | Optional to add | Each added row requires its name and valid HTTPS URL; remove unwanted rows |
 
@@ -64,6 +64,30 @@ derived from the published snapshot, never unsaved or saved-only draft text.
 Article JSON-LD includes the visible headline, publication/modification dates,
 author, category and tags. Tags do not create an obsolete meta-keywords field.
 Only published locales receive hreflang; private previews remain noindex.
+
+### Responsive Article Images (October 2)
+
+Upload/crop once; `article-media.mjs` provides mobile/desktop thumbnail and
+banner delivery profiles (320/640/800/1600 px, plus 1280 for intermediate/DPR
+selection). `srcset` and layout-specific `sizes` choose the actual request.
+Cloudinary URLs use crop-preserving `c_limit,f_auto,q_auto` delivery transforms;
+the saved original and recrop coordinates do not change. The Admin cover panel
+lists available widths, capped to the saved image width. These are automatic
+delivery variants, not four independently editable crops or upload fields.
+
+The four currently shipped article images also have hashed WebP derivatives,
+generated/checked by `build:visitor` via `scripts/build-article-images.mjs`.
+Unknown local/external/signed URLs keep their existing source, with no invented
+variant URL. Public media exposes safe output dimensions but no original/crop
+metadata. Home cards, index/pinned/related cards, detail covers and body figures
+consume variants. The page CMS's unrelated logo/background slots are unchanged.
+
+Checks: `node scripts/article-delivery-check.mjs --browser` (real Chromium
+responsive selection; Cloudinary response bytes mocked, shipped assets real),
+`node scripts/article-media-check.mjs --browser`, and
+`node scripts/article-validation-check.mjs --browser`.
+
+Reference: [Cloudinary responsive HTML](https://cloudinary.com/documentation/responsive_html).
 
 Sources: [Google title links](https://developers.google.com/search/docs/appearance/title-link),
 [image guidance](https://developers.google.com/search/docs/appearance/google-images),
@@ -284,7 +308,8 @@ published cards, share controls, consultation CTA and the contact dock use the
 same runtime, templates and styles as Visitor. Desktop/Mobile change the actual
 iframe viewport, including media queries and sticky behavior. Desktop has a
 panoramic cover, reading column, contents/quote rail and full-width takeaway
-banner; mobile places takeaways below the cover and contents after the prose.
+banner; mobile places collapsible contents below the cover, before takeaways
+and prose, while sharing stays after the prose. Authored block order is retained.
 Article title is H1; authored headings support H1–H6, with H2 recommended below it.
 
 Summary and Key points use sage cards, a gold lightbulb badge, and botanical

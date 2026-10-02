@@ -1,6 +1,7 @@
 import {projectPublishedArticles,articlePublicHref} from './home-articles.mjs';
 import {renderArticleDocument,articleDocumentText} from '../../article-document.mjs';
 import {articleTypographyAttributes} from '../../article-typography.mjs';
+import {articleImageDelivery} from '../../article-media.mjs';
 
 export function articleDetailSlug(path = '') {
   return /^\/articles\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/.exec(path)?.[1] || '';
@@ -30,7 +31,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
       case 'quote': return base.text ? [{...base,quote:true,attribution:text(block.attribution)}] : [];
       case 'callout': return base.text ? [{...base,callout:true,title:text(block.title)}] : [];
       case 'list': {const items=texts(block.items);return items.length ? [{...base,list:true,ordered:block.ordered===true,items}] : [];}
-      case 'image': {const src=mediaUrl(block.src);return src ? [{...base,image:true,src,alt:text(block.alt),caption:text(block.caption)}] : [];}
+      case 'image': {const image=articleImageDelivery({...block,src:mediaUrl(block.src)},'banner');return image.src ? [{...base,image:true,...image,alt:text(block.alt),caption:text(block.caption)}] : [];}
       default: return [];
     }
   });
@@ -43,6 +44,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
   const published = new Date(summary.publishedAt);
   const date = new Intl.DateTimeFormat(lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
   const updated = Date.parse(copy.updatedAt);
+  const image=articleImageDelivery({...item.cover,src:mediaUrl(item.cover?.src)||mediaUrl(item.image?.src)},'banner');
   return {...summary,available:true,sample:payload.sample===true,blocks,sources,languages:Object.keys(item.translations),
     richDocument:rich ? JSON.stringify(rich.document) : '',
     titleStyle:articleTypographyAttributes(rich?.document.attrs?.titleStyle).style || '',titleStyleKeys:articleTypographyAttributes(rich?.document.attrs?.titleStyle)['data-article-style'] || '',
@@ -52,10 +54,10 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
     takeaways:rich?.document.attrs?.takeawaysInDocument?[]:texts(copy.takeaways).slice(0,8),author:text(copy.author),caption:text(copy.caption),
     headerNote:text(copy.headerNote),sidebarQuote:text(copy.sidebarQuote),takeawayNote:text(copy.takeawayNote),
     headerNoteEnabled:copy.headerNoteEnabled!==false,sidebarQuoteEnabled:copy.sidebarQuoteEnabled!==false&&!rich?.document.attrs?.sidebarQuoteInDocument,takeawayNoteEnabled:copy.takeawayNoteEnabled!==false&&!rich?.document.attrs?.takeawaysInDocument,
-    image:mediaUrl(item.cover?.src) || summary.image,imageAlt:text(copy.coverAlt) || summary.imageAlt,
-    date:date.format(published),datetime:published.toISOString(),
+    image:image.src,imageSrcset:image.srcset,imageAlt:text(copy.coverAlt) || summary.imageAlt,
+    date:summary.showDate?date.format(published):'',datetime:published.toISOString(),
     updatedDatetime:Number.isFinite(updated)&&updated>=summary.publishedAt&&updated<=(now??Date.now())?new Date(updated).toISOString():published.toISOString(),
-    updated: Number.isFinite(updated) && updated>summary.publishedAt && updated<=(now ?? Date.now()) ? date.format(updated) : '',
+    updated: summary.showDate && Number.isFinite(updated) && updated>summary.publishedAt && updated<=(now ?? Date.now()) ? date.format(updated) : '',
     reading:summary.readingMinutes ? (lang==='en'?summary.readingMinutes+' min read':'อ่าน '+summary.readingMinutes+' นาที') : '',
     categoryHref:articlePublicHref('/articles?category='+encodeURIComponent(summary.categoryId),lang)};
 }

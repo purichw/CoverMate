@@ -14,7 +14,7 @@ export function articleFieldContract(key,{cover=false}={}) {
     title:'ชื่อที่แสดงบนหน้าบทความและการ์ด',excerpt:'ข้อความสั้นสำหรับการ์ดบทความ แยกจาก SEO description',
     slug:'ภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลาง ไม่เกิน 160 ตัวอักษร',
     authorName:'ชื่อผู้เขียนที่แสดงบนบทความ',coverAlt:cover?'บรรยายสิ่งสำคัญในภาพ ไม่ต้องใส่คำค้นซ้ำ ๆ':'จำเป็นเมื่อเพิ่มภาพปก',
-    publishedAt:'เว้นว่างเพื่อใช้วันเผยแพร่ครั้งแรก ระบุเวลาไทย (UTC+7)',
+    publishedAt:'ไม่บังคับ · เว้นว่างเพื่อไม่แสดงวันที่ ระบุเวลาไทย (UTC+7)',
     tags:'ไม่เกิน 20 แท็ก แท็กละ 80 ตัวอักษร',
     seoTitle:'เว้นว่างเพื่อใช้ชื่อบทความ',seoDescription:'เว้นว่างเพื่อใช้คำโปรยของบทความ',
     takeaways:'ไม่เกิน 8 ข้อ ข้อละ 1,000 ตัวอักษร',
@@ -55,7 +55,7 @@ export function validateArticle(draft,{publish=false,languages=['th']}={}) {
       else if(text(image.alt).length>500)add('figure-alt-'+index,'Alt ต้องไม่เกิน 500 ตัวอักษร',language);
       if(!articleUrl(image.src,true))add('document',`ลิงก์ภาพในเนื้อหา ${index+1} ไม่ถูกต้อง`,language);
     });
-    if(t.publishedAt!==null&&t.publishedAt!==undefined&&!validDate(t.publishedAt))add('publishedAt','กรุณาระบุวันที่และเวลาให้ถูกต้อง หรือเว้นว่างเพื่อใช้วันเผยแพร่',language);
+    if(t.publishedAt!==null&&t.publishedAt!==undefined&&!validDate(t.publishedAt))add('publishedAt','กรุณาระบุวันที่และเวลาให้ถูกต้อง หรือเว้นว่างเพื่อไม่แสดงวันที่',language);
     if(!Array.isArray(t.takeaways)||t.takeaways.length>8||t.takeaways.some(v=>typeof v!=='string'||v.length>1000))add('takeaways','สรุปได้ไม่เกิน 8 ข้อ ข้อละ 1,000 ตัวอักษร',language);
     if(!Array.isArray(t.sources)||t.sources.length>30)add('sources','ใส่แหล่งอ้างอิงได้ไม่เกิน 30 รายการ',language);
     else t.sources.forEach((source,index)=>{
