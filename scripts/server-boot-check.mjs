@@ -144,7 +144,7 @@ try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     let failStyles = true;
-    let releaseStyle, heldStyles = 0;
+    let releaseStyle, heldStyles = 0, heldScripts = 0;
     const pendingStyle = new Promise(resolve => { releaseStyle = resolve; });
     await page.route('**/assets/visitor/home.css?*', route => failStyles ? route.abort('failed') : route.continue());
     await page.route('**/assets/article-document.css', async route => {
@@ -152,10 +152,17 @@ try {
       await pendingStyle;
       await route.continue();
     });
+    await page.route('**/assets/vendor/react-18.3.1.min.js', async route => {
+      heldScripts++;
+      await pendingStyle;
+      await route.continue();
+    });
     try {
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#covermate-boot[data-error]', { timeout: 10000 });
       assert.ok(heldStyles > 0, 'A failed stylesheet reports immediately while another stylesheet remains pending');
+      assert.ok(heldScripts > 0, 'The app script is still held while the stylesheet failure is reported');
+      assert.equal(await page.evaluate(() => typeof window.React), 'undefined', 'Critical stylesheet failure is shown before app mount');
       assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-covermate-booting')), true, 'Failed critical CSS retains the loading guard');
       assert.equal(await page.locator('#covermate-boot button').isVisible(), true, 'Failed critical CSS offers retry');
       assert.equal(await page.locator('main').isVisible(), false, 'A stylesheet failure never exposes an unstyled page');
@@ -164,7 +171,7 @@ try {
       await page.locator('#covermate-boot button').click();
       await page.waitForFunction(() => !document.documentElement.hasAttribute('data-covermate-booting'));
       assert.equal(await page.locator('main h1').isVisible(), true, 'Retry recovers when the stylesheet becomes available');
-      report.checks.push({ homeCssFailure: true, pendingSiblingStyle: true, guardRetained: true, retryVisible: true, retryRecovered: true });
+      report.checks.push({ homeCssFailure: true, pendingSiblingStyle: true, pendingAppScript: true, failedBeforeMount: true, guardRetained: true, retryVisible: true, retryRecovered: true });
     } finally {
       releaseStyle();
       await page.close();
