@@ -34,7 +34,7 @@ const {server,baseUrl} = await startStaticServer({ownerRoutesToRoot:true,port:Nu
     res.writeHead(403);res.end('Read-only local design preview.');return true;
   }
   if (url.pathname === '/covermate-public.mjs') {
-    const body = fs.readFileSync('covermate-public.mjs','utf8').replaceAll('${publicFirestoreRoot()}', '${location.origin}/__transparency-fixture');
+    const body = fs.readFileSync('src/public/adapter.mjs','utf8').replaceAll('${publicFirestoreRoot()}', '${location.origin}/__transparency-fixture');
     res.writeHead(200,{'content-type':'application/javascript'});res.end(body);return true;
   }
   if (url.pathname.startsWith('/__transparency-fixture/')) {

@@ -15,6 +15,18 @@ selectors to all events; select them again before interpreting contact totals.
 The standard Google report remains unchanged. Access still requires an
 authorized Google account; the link does not grant access.
 
+## Google-only contact report
+
+[Open SEO — การติดต่อจาก Google](https://analytics.google.com/analytics/web/#/a402413350p547278377/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..columnFilters%3D%7B%22event%22:%22line_click%22,%22conversionEvent%22:%22quote_submit_success%22,%22sessionConversionRate%22:%22quote_submit_success%22%7D&collectionId=business-objectives&discardConfirmed=true&r=15945871144)
+
+This separate saved Landing page report has a persistent **Session source /
+medium matches regex `^google / organic$`** filter. It includes sessions,
+engagement, Event count, Key events and Session key event rate. The link selects
+LINE clicks, successful form submissions and the session rate for successful
+form submissions, respectively. Reloading the link was verified to preserve
+the filter and all three event selections. No Google organic sessions were
+available for the selected period at setup; the report does not fabricate data.
+
 ## How to use it
 
 1. Choose the same completed date range in GA4 and Search Console.
@@ -31,10 +43,10 @@ Search Console and GA4 have different populations and processing times. GA4
 requires the visitor's analytics consent and can be blocked. The associated
 GA4 columns must not be described as an exact join between a search query and
 a particular lead, or assumed to contain only Google organic visitors. For
-Google-only contact attribution, use a separate GA4 acquisition/exploration
-view filtered by **Session source / medium = google / organic**, with landing
-page and the same event names. Do not divide unrelated totals into a claimed
-SEO conversion rate.
+Google-only contact attribution, use the second saved report above. Its session
+key event rate is the share of Google organic sessions with a successful form
+submission; it is not a sales conversion rate. Do not divide totals from the
+two reports into a claimed SEO conversion rate.
 
 LINE clicks are actions, not unique customers, conversations or sales. A
 successful form event is an acknowledged submission, not a policy purchase.

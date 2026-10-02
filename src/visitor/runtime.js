@@ -2786,7 +2786,6 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       headerHomeHref:standaloneRoute?this.localizedPublicHref('/'):'#top',
       footerPrivacyHref:standaloneRoute?this.localizedPublicHref('/#privacy'):'#privacy',
       homeAdvisor,
-      serviceLinks:['health','life'].map(page=>({key:page,label:cmsText('servicePages.'+page+'.navLabel'),href:this.localizedPublicHref('/'+page),copy:'servicePages.'+page+'.navLabel'})).filter(item=>item.label),
       sharedDesign:sharedDesign, legacyDesign:!sharedDesign, heroProof:heroProof,
       ...calculatorView,
       homeCopy: Object.fromEntries(CMS_CONTENT_FIELDS.filter(field => field.localized && field.path.startsWith('homeDesign.')).map(field => [field.path.slice(11), cmsText(field.path)])),

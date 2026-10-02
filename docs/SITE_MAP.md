@@ -54,7 +54,7 @@ SEO implementation details live in [`SEO.md`](SEO.md).
 ## Visitor Sections
 
 The public home is a single-page landing experience. The product also includes
-`/motor`, a dedicated motor-insurance page, plus `/articles` and its readers in
+`/motor`, `/health` and `/life`, dedicated service landing pages, plus `/articles` and its readers in
 the same brand system. Article presentation is documented in
 [HOME_ARTICLES.md](HOME_ARTICLES.md), [ARTICLES_INDEX.md](ARTICLES_INDEX.md) and
 [ARTICLE_DETAIL.md](ARTICLE_DETAIL.md).
@@ -137,6 +137,9 @@ anchors. Home links use `/#motor`, which keeps the global navigation and scrolls
 to the unchanged DOM/CMS section ID `insurers`. Old `/#insurers` URLs are replaced
 with `/#motor`, preserving query parameters and history position. `/#life`
 re-aims to `#cover`. Hidden destinations are not exposed as dead links.
+`/health` and `/life` follow the dedicated `/motor` landing-page pattern: direct
+URLs and search can reach them, but Home coverage and the shared footer do not
+add direct service-page links. Home's inline coverage flow remains in place.
 Same-page anchor clicks scroll smoothly once, retain the rendered content and
 update browser history. Reduced motion uses an instant landing. Back/Forward,
 menu closure and anchor focus must not cause repeated jumps; `#top` only returns

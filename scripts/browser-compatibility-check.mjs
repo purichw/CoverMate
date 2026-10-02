@@ -23,7 +23,7 @@ fs.mkdirSync(out, { recursive: true });
 const engines = (process.env.COVERMATE_BROWSERS || 'chromium,firefox,webkit').split(',');
 const report = { timestamp: new Date().toISOString(), environment: 'Isolated local CMS and lead fixtures; no production writes',
   fixture: fixtureFolder || 'repository defaults', cases: [], errors: [], skipped: ['Real LINE app and OS handoff', 'Physical keyboard/safe-area/IME', 'Branded Safari', 'Branded Edge unless explicitly selected'] };
-const publicSource = fs.readFileSync('covermate-public.mjs', 'utf8');
+const publicSource = fs.readFileSync('src/public/adapter.mjs', 'utf8');
 assert.ok(publicSource.includes('async function appCheckToken() {'));
 const publicFixture = publicSource.replace('async function appCheckToken() {', 'async function appCheckToken() { return "isolated-browser-fixture";');
 const profiles = [

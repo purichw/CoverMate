@@ -19,7 +19,7 @@ const { server, baseUrl } = await startStaticServer({ onRequest: async (req, res
   if (['/', '/motor'].includes(url.pathname)) { await pageHandler(req, res); return true; }
   if (url.pathname === '/covermate-public.mjs') {
     res.writeHead(200, { 'content-type': 'application/javascript' });
-    res.end(fs.readFileSync('covermate-public.mjs', 'utf8').replace('${publicFirestoreRoot()}', '${location.origin}/__seo-fixture'));
+    res.end(fs.readFileSync('src/public/adapter.mjs', 'utf8').replace('${publicFirestoreRoot()}', '${location.origin}/__seo-fixture'));
     return true;
   }
   if (url.pathname.startsWith('/__seo-fixture/')) { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ fields: toFirestoreFields(live) })); return true; }

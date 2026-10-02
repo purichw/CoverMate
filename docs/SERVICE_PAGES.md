@@ -27,8 +27,11 @@ Home callback form (`/#talk`, preserving English/UAT context).
 
 ## Navigation and references
 
-Home's coverage section and the shared footer link to both pages. Cross-service
-links retain locale. Related article links appear only when the real publication
+Like `/motor`, these are dedicated landing pages for direct links and search;
+Home's coverage section and the shared footer do not automatically link to them.
+Home keeps its existing inline coverage and consultation flow. The public routes,
+sitemap entries and CMS page selection remain available. Cross-service links
+within the dedicated pages retain locale. Related article links appear only when the real publication
 feed contains the selected language; a Thai-only guide is not advertised as an
 English article. The Articles index remains the browsing fallback.
 

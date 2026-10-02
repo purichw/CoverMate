@@ -22,7 +22,7 @@ assert.equal(migrated.cmsContentVersion,CMS_CONTENT_VERSION);
 for (const key of keys) assert.equal(typeof migrated.formOptions.query[key].en,'string');
 
 // Exercise the real client serializer and server validator without Firebase writes.
-const client = fs.readFileSync('covermate-public.mjs','utf8');
+const client = fs.readFileSync('src/public/adapter.mjs','utf8');
 const payloadSource = fs.readFileSync('covermate-contact-payload.mjs','utf8').replace(/^import .*;\n/gm,'').replace(/^export /gm,'');
 const prepare = vm.runInNewContext(payloadSource+'\nprepareContactPayload', {crypto,TextEncoder,cleanText,cleanLeadChoice,URL,location:{origin:'https://example.test',pathname:'/'}});
 const api = fs.readFileSync('api/leads.js','utf8');

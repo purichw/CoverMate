@@ -54,6 +54,17 @@ vm.runInNewContext(buildVisitorRuntime()+'\nthis.Component=Component;',sandbox);
 const app=new sandbox.Component();
 app.readJSON=()=>null;app.writeJSON=()=>{};app.queueRemoteDraft=()=>{};app.textOv={};
 app.state.site=app.normalizeConfig(state.config,{repeatableIds:true});
+const directServiceLink=value=>typeof value==='string'&&/^\/(health|life)(?:[/?#]|$)/.test(value);
+const collectHrefs=value=>Array.isArray(value)?value.flatMap(collectHrefs):value&&typeof value==='object'?Object.entries(value).flatMap(([key,item])=>/href$/i.test(key)&&typeof item==='string'?[item]:collectHrefs(item)):[];
+for(const lang of ['th','en']) {
+  app.state.routePage='home';app.state.lang=lang;
+  const home=app.renderVals();
+  assert.equal(collectHrefs([home.navItems,home.sectionGroups]).some(directServiceLink),false,'Default Home keeps its inline flow rather than linking to dedicated service landing pages');
+  assert.ok(home.sectionGroups.length>0,'Home content must remain available');
+}
+for(const file of ['src/visitor/home.html','src/visitor/template.html']) {
+  assert.doesNotMatch(fs.readFileSync(file,'utf8'),/\bserviceLinks\b|href=["']\/(?:health|life)(?:[/?#"'])/,'Shared Home and footer templates must not add direct service-page entries');
+}
 app.state.routePage='health';app.state.lang='th';app.state.sel='service-content';
 let view=app.renderVals();
 assert.equal(view.isServicePage,true);

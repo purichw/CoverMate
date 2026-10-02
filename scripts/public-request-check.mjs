@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-// Exercise the shipped helper without importing browser bootstrap or Firebase.
-const source = fs.readFileSync('covermate-public.mjs', 'utf8');
+// Exercise readable helper source without importing browser bootstrap or Firebase.
+// check:visitor-source verifies the minification-only emitted root module.
+const source = fs.readFileSync('src/public/adapter.mjs', 'utf8');
 const start = source.indexOf('async function fetchJSON(');
 const end = source.indexOf('\nexport function hydrateLocalContent()', start);
 assert.ok(start >= 0 && end > start);

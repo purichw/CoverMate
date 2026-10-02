@@ -1610,7 +1610,6 @@ textarea.input { min-height: 90px; resize: vertical; }
         <div class="cm-footer-heading"><span class="{{ footerIcons.nav.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.nav.image }}"><img sc-camel-src="{{ footerIcons.nav.image }}" alt="" data-cms-image="{{ footerIcons.nav.path }}"></sc-if><sc-if value="{{ !footerIcons.nav.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.nav.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.navHeading">{{ footerNavHeading }}</h3><p data-cms-copy="footer.navHelper">{{ footerCopy.navHelper }}</p></div></div>
         <div class="cm-footer-links">
           <sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-for>
-          <sc-for list="{{ serviceLinks }}" as="n"><a href="{{ n.href }}"><span data-cms-copy="{{ n.copy }}">{{ n.label }}</span><svg class="cm-footer-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a></sc-for>
           <sc-if value="{{ showFooterPrivacyNav }}"><a href="{{ footerPrivacyHref }}"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
         </div>
       </nav>

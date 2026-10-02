@@ -129,7 +129,15 @@ must stay out of the header nav and sitemap.
 checks Firestore `admins/{uid}` before writing the browser-local
 `covermate-admin-session` cache and redirecting to `/admin`.
 
-`covermate-public.mjs` owns lightweight REST hydration of published CMS content
+`src/public/adapter.mjs` owns the readable public adapter; `build:visitor` emits
+the minified root `covermate-public.mjs` at its unchanged browser URL.
+`src/public/environment.mjs` similarly emits `covermate-environment.mjs` for
+shared browser/server environment resolution. These are minification-only
+outputs: import specifiers, module identity and contact retry URLs are preserved.
+`check:visitor-source` checks both generated files. Source-based fixtures read
+`src/public/adapter.mjs` and still serve it at the canonical root URL.
+
+`covermate-public.mjs` provides lightweight REST hydration of published CMS content
 and lead submissions through `/api/leads`. Firebase Auth and Firestore SDKs are
 not loaded for public first paint. App Check is loaded when a visitor submits.
 `covermate-firebase-config.mjs` owns public Firebase identifiers and the strictly

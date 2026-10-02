@@ -87,6 +87,17 @@ export function readPublicContractAsset() {
   return { code, file: new URL('assets/visitor/contract.js', ROOT) };
 }
 
+// Keep canonical root URLs and module identity; only shipped formatting changes.
+// Adapter imports intentionally resolve relative to its root output file.
+export function readPublicRuntimeAssets() {
+  return [['adapter', 'covermate-public.mjs'], ['environment', 'covermate-environment.mjs']].map(([source, output]) => ({
+    code: transformSync(readText(new URL(`src/public/${source}.mjs`, ROOT)), {
+      minify: true, format: 'esm', target: 'es2022', charset: 'utf8'
+    }).code,
+    file: new URL(output, ROOT)
+  }));
+}
+
 export function readContactPayloadAsset() {
   const file = new URL('assets/visitor/contact-payload.js', ROOT);
   const code = buildSync({

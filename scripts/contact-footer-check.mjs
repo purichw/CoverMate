@@ -16,7 +16,7 @@ const errors=[];
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
   await context.route('**/v1/projects/**/documents/sites/**/states/live',r=>r.fulfill({json:{fields:toFirestoreFields(live)}}));
-  await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync('covermate-public.mjs','utf8').replace('async function appCheckToken() {','async function appCheckToken() { return "local-test";')}));
+  await context.route('**/covermate-public.mjs',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync('src/public/adapter.mjs','utf8').replace('async function appCheckToken() {','async function appCheckToken() { return "local-test";')}));
   let mode='failure',release,submissions=[];
   await context.route('**/api/leads?*',async route=>{
     submissions.push(route.request().postDataJSON());

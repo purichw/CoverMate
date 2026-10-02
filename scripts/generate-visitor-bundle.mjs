@@ -11,6 +11,7 @@ import {
   readEditorVersionsAsset,
   readContactPayloadAsset,
   readPublicContractAsset,
+  readPublicRuntimeAssets,
   readArticleReaderAsset,
   readImageVersions,
   VISITOR_SOURCE_PATHS
@@ -29,6 +30,7 @@ function main() {
   const editorVersions = readEditorVersionsAsset();
   const payload = readContactPayloadAsset();
   const publicContract = readPublicContractAsset();
+  const publicRuntime = readPublicRuntimeAssets();
   const articleReader = readArticleReaderAsset();
   const adminFile = new URL('../admin/index.html', import.meta.url);
   const admin = fs.readFileSync(adminFile,'utf8');
@@ -47,7 +49,7 @@ function main() {
   const checkOnly = process.argv.includes("--check");
   if (checkOnly) {
     const current = fs.readFileSync(VISITOR_SOURCE_PATHS.index, "utf8");
-    if (current !== next || !fs.existsSync(VISITOR_SOURCE_PATHS.publicIndex) || readPublicIndex() !== publicIndex || admin !== nextAdmin || !fs.existsSync(assetFile) || fs.readFileSync(assetFile, 'utf8') !== assets || [select, analytics, editorPreview, editorVersions, payload, publicContract, articleReader].some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.code) || styles.some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.css)) {
+    if (current !== next || !fs.existsSync(VISITOR_SOURCE_PATHS.publicIndex) || readPublicIndex() !== publicIndex || admin !== nextAdmin || !fs.existsSync(assetFile) || fs.readFileSync(assetFile, 'utf8') !== assets || [select, analytics, editorPreview, editorVersions, payload, publicContract, articleReader, ...publicRuntime].some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.code) || styles.some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.css)) {
       console.error("Visitor/owner artifacts are out of sync with src/visitor sources. Run npm run build:visitor.");
       process.exit(1);
     }
@@ -68,6 +70,7 @@ function main() {
   fs.writeFileSync(editorVersions.file,editorVersions.code);
   fs.writeFileSync(payload.file,payload.code);
   fs.writeFileSync(publicContract.file,publicContract.code);
+  for (const asset of publicRuntime) fs.writeFileSync(asset.file,asset.code);
   fs.writeFileSync(articleReader.file,articleReader.code);
   if (admin !== nextAdmin) fs.writeFileSync(adminFile,nextAdmin);
   console.log("Generated index.html and server/visitor-public.html from src/visitor sources.");
