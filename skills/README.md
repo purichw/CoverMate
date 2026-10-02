@@ -3,7 +3,7 @@
 These are versioned copies of the two project-specific Codex skills:
 
 - [covermate-new-chat](covermate-new-chat/SKILL.md): context pickup, source
-  ownership, relevant reading, setup and release boundaries.
+  ownership, relevant reading, setup and separate build/CI/production evidence.
 - [covermate-design-spec](covermate-design-spec/SKILL.md): current product/design
   contracts and proportional screenshot evidence.
 
@@ -12,6 +12,12 @@ must be synchronized with its matching folder here before a project push. This
 repository does not auto-install skills or change global Codex configuration.
 Other generic skills referenced by these files are dependencies of the local
 Codex environment, not bundled CoverMate sources.
+
+Release work uses the installed `release-gate` for changed-behavior/test
+mapping, `efficient-execution` for batching local checks and release reviews,
+and `github-actions-repair` for failed-run diagnosis. Their rules do not modify
+the project's CI workflow or authorize publishing. The current project process
+is maintained in [RELEASE_RUNBOOK.md](../docs/RELEASE_RUNBOOK.md).
 
 The canonical design specification is
 [docs/covermate-website-full-design-spec.md](../docs/covermate-website-full-design-spec.md).

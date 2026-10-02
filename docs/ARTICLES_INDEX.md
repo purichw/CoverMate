@@ -1,9 +1,11 @@
 # Public Articles Index
 
-Public `/articles` list. The reader, editor and publication adapter now exist;
-see `ARTICLE_DETAIL.md` and `api/page.js`. The 2026-09-30 desktop/mobile list
-redesign and pinned carousel are local and not yet deployed. Editorial content,
-publication eligibility and routing are unchanged; pin order is now CMS-owned.
+Public `/articles` list. Current contract reviewed against live source `aa8b68d`
+on 2026-10-02, including the pinned carousel's current autoplay behavior.
+See [HANDOFF.md](HANDOFF.md) for CI and deployment evidence, `ARTICLE_DETAIL.md`
+for the reader, and `api/page.js` for the publication adapter. Editorial content,
+publication eligibility and routing are unchanged; pin order is CMS-owned.
+This documentation refresh did not run new visual smoke.
 
 ## Reference-Led Redesign (2026-09-30)
 
@@ -21,8 +23,8 @@ publication eligibility and routing are unchanged; pin order is now CMS-owned.
 - Thumbnail/category variants are scoped to `.ar-index`; the shared reader cards
   retain their own layout. Missing or failed list covers become text-led cards
   rather than large empty image panels.
-- Local design evidence uses a published CMS readback with a clearly labeled
-  12-article sample catalog. The real readback contained only two test articles
+- Historical design evidence used a published CMS readback with a clearly labeled
+  12-article sample catalog. That readback contained only two test articles
   without covers; it was also checked separately, not replaced by sample data.
 - `scripts/articles-index-snapshots.mjs <loopback-url>` produces proportionally
   scaled reference/development comparisons, full-page and mobile viewport
@@ -37,13 +39,16 @@ publication eligibility and routing are unchanged; pin order is now CMS-owned.
 - Desktop: four columns, eight list entries per page, numeric pagination.
 - Tablet: two columns. Mobile: image-left cards, horizontally scrolling
   categories and load more. There is no invented customer-account navigation.
-- All eligible pinned articles appear in one carousel, in the saved Admin order.
+- All eligible pinned articles appear in one carousel, in the saved Admin order,
+  with one active card at every viewport. Home's separate carousel uses the
+  2/1/3 desktop/tablet/mobile page sizes documented in `HOME_ARTICLES.md`.
   Pins absent from a saved order append by publication date, then stable ID.
   There is no product cap on pinned posts. All carousel posts are excluded from
   the regular list in unfiltered latest mode; counts still include them.
   If all articles are pinned, no empty Latest section is shown.
   Search, categories and explicit oldest/title sorting show pins as ordinary
-  matching results. Home recommendation (`featuredIds` / `featured`) is independent.
+  matching results. Home's persisted `featured` pin flag is independent and
+  has its own ten-slot capacity; legacy fixture-only `featuredIds` is not its order.
 - Rotation advances and wraps every 10 seconds while visible, with no Play/Pause
   button. Previous/next, keyboard activation and touch swipe remain available.
   Pointer navigation restarts the interval and hover does not stop rotation.
@@ -111,6 +116,8 @@ node scripts/articles-index-check.mjs --browser --fixture=uat-results/home-artic
 node scripts/articles-carousel-check.mjs
 PLAYWRIGHT_BROWSERS_PATH=/Users/point/CoverMate/.tools/playwright-browsers BROWSER=webkit node scripts/articles-index-check.mjs --browser --fixture=uat-results/home-articles/published-baseline.json
 node scripts/home-articles-check.mjs
+# With isolated Auth/Firestore emulators running, when shared Home behavior changes:
+COVERMATE_TEST_MODE=emulator FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9098 node scripts/home-articles-pins-e2e.mjs
 node scripts/contract-regression-check.mjs
 node scripts/seo-check.mjs
 node scripts/generate-visitor-bundle.mjs --check
@@ -123,14 +130,21 @@ open the existing labeled article-detail fixtures through the real reader.
 Reports and desktop/mobile captures are under `uat-results/articles-index/`.
 Browser automation is not a physical iPhone/Safari device test.
 
-Known verification limit: the continuous WebKit run repeatedly process-crashes
+### Historical Browser Evidence (2026-09-27–30)
+
+The following records describe the earlier design verification, not a fresh
+run against `aa8b68d`. Current release evidence is in `HANDOFF.md`; CI success
+does not establish physical-device coverage or resolve an unrerun WebKit case.
+
+The continuous WebKit run repeatedly process-crashed
 on navigation after the desktop filter/history/language flow and viewport change.
 No page JS error was reported. A simpler Home language/resize control passed,
 so the cause is unresolved; do not call this a verified pre-existing bug or a
 full Safari pass. With `--isolate-mobile`, mobile load more, focus and reload
-pass on a fresh page, but the subsequent navigation to the empty-feed state
-also process-crashes. This is partial coverage, not a workaround or a passing
-WebKit run. Investigate both sequences on Safari/iPhone before production.
+passed on a fresh page, but the subsequent navigation to the empty-feed state
+also process-crashed. This was partial coverage, not a passing WebKit run.
+Neither sequence was rerun in this documentation refresh; retain that limit
+when making Safari/iPhone compatibility claims.
 
 Chromium passed all four responsive widths (1440, 820, 390 and 320), the
 complete interaction sequence, empty/error/media-fallback states and the
@@ -148,7 +162,7 @@ Article thumbnails reuse the documented local samples in
 The read-only index harness now reuses `articleDetailFixture` as well as the
 summary fixture, so card links no longer lead to its former 501 placeholder.
 `scripts/article-detail-check.mjs --browser` additionally verifies related-card
-and breadcrumb navigation. No production CMS mutation or release is part of this pass.
+and breadcrumb navigation. These fixture checks do not mutate production CMS.
 
 ## Pin Order Verification
 
@@ -160,3 +174,9 @@ publication privacy, settings preservation and audit. `articles-carousel-check`
 also tests 101-pin projection and timing/interaction behavior at 320/390/820/1440.
 Evidence lives in `uat-results/article-carousel/`. These are local Chromium
 checks, not a production write test or physical Safari/iPhone certification.
+
+For changes shared with Home, also use `scripts/home-articles-pins-e2e.mjs`
+through the focused emulator command above. It verifies real save/reload/publish,
+three-card mobile paging and a reader link while preserving independent index
+pins. The Home check is included in `scripts/emulator-suite.mjs`; the browser
+index check alone does not cover that publication boundary.

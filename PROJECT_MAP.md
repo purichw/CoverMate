@@ -3,14 +3,17 @@
 Purpose: make the static CoverMate visitor/admin site easy to navigate, verify,
 and safely edit in later sessions.
 
-Last updated: 2026-09-27. This is a source map; [HANDOFF.md](docs/HANDOFF.md)
-and [REFACTOR_20260924.md](docs/REFACTOR_20260924.md) distinguish production,
-hosted UAT and local verification. A file or route in this map is not deployment evidence.
+Last updated: 2026-10-02. This is a source map;
+[HANDOFF.md](docs/HANDOFF.md) owns the current release checkpoint and
+[RELEASE_RUNBOOK.md](docs/RELEASE_RUNBOOK.md) owns release verification.
+A file or route in this map is not deployment evidence.
 
-Current state: source-authored visitor files generate a Vercel-hosted HTML
-bundle, alongside private admin surfaces and serverless APIs. Do not hand-edit
-the generated bundle as the lasting implementation. Firebase Auth, Firestore CMS persistence, lead capture, Admin
-Analytics, and the source-authored Cases workspace are implemented.
+Current state: source-authored visitor files generate public and owner-compatible
+HTML bundles for Vercel, alongside private admin surfaces and serverless APIs.
+Do not hand-edit generated bundles as the lasting implementation. Firebase Auth,
+Firestore CMS persistence, lead capture, Admin
+Analytics, the source-authored Cases workspace, and Articles management,
+publication and public readers are implemented.
 The Operations module now presents owner-only Cases: enquiries, status,
 follow-up, working notes and in-app notifications. Legacy leads/tasks/audit
 endpoints remain compatibility APIs, not visible Operations sub-tabs.
@@ -27,8 +30,10 @@ ephemeral static serving live in `scripts/lib/playwright.mjs` and
 `scripts/lib/static-server.mjs`. Do not reintroduce per-script template
 parsers, duplicate admin route constants, copied Playwright fallback paths, or
 fixed-port local servers in regression scripts.
-`npm run check:ci` is the automatable local/CI release gate, and GitHub Actions
-runs it on `main`, pull requests, and manual dispatch.
+`npm run check:ci` is the broad local/CI gate. GitHub Actions runs it followed by
+`npm run check:emulators` as separate required steps in the same `verify` job on
+`main`, pull requests, and manual dispatch. The emulator command covers real
+Auth/Rules/API/browser integration and publication workflows.
 The Home Needs Calculator uses shared Life/CI/Health formulas and validated
 optional profile/PA inputs, with an explicit opt-in attachment to consultation.
 CMS owns methodology/source/catalog data; reviewed eligibility and product-fit
@@ -44,9 +49,10 @@ Product decision checkpoint: the 2026-08-11 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
 launcher-card count, or insurer-count copy. The newer
 [Cases contract](docs/ADMIN_CASES_V2.md) owns the current Operations scope. `/admin` is now
-the single Admin Portal shell with Home, Operations, Website content, Analytics,
-and Settings in one sidebar. Stub/planned admin modules stay hidden until their
-real contracts exist. Future bugs should be fixed as defects unless the owner
+the single Admin Portal shell with Home, Operations, Website content, Articles,
+and Analytics in one sidebar. Account details, notification preferences and
+notifications live in the shared account menu. Stub/planned admin modules stay
+hidden until their real contracts exist. Future bugs should be fixed as defects unless the owner
 explicitly reopens the product decision.
 
 Visual authority: the owner explicitly selected the September Home handoff and
@@ -54,6 +60,11 @@ subsequent desktop/tablet/mobile references. Their composition supersedes older
 Home geometry; live CMS still owns actual content. Historical exports remain
 historical. A broken prototype runtime does not invalidate a usable screenshot
 as a visual reference. See [HOME_REDESIGN.md](docs/HOME_REDESIGN.md).
+The current compact Home article section uses two horizontal cards per page on
+desktop, one on tablet, and three compact rows on mobile, with clickable page
+bars. [HOME_ARTICLES.md](docs/HOME_ARTICLES.md) owns that presentation and its
+independent published feed; [ARTICLES_INDEX.md](docs/ARTICLES_INDEX.md) owns the
+public index and its separately ordered pinned carousel.
 
 ## How To Run / Verify
 
@@ -74,7 +85,8 @@ as a visual reference. See [HOME_REDESIGN.md](docs/HOME_REDESIGN.md).
 - Seed missing UAT live/draft CMS state: `npm run uat:seed`
 - Hosted UAT E2E smoke: `npm run smoke:uat`
 - Local smoke: `npm run smoke`
-- Full local/CI gate: `npm run check:ci`
+- Broad local/CI gate: `npm run check:ci`; required Auth/Rules/API/publication
+  integration step: `npm run check:emulators`
 - Production smoke: `COVERMATE_URL=https://covermateinsurance.com npm run smoke`
 - Production URL: `https://covermateinsurance.com`
 - Vercel project: `covermate`
@@ -100,6 +112,11 @@ Detailed project documents:
 - [`docs/CMS_EDITOR_HISTORY.md`](docs/CMS_EDITOR_HISTORY.md)
 - [`docs/COPY_VOICE_AUDIT_20260927.md`](docs/COPY_VOICE_AUDIT_20260927.md)
 - [`docs/ARTICLES_PUBLISHING.md`](docs/ARTICLES_PUBLISHING.md)
+- [`docs/HOME_ARTICLES.md`](docs/HOME_ARTICLES.md)
+- [`docs/ARTICLES_INDEX.md`](docs/ARTICLES_INDEX.md)
+- [`docs/ARTICLE_DETAIL.md`](docs/ARTICLE_DETAIL.md)
+- [`docs/ADMIN_ARTICLES.md`](docs/ADMIN_ARTICLES.md)
+- [`docs/ARTICLE_EDITOR.md`](docs/ARTICLE_EDITOR.md)
 - [`docs/CONTACT_SUBMISSION.md`](docs/CONTACT_SUBMISSION.md)
 - [`docs/CUSTOMER_ACKNOWLEDGEMENTS.md`](docs/CUSTOMER_ACKNOWLEDGEMENTS.md)
 - [`docs/ADMIN_LOADING.md`](docs/ADMIN_LOADING.md)
@@ -130,8 +147,8 @@ Detailed project documents:
 
 | Path | Purpose / ownership |
 | --- | --- |
-| `index.html` | Generated deploy artifact for the public visitor site, dedicated `/motor` campaign route through Vercel rewrites, and owner modes. Do not use it as the source of truth for visitor runtime edits; update `src/visitor/*` and run `npm run build:visitor`. |
-| `src/visitor/shell.html` | Source outer shell for `index.html`, including first-paint cloak, favicon/head metadata, script imports, and the embedded bundle slot. |
+| `server/visitor-public.html`, `index.html` | Generated public artifact and owner-editing/offline-compatible artifact, respectively. Public routes use the public artifact through the server page renderer. Both share the same source renderer; update `src/visitor/*` and run `npm run build:visitor`. |
+| `src/visitor/shell.html` | Source outer shell for both generated visitor artifacts, including first-paint cloak, favicon/head metadata, script imports, and the embedded bundle slot. |
 | `src/visitor/template.html` | Source embedded `__bundler/template` HTML. The generator serializes this through `scripts/lib/bundler-template.mjs`. |
 | `src/visitor/defaults.js` | Source default CMS/site config injected into the visitor runtime. Firestore live/draft data still owns runtime content. |
 | `src/visitor/runtime.js` | Visitor rendering, routes, CMS normalization/hydration and runtime state. Composes `withCmsController`; uses the shared contract rather than copied route/cache decisions. |
@@ -143,10 +160,14 @@ Detailed project documents:
 | `covermate-calculator.mjs`, `covermate-recommendations.mjs` | Shared calculator formulas/validated attachments and deterministic product eligibility, catalog approval, and fit. |
 | `api/leads.js`, `server/enquiry-privacy.cjs` | Public App Check/idempotent intake, published consent receipt verification, calculator validation, and atomic lead/Cases creation. |
 | `admin/login/index.html` | Admin login surface. Firebase Google sign-in checks Firestore `admins/{uid}` before writing `covermate-admin-session` and redirecting to `/admin`. |
-| `admin/index.html` | Private single-shell Admin Portal. Home, Operations, Website content, Analytics, and Settings switch client-side through the shared sidebar. Has an early session gate and verified Firebase admin session check that redirect unauthenticated visitors to `/admin/login`. |
+| `admin/index.html`, `admin/shell.js` | Private single-shell Admin Portal and shared desktop/mobile navigation/account menu. Home, Operations, Website content, Articles, and Analytics switch client-side. Early session and verified Firebase admin checks redirect unauthenticated visitors to `/admin/login`. |
 | `admin/analytics/index.html` | Private owner analytics dashboard. Shows Firestore leads and server-only GA4 API aggregates, or an explicit setup-needed state when unconfigured. |
 | `admin/ops/index.html` | Compatibility shim into `/admin#operations`. It must stay tiny and must not grow into a second Admin Portal shell. |
-| `admin/ops/app.js` | Shared portal module navigation, verified API adapter, Home/Analytics/Settings and Cases mounting. Legacy rendering helpers are compatibility code, not the visible Cases workspace. |
+| `admin/ops/app.js` | Shared portal module coordination, verified API adapter, and Home/Website content/Articles/Analytics/Cases mounting. Legacy rendering helpers are compatibility code, not the visible Cases workspace. |
+| `admin/articles/workspace.mjs`, `data.mjs`, `model.mjs`, `pin-order.mjs` | Articles catalog, filters, visibility saves, pin ordering and authenticated repository adapter inside the existing Admin shell. |
+| `src/admin/article-editor.mjs`, `article-canvas.mjs`, `article-preview.mjs` | Rich article authoring, editable canvas and full-page preview; `build:article-editor` generates the owner editor bundle. |
+| `api/articles.js`, `server/articles.mjs` | Authorized article drafts, revision-checked publication, visibility/pin settings and safe published feeds. Article lifecycle is independent of website draft/live/version actions. |
+| `article-document.mjs`, `article-validation.mjs`, `article-settings.mjs` | Shared rich document/media normalization, save/publish validation and visibility defaults. |
 | `admin/ops/cases.js`, `cases.css` | Owner Cases list/detail, unsaved draft, filters/cursors, follow-up and in-app notification UI. No browser-persisted customer-data fallback. |
 | `api/ops.js` | Shared Firebase token/allowlist/UAT authorization and HTTP envelopes; dispatches Cases versus legacy operations. |
 | `server/cases-handler.cjs`, `cases-service.cjs` | Owner-only Cases routing, transactions, activities, idempotency, notifications and preferences. Public intake uses service helpers in its own transaction. |
@@ -167,24 +188,27 @@ Detailed project documents:
 | `favicon.svg` / `favicon.ico` | CoverMate shield browser icons. SVG is referenced in page heads; ICO covers legacy browser probes. |
 | `robots.txt` | Public crawler policy and primary-domain sitemap. Crawlers may read Admin noindex; authentication, not robots, protects private data. |
 | `src/visitor/home.html`, `home.css` | Compact Home-specific template and styles; existing Motor/shared owners remain in `template.html`. |
+| `src/visitor/home-articles.html`, `home-articles.mjs` | Compact Home carousel and published-summary projection; scoped presentation lives in `home.css`. CMS owns placement/headings while Articles owns records, pins and visibility. |
+| `src/visitor/articles-index.*`, `article-detail.*`, `article-carousel.mjs` | Public index/filter/pagination, reader and shared carousel behavior, using published article data and existing public chrome. |
 | `src/admin/media-editor.js`, `media-editor.css` | Ratio-locked crop UI source; `build:media` generates owner-only assets. |
 | `api/media.js`, `server/cloudinary.cjs` | Owner-only PNG validation, site isolation, Cloudinary signed immutable uploads and Free-plan quota guard. |
 | `covermate-seo.mjs` | Shared CMS metadata model for initial HTML and hydrated visitor head. |
-| `api/page.js`, `server/seo-page.mjs` | Published CMS-backed HTML head for Home/Motor and private owner boot heads; no draft reads. |
+| `api/page.js`, `server/seo-page.mjs` | Published CMS-backed initial HTML for Home/Motor/Articles and private owner boot heads; public article routes use eligible live translations, never drafts. |
 | `server/asset-versions.json` | Generated image hash map used by server metadata. Regenerated with `build:visitor`. |
-| `sitemap.xml` | Four production URLs: Home and Motor in Thai and `?lang=en`; hash aliases and admin routes stay out. |
+| `sitemap.xml`, `api/article-sitemap.js` | Static Home/Motor TH/EN sitemap plus dynamic article sitemap with enabled index and eligible published translations; hash aliases and admin routes stay out. |
 | `site.webmanifest` | App metadata and icon map for browser install/share surfaces. |
 | `organic.css` | Organic visual token source copied from the supplied CSS reference. Kept for design-system reference and future extraction work. |
 | `scripts/smoke.mjs` | Playwright smoke harness using the shared Playwright loader. |
 | `scripts/lib/bundler-template.mjs` | Shared embedded bundle-template parser/serializer used by validation, copy export/update, and regression scripts. This is the owner for template marker masking/restoring. |
-| `scripts/lib/visitor-source.mjs` | Shared source-to-generated visitor bundle composer. It is the only script-layer owner for the `src/visitor/*` to `index.html` generation boundary. |
+| `scripts/lib/visitor-source.mjs` | Shared source-to-generated visitor composer and public/owner boundary for `server/visitor-public.html`, `index.html` and generated visitor assets. |
 | `scripts/lib/contract-loader.mjs` | Shared regression-script loader for `covermate-contract.js`, used to keep Node checks clean without changing the repo-wide CommonJS/ESM mode. |
 | `scripts/lib/playwright.mjs` | Shared Playwright resolver for local installs and the Codex bundled runtime path. |
 | `scripts/lib/static-server.mjs` | Shared ephemeral static server for browser regression scripts. It preserves clean URL behavior and only maps owner public-page routes to `index.html` when requested by a check. |
 | `scripts/lib/uat-env.mjs` | Shared UAT smoke helper for local `.env.uat.local` loading, preview URL guards, Vercel protection-bypass headers, Firebase/gcloud credentials, and Firestore REST read/write helpers. It refuses non-UAT Firestore paths. |
-| `scripts/generate-visitor-bundle.mjs` | Generates `index.html` from `src/visitor/*`; `--check` is wired into `npm run check:bundles` to catch generated artifact drift. |
+| `scripts/generate-visitor-bundle.mjs` | Generates both visitor artifacts and their assets from `src/visitor/*`; `--check` is wired into `npm run check:bundles` to catch generated artifact drift. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
-| `scripts/ci-check.mjs` | Single local/CI release-gate runner. It runs static checks, browser checks, performance budgets, and local smoke against an ephemeral static server. |
+| `scripts/ci-check.mjs`, `.github/workflows/ci.yml` | Broad gate for generated artifacts, contracts, browser checks, performance budgets and local smoke. CI runs the separate `check:emulators` integration step after this gate. |
+| `scripts/emulator-suite.mjs` | Isolated Auth/Firestore/API/browser integration, including Cases, article API/publication and Home pin capacity; invoked by `npm run check:emulators`. |
 | `scripts/security-contract-check.mjs` | Static guard for Vercel security headers, Firestore deny-by-default/auth/lead validation rules, analytics PII boundaries, and server-side Operations API authorization. |
 | `scripts/performance-budget-check.mjs` | Playwright budget check for home and `/motor` mobile/desktop boot, LCP/CLS where browser entries are available, horizontal overflow, and payload budgets. |
 | `scripts/needs-calculator-regression.mjs` | Targeted regression for `fit.calculator` assumptions, public calculator controls, formula outputs, and Firestore-over-default precedence. |
@@ -205,6 +229,8 @@ Detailed project documents:
 ```mermaid
 flowchart LR
   "Visitor /" --> "Visitor /motor"
+  "Visitor /" --> "Visitor /articles"
+  "Visitor /articles" --> "Visitor /articles/slug"
   "Visitor /" --> "Visitor #motor legacy alias"
   "Admin shell /admin" --> "Owner /admin/edit"
   "Admin shell /admin" --> "Owner /admin/content"
@@ -212,6 +238,7 @@ flowchart LR
   "Admin login /admin/login" --> "Admin shell /admin"
   "Compatibility /admin/ops" --> "Admin shell /admin"
   "Admin shell /admin" --> "Owner Cases workspace"
+  "Admin shell /admin" --> "Owner Articles /admin#articles"
   "Admin shell /admin" --> "Analytics module"
   "Admin shell /admin" --> "Owner #edit"
   "Admin shell /admin" --> "Owner #admin"
@@ -223,6 +250,9 @@ Route contracts:
 - `/motor` is the dedicated motor-insurance campaign page inside the same
   product and bundle. It shares canonical data with Home where appropriate and
   adds motor-local blocks under `motorPage.*`.
+- `/articles` is the public index and `/articles/{slug}` is the public reader.
+  Saved visibility settings gate access; disabled Articles returns 404 without
+  deleting drafts or publications. Only due published translations are public.
 - `/#motor` is a visitor anchor alias for the main site's motor-insurance /
   insurer section (`#insurers`). It must keep the same global navbar as `/`.
 - `/#life` is a visitor anchor alias for the hero coverage accordion cluster
@@ -230,9 +260,13 @@ Route contracts:
 - `/#motor-focus` and `/#life-focus` are unexposed campaign variants preserved
   from the legacy reference set. They are public hash states in `index.html`,
   but must not appear in the header nav or `sitemap.xml`.
-- `/#admin`, `/#edit`, and `/#preview` are owner modes inside `index.html`.
+- `/admin/content`, `/admin/edit`, and `/admin/preview` are canonical owner
+  routes; `?page=motor` selects the Motor website canvas and Home is the default.
+  `/#admin`, `/#edit`, and `/#preview` remain legacy owner-mode inputs.
 - `/admin/login` is the owner auth gate.
 - `/admin` is the private Admin Portal Home and must remain reachable after login.
+- `/admin#articles` opens Articles management and its editor in the same shell.
+  It owns article records and publication, separately from the website canvas.
 - `/admin/analytics` is a legacy/private analytics route and must remain out of
   `sitemap.xml`; new sidebar navigation uses the Analytics module inside
   `/admin`.
@@ -250,11 +284,13 @@ Route contracts:
   `/admin/content`, and `/admin/preview`; legacy `/#edit`, `/#admin`, and
   `/#preview` remain compatibility inputs only.
 - Visitor bundle edits belong in `src/visitor/*`. Run
-  `npm run build:visitor` after source edits; `index.html` is a generated
-  deploy artifact and `npm run check:visitor-source` catches drift.
+  `npm run build:visitor` after source edits; `server/visitor-public.html` and
+  `index.html` are generated artifacts and `npm run check:visitor-source`
+  catches drift.
 - `/admin/index.html` owns the single Admin Portal shell. `/admin/ops/index.html`
   is only a compatibility shim; `admin/ops/app.js` mounts the Cases workspace
-  from `admin/ops/cases.js` and coordinates the other shell modules.
+  from `admin/ops/cases.js`, the Articles workspace from
+  `admin/articles/workspace.mjs`, and coordinates the other shell modules.
 - Keep CMS commands in `src/visitor/cms-controller.js`, pure history in
   `editor-history.js`, and rendering/hydration in `runtime.js`. The generator
   composes these sources; do not maintain a second controller in generated HTML.
@@ -307,6 +343,12 @@ Important behavior:
   version history as needed.
 - Save draft writes the active namespace `states/draft`; publish/restore writes
   `states/live`, `states/draft`, and a new `versions/*` document.
+- Article records use separate `articles`, `articleCatalog`, `articleSlugs`,
+  `articleSettings` and `articleAudit` collections inside the same site namespace.
+  Website Save/Publish/Reset/Undo/version restore never writes article drafts or
+  publications. Article Save/Publish/Unpublish never writes website states or
+  versions. Shared page headings/artwork remain website CMS fields; see
+  [ARTICLES_PUBLISHING.md](docs/ARTICLES_PUBLISHING.md).
 - `api/page.js` prepares public initial metadata from published CMS; runtime
   sync follows hydrated live state. Static metadata is the failure fallback.
   Admin routes and owner modes must remain `noindex`.
@@ -416,8 +458,9 @@ Current active bundle references:
 - `assets/ins/14-sompo.png`
 
 The active insurer grid currently has 14 logo references, is rendered from the
-editable `insurers.items` content array, and includes AIA/Srikrung Broker
-relationship proof cards in the same section. Slot 13 is Aioi Bangkok Insurance.
+editable `insurers.items` content array. Home presents the AIA/Srikrung Broker
+relationship proof cards in its separate licence band while preserving their
+existing CMS ownership. Slot 13 is Aioi Bangkok Insurance.
 The one-time CMS v1 migration maps the exact legacy ThaiVivat asset to Aioi.
 Later Admin values and explicit blanks win; do not guess logos by slot or name.
 The visible copy should follow the actual logo count unless business-approved
@@ -433,8 +476,8 @@ embedded into the current `index.html` bundle resource map.
 ### Visitor
 
 1. Visitor lands on `/`.
-2. Navigation anchors move through coverage, motor, claim help, calculator,
-   steps, FAQ, and contact entry points.
+2. Navigation anchors move through the enabled coverage, motor, calculator,
+   FAQ and contact sections; saved Articles visibility controls article links.
 3. Language toggle switches Thai/English copy.
 4. Insurer logos render from editable content in the motor/insurer section.
 5. Home uses three featured illustrated tiers and a disclosed full comparison;
@@ -449,6 +492,9 @@ embedded into the current `index.html` bundle resource map.
    `qtype: "review"`.
 10. Successful public form submission writes a validated Firestore lead document
    and fires only privacy-safe Analytics outcome/category events.
+11. Home article cards and the public index open eligible published readers.
+    Home displays up to ten articles using Home pins then latest publications;
+    the index uses its independent, CMS-ordered pinned carousel.
 
 ### Admin
 
@@ -459,7 +505,8 @@ embedded into the current `index.html` bundle resource map.
 4. Sidebar module switching inside `/admin` uses client-side state and does not
    reload the document.
 5. `งานลูกค้า` opens the owner-only Cases workspace inside the same shell.
-6. `จัดการเว็บไซต์`, `Analytics`, and `ตั้งค่า` open inside the same shell.
+6. `จัดการเว็บไซต์`, `บทความ`, and `Analytics` open inside the same shell.
+   Account details and notification preferences open from the shared account menu.
 7. Quick actions use `/admin/edit` and `/admin/preview`; old hashes remain inputs for compatibility.
 8. `/admin/analytics` remains a legacy/private analytics route while the main
    sidebar Analytics surface shows first-party CoverMate records and funnel
@@ -475,6 +522,9 @@ embedded into the current `index.html` bundle resource map.
 12. Closing direct `/admin/content` returns to `/admin`. Closing a panel opened
    from `/admin/edit` hides the panel and keeps the owner in the same editor
    context. `Public site` opens the clean public route in a new browser tab.
+13. Articles management opens a full draft in the rich editor. Save draft,
+    full-page Preview and confirmed Publish/Unpublish belong to that article;
+    website state, other article drafts and visibility settings remain separate.
 
 ## Do Not Break
 
@@ -524,10 +574,11 @@ embedded into the current `index.html` bundle resource map.
 | HTML bundle route/auth/content changes | `npm run smoke`, plus targeted Playwright interaction for the changed flow. |
 | Source-authored admin pages | `npm run check:bundles`, `npm run smoke`, and desktop/mobile screenshot evidence. |
 | Cases/API/refactor boundaries | `npm run check:refactor`, relevant Cases checks, and isolated Auth/Firestore emulator tests for touched persistence/authorization behavior. |
+| Articles UI/publication | Targeted Home/index/reader/editor checks for the touched surface; `npm run check:emulators` for persistence, authorization, visibility and publication boundaries. See the canonical Articles docs above. |
 | Firestore rules or lead data changes | Isolated emulator allow/deny and API/persistence checks; hosted UAT when required by `docs/UAT.md`. Rules deployment remains a separate authorized action. |
 | Narrow visual/font/responsive changes | `git diff --check` and personally inspected targeted desktop/mobile evidence; broaden only when shared behavior or release risk changes. |
 | Insurer logo changes | Targeted asset/optical-size check; update count expectations only if active data changes. |
-| Vercel/deploy changes | Current owner authorization, release-gate checks, exact-SHA CI and deployed source/smoke readback; do not bypass the Git-linked production check. |
+| Vercel/deploy changes | Current owner authorization, `check:ci` plus separate `check:emulators`, exact-SHA CI and deployed source/smoke readback per `docs/RELEASE_RUNBOOK.md`; `docs/HANDOFF.md` owns the current receipt. Do not bypass the Git-linked production check. |
 | Documentation-only changes | `git diff --check`; markdown lint only if the repo later adds one. |
 
 ## Relevant Skills

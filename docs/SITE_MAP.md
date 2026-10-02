@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-09-24. This map describes source routes. See
+Last updated: 2026-10-02. This map describes source routes. See
 [HANDOFF.md](HANDOFF.md) for deployed versus candidate status; route presence
 in the working tree is not deployment evidence.
 
@@ -8,8 +8,10 @@ in the working tree is not deployment evidence.
 
 | Route | Audience | Purpose | Source |
 | --- | --- | --- | --- |
-| `/` | Visitor | Compact Home | `src/visitor/home.html`, `home.css`, generated `index.html`; `api/page.js` head wrapper |
-| `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `src/visitor/template.html`, generated `index.html`; `api/page.js` head wrapper |
+| `/` | Visitor | Compact Home | `src/visitor/home.html`, `home.css`, generated `server/visitor-public.html`; `api/page.js` wrapper |
+| `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `src/visitor/template.html`, generated `server/visitor-public.html`; `api/page.js` wrapper |
+| `/articles` | Visitor | Published article index, gated by saved Articles visibility | `src/visitor/articles-index.*`, `api/page.js`, `server/articles.mjs` |
+| `/articles/{slug}` | Visitor | Reader for eligible published translations | `src/visitor/article-detail.*`, `api/page.js`, `server/articles.mjs` |
 | `/#motor` | Visitor | Public Home motor-insurance anchor; same insurer section | `index.html` |
 | `/#insurers` | Visitor | Compatibility URL, replaced with `/#motor` without adding history | `index.html` |
 | `/#life` | Visitor | Alias to the Home `#cover` section | `index.html` |
@@ -17,7 +19,8 @@ in the working tree is not deployment evidence.
 | `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the legacy reference set | `index.html` |
 | `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the legacy reference set | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
-| `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Analytics, and Settings | `admin/index.html` |
+| `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Articles, and Analytics; shared account menu | `admin/index.html`, `admin/shell.js` |
+| `/admin#articles` | Verified owner | Articles management and rich editor inside the shared shell | `admin/articles/workspace.mjs`, `src/admin/article-editor.mjs`, `/api/articles` |
 | `/admin/ops` | Verified admin; Cases owner-only | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit`, `/#admin`, `/#preview` | Owner | Session-gated compatibility aliases for editor, panel, preview; do not generate new links | `covermate-contract.js`, `src/visitor/runtime.js` |
 | `/admin/content?page=home\|motor` | Owner | Control panel for the selected page | Shared visitor runtime/controller; private boot head via `api/page.js` |
@@ -32,6 +35,7 @@ in the working tree is not deployment evidence.
 | `/motor` | `index,follow` | `https://covermateinsurance.com/motor` |
 | `/?lang=en` | `index,follow` | `https://covermateinsurance.com/?lang=en` |
 | `/motor?lang=en` | `index,follow` | `https://covermateinsurance.com/motor?lang=en` |
+| `/articles`, `/articles/{slug}` and eligible `?lang=en` variants | Public when Articles is enabled and the translation is published and due; disabled/unavailable content is not indexed | Corresponding public route and language; see [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md) |
 | `/#motor` | Same document as `/`; do not sitemap hash URLs | `https://covermateinsurance.com/` |
 | `/#life` | Same document as `/`; do not sitemap hash URLs | `https://covermateinsurance.com/` |
 | `/#motor-focus`, `/#life-focus` | Same document as `/`; unexposed campaign hash states, not sitemap URLs | `https://covermateinsurance.com/` |
@@ -45,7 +49,10 @@ SEO implementation details live in [`SEO.md`](SEO.md).
 ## Visitor Sections
 
 The public home is a single-page landing experience. The product also includes
-`/motor`, a dedicated motor-insurance page in the same bundle and brand system.
+`/motor`, a dedicated motor-insurance page, plus `/articles` and its readers in
+the same brand system. Article presentation is documented in
+[HOME_ARTICLES.md](HOME_ARTICLES.md), [ARTICLES_INDEX.md](ARTICLES_INDEX.md) and
+[ARTICLE_DETAIL.md](ARTICLE_DETAIL.md).
 Authored templates and runtime live in `src/visitor/`; inspect those sources
 and the rendered DOM before renaming section IDs or anchors.
 
@@ -60,7 +67,7 @@ and `on` values win. The Home direction is documented in [HOME_REDESIGN.md](HOME
 | Policy review | Explains the free policy review offer and what visitors can send in. |
 | Fit/calculator | Home Life/CI/Health planning with explicit blank/unknown states, optional eligibility/PA intake, reviewed sources, and opt-in contact attachment. |
 | Process/how | Explains consultation, information gathering, comparison, and follow-up. |
-| Motor insurers | Home static logo grid with disclosed AIA/Srikrung relationship proof; Motor retains its own presentation. |
+| Motor insurers | Home static logo grid; relationship proof sits in the separate final licence band. Motor retains its own presentation. |
 | Motor tier comparison | Home and Motor share three CMS-ID-selected illustrated classes, a desktop class-by-topic table and mobile topic disclosures. Cell statuses and localized remarks are owner-editable. |
 | Claim help | Explains accident/claim assistance and emergency support expectations. |
 | Renewal reminders | Lets visitors request renewal reminders without replacing the consultation form. |
@@ -69,6 +76,7 @@ and `on` values win. The Home direction is documented in [HOME_REDESIGN.md](HOME
 | FAQ | Common questions plus former Guides items; one public/Admin owner with stable IDs. |
 | Fee transparency | Explains broker compensation and how recommendations should stay aligned with visitor needs. |
 | Privacy/PDPA | Explains what happens to submitted information and what is not sent to Analytics. |
+| Home articles | Compact published article carousel; website CMS owns placement/headings, while Articles owns records, pins and visibility. See [HOME_ARTICLES.md](HOME_ARTICLES.md). |
 | Contact/footer | LINE, phone, email, location, form, and legal copy. |
 
 ## Dedicated Motor Page
@@ -97,7 +105,8 @@ Supported Motor route sections; visibility remains CMS-owned:
 | Surface | Route | Role |
 | --- | --- | --- |
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
-| Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Analytics, Settings, public-site exit, and log out. |
+| Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Articles, Analytics and public-site exit. Shared account menu owns account details, notification preferences, notifications and log out. |
+| Articles | `/admin#articles` | Catalog, visibility, pin ordering, rich editor and independent article publication. See [ADMIN_ARTICLES.md](ADMIN_ARTICLES.md) and [ARTICLE_EDITOR.md](ARTICLE_EDITOR.md). |
 | Analytics | `/admin` | First-party admin reporting inside the shared shell. The legacy `/admin/analytics` route may remain reachable for older bookmarks, but new navigation stays in the shell. |
 | Cases workspace (งานลูกค้า) | `/admin#operations` or compatibility `/admin/ops` | Owner-only case inbox/detail, follow-up, activity, and in-app notifications through `/api/ops/*`. Legacy Dashboard/Leads/Tasks/Audit APIs remain compatibility code, not visible tabs. Planned modules remain hidden. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md). |
 | Inline editor | `/admin/edit` | Tap editable copy directly on the page; whole-Draft Undo/Redo and owner commands. |
@@ -135,7 +144,9 @@ The `/admin` home actions must stay aligned with the live admin product:
   แผงเครื่องมือ` command opens the control panel for section order, visibility, brand,
   footer, backup, restore, preview, and publish.
 - `Analytics` switches to the Analytics module inside the shared shell
-- `ตั้งค่า` switches to the Settings module inside the shared shell
+- `บทความ` switches to Articles management inside the shared shell
+- The shared account menu opens account details, notification preferences and
+  notifications, and keeps log out available
 - `ดูเว็บจริง` opens clean `/` in a new tab and keeps the current Admin tab
 
 Admin chrome is Thai with conventional English terms; the TH/EN selector
@@ -143,6 +154,11 @@ changes website content only. See [ADMIN_LANGUAGE.md](ADMIN_LANGUAGE.md).
 
 Inside the Admin Portal shell, unbuilt modules must stay hidden and must not show
 fake records, not-wired tables, or browser-local workflow data.
+
+Website draft/live/version actions and article draft/publication actions have
+independent lifecycles. Saved Articles visibility controls public article URLs,
+Home cards and navigation; website publishing does not publish article drafts.
+See [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md) for the full boundary.
 
 Unauthenticated direct access to `/admin`, `/admin/analytics`, `/admin/ops`,
 `/admin/edit`, `/admin/content`, `/admin/preview`, and their legacy owner hashes

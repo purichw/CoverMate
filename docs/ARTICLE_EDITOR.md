@@ -1,6 +1,7 @@
 # Article Editor
 
-Updated 2026-10-01. Publication and cloud-storage behavior is specified in
+Updated 2026-10-02 against live source `aa8b68d`; see [HANDOFF.md](HANDOFF.md)
+for CI and deployment evidence. Publication and cloud-storage behavior is specified in
 [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md); this document covers authoring
 and reader presentation.
 
@@ -25,7 +26,7 @@ Existing published articles produce a separate working draft and keep their
 slug read-only. Back, sidebar navigation, logout and browser unload guard unsaved
 changes. Saving during continued typing does not mark later edits saved.
 
-## Field Requirements And SEO (Local, September 30)
+## Field Requirements And SEO
 
 `article-validation.mjs` owns the shared field requirements used by the editor
 and article repository. Fields identify **จำเป็น**, **ไม่บังคับ**, or
@@ -83,7 +84,9 @@ uses the actual Admin editor, article repository and public renderer with an
 isolated in-memory database and synthetic identity. It verifies draft save/reload,
 field correction, conditional Alt, SEO publication, multilingual confirmation,
 server conflict and 1440/375 layouts, without production writes or auth testing.
-Evidence: `uat-results/article-validation/`. This change is not yet deployed.
+Recorded local evidence: `uat-results/article-validation/`. This implementation
+is included in `aa8b68d`; this documentation refresh did not rerun visual or
+authenticated production checks.
 
 ## Writing
 
