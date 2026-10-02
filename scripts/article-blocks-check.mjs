@@ -86,7 +86,10 @@ if(process.argv.includes('--browser')){
     };
     await field('title').fill('Free blocks UI QA');await field('excerpt').fill('Authoring through the actual controls');await field('slug').fill('free-blocks-ui-qa');
     await body().fill('เนื้อหาเริ่มต้น');
-    await tool('add-paragraph');await page.keyboard.insertText('ย่อหน้าที่เพิ่มจากปุ่ม');
+    await tool('add-paragraph');
+    // Tiptap restores iframe focus on the next animation frame.
+    await articleCanvas(page).locator('.ae-editor-host:not([hidden]) .tiptap:focus').waitFor();
+    await page.keyboard.insertText('ย่อหน้าที่เพิ่มจากปุ่ม');
     assert.ok(articleDocumentText(await doc()).includes('ย่อหน้าที่เพิ่มจากปุ่ม'));
     await tool('block-delete');
     await edit('add-takeaway',{title:'สรุปที่สร้างด้วย Editor',items:'ประเด็นจาก UI หนึ่ง\nประเด็นจาก UI สอง',note:'ข้อความลายมือจาก UI'});
