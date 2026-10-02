@@ -1,5 +1,8 @@
 # Shared Admin Shell Release
 
+Final status: deployed and verified on September 26, 2026. The earlier blocker
+and exception sections below are the release history, not the current status.
+
 ## Scope
 
 The owner authorized push/deploy on September 26, 2026. Only the shared Admin
@@ -69,3 +72,21 @@ The authorized exception applies only to this release. A production build must
 use Production configuration, not promote an artifact built with UAT settings.
 Record its alias/source and exact-byte readback separately; do not label pending
 or failed CI as passed. The normal project CI gate remains installed.
+
+## Confirmed Production Result
+
+- Released source: `d8d130ae90cf22fd44c0429dd18d9b7e44cb37af`, pushed to `main`.
+- GitHub CI run `36180339157` passed the complete CoverMate gate and real isolated
+  Auth, Rules, API and Publish E2E. No check bypass was ultimately necessary.
+- Production deployment: `dpl_79dWdyzV33Z1qkmSGrDQ5od4e3XH`,
+  `https://covermate-5ntoxrleb-purich-w.vercel.app`. The deployment-alias gate
+  succeeded and `https://covermateinsurance.com` resolves to this artifact.
+- Canonical readback at `2026-09-26T06:12:50Z` passed exact SHA-256 comparison
+  of all seven changed Admin runtime files. Signed-out Admin redirects to a
+  rendered Login at 1440px and 390px; public Home hydrates without overflow or
+  page errors at both widths. No form submission or production data write.
+- Evidence: `uat-results/admin-shell-release/production.json` and production
+  login screenshots. Real owner sign-in and authenticated production customer
+  data were not exercised; synthetic local/CI tests cover the five modules.
+- This closeout is documentation only on the release branch. It does not create
+  another production deployment or change the verified runtime source above.
