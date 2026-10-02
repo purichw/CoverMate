@@ -46,7 +46,9 @@ export function registerArticleCarousel() {
       const slides=[...this.querySelectorAll('[data-slide-key]')],language=this.dataset.language;
       if(slides.length===this.slides.length&&slides.every((slide,i)=>slide===this.slides[i])&&language===this.language){this.loadImages();return;}
       const current=this.slides[this.index]?.dataset.slideKey;
-      this.slides=slides;this.language=language;this.index=Math.max(0,slides.findIndex(slide=>slide.dataset.slideKey===current));
+      this.slides=slides;this.language=language;
+      const retained=Math.max(0,slides.findIndex(slide=>slide.dataset.slideKey===current));
+      this.index=Math.floor(retained/this.pageSize())*this.pageSize();
       this.setAttribute('aria-roledescription',language==='en'?'carousel':'ชุดบทความเลื่อน');
       this.update();
     }

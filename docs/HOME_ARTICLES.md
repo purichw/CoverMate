@@ -15,7 +15,7 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   the existing site workflow; article records and visibility settings stay separate.
 - Carousel: three cards across per page at 1024px+, two at 768–1023px, and
   three compact cards stacked vertically on mobile. Desktop cards use 16:9
-  covers; mobile cards put a square thumbnail beside the
+  covers; mobile cards put a vertically centered square thumbnail beside the
   text. Category/date sit in the copy column. Missing covers use a compact
   desktop placeholder without stretching the article into a large empty panel.
   Dates use the published translation's timestamp in Bangkok time, localized

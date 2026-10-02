@@ -101,12 +101,13 @@ try {
   await carousel.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,clientX:100,clientY:305});
   assert.equal((await active())[0],keys(feed)[3]);await page.waitForTimeout(550);
   await page.waitForFunction(()=>document.querySelector('#articles article-carousel').visible);
-  await page.clock.install();
-  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(1,1);
-  // Deliver native pointer-leave before freezing animation frames. Otherwise
-  // the taller mobile stack can retain hover pause after the pointer has left.
+  // Leave the carousel before installing the clock; native pointer delivery
+  // must not depend on mocked animation frames. Use the keyboard to resume.
+  await page.mouse.move(1,1);
   await page.waitForFunction(()=>!document.querySelector('#articles article-carousel').hovered);
-  await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+100)));
+  await carousel.locator('[data-carousel-action=play]').focus();
+  const clockStart=new Date();await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
+  await carousel.locator('[data-carousel-action=play]').press('Space');
   await page.clock.runFor(9000);assert.equal((await active())[0],keys(feed)[3]);
   await page.clock.runFor(2000);assert.equal((await active())[0],keys(feed)[6]);
   await carousel.locator('[data-active=true] a').first().focus();await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[6],'Focus pauses');await page.clock.resume();
@@ -116,6 +117,12 @@ try {
   assert.equal((await active()).length,1,'Four articles end with one card, without repeats');
   const partial=await carousel.locator('.hm-article-grid').boundingBox(),last=await carousel.locator('[data-active=true]').boundingBox();
   assert.ok(Math.abs(partial.y+partial.height-last.y-last.height)<1,'Four-article feed leaves no empty mobile rows');
+  const retained=(await active())[0];
+  await carousel.locator('[data-slide-key]').first().evaluate(node=>node.remove());
+  await page.waitForFunction(()=>document.querySelectorAll('#articles [data-active=true]').length===3);
+  assert.ok((await active()).includes(retained),'Feed changes keep the previously selected article on its containing page');
+  assert.equal(await carousel.locator('[data-active=true]:visible').count(),3,'A shrinking feed cannot hide the remaining active cards');
+  assert.equal(await carousel.locator('[data-carousel-controls]').isVisible(),false);
   server.setFeed({...feed,items:[feed.items[0]]});await ready();assert.equal(await carousel.locator('[data-carousel-controls]').isVisible(),false);
   server.setFeed({...feed,items:[]});await page.reload();await page.locator('#talk').waitFor();assert.equal(await page.locator('#articles').count(),0);
   assert.deepEqual(errors,[]);report.checks=['ten reachable cards','stable full-page height','compact partial mobile page','desktop/tablet/mobile','keyboard/swipe/wrap','10-second rotation','focus/reduced motion','single/empty'];report.passed=true;
