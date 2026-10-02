@@ -112,12 +112,15 @@ export function readContactPayloadAsset() {
 }
 
 const ARTICLE_READER_HELPERS = ['articleDetailSlug', 'readArticleDetail', 'articleShareUrl', 'articleSaved', 'toggleSavedArticle'];
+const HOME_ARTICLE_HELPERS = ['articlePublicHref', 'readHomeArticleFeed', 'projectPublishedArticles', 'projectHomeArticles', 'homeArticleInsertionIndex'];
 const ARTICLE_READER_BINDINGS = `const {registerArticleDocument,registerArticleCarousel,${ARTICLE_READER_HELPERS.join(',')}} = CoverMateArticleReader;`;
+const HOME_ARTICLE_BINDINGS = `const {${HOME_ARTICLE_HELPERS.join(',')}} = CoverMateArticleReader;`;
 export function readArticleReaderAsset() {
   const helpers = ARTICLE_READER_HELPERS;
-  // Bundle only browser entry points; full publication projection stays server-side.
+  // Reuse the existing reader request for feed helpers and responsive media.
+  // Full article-detail projection stays server-side.
   const code = buildSync({
-    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
+    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs'; export {${HOME_ARTICLE_HELPERS.join(',')}} from './src/visitor/home-articles.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
     bundle: true, write: false, treeShaking: true, minify: true, format: 'iife',
     globalName: 'CoverMateArticleReader', target: 'es2022', charset: 'utf8'
   }).outputFiles[0].text;
@@ -273,7 +276,7 @@ export function buildVisitorTemplate(sources = readVisitorSources()) {
   const defaults = JSON.parse(vm.runInNewContext(sources.defaults + '\nJSON.stringify(DEFAULTS)'));
   // Keep source and diagnostic builds readable; compact only shipped output.
   // No output format: esbuild retains top-level Component while compacting locals.
-  const runtime = transformSync(buildVisitorRuntime({ ...sources, articleDetailSource: ARTICLE_READER_BINDINGS, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' }), {
+  const runtime = transformSync(buildVisitorRuntime({ ...sources, articleDetailSource: ARTICLE_READER_BINDINGS, homeArticlesSource: HOME_ARTICLE_BINDINGS, defaults: 'const DEFAULTS = ' + JSON.stringify(defaults) + ';' }), {
     minifyWhitespace: true, minifyIdentifiers: true, charset: 'utf8'
   }).code
     // Existing seed/export tools use these two boundaries in the generated HTML.

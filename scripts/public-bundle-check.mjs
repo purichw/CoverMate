@@ -18,6 +18,8 @@ for (const marker of ['class="hm-menu"', 'id="articles-search"', 'class="cm-foot
 }
 assert.ok(gzipSync(visitor).length < gzipSync(owner).length * 0.85, 'Public payload must remain at least 15% smaller compressed than owner');
 assert.ok(gzipSync(visitor).length < 195000, 'Public shell compressed budget');
+assert.doesNotMatch(publicTemplate,/c_limit,w_/,'Responsive delivery logic belongs to the shared reader, not every HTML response');
+assert.match(fs.readFileSync('assets/visitor/article-reader.js','utf8'),/projectHomeArticles/);
 for (const [key, marker] of [
   ['runtime', '// COVERMATE_OWNER_VALUES_BEGIN'],
   ['runtime', '/* COVERMATE_OWNER_BASE_END */'],
