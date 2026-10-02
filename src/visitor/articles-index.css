@@ -44,8 +44,6 @@ article-carousel { display:block; margin-bottom:30px; }
 .ar-carousel-controls[hidden] { display:none; }
 .ar-carousel-controls button { display:flex; align-items:center; justify-content:center; width:44px; height:44px; padding:0; border:1px solid #e2dfd5; border-radius:50%; background:#fffefa; color:var(--color-accent-700); cursor:pointer; }
 .ar-carousel-controls span { min-width:56px; text-align:center; font-size:13px; font-variant-numeric:tabular-nums; color:var(--ar-muted); }
-.ar-carousel-controls [data-carousel-action="play"] { margin-right:auto; }
-.ar-carousel-controls [data-playing="true"] .ar-carousel-play,.ar-carousel-controls [data-playing="false"] .ar-carousel-pause { display:none; }
 article-carousel .ar-featured { touch-action:pan-y; }
 .ar-index .ar-featured-label { display:none; align-items:center; gap:6px; color:#9b551c; background:#fff0d8; border-radius:999px; padding:5px 10px; font-size:12px; font-weight:600; }
 .ar-featured-label svg { width:16px; height:16px; }

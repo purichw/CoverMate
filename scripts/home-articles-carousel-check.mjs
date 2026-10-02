@@ -41,14 +41,14 @@ try {
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
   const ready=async(lang='th')=>{await page.goto(server.baseUrl+'/?lang='+lang);await page.locator('#articles [data-active=true]').first().waitFor();await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));await page.evaluate(()=>document.fonts.ready);if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();await page.locator('#articles').scrollIntoViewIfNeeded();};
   const carousel=page.locator('#articles article-carousel'),active=()=>carousel.locator('[data-active=true]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey));
-  for(const [width,size] of [[1440,3],[820,2],[375,1],[320,1]]) {
+  for(const [width,size] of [[1440,2],[820,1],[375,1],[320,1]]) {
     await page.setViewportSize({width,height:900});await ready(width===320?'en':'th');
     assert.equal(await carousel.locator('[data-slide-key]').count(),10);
     assert.equal((await active()).length,size);
     const pages=carousel.locator('[data-carousel-page]');
     const pageCount=Math.ceil(10/size);
     assert.equal(await pages.count(),pageCount);
-    assert.equal(await carousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'false','Reduced motion starts paused');
+    assert.equal(await carousel.locator('[data-carousel-action=play]').count(),0,'No Play/Pause control');
     const heights=[],seen=new Set();
     for(let i=0;i<Math.ceil(10/size);i++) {
       for(const id of await active())seen.add(id);
@@ -68,11 +68,18 @@ try {
     const geometry=await carousel.locator('[data-active=true] .hm-article-link').evaluateAll(nodes=>nodes.map(node=>{
       const image=node.querySelector('.hm-article-media').getBoundingClientRect(),copy=node.querySelector('.hm-article-copy').getBoundingClientRect();
       const category=node.querySelector('.hm-article-category').getBoundingClientRect(),date=node.querySelector('time').getBoundingClientRect();
-      return {image:image.toJSON(),copy:copy.toJSON(),category:category.toJSON(),date:date.toJSON()};
+      return {card:node.getBoundingClientRect().toJSON(),image:image.toJSON(),copy:copy.toJSON(),category:category.toJSON(),date:date.toJSON()};
     }));
-    assert.ok(geometry.every(g=>Math.abs(g.image.width/g.image.height-1.45)<.01),'Consistent landscape media');
-    assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Image above copy on every viewport');
-    assert.ok(geometry.every(g=>g.category.right<=g.date.left && g.date.right<=g.image.right),'Overlay badges do not collide');
+    if(width>=768) {
+      assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Desktop/tablet images beside copy');
+      assert.ok(geometry.every(g=>g.card.height<=260),'Compact horizontal card height');
+    } else {
+      assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top && g.image.height<=176),'Mobile cover stays compact above copy');
+      assert.ok(geometry.every(g=>g.card.height<=410),'Compact mobile card height');
+    }
+    assert.ok(geometry.every(g=>g.category.right<=g.date.left || g.category.bottom<=g.date.top),'Metadata can wrap without collisions');
+    assert.ok(geometry.every(g=>g.category.left>=g.copy.left && g.date.right<=g.copy.right),'Metadata belongs to the text area');
+    assert.ok(await carousel.locator('[data-active=true] .hm-article-read').first().isVisible(),'Read action remains visible on all viewports');
     const allLink=await page.locator('.hm-articles-all').boundingBox(),heading=await page.locator('.hm-articles-heading').boundingBox(),carouselBox=await carousel.boundingBox();
     if(width<768)assert.ok(allLink.y>=carouselBox.y+carouselBox.height,'Mobile all-articles CTA below carousel');
     else assert.ok(allLink.y>=heading.y&&allLink.y+allLink.height<=heading.y+heading.height,'Desktop all-articles CTA beside heading');
@@ -89,10 +96,14 @@ try {
   assert.equal((await active())[0],keys(feed)[1]);await page.waitForTimeout(550);
   await page.waitForFunction(()=>document.querySelector('#articles article-carousel').visible);
   const clockStart=new Date();await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
-  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(0,0);
+  await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[1],'Reduced motion does not auto-rotate');
+  await page.emulateMedia({reducedMotion:'no-preference'});await page.mouse.move(0,0);
   await page.clock.runFor(9000);assert.equal((await active())[0],keys(feed)[1]);
   await page.clock.runFor(2000);assert.equal((await active())[0],keys(feed)[2]);
-  await carousel.locator('[data-active=true] a').focus();await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[2],'Focus pauses');await page.clock.resume();
+  await carousel.locator('[data-carousel-page="3"]').click();
+  await page.clock.runFor(10001);assert.equal((await active())[0],keys(feed)[4],'Manual indicator selection keeps autoplay running');
+  await carousel.locator('[data-active=true] a').focus();await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[4],'Focus pauses');
+  await page.locator('.hm-articles-all').focus();await page.clock.runFor(10001);assert.equal((await active())[0],keys(feed)[5],'Leaving carousel focus resumes automatically');await page.clock.resume();
   server.setFeed({...feed,items:[feed.items[0]]});await ready();assert.equal(await carousel.locator('[data-carousel-controls]').isVisible(),false);
   server.setFeed({...feed,items:[]});await page.reload();await page.locator('#talk').waitFor();assert.equal(await page.locator('#articles').count(),0);
   assert.deepEqual(errors,[]);report.checks=['ten reachable cards','stable height','desktop/tablet/mobile','keyboard/swipe/wrap','10-second rotation','focus/reduced motion','single/empty'];report.passed=true;

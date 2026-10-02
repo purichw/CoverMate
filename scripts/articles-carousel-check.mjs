@@ -40,7 +40,7 @@ try {
     await page.locator('article-carousel').scrollIntoViewIfNeeded();
     assert.equal(await active(),feed.settings.pinnedOrder[0]);
     const carousel=page.locator('article-carousel');
-    assert.equal(await carousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'false','Reduced motion starts paused');
+    assert.equal(await carousel.locator('[data-carousel-action=play]').count(),0,'No Play/Pause control');
     const sizes=[];
     for(let i=0;i<3;i++) {
       await page.locator('.ar-slide[data-active=true] img').waitFor();
@@ -69,18 +69,18 @@ try {
   await page.waitForFunction(()=>document.querySelector('article-carousel').visible);
   const clockStart=new Date();
   await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
-  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(0,0);
-  await page.waitForFunction(()=>{const el=document.querySelector('article-carousel');return el.playing&&el.visible&&!el.hovered;},null,{timeout:5000}).catch(async error=>{console.error('Carousel timing state',await carousel.evaluate(el=>({playing:el.playing,visible:el.visible,hovered:el.hovered,hidden:document.hidden,rect:el.getBoundingClientRect().toJSON(),focus:document.activeElement.outerHTML.slice(0,160)})));throw error;});
+  await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[1],'Reduced motion does not auto-rotate');
+  await page.emulateMedia({reducedMotion:'no-preference'});await page.mouse.move(0,0);
   await page.clock.runFor(9000);assert.equal(await active(),feed.settings.pinnedOrder[1],'No early rotation');
   await page.clock.runFor(2000);assert.equal(await active(),feed.settings.pinnedOrder[2],'Rotates after the 10-second interval');
   await page.locator('.ar-slide[data-active=true] .ar-card-link').hover();await page.clock.runFor(11000);
-  assert.equal(await active(),feed.settings.pinnedOrder[2],'Hover pauses');
-  await page.mouse.move(0,0);await page.clock.runFor(10001);assert.equal(await active(),feed.settings.pinnedOrder[0]);
-  await page.locator('.ar-slide[data-active=true] .ar-card-link').focus();await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[0],'Keyboard focus stops rotation');
-  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(0,0);
+  assert.equal(await active(),feed.settings.pinnedOrder[0],'Hover does not stop autoplay');
+  await page.locator('.ar-slide[data-active=true] .ar-card-link').focus();await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[0],'Focused card pauses rotation');
+  await page.locator('#articles-search').focus();await page.clock.runFor(10001);assert.equal(await active(),feed.settings.pinnedOrder[1],'Leaving carousel focus resumes automatically');
+  await page.mouse.move(0,0);
   await page.locator('footer').scrollIntoViewIfNeeded();
   await page.waitForFunction(()=>document.querySelector('article-carousel').visible===false);
-  await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[0],'Offscreen pauses');
+  await page.clock.runFor(11000);assert.equal(await active(),feed.settings.pinnedOrder[1],'Offscreen pauses');
   await page.clock.resume();
   await ready();await page.locator('.ar-slide[data-active=true] a').click();await page.locator('.ad-prose').waitFor();assert.match(page.url(),/travel-cover-checklist/);
   await page.locator('.ad-related').scrollIntoViewIfNeeded();assert.ok(await page.locator('.ad-related img').count()>0,'Shared reader cards retain images');
@@ -107,12 +107,12 @@ try {
   if(await automatic.locator('[data-cookie-reject]').isVisible())await automatic.locator('[data-cookie-reject]').click();
   const liveCarousel=automatic.locator('article-carousel');await liveCarousel.scrollIntoViewIfNeeded();await automatic.mouse.move(0,0);
   await automatic.waitForFunction(()=>document.querySelector('article-carousel').visible);
-  assert.equal(await liveCarousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'true','Normal motion auto-starts');
+  assert.equal(await liveCarousel.locator('[data-carousel-action=play]').count(),0,'No Play/Pause control is needed');
   await automatic.waitForTimeout(11000);
   assert.equal(await liveCarousel.locator('[data-active=true]').getAttribute('data-slide-key'),feed.settings.pinnedOrder[1],'Automatic rotation needs no initial click');
-  await liveCarousel.locator('[data-carousel-action=play]').click();await automatic.mouse.move(0,0);
-  assert.equal(await liveCarousel.locator('[data-carousel-action=play]').getAttribute('data-playing'),'false','Clicking Pause really stops a running carousel');
-  await automatic.waitForTimeout(11000);assert.equal(await liveCarousel.locator('[data-active=true]').getAttribute('data-slide-key'),feed.settings.pinnedOrder[1]);
+  await liveCarousel.locator('[data-carousel-action=next]').click();
+  assert.equal(await liveCarousel.locator('[data-active=true]').getAttribute('data-slide-key'),feed.settings.pinnedOrder[2]);
+  await automatic.waitForTimeout(11000);assert.equal(await liveCarousel.locator('[data-active=true]').getAttribute('data-slide-key'),feed.settings.pinnedOrder[0],'Manual navigation does not require restarting autoplay');
   await normalContext.close();
-  assert.deepEqual(errors,[]);console.log('PASS pin projection, unlimited pins, desktop/mobile stable geometry, navigation/wrap, keyboard/swipe, 10-second timer, reduced motion, hover/focus/offscreen pause and reader link.');
+  assert.deepEqual(errors,[]);console.log('PASS pin projection, unlimited pins, desktop/mobile stable geometry, navigation/wrap, keyboard/swipe, continuous 10-second autoplay without Play/Pause, reduced motion, focus resume, offscreen pause and reader link.');
 } finally {await browser.close();await new Promise(resolve=>server.server.close(resolve));}

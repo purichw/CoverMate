@@ -2,8 +2,8 @@ export function registerArticleCarousel() {
   if(typeof customElements==='undefined'||customElements.get('article-carousel'))return;
   customElements.define('article-carousel',class extends HTMLElement {
     connectedCallback() {
-      this.abort=new AbortController();this.slides=[];this.index=0;this.visible=false;this.hovered=false;
-      this.motion=matchMedia('(prefers-reduced-motion: reduce)');this.playing=!this.motion.matches;
+      this.abort=new AbortController();this.slides=[];this.index=0;this.visible=false;
+      this.motion=matchMedia('(prefers-reduced-motion: reduce)');
       const on=(target,event,handler)=>target.addEventListener(event,handler,{signal:this.abort.signal});
       this.observer=new MutationObserver(()=>this.sync());
       this.observer.observe(this,{childList:true,subtree:true,attributes:true,attributeFilter:['data-language','data-carousel-src']});
@@ -12,16 +12,14 @@ export function registerArticleCarousel() {
       this.resize=new ResizeObserver(()=>{const size=this.pageSize();if(size!==this.size){this.size=size;this.index=Math.floor(this.index/size)*size;this.update();}});
       this.resize.observe(this);
       on(document,'visibilitychange',()=>this.schedule());
-      on(this.motion,'change',()=>{if(this.motion.matches)this.playing=false;this.update();});
-      on(this,'pointerenter',event=>{if(event.pointerType==='mouse'){this.hovered=true;this.schedule();}});
-      on(this,'pointerleave',event=>{if(event.pointerType==='mouse'){this.hovered=false;this.schedule();}});
-      on(this,'focusin',()=>{this.playing=false;this.update();});
+      on(this.motion,'change',()=>this.schedule());
+      on(this,'focusin',()=>this.schedule());
+      on(this,'focusout',()=>queueMicrotask(()=>{if(this.isConnected)this.schedule();}));
       on(this,'click',event=>{
         const page=event.target.closest('[data-carousel-page]');
         if(page)this.go(Number(page.dataset.carouselPage)*this.pageSize(),true);
         const action=event.target.closest('[data-carousel-action]')?.dataset.carouselAction;
         if(action==='previous'||action==='next')this.go(this.index+(action==='next'?1:-1)*this.pageSize(),true);
-        if(action==='play'){this.playing=!(this.pointerPlayState??this.playing);this.pointerPlayState=null;this.update();}
       });
       on(this,'keydown',event=>{
         if(!event.target.closest('[data-carousel-page]'))return;
@@ -30,8 +28,8 @@ export function registerArticleCarousel() {
         if(next===null)return;
         event.preventDefault();this.go(next*this.pageSize(),true);pages[next].focus();
       });
-      on(this,'pointerdown',event=>{this.pointerPlayState=event.target.closest('[data-carousel-action="play"]')?this.playing:null;if(event.pointerType==='touch'&&event.isPrimary&&!event.target.closest('button'))this.touch={x:event.clientX,y:event.clientY};});
-      on(this,'pointercancel',()=>{this.touch=null;this.pointerPlayState=null;});
+      on(this,'pointerdown',event=>{if(event.pointerType==='touch'&&event.isPrimary&&!event.target.closest('button'))this.touch={x:event.clientX,y:event.clientY};});
+      on(this,'pointercancel',()=>{this.touch=null;});
       on(this,'pointerup',event=>{
         const touch=this.touch;this.touch=null;if(!touch)return;
         const x=event.clientX-touch.x,y=event.clientY-touch.y;
@@ -54,7 +52,6 @@ export function registerArticleCarousel() {
       const size=this.pageSize();
       if(this.slides.length<=size)return;
       this.index=index<0?Math.floor((this.slides.length-1)/size)*size:index>=this.slides.length?0:index;
-      if(manual)this.playing=false;
       this.update();
       const announcement=this.querySelector('[data-carousel-announcement]');
       if(manual&&announcement)announcement.textContent=`${this.index+1} / ${this.slides.length}: ${this.slides[this.index].querySelector('h3')?.textContent||''}`;
@@ -84,12 +81,11 @@ export function registerArticleCarousel() {
           if(index===current)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
         });
       }
-      for(const action of ['previous','next','play']) {
+      for(const action of ['previous','next']) {
         const button=this.querySelector(`[data-carousel-action="${action}"]`);if(!button)continue;
-        const label=action==='previous'?(english?'Previous pinned article':'บทความปักหมุดก่อนหน้า'):action==='next'?(english?'Next pinned article':'บทความปักหมุดถัดไป'):this.playing?(english?'Pause automatic rotation':'หยุดเลื่อนอัตโนมัติ'):(english?'Play every 10 seconds':'เลื่อนอัตโนมัติทุก 10 วินาที');
+        const label=action==='previous'?(english?'Previous pinned article':'บทความปักหมุดก่อนหน้า'):(english?'Next pinned article':'บทความปักหมุดถัดไป');
         const accessibleLabel=home?label.replace('pinned article','articles').replace('บทความปักหมุด','ชุดบทความ'):label;
         button.setAttribute('aria-label',accessibleLabel);button.title=accessibleLabel;
-        if(action==='play'){button.dataset.playing=String(this.playing);button.setAttribute('aria-pressed',String(this.playing));}
       }
       this.loadImages();this.schedule();
     }
@@ -103,7 +99,10 @@ export function registerArticleCarousel() {
     }
     schedule() {
       clearTimeout(this.timer);
-      if(this.playing&&!this.hovered&&this.visible&&!document.hidden&&this.slides.length>this.pageSize())this.timer=setTimeout(()=>this.go(this.index+this.pageSize()),10000);
+      const focused=document.activeElement;
+      // Do not rotate a focused card or move keyboard navigation out of view.
+      const reading=this.contains(focused)&&(focused.closest('[data-slide-key]')||focused.matches(':focus-visible'));
+      if(!this.motion.matches&&!reading&&this.visible&&!document.hidden&&this.slides.length>this.pageSize())this.timer=setTimeout(()=>this.go(this.index+this.pageSize()),10000);
     }
   });
 }

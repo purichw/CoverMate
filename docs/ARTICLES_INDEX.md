@@ -44,10 +44,12 @@ publication eligibility and routing are unchanged; pin order is now CMS-owned.
   If all articles are pinned, no empty Latest section is shown.
   Search, categories and explicit oldest/title sorting show pins as ordinary
   matching results. Home recommendation (`featuredIds` / `featured`) is independent.
-- Rotation advances and wraps every 10 seconds while visible. Previous/next,
-  keyboard activation, touch swipe and pause/play are available. Hover, hidden
-  tabs and scrolling offscreen pause the timer; focus/manual navigation stop
-  automatic rotation until Play is chosen. Reduced motion starts paused.
+- Rotation advances and wraps every 10 seconds while visible, with no Play/Pause
+  button. Previous/next, keyboard activation and touch swipe remain available.
+  Pointer navigation restarts the interval and hover does not stop rotation.
+  A focused card or keyboard-focused carousel control pauses rotation until
+  focus leaves; hidden tabs/offscreen pause and resume automatically. Reduced
+  motion disables automatic rotation while preserving manual navigation.
   A single pin has no controls/timer; zero pins has no carousel. Hidden slides
   are inert and excluded from accessibility navigation. Only current/adjacent
   covers are requested initially; adding many pins does not preload every cover.

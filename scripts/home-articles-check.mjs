@@ -127,7 +127,11 @@ if(process.argv.includes('--browser')) {
       if(width<768) {
         assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Mobile image above copy');
         assert.equal(geometry.length,1,'Mobile shows one carousel card');
-      } else assert.equal(new Set(geometry.map(g=>g.y)).size,1,'Desktop/tablet one row');
+      } else {
+        assert.equal(new Set(geometry.map(g=>g.y)).size,1,'Desktop/tablet one row');
+        assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Compact horizontal cards');
+        assert.ok(geometry.every(g=>g.height<=260),'Desktop/tablet height budget');
+      }
       for(const node of await page.locator('#articles a').all())assert.ok((await node.getAttribute('href')).endsWith(lang==='en'?'?lang=en':''));
       await page.locator('.hm-article-link').first().focus();
       assert.equal(await page.evaluate(()=>document.activeElement.className),'hm-article-link');
@@ -151,6 +155,12 @@ if(process.argv.includes('--browser')) {
     server.setFeed(unsafeText);await ready();assert.equal(await page.locator('.hm-article-copy h3 img').count(),0);
     assert.equal(await page.evaluate(()=>window.__articleInjection),undefined);
     server.setFeed(long);await page.setViewportSize({width:320,height:900});await ready('/?lang=en');await assertFit();
+    const longIndex=projectHomeArticles(long,{lang:'en'}).items.findIndex(item=>item.key===long.items[0].id);
+    await page.locator(`[data-carousel-page="${longIndex}"]`).click();
+    const longCard=page.locator('#articles [data-active=true] .hm-article-link');
+    assert.equal(await longCard.locator('h3').textContent(),long.items[0].translations.en.title,'Clamping preserves the complete accessible title');
+    assert.ok((await longCard.boundingBox()).height<=460,'Long title/category cannot inflate a compact mobile card');
+    assert.ok(await longCard.locator('.hm-article-read').isVisible(),'Long copy retains the reading action');
     const missing=structuredClone(feed);missing.items[2].image.src='assets/article-preview/missing.jpg';missing.items[1].image.src='';
     server.setFeed(missing);await ready();await page.locator('#articles').scrollIntoViewIfNeeded();
     await page.waitForFunction(()=>document.querySelector('.hm-article-media img')?.hasAttribute('data-failed'));

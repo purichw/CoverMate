@@ -27,7 +27,6 @@
     <sc-if value="{{ articleIndex.hasFeatured }}"><article-carousel role="region" aria-label="{{ articleCopy.featured }}" data-language="{{ articleLanguage }}">
       <div class="ar-featured"><sc-for list="{{ articleFeatured }}" as="article"><div class="ar-slide" data-slide-key="{{ article.key }}"><!-- COVERMATE_ARTICLE_CARD --></div></sc-for></div>
       <div class="ar-carousel-controls" data-carousel-controls hidden>
-        <button type="button" data-carousel-action="play"><svg class="ar-carousel-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg><svg class="ar-carousel-play" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 3 14 9-14 9V3Z"/></svg></button>
         <span data-carousel-counter aria-hidden="true"></span>
         <button type="button" data-carousel-action="previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
         <button type="button" data-carousel-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
