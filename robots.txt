@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Allow: /api/article-sitemap$
 
 Sitemap: https://covermateinsurance.com/sitemap.xml
 Sitemap: https://covermateinsurance.com/api/article-sitemap

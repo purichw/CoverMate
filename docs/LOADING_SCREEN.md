@@ -37,6 +37,8 @@ unchanged. The bar is indeterminate: it does not claim a download percentage.
 - At four seconds the status acknowledges a slow load and motion stops. At ten
   seconds a retry button appears. Critical stylesheet, script or bundle errors
   immediately show a friendly error and the same retry action, which reloads the current URL.
+  A failed stylesheet rejects the readiness barrier immediately even if a sibling
+  stylesheet is still pending; it must not wait for every request to settle.
   If loading subsequently succeeds, the page still opens normally.
 - Reduced-motion users receive a static gold bar and immediate dismissal.
   Status uses a polite live region; retry is a native button with a visible
@@ -77,6 +79,10 @@ DOM-swap continuity; slow/reduced-motion recovery; failed scripts and
 keyboard retry; a stalled request and retry; unavailable logo fallback; and
 readiness independent of noncritical images. Screenshots and the report are
 written to `uat-results/loading-screen/`. This check is included in `check:ci`.
+
+`node scripts/server-boot-check.mjs` also holds the article stylesheet pending
+while aborting Home CSS. Error/retry must appear before releasing that pending
+request, the unstyled page must remain hidden, and a real retry must recover.
 
 Also checked locally: existing boot guard and server-seed regression, localized
 published logo/blank/escaping assertions, generated bundles, unchanged

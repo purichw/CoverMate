@@ -28,6 +28,11 @@ well as the visitor; do not edit that generated block by hand.
   36px on both sides for the selected checkmark. Single-select native fallbacks use
   centered text where supported by the browser. Form labels and text inputs keep
   their existing alignment.
+- The painted native field and overlaid trigger must share their vertical bounds;
+  center text and indicators against that visible field, not a taller hit layer.
+  Chevron and selected-check indicators use the bundled Lucide icons. Mobile and
+  coarse-pointer fields keep a visible minimum height of 44px. Calculator unit
+  suffix styles must exclude `.cm-select-shell`.
 - Screens that replace their form asynchronously must preserve the currently
   focused control on every render. Operations captures the active filter before
   replacing its loading/completed list, refreshes its shared dropdown, and
@@ -73,7 +78,10 @@ Playwright engine. Screenshots/reports are in `uat-results/custom-select/`.
 articles index (TH/EN, 320/390/1440px), CMS list, Editor, contact, calculator,
 and renewal controls. The article sort owns its native select styling, including
 12px left padding; the shared trigger balances its insets to center the value.
-It also exercises sort selection and Escape. `--center-only` scopes the check to
+It measures painted/overlay bounds, text and icon centers, edge clearance, mobile
+touch height, default filter-label fit, and adjacent Editor toolbar icons. It also
+exercises sort selection, open-menu indicators, Escape and restored focus.
+`--center-only` scopes the check to
 desktop/mobile Articles and CMS controls, including the Cases status dropdown.
 Local fixture evidence is in
 `uat-results/select-spacing/`; this does not certify production publication.
