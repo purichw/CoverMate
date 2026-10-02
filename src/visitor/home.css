@@ -75,13 +75,22 @@ article-carousel[data-layout="cards"] .hm-article-grid > li[data-active="true"] 
   .hm-article-media { aspect-ratio:auto; min-height:200px; height:100%; }
 }
 @media(max-width:767px) {
-  .hm-articles .hm-wrap { grid-template-columns:minmax(0,1fr); gap:16px; padding:24px 20px; }
-  .hm-articles .hm-articles-heading h2 { font-size:26px; }
-  .hm-articles-heading .hm-section-copy { gap:6px; }
-  .hm-articles-heading .hm-section-copy > p:not(.hm-eyebrow) { font-size:16px; }
-  .hm-articles-all { grid-column:1; grid-row:3; width:100%; }
-  .hm-article-link { padding:10px; gap:10px; }
-  .hm-article-media { max-height:176px; }
+  .hm-articles .hm-wrap { grid-template-columns:minmax(0,1fr); gap:12px; padding:24px 20px; }
+  .hm-articles .hm-articles-heading h2 { font-size:22px; }
+  .hm-articles-all { grid-column:1; grid-row:2; justify-self:end; width:max-content; border-radius:999px; }
+  .hm-articles article-carousel[data-layout="cards"] { grid-row:3; --carousel-page-size:3; }
+  article-carousel[data-layout="cards"] .hm-article-grid { grid-template-columns:minmax(0,1fr); gap:8px; }
+  article-carousel[data-layout="cards"] .hm-article-grid > li { grid-column:1; grid-row:var(--carousel-column,1); }
+  article-carousel[data-layout="cards"] .hm-article-grid > li[data-carousel-empty-row] { display:none; }
+  .hm-article-link { display:grid; grid-template-columns:clamp(96px,34%,136px) minmax(0,1fr); align-items:start; gap:12px; padding:8px; }
+  .hm-articles .hm-article-media { aspect-ratio:1; align-self:center; }
+  .hm-articles .hm-article-media:not(:has(img)) { height:auto; aspect-ratio:1; }
+  .hm-article-copy { padding:0; gap:4px; }
+  .hm-article-copy h3 { font-size:16px; line-height:1.35; }
+  .hm-article-copy .hm-article-excerpt { font-size:13px; line-height:1.5; -webkit-line-clamp:2; }
+  .hm-article-read { margin-top:0; min-height:0; font-size:13px; line-height:1.5; }
+  .hm-article-meta { gap:4px 8px; }
+  .hm-article-meta .hm-article-category { font-size:11px; padding:2px 8px; }
   .hm-carousel-controls { display:flex; justify-content:center; margin-top:0; }
   .hm-carousel-pages { gap:0; }
   .hm-carousel-pages button::after { width:calc(100% - 8px); }

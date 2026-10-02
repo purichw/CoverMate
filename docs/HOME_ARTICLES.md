@@ -14,20 +14,23 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   Normal sections can also move across Articles. Draft/Undo/Redo/publication use
   the existing site workflow; article records and visibility settings stay separate.
 - Compact cards: two horizontal cards per page at 1024px+, one horizontal card
-  at 768–1023px, and one upright card on mobile. Desktop/tablet covers sit left
-  of the copy; mobile uses a 16:9 cover capped at 176px high.
+  at 768–1023px, and three compact cards stacked vertically on mobile.
+  Desktop/tablet covers sit left of the copy; mobile uses centered square
+  thumbnails beside the text. Full pages reserve stable row heights; a partial
+  last mobile page collapses unused rows instead of leaving blank spaces.
   Category/date metadata sits with the copy, not over the cover.
   Dates use the published translation's timestamp in Bangkok time, localized
   to TH/EN. Titles show up to three lines and excerpts up to two; the complete
   title remains the link's accessible name and the full content is in the article.
   Card corners continue to follow the site's CMS theme radius; the compact
   composition and heading sizes remain specific to this section.
-- All-articles link beside the heading on desktop, full-width below the carousel
-  on mobile. Every card shows the CMS-owned reading label.
+- All-articles link beside the heading on desktop and above the carousel on
+  mobile. Every card shows the CMS-owned reading label. Mobile titles use 16px
+  type and excerpts use 13px/1.5 for the compact row composition.
 - One native link per card covers image, title and reading label. Keyboard focus
   has a visible outline. Home opts into `[data-carousel-pages]` for compact,
   clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
-  Mobile shows up to five indicators around the current page, retaining 44px
+  Mobile shows up to four page indicators for the ten-article feed, retaining 44px
   touch targets without overflowing when all ten articles are present.
   The index carousel retains its previous/next controls. Both support swipe and
   automatic ten-second rotation without a Play/Pause button. Pointer navigation

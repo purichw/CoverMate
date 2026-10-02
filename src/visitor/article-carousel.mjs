@@ -44,7 +44,9 @@ export function registerArticleCarousel() {
       const slides=[...this.querySelectorAll('[data-slide-key]')],language=this.dataset.language;
       if(slides.length===this.slides.length&&slides.every((slide,i)=>slide===this.slides[i])&&language===this.language){this.loadImages();return;}
       const current=this.slides[this.index]?.dataset.slideKey;
-      this.slides=slides;this.language=language;this.index=Math.max(0,slides.findIndex(slide=>slide.dataset.slideKey===current));
+      this.slides=slides;this.language=language;
+      const retained=Math.max(0,slides.findIndex(slide=>slide.dataset.slideKey===current));
+      this.index=Math.floor(retained/this.pageSize())*this.pageSize();
       this.setAttribute('aria-roledescription',language==='en'?'carousel':'ชุดบทความเลื่อน');
       this.update();
     }
@@ -61,7 +63,12 @@ export function registerArticleCarousel() {
       this.slides.forEach((slide,index)=>{
         const active=index>=this.index&&index<this.index+size;
         slide.dataset.active=String(active);slide.inert=!active;slide.setAttribute('aria-hidden',String(!active));
-        if(home)slide.style.setProperty('--carousel-column',String(index%size+1));
+        if(home) {
+          slide.style.setProperty('--carousel-column',String(index%size+1));
+          // Mobile stacks the slots. Omit unoccupied rows on the final page,
+          // while keeping hidden peers in occupied rows to reserve their height.
+          slide.toggleAttribute('data-carousel-empty-row',index%size>=Math.min(size,this.slides.length-this.index));
+        }
         slide.setAttribute('role','group');slide.setAttribute('aria-roledescription',english?'slide':'บทความ');slide.setAttribute('aria-label',`${index+1} / ${this.slides.length}`);
       });
       const controls=this.querySelector('[data-carousel-controls]');if(controls)controls.hidden=this.slides.length<=size;

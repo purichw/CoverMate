@@ -125,8 +125,8 @@ if(process.argv.includes('--browser')) {
         return {x:r.x,y:r.y,width:r.width,height:r.height,image:img.toJSON(),copy:copy.toJSON()};
       }));
       if(width<768) {
-        assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Mobile image above copy');
-        assert.equal(geometry.length,1,'Mobile shows one carousel card');
+        assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Mobile thumbnail beside copy');
+        assert.equal(geometry.length,3,'Mobile stacks three compact carousel cards');
       } else {
         assert.equal(new Set(geometry.map(g=>g.y)).size,1,'Desktop/tablet one row');
         assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Compact horizontal cards');
@@ -156,8 +156,8 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.evaluate(()=>window.__articleInjection),undefined);
     server.setFeed(long);await page.setViewportSize({width:320,height:900});await ready('/?lang=en');await assertFit();
     const longIndex=projectHomeArticles(long,{lang:'en'}).items.findIndex(item=>item.key===long.items[0].id);
-    await page.locator(`[data-carousel-page="${longIndex}"]`).click();
-    const longCard=page.locator('#articles [data-active=true] .hm-article-link');
+    if(await page.locator('[data-carousel-controls]').isVisible())await page.locator(`[data-carousel-page="${Math.floor(longIndex/3)}"]`).click();
+    const longCard=page.locator('#articles [data-active=true] .hm-article-link').filter({has:page.getByRole('heading',{name:long.items[0].translations.en.title,exact:true})});
     assert.equal(await longCard.locator('h3').textContent(),long.items[0].translations.en.title,'Clamping preserves the complete accessible title');
     assert.ok((await longCard.boundingBox()).height<=460,'Long title/category cannot inflate a compact mobile card');
     assert.ok(await longCard.locator('.hm-article-read').isVisible(),'Long copy retains the reading action');

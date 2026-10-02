@@ -73,7 +73,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   // The template is inserted dynamically and its stylesheet links are recreated
   // when the app mounts. Remember early errors as well as links still loading.
   document.addEventListener('error', function(event) {
-    if (event.target.matches && event.target.matches('link[rel="stylesheet"]')) stylesheetResults.set(event.target, Promise.resolve(false));
+    const link = event.target;
+    if (!link.matches || !link.matches('link[rel="stylesheet"]')) return;
+    stylesheetResults.set(link, Promise.resolve(false));
+    // A sibling stylesheet can block the app scripts, so report a known
+    // critical failure even before the mounted page reaches its style barrier.
+    if (link.ownerDocument === document && link.isConnected && document.documentElement.hasAttribute(BOOT_ATTR) && window.CoverMateBoot && window.CoverMateBoot.pending) window.CoverMateBoot.fail();
   }, true);
   function stylesheetReady(link) {
     if (stylesheetResults.has(link)) return stylesheetResults.get(link);
