@@ -70,11 +70,12 @@ try {
       const category=node.querySelector('.hm-article-category').getBoundingClientRect(),date=node.querySelector('time').getBoundingClientRect();
       return {image:image.toJSON(),copy:copy.toJSON(),category:category.toJSON(),date:date.toJSON()};
     }));
-    assert.ok(geometry.every(g=>Math.abs(g.image.width/g.image.height-1.45)<.01),'Consistent landscape media');
-    assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Image above copy on every viewport');
-    assert.ok(geometry.every(g=>g.category.right<=g.date.left && g.date.right<=g.image.right),'Overlay badges do not collide');
+    if(width<768)assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Mobile thumbnails sit beside text');
+    else assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Desktop images sit above text');
+    assert.ok(geometry.every(g=>g.category.left>=g.copy.left&&g.category.right<=g.copy.right&&g.date.right<=g.copy.right),'Metadata stays inside the copy column');
+    assert.ok(geometry.every(g=>g.category.right<=g.date.left||g.category.bottom<=g.date.top),'Category and date can wrap without colliding');
     const allLink=await page.locator('.hm-articles-all').boundingBox(),heading=await page.locator('.hm-articles-heading').boundingBox(),carouselBox=await carousel.boundingBox();
-    if(width<768)assert.ok(allLink.y>=carouselBox.y+carouselBox.height,'Mobile all-articles CTA below carousel');
+    if(width<768)assert.ok(allLink.y>=heading.y+heading.height&&allLink.y+allLink.height<=carouselBox.y,'Mobile all-articles CTA between heading and carousel');
     else assert.ok(allLink.y>=heading.y&&allLink.y+allLink.height<=heading.y+heading.height,'Desktop all-articles CTA beside heading');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     await pages.first().blur();
@@ -89,7 +90,10 @@ try {
   assert.equal((await active())[0],keys(feed)[1]);await page.waitForTimeout(550);
   await page.waitForFunction(()=>document.querySelector('#articles article-carousel').visible);
   const clockStart=new Date();await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
-  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(0,0);
+  await carousel.locator('[data-carousel-action=play]').click();await page.locator('.hm-articles-all').hover();
+  // Let the browser deliver the native pointer-leave before measuring rotation.
+  // A frozen clock can otherwise retain hover pause after moving the pointer.
+  await page.clock.runFor(50);assert.equal(await carousel.evaluate(el=>el.hovered),false);
   await page.clock.runFor(9000);assert.equal((await active())[0],keys(feed)[1]);
   await page.clock.runFor(2000);assert.equal((await active())[0],keys(feed)[2]);
   await carousel.locator('[data-active=true] a').focus();await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[2],'Focus pauses');await page.clock.resume();

@@ -1,5 +1,5 @@
 <sc-if value="{{ s.homeArticles }}">
-  <section id="articles" class="hm-band hm-articles" data-home-section="articles" aria-labelledby="home-articles-title">
+  <section id="articles" class="hm-band hm-articles" data-home-section="articles" style="{{ s.homeStyle }}" aria-labelledby="home-articles-title">
     <div class="hm-wrap">
       <div class="hm-heading hm-articles-heading">
         <div class="hm-section-copy">
@@ -17,12 +17,12 @@
                 <div class="hm-article-media">
                   <svg class="hm-article-fallback" viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg>
                   <sc-if value="{{ article.image }}"><img sc-camel-src="{{ article.image }}" alt="{{ article.imageAlt }}" style="{{ article.imageStyle }}" width="640" height="360" loading="lazy" decoding="async"></sc-if>
+                </div>
+                <div class="hm-article-copy">
                   <div class="hm-article-meta">
                     <sc-if value="{{ article.category }}"><span class="hm-article-category">{{ article.category }}</span></sc-if>
                     <time datetime="{{ article.datetime }}">{{ article.date }}</time>
                   </div>
-                </div>
-                <div class="hm-article-copy">
                   <h3 id="{{ article.titleId }}">{{ article.title }}</h3>
                   <sc-if value="{{ article.excerpt }}"><p class="hm-article-excerpt">{{ article.excerpt }}</p></sc-if>
                   <span class="hm-article-read"><span data-cms-copy="homeDesign.articlesRead">{{ homeCopy.articlesRead }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ articleArrowPaths }}" as="d"><path d="{{ d }}"/></sc-for></svg></span>

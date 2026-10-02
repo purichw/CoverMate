@@ -14,11 +14,18 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   Normal sections can also move across Articles. Draft/Undo/Redo/publication use
   the existing site workflow; article records and visibility settings stay separate.
 - Carousel: three cards per page at 1024px+, two at 768–1023px, one on mobile.
-  Upright cards use 1.45:1 covers on every viewport, with category/date overlays.
+  Desktop cards use 16:9 covers; mobile cards put a 4:5 thumbnail beside the
+  text. Category/date sit in the copy column. Missing covers use a compact
+  desktop placeholder without stretching the article into a large empty panel.
   Dates use the published translation's timestamp in Bangkok time, localized
   to TH/EN. Full titles wrap; excerpts use up to three lines.
-- All-articles link beside the heading on desktop, full-width below the carousel
-  on mobile. Mobile cards also show the CMS-owned reading label.
+- Home Articles reuses `.hm-wrap` gutters and width, `.hm-section-copy` spacing,
+  eyebrow and intro styles, and the same heading rule as coverage tiers:
+  28px/1.45, dropping to 22px below 600px. Cards share the tier border, surface
+  and theme-selected radius while retaining their own media/text composition.
+  Desktop card titles use 20px; mobile uses 16px, with readable 14px excerpts.
+- All-articles link sits beside the heading on desktop and fits its label above
+  the carousel on mobile. Both layouts show the CMS-owned reading label.
 - One native link per card covers image, title and reading label. Keyboard focus
   has a visible outline. Home opts into `[data-carousel-pages]` for compact,
   clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
