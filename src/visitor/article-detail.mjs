@@ -1,6 +1,7 @@
 import {projectPublishedArticles,articlePublicHref} from './home-articles.mjs';
 import {renderArticleDocument,articleDocumentText} from '../../article-document.mjs';
 import {articleTypographyAttributes} from '../../article-typography.mjs';
+import {projectArticleAuthorDetails} from '../../article-author.mjs';
 
 export function articleDetailSlug(path = '') {
   return /^\/articles\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/.exec(path)?.[1] || '';
@@ -44,6 +45,7 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
   const date = new Intl.DateTimeFormat(lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
   const updated = Date.parse(copy.updatedAt);
   return {...summary,available:true,sample:payload.sample===true,blocks,sources,languages:Object.keys(item.translations),
+    ...projectArticleAuthorDetails(copy,lang),
     richDocument:rich ? JSON.stringify(rich.document) : '',
     titleStyle:articleTypographyAttributes(rich?.document.attrs?.titleStyle).style || '',titleStyleKeys:articleTypographyAttributes(rich?.document.attrs?.titleStyle)['data-article-style'] || '',
     excerptStyle:articleTypographyAttributes(rich?.document.attrs?.excerptStyle).style || '',excerptStyleKeys:articleTypographyAttributes(rich?.document.attrs?.excerptStyle)['data-article-style'] || '',

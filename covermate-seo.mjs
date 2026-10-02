@@ -1,10 +1,13 @@
+import { servicePageMetadata } from './src/visitor/service-page.mjs';
+
 // Shared by the initial HTTP response and CMS-driven client metadata.
 export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, article = null, articleFeed = null, assetPath = value => value } = {}) {
   const root = 'https://covermateinsurance.com';
   const isArticle = /^\/articles\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(path);
-  path = isArticle ? path.replace(/\/$/,'') : ['/motor','/articles'].includes(path) ? path : '/';
+  path = isArticle ? path.replace(/\/$/,'') : ['/motor','/health','/life','/articles'].includes(path) ? path : '/';
   noindex = noindex || ((path === '/articles' || isArticle) && articleFeed?.settings?.enabled!==true);
   lang = lang === 'en' ? 'en' : 'th';
+  const servicePage = ['/health', '/life'].includes(path) ? servicePageMetadata(site, path.slice(1), lang) : null;
   const clean = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
   const localized = value => clean(typeof value === 'string' ? value : value?.[lang]);
   const url = value => {
@@ -22,14 +25,14 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
     return Object.fromEntries([...new Set([...Object.keys(defaults || {}), ...Object.keys(value)])].map(key => [key, merge(defaults?.[key], value[key])]));
   };
   const motor = merge(motorDefaults, site.motorPage) || {};
-  const pageSeo = isArticle ? {title:clean(article?.seoTitle) || article?.title || (lang==='en'?'Article unavailable':'ไม่พบบทความ'),description:clean(article?.seoDescription) || article?.excerpt || ''} : path === '/articles' ? {title:site.articlesPage?.title || {th:'บทความจาก CoverMate',en:'CoverMate articles'},description:site.articlesPage?.intro} : path === '/motor' ? motor.seo || {} : seo;
+  const pageSeo = isArticle ? {title:clean(article?.seoTitle) || article?.title || (lang==='en'?'Article unavailable':'ไม่พบบทความ'),description:clean(article?.seoDescription) || article?.excerpt || ''} : path === '/articles' ? {title:site.articlesPage?.title || {th:'บทความจาก CoverMate',en:'CoverMate articles'},description:site.articlesPage?.intro} : servicePage || (path === '/motor' ? motor.seo || {} : seo);
   const media = site.brand?.media || {};
   const brand = localized(site.brand?.name) || 'CoverMate';
   const service = path === '/motor' ? 'motor' : 'home';
-  const serviceName = localized(seo[service + 'ServiceName']);
+  const serviceName = servicePage ? clean(servicePage.serviceName) : localized(seo[service + 'ServiceName']);
   const hero = path === '/motor' ? motor.hero : (site.sections || []).find(section => section.type === 'hero' && section.on !== false);
   const title = privatePage ? 'CoverMate Admin' : localized(pageSeo.title) || [brand, serviceName].filter(Boolean).join(' | ');
-  const description = privatePage ? 'Private CoverMate owner tools.' : localized(pageSeo.description) || clean(hero?.[lang]?.body);
+  const description = privatePage ? 'Private CoverMate owner tools.' : localized(pageSeo.description) || (servicePage ? '' : clean(hero?.[lang]?.body));
   const base = root + path;
   const canonical = base + (lang === 'en' ? '?lang=en' : '');
   const image = url(isArticle ? article?.image : seo.image), imageAlt = isArticle ? clean(article?.imageAlt) : localized(seo.imageAlt);
@@ -53,14 +56,14 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
   const sameAs = [contact.lineUrl, contact.facebookUrl].filter(value => /^https?:\/\//i.test(clean(value))).map(url).filter(Boolean);
   if (sameAs.length) org.sameAs = sameAs;
   if (org.telephone || org.email) org.contactPoint = [{ '@type': 'ContactPoint', contactType: 'customer service', availableLanguage: ['Thai', 'English'], ...(org.telephone ? { telephone: org.telephone } : {}), ...(org.email ? { email: org.email } : {}) }];
-  const serviceType = localized(seo[service + 'ServiceType']);
-  const audience = localized(seo[service + 'Audience']);
+  const serviceType = servicePage ? serviceName : localized(seo[service + 'ServiceType']);
+  const audience = servicePage ? '' : localized(seo[service + 'Audience']);
   const graph = [
     { '@type': 'WebSite', '@id': websiteId, url: root + '/', name: brand, inLanguage: ['th-TH', 'en'], publisher: { '@id': orgId } },
     org,
     { '@type': path === '/articles' ? 'CollectionPage' : 'WebPage', '@id': canonical + '#webpage', url: canonical, name: title, description, inLanguage: language, isPartOf: { '@id': websiteId }, about: { '@id': orgId }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}) }
   ];
-  if (serviceName && ['/', '/motor'].includes(path)) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
+  if (serviceName && ['/', '/motor', '/health', '/life'].includes(path)) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
   if (isArticle && article?.available) {
     // Follow the reader's visible CMS labels and navigation, not category URLs.
     const suffix = lang === 'en' ? '?lang=en' : '';
@@ -90,7 +93,11 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
       ...(article.category ? { articleSection: clean(article.category) } : {}),
       ...(Array.isArray(article.tags) && article.tags.length ? { keywords: article.tags.map(clean).filter(Boolean) } : {}),
       ...(image ? { image } : {}),
-      ...(article.author ? { author: { '@type': article.author === brand ? 'Organization' : 'Person', name: article.author } } : {}),
+      ...(article.author ? { author: {
+        '@type': article.author === brand ? 'Organization' : 'Person', name: article.author,
+        ...(article.authorDetailsEnabled !== false && clean(article.authorBio) ? { description: clean(article.authorBio) } : {}),
+        ...(() => { try { const address = new URL(article.authorUrl); return article.authorDetailsEnabled !== false && address.protocol === 'https:' && !address.username && !address.password ? { url: address.href } : {}; } catch { return {}; } })()
+      } } : {}),
       ...(citations.length ? { citation: citations } : {})
     });
   }

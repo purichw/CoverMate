@@ -54,6 +54,7 @@
           </details>
         </sc-for>
       </div>
+      <sc-if value="{{ isHome }}"><div class="hm-actions"><sc-for list="{{ serviceLinks }}" as="link"><a class="hm-text-link" href="{{ link.href }}"><span data-cms-copy="{{ link.copy }}">{{ link.label }}</span><span aria-hidden="true">→</span></a></sc-for></div></sc-if>
     </sc-if>
 
     <sc-if value="{{ s.homeInsurers }}">

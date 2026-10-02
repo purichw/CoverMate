@@ -35,7 +35,7 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
     .selectedCell{background:#e3edf5!important}
     .tableWrapper{overflow:auto;margin-block:24px}
   `;
-  const fields={'.ad-header h1':'title','.ad-deck':'excerpt','.ad-header .hm-article-category':'categoryId','.ad-cover':'coverAlt','.ad-cover-caption':'caption','.ad-author':'authorName','.ad-header-note':'headerNote','.ad-side-note':'sidebarQuote','.ad-takeaways':'takeaways','.ad-takeaways-note':'takeawayNote','.ad-sources':'source-label-0'};
+  const fields={'.ad-header h1':'title','.ad-deck':'excerpt','.ad-header .hm-article-category':'categoryId','.ad-cover':'coverAlt','.ad-cover-caption':'caption','.ad-author':'authorName','.ad-author-details':'authorBio','.ad-author-profile':'authorUrl','.ad-editorial-note':'editorialNote','.ad-header-note':'headerNote','.ad-side-note':'sidebarQuote','.ad-takeaways':'takeaways','.ad-takeaways-note':'takeawayNote','.ad-sources':'source-label-0'};
   function decorate(){
     const doc=frame.contentDocument;
     for(const [selector,key] of Object.entries(fields))doc.querySelectorAll(selector).forEach(el=>{

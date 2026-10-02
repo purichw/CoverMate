@@ -30,6 +30,14 @@
       "destination": "/api/page?route=/motor"
     },
     {
+      "source": "/health",
+      "destination": "/api/page?route=/health"
+    },
+    {
+      "source": "/life",
+      "destination": "/api/page?route=/life"
+    },
+    {
       "source": "/articles",
       "destination": "/api/page?route=/articles"
     },

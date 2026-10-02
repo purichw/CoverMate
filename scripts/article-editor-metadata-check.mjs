@@ -139,3 +139,58 @@ const clearedHTML=createArticlePreviewPage(previewSource,cleared,{origin:'https:
 assert.deepEqual(select(readPreviewDetail(clearedHTML)),select(cleared),'Explicit clearing reaches the real preview runtime');
 assert.deepEqual(visibility(readPreviewDetail(clearedHTML)),disabledNotes,'Preview receives the selected language visibility');
 console.log('PASS localized article notes: defaults, TH/EN, backup, strict visibility validation, draft/live isolation, toggle/text preservation, publication, projection, escaped preview rendering and explicit clearing.');
+
+// Author identity is explicit editorial data, never an inferred credential.
+const authorKeys=['authorBio','authorUrl','editorialNote'];
+const authorSelect=value=>Object.fromEntries(authorKeys.map(key=>[key,value[key]]));
+const authorEmpty={authorBio:'',authorUrl:'',editorialNote:''};
+let authorDraft=newDraft();authorDraft.id='author-trust-test';authorDraft.slug='author-trust-test';authorDraft.authorName='Purich Worawarachai';
+const authorDetails={authorBio:'ข้อมูลผู้เขียนที่ยืนยันแล้วสำหรับการทดสอบ',authorUrl:'https://example.com/authors/purich',editorialNote:'หมายเหตุการจัดทำสำหรับการทดสอบ'};
+assert.deepEqual(authorSelect(authorDraft.translations.th),authorEmpty);
+Object.assign(authorDraft.translations.th,authorDetails);
+assert.deepEqual(authorSelect(parseDraftBackup(JSON.stringify(authorDraft)).translations.th),authorDetails);
+authorDraft=await repository.mutate(site,'save',authorDraft,0,actor);
+assert.deepEqual(authorSelect((await repository.get(site,authorDraft.id)).translations.th),authorDetails);
+authorDraft=await repository.mutate(site,'publish',{id:authorDraft.id,languages:['th','en']},authorDraft.revision,actor);
+const authorRead=async(lang='th')=>projectArticleDetail(await repository.detail(site,authorDraft.slug),{slug:authorDraft.slug,lang,now:at,mediaUrl:value=>articleUrl(value,true)});
+assert.deepEqual(authorSelect(await authorRead()),authorDetails);
+assert.equal((await authorRead()).hasAuthorDetails,true);
+assert.equal((await authorRead()).author,'Purich Worawarachai');
+assert.deepEqual(authorSelect(await authorRead('en')),authorEmpty,'No biography leaks between locales');
+assert.equal((await authorRead('en')).hasAuthorDetails,false);
+assert.equal('reviewedBy' in await authorRead(),false);
+for(const key of authorKeys)for(const invalid of [42,null,{},'x'.repeat(key==='authorUrl'?2001:1201)]){
+  const input=structuredClone(authorDraft);input.translations.th[key]=invalid;
+  await assert.rejects(repository.mutate(site,'save',input,authorDraft.revision,actor),error=>error.status===422&&error.fields?.some(issue=>issue.field===key));
+}
+for(const invalid of ['javascript:alert(1)','http://example.com','https://user:pass@example.com','/authors/purich']){
+  const input=structuredClone(authorDraft);input.translations.th.authorUrl=invalid;
+  await assert.rejects(repository.mutate(site,'save',input,authorDraft.revision,actor),error=>error.status===422&&error.fields?.some(issue=>issue.field==='authorUrl'));
+}
+for(const invalid of ['false',0,null]){
+  const input=structuredClone(authorDraft);input.translations.th.authorDetailsEnabled=invalid;
+  await assert.rejects(repository.mutate(site,'save',input,authorDraft.revision,actor),error=>error.status===422&&error.fields?.some(issue=>issue.field==='authorDetailsEnabled'));
+}
+authorDraft.translations.th.authorDetailsEnabled=false;
+authorDraft=await repository.mutate(site,'save',authorDraft,authorDraft.revision,actor);
+assert.deepEqual(authorSelect(await authorRead()),authorDetails,'Unpublished visibility change cannot alter live content');
+authorDraft=await repository.mutate(site,'publish',{id:authorDraft.id,languages:['th']},authorDraft.revision,actor);
+assert.deepEqual(authorSelect(await authorRead()),authorEmpty,'Hidden details are not emitted for public rendering or structured data');
+assert.equal((await authorRead()).hasAuthorDetails,false);
+assert.deepEqual(authorSelect((await repository.get(site,authorDraft.id)).translations.th),authorDetails,'Hide retains editable biography');
+authorDraft.translations.th.authorDetailsEnabled=true;
+Object.assign(authorDraft.translations.th,{authorBio:unsafe,editorialNote:unsafe});
+authorDraft=await repository.mutate(site,'save',authorDraft,authorDraft.revision,actor);
+authorDraft=await repository.mutate(site,'publish',{id:authorDraft.id,languages:['th']},authorDraft.revision,actor);
+const authorPreview=createArticlePreviewPage(previewSource,await authorRead(),{origin:'https://preview.example.test'});
+assert.equal(authorPreview.includes(unsafe),false);
+assert.equal(readPreviewDetail(authorPreview).authorBio,unsafe,'Escaped Preview receives the actual biography');
+Object.assign(authorDraft.translations.th,authorEmpty);
+authorDraft=await repository.mutate(site,'save',authorDraft,authorDraft.revision,actor);
+authorDraft=await repository.mutate(site,'publish',{id:authorDraft.id,languages:['th']},authorDraft.revision,actor);
+assert.deepEqual(authorSelect(await authorRead()),authorEmpty);
+assert.equal((await authorRead()).hasAuthorDetails,false,'Clearing author details removes its empty panel');
+const legacyAuthor=newDraft();legacyAuthor.id='legacy-author-test';legacyAuthor.slug='legacy-author-test';
+for(const lang of ['th','en'])for(const key of [...authorKeys,'authorDetailsEnabled'])delete legacyAuthor.translations[lang][key];
+assert.deepEqual(authorSelect((await repository.mutate(site,'save',legacyAuthor,0,actor)).translations.th),authorEmpty);
+console.log('PASS author trust: localized editor data, safe URLs, real repository save/reopen/publication, backup, explicit hide/clear and escaped Preview; no inferred review.');

@@ -111,6 +111,11 @@ This does not add a website-owner editor route for article bodies.
 ## Files And Preview
 
 - `src/visitor/article-detail.{mjs,html,css}`: safe projection and reading view.
+- `article-author.mjs`: optional localized biography, safe HTTPS profile link
+  and article-preparation note. Plain text is escaped by the shared renderer.
+  The author panel is omitted when empty; disabling it suppresses profile links
+  and the projected detail values without erasing the editable draft. No reviewer
+  identity or qualification is inferred from the author's name.
 - `src/visitor/runtime.js`: save, share, anchors, related articles and shell.
 - `src/visitor/article-card.html`, `article-cta.html`: actual shared partials.
 - `server/seo-page.mjs`, `covermate-seo.mjs`, `covermate-contract.js`,

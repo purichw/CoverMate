@@ -1,4 +1,5 @@
 import {normalizeArticleDocument,legacyArticleDocument,articleUrl,normalizeArticleMedia} from '../../article-document.mjs';
+import {normalizeArticleAuthorDetails} from '../../article-author.mjs';
 
 export const ARTICLE_CATEGORIES = {motor:['ประกันรถยนต์','Motor insurance'],health:['ประกันสุขภาพ','Health insurance'],life:['ประกันชีวิต','Life insurance'],critical:['โรคร้ายแรง','Critical illness'],finance:['วางแผนการเงิน','Financial planning'],claims:['เคลมและกรมธรรม์','Claims and policies'],travel:['ประกันเดินทาง','Travel insurance'],general:['ความรู้ทั่วไป','General']};
 // Editorial dates are entered in Bangkok time, independent of the device zone.
@@ -30,6 +31,7 @@ export function createArticleDraft(source = {}, author = 'CoverMate') {
     draft.translations[lang] = {
       title:text(t.title),excerpt:text(t.excerpt),category:ARTICLE_CATEGORIES[draft.categoryId]?.[lang === 'en' ? 1 : 0] || text(t.category),
       imageAlt:text(t.imageAlt),coverAlt:text(t.coverAlt) || text(t.imageAlt),caption:text(t.caption),
+      ...normalizeArticleAuthorDetails(t),
       headerNote:text(t.headerNote),sidebarQuote:text(t.sidebarQuote),takeawayNote:text(t.takeawayNote),
       headerNoteEnabled:t.headerNoteEnabled!==false,sidebarQuoteEnabled:t.sidebarQuoteEnabled!==false,takeawayNoteEnabled:t.takeawayNoteEnabled!==false,
       seoTitle:text(t.seoTitle),seoDescription:text(t.seoDescription),publishedAt:Number.isFinite(Date.parse(t.publishedAt))?new Date(t.publishedAt).toISOString():null,

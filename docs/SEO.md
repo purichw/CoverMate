@@ -242,6 +242,27 @@ review-request and resource-outreach drafts are in
 No outreach, review solicitation, automated schedule, or fabricated address was
 submitted. Ignored evidence is under `uat-results/seo-remaining-20261002/`.
 
+## Service, authorship and indexing follow-up — October 2, 2026
+
+- Search Console URL Inspection now confirms **URL is on Google / Page is
+  indexed** for all four published foundation guides. Indexing does not imply
+  a particular ranking. Evidence: `uat-results/seo-next-20261002/gsc-*-indexed.jpg`.
+- Dedicated `/health` and `/life` pages have Thai and English CMS-owned copy,
+  page-specific metadata, Service schema, internal links and sitemap entries.
+  See [SERVICE_PAGES.md](SERVICE_PAGES.md). Existing explicit CMS blanks stay
+  blank; content editing must not overwrite Home's metadata.
+- Article author biography, HTTPS profile link and editorial note now follow
+  the normal draft/save/publish lifecycle in both languages, with an optional
+  visibility control. Editor canvas, Preview and public rendering share the
+  projection. The owner supplied **Purich Worawarachai** as the author name;
+  biography and qualifications await additional information. Do not imply
+  independent expert review or attach business licences to this person without
+  confirmation.
+- A saved GA4 landing-page/contact report is available in
+  [SEO_REPORTING.md](SEO_REPORTING.md), including its source/attribution limits.
+- Google Business Profile creation is **deferred at the owner's request**.
+  The earlier request for location details is no longer a pending setup action.
+
 ## References
 
 - [Google JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)

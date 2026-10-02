@@ -1,6 +1,6 @@
 # CoverMate Site Map
 
-Last updated: 2026-09-24. This map describes source routes. See
+Last updated: 2026-10-02. This map describes source routes. See
 [HANDOFF.md](HANDOFF.md) for deployed versus candidate status; route presence
 in the working tree is not deployment evidence.
 
@@ -10,6 +10,7 @@ in the working tree is not deployment evidence.
 | --- | --- | --- | --- |
 | `/` | Visitor | Compact Home | `src/visitor/home.html`, `home.css`, generated `index.html`; `api/page.js` head wrapper |
 | `/motor` | Visitor | Dedicated motor-insurance campaign page for motor-specific ads/search | `src/visitor/template.html`, generated `index.html`; `api/page.js` head wrapper |
+| `/health`, `/life` | Visitor | Bilingual AIA service guidance, preparation, FAQ and consultation links | `src/visitor/service-page.mjs`, `.html`, `.css`; canonical CMS fields `servicePages.*`; `api/page.js` head wrapper |
 | `/#motor` | Visitor | Public Home motor-insurance anchor; same insurer section | `index.html` |
 | `/#insurers` | Visitor | Compatibility URL, replaced with `/#motor` without adding history | `index.html` |
 | `/#life` | Visitor | Alias to the Home `#cover` section | `index.html` |
@@ -20,9 +21,9 @@ in the working tree is not deployment evidence.
 | `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Analytics, and Settings | `admin/index.html` |
 | `/admin/ops` | Verified admin; Cases owner-only | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit`, `/#admin`, `/#preview` | Owner | Session-gated compatibility aliases for editor, panel, preview; do not generate new links | `covermate-contract.js`, `src/visitor/runtime.js` |
-| `/admin/content?page=home\|motor` | Owner | Control panel for the selected page | Shared visitor runtime/controller; private boot head via `api/page.js` |
-| `/admin/edit?page=home\|motor` | Owner | Inline editor; panel can open without leaving it | Shared visitor runtime/controller; private boot head via `api/page.js` |
-| `/admin/preview?page=home\|motor` | Owner | Private draft preview | Shared visitor runtime; private boot head via `api/page.js` |
+| `/admin/content?page=home\|motor\|health\|life` | Owner | Control panel for the selected page | Shared visitor runtime/controller; private boot head via `api/page.js` |
+| `/admin/edit?page=home\|motor\|health\|life` | Owner | Inline editor; panel can open without leaving it | Shared visitor runtime/controller; private boot head via `api/page.js` |
+| `/admin/preview?page=home\|motor\|health\|life` | Owner | Private draft preview | Shared visitor runtime; private boot head via `api/page.js` |
 
 ## Indexing Map
 
@@ -32,6 +33,10 @@ in the working tree is not deployment evidence.
 | `/motor` | `index,follow` | `https://covermateinsurance.com/motor` |
 | `/?lang=en` | `index,follow` | `https://covermateinsurance.com/?lang=en` |
 | `/motor?lang=en` | `index,follow` | `https://covermateinsurance.com/motor?lang=en` |
+| `/health` | `index,follow` | `https://covermateinsurance.com/health` |
+| `/health?lang=en` | `index,follow` | `https://covermateinsurance.com/health?lang=en` |
+| `/life` | `index,follow` | `https://covermateinsurance.com/life` |
+| `/life?lang=en` | `index,follow` | `https://covermateinsurance.com/life?lang=en` |
 | `/#motor` | Same document as `/`; do not sitemap hash URLs | `https://covermateinsurance.com/` |
 | `/#life` | Same document as `/`; do not sitemap hash URLs | `https://covermateinsurance.com/` |
 | `/#motor-focus`, `/#life-focus` | Same document as `/`; unexposed campaign hash states, not sitemap URLs | `https://covermateinsurance.com/` |
@@ -93,6 +98,13 @@ Supported Motor route sections; visibility remains CMS-owned:
 | Contact/footer | Shared contact panel, lead form, and footer. |
 
 ## Admin Sections
+
+Health and Life use the same page picker, Draft/Preview/Publish boundaries and
+canonical localized copy as other website pages. Their service-specific content
+is described in [SERVICE_PAGES.md](SERVICE_PAGES.md). Home coverage and the
+shared footer link to them; each page points to related published-language
+articles and the existing contact form. They are separate documents from the
+legacy `/#life` and `/#life-focus` hash states.
 
 | Surface | Route | Role |
 | --- | --- | --- |

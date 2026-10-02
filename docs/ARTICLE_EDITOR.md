@@ -307,6 +307,22 @@ Hosted-page CSP, `frame-ancestors 'none'` and X-Frame-Options DENY remain unchan
 Closing Preview aborts loading and discards its document. Readiness waits for the
 real Visitor boot to finish; a blocked or failed boot also offers Retry.
 No fake author avatar or quote is supplied when editorial data is empty.
+
+### Author information and editorial transparency
+
+The **ผู้เขียนและการจัดทำบทความ** settings disclose optional author biography,
+HTTPS profile URL and a plain-text explanation of how that article was prepared.
+These fields are independent for TH/EN, remain editable in a saved/reopened draft
+and backup, and use the same public renderer in the writing canvas and Preview.
+Clicking the visible author/profile/editorial text in the canvas opens its actual
+setting. The visibility switch retains the text while hiding the details and
+profile link; the existing byline name remains visible. Clearing an optional
+field removes it without an organization biography or other fallback.
+
+Only confirmed information belongs in these fields. A name does not imply a
+qualification or review: the product does not generate `reviewedBy`, experience,
+licenses or a human-reviewed claim. Source references remain a separate existing
+collection. An empty biography/profile creates no empty About-author panel.
 Tables scroll within their region rather than widening the page. The public
 server still checks record and selected-language publication and rejects future,
 missing or empty content. Optional notes pass through the same normalized draft,

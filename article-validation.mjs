@@ -1,5 +1,6 @@
 import {ARTICLE_CATEGORIES} from './admin/articles/drafts.mjs';
 import {articleDocumentText,articleUrl} from './article-document.mjs';
+import {ARTICLE_AUTHOR_LIMITS,articleAuthorUrl} from './article-author.mjs';
 
 export const ARTICLE_FIELD_LIMITS={title:240,excerpt:600,seoTitle:240,seoDescription:600,coverAlt:500,imageAlt:500,caption:1000,headerNote:500,sidebarQuote:1000,takeawayNote:500};
 const text=value=>typeof value==='string'?value:'';
@@ -14,6 +15,9 @@ export function articleFieldContract(key,{cover=false}={}) {
     title:'ชื่อที่แสดงบนหน้าบทความและการ์ด',excerpt:'ข้อความสั้นสำหรับการ์ดบทความ แยกจาก SEO description',
     slug:'ภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลาง ไม่เกิน 160 ตัวอักษร',
     authorName:'ชื่อผู้เขียนที่แสดงบนบทความ',coverAlt:cover?'บรรยายสิ่งสำคัญในภาพ ไม่ต้องใส่คำค้นซ้ำ ๆ':'จำเป็นเมื่อเพิ่มภาพปก',
+    authorBio:'ระบุเฉพาะประวัติหรือความเชี่ยวชาญที่ยืนยันแล้ว เว้นว่างได้ ไม่เกิน 1,200 ตัวอักษร',
+    authorUrl:'ลิงก์ HTTPS ของผู้เขียนที่ตรวจสอบได้ เช่น หน้าแนะนำตัวหรือโปรไฟล์วิชาชีพ',
+    editorialNote:'อธิบายวิธีจัดทำหรือทบทวนบทความตามที่ทำจริง ไม่ระบุว่ามีผู้ตรวจหากยังไม่ได้ตรวจ',
     publishedAt:'เว้นว่างเพื่อใช้วันเผยแพร่ครั้งแรก ระบุเวลาไทย (UTC+7)',
     tags:'ไม่เกิน 20 แท็ก แท็กละ 80 ตัวอักษร',
     seoTitle:'เว้นว่างเพื่อใช้ชื่อบทความ',seoDescription:'เว้นว่างเพื่อใช้คำโปรยของบทความ',
@@ -43,6 +47,9 @@ export function validateArticle(draft,{publish=false,languages=['th']}={}) {
   for(const language of ['th','en']) {
     const t=draft.translations[language],required=publish&&languages.includes(language);
     if(!t||t.document?.type!=='doc'){add('document','รูปแบบเนื้อหาบทความไม่ถูกต้อง',language);continue;}
+    for(const [field,max] of Object.entries(ARTICLE_AUTHOR_LIMITS))if(t[field]!==undefined&&(typeof t[field]!=='string'||t[field].length>max))add(field,`กรอกข้อความไม่เกิน ${max.toLocaleString('th-TH')} ตัวอักษร`,language);
+    if(typeof t.authorUrl==='string'&&t.authorUrl.trim()&&!articleAuthorUrl(t.authorUrl))add('authorUrl','กรุณาใส่ลิงก์ HTTPS ของผู้เขียนที่ถูกต้อง',language);
+    if(t.authorDetailsEnabled!==undefined&&typeof t.authorDetailsEnabled!=='boolean')add('authorDetailsEnabled','การแสดงข้อมูลผู้เขียนต้องเป็นค่าเปิดหรือปิด',language);
     for(const [field,max] of Object.entries(ARTICLE_FIELD_LIMITS)) {
       if(!(t[field]===undefined&&['headerNote','sidebarQuote','takeawayNote'].includes(field))&&(typeof t[field]!=='string'||t[field].length>max))add(field,`กรอกข้อความไม่เกิน ${max.toLocaleString('th-TH')} ตัวอักษร`,language);
     }
