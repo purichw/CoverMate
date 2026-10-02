@@ -126,7 +126,7 @@ if(process.argv.includes('--browser')) {
       }));
       if(width<768) {
         assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Mobile thumbnail beside copy');
-        assert.equal(geometry.length,1,'Mobile shows one carousel card');
+        assert.equal(geometry.length,3,'Mobile stacks three compact carousel cards');
       } else assert.equal(new Set(geometry.map(g=>g.y)).size,1,'Desktop/tablet one row');
       for(const node of await page.locator('#articles a').all())assert.ok((await node.getAttribute('href')).endsWith(lang==='en'?'?lang=en':''));
       await page.locator('.hm-article-link').first().focus();

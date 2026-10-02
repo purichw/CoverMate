@@ -41,7 +41,7 @@ try {
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
   const ready=async(lang='th')=>{await page.goto(server.baseUrl+'/?lang='+lang);await page.locator('#articles [data-active=true]').first().waitFor();await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));await page.evaluate(()=>document.fonts.ready);if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();await page.locator('#articles').scrollIntoViewIfNeeded();};
   const carousel=page.locator('#articles article-carousel'),active=()=>carousel.locator('[data-active=true]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey));
-  for(const [width,size] of [[1440,3],[820,2],[375,1],[320,1]]) {
+  for(const [width,size] of [[1440,3],[820,2],[375,3],[320,3]]) {
     await page.setViewportSize({width,height:900});await ready(width===320?'en':'th');
     assert.equal(await carousel.locator('[data-slide-key]').count(),10);
     assert.equal((await active()).length,size);
@@ -54,10 +54,18 @@ try {
       for(const id of await active())seen.add(id);
       await page.waitForFunction(()=>[...document.querySelectorAll('#articles [data-active=true] img')].every(img=>img.complete&&img.naturalWidth>0));
       heights.push((await carousel.boundingBox()).height);
+      if(width<768&&i+1===pageCount) {
+        const finalCard=await carousel.locator('[data-active=true]').last().boundingBox();
+        const grid=await carousel.locator('.hm-article-grid').boundingBox();
+        assert.ok(Math.abs(grid.y+grid.height-finalCard.y-finalCard.height)<1,'Partial mobile page has no empty rows');
+        await page.locator('#articles').screenshot({path:`${out}/home-${width}-last-page.png`});
+      }
       if(i+1===pageCount)await page.keyboard.press('ArrowRight');else await pages.nth(i+1).click();
     }
     assert.equal(seen.size,10,'All ten reachable');assert.equal((await active())[0],keys(feed)[0],'Next wraps');
-    assert.ok(heights.every(h=>Math.abs(h-heights[0])<1),'Stable carousel height');
+    const fullPageHeights=width<768?heights.slice(0,-1):heights;
+    assert.ok(fullPageHeights.every(h=>Math.abs(h-fullPageHeights[0])<1),'Full pages retain stable carousel height');
+    if(width<768)assert.ok(heights.at(-1)<heights[0],'Partial mobile page collapses unused rows');
     await pages.first().focus();await page.keyboard.press('ArrowLeft');
     assert.equal((await active())[0],keys(feed)[Math.floor(9/size)*size],'Keyboard previous wraps');
     await page.keyboard.press('ArrowRight');
@@ -70,7 +78,11 @@ try {
       const category=node.querySelector('.hm-article-category').getBoundingClientRect(),date=node.querySelector('time').getBoundingClientRect();
       return {image:image.toJSON(),copy:copy.toJSON(),category:category.toJSON(),date:date.toJSON()};
     }));
-    if(width<768)assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Mobile thumbnails sit beside text');
+    if(width<768) {
+      assert.ok(geometry.every(g=>g.image.right<=g.copy.left),'Mobile thumbnails sit beside text');
+      assert.ok(geometry.every(g=>Math.abs(g.image.width-g.image.height)<1),'Mobile thumbnails are square');
+      assert.ok(geometry.every((g,i)=>i===0||g.image.top>=geometry[i-1].image.bottom),'Mobile cards stack vertically');
+    }
     else assert.ok(geometry.every(g=>g.image.bottom<=g.copy.top),'Desktop images sit above text');
     assert.ok(geometry.every(g=>g.category.left>=g.copy.left&&g.category.right<=g.copy.right&&g.date.right<=g.copy.right),'Metadata stays inside the copy column');
     assert.ok(geometry.every(g=>g.category.right<=g.date.left||g.category.bottom<=g.date.top),'Category and date can wrap without colliding');
@@ -87,18 +99,25 @@ try {
   await page.setViewportSize({width:390,height:844});await ready();
   await carousel.dispatchEvent('pointerdown',{pointerType:'touch',isPrimary:true,clientX:290,clientY:300});
   await carousel.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,clientX:100,clientY:305});
-  assert.equal((await active())[0],keys(feed)[1]);await page.waitForTimeout(550);
+  assert.equal((await active())[0],keys(feed)[3]);await page.waitForTimeout(550);
   await page.waitForFunction(()=>document.querySelector('#articles article-carousel').visible);
-  const clockStart=new Date();await page.clock.install({time:clockStart});await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
-  await carousel.locator('[data-carousel-action=play]').click();await page.locator('.hm-articles-all').hover();
-  // Let the browser deliver the native pointer-leave before measuring rotation.
-  // A frozen clock can otherwise retain hover pause after moving the pointer.
-  await page.clock.runFor(50);assert.equal(await carousel.evaluate(el=>el.hovered),false);
-  await page.clock.runFor(9000);assert.equal((await active())[0],keys(feed)[1]);
-  await page.clock.runFor(2000);assert.equal((await active())[0],keys(feed)[2]);
-  await carousel.locator('[data-active=true] a').focus();await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[2],'Focus pauses');await page.clock.resume();
+  await page.clock.install();
+  await carousel.locator('[data-carousel-action=play]').click();await page.mouse.move(1,1);
+  // Deliver native pointer-leave before freezing animation frames. Otherwise
+  // the taller mobile stack can retain hover pause after the pointer has left.
+  await page.waitForFunction(()=>!document.querySelector('#articles article-carousel').hovered);
+  await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+100)));
+  await page.clock.runFor(9000);assert.equal((await active())[0],keys(feed)[3]);
+  await page.clock.runFor(2000);assert.equal((await active())[0],keys(feed)[6]);
+  await carousel.locator('[data-active=true] a').first().focus();await page.clock.runFor(11000);assert.equal((await active())[0],keys(feed)[6],'Focus pauses');await page.clock.resume();
+  server.setFeed({...feed,items:feed.items.slice(0,4)});await ready();
+  assert.equal((await active()).length,3,'Four articles start with three mobile cards');
+  await carousel.locator('[data-carousel-page]').last().click();
+  assert.equal((await active()).length,1,'Four articles end with one card, without repeats');
+  const partial=await carousel.locator('.hm-article-grid').boundingBox(),last=await carousel.locator('[data-active=true]').boundingBox();
+  assert.ok(Math.abs(partial.y+partial.height-last.y-last.height)<1,'Four-article feed leaves no empty mobile rows');
   server.setFeed({...feed,items:[feed.items[0]]});await ready();assert.equal(await carousel.locator('[data-carousel-controls]').isVisible(),false);
   server.setFeed({...feed,items:[]});await page.reload();await page.locator('#talk').waitFor();assert.equal(await page.locator('#articles').count(),0);
-  assert.deepEqual(errors,[]);report.checks=['ten reachable cards','stable height','desktop/tablet/mobile','keyboard/swipe/wrap','10-second rotation','focus/reduced motion','single/empty'];report.passed=true;
+  assert.deepEqual(errors,[]);report.checks=['ten reachable cards','stable full-page height','compact partial mobile page','desktop/tablet/mobile','keyboard/swipe/wrap','10-second rotation','focus/reduced motion','single/empty'];report.passed=true;
   fs.writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));console.log('PASS Home carousel browser interactions and responsive screenshots.');
 } finally {await browser.close();await new Promise(resolve=>server.server.close(resolve));}

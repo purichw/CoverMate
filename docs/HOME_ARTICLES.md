@@ -13,23 +13,27 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   the fixed licence/Footer bands. Hidden anchors use the next visible section.
   Normal sections can also move across Articles. Draft/Undo/Redo/publication use
   the existing site workflow; article records and visibility settings stay separate.
-- Carousel: three cards per page at 1024px+, two at 768–1023px, one on mobile.
-  Desktop cards use 16:9 covers; mobile cards put a 4:5 thumbnail beside the
+- Carousel: three cards across per page at 1024px+, two at 768–1023px, and
+  three compact cards stacked vertically on mobile. Desktop cards use 16:9
+  covers; mobile cards put a square thumbnail beside the
   text. Category/date sit in the copy column. Missing covers use a compact
   desktop placeholder without stretching the article into a large empty panel.
   Dates use the published translation's timestamp in Bangkok time, localized
-  to TH/EN. Full titles wrap; excerpts use up to three lines.
+  to TH/EN. Full titles wrap; excerpts use up to three lines on desktop and
+  two on mobile. Full pages reserve stable row heights. A partial last mobile
+  page collapses unused rows rather than leaving blank card-sized spaces.
 - Home Articles reuses `.hm-wrap` gutters and width, `.hm-section-copy` spacing,
   eyebrow and intro styles, and the same heading rule as coverage tiers:
   28px/1.45, dropping to 22px below 600px. Cards share the tier border, surface
   and theme-selected radius while retaining their own media/text composition.
-  Desktop card titles use 20px; mobile uses 16px, with readable 14px excerpts.
+  Desktop card titles use 20px with 14px excerpts; mobile uses 16px titles and
+  13px/1.5 excerpts, keeping the reading link immediately below the copy.
 - All-articles link sits beside the heading on desktop and fits its label above
   the carousel on mobile. Both layouts show the CMS-owned reading label.
 - One native link per card covers image, title and reading label. Keyboard focus
   has a visible outline. Home opts into `[data-carousel-pages]` for compact,
   clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
-  Mobile shows up to five indicators around the current page, retaining 44px
+  Mobile shows up to four page indicators for the ten-article feed, retaining 44px
   touch targets without overflowing when all ten articles are present.
   The index carousel retains its previous/next controls. Both support swipe,
   ten-second rotation and pause. Reduced motion starts paused; focus stops rotation.
