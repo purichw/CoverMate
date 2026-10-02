@@ -53,11 +53,13 @@ try {
   await admin.reload();await admin.locator('[data-article-state=ready]').waitFor();await admin.locator('[name=query]').fill(ids[11]);await admin.locator(`[data-article-action=edit][data-id="${ids[11]}"]:visible`).click();
   assert.equal(await admin.locator('[data-field=featured]').isChecked(),true,'Home pin saved through reload');
   await publish();assert.deepEqual((await home()).slice(0,4),[0,10,11,12].map(i=>ids[i]));
-  await visitor.goto(baseUrl+'/'+suffix);await visitor.locator('#articles [data-active=true]').waitFor();
-  assert.deepEqual(await visitor.locator('#articles [data-slide-key]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey)),await home());
+  await visitor.goto(baseUrl+'/'+suffix);await visitor.locator('#articles [data-active=true]').first().waitFor();
+  const publishedHome=await home(),activeHome=()=>visitor.locator('#articles [data-active=true]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey));
+  assert.deepEqual(await visitor.locator('#articles [data-slide-key]').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey)),publishedHome);
+  assert.deepEqual(await activeHome(),publishedHome.slice(0,3),'Mobile Home displays the first three published cards');
   await visitor.locator('#articles').scrollIntoViewIfNeeded();await visitor.locator('#articles [data-carousel-page="1"]').click();
-  assert.equal(await visitor.locator('#articles [data-active=true]').getAttribute('data-slide-key'),ids[10]);
-  await visitor.locator('#articles [data-active=true] a').click();await visitor.locator('.ad-prose').waitFor();assert.match(visitor.url(),new RegExp(ids[10]));
+  assert.deepEqual(await activeHome(),publishedHome.slice(3,6),'Next page advances by three published cards');
+  await visitor.locator(`#articles [data-active=true][data-slide-key="${ids[12]}"] a`).click();await visitor.locator('.ad-prose').waitFor();assert.match(visitor.url(),new RegExp(ids[12]));
   await visitor.goto(baseUrl+'/articles'+suffix);await visitor.locator('.ar-slide[data-active=true]').waitFor();
   assert.deepEqual(await visitor.locator('.ar-slide').evaluateAll(nodes=>nodes.map(n=>n.dataset.slideKey)),[ids[13]],'Index carousel untouched');
   console.log('PASS real CMS save/reload/publish, public carousel and detail, independent index pin.');
