@@ -20,6 +20,8 @@ management are documented in `ARTICLES_PUBLISHING.md` and `ADMIN_ARTICLES.md`.
   Dates use the published translation's timestamp in Bangkok time, localized
   to TH/EN. Titles show up to three lines and excerpts up to two; the complete
   title remains the link's accessible name and the full content is in the article.
+  Card corners continue to follow the site's CMS theme radius; the compact
+  composition and heading sizes remain specific to this section.
 - All-articles link beside the heading on desktop, full-width below the carousel
   on mobile. Every card shows the CMS-owned reading label.
 - One native link per card covers image, title and reading label. Keyboard focus

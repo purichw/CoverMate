@@ -106,7 +106,7 @@ Implemented visitor events:
 | Event | Trigger | Parameters |
 | --- | --- | --- |
 | `page_view` | Initial public page view and hash change | `page_title`, `page_location`, `page_path` |
-| `line_click` | Visitor clicks a LINE link | `link_type` |
+| `line_click` | Visitor clicks an HTTPS contact link on `line.me` or `lin.ee` (including `www`) | `link_type` |
 | `phone_click` | Visitor clicks a `tel:` link | `link_type` |
 | `email_click` | Visitor clicks a `mailto:` link | `link_type` |
 | `language_change` | Visitor taps `TH` or `EN` | `language` |
@@ -120,6 +120,15 @@ The success event intentionally uses category fields only. `trackEvent()` drops
 unknown event names and strips parameters not listed above. Do not add contact
 details, calculator values, URL query strings, error text, claim details, or
 freeform messages to GA event parameters.
+
+LINE article-share links (`social-plugins.line.me/lineit/share` and
+`line.me/R/msg/text`) are excluded from contact intent. URLs that merely contain
+`line.me` in a query, path or unrelated hostname are also excluded. The Admin
+contact-intent total remains `line_click + phone_click + email_click`; it counts
+contact actions, not unique people or completed sales. In GA4, use
+`quote_submit_success` as the primary lead key event and contact clicks as
+secondary intent; property-level key-event configuration is separate from this
+client implementation.
 
 ## Firestore Lead Analytics
 

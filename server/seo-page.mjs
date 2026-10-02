@@ -41,6 +41,17 @@ export function renderPublicPage(html, config, options) {
   } catch { /* A missing or invalid logo keeps a text identity. */ }
   rendered = rendered.replace(/<img data-covermate-boot-logo[^>]*>/,
     '<img data-covermate-boot-logo data-published' + (logoUrl ? ' src="' + escape(logoUrl) + '"' : ' hidden') + ' width="1200" height="375" alt="CoverMate">');
+  // Home's CMS background is otherwise discovered only after the template
+  // mounts. Preload the exact rendered asset only when the first visible
+  // section is a hero; other routes, hidden/reordered heroes and owner tools
+  // must not download an unrelated decoration.
+  const firstSection = (config?.sections || []).find(section => section && section.on !== false);
+  const heroArtwork = options?.path === '/' && !options.privatePage && firstSection?.type === 'hero'
+    ? cmsMedia(config?.homeDesign?.botanicalIllustration) : '';
+  if (heroArtwork) {
+    const heroUrl = versionedAssetUrl(heroArtwork, assetVersions, 'https://covermateinsurance.com');
+    rendered = rendered.replace('</head>', '<link rel="preload" as="image" fetchpriority="high" href="' + escape(heroUrl) + '">\n</head>');
+  }
   // Prefetch the public adapter without executing it. Classic-script preloads
   // are omitted because WebKit can retain failed preloads across Retry.
   if (!options?.privatePage) rendered = rendered.replace('</head>', '<link rel="modulepreload" href="/covermate-public.mjs">\n</head>');

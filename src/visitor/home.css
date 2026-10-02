@@ -51,8 +51,8 @@ article-carousel[data-layout="cards"] .hm-article-grid > li[data-active="true"] 
 .hm-carousel-pages button[aria-current]::after { background:var(--color-accent-700); }
 .hm-carousel-controls button:focus-visible { outline:3px solid var(--color-accent-700); outline-offset:2px; }
 @media (max-width:1023px) { .hm-articles article-carousel[data-layout="cards"] { --carousel-page-size:1; } }
-.hm-article-card { height:100%; border:1px solid #e2e3dc; border-radius:8px; background:#fffefa; }
-.hm-article-link { height:100%; display:flex; flex-direction:column; gap:12px; padding:12px; border-radius:8px; text-decoration:none; }
+.hm-article-card { height:100%; border:1px solid #e2e3dc; border-radius:var(--hm-card,8px); background:#fffefa; }
+.hm-article-link { height:100%; display:flex; flex-direction:column; gap:12px; padding:12px; border-radius:inherit; text-decoration:none; }
 .hm-article-media { position:relative; flex:none; aspect-ratio:16/9; width:100%; overflow:hidden; border-radius:5px; background:var(--color-accent-2-200); }
 .hm-article-media img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .hm-article-media img[data-failed] { display:none; }

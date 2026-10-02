@@ -2020,7 +2020,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     const articleSlot = homeArticleInsertionIndex(workSections, homeDesign.articlesBefore);
     const articleBefore = workSections[articleSlot]?.id || '';
     const displaySections = isArticleRoute ? [] : sections.slice();
-    if (homeArticles.visible) displaySections.splice(homeArticleInsertionIndex(sections,articleBefore,workSections), 0, {id:'articles', key:'articles', homeArticles:true});
+    if (homeArticles.visible) displaySections.splice(homeArticleInsertionIndex(sections,articleBefore,workSections), 0, {id:'articles', key:'articles', homeArticles:true,homeStyle:'--hm-card:'+(site.theme.radius === 'sharp' ? 8 : 16)+'px'});
     const articleIndex = projectArticleIndex(isArticles ? S.articleFeed : null, {search:window.location.search,lang:lk,mediaUrl:value=>assetURL(cmsMedia(value))});
     const articleCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Articles index' && field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
     const articleAddress = changes => articleIndexAddress(window.location.search,{page:null,...changes});

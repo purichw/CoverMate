@@ -58,10 +58,42 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
   const graph = [
     { '@type': 'WebSite', '@id': websiteId, url: root + '/', name: brand, inLanguage: ['th-TH', 'en'], publisher: { '@id': orgId } },
     org,
-    { '@type': 'WebPage', '@id': canonical + '#webpage', url: canonical, name: title, description, inLanguage: language, isPartOf: { '@id': websiteId }, about: { '@id': orgId }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}) }
+    { '@type': path === '/articles' ? 'CollectionPage' : 'WebPage', '@id': canonical + '#webpage', url: canonical, name: title, description, inLanguage: language, isPartOf: { '@id': websiteId }, about: { '@id': orgId }, ...(image ? { primaryImageOfPage: { '@type': 'ImageObject', url: image } } : {}) }
   ];
-  if (serviceName) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
-  if(isArticle&&article?.available)graph.push({'@type':'Article','@id':canonical+'#article',headline:clean(article.title)||title,description,inLanguage:language,mainEntityOfPage:canonical,publisher:{'@id':orgId},datePublished:article.datetime,...(article.updatedDatetime?{dateModified:article.updatedDatetime}:{}),...(article.category?{articleSection:clean(article.category)}:{}),...(Array.isArray(article.tags)&&article.tags.length?{keywords:article.tags.map(clean).filter(Boolean)}:{}),...(image?{image}:{}),...(article.author?{author:{'@type':article.author===brand?'Organization':'Person',name:article.author}}:{})});
+  if (serviceName && ['/', '/motor'].includes(path)) graph.push({ '@type': 'Service', '@id': canonical + '#insurance-advisory', name: serviceName, ...(serviceType ? { serviceType } : {}), provider: { '@id': orgId }, ...(area ? { areaServed: { '@type': 'AdministrativeArea', name: area } } : {}), ...(audience ? { audience: { '@type': 'Audience', audienceType: audience } } : {}) });
+  if (isArticle && article?.available) {
+    // Follow the reader's visible CMS labels and navigation, not category URLs.
+    const suffix = lang === 'en' ? '?lang=en' : '';
+    const trail = [
+      { name: localized(site.articleDetail?.home ?? { th: 'หน้าหลัก', en: 'Home' }), item: root + '/' + suffix },
+      { name: localized(site.articleDetail?.all ?? { th: 'บทความทั้งหมด', en: 'All articles' }), item: root + '/articles' + suffix },
+      { name: clean(article.title), item: canonical }
+    ].filter(entry => entry.name);
+    if (trail.length >= 2) {
+      const breadcrumbId = canonical + '#breadcrumb';
+      graph[2].breadcrumb = { '@id': breadcrumbId };
+      graph.push({ '@type': 'BreadcrumbList', '@id': breadcrumbId, itemListElement: trail.map((entry, index) => ({ '@type': 'ListItem', position: index + 1, ...entry })) });
+    }
+    // Sources come from the reader projection. Keep its HTTPS/name boundary if
+    // this shared model is also called directly by a preview or future client.
+    const citations = (Array.isArray(article.sources) ? article.sources : []).slice(0, 30).flatMap(source => {
+      try {
+        const address = new URL(source?.href);
+        const name = clean(source?.label);
+        return address.protocol === 'https:' && !address.username && !address.password && name ? [{ '@type': 'CreativeWork', name, url: address.href }] : [];
+      } catch { return []; }
+    });
+    graph.push({
+      '@type': 'Article', '@id': canonical + '#article', headline: clean(article.title) || title, description, inLanguage: language,
+      mainEntityOfPage: canonical, publisher: { '@id': orgId }, datePublished: article.datetime,
+      ...(article.updatedDatetime ? { dateModified: article.updatedDatetime } : {}),
+      ...(article.category ? { articleSection: clean(article.category) } : {}),
+      ...(Array.isArray(article.tags) && article.tags.length ? { keywords: article.tags.map(clean).filter(Boolean) } : {}),
+      ...(image ? { image } : {}),
+      ...(article.author ? { author: { '@type': article.author === brand ? 'Organization' : 'Person', name: article.author } } : {}),
+      ...(citations.length ? { citation: citations } : {})
+    });
+  }
   return {
     title, language, canonical,
     meta: {

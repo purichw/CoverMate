@@ -209,6 +209,31 @@ async function verifyPublicEvents(browser) {
   await page.close();
 }
 
+async function verifyLineContactIntent(browser) {
+  const page = await browser.newPage();
+  await page.addInitScript(seedConsent);
+  await routeStatic(page);
+  await page.goto('https://covermateinsurance.com/');
+  await page.waitForFunction(() => window.CoverMateAnalytics?.enabled === true);
+  for (const href of [
+    'https://social-plugins.line.me/lineit/share?url=https%3A%2F%2Fcovermateinsurance.com%2Farticles',
+    'https://line.me/R/msg/text/?An%20article',
+    'https://line.me/lineit/share?url=https%3A%2F%2Fcovermateinsurance.com',
+    'https://example.com/?redirect=https://line.me/ti/p/~covermate',
+    'https://line.me.example.com/ti/p/~covermate',
+    'https://example.com/lin.ee/covermate',
+    'mailto:help@line.me'
+  ]) {
+    await page.locator('#line').evaluate((link, url) => link.setAttribute('href', url), href);
+    await page.locator('#line').click();
+  }
+  assert.equal(countEvents(eventRows(await page.evaluate(() => window.dataLayer || [])), 'line_click'), 0, 'Share and unrelated URLs do not inflate contact intent');
+  await page.locator('#line').evaluate(link => link.setAttribute('href', 'https://lin.ee/covermate'));
+  await page.locator('#line').click();
+  assert.equal(countEvents(eventRows(await page.evaluate(() => window.dataLayer || [])), 'line_click'), 1, 'Official short contact URLs remain tracked');
+  await page.close();
+}
+
 async function verifyTrackingBoundaries(browser) {
   for (const withoutContract of [false, true]) {
     for (const [path, expected] of [
@@ -453,6 +478,7 @@ const browser = await launchChromium(chromium, { headless: true });
 try {
   await verifyConsent(browser);
   await verifyPublicEvents(browser);
+  await verifyLineContactIntent(browser);
   await verifyTrackingBoundaries(browser);
   await verifyAnalyticsRouteAuth(browser);
 } finally {
