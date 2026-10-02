@@ -36,7 +36,7 @@ git -C "/Users/point/CoverMate" status --short --branch
 
 ## Required Discipline
 
-- Start from the current `docs/HANDOFF.md` checkpoint. Distinguish source, protected preview, published CMS and deployed production; a generated build is not deployment evidence.
+- Start from the current `docs/HANDOFF.md` checkpoint. Distinguish source, protected preview, published CMS and deployed production. Report Vercel build readiness, exact-SHA CI success, and production alias promotion separately; a ready build alone does not mean the change is live. Use the release evidence guidance in `references/new-chat-context.md`.
 - Check the active checkout, upstream and uncommitted scope before applying an old patch. Refactor UAT evidence may use an older production baseline than current `origin/main`; preserve newer runtime, build and test changes when integrating it. Read `docs/REFACTOR_20260924.md` for the extraction and evidence boundaries.
 - Primary origin is `https://covermateinsurance.com`. Read `docs/CMS_MEDIA.md` for the selected Cloudinary Free backend and current cost/security boundaries; Firebase Auth and Firestore remain in use, Firebase Storage does not.
 - Home redesign work must read `docs/HOME_REDESIGN.md`: the approved compact composition and current Admin ownership supersede old expanded-section geometry. Do not revive superseded constraints from historical specs.

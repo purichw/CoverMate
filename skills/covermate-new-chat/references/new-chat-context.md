@@ -31,6 +31,7 @@ Then choose by task:
 - Public copy/FAQ wording: `docs/COPY_VOICE_AUDIT_20260927.md`, `scripts/lib/copy-voice-20260927.mjs`, `scripts/prepare-copy-voice-20260927.mjs`. Use ordinary customer questions and direct, helpful answers; keep research/proposals separate from implemented or published copy.
 - FAQ collection controls: `docs/CMS_CONTENT_OWNERSHIP.md#faq-collection-editing`, `src/visitor/cms-controller.js`, `src/visitor/runtime.js`, `src/visitor/template.html`, `scripts/faq-consolidation-check.mjs`.
 - Articles list/editor/public pages and feature toggles: `docs/ARTICLES_PUBLISHING.md`. Central API persistence and explicit locale/date publication supersede historical browser-only drafts; master/Home/navigation flags are independent.
+- Home article layout and carousel behavior: `docs/HOME_ARTICLES.md`, `docs/ARTICLES_INDEX.md`, `src/visitor/article-carousel.mjs`. Keep Home page counts and index pins distinct; inspect affected local browser and publication-emulator fixtures before changing their assumptions.
 - Image replacement/crop and CMS parity: `docs/CMS_MEDIA.md`, `docs/CMS_SITE_AUDIT.md`, `src/admin/media-editor.js`, `api/media.js`, `server/cloudinary.cjs`. Cloudinary Free is the selected backend; no Firebase Storage fallback. Read current billing/release status, never infer it from a source file.
 - Browser and domain release: `docs/BROWSER_COMPATIBILITY.md`, `docs/SEO.md`; real LINE testing is distinct from WebKit/Chromium emulation.
 
@@ -41,7 +42,7 @@ Then choose by task:
 - SEO/crawler/social: `docs/SEO.md`, `robots.txt`, `sitemap.xml`, `vercel.json`, `site.webmanifest`
 - UI/visual design/assets: `docs/DESIGN_ASSETS.md`, `docs/covermate-website-full-design-spec.md`, `organic.css`, `assets/`, current snapshots under `docs/snapshots/`
 - External prototypes, SPEC files, or handoff packages: read the user-provided files only after the current product docs above, and reconcile them against accepted product decisions before implementing
-- QA/release/UAT: `package.json`, `scripts/validate-bundles.mjs`, `scripts/smoke.mjs`, `scripts/uat-e2e-smoke.mjs`, `docs/RELEASE_RUNBOOK.md`, `docs/UAT.md`
+- QA/release/UAT: `package.json`, `.github/workflows/ci.yml`, `scripts/ci-check.mjs`, `scripts/emulator-suite.mjs`, `scripts/validate-bundles.mjs`, `docs/RELEASE_RUNBOOK.md`, `docs/UAT.md`. Read the runbook's focused check matrix before choosing full suites; `check:ci` and `check:emulators` are separate required workflow steps.
 - Admin/CMS operations: `docs/ADMIN_CMS_REBUILD_DECISIONS.md`, `docs/INTERACTION_MAP.md`, `docs/DATA_CONTRACT.md`, `admin/index.html`, `index.html`, `covermate-firebase.js`
 - Admin language/Home/Cases: `docs/ADMIN_LANGUAGE.md`, `docs/ADMIN_HOME_DESIGN.md`, `docs/ADMIN_CASES_V2.md`; current controls are natural Thai with conventional English terms, and Cases replaces the old visible Operations tabs.
 - CMS Undo/Redo/Reset and refactor: `docs/CMS_EDITOR_HISTORY.md`, `docs/REFACTOR_20260924.md`, `src/visitor/cms-controller.js`, `src/visitor/editor-history.js`, `covermate-freshness.mjs`.
@@ -56,6 +57,7 @@ Use the current on-disk `SKILL.md` each time a skill is invoked.
 - UI/UX routing and broad UX judgment: `$ui-ux-orchestrator`, `$ui-ux-expert`
 - Screenshots/snapshots: `$snapshot`
 - Release readiness: `$release-gate`
+- Failed GitHub Actions runs: `$github-actions-repair`
 - Efficient batching: `$efficient-execution`
 - Regression hunting: `$regression-hunter`
 - Docs maps: `$docs-cartographer`
@@ -79,7 +81,7 @@ Use the current on-disk `SKILL.md` each time a skill is invoked.
 - `/` is the public home page. `/motor` is the dedicated motor-insurance campaign page inside the same CoverMate product. `/#motor` is only a legacy same-page alias to the home motor/insurer area.
 - `/admin/login`, `/admin`, `/admin/ops`, `/admin/analytics`, `/admin/content`, `/admin/edit`, `/admin/preview`, and owner hash modes are private admin routes/states and must stay `noindex`.
 - `/admin` is the Admin Portal Home and must remain reachable after sign-in.
-- The shared Admin shell includes Home, Operations/Cases, Website content, Articles, Analytics and Settings with their existing role gates. Articles uses its own list/editor; public routes remain controlled by publication and visibility settings.
+- The shared Admin shell includes Home, Operations/Cases, Website content, Articles and Analytics with their existing role gates. Settings/Role Preview are retired; account details and notification preferences live in the shared account menu. Articles uses its own list/editor; public routes remain controlled by publication and visibility settings.
 - Website content has one main editor entry. Do not reintroduce a separate `Arrange & customise` launcher card; open the control panel from the editor via `Tools -> Panel`.
 - The control panel/shell must not leak into clean public routes.
 - Owner modes are `/#edit`, `/#admin`, `/#preview`, plus direct admin routes `/admin/content`, `/admin/edit`, and `/admin/preview`; clean public visitor routes must not show owner chrome even when an admin session exists.
@@ -100,7 +102,7 @@ Use the current on-disk `SKILL.md` each time a skill is invoked.
 ## Current Admin/CMS Status
 
 - `/admin` is the shared Admin Portal Home with Operations/Cases, Website content,
-  Articles, Analytics, and Settings. `/admin#articles` is the owner-only article
+  Articles and Analytics. `/admin#articles` is the owner-only article
   list/editor. The public master flag controls `/articles` and
   `/articles/:slug`; detail URLs additionally require an eligible published
   translation.
@@ -170,6 +172,21 @@ GitHub `verify` on the exact deployment SHA. Prefer Git-triggered deployment;
 never force-promote a failed/pending check. Verify the served version and CMS
 state before calling a release live. Do not publish unrelated drafts.
 
+Report release stages with their own evidence:
+
+- **Build ready:** Vercel finished building the identified deployment. `READY`
+  with `STAGED` still awaits promotion.
+- **CI passed:** required jobs actually executed and succeeded for that
+  deployment SHA. Record its run link; pending/cancelled/skipped is not a pass.
+- **Live:** the production alias resolves to that deployment and the requested
+  deployed surface has been verified. CMS publication remains a separate action.
+
+For delay investigations, compare build, CI, and alias-promotion timestamps for
+the same SHA. Read the current workflow's concurrency behavior before a new
+push; do not assume a new commit can reuse an older commit's green checks or
+that build duration measures time to production. Keep historical timings out of
+new release estimates unless current evidence supports them.
+
 ## Common Source Areas
 
 - Visitor/admin source: `src/visitor/runtime.js`, `template.html`, `home.html`, `home.css`, `shell.html`; `index.html` is generated with `npm run build:visitor`, never hand-edited
@@ -231,7 +248,7 @@ Important constraints:
 - If a named skill is used, read its current on-disk SKILL.md first.
 - UI work needs snapshot evidence in the final handoff.
 - Release work must use $release-gate; deployed media/image changes should use $production-asset-smoke after deployment; rollback-like work must use $rollback-guardrail first.
-- Treat current Admin/CMS contract docs as authoritative, including docs/ARTICLES_PUBLISHING.md for the later Articles module. `/admin` shares Home, Operations/Cases, Website content, Articles, Analytics and Settings. Website content has one editor entry; open the panel from `Tools -> Panel`. Articles keeps its separate editor.
+- Treat current Admin/CMS contract docs as authoritative, including docs/ARTICLES_PUBLISHING.md. `/admin` shares Home, Operations/Cases, Website content, Articles and Analytics; account details/preferences use the shared account menu. Website content has one editor entry; open the panel from `Tools -> Panel`. Articles keeps its separate editor.
 - `Public site` opens a clean public route in a new tab and must not move the current Admin tab. Do not generate `/?view=public`.
 - Firestore live/draft data must prevail over hard-coded and local fallback content.
 

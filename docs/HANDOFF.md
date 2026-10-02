@@ -2,6 +2,76 @@
 
 Last updated: 2026-10-02
 
+## Current Source And Production Checkpoint
+
+Rechecked on October 2 against GitHub and Vercel. This checkpoint supersedes the
+candidate/deployment wording in the historical entries below.
+
+| Evidence | Confirmed state |
+| --- | --- |
+| Verified runtime baseline and production Git SHA at this checkpoint | `aa8b68d5968c90b84766b32cf09aa4c5c511a9f4` |
+| Required GitHub `verify` | [36999361088](https://github.com/purichw/CoverMate/actions/runs/36999361088), success; both the main gate and Auth/Rules/API/Publish emulator step executed |
+| Vercel deployment | `dpl_TgjPJPK8E3ZHC7bPtMzzAhKfLmph`, `READY` / `PROMOTED`; `deployment-alias` check succeeded |
+| Canonical production | [covermateinsurance.com](https://covermateinsurance.com), assigned to that deployment |
+| October 2 timeline, Asia/Bangkok | Deployment created 18:08:29; build ready 18:09:33; CI completed 18:39:02; production alias check completed 18:39:03 |
+
+This documentation pass verified repository, CI and deployment metadata. It did
+not rerun browser/real-device smoke, log in, send customer messages, or inspect
+or modify live CMS documents. CI success and alias identity do not establish
+new visual, real LINE, or live content-publication evidence.
+
+Current implementation carried by this revision:
+
+- Home article pages show two compact horizontal cards on desktop, one on
+  tablet, and three stacked horizontal cards on mobile. Mobile thumbnails are
+  square and vertically centered; unused rows on a partial page collapse.
+  Shared section heading/eyebrow sizing is retained. Publication eligibility,
+  independent Home pins and the ten-item limit are unchanged. See
+  [HOME_ARTICLES.md](HOME_ARTICLES.md) for exact breakpoints and checks.
+- Home and index carousels rotate automatically with temporary interaction and
+  lifecycle suspension; the old Play/Pause button is removed. The index still
+  shows one pinned article at a time. See [ARTICLES_INDEX.md](ARTICLES_INDEX.md).
+- Critical stylesheet failure shows the boot error/Retry state before app mount,
+  even when a sibling stylesheet or React is stalled. The regression fixture
+  synchronizes held resources with actual Retry navigation; see
+  [LOADING_SCREEN.md](LOADING_SCREEN.md).
+- The Home publication E2E asserts three active mobile cards and the next
+  three-card page, retaining real Save/Publish/detail-link and independent index
+  pin coverage. Earlier `46a5c98` and its fixes are ancestors of this release.
+- The integrated revision also contains the standalone Motor poster v33 export
+  and its QA utilities under `exports/`; an export is not a visitor-route or
+  live CMS content replacement.
+
+This documentation/skill update is based on the runtime revision above and
+changes no runtime files. The owner authorized committing and pushing these
+documentation/skill changes; no separate manual deployment or CMS publication
+was requested. The documentation revision advances Git beyond this verified
+production checkpoint; it does not establish a newer deployment result.
+Installed and versioned `covermate-new-chat` copies are synchronized; the generic
+`release-gate` and `efficient-execution` skills live outside this repository.
+
+## Release Execution And Remaining Work
+
+Use [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md) for focused pre-push checks, failure
+diagnosis, batching and the distinction between build readiness, CI success and
+production promotion. The October 2 delays included a boot-readiness failure,
+a stale one-card E2E assumption, and runs superseded by newer pushes. A cancelled
+run is not a failed product assertion or a successful gate. The final integrated
+revision passed the unchanged required workflow.
+
+CI still runs the main checks and emulator checks sequentially in one `verify`
+job. Parallelization or affected-check selection has not been implemented;
+updating the skills/runbook does not change the workflow. Historical credentials,
+delivery, real-device and CMS-publication limitations below retain their own
+scope and must be rechecked when relevant to a new task.
+
+## Reading The Historical Entries
+
+The entries below preserve earlier implementation scopes and evidence. Their
+phrases such as "candidate", "current authorization" and "required before live"
+refer to their original task, not the production status above or permission for
+a future release. Prefer living domain docs for current behavior.
+
 ## Visitor Performance Release
 
 The owner authorized push/deploy of the Visitor/owner bundle split, fixed-name
@@ -787,8 +857,9 @@ data contract, or release contract.
 The exported bundler placeholder is hidden on first paint so users do not see an
 "Unpacking..." state or raw template content.
 
-Admin login redirects to `/admin`, the private Admin Portal Home. The home has
-four primary modules: Operations, Website content, Analytics, and Settings.
+Admin login redirects to `/admin`, the private Admin Portal Home. Current
+navigation is Home, Operations/Cases, Website content, Articles and Analytics.
+Settings/Role Preview are retired; see `ADMIN_CMS_REBUILD_DECISIONS.md`.
 
 The Admin Portal has an early session gate and its own sign-out action.
 
@@ -949,11 +1020,10 @@ Run smoke against production:
 COVERMATE_URL=https://covermateinsurance.com npm run smoke
 ```
 
-Deploy production:
-
-```bash
-vercel deploy --prod --yes
-```
+For an authorized production release, follow `RELEASE_RUNBOOK.md`: prefer the
+Git-triggered deployment of the intended SHA, wait for its required `verify`,
+then check the canonical alias and changed deployed surface. A manually built
+deployment is not a shortcut around the exact-SHA check.
 
 Deploy Firestore Rules, only with explicit owner approval:
 
@@ -1000,10 +1070,10 @@ The GA4 Data API endpoint exists. Availability depends on valid server-side
 property access and credentials; this docs pass did not verify that remote
 configuration. The browser must never contain service-account credentials.
 
-The Operations Portal is live for Leads, Tasks, and Audit. Customers,
-Consultations, Quotes, Policies, Renewals, Documents, and Insurers are
-deliberately labeled as not wired until dedicated production data contracts are
-implemented.
+The Operations Portal presents owner-only Cases. Leads/Tasks/Audit remain
+compatibility APIs, not visible tabs. Customers, Consultations, Quotes, Policies,
+Renewals, Documents and Insurers remain hidden until dedicated production data
+contracts are implemented. See `ADMIN_CASES_V2.md` for the current scope.
 
 Legal/license/contact copy should be reviewed by the site owner before paid
 traffic.

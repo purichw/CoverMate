@@ -1,8 +1,10 @@
 # Admin Editor panel
 
-Implementation and operating contract, 2026-09-27. Release verification is in
-progress; current results belong in [the release record](RELEASE_CMS_PANEL_20260927.md).
-This document does not confirm a production deployment.
+Implementation and operating contract, reviewed against live source `aa8b68d`
+on 2026-10-02. [HANDOFF.md](HANDOFF.md) owns current CI/deployment evidence;
+[the September 27 release record](RELEASE_CMS_PANEL_20260927.md) retains the
+earlier evidence. This documentation refresh did not rerun visual, hosted-auth
+or production-Publish checks.
 
 ## Layout and navigation
 
@@ -28,7 +30,7 @@ closing the panel and restores focus to the owner Tools toggle.
 
 ## Page switching
 
-Local candidate, 2026-09-28. The **หน้าที่แก้ไข** selector is always visible in
+Introduced 2026-09-28. The **หน้าที่แก้ไข** selector is always visible in
 the panel header and also available in the inline editor's Tools menu. Both use
 `editor-page.html` and the existing shared select. Home and Motor are the only
 implemented page choices; Articles uses its separate Article Editor.
@@ -62,11 +64,12 @@ production Publish or physical devices.
 The page-switch browser check passed on 2026-09-28, including the embedded
 Motor preview after switching. Final 1440px/390px screenshots were inspected.
 Route contracts, CMS controller tests, generated bundles and unchanged
-Home/Motor performance budgets also passed. This candidate is not deployed.
+Home/Motor performance budgets also passed in that verification. The page-switch
+implementation is included in `aa8b68d`; the dated results are not fresh checks.
 
 ## Content workspace
 
-Local candidate, 2026-09-30. Content uses the same panel dimensions, action bars
+Introduced 2026-09-30. Content uses the same panel dimensions, action bars
 and scroll surface as the other tabs. The redundant embedded preview and second
 desktop section list have been removed. The shared section select follows the
 actual page order on every viewport; grouped fields fill the available width.

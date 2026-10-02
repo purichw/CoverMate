@@ -1,8 +1,10 @@
 # CoverMate initial loading screen
 
-Implemented locally on 2026-09-23; source boundaries reviewed on 2026-09-24.
-The dated measurements below are historical. `HANDOFF.md` and current release
-records own deployment evidence and the combined visitor budget.
+Initial implementation: 2026-09-23. Current contract reviewed against live
+source `aa8b68d` on 2026-10-02, including pre-mount stylesheet failure reporting
+and Retry recovery. The dated measurements below are historical. `HANDOFF.md`
+owns current CI/deployment evidence and the combined visitor budget. This
+documentation refresh did not run new visual smoke.
 
 The cream boot guard now shows the approved CoverMate identity, a gold activity
 bar and a short localized status. Typography and the existing page design stay
@@ -39,6 +41,10 @@ unchanged. The bar is indeterminate: it does not claim a download percentage.
   immediately show a friendly error and the same retry action, which reloads the current URL.
   A failed stylesheet rejects the readiness barrier immediately even if a sibling
   stylesheet is still pending; it must not wait for every request to settle.
+  While boot is pending and the visibility guard is present, a stylesheet error
+  from a connected link in the current document also reports failure before the
+  app mounts. This covers a pending sibling stylesheet blocking app scripts.
+  Detached links and errors after the page is ready do not reopen the loader.
   If loading subsequently succeeds, the page still opens normally.
 - Reduced-motion users receive a static gold bar and immediate dismissal.
   Status uses a polite live region; retry is a native button with a visible
@@ -80,9 +86,15 @@ keyboard retry; a stalled request and retry; unavailable logo fallback; and
 readiness independent of noncritical images. Screenshots and the report are
 written to `uat-results/loading-screen/`. This check is included in `check:ci`.
 
-`node scripts/server-boot-check.mjs` also holds the article stylesheet pending
-while aborting Home CSS. Error/retry must appear before releasing that pending
-request, the unstyled page must remain hidden, and a real retry must recover.
+`node scripts/server-boot-check.mjs` holds the article stylesheet and React script
+pending while aborting Home CSS. It waits for both actual intercepted requests,
+then requires error/retry while React is still unavailable and the guarded page
+remains hidden. Both holds remain until the Retry button starts real navigation;
+the old requests are aborted and fresh requests succeed. The reloaded page must
+become visible through the existing style/font barrier. This check is also in
+`check:ci`; it covers failure before app mount rather than relying on a timeout.
+
+### Historical Local Evidence (2026-09-23–24)
 
 Also checked locally: existing boot guard and server-seed regression, localized
 published logo/blank/escaping assertions, generated bundles, unchanged

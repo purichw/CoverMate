@@ -1,28 +1,24 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-09-24
+Last updated: 2026-10-02
 
-## Current Authorization
+## Authorization
 
-The September 24 task authorizes updating project documentation and the two
-CoverMate skills, then pushing the integrated refactor. The candidate is built
-on upstream `167535e`, preserving the already-committed visitor/calculator/contact
-work. [REFACTOR_20260924.md](REFACTOR_20260924.md) owns this integration's scope
-and verification. The September 23 scope in
-[RELEASE_CHAT_20260923.md](RELEASE_CHAT_20260923.md) remains a historical record.
-Preserve unrelated uncommitted work in the original checkout.
+Use the user's actual task authorization for commit, push, deployment and CMS
+publication. Dated release records are evidence of their original scope, not
+standing permission to release again. A documentation-only push can trigger the
+existing Git-linked pipeline; it does not authorize a separate manual deployment
+or publication of CMS/article drafts.
 
-This push does not change Rules or authorize a content migration, Publish of
-existing Draft, customer reseeding, or bulk data migration. Reset Draft is a
-user-operated editor feature, not a rollout step.
-Final SHA, full CI, hosted UAT and production readback remain separately recorded
-gates; do not bypass the exact-SHA CI requirement.
+[HANDOFF.md](HANDOFF.md#current-source-and-production-checkpoint) records the
+latest verified source/CI/production identity. Preserve unrelated local edits
+when integrating upstream. Code deployment, Firestore Rules deployment and
+publication of CMS/article drafts are separate operations. Reset Draft is an
+editor feature, not a rollout step.
 
-Historical September 21 authorization selected Cloudinary Free; Firebase Storage
-remains rejected. [HANDOFF.md](HANDOFF.md) preserves earlier deployment records.
-[CMS_MEDIA.md](CMS_MEDIA.md) owns credentials, cost boundaries and hosted upload
-checks. Older migration instructions below are reference procedures only and do
-not authorize or require those operations for this push.
+Cloudinary Free remains the selected upload backend; see [CMS_MEDIA.md](CMS_MEDIA.md)
+for credentials, cost boundaries and hosted checks. Historical refactor and
+migration procedures below apply only when that operation is in scope.
 
 ## Production
 
@@ -81,12 +77,59 @@ files. Verify the served runtime, not just a changing deployment identifier.
 - Prefer the Git-triggered deployment of the tested SHA. A manual CLI deployment
   may lack Git check provenance; do not bypass checks to make it live.
 
-On 2026-09-13 the API readback confirmed the exact policy, GitHub repo/`main`
-link and automatic production aliasing. This is configuration verification, not
-an observed blocked-then-promoted deployment. For each authorized release, record pending/failure hold,
-successful check on the exact SHA, then alias/source readback. Until CI passes,
-do not report the candidate as live. Platform behavior and manual bypass details:
+The October 2 readback confirmed the integrated revision's passing `verify`,
+successful `deployment-alias` check and canonical alias assignment; see
+[HANDOFF.md](HANDOFF.md#current-source-and-production-checkpoint). For each new
+authorized release, record the stages separately rather than reusing that
+historical pass. Platform behavior and manual bypass details:
 [Vercel Deployment Checks](https://vercel.com/docs/deployment-checks).
+
+### Release Status And Timing
+
+| Status to report | Required evidence |
+| --- | --- |
+| Pushed | Intended commit is on the intended remote branch. |
+| Build ready | Identified Vercel deployment finished building; `READY` / `STAGED` is still awaiting promotion. |
+| CI passed | Required checks actually executed and succeeded on that deployment's exact SHA; record the run URL. |
+| Production promoted | Canonical alias points to the intended deployment and the alias check succeeded. |
+| Release verified | The requested deployed surface passes proportionate read-only verification; report any real-device/auth/CMS evidence not covered. |
+
+`.github/workflows/ci.yml` currently has one `verify` job, a 40-minute job limit,
+and `cancel-in-progress: true` for the same Git ref. It runs `check:ci` followed
+by `check:emulators`; the latter is a separate required step, not part of
+`check:ci`. A new push to the same ref can cancel the active run. Cancelled or
+skipped coverage is not successful coverage.
+
+Observed on October 2 for `aa8b68d` / [run 36999361088](https://github.com/purichw/CoverMate/actions/runs/36999361088):
+Vercel build readiness took about 64 seconds, the main gate took 23m14s, and the
+Auth/Rules/API/Publish emulator step took 4m46s. Including queue/setup/cleanup,
+CI took 30m33s. The main gate ran 88 commands sequentially. These are historical
+measurements, not future ETAs. No parallelization or changed-file CI selection
+has been implemented by the documentation/skill update.
+
+### Avoidable Restarts
+
+1. Map the changed behavior to tests before push. Search relevant selectors,
+   counts, pagination, readiness and fixtures, including tests invoked by
+   `scripts/emulator-suite.mjs`; filename-only searches can miss a consumer.
+2. Run the affected focused checks and collect already-running release reviews.
+   Combine known corrections before one push. A CSS-only edit does not require
+   new review rounds or the complete local CI suite by default.
+3. On failure, inspect the first causal error, reproduce the affected condition
+   when possible, and check nearby assumptions before another push. Retain valid
+   evidence for untouched code. Compare browser/runtime versions when a failure
+   appears environment-dependent; do not widen timeouts or weaken assertions
+   simply to obtain a pass.
+4. Check the active run and concurrency policy before superseding it. Use bounded
+   waits, report meaningful milestones, and investigate an unexpected stall
+   rather than treating repeated unchanged polling as progress.
+
+The October 2 boot-readiness failure and stale one-card Home E2E expectation
+were corrected before the final integrated pass. Tests now cover a critical CSS
+error before app mount and three active mobile Home cards. Keep the one-card
+index-carousel contract separate. Use `$release-gate`, `$efficient-execution`
+and `$github-actions-repair` for their respective release, batching and failure
+diagnosis rules.
 
 ## Release Permission Guardrail
 
@@ -98,11 +141,10 @@ specific setting; it does not authorize commit, push, deploy or data migration.
 
 ## Local Verification
 
-Use the current integration checkout and upstream commit. The refactor's
-`c7bada4` hosted preview proves that baseline only; merging later visitor work
-requires affected checks on the combined source. Preserve newer lazy imports,
-output minification and regression assertions rather than overlaying stale
-working-tree copies. See [REFACTOR_20260924.md](REFACTOR_20260924.md).
+Use the active checkout's current source and diff. Old hosted previews and local
+reports prove their recorded baseline only. Refresh affected evidence after
+integration; preserve newer runtime, generated outputs and regression assertions
+rather than overlaying an older working-tree copy.
 
 Install dependencies:
 
@@ -122,13 +164,35 @@ Run a local static server:
 python3 -m http.server 4177
 ```
 
-Run smoke checks against local:
+Choose the smallest check set that covers the changed behavior:
+
+| Changed surface | Focused starting point |
+| --- | --- |
+| Documentation/skills | Diff and local-link checks; skill validation and installed/versioned comparison when skills change. No app rebuild or browser suite. |
+| Home article layout | `node scripts/home-articles-check.mjs --browser` plus current desktop/mobile visual evidence. |
+| Home carousel counts, navigation or shared rotation | `node scripts/home-articles-carousel-check.mjs`; check the index consumer with `node scripts/articles-carousel-check.mjs --interactions-only`; run Home publication E2E when its assumptions change. |
+| Boot failure/readiness | `node scripts/server-boot-check.mjs` and relevant cross-engine `node scripts/runtime-error-check.mjs`. |
+| Website/article lifecycle separation | `npm run check:content-isolation` plus the changed persistence/confirmation flow. |
+| Visitor source/generated artifacts | Build the touched outputs, then `npm run check:bundles`. |
+
+For Home publication integration in isolated local Auth/Firestore emulators:
+
+```bash
+COVERMATE_TEST_MODE=emulator npx firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json "node scripts/home-articles-pins-e2e.mjs"
+```
+
+This uses the project's demo configuration, ports 8088/9098 and namespaced
+synthetic records. It does not publish production CMS/article drafts. See
+[HOME_ARTICLES.md](HOME_ARTICLES.md) for the detailed contract.
+
+Run the full local gate when the diff or failed targeted evidence warrants it:
 
 ```bash
 npm run check:ci
 ```
 
-For a shorter manual split, run:
+The checks below are available by risk; they are not a mandatory bundle for
+every small follow-up:
 
 ```bash
 npm run check:bundles
@@ -150,9 +214,11 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 section structure, coverage controls, relationship cards,
 insurer logo items, and tier rows/columns.
 
-GitHub Actions runs `npm run check:ci` on pushes to `main`, pull requests, and
-manual dispatch. CI installs Playwright Chromium and uses the shared browser
-launcher helper, so browser checks are no longer tied to macOS Chrome.app.
+GitHub Actions runs `npm run check:ci` and then `npm run check:emulators` on
+pushes to `main`, pull requests and manual dispatch. CI uses Node 22, Java 21,
+and Playwright Chromium/WebKit with the shared launcher helper. Record the
+actual browser version when reproducing CI; a local Chrome fallback may differ
+from the installed Playwright browser.
 
 ## UAT Trigger Policy
 
@@ -233,7 +299,10 @@ responsive snapshots, exact served assets, private noindex, upload rejection,
 canonical redirects and sitemap. Personally inspect its captured images.
 It does not log in, submit enquiries or publish CMS data.
 
-Minimum checks:
+The list below is the release coverage inventory. Select entries affected by
+the diff and the required endpoint; do not run every journey for a tiny visual
+fix. Checks involving login, submissions or CMS writes require an appropriately
+authorized environment and are not part of the read-only production smoke.
 
 - `/` loads public visitor site
 - first paint does not show exported placeholder UI or raw `<x-dc>` template
@@ -430,9 +499,9 @@ The expression should return `null`.
 Only run this section after the user explicitly approves commit, push, and
 deploy in the current task.
 
-The September 23 candidate retains the existing server-side intake and adds
-Cases contracts/rules. Verify compatible API/site behavior before applying its
-Rules; no legacy lead or CMS content migration is part of rollout.
+When a release changes Cases contracts or Rules, verify compatible API/site
+behavior before applying the Rules. Do not infer a lead/CMS content migration
+from an ordinary code deployment.
 
 Historical server-side lead migration guidance: configure Vercel server secrets and verify
 real App Check submission on a registered preview hostname first. See
@@ -449,7 +518,7 @@ firebase deploy --only firestore:rules --project covermate-purich
 
 For the historical direct-write-to-server migration, the old form wrote directly
 to Firestore; compatible API/site code had to precede denying anonymous writes.
-The active Cases release must likewise keep app/API and Rules compatible and
+Any Cases/Rules release must likewise keep app/API and Rules compatible and
 rerun its hosted UAT checks after Rules deployment. Existing tabs may need a
 refresh. A rollback must preserve canonical Cases data and compatible protection;
 never restore CMS content automatically or reopen direct writes to canonical
@@ -501,6 +570,9 @@ For a bad production deploy:
 ## Pre-Release Checklist
 
 - `git status` reviewed
+- changed-behavior assumptions and affected integration fixtures inspected
+- required local checks and already-running release reviews collected before push
+- active CI run/concurrency checked; build, CI and promotion tracked separately
 - relevant docs updated
 - storage key changes reflected in [DATA_CONTRACT.md](DATA_CONTRACT.md)
 - Firestore rules deployed when lead/CMS payload validation changes
