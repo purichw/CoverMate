@@ -274,7 +274,14 @@
     var el = target && target.closest ? target.closest("a[href]") : null;
     if (!el) return null;
     var href = el.getAttribute("href") || "";
-    if (/line\.me|lin\.ee/i.test(href)) return { name: "line_click", params: { link_type: "line" } };
+    // Article sharing is not a contact enquiry. Match the destination host,
+    // never a domain string embedded in a query, path, or unrelated hostname.
+    try {
+      var destination = new URL(href, window.location.href);
+      var lineHost = /^(?:www\.)?(?:line\.me|lin\.ee)$/.test(destination.hostname);
+      var lineShare = /^\/(?:lineit\/share|R\/msg\/text)(?:\/|$)/i.test(destination.pathname);
+      if (destination.protocol === "https:" && lineHost && !lineShare) return { name: "line_click", params: { link_type: "line" } };
+    } catch (error) { /* Invalid URLs do not represent contact intent. */ }
     if (/^tel:/i.test(href)) return { name: "phone_click", params: { link_type: "phone" } };
     if (/^mailto:/i.test(href)) return { name: "email_click", params: { link_type: "email" } };
     return null;

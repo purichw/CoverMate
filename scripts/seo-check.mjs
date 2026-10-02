@@ -29,6 +29,16 @@ for (const logo of ['', null, 'javascript:alert(1)']) {
   assert.doesNotMatch(bootImage({ headerLogo: { th: logo } }), /\ssrc=/);
 }
 assert.match(bootImage({ headerLogo: 'https://example.com/logo.png?x=" onerror="alert(1)' }), /x=&quot; onerror=&quot;alert\(1\)/);
+const heroConfig = { ...config, sections: [{ type: 'hero', on: true }], homeDesign: { botanicalIllustration: 'assets/brand/home-hero-background-v2.webp' } };
+const imagePreloads = (site, options = {}) => renderPublicPage(html, site, { path: '/', ...options }).split('</head>')[0].match(/<link rel="preload" as="image"[^>]*>/g) || [];
+assert.deepEqual(imagePreloads(heroConfig), ['<link rel="preload" as="image" fetchpriority="high" href="' + versionedAssetUrl(heroConfig.homeDesign.botanicalIllustration, imageVersions, 'https://covermateinsurance.com') + '">']);
+assert.deepEqual(imagePreloads({ ...heroConfig, homeDesign: { botanicalIllustration: 'https://example.com/custom.webp?revision=2&size=hero' } }), ['<link rel="preload" as="image" fetchpriority="high" href="https://example.com/custom.webp?revision=2&amp;size=hero">']);
+for (const site of [
+  { ...heroConfig, sections: [{ type: 'hero', on: false }] },
+  { ...heroConfig, sections: [{ type: 'products' }, { type: 'hero' }] },
+  ...['', null, 'javascript:alert(1)', 'https://example.com/x" onload="alert(1)'].map(art => ({ ...heroConfig, homeDesign: { botanicalIllustration: art } }))
+]) assert.deepEqual(imagePreloads(site), [], 'Respect disabled, reordered, cleared and invalid CMS hero art');
+for (const options of [{ path: '/motor' }, { path: '/articles' }, { privatePage: true }]) assert.deepEqual(imagePreloads(heroConfig, options), [], 'Only preload artwork on its visible public Home route');
 for (const path of ['/', '/motor']) for (const lang of ['th', 'en']) {
   const model = createSeoModel(config, { path, lang });
   const canonical = 'https://covermateinsurance.com' + path + (lang === 'en' ? '?lang=en' : '');
@@ -43,6 +53,58 @@ for (const path of ['/', '/motor']) for (const lang of ['th', 'en']) {
     assert.equal((head.match(/rel="canonical"/g) || []).length, 1);
     assert.ok(head.includes(`<title>${model.title}</title>`));
   }
+}
+// Article metadata describes the real reader hierarchy and published sources;
+// publishing a guide must not create another instance of the Home service.
+const editorialConfig = structuredClone(config);
+editorialConfig.seo.homeServiceName = { th: 'คำปรึกษาประกันภัย', en: 'Insurance advisory' };
+editorialConfig.seo.motorServiceName = { th: 'เปรียบเทียบประกันรถยนต์', en: 'Motor comparison' };
+editorialConfig.articleDetail = { home: { th: 'หน้าแรก', en: 'Homepage' }, all: { th: 'อ่านบทความทั้งหมด', en: 'Insurance guides' } };
+const articleFeed = { available: true, settings: { enabled: true }, items: [] };
+const article = {
+  available: true, title: 'Health cover <guide>', seoTitle: 'Insurance guide | CoverMate', excerpt: 'Read the policy terms.',
+  languages: ['th', 'en'], author: 'CoverMate', datetime: '2026-10-01T03:00:00.000Z', updatedDatetime: '2026-10-02T03:00:00.000Z',
+  sources: [
+    { label: 'Policy information', href: 'https://example.org/policy?version=1&lang=th' },
+    { label: 'Unsafe protocol', href: 'javascript:alert(1)' },
+    { label: 'Credentials', href: 'https://secret@example.org/policy' },
+    { label: '', href: 'https://example.org/blank' },
+    { label: 'Not HTTPS', href: 'http://example.org/policy' }
+  ]
+};
+for (const lang of ['th', 'en']) {
+  const suffix = lang === 'en' ? '?lang=en' : '';
+  const model = createSeoModel(editorialConfig, { path: '/articles/health-cover', lang, article, articleFeed });
+  const graph = model.graph['@graph'];
+  const breadcrumbs = graph.find(entry => entry['@type'] === 'BreadcrumbList');
+  const articleSchema = graph.find(entry => entry['@type'] === 'Article');
+  assert.equal(graph.some(entry => entry['@type'] === 'Service'), false);
+  assert.deepEqual(breadcrumbs.itemListElement.map(({ position, name, item }) => ({ position, name, item })), [
+    { position: 1, name: editorialConfig.articleDetail.home[lang], item: 'https://covermateinsurance.com/' + suffix },
+    { position: 2, name: editorialConfig.articleDetail.all[lang], item: 'https://covermateinsurance.com/articles' + suffix },
+    { position: 3, name: article.title, item: model.canonical }
+  ]);
+  assert.equal(graph.find(entry => entry['@type'] === 'WebPage').breadcrumb['@id'], breadcrumbs['@id']);
+  assert.equal(articleSchema.headline, article.title, 'The breadcrumb and Article headline use the displayed title, not the SEO override');
+  assert.deepEqual(articleSchema.citation, [{ '@type': 'CreativeWork', name: 'Policy information', url: article.sources[0].href }]);
+  const rendered = renderPublicPage(html, editorialConfig, { path: '/articles/health-cover', lang, article, articleFeed });
+  for (const surface of [rendered, extractBundlerTemplate(rendered)]) {
+    const json = JSON.parse(surface.match(/<script type="application\/ld\+json" id="covermate-jsonld">([\s\S]*?)<\/script>/)[1]);
+    assert.deepEqual(json, model.graph, 'Initial and embedded metadata use the same safe editorial graph');
+  }
+  const collection = createSeoModel(editorialConfig, { path: '/articles', lang, articleFeed }).graph['@graph'];
+  assert.ok(collection.some(entry => entry['@type'] === 'CollectionPage' && entry.url === 'https://covermateinsurance.com/articles' + suffix));
+  assert.equal(collection.some(entry => ['Service', 'Article', 'BreadcrumbList'].includes(entry['@type'])), false, 'The index has no reader breadcrumb or service schema');
+  for (const path of ['/', '/motor']) {
+    assert.ok(createSeoModel(editorialConfig, { path, lang }).graph['@graph'].some(entry => entry['@type'] === 'Service'), 'Real service pages retain Service schema');
+  }
+}
+const noSources = createSeoModel(editorialConfig, { path: '/articles/health-cover', article: { ...article, sources: [] }, articleFeed });
+assert.equal('citation' in noSources.graph['@graph'].find(entry => entry['@type'] === 'Article'), false);
+const blankTrailConfig = { ...editorialConfig, articleDetail: { home: { th: '' }, all: { th: '' } } };
+assert.equal(createSeoModel(blankTrailConfig, { path: '/articles/health-cover', article, articleFeed }).graph['@graph'].some(entry => entry['@type'] === 'BreadcrumbList'), false, 'Do not invent hidden CMS breadcrumb labels');
+for (const options of [{ noindex: true }, { privatePage: true }, { articleFeed: { settings: { enabled: false } } }]) {
+  assert.equal(createSeoModel(editorialConfig, { path: '/articles/health-cover', article, articleFeed, ...options }).graph, null, 'Private/disabled article pages expose no structured-data graph');
 }
 const blank = structuredClone(config);
 blank.seo.image = ''; blank.brand.media = { favicon: '', mark: '' };

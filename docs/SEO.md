@@ -172,6 +172,76 @@ Search Console/Bing submission and account verification are separate owner
 operations, not implied by deployment or a Lighthouse score. Historical snapshot
 manifests and old exports remain factual archives, not current domain guidance.
 
+## Production SEO Checkpoint — October 2, 2026
+
+The first SEO content-cleanup batch changed production CMS data only; no runtime
+source change or deployment was needed:
+
+- Unpublished `test` (`/articles/12345`) and `test 2` (`/articles/test2`) through
+  the article repository's normal unpublish transaction. Both remain editable
+  drafts with their draft content preserved. Public routes return 404, the
+  published feed is empty, and neither URL appears in the article sitemap.
+- Set `config.contact.email` to `covermate@covermateinsurance.com` independently
+  in website live and draft states. Other config/text fields were preserved;
+  this did not publish unrelated draft content. Verified the mailto links in
+  the contact section and footer at desktop and 390px mobile widths, and the
+  email in the initial Organization/InsuranceAgency JSON-LD.
+- Search Console reported the homepage as indexed. Its fresh Live Test at
+  14:29 Asia/Bangkok passed and rendered the real homepage content and new email
+  anchors. This verifies Google's rendering of Home, not every route or
+  non-JavaScript crawlers. No body-rendering change was justified by this check.
+- `/sitemap.xml` was **Success** in Search Console (4 discovered pages).
+  `/api/article-sitemap` returned HTTP 200 with valid XML and 6 URLs, and its
+  Google Live Test at 14:35:48 showed **Crawl allowed: Yes** and **Page fetch:
+  Successful**. The Sitemaps report still showed **Couldn't fetch** afterward;
+  report processing remains unconfirmed. Do not equate a successful live fetch
+  with successful sitemap processing or request search indexing for the XML.
+
+Local evidence and protected pre-change CMS backups are in
+`uat-results/seo-first-batch-20261002/` (ignored). Relevant receipts:
+`mutation-receipt.json`, `http-after.json`, `google-home-render-proof.json`,
+`google-sitemap-live-test.txt`, and the desktop/mobile screenshots. Do not commit
+CMS backups. No broad build, performance audit, new content, or ranking claim
+was part of this data-only pass.
+
+## SEO Content and Measurement — October 2, 2026
+
+The follow-up source batch adds four Thai educational guides in
+[`content/seo-foundation-20261002.mjs`](content/seo-foundation-20261002.mjs):
+health insurance, life planning, existing-policy review, and motor tiers.
+They use the normal editable article document, official OIC/insurer references,
+linked related guides, and licensed or clearly labelled illustrative covers.
+They are publication inputs, not hardcoded public fallback content. Deploy the
+new `assets/articles/` files before saving/publishing only these four new IDs
+through the normal article repository. Existing drafts and website states must
+remain unchanged. English translations remain unpublished.
+
+The source changes add article breadcrumbs and citations, identify the index as
+a CollectionPage, limit Service schema to relevant pages, preload Home's first
+visible hero artwork, and exclude LINE sharing links from contact-click counts.
+Targeted SEO, analytics/consent, generated-bundle and content validation pass.
+The initial mobile Lighthouse observation was 60 performance, LCP 5.1s,
+FCP 2.7s, TBT 480ms, CLS 0; this is a single lab baseline, not field data or a
+ranking result. Compare again only after the intended SHA is actually live.
+
+Live Google Analytics configuration was verified in the UI:
+
+- `quote_submit_success` is a key event (once per event; no invented monetary
+  value). No fake lead was submitted. Production event arrival is a separate
+  check after a genuine consented submission.
+- Search Console domain `covermateinsurance.com` is linked to CoverMate's
+  existing stream `15340450413` / `G-5TF3C235EF`.
+- That stream's display URL now uses `https://covermateinsurance.com`, preserving
+  its measurement ID and collected history.
+
+Business Profile Manager showed no business in the signed-in account; the
+owner clarified that the old profile may have been deleted. New profile setup
+awaits actual location/service-area/eligibility details. Prepared description,
+review-request and resource-outreach drafts are in
+[`content/seo-next-actions-20261002.md`](content/seo-next-actions-20261002.md).
+No outreach, review solicitation, automated schedule, or fabricated address was
+submitted. Ignored evidence is under `uat-results/seo-remaining-20261002/`.
+
 ## References
 
 - [Google JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)
