@@ -35,6 +35,7 @@ app.readJSON = () => null; app.writeJSON = () => {}; app.queueRemoteDraft = () =
 app.state.site = app.normalizeConfig(original.config, { repeatableIds: true });
 const base = JSON.parse(JSON.stringify(app.state.site));
 const insurers = () => app.state.site.sections.find(s => s.type === 'insurers');
+const licenceSections = (values = app.renderVals()) => values.sectionGroups.flatMap(group => group.sections).filter(section => section.homeLicences).map(section => section.licence);
 const expectedIds = Array.from(app.buildMotorPageSections(base).filter(s => s.on !== false), s => s.id);
 const brokerId = insurers().cards.find(c => c.licenceRole === 'broker')?.id;
 const enabledTiers = base.sections.find(s => s.type === 'tiers').items.filter(item => item.on !== false);
@@ -50,28 +51,28 @@ for (const route of ['home', 'motor']) {
   assert.ok(shared.every(s => s.isHomeLayout));
   if (route === 'motor') {
     assert.deepEqual(Array.from(values.sections, s => s.id), expectedIds);
-    assert.ok(values.homeLicenceSections.every(s => s.cards.every(c => c.licenceRole === 'broker')));
+    assert.ok(licenceSections(values).every(s => s.cards.every(c => c.licenceRole === 'broker')));
     assert.equal(values.heroProof.life, false);
-  } else assert.equal(values.homeLicenceSections[0].cards.length, insurers().cards.filter(c => c.on !== false).length);
+  } else assert.equal(licenceSections(values)[0].cards.length, insurers().cards.filter(c => c.on !== false).length);
 }
 assert.deepEqual(JSON.parse(JSON.stringify(app.state.site)), base, 'Rendering never rewrites CMS data');
 insurers().cards.reverse();
 const broker = insurers().cards.find(c => c.id === brokerId);
 broker.logo = ''; broker.th = { kicker: 'Broker custom role', title: 'Custom company', body: 'Custom licence content' };
-assert.equal(app.renderVals().homeLicenceSections[0].cards[0].title, 'Custom company');
+assert.equal(licenceSections()[0].cards[0].title, 'Custom company');
 assert.equal(app.renderVals().heroProof.logo, '', 'Cleared CMS logo stays cleared');
 broker.on = false;
-assert.equal(app.renderVals().homeLicenceSections.length, 0);
+assert.equal(licenceSections().length, 0);
 assert.equal(app.renderVals().heroProof.visible, false, 'No fallback to AIA when broker is hidden');
 broker.on = true;
 app.state.sel = 'licences';
 app.renderVals().editCards.find(c => c.id === brokerId).onLicenceRole({ target: { value: '' } });
-assert.equal(app.renderVals().homeLicenceSections.length, 0, 'Admin role selection drives route visibility');
+assert.equal(licenceSections().length, 0, 'Admin role selection drives route visibility');
 assert.equal(app.renderVals().editCards.some(c => c.id === brokerId), false, 'Motor editor only lists broker cards');
 app.state.routePage = 'home';
 app.renderVals().editCards.find(c => c.id === brokerId).onLicenceRole({ target: { value: 'broker' } });
 app.state.routePage = 'motor';
-assert.equal(app.renderVals().homeLicenceSections[0].cards.length, 1);
+assert.equal(licenceSections()[0].cards.length, 1);
 const legacy = structuredClone(base); legacy.cmsContentVersion = 10;
 legacy.sections.find(s => s.type === 'insurers').cards.forEach(c => { delete c.licenceRole; });
 const upgraded = contract.migrateCmsContent(legacy);
