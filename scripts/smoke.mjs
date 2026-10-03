@@ -1875,19 +1875,13 @@ for (const [name, width, height] of viewports) {
         navHrefs,
         homeMotorLinks,
         headerCtaText,
-        placeholderStoriesVisible:
-          Array.from(document.querySelectorAll("section#voices")).some((section) => {
-            const rect = section.getBoundingClientRect();
-            const style = window.getComputedStyle(section);
-            return (
-              rect.width > 0 &&
-              rect.height > 0 &&
-              style.display !== "none" &&
-              style.visibility !== "hidden" &&
-              style.opacity !== "0"
-            );
-          }) ||
-          /รอความคิดเห็นจริง|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|Awaiting real feedback|Client feedback will appear here|Customer name|sample review/i.test(bodyText),
+        // Genuine owner stories may be visible; reject the actual placeholder
+        // copy in rendered item fields, never a section merely by its ID.
+        placeholderStoriesVisible: Array.from(document.querySelectorAll(
+          'section[data-screen-label="Voices"] [data-content-path*=".items."], section[data-screen-label="Claim stories"] [data-content-path*=".items."]'
+        )).filter(isVisible).some(node =>
+          /^(?:รอความคิดเห็นจริง|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่(?:เมื่อได้รับอนุญาต)?|ตัวอย่างโครงสร้าง|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง(?:ตรงนี้(?: — 1 ถึง 2 ประโยคจะอ่านง่ายที่สุด)?)?|ชื่อลูกค้า|อาชีพ\s*·\s*ประกันที่ทำ|Awaiting real feedback|Client feedback will appear here(?: once permission is granted)?|Placeholder structure|Customer name|Client name|Occupation\s*·\s*policy held|Role\s*·\s*policy|sample review|Paste a real quote here(?: — one or two sentences reads best)?)[.!?…]*$/i.test((node.innerText || '').replace(/\s+/g, ' ').trim().replace(/^⟨|⟩$/g,''))
+        ),
         hasQueryTypeSelect: selectOptions.some((text) =>
           /ขอใบเสนอราคา|Request a quote|Compare plans|เปรียบเทียบแผน/.test(text)
         ),

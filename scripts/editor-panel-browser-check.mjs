@@ -25,6 +25,22 @@ defaults.contact.lineUrl = 'https://editor-panel.example.invalid/line';
 defaults.sections.find(section => section.id === 'talk').bg = 'sage';
 const clean = value => contract.sanitizeStateDoc(value, { repeatableIds: true });
 const live = clean({ config: defaults, text: {}, revision: 1 });
+if(process.argv.includes('--article-order')) {
+  // Seed after the current migration: this deliberately exercises a modern
+  // owner draft retaining placeholders, independently of legacy seed upgrades.
+  const voices=live.config.sections.find(section=>section.id==='voices');
+  voices.on=false;
+  voices.items=[{
+    id:'local-authored-claim',on:true,
+    th:{label:'เคสทดสอบในเครื่อง',title:'ติดตามเอกสารเคลมในสภาพแวดล้อมทดสอบ',body:'เนื้อหาสังเคราะห์สำหรับตรวจระบบในเครื่องเท่านั้น ไม่มีข้อมูลลูกค้าจริง',meta:'Local QA'},
+    en:{label:'Local test case',title:'Claim document follow-up in a local test',body:'Synthetic content for local system verification only; no real customer data.',meta:'Local QA'}
+  },...Array.from({length:3},(_,index)=>({
+    id:'local-placeholder-'+(index+1),on:true,
+    th:{label:'รอความคิดเห็นจริง',title:'ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่เมื่อได้รับอนุญาต',body:'เราจะไม่ใช้ชื่อ รูปภาพ หรือรายละเอียดส่วนบุคคลโดยไม่ได้รับความยินยอม',meta:'ตัวอย่างโครงสร้าง'},
+    en:{label:'Awaiting real feedback',title:'Client feedback will appear here once permission is granted.',body:'We will not use names, photographs or personal details without consent.',meta:'Placeholder structure'}
+  }))];
+  Object.assign(live,clean(live));
+}
 const originalLive = structuredClone(live);
 let draft = structuredClone(live), saves = 0, forbiddenWrites = 0;
 let versionsFailure = false, draftFailure = false;
@@ -111,6 +127,7 @@ if (process.argv.includes('--serve')) {
   fs.mkdirSync(output, { recursive:true });
   const owners = ['src/visitor/runtime.js','src/visitor/template.html','src/visitor/home.css','src/visitor/editor-panel.css','src/visitor/cms-controller.js','covermate-contract.js','index.html','assets/visitor/home.css','assets/visitor/editor-tools.css','assets/visitor/editor-panel.css','scripts/editor-panel-browser-check.mjs'];
   if(process.argv.includes('--versions'))owners.push('src/visitor/editor-versions.js','src/visitor/editor-versions.html','src/visitor/editor-version-detail.html','assets/visitor/editor-versions.js','scripts/lib/editor-versions-check.mjs');
+  if(process.argv.includes('--article-order'))owners.push('scripts/lib/editor-article-order-check.mjs','src/visitor/home-articles.mjs');
   const hashes = () => Object.fromEntries(owners.map(file => [file,createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
   const report = { passed:false, startedAt:new Date().toISOString(), sourceHashes:hashes(), checks:[], screenshots:[], geometry:[], errors:[], blockedRequests:[], fixture:{environment:'Local static server; synthetic owner; memory-only Draft',productionWrites:0,publishEnabled:false} };
   const browser = await launchChromium(loadPlaywright().chromium);

@@ -6,15 +6,30 @@ in that release; see [HANDOFF.md](HANDOFF.md) for its CI and deployment evidence
 Article publication and management are documented in `ARTICLES_PUBLISHING.md`
 and `ADMIN_ARTICLES.md`. This documentation refresh did not run new visual smoke.
 
+The Page Structure visibility/order follow-up is implemented locally on
+2026-10-03. Targeted local verification passed for shared `cm-switch` controls,
+keyboard interaction, visibility, order, Save/reload/Preview and website/article
+isolation. The code remains uncommitted and has not been deployed or published.
+The separate claims-content change is saved only in Website Draft revision 94;
+it made no article/settings or Live writes. See
+[CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up).
+
 ## Presentation
 
-- Home only: Articles appears in Page Structure and can move up/down using the
-  existing controls. Its stable next-section anchor is `homeDesign.articlesBefore`.
-  Missing/invalid anchors retain the default before Contact (or after tiers/end
-  when Contact is absent); an empty anchor means the last movable section, before
-  the fixed licence/Footer bands. Hidden anchors use the next visible section.
-  Normal sections can also move across Articles. Draft/Undo/Redo/publication use
-  the existing site workflow; article records and visibility settings stay separate.
+- Home only: Articles uses the same working show/hide and move controls as the
+  other Page Structure rows. Its visibility control uses the shared `cm-switch`
+  track/thumb and 44px touch target, with an accessible checked state and state
+  tooltip rather than a text status chip. In the local follow-up, `pageLayout.home.order`
+  stores the whole outline order, including Articles, Licences and Footer; the
+  rendered DOM and keyboard sequence follow it. `pageLayout.home.hidden` can
+  hide the Articles presentation without changing article records or settings.
+  With no stored order, `homeDesign.articlesBefore` preserves its legacy position:
+  default before Contact (or after tiers/end when Contact is absent), and an empty
+  anchor retains the prior position before Licences/Footer. Hidden anchors use
+  the next visible section. The legacy anchor is maintained for compatibility.
+  Normal sections and presentation rows can move across Articles. Draft, Save,
+  Reset, Undo/Redo, Preview and Publish use the existing website workflow;
+  article records and independently saved article settings stay separate.
 - Compact cards: two horizontal cards per page at 1024px+, one horizontal card
   at 768–1023px, and three compact cards stacked vertically on mobile.
   Desktop/tablet covers sit left of the copy; mobile uses centered square
@@ -60,7 +75,7 @@ CMS v21 adds only five localized fields in the existing Brand & contact group
 `articlesAll`, `articlesRead`. Migration fills absent translations only and keeps
 intentional blanks/custom values. These same fields are now also available in
 Content > Articles. Article titles, media and excerpts are **not**
-duplicated into Home config or the fixed-layout page editor.
+duplicated into Home config or the website page editor.
 
 The public server injects `script#covermate-article-feed[type=application/json]`
 inside the decoded Visitor template. Owner Home canvases load the same published
@@ -68,7 +83,10 @@ summary projection through authenticated `GET /api/articles?action=feed`, using
 the existing article repository and environment-aware client. Failure clears the
 canvas feed and offers retry in Content > Articles. Empty/disabled/error rows
 remain reorderable; returning publications keep their configured slot. The
-existing Articles settings remain the only owner of master/Home visibility.
+local website presentation switch remains operable in these states and explains
+why content is unavailable. Existing Articles settings still own the master and
+Home feed gates; website `pageLayout.home.hidden` is an additional presentation
+preference and does not overwrite them.
 The payload contains no drafts, private content or complete editor documents:
 
 ```js
@@ -88,7 +106,8 @@ The payload contains no drafts, private content or complete editor documents:
 }
 ```
 
-Absent/unavailable/empty feeds hide the entire section. Only published,
+Absent/unavailable/empty feeds, or a hidden website presentation, hide the entire
+section. Only published,
 non-future, titled translations are selected. No cross-language fallback.
 `featured` is the existing persisted
 **Pin to Home** flag, now labeled `ปักหมุดบน Home` in CMS; old selections survive.
@@ -102,8 +121,9 @@ only the actual cards, with no fabricated fillers. Links are `/articles` and
 `/articles/{slug}` with `?lang=en` in English. Slugs cannot inject other routes.
 Image URLs go through the existing CMS media validator and asset version helper.
 
-Use the actual Articles management module for records and visibility; the Home
-editor does not duplicate these settings or create placeholder articles.
+Use the Articles management module for records and master/Home feed settings.
+The Home editor changes only website presentation visibility and placement;
+it does not save or publish articles, duplicate the settings, or create placeholders.
 
 Home pin capacity is enforced in the server transaction, including concurrent
 saves/imports. A unique article with either a pinned draft or pinned live snapshot

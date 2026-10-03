@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
+import { importCoverMateContract } from './lib/contract-loader.mjs';
 import { createHomeFixture } from './lib/home-redesign-fixture.mjs';
 import { startStaticServer } from './lib/static-server.mjs';
 import { toFirestoreFields } from './lib/uat-env.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
 
-const fixture = await createHomeFixture(process.argv[2]);
-const live = fixture.state;
+const contract = await importCoverMateContract();
+const live = process.argv[2] ? (await createHomeFixture(process.argv[2])).state : contract.sanitizeStateDoc({
+  config:JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js','utf8')+'\nJSON.stringify(DEFAULTS)')),text:{},revision:1
+},{repeatableIds:true});
 live.config.sections.find(section => section.id === 'how').on = false;
 live.config.sections.find(section => section.id === 'insurers').cta1href = '';
 const output = 'uat-results/home-licences';
@@ -30,7 +34,7 @@ try {
       });
       assert.equal(await page.locator('#insurers .hm-relationship').count(),0,'Licence disclosure removed from logo band');
       assert.equal(await section.locator('details').count(),0,'Licences are always expanded');
-      assert.ok(await section.evaluate(el => el.parentElement.lastElementChild === el),'Last main section before Footer');
+      assert.deepEqual(await page.locator('main section[id], main footer.cm-footer').evaluateAll(nodes=>nodes.slice(-2).map(node=>node.id)),['licences','footer'],'Default composition keeps licences immediately before Footer');
       assert.equal(await page.locator('.hm-licence-card').count(),2);
       const geometry = await section.evaluate(el => ({
         height:el.getBoundingClientRect().height,
@@ -54,7 +58,7 @@ try {
       });
       if (lang==='th') await page.screenshot({path:`${output}/home-${width}.png`});
       report.push({width,lang,...geometry});
-      console.log(`PASS ${width}px ${lang}: final section, CMS cards, loaded art/logos, equal peers, no overflow`);
+      console.log(`PASS ${width}px ${lang}: default placement, CMS cards, loaded art/logos, equal peers, no overflow`);
     }
     assert.deepEqual(errors,[]);
     await context.close();
@@ -83,15 +87,41 @@ try {
   assert.equal(await page.locator('.hm-licence-card').count(),1,'Card visibility follows CMS');
   insurers.on=false;
   await page.reload();
-  await page.locator('#hero').waitFor();
-  assert.equal(await page.locator('#licences').count(),0,'Parent visibility follows CMS');
+  await page.locator('#licences').waitFor();
+  assert.equal(await page.locator('#insurers').count(),0,'Company-logo section follows its own visibility');
+  assert.equal(await page.locator('.hm-licence-card').count(),1,'Hidden company-logo section does not hide independently controlled licences');
   insurers.on=true;
+  live.config.pageLayout={home:{hidden:['licences'],order:['licences','hero']}};
+  await page.reload();
+  await page.locator('#insurers').waitFor();
+  assert.equal(await page.locator('#licences').count(),0,'Page Structure can hide licences without hiding company logos');
+  live.config.pageLayout.home.hidden=[];
+  await page.reload();
+  await page.locator('#licences').waitFor();
+  assert.deepEqual(await page.locator('main section[id]').evaluateAll(nodes=>nodes.slice(0,2).map(node=>node.id)),['licences','hero'],'Saved licence placement changes actual DOM order');
+  const homePlacement=structuredClone(live.config.pageLayout.home);
+  for(const card of insurers.cards)card.on=true;
   await page.goto(baseUrl+'/motor');
+  await page.locator('#licences').waitFor();
+  const brokers=insurers.cards.filter(card=>card.licenceRole==='broker');
+  assert.ok(brokers.length,'Fixture includes broker-role cards');
+  assert.deepEqual(await page.locator('#licences [data-content-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.contentId)),brokers.map(card=>card.id),'Motor only displays the existing broker-role cards');
+  assert.notEqual(await page.locator('main section[id]').first().getAttribute('id'),'licences','Home licence placement does not reorder Motor');
+  live.config.pageLayout.motor={hidden:['licences'],order:['licences','motor']};
+  await page.reload();
   await page.locator('#motor').waitFor();
-  assert.equal(await page.locator('#licences').count(),0,'Motor layout unchanged');
+  assert.equal(await page.locator('#licences').count(),0,'Motor presentation visibility is independently controllable');
+  assert.deepEqual(live.config.pageLayout.home,homePlacement,'Motor visibility leaves saved Home presentation unchanged');
+  await page.goto(baseUrl+'/?lang=en');
+  await page.locator('#licences').waitFor();
+  assert.equal(await page.locator('.hm-licence-card').count(),insurers.cards.length,'Home still shows enabled cards of all roles');
+  for(const card of insurers.cards)card.on=false;
+  await page.reload();
+  await page.locator('#hero').waitFor();
+  assert.equal(await page.locator('#licences').count(),0,'An empty eligible card set does not render a blank licence band');
   await context.close();
-  fs.writeFileSync(`${output}/report.json`,JSON.stringify({result:'PASS',data:'Local proposed CMS fixture; no production writes',cases:report},null,2));
-  console.log('PASS CMS edits, licence token, intentional blanks, card/section visibility and Motor isolation');
+  fs.writeFileSync(`${output}/report.json`,JSON.stringify({result:'PASS',data:process.argv[2]?'Local proposed CMS fixture; no production writes':'Bundled CMS defaults; no production writes',cases:report},null,2));
+  console.log('PASS CMS edits, licence token, intentional blanks, independent band/card visibility, DOM placement and Home/Motor isolation');
 } finally {
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

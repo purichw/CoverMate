@@ -8,6 +8,7 @@ const {
   adminPortalUrl,
   cleanPublicExitPath,
   filterLinksByVisibleSections,
+  isPlaceholderStoryItem,
   ownerModeFromHash,
   ownerModeFromPath,
   ownerPathForMode,
@@ -117,5 +118,63 @@ const list = [{ id: "a" }, { id: "b" }];
 assert.equal(repeatableContentIndex(list, "b", 0), 1);
 assert.equal(repeatableContentIndex(list, "missing", 0), 0);
 assert.equal(repeatableContentIndex(list, "", 9), -1);
+
+const authoredStory = { th: { title: 'เคลมแล้ว', body: 'ช่วยไว' }, en: { title: 'Sample review' } };
+assert.equal(isPlaceholderStoryItem(authoredStory, 'th'), false, 'Short authored Thai remains eligible');
+assert.equal(isPlaceholderStoryItem(authoredStory, 'en'), true, 'A pending English translation stays filtered independently');
+assert.equal(isPlaceholderStoryItem({ th: { title: 'เสียงจากลูกค้า', body: 'ดี' }, en: { title: 'Customer voice', body: 'Helpful.' } }, 'th'), false, 'A generic customer heading is not placeholder evidence');
+assert.equal(isPlaceholderStoryItem({ en: { title: 'Customer voice', body: 'Helpful.', meta: 'Published with permission' } }, 'en'), false, 'Real feedback and consent attribution remain eligible');
+for (const [lang, field, text] of [
+  ['th','label','รอความคิดเห็นจริง'], ['th','title','ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่เมื่อได้รับอนุญาต'],
+  ['th','meta','ตัวอย่างโครงสร้าง'], ['th','name','ชื่อลูกค้า'],
+  ['en','label','Awaiting real feedback'], ['en','title','Client feedback will appear here once permission is granted.'],
+  ['en','meta','Placeholder structure'], ['en','name','Customer name'], ['en','meta','Role · policy']
+]) assert.equal(isPlaceholderStoryItem({ [lang]: { [field]: text } }, lang), true, 'Known pending field: ' + text);
+assert.equal(isPlaceholderStoryItem(authoredStory, 'fr'), false, 'Unknown languages never borrow another translation');
+assert.equal(isPlaceholderStoryItem(null, 'th'), false);
+assert.equal(isPlaceholderStoryItem({ en: { title: 123 } }, 'en'), false);
+for (const [lang,quote] of [
+  ['th','⟨ใส่คำรีวิวจริงตรงนี้ — 1 ถึง 2 ประโยคจะอ่านง่ายที่สุด⟩'],
+  ['th','⟨ใส่คำรีวิวจริงตรงนี้⟩'],
+  ['en','⟨Paste a real quote here — one or two sentences reads best⟩'],
+  ['en','⟨Paste a real quote here⟩']
+]) assert.equal(isPlaceholderStoryItem({[lang]:{quote}},lang),true,'Recognize the current CMS legacy placeholder: '+quote);
+const storyConfig = { cmsContentVersion: navState.config.cmsContentVersion, sections: [
+  { id: 'voices', type: 'stories', on: true, items: [{ th: { label: 'รอความคิดเห็นจริง' }, en: { label: 'Awaiting real feedback' } }] },
+  { id: 'short-stories', type: 'stories', on: true, items: [authoredStory] },
+  { id: 'hidden-feedback', type: 'testimonials', on: false, items: [{ th: { quote: 'ดี' } }] },
+  { id: 'empty-feedback', type: 'testimonials', on: true, items: [] }
+] };
+const storyBefore = structuredClone(storyConfig);
+const savedStories = sanitizeStateDoc({ config: storyConfig, text: {} });
+assert.deepEqual(savedStories.config.sections, storyBefore.sections, 'Save preserves enabled, hidden, short and empty story sections without rewriting content');
+assert.deepEqual(sanitizeStateDoc(savedStories).config.sections, storyBefore.sections, 'Repeated normalization cannot turn the owner switch off');
+assert.deepEqual(storyConfig, storyBefore, 'Story normalization never mutates the supplied draft');
+
+
+const layoutConfig = {
+  ...storyConfig,
+  pageLayout: {
+    home: { order: ['footer', 'articles', 'voices', 'licences', 'articles', null, '<script>'], hidden: ['articles', 'licences', 'articles', 'voices', 'footer'] },
+    motor: { order: ['licences', 'hero', 'footer'], hidden: [] },
+    health: { order: ['footer', 'service-content'], hidden: ['service-content'] },
+    life: { order: 'invalid', hidden: null },
+    unknown: { order: ['footer'], hidden: ['articles'] }
+  },
+  footer: { show: false }
+};
+const layoutBefore = structuredClone(layoutConfig);
+const savedLayout = sanitizeStateDoc({ config: layoutConfig, text: {} });
+assert.deepEqual(savedLayout.config.pageLayout, {
+  home: { order: ['footer', 'articles', 'voices', 'licences'], hidden: ['articles', 'licences'] },
+  motor: { order: ['licences', 'hero', 'footer'], hidden: [] },
+  health: { order: ['footer', 'service-content'], hidden: ['service-content'] },
+  life: { order: [], hidden: [] }
+}, 'Route layout preserves independent order and virtual visibility, rejecting invalid and duplicate values');
+assert.equal(savedLayout.config.footer.show, false, 'Footer visibility keeps its canonical global owner');
+assert.deepEqual(savedLayout.config.sections, storyBefore.sections, 'Presentation settings cannot rewrite real section visibility or content');
+assert.deepEqual(sanitizeStateDoc(savedLayout).config.pageLayout, savedLayout.config.pageLayout, 'Page layout survives repeated save/reload normalization');
+assert.deepEqual(layoutConfig, layoutBefore, 'Layout normalization never mutates the supplied draft');
+assert.equal(savedStories.config.pageLayout, undefined, 'Legacy drafts keep default placement without invented layout overrides');
 
 console.log("CoverMate route/content contract regression checks passed.");

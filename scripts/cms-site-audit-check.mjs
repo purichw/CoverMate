@@ -178,8 +178,8 @@ try {
   assert.equal(await page.locator('#hero h1').innerText(),'Audit home headline');
   await select('insurers');
   const hiddenId=draft.config.sections.find(s=>s.id==='insurers').items[0].id;
-  await reveal(page.locator(`[data-admin-repeatable-id="${hiddenId}"]`).getByRole('button',{name:'ซ่อน',exact:true,includeHidden:true}));
-  await page.locator(`[data-admin-repeatable-id="${hiddenId}"]`).getByRole('button',{name:'ซ่อน',exact:true}).click();
+  await reveal(page.locator(`[data-admin-repeatable-id="${hiddenId}"]`).getByRole('switch',{includeHidden:true}));
+  await page.locator(`[data-admin-repeatable-id="${hiddenId}"]`).getByRole('switch').click();
   await edit(page.locator('[data-admin-copy-key="cta1href"]'),'');
   await save();
   await page.reload(); await panel(); await select('review'); await language('English');

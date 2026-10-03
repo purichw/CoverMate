@@ -81,9 +81,10 @@ export function readEditorVersionsAsset() {
 }
 
 export function readPublicContractAsset() {
-  const code = transformSync(readText(new URL('covermate-contract.js', ROOT)), {
-    minify: true, format: 'esm', target: 'es2022', charset: 'utf8'
-  }).code;
+  const code = buildSync({
+    entryPoints:[fileURLToPath(new URL('covermate-contract.js', ROOT))],
+    bundle:true, write:false, minify:true, format:'esm', target:'es2022', charset:'utf8'
+  }).outputFiles[0].text;
   return { code, file: new URL('assets/visitor/contract.js', ROOT) };
 }
 

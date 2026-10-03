@@ -49,6 +49,24 @@ Both modules can have pending work at the same time without one action including
 the other's changes. Shared website headings/artwork around article pages remain
 website CMS content, distinct from article body/cover/title data.
 
+The 2026-10-03 local Page Structure follow-up adds a working Home Articles
+show/hide switch and complete page ordering. This website control uses the
+shared Brand-derived `cm-switch` track/thumb, 44px touch target and accessible
+checked state; it is not a text status badge. `pageLayout.home.hidden` owns this
+website presentation preference; `pageLayout.home.order` owns its position.
+These values follow Website Draft/Save/Reset/Undo/Preview/Publish, without calls
+to article settings or record writes. The independently saved article
+`enabled`/`showHome` gates and eligible published translations still determine
+whether the feed can appear; enabling the website presentation cannot bypass
+them. Empty, disabled or failed feeds show an explanation in the website editor.
+Targeted local browser and `check:content-isolation` verification passed for
+the ownership behavior, shared-switch controls and keyboard interaction.
+The code remains uncommitted and is not evidence of deployment or production
+publication. A separate claims-content update passed compare-and-set write and
+readback from Website Draft revision 93 to 94, changing only nine `voices` paths;
+it made no article/settings or Live writes and did not Publish. See
+[CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up).
+
 The September 30 follow-up makes this existing storage separation explicit in
 the UI and adds `check:content-isolation` to CI. No collection migration, bulk
 publication, draft reset or hosted data write is part of that change.

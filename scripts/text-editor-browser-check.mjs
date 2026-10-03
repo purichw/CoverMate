@@ -87,22 +87,23 @@ async function selectSection(page, sectionId) {
   await row.scrollIntoViewIfNeeded();
   await row.locator(`[data-admin-section-edit="${sectionId}"]`).click();
   await panel.locator('.cm-editor-nav').getByRole("button", { name: "เนื้อหา", exact: true }).click();
-  await page.waitForFunction(
-    (id) => Array.from(document.querySelectorAll('aside[data-editor-panel]'))
-      .some((aside) => (aside.innerText || "").includes(`#${id}`)),
-    sectionId,
-    { timeout: 10000 }
-  );
+  await panel.locator(`[data-content-detail="${sectionId}"]`).waitFor();
+}
+
+async function revealControl(control) {
+  const ancestors = control.locator('xpath=ancestor::details');
+  for (let index=0;index<await ancestors.count();index++) {
+    const disclosure=ancestors.nth(index);
+    if (!await disclosure.evaluate(element=>element.open)) await disclosure.locator(':scope > summary').click();
+  }
+  await control.scrollIntoViewIfNeeded();
 }
 
 async function clickVisibility(locator, label) {
-  await locator.scrollIntoViewIfNeeded();
-  const byRole = locator.getByRole("button", { name: label, exact: true }).first();
-  if (await byRole.count()) {
-    await byRole.click();
-    return;
-  }
-  await locator.locator("button").filter({ hasText: new RegExp(`^\\s*${label}\\s*$`) }).first().click();
+  const control = locator.getByRole('switch', { includeHidden:true });
+  await revealControl(control);
+  assert.equal(await control.getAttribute('aria-checked'), String(label === 'ซ่อน'));
+  await control.click();
 }
 
 async function sectionState(page, sectionId) {
@@ -222,18 +223,19 @@ async function verifyItemControls(page, baseUrl) {
   const firstId = before.items[0].id;
   const row = page.locator(`[data-admin-repeatable-id="${firstId}"]`).first();
   await clickVisibility(row, "ซ่อน");
-  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("ซ่อนอยู่", { exact: true }).first().waitFor({ timeout: 10000 });
   let current = await sectionState(page, "faq");
   assert.equal(current.items.length, before.items.length, "Hiding an item deleted it");
   assert.equal(current.items[0].id, firstId, "Hiding an item changed its id");
   assert.equal(current.items[0].on, false, "Item hide did not set on=false");
 
   await clickVisibility(row, "แสดงอีกครั้ง");
-  await row.getByText("แสดงอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("แสดงอยู่", { exact: true }).first().waitFor({ timeout: 10000 });
   current = await sectionState(page, "faq");
   assert.equal(current.items.length, before.items.length, "Restoring an item duplicated it");
   assert.equal(current.items[0].on, true, "Item restore did not set on=true");
 
+  await revealControl(page.locator('[data-admin-add-faq]'));
   await page.locator('[data-admin-add-faq]').click();
   await page.waitForFunction(
     (count) => {
@@ -254,7 +256,7 @@ async function verifyItemControls(page, baseUrl) {
 }
 
 async function verifyCardControls(page) {
-  // The fixed licence band edits the existing insurers.cards owner. The
+  // The licence band edits the existing insurers.cards owner. The
   // insurers row itself now owns only the company-logo section's content.
   await selectSection(page, "licences");
   const before = await sectionState(page, "insurers");
@@ -262,19 +264,22 @@ async function verifyCardControls(page) {
   const firstId = before.cards[0].id;
   const row = page.locator(`[data-admin-repeatable-card-id="${firstId}"]`).first();
   await clickVisibility(row, "ซ่อน");
-  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("ซ่อนอยู่", { exact: true }).first().waitFor({ timeout: 10000 });
   let current = await sectionState(page, "insurers");
   assert.equal(current.cards.length, before.cards.length, "Hiding a card deleted it");
   assert.equal(current.cards[0].id, firstId, "Hiding a card changed its id");
   assert.equal(current.cards[0].on, false, "Card hide did not set on=false");
 
   await clickVisibility(row, "แสดงอีกครั้ง");
-  await row.getByText("แสดงอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("แสดงอยู่", { exact: true }).first().waitFor({ timeout: 10000 });
   current = await sectionState(page, "insurers");
   assert.equal(current.cards.length, before.cards.length, "Restoring a card duplicated it");
   assert.equal(current.cards[0].on, true, "Card restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ เพิ่มการ์ดใบอนุญาต", exact: true }).click();
+  const addCard=page.locator('[data-content-group="cards"] .cm-editor-add');
+  await revealControl(addCard);
+  assert.equal((await addCard.textContent()).trim(),'+ เพิ่มการ์ดใบอนุญาต');
+  await addCard.click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -301,7 +306,7 @@ async function verifyHeadControls(page) {
   const row = page.locator(`[data-admin-repeatable-head-id="${firstId}"]`).first();
   const firstTierCellCount = before.items?.[0]?.st?.length || 0;
   await clickVisibility(row, "ซ่อน");
-  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("ซ่อนอยู่", { exact: true }).first().waitFor({ timeout: 10000 });
   let current = await sectionState(page, "tiers");
   assert.equal(current.heads.length, before.heads.length, "Hiding a column deleted it");
   assert.equal(current.heads[0].id, firstId, "Hiding a column changed its id");
@@ -309,12 +314,15 @@ async function verifyHeadControls(page) {
   assert.equal(current.items?.[0]?.st?.length || 0, firstTierCellCount, "Column hide changed tier row cell count");
 
   await clickVisibility(row, "แสดงอีกครั้ง");
-  await row.getByText("แสดงอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  await row.getByText("แสดงอยู่", { exact: true }).first().waitFor({ timeout: 10000 });
   current = await sectionState(page, "tiers");
   assert.equal(current.heads.length, before.heads.length, "Restoring a column duplicated it");
   assert.equal(current.heads[0].on, true, "Column restore did not set on=true");
 
-  await page.getByRole("button", { name: "+ เพิ่มหัวข้อความคุ้มครอง", exact: true }).click();
+  const addHead=page.locator('[data-content-group="heads"] .cm-editor-add');
+  await revealControl(addHead);
+  assert.equal((await addHead.textContent()).trim(),'+ เพิ่มหัวข้อความคุ้มครอง');
+  await addHead.click();
   await page.waitForFunction(
     (count) => {
       const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
@@ -336,11 +344,9 @@ async function hideSectionFromBuilder(page, sectionId) {
   await page.locator('[data-editor-panel] .cm-editor-nav').getByRole("button", { name: "โครงสร้างหน้า", exact: true }).click();
   const row = page.locator(`[data-admin-section-row="${sectionId}"]`).first();
   await row.scrollIntoViewIfNeeded();
-  const status = row.getByText("ซ่อนอยู่", { exact: true });
-  if (!(await status.count())) {
-    await row.locator('button[aria-label="แสดงหรือซ่อนส่วนนี้"]').first().click();
-  }
-  await row.getByText("ซ่อนอยู่", { exact: true }).waitFor({ timeout: 10000 });
+  const control = row.getByRole('switch');
+  if (await control.getAttribute('aria-checked') !== 'false') await control.click();
+  assert.equal(await control.getAttribute('aria-checked'), 'false');
 }
 
 async function verifyHiddenSectionTargetLinks(page, baseUrl) {
