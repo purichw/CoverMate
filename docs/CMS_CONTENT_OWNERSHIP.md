@@ -164,11 +164,12 @@ schema, stored content, Publish behavior or cache duration.
 Implemented locally on 2026-10-03. Targeted local verification passed for
 Home/Motor/Health/Life controls, persistence, Preview and publication isolation.
 The shared switches, keyboard interaction and route checks also passed. The
-latest build, contract regression, exported-API/normalizer bundle parity and all
+pre-integration build, contract regression, exported-API/normalizer bundle parity and all
 four performance cases passed: initial scripts 349,861 / 350,000 bytes, maximum
 compressed public shell 194,223 / 195,000 bytes. The minifier bundle step retains
 the contract API; claim-example copy is not added to startup JavaScript. The code
-remains uncommitted and has not been deployed. The separate content update is
+is committed in `ba26af7`; deployment requires the exact release revision's CI
+and promotion evidence. The separate content update is
 saved in Website Draft revision 94 and has not been published.
 
 Every outline row uses the same working show/hide switch and move-up/down
@@ -232,7 +233,7 @@ section's `on:false` were retained, with unrelated config and text unchanged.
 There were no Live or article writes and no Publish. Local evidence is
 `uat-results/section-controls/claim-guidance-draft-report.json`; its `backup`
 field identifies the saved pre-write state. Content is now available in Draft,
-while the source controls remain uncommitted and not deployed.
+while code release and CMS publication remain separate operations.
 
 Focused verification commands are
 `node scripts/editor-panel-browser-check.mjs --article-order`,

@@ -9,7 +9,8 @@ and `ADMIN_ARTICLES.md`. This documentation refresh did not run new visual smoke
 The Page Structure visibility/order follow-up is implemented locally on
 2026-10-03. Targeted local verification passed for shared `cm-switch` controls,
 keyboard interaction, visibility, order, Save/reload/Preview and website/article
-isolation. The code remains uncommitted and has not been deployed or published.
+isolation. The source change is committed in `ba26af7`; deployment verification
+is separate from CMS publication.
 The separate claims-content change is saved only in Website Draft revision 94;
 it made no article/settings or Live writes. See
 [CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up).
@@ -30,7 +31,7 @@ it made no article/settings or Live writes. See
   Normal sections and presentation rows can move across Articles. Draft, Save,
   Reset, Undo/Redo, Preview and Publish use the existing website workflow;
   article records and independently saved article settings stay separate.
-- Compact cards: two horizontal cards per page at 1024px+, one horizontal card
+- Compact cards: three horizontal cards per page at 1024px+, one horizontal card
   at 768–1023px, and three compact cards stacked vertically on mobile.
   Desktop/tablet covers sit left of the copy; mobile uses centered square
   thumbnails beside the text. Full pages reserve stable row heights; a partial
@@ -51,10 +52,13 @@ it made no article/settings or Live writes. See
 - One native link per card covers image, title and reading label. Keyboard focus
   has a visible outline. Home opts into `[data-carousel-pages]` for compact,
   clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
-  Mobile shows up to four page indicators for the ten-article feed, retaining 44px
-  touch targets without overflowing when all ten articles are present.
-  Desktop shows up to five indicators; tablet shows a moving window of five
-  for its single-card pages. Hidden cards are inert and excluded from navigation.
+  Desktop and mobile show four page indicators for the twelve-article feed,
+  retaining 44px touch targets without overflowing when all twelve are present.
+  Tablet shows a moving window of five for its single-card pages. Previous/next
+  arrows use 44px circular targets with localized labels/tooltips. Desktop/tablet
+  arrows sit outside the card track at its vertical center without covering content;
+  mobile arrows flank the page indicators below the cards.
+  Hidden cards are inert and excluded from navigation.
   The index carousel retains its previous/next controls. Both support swipe and
   automatic ten-second rotation without a Play/Pause button. Pointer navigation
   restarts the interval; hover does not stop rotation. Focused cards/keyboard
@@ -112,8 +116,8 @@ non-future, titled translations are selected. No cross-language fallback.
 `featured` is the existing persisted
 **Pin to Home** flag, now labeled `ปักหมุดบน Home` in CMS; old selections survive.
 Select Home pins newest-first, then fill remaining slots with latest unique
-articles, up to ten total. Zero pins gives ten latest, three pins gives seven
-latest excluding those pins, and ten pins gives no latest filler. The independent
+articles, up to twelve total. Zero pins gives twelve latest, three pins gives nine
+latest excluding those pins, and ten pins gives two latest fillers. The independent
 `pinned` flag and `settings.pinnedOrder` belong only to `/articles`, still unlimited.
 Home ignores legacy fixture-only `featuredIds` order.
 IDs/slugs are deduplicated. Fewer articles leave
@@ -131,7 +135,7 @@ reserves one of ten slots. Removing a live pin from a draft does not free the sl
 until republished (or unpublished with an unpinned draft). Draft/future pins never
 appear publicly; eligible latest publications fill their slots. Existing over-limit
 legacy selections are not deleted: they can be edited/reduced, but cannot expand,
-and the visitor projection remains capped at ten. Capacity changes serialize on
+and the visitor projection remains capped at twelve, with up to ten pins. Capacity changes serialize on
 the settings revision and preserve the independent index pin order and switches.
 
 ## Local Preview And Checks

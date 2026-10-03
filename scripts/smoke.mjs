@@ -1899,7 +1899,14 @@ for (const [name, width, height] of viewports) {
         hasLifeRelationshipProof: /AIA/.test(document.querySelector('#licences')?.innerText || insurerText),
         hasMotorRelationshipProof: /Srikrung|ศรีกรุง/i.test(document.querySelector('#licences')?.innerText || insurerText),
         hasFooterLifeCredential: /AIA/.test(document.querySelector('footer')?.innerText || ''),
-        hasFinalLicenceSection: Boolean(document.querySelector('main > section#licences:last-child')),
+        hasConfiguredLicenceSection: (() => {
+          const licence=document.querySelector('main #licences');if(!licence)return false;
+          const config=JSON.parse(localStorage.getItem('purich-live-config-v3')||'{}');
+          const order=config.pageLayout?.home?.order||[];
+          const actual=Array.from(document.querySelectorAll('main section[id],main footer.cm-footer')).map(node=>node.id==='motor'?'insurers':node.id);
+          if(!order.length)return actual.filter(id=>id!=='footer').at(-1)==='licences';
+          return JSON.stringify(actual.filter(id=>order.includes(id)))===JSON.stringify(order.filter(id=>actual.includes(id)));
+        })(),
         missingAnchors,
         duplicateHeaderNavLabels: headerNavLabels.filter(
           (label, index, labels) => labels.indexOf(label) !== index
@@ -2009,7 +2016,7 @@ for (const [name, width, height] of viewports) {
       if (visibleHomeMotorLinks.length !== 0) {
         failures.push(`${name} ${route}: retired dedicated /motor CTA is visible (${JSON.stringify(state.homeMotorLinks)})`);
       }
-      if (!state.hasFinalLicenceSection) failures.push(`${name} ${route}: licences must be the final main section`);
+      if (!state.hasConfiguredLicenceSection) failures.push(`${name} ${route}: licences must follow the saved page order (default: before Footer)`);
     }
     if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
@@ -2518,10 +2525,11 @@ for (const [name, width, height] of viewports) {
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
-    if (tabName === 'แบรนด์และติดต่อ' && await page.locator('.cm-brand-preview > summary').isVisible()) {
+    if (tabName === 'แบรนด์และติดต่อ') {
       // The live thumbnail owns a disposable iframe. Verify its images before
-      // switching tabs, which intentionally removes that document.
-      await page.locator('.cm-brand-preview > summary').click();
+      // switching tabs, even when the desktop layout hides the disclosure.
+      const previewDisclosure = page.locator('.cm-brand-preview > summary');
+      if (await previewDisclosure.isVisible()) await previewDisclosure.click();
       await page.locator('[data-editor-preview][data-preview-ready]').waitFor({state:'attached'});
       await page.waitForFunction(() => {
         const doc = document.querySelector('[data-editor-preview] iframe')?.contentDocument;

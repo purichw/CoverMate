@@ -12,8 +12,8 @@ The Page Structure control follow-up below is implemented locally on
 2026-10-03. Targeted local verification passed for shared `cm-switch` controls,
 keyboard interaction, route ordering, Save/reload/Preview and licence rendering.
 The latest build, contract/bundle parity and four performance cases also passed.
-The code remains uncommitted and is not deployed; earlier release evidence
-retains its dated scope.
+The source change is committed in `ba26af7`; earlier release evidence retains
+its dated scope, and deployment verification is separate from CMS publication.
 The later request to fill the empty claims area adds three explicitly labelled
 illustrative scenarios through a separate Website Draft content update. The
 content-only helper's exact-seed and preservation checks passed, followed by a

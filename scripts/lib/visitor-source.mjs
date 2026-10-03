@@ -316,8 +316,8 @@ export function buildVisitorIndex(sources = readVisitorSources(), { publicOnly =
   // Brand names and numbers use this subset in both languages. Thai is already
   // discovered by the localized loading copy; do not preload unused subsets.
   const startupHints = stylePreloads + '\n<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/google-sans-latin.woff2" crossorigin>';
-  // Keep the readable bootstrap source, without shipping its comments/whitespace.
+  // Keep top-level bindings while compacting bootstrap locals, as for the runtime.
   const shell = sources.shell.replace('/covermate-analytics.js', readAnalyticsAsset().url).replace(/(<script id="covermate-bootstrap">)([\s\S]*?)(<\/script>)/,
-    (_, open, script, close) => open + transformSync(script, { minifyWhitespace: true }).code + close);
+    (_, open, script, close) => open + transformSync(script, { minifyWhitespace: true, minifyIdentifiers: true }).code + close);
   return withDefaultSeo(shell, sources).replace('</head>', () => startupHints + '\n</head>').replace(VISITOR_TEMPLATE_SLOT, () => serializedTemplate);
 }

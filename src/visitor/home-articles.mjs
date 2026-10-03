@@ -50,7 +50,7 @@ export function projectHomeArticles(feed, options = {}) {
   const pins = latest.filter(item=>item.homePinned).slice(0,10);
   const selected = new Set(pins.map(item=>item.key));
   const date = new Intl.DateTimeFormat(options.lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
-  const items = [...pins,...latest.filter(item=>!selected.has(item.key))].slice(0,10).map(item=>({...item,
+  const items = [...pins,...latest.filter(item=>!selected.has(item.key))].slice(0,12).map(item=>({...item,
     date:item.showDate?date.format(item.publishedAt):'',datetime:new Date(item.publishedAt).toISOString(),
     reading:!item.showDate&&item.readingMinutes?(options.lang==='en'?item.readingMinutes+' min read':'อ่าน '+item.readingMinutes+' นาที'):''}));
   return {visible:items.length > 0, items, indexHref:articlePublicHref('/articles',options.lang)};

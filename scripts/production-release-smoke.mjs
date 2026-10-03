@@ -49,7 +49,13 @@ try {
       assert.equal(await page.locator('#licences').count(), 1);
       assert.equal(await page.locator('#insurers .hm-relationship').count(), 0);
       assert.equal(await page.locator('a[href^="/motor"]').count(), 0);
-      assert.ok(await page.locator('#licences').evaluate(el => el.parentElement.lastElementChild === el));
+      assert.ok(await page.locator('#licences').evaluate(el => {
+        if(!el.closest('main'))return false;
+        const config=JSON.parse(localStorage.getItem('purich-live-config-v3')||'{}'),order=config.pageLayout?.home?.order||[];
+        const actual=Array.from(document.querySelectorAll('main section[id],main footer.cm-footer')).map(node=>node.id==='motor'?'insurers':node.id);
+        if(!order.length)return actual.filter(id=>id!=='footer').at(-1)==='licences';
+        return JSON.stringify(actual.filter(id=>order.includes(id)))===JSON.stringify(order.filter(id=>actual.includes(id)));
+      }),'Licences follows saved page order, defaulting to the section before Footer');
     }
     const widths = path === '/' ? [390, 820, 1440] : [390, 1440];
     for (const width of widths) {

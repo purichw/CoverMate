@@ -35,8 +35,8 @@ try {
   }
   const flags=await repository.settings(site);await repository.changeSettings(site,{enabled:true,showHome:true,showNavigation:true},flags.revision,signup.localId);
   const home=async()=>(projectHomeArticles(await repository.feed(site))).items.map(item=>item.key);
-  assert.deepEqual(await home(),[0,10,12,1,2,3,4,5,6,7].map(i=>ids[i]));
-  console.log('PASS isolated publication seed: three pins and seven latest.');
+  assert.deepEqual(await home(),[0,10,12,1,2,3,4,5,6,7,8,9].map(i=>ids[i]));
+  console.log('PASS isolated publication seed: three pins and nine latest.');
   browser=await launchChromium(loadPlaywright().chromium,{headless:true});
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),admin=await context.newPage(),visitor=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'}),errors=[];
   for(const page of [admin,visitor]){page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));}
@@ -88,7 +88,8 @@ try {
   const retry=await call('save',{article:rejected,expectedRevision:rejected.revision});assert.equal(retry.status,200,'Published unpin frees slot');
   for(const item of (await repository.catalog(site)).items.filter(item=>item.featured)){const d=await repository.get(site,item.id);await repository.mutate(site,'publish',{id:d.id,languages:['th']},d.revision,signup.localId);}
   const allPins=(await repository.feed(site)).items.filter(item=>item.featured).map(item=>item.id);
-  assert.equal(allPins.length,10);assert.deepEqual(new Set(await home()),new Set(allPins),'Ten live pins leave no latest filler');
-  assert.deepEqual(errors,[]);report.checks=['real save/reload/publish','independent Home/index pins','public carousel and reader link','concurrent tenth slot','eleventh rejected with edits preserved','published unpin releases slot','ten pins only','mobile settings'];report.passed=true;
+  assert.equal(allPins.length,10);assert.deepEqual(new Set((await home()).slice(0,10)),new Set(allPins),'All ten live pins lead the Home feed');
+  assert.equal(new Set(await home()).size,12,'Ten live pins leave two unique latest slots');
+  assert.deepEqual(errors,[]);report.checks=['real save/reload/publish','independent Home/index pins','public carousel and reader link','concurrent tenth slot','eleventh rejected with edits preserved','published unpin releases slot','ten pins plus two latest','mobile settings'];report.passed=true;
   fs.writeFileSync(out+'/cms-report.json',JSON.stringify(report,null,2));console.log('PASS Home pins CMS/API/Visitor and concurrent ten-pin cap.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}

@@ -146,7 +146,7 @@ if(process.argv.includes('--browser')) {
       server.setFeed(noCovers);await ready();
       assert.equal(await page.locator('.ar-media:visible').count(),0,'Explicitly blank covers do not render fake thumbnail blocks');await fit();
       report.checks.push('Empty, unavailable, missing image fallback and escaped content');
-      server.setFeed(feed);await page.goto(server.baseUrl+'/');await page.locator('#articles').waitFor();assert.equal(await page.locator('.hm-article-card').count(),10);
+      server.setFeed(feed);await page.goto(server.baseUrl+'/');await page.locator('#articles').waitFor();assert.equal(await page.locator('.hm-article-card').count(),12,'Home includes twelve articles independently of index pagination');
       await page.locator('.hm-articles-all').click();await page.locator('.ar-index').waitFor();assert.equal(new URL(page.url()).pathname,'/articles');
       await page.locator('.ar-featured .ar-card-link').click();await page.locator('.ad-prose').waitFor();
       assert.equal(new URL(page.url()).pathname,'/articles/motor-cover-types');

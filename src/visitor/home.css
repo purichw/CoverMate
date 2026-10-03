@@ -37,9 +37,9 @@ html[data-covermate-route] {
 .hm-articles-all { grid-column:2; grid-row:1; display:inline-flex; align-items:center; justify-content:center; gap:12px; min-height:48px; max-width:100%; padding:10px 24px; border:1px solid var(--color-accent-700); border-radius:8px; font-size:15px; font-weight:600; text-decoration:none; }
 .hm-band .hm-articles-all { color:var(--color-accent-700); }
 .hm-articles-all span { overflow-wrap:anywhere; }
-.hm-article-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; list-style:none; margin:0; padding:0; }
+.hm-article-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; list-style:none; margin:0; padding:0; }
 .hm-article-grid > li { min-width:0; }
-.hm-articles article-carousel[data-layout="cards"] { --carousel-page-size:2; grid-column:1/-1; grid-row:2; min-width:0; margin:0; }
+.hm-articles article-carousel[data-layout="cards"] { --carousel-page-size:3; grid-column:1/-1; grid-row:2; min-width:0; margin:0; }
 article-carousel[data-layout="cards"] .hm-article-grid { grid-template-columns:repeat(var(--carousel-page-size),minmax(0,1fr)); touch-action:pan-y; }
 article-carousel[data-layout="cards"] .hm-article-grid > li { grid-row:1; grid-column:var(--carousel-column,1); visibility:hidden; pointer-events:none; }
 article-carousel[data-layout="cards"] .hm-article-grid > li[data-active="true"] { visibility:visible; pointer-events:auto; }
@@ -52,6 +52,13 @@ article-carousel[data-layout="cards"] .hm-article-grid > li[data-active="true"] 
 .hm-carousel-pages button::after { content:''; width:100%; height:4px; border-radius:4px; background:#dfddd7; }
 .hm-carousel-pages button[aria-current]::after { background:var(--color-accent-700); }
 .hm-carousel-controls button:focus-visible { outline:3px solid var(--color-accent-700); outline-offset:2px; }
+.hm-carousel-controls .hm-carousel-arrow { flex:0 0 44px; width:44px; height:44px; border:1px solid #e2e3dc; border-radius:50%; background:#fffefa; color:var(--color-accent-700); box-shadow:0 2px 8px #2e2b2510; pointer-events:auto; }
+.hm-carousel-arrow svg { width:22px; height:22px; }
+@media(min-width:768px) {
+  .hm-articles article-carousel[data-layout="cards"]:has([data-carousel-controls]:not([hidden])) { position:relative; padding:0 28px 56px; }
+  .hm-carousel-controls { position:absolute; inset:0 -24px 56px; width:auto; max-width:none; margin:0; justify-content:space-between; pointer-events:none; }
+  .hm-carousel-pages { position:absolute; top:calc(100% + 12px); left:50%; transform:translateX(-50%); pointer-events:auto; }
+}
 @media (max-width:1023px) { .hm-articles article-carousel[data-layout="cards"] { --carousel-page-size:1; } }
 .hm-article-card { height:100%; border:1px solid #e2e3dc; border-radius:var(--hm-card,8px); background:#fffefa; }
 .hm-article-link { height:100%; display:flex; flex-direction:column; gap:12px; padding:12px; border-radius:inherit; text-decoration:none; }
@@ -71,6 +78,7 @@ article-carousel[data-layout="cards"] .hm-article-grid > li[data-active="true"] 
 @media(hover:hover) and (pointer:fine) {
   .hm-article-link:hover h3 { text-decoration:underline; text-decoration-color:var(--color-accent-700); text-underline-offset:4px; }
   .hm-articles-all:hover { background:var(--color-surface); }
+  .hm-carousel-controls .hm-carousel-arrow:hover { background:var(--color-surface); border-color:var(--color-accent-700); }
 }
 @media(min-width:768px) {
   .hm-article-link { display:grid; grid-template-columns:minmax(0,38%) minmax(0,1fr); gap:16px; }
@@ -93,7 +101,7 @@ article-carousel[data-layout="cards"] .hm-article-grid > li[data-active="true"] 
   .hm-article-read { margin-top:0; min-height:0; font-size:13px; line-height:1.5; }
   .hm-article-meta { gap:4px 8px; }
   .hm-article-meta .hm-article-category { font-size:11px; padding:2px 8px; }
-  .hm-carousel-controls { display:flex; justify-content:center; margin-top:0; }
+  .hm-carousel-controls { display:flex; justify-content:center; gap:8px; margin-top:8px; }
   .hm-carousel-pages { gap:0; }
   .hm-carousel-pages button::after { width:calc(100% - 8px); }
 }

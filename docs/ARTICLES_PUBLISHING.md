@@ -61,8 +61,8 @@ whether the feed can appear; enabling the website presentation cannot bypass
 them. Empty, disabled or failed feeds show an explanation in the website editor.
 Targeted local browser and `check:content-isolation` verification passed for
 the ownership behavior, shared-switch controls and keyboard interaction.
-The code remains uncommitted and is not evidence of deployment or production
-publication. A separate claims-content update passed compare-and-set write and
+The source change is committed in `ba26af7`; release verification is separate
+from CMS publication. A separate claims-content update passed compare-and-set write and
 readback from Website Draft revision 93 to 94, changing only nine `voices` paths;
 it made no article/settings or Live writes and did not Publish. See
 [CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up).
@@ -88,7 +88,7 @@ archiving or moving to Trash.
 Pins, Home recommendation, category, tags, author, cover, separate TH/EN body,
 takeaways, sources and SEO fields pass through the same server publication model.
 The existing `featured` field is now labeled **ปักหมุดบน Home**, independent of
-index pins. Home displays up to ten eligible publications: Home pins newest-first,
+index pins. Home displays up to twelve eligible publications: Home pins newest-first,
 then latest unique articles. Home pin capacity is ten unique draft/live selections,
 enforced transactionally even on concurrent saves. A published pin must be removed
 from both draft and live to release capacity; unpublished edits never alter the
