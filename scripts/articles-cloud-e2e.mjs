@@ -86,6 +86,7 @@ try {
       await articleField(admin,'pinned').check();
       await closeArticleSettings(admin);
       const authored=await authorRichArticle(admin,{out,engine});
+      await admin.locator('[data-ae=toggle-writing]').click();
       await assertReaderArticle(admin.frameLocator('.ae-canvas-frame'),authored);
       await db.doc('admins/'+account.localId).update({active:false});
       await admin.locator('.ae-actions [data-ae=save]').click();
@@ -109,7 +110,7 @@ try {
       await admin.locator('.ae-actions [data-ae=save]').click();
       await admin.locator('.ae-feedback').filter({hasText:'อุปกรณ์อื่น'}).waitFor();
       assert.equal(await admin.locator('[data-field=excerpt]').inputValue(),'ฉบับที่ยังไม่บันทึกหลังแท็บอื่นแก้ไข');
-      const download=admin.waitForEvent('download');await admin.locator('[data-ae=export]').click();assert.match((await download).suggestedFilename(),/draft.json$/);
+      const download=admin.waitForEvent('download');await articleTool(admin,'export');assert.match((await download).suggestedFilename(),/draft.json$/);
       await admin.locator('[data-ae=back]').click();
       await admin.getByRole('button',{name:'แก้ไข: '+title,exact:true}).click();
       await admin.locator('[data-ae=preview]:visible').click();
@@ -120,11 +121,11 @@ try {
       await preview.locator('footer').waitFor();
       await preview.getByText('ข้อสรุปจาก CMS',{exact:true}).waitFor();
       await assertReaderArticle(preview,authored);
-      await preview.locator('.ad-takeaways').scrollIntoViewIfNeeded();
+      await preview.locator('[data-article-summary=true]').scrollIntoViewIfNeeded();
       await admin.screenshot({path:out+'/'+engine+'-authored-preview-desktop.png'});
       await previewDialog.locator('[data-ae=mobile]').click();
       await assertReaderArticle(preview,authored);
-      await preview.locator('.ad-takeaways').scrollIntoViewIfNeeded();
+      await preview.locator('[data-article-summary=true]').scrollIntoViewIfNeeded();
       await admin.screenshot({path:out+'/'+engine+'-authored-preview-mobile.png'});
       assert.match(await preview.locator('meta[name=robots]').getAttribute('content'),/noindex/);
       assert.equal(await repository.detail('covermate-uat',slug),null,'Full-page Preview does not publish the draft');

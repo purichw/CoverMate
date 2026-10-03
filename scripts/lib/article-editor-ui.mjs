@@ -1,5 +1,10 @@
 // Exercise inline disclosures or the optional settings sheet through real UI.
 export const articleCanvas=page=>page.frameLocator('.ae-canvas-frame');
+export async function openArticleWriting(page){
+  await closeSettings(page);
+  if(await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
+  await articleCanvas(page).locator('.ae-editor-host:visible .tiptap[contenteditable=true]').waitFor();
+}
 async function revealDetails(control){
   const closed=()=>control.locator('xpath=ancestor::details[not(@open)]');
   while(await closed().count())await closed().first().locator(':scope > summary').click();
@@ -10,7 +15,11 @@ async function ensureSettingsVisible(page){
   const dialog=page.locator('.ae-settings-dialog[open]');
   // The loading canvas can move this footer button between pointerdown/up.
   // Keyboard activation uses the real button without depending on its position.
-  if(!await dialog.count())await page.locator('[data-ae=settings]:visible').press('Enter');
+  if(!await dialog.count()){
+    // TipTap restores iframe focus on animation frames after a format dialog closes.
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    await page.locator('[data-ae=settings]:visible').press('Enter');
+  }
   await dialog.waitFor({state:'visible'});
   await settings.waitFor({state:'visible'});
 }
@@ -29,6 +38,7 @@ export async function revealArticleControl(page,selector){
   const readerPanel=await control.evaluate(el=>el.closest('.ae-reader-fields > [data-panel]')?.dataset.panel);
   if(readerPanel){
     await closeSettings(page);
+    if(await page.locator('.ae-fullscreen').count())await page.locator('[data-ae=fullscreen]').click();
     const trigger=page.locator(`[data-reader-panel="${readerPanel}"]`);
     if(await trigger.getAttribute('aria-expanded')!=='true')await trigger.click();
     await revealDetails(control);
@@ -37,7 +47,7 @@ export async function revealArticleControl(page,selector){
   if(await control.evaluate(el=>Boolean(el.closest('.ae-settings,.ae-settings-panel'))))await ensureSettingsVisible(page);
   else{
     await closeSettings(page);
-    if(await control.evaluate(el=>Boolean(el.closest('.ae-canvas')))&&await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();
+    if(await control.evaluate(el=>Boolean(el.closest('.ae-writing-tools')))&&await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
     if(await control.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," ae-basic ")]').count()&&await page.locator('[data-ae=toggle-basic]').getAttribute('aria-expanded')==='false')await page.locator('[data-ae=toggle-basic]').click();
   }
   await revealDetails(control);

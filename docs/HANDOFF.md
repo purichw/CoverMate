@@ -2,6 +2,10 @@
 
 Last updated: 2026-10-03
 
+October 4 integration candidate: [combined release scope and verification](RELEASE_INTEGRATION_20261004.md).
+The candidate record does not supersede the verified production checkpoint until
+its own hosted UAT, exact-SHA CI and production alias checks complete.
+
 The latest verified release is `6095b06`, checked on October 3 at 22:02
 Asia/Bangkok. See [the current checkpoint](#current-source-and-production-checkpoint)
 for exact CI, production and monitoring evidence. Earlier sections below retain

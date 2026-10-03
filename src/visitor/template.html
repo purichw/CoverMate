@@ -419,9 +419,9 @@ textarea.input { min-height: 90px; resize: vertical; }
     --dock-cream: #F6EFE4;
     --dock-cream-dim: rgba(246,239,228,.58);
     --dock-sage: #9FB08C;
-    --dock-terracotta: #C46A3A;
-    --dock-terracotta-hover: #D2784A;
-    --dock-terracotta-active: #B15E31;
+    --dock-terracotta: #AD4E16;
+    --dock-terracotta-hover: #98430F;
+    --dock-terracotta-active: #81370B;
     position: fixed;
     left: 50%;
     bottom: calc(26px + env(safe-area-inset-bottom));
@@ -526,7 +526,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   .cm-owner-dock__button:focus-visible,
   .cm-owner-dock__link:focus-visible { outline: 2px solid var(--dock-terracotta); outline-offset: 2px; }
   .cm-owner-dock__icon { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: .72; }
-  .cm-owner-dock__chev { display: inline-block; width: 14px; height: 14px; transition: transform .16s cubic-bezier(.2,.7,.3,1); }
+  .cm-owner-dock__chev { display:block;flex:none;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .16s cubic-bezier(.2,.7,.3,1); }
   .cm-owner-dock__toggle:checked + .cm-owner-dock__summary { background: rgba(246,239,228,.10); color: var(--dock-cream); }
   .cm-owner-dock__toggle:checked + .cm-owner-dock__summary .cm-owner-dock__chev { transform: rotate(180deg); }
   .cm-owner-dock__button,
@@ -537,43 +537,54 @@ textarea.input { min-height: 90px; resize: vertical; }
   .cm-owner-dock__panel {
     position: absolute;
     right: 0;
-    bottom: calc(100% + 10px);
-    width: min(560px, calc(100vw - 24px));
-    padding: 14px;
+    bottom: calc(100% + 20px);
+    width: min(640px, calc(100vw - 24px));
+    max-height: calc(100dvh - 120px);
+    padding: 22px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
     gap: 0;
-    border-radius: 20px;
+    border-radius: 8px;
     background: var(--dock-ink);
     box-shadow: 0 24px 56px -22px rgba(36,22,12,.55);
     border: 1px solid var(--dock-hairline);
     animation: cmDockRise .16s cubic-bezier(.2,.7,.3,1) both;
-    overflow: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   @keyframes cmDockRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .cm-owner-dock__panel-col { min-width: 0; display: grid; align-content: start; gap: 4px; }
-  .cm-owner-dock__panel-col + .cm-owner-dock__panel-col { border-left: 1px solid var(--dock-hairline); padding-left: 14px; margin-left: 14px; }
+  .cm-owner-dock__panel-col { min-width: 0; display: flex; flex-direction:column; gap: 16px; }
+  .cm-owner-dock__panel-col + .cm-owner-dock__panel-col { border-left: 1px solid var(--dock-hairline); padding-left: 20px; margin-left: 20px; }
   .cm-owner-dock__group { display: grid; gap: 4px; }
-  .cm-owner-dock__group + .cm-owner-dock__group { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--dock-hairline); }
+  .cm-owner-dock__group + .cm-owner-dock__group { padding-top: 14px; border-top: 1px solid var(--dock-hairline); }
   .cm-owner-dock__group-label {
     padding: 2px 10px 6px;
-    font-size: 10.5px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0;
     font-weight: 700;
     color: var(--dock-sage);
   }
   .cm-owner-dock__actions { display: grid; gap: 4px; }
   .cm-owner-dock__action {
-    min-height: 40px;
+    min-height: 46px;
     width: 100%;
     justify-content: flex-start;
     gap: 12px;
     padding-inline: 10px 12px;
-    border-radius: 12px;
+    border-radius: 6px;
     color: var(--dock-cream);
   }
-  .cm-owner-dock__action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cm-owner-dock__action-label { min-width: 0; white-space: normal; text-align:left; line-height:1.5; }
+  .cm-owner-dock__panel .cm-owner-dock__icon { width:20px;height:20px;opacity:1; }
+  .cm-owner-dock__panel .cm-editor-context-picker { min-height:106px;border-radius:8px; }
+  .cm-owner-dock__draft { display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;gap:12px;padding:12px 14px;margin-bottom:6px;border:1px solid #9fb08c33;border-radius:8px;background:#9fb08c12;color:#bed4ab; }
+  .cm-owner-dock__draft-copy { display:grid;gap:4px;min-width:0; }
+  .cm-owner-dock__draft .cm-editor-context-icon { width:24px;height:28px;border-radius:0;background:none;color:inherit; }
+  .cm-owner-dock__draft-copy strong { font-size:12px;font-weight:600;line-height:1.4; }
+  .cm-owner-dock__draft-copy small { color:var(--dock-cream-dim);font-size:11px;line-height:1.5; }
+  .cm-owner-dock__shortcut { border:1px solid var(--dock-hairline);padding:4px 8px;border-radius:4px; }
+  .cm-owner-dock__panel-col .cm-owner-dock__signout { margin-top:auto;padding-top:16px; }
+  .cm-owner-dock__signout .cm-owner-dock__action { color:#f29683; }
   .cm-owner-dock__shortcut,
   .cm-owner-dock__caption { margin-left: auto; color: var(--dock-cream-dim); font-size: 11px; font-weight: 700; }
   .cm-owner-dock__button--publish {
@@ -604,22 +615,31 @@ textarea.input { min-height: 90px; resize: vertical; }
     .cm-owner-dock__summary { min-width: 96px; padding-inline: 14px; }
     .cm-owner-dock__divider { display: none; }
     .cm-owner-dock__panel {
+      --dock-cream:#292d25;
+      --dock-cream-dim:#687063;
+      --dock-sage:#4f7241;
+      --dock-hairline:#e5e5dc;
       left: 0;
       right: 0;
-      bottom: calc(100% + 10px);
+      bottom: calc(100% + 20px);
       width: 100%;
-      max-height: min(460px, calc(100vh - 110px - env(safe-area-inset-bottom)));
+      max-height: calc(100dvh - 124px - env(safe-area-inset-bottom));
       overflow-y: auto;
       grid-template-columns: 1fr;
-      padding: 12px;
-      border-radius: 18px;
+      padding: 16px;
+      border-radius: 8px;
+      background:#fffefa;
       -webkit-overflow-scrolling: touch;
     }
     .cm-owner-dock__panel-col + .cm-owner-dock__panel-col { border-left: 0; padding-left: 0; margin-left: 0; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--dock-hairline); }
     .cm-owner-dock__group-label { padding-inline: 8px; }
-    .cm-owner-dock__action { min-height: 48px; padding-inline: 12px; border-radius: 12px; font-size: 15px; }
-    .cm-owner-dock__button--publish { justify-content: center; }
-    .cm-owner-dock__button--publish .cm-owner-dock__caption { display: none; }
+    .cm-owner-dock__action { min-height: 48px; padding-inline: 12px; border-radius: 6px; font-size: 14px; }
+    .cm-owner-dock__button:hover,.cm-owner-dock__link:hover { background:#edf2e8;border-color:#dfe8d8; }
+    .cm-owner-dock__draft { background:#edf4e8;border-color:#e0ead8;color:#355e30; }
+    .cm-owner-dock__button--publish { background:#ad4e16;color:#fff; }
+    .cm-owner-dock__button--publish:hover { background:#91421b;color:#fff; }
+    .cm-owner-dock__button--publish .cm-owner-dock__caption { color:#fff; }
+    .cm-owner-dock__signout .cm-owner-dock__action { color:#ae392a; }
   }
   @media (max-width: 560px) {
     .cm-owner-dock__label--wide { display: none; }
@@ -1701,17 +1721,19 @@ textarea.input { min-height: 90px; resize: vertical; }
           <div class="cm-owner-dock__panel-col">
             <!-- COVERMATE_EDITOR_PAGE -->
             <div class="cm-owner-dock__group">
-              <span class="cm-owner-dock__group-label">Draft</span>
-              <p class="cm-editor-history-note">{{ editorHistoryHint }}</p>
+              <div class="cm-owner-dock__draft" role="status">
+                <span class="cm-editor-context-icon" aria-hidden="true"><svg sc-camel-view-box="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h6"></path></svg></span>
+                <span class="cm-owner-dock__draft-copy"><strong>Draft · {{ editorSaveStatus }}</strong><small>{{ editorHistoryHint }}</small></span>
+              </div>
               <div class="cm-owner-dock__actions">
+                <button type="button" sc-camel-on-click="{{ openPreview }}" class="cm-owner-dock__button cm-owner-dock__action">
+                  <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <span class="cm-owner-dock__action-label">ดูตัวอย่าง (Preview)</span>
+                </button>
                 <button type="button" sc-camel-on-click="{{ requestSaveDraft }}" class="cm-owner-dock__button cm-owner-dock__action">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path></svg>
                   <span class="cm-owner-dock__action-label">{{ saveLabel }}</span>
                   <span class="cm-owner-dock__shortcut">⌘S</span>
-                </button>
-                <button type="button" sc-camel-on-click="{{ openPreview }}" class="cm-owner-dock__button cm-owner-dock__action">
-                  <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  <span class="cm-owner-dock__action-label">{{ previewLabel }}</span>
                 </button>
                 <button type="button" sc-camel-on-click="{{ requestPublish }}" class="cm-owner-dock__button cm-owner-dock__action cm-owner-dock__button--publish">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="m18 9-6-6-6 6"></path><path d="M12 3v13"></path><path d="M5 21h14"></path></svg>
@@ -1721,9 +1743,10 @@ textarea.input { min-height: 90px; resize: vertical; }
               </div>
             </div>
             <div class="cm-owner-dock__group">
+              <span class="cm-owner-dock__group-label">เครื่องมือเพิ่มเติม</span>
               <button type="button" data-editor-reset sc-camel-on-click="{{ requestResetDraft }}" class="cm-owner-dock__button cm-owner-dock__action cm-owner-dock__button--quiet">
                 <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7"></path></svg>
-                <span class="cm-editor-reset-copy">Reset Draft<small>กลับไปยัง Publish ล่าสุด</small></span>
+                <span class="cm-editor-reset-copy">Reset draft หน้าเว็บ<small>กลับไปยัง Publish ล่าสุด · บทความไม่เปลี่ยน</small></span>
               </button>
             </div>
           </div>
@@ -1745,7 +1768,7 @@ textarea.input { min-height: 90px; resize: vertical; }
                 </button>
               </div>
             </div>
-            <div class="cm-owner-dock__group">
+            <div class="cm-owner-dock__group cm-owner-dock__signout">
               <div class="cm-owner-dock__actions">
                 <button type="button" sc-camel-on-click="{{ signOut }}" class="cm-owner-dock__button cm-owner-dock__action cm-owner-dock__button--quiet">
                   <svg class="cm-owner-dock__icon" sc-camel-view-box="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>

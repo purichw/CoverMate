@@ -4,6 +4,7 @@ import {
   readAdminSession
 } from "../covermate-contract.js";
 import { appendEnvironmentSearch, resolveCoverMateEnvironment } from "../covermate-environment.mjs";
+import { confirmSignOut } from './sign-out-confirm.js';
 
 export { ADMIN_LOGIN_PATH, clearAdminSession, readAdminSession };
 
@@ -56,7 +57,19 @@ export async function requireVerifiedAdminSession(options = {}) {
   return null;
 }
 
-export async function signOutAdmin() {
+let signOutPending;
+export function signOutAdmin(options = {}) {
+  if (signOutPending) return signOutPending;
+  signOutPending = (async () => {
+    if (!(await confirmSignOut())) return false;
+    if (options.beforeSignOut && !(await options.beforeSignOut())) return false;
+    await completeSignOut();
+    return true;
+  })().finally(() => { signOutPending = null; });
+  return signOutPending;
+}
+
+async function completeSignOut() {
   clearAdminSession();
   try {
     await import(window.location.origin + "/covermate-firebase.js");

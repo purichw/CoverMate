@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {projectArticleIndex,articleIndexAddress} from '../src/visitor/articles-index.mjs';
 import {projectHomeArticles} from '../src/visitor/home-articles.mjs';
+import {projectArticleSuggestions} from '../src/visitor/article-search.mjs';
 import {articleIndexFixture} from './fixtures/home-articles/index-feed.mjs';
 import {startArticlesIndexPreview} from './articles-index-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
@@ -26,6 +27,33 @@ for(const mutate of [item=>item.status='draft',item=>item.status='scheduled',ite
   const item=structuredClone(feed.items[0]);mutate(item);assert.equal(view({...feed,items:[item]}).total,0);
 }
 const bad=structuredClone(feed);bad.items[0].image.src='javascript:alert(1)';assert.equal(view(bad).featured.image,'');
+const suggestionFeed=structuredClone(feed);
+suggestionFeed.items=suggestionFeed.items.slice(0,4);
+for(const [index,item] of suggestionFeed.items.entries()) {
+  item.pinned=index===2||index===3;
+  for(const [lang,copy] of Object.entries(item.translations))Object.assign(copy,{
+    title:lang==='th'?(index===3?'ประกันสุขภาพ':'ประกันรถยนต์'):(index===3?'Health cover':'Motor cover'),
+    excerpt:lang==='th'?'วางแผนความคุ้มครอง':'Plan your cover',tags:[],
+    publishedAt:`2026-09-${String(20-index).padStart(2,'0')}T00:00:00Z`,
+    releasedAt:`2026-09-${String(21+index).padStart(2,'0')}T00:00:00Z`,showDate:index!==1
+  });
+  item.tags=index===3?['ประกันรถยนต์','Motor cover']:[];
+}
+const suggested=(query='ประกันรถยนต์',extra={})=>projectArticleSuggestions(suggestionFeed,{...options,query,...extra});
+assert.deepEqual(suggested().items.map(item=>item.key),[2,1,0,3].map(index=>suggestionFeed.items[index].id),'Relevance first, then pins, then actual Publish time (not optional displayed dates)');
+assert.deepEqual(suggested('motor cover',{lang:'en'}).items.map(item=>item.key),[2,1,0,3].map(index=>suggestionFeed.items[index].id));
+assert.deepEqual(view(suggestionFeed,'?q='+encodeURIComponent('ประกันรถยนต์')).items.map(item=>item.key),suggested().items.map(item=>item.key),'Submitted results use the same relevance order as suggestions');
+assert.equal(view(suggestionFeed,'?q='+encodeURIComponent('ประกันรถยนต์ เงื่อนไข')).total,suggested('ประกันรถยนต์ เงื่อนไข').total,'Partial query matching agrees with full results');
+assert.equal(suggested('  ประกันรถยนต์  ').items[0].score,100);
+assert.equal(suggested('no-match').total,0);
+assert.equal(suggested('ประกันรถยนต์ เงื่อนไข').items[0].score,35,'Partial term coverage is lower than a full match');
+assert.ok(suggested('',{category:'motor'}).items.every(item=>item.categoryId==='motor'));
+assert.equal(projectArticleSuggestions(null,{query:'ประกัน'}).total,0);
+assert.equal(projectArticleSuggestions({...suggestionFeed,settings:{enabled:false}},{query:'ประกัน'}).total,0);
+for(const mutate of [item=>item.status='draft',item=>item.translations.th.status='draft',item=>item.translations.th.publishedAt='2099-01-01']) {
+  const item=structuredClone(suggestionFeed.items[0]);mutate(item);
+  assert.equal(projectArticleSuggestions({available:true,items:[item]},{...options,query:'ประกัน'}).total,0,'Suggestions cannot expose private/scheduled translations');
+}
 const original={cmsContentVersion:21,articlesPage:{title:{th:'Owner title',en:''},heroImage:''}};
 const migrated=migrateCmsContent(original);assert.equal(migrated.cmsContentVersion,CMS_CONTENT_VERSION);assert.deepEqual(migrated.articlesPage.title,original.articlesPage.title);assert.equal(migrated.articlesPage.heroImage,'');
 assert.deepEqual(migrateCmsContent(migrated),migrated);
@@ -109,6 +137,34 @@ if(process.argv.includes('--browser')) {
     }
     if(process.argv.includes('--snapshots-only')) { fs.writeFileSync(`${out}/${engine}-report.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report)); }
     else {
+      for(const [width,lang] of [[1440,'th'],[390,'en']]) {
+        server.setFeed(suggestionFeed);await page.setViewportSize({width,height:900});await ready('/articles'+(lang==='en'?'?lang=en':''));
+        const input=page.locator('#articles-search'),panel=page.locator('.ar-search-panel');
+        await input.focus();await panel.waitFor({state:'visible'});
+        assert.ok(await panel.locator('.ar-search-topics a').count(),'Focused empty search offers live category shortcuts');
+        const query=lang==='en'?'Motor cover':'ประกันรถยนต์';
+        await input.fill(query);await panel.getByRole('option').first().waitFor();
+        assert.deepEqual(await panel.getByRole('option').evaluateAll(items=>items.map(item=>new URL(item.href).pathname)),[2,1,0,3].map(index=>'/articles/'+suggestionFeed.items[index].slug));
+        assert.equal(new URL(page.url()).searchParams.has('q'),false,'Typing suggestions does not replace the full results or URL');
+        assert.equal(await input.evaluate(el=>document.activeElement===el),true,'Typing keeps focus in the input');
+        await input.press('ArrowDown');assert.equal(await input.getAttribute('aria-activedescendant'),'articles-suggestion-0');
+        await input.press('ArrowUp');assert.equal(await input.getAttribute('aria-activedescendant'),'articles-suggestion-3');
+        await input.press('Escape');assert.equal(await input.getAttribute('aria-expanded'),'false');assert.equal(await input.inputValue(),query);
+        await input.press('ArrowDown');await panel.waitFor({state:'visible'});await fit();
+        const bounds=await panel.boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+1,'Suggestions fit the viewport');
+        await page.screenshot({path:`${out}/search-${width}-${lang}.png`});
+        await input.fill('no-match');await page.waitForFunction(()=>document.querySelector('.ar-search-panel [role=status]')?.textContent.match(/ยังไม่พบ|No articles/));
+        assert.equal(await panel.getByRole('option').count(),0);
+        await input.fill(query);await panel.locator('.ar-search-all').click();
+        assert.equal(new URL(page.url()).searchParams.get('q'),query);assert.equal(await input.getAttribute('aria-expanded'),'false');
+        await input.click();await panel.waitFor({state:'visible'});await page.locator('#articles-results').click();
+        assert.equal(await input.getAttribute('aria-expanded'),'false','Outside click dismisses suggestions');
+        await input.click();await input.press('ArrowDown');await input.press('Enter');
+        await page.waitForURL('**/articles/'+suggestionFeed.items[2].slug+(lang==='en'?'?lang=en':''));
+        await page.locator('.ad-prose').waitFor();
+      }
+      report.checks.push('Search suggestions: relevance → pins → actual Publish time, optional date ignored, TH/EN, desktop/mobile, keyboard/dismissal, categories, full results and article navigation');
+      server.setFeed(feed);
       await page.setViewportSize({width:1440,height:1000});await ready();
       await page.locator('.ar-pagination a').filter({hasText:/^2$/}).click();
       assert.match(page.url(),/page=2/);assert.equal(await page.locator('.ar-item:visible').count(),3);

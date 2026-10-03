@@ -80,12 +80,13 @@ if(process.argv.includes('--browser')){
     const save=async()=>{await tool('save');await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
     const exported=async(name)=>{const pending=page.waitForEvent('download');await tool('export');const download=await pending;const file=`${out}/${engine}-${name}.json`;await download.saveAs(file);return JSON.parse(await fs.readFile(file,'utf8'));};
     const selectPlacement=async value=>{
+      await revealArticleControl(page,'select[data-block-placement]');
       const select=page.locator('select[data-block-placement]'),label=await select.locator(`option[value="${value}"]`).innerText();
       const trigger=select.locator('xpath=..').locator('.cm-select-trigger');
       if(await trigger.count()){await trigger.click();await page.getByRole('option',{name:label,exact:true}).click();}else await select.selectOption(value);
     };
     await field('title').fill('Free blocks UI QA');await field('excerpt').fill('Authoring through the actual controls');await field('slug').fill('free-blocks-ui-qa');
-    await body().fill('เนื้อหาเริ่มต้น');
+    await page.locator('[data-ae=toggle-writing]').click();await body().fill('เนื้อหาเริ่มต้น');
     await tool('add-paragraph');
     // Tiptap restores iframe focus on the next animation frame.
     await articleCanvas(page).locator('.ae-editor-host:not([hidden]) .tiptap:focus').waitFor();
@@ -142,15 +143,16 @@ if(process.argv.includes('--browser')){
 
     await page.locator('.ae-import-file').setInputFiles({name:'legacy-blocks.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(legacy))});
     await page.locator('.ae-feedback').filter({hasText:'นำเข้าสำเนาฉบับร่างแล้ว'}).waitFor();await save();
-    await articleCanvas(page).locator('.ad-takeaways li').first().waitFor();assert.equal(await articleCanvas(page).locator('.ad-takeaways li').count(),2);
-    const beforeConvert=await doc();
-    await tool('convert-takeaways');
-    await body().locator('.article-takeaway-card').waitFor();
+    await body().locator('[data-article-summary=true] li').first().waitFor();assert.equal(await body().locator('[data-article-summary=true] li').count(),2);
+    assert.equal(await page.locator('[data-ae=convert-takeaways],[data-ae=clear-takeaways]').count(),0);
     await articleCanvas(page).locator('.ad-takeaways').waitFor({state:'detached'});
     assert.equal((await doc()).attrs.takeawaysInDocument,true);
-    await tool('undo');assert.deepEqual(await doc(),beforeConvert,'Undo conversion restores document and metadata presentation');
-    await articleCanvas(page).locator('.ad-takeaways li').first().waitFor();assert.equal(await articleCanvas(page).locator('.ad-takeaways li').count(),2);
-    await tool('redo');await articleCanvas(page).locator('.ad-takeaways').waitFor({state:'detached'});
+    const importedEnglish=canonical(await articleCanvas(page).locator('.tiptap[lang=en]').evaluate(el=>el.editor.getJSON()));
+    assert.ok(articleDocumentText(importedEnglish).includes('English summary'),'EN legacy summary is adopted independently');
+    if(await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
+    const beforeSummaryMove=await doc();await body().locator('[data-article-summary=true] li p').first().click();await tool('block-up');
+    assert.notDeepEqual(await doc(),beforeSummaryMove,'Summary moves as a regular block');
+    await tool('undo');assert.deepEqual(await doc(),beforeSummaryMove,'Undo restores the summary position');await tool('redo');
     await revealArticleControl(page,'[data-ae=convert-sidebar]');
     const quoteConversion=await page.locator('[data-ae=convert-sidebar]:visible').elementHandle();
     await body().locator('p').first().click();
@@ -159,9 +161,9 @@ if(process.argv.includes('--browser')){
     await body().locator('.article-quote-card').waitFor();await articleCanvas(page).locator('.ad-side-note').waitFor({state:'detached'});
     const converted=await exported('converted');
     for(const key of ['takeaways','takeawayNote','sidebarQuote'])assert.deepEqual(converted.translations.th[key],legacy.translations.th[key],'Conversion preserves metadata: '+key);
-    assert.deepEqual(canonical(converted.translations.en.document),canonical(legacy.translations.en.document));
+    assert.deepEqual(canonical(converted.translations.en.document),importedEnglish,'TH block changes leave the independently imported EN summary intact');
     await save();
-    report.checks.push('Explicit legacy conversion is reversible without lost metadata, duplicate summaries or sidebar fallback');
+    report.checks.push('Legacy summary is automatically adopted without duplicates; movement is reversible and sidebar conversion retains metadata');
     for(const width of [390,320]){
       await page.setViewportSize({width,height:900});await (await revealArticleControl(page,'[data-canvas-size=mobile]')).click();
       await body().locator('.article-takeaway-card').scrollIntoViewIfNeeded();

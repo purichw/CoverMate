@@ -70,7 +70,7 @@ if(process.argv.includes('--browser')){
     const save=async()=>{await tool('save');await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
     await articleField(page,'title').fill('Typography controls QA');await articleField(page,'excerpt').fill('ชนิดข้อความและขนาดที่ตั้งเอง');await articleField(page,'slug').fill('typography-controls-qa');
     const lines=[...Array.from({length:6},(_,i)=>'Heading '+(i+1)),'Normal BOLD rest','Block spacing sample'];
-    await body().fill(lines[0]);await body().press('End');
+    await page.locator('[data-ae=toggle-writing]').click();await body().fill(lines[0]);await body().press('End');
     for(const line of lines.slice(1)){await page.keyboard.press('Enter');await page.keyboard.insertText(line);}
     for(let level=1;level<=6;level++){await body().locator('p').filter({hasText:'Heading '+level}).click();await choose('select[data-format=block]','h'+level);assert.equal(await body().locator('h'+level).innerText(),'Heading '+level);}
     await body().locator('h6').click();await choose('select[data-format=block]','paragraph');assert.equal(await body().locator('h6').count(),0,'H6 can return to paragraph');await choose('select[data-format=block]','h6');

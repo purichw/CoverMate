@@ -177,7 +177,7 @@ Detailed project documents:
 | `server/cases-handler.cjs`, `cases-service.cjs` | Owner-only Cases routing, transactions, activities, idempotency, notifications and preferences. Public intake uses service helpers in its own transaction. |
 | `server/cases-repository.cjs`, `cases-contract.cjs` | Environment collection selection and complete case reads; validation, state transitions, metrics, filters and legacy projection. |
 | `server/legacy-ops-service.cjs`, `ops-firestore.cjs`, `ops-access.cjs` | Compatibility leads/tasks/audit endpoints, existing REST/codec/CAS behavior and shared role permissions. |
-| `admin/session.js` | Shared admin session helper for source-authored admin pages. |
+| `admin/session.js`, `admin/sign-out-confirm.js` | Shared admin session and logout confirmation for the portal, Analytics, website editor, and login account switch. User logout confirms before cleanup; existing unsaved-change guards still apply. |
 | `admin/analytics-data.js` | Analytics normalization helpers for lead summaries and GA4 connection metadata. |
 | `covermate-environment.mjs` | Runtime environment resolver. Production host is locked to production; Vercel preview and explicit local UAT route CMS/lead traffic to UAT collections. |
 | `covermate-contract.js` | Shared runtime contract for localStorage keys, owner hash detection, admin session parsing/writing, public admin-marker cleanup, CMS state sanitization, needs-calculator defaults, and fallback cache writes. Visitor shell, Firebase adapter, and admin session helpers consume this file instead of duplicating those contracts. |
@@ -447,6 +447,9 @@ Runtime contracts preserved in source:
 - Inline edit mode has its own warm-ink owner dock. The default row keeps
   editing status, Undo/Redo, and `เครื่องมือ` visible; opening `เครื่องมือ → แผงเครื่องมือ` shows the
   control panel without leaving the editor route.
+- The tools popover groups editing actions and navigation in two desktop columns,
+  with a light, internally scrolling mobile layout. See `docs/ADMIN_OWNER_PANEL_20261004.md`
+  for scope, shared logout ownership, and focused visual/interaction evidence.
 - Same-page public anchors scroll in place without rebuilding the visitor DOM.
 - Home restores `#cover` as its own compact CMS/Admin section.
   The old embedded-only rule is superseded; Guides are merged into FAQ in v4.

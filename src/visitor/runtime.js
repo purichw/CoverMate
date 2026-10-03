@@ -412,6 +412,20 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     // COVERMATE_OWNER_LISTENERS_BEGIN
     this._editorKeydown = event => this.editorKeydown(event);
     document.addEventListener('keydown', this._editorKeydown, true);
+    this._ownerToolsDismiss = event => {
+      const toggle = document.getElementById('covermate-owner-tools-toggle');
+      if (!toggle?.checked || document.querySelector('dialog[open],[data-admin-confirm]')) return;
+      if (event.type === 'keydown') {
+        if (event.key !== 'Escape' || event.target.closest?.('[role="listbox"],[role="combobox"][aria-expanded="true"]')) return;
+        event.preventDefault(); toggle.checked = false; toggle.focus({preventScroll:true});
+      } else if (!event.target.closest?.('.cm-owner-dock')) toggle.checked = false;
+    };
+    document.addEventListener('keydown', this._ownerToolsDismiss);
+    document.addEventListener('pointerdown', this._ownerToolsDismiss);
+    this._disposeOwnerTools = () => {
+      document.removeEventListener('keydown', this._ownerToolsDismiss);
+      document.removeEventListener('pointerdown', this._ownerToolsDismiss);
+    };
     this._editorInput = event => {
       if (!(this.state.admin || this.state.editMode)) return;
       const el = event.target;
@@ -572,6 +586,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     this._disposeContentProtection?.();
     if (window.__covermateArticlePreview?.update === this._articlePreviewUpdate) delete window.__covermateArticlePreview.update;
     document.removeEventListener('keydown', this._editorKeydown, true);
+    this._disposeOwnerTools?.();
     document.removeEventListener('input', this._editorInput, true);
     document.removeEventListener('pointerdown', this._editorPointer, true);
     this.contactFlow?.dispose();
@@ -610,6 +625,10 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
   }
 
   sweep() {
+    if (this.state.routePage === 'articles') {
+      this._articleSearchLoader ||= import(location.origin+'/assets/visitor/article-search.js').catch(()=>{this._articleSearchLoader=null;});
+      this._articleSearchLoader?.then(module=>module?.enhanceArticleSearch(this));
+    }
     if (this.state.admin && document.querySelector('[data-editor-preview]')) {
       this._editorPreviewLoader ||= import(location.origin + '/assets/visitor/editor-preview.js').catch(() => null);
       this._editorPreviewLoader.then(module => {
@@ -823,13 +842,14 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     });
   }
 
-  navigateArticles(href, event, more = false) {
+  navigateArticles(href, event, {more = false, preservePosition = false} = {}) {
     if (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey) return;
     event?.preventDefault();
     const previousCount = document.querySelectorAll('.ar-grid .ar-item').length;
     window.history.pushState(null, '', href);
     this._routeLocation = window.location.href;
     this.setState({articleNavigation:Date.now(),articleSearchDraft:null}, () => requestAnimationFrame(() => {
+      if (preservePosition) return;
       const target = more ? document.querySelectorAll('.ar-grid .ar-card-link')[previousCount] : document.getElementById('articles-results') || document.getElementById('articles-title');
       target?.focus({preventScroll:more});
       if (!more && target) this.scrollToAnchor(target.id, {smooth:false});
@@ -2062,7 +2082,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const href=articleAddress({category:category.key});
       return {...category,href,selected:category.key===articleIndex.category?'true':'false',className:category.key===articleIndex.category?'ar-category is-current':'ar-category',
         paths:articleCategoryPaths(category.key),
-        click:event=>this.navigateArticles(href,event)};
+        click:event=>this.navigateArticles(href,event,{preservePosition:true})};
     });
     articleIndex.pagination = articleIndex.pagination.map(item=>({...item,click:event=>this.navigateArticles(item.href,event)}));
     const detailCopy=Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Article reader'&&field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
@@ -2922,7 +2942,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       articleClear:event=>this.navigateArticles(articleIndex.clearHref,event),
       articlePrevious:event=>this.navigateArticles(articleIndex.previousHref,event),
       articleNext:event=>this.navigateArticles(articleIndex.nextHref,event),
-      articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,true),
+      articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,{more:true}),
       articleReload:()=>window.location.reload(),
       licenceFilePaths: ICONS.file,
       sectionGroups: displaySections.reduce((groups, section) => {
@@ -3165,7 +3185,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
           if (popup) { try { popup.opener = null; } catch (e) {} }
         } catch (err) {}
       },
-      signOut: () => { try { window.localStorage.removeItem('covermate-admin-session'); window.localStorage.removeItem(K_ADMIN_EVER); } catch (err) {} try { import(window.location.origin + '/covermate-firebase.js').then(() => { if (window.CoverMateFirebase) window.CoverMateFirebase.signOut(); }).catch(() => {}); } catch (e) {} window.location.replace('/admin/login'); },
+      signOut: async () => { const { signOutAdmin } = await import(window.location.origin + '/admin/session.js'); await signOutAdmin(); },
 
       preview: S.preview,
       dirty: dirty, clean: !dirty,

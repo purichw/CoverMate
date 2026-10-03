@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {articleCanvas,articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './lib/article-editor-ui.mjs';
+import {articleCanvas,articleField,articleTool,openSettings,closeSettings,revealArticleControl,openArticleWriting} from './lib/article-editor-ui.mjs';
 import {articleUrl,articleVideo,renderArticleDocument,normalizeArticleDocument,legacyArticleDocument} from '../article-document.mjs';
 import {createArticleDraft,parseDraftBackup,publicationDateInput,publicationDateISO} from '../admin/articles/drafts.mjs';
 import {normalizeArticleCatalog,articleListView} from '../admin/articles/model.mjs';
@@ -105,6 +105,8 @@ if(process.argv.includes('--browser')) {
     report.checks.push('Initial schema defaults stay clean and a temporarily blank title preserves the same editable document');
     assert.equal(await articleCanvas(page).locator('.ae-editor-host:visible .tiptap h2').count(),2);
     assert.equal(await articleCanvas(page).locator('.ae-editor-host:visible .tiptap .article-callout').count(),3);
+    await page.locator('[data-ae=toggle-writing]').click();
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap[contenteditable=true]').waitFor();
     await articleCanvas(page).locator('.ae-editor-host:visible .tiptap p').first().click();await page.keyboard.press('Home');
     await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').evaluate(el=>{
       const clipboardData=new DataTransfer();clipboardData.setData('text/html','<p><strong>Paste check</strong><script>window.badPaste=true</script><img src="javascript:alert(1)"></p>');
@@ -164,7 +166,8 @@ if(process.argv.includes('--browser')) {
       await page.locator('.ae-settings-dialog .ae-done').click();
       await page.locator('.ae-settings-dialog').waitFor({state:'detached'});assert.equal(await page.locator('[data-field=title]').inputValue(),'ยังไม่บันทึก');
       await articleField(page,'coverAlt').fill('ข้อความอธิบายภาพจากมือถือ');
-      await page.locator('[data-ae=close-reader]').click();
+      await page.locator('[data-reader-panel][aria-expanded=true]').click();
+      if(await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
       if(width===390){
         const callout=articleCanvas(page).locator('.ae-editor-host:visible .article-callout').first();
         await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();
@@ -172,7 +175,7 @@ if(process.argv.includes('--browser')) {
         const toolbar=await page.locator('.ae-toolbar').boundingBox(),frame=await page.locator('.ae-canvas-frame').boundingBox();
         assert.ok(toolbar.y+toolbar.height<=frame.y+1,'Outer toolbar cannot cover the independently scrolling writing frame');
         await page.locator('[data-format=block]').locator('..').scrollIntoViewIfNeeded();
-        assert.equal(await page.locator('.ae-toolbar').evaluate(el=>getComputedStyle(el).position),'relative','Formatting tools remain in document flow above the writing frame');
+        assert.ok(['static','relative'].includes(await page.locator('.ae-toolbar').evaluate(el=>getComputedStyle(el).position)),'Formatting tools remain in document flow above the writing frame');
         await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();await callout.locator('p').last().click();await page.screenshot({path:out+'/'+engine+'-mobile-body.png'});
       }
     }
@@ -195,8 +198,8 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.locator('[data-field=title]').inputValue(),'');await articleField(page,'title').fill('บทความใหม่');
     await revealArticleControl(page,'.ae-canvas-frame');
     const newBody=articleCanvas(page).locator('.ae-editor-host:visible .tiptap');
-    await newBody.waitFor({timeout:25000});await newBody.fill('เนื้อหาใหม่ที่ยังไม่เผยแพร่');await save(page);
-    const download=page.waitForEvent('download');await page.locator('[data-ae=export]').click();const file=await download;await file.saveAs(out+'/draft-backup.json');
+    await openArticleWriting(page);await newBody.fill('เนื้อหาใหม่ที่ยังไม่เผยแพร่');await save(page);
+    const download=page.waitForEvent('download');await articleTool(page,'export');const file=await download;await file.saveAs(out+'/draft-backup.json');
     assert.equal(JSON.parse(fs.readFileSync(out+'/draft-backup.json','utf8')).translations.th.title,'บทความใหม่');
     await page.locator('.ae-import-file').setInputFiles(out+'/draft-backup.json');await page.locator('.ae-feedback').filter({hasText:'นำเข้าสำเนา'}).waitFor();
     assert.equal(await page.locator('[data-field=title]').inputValue(),'บทความใหม่');await save(page);

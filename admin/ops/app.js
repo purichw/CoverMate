@@ -372,9 +372,10 @@ async function handleClick(event) {
     if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
     if (action === "logout") {
-      if (articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
-      if (!(await casesWorkspace.canLeave())) return;
-      signOutAdmin();
+      await signOutAdmin({beforeSignOut: async () => {
+        if (articlesWorkspace?.active && !articlesWorkspace.canLeave()) return false;
+        return casesWorkspace.canLeave();
+      }});
       return;
     }
     if (action === 'account') return casesWorkspace.openAccount();

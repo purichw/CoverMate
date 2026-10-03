@@ -1,4 +1,5 @@
 import {Editor} from '@tiptap/core';
+import {Check,ListChecks,ChevronRight,Crop,Trash2,UserRound,Type,Copy} from 'lucide';
 import {createElement,Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,ArrowRight,ChevronDown,CalendarDays,Clock3,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone,Maximize2,Minimize2} from 'lucide';
 import {articleExtensions} from './article-extensions.mjs';
 import {articleEscape as esc,articleUrl,articleVideo,articleDocumentText,registerArticleDocument,normalizeArticleMedia} from '../../article-document.mjs';
@@ -8,7 +9,7 @@ import {projectArticleDetail} from '../visitor/article-detail.mjs';
 import {createArticlePreviewPage} from './article-preview.mjs';
 import {appendEnvironmentSearch} from '../../covermate-environment.mjs';
 import {mountArticleCanvas} from './article-canvas.mjs';
-import {articleBlocks,selectedArticleBlock,insertArticleBlock,changeArticleBlock,takeawayContent,quoteContent,blockPlainText} from './article-blocks.mjs';
+import {articleBlocks,selectedArticleBlock,insertArticleBlock,changeArticleBlock,takeawayContent,quoteContent,blockPlainText,prepareArticleSummary} from './article-blocks.mjs';
 import {ARTICLE_TYPE_LIMITS,normalizeArticleTypography} from '../../article-typography.mjs';
 import {closeHistory} from '@tiptap/pm/history';
 import {validateArticle,articleFieldContract,articleImages} from '../../article-validation.mjs';
@@ -16,7 +17,7 @@ import {createSeoModel} from '../../covermate-seo.mjs';
 import {ARTICLE_IMAGE_PROFILES,articleImageDelivery} from '../../article-media.mjs';
 
 const glyphs={Bold,Italic,Underline,Strikethrough,Highlighter,Subscript,Superscript,Undo2,Redo2,List,ListOrdered,IndentIncrease,IndentDecrease,AlignLeft,AlignCenter,AlignRight,AlignJustify,Link,Unlink,Image,Quote,Minus,Table,Video,RemoveFormatting,ArrowLeft,ArrowRight,ChevronDown,CalendarDays,Clock3,Eye,Save,Download,Upload,X,Settings2,FileText,Lightbulb,Info,TriangleAlert,ExternalLink,Monitor,Smartphone,Maximize2,Minimize2};
-const icon = name => createElement(glyphs[name],{width:20,height:20,'aria-hidden':'true'}).outerHTML;
+const icon = name => createElement(({Check,ListChecks,ChevronRight,Crop,Trash2,UserRound,Type,Copy,...glyphs})[name],{width:20,height:20,'aria-hidden':'true'}).outerHTML;
 const btn=(action,name,label='',extra='')=>`<button type="button" class="ae-button" data-ae="${action}" aria-label="${esc(label || action)}" title="${esc(label || action)}" ${extra}>${icon(name)}${label && ['back','preview','save','settings','export','import','cover','desktop','mobile'].includes(action)?`<span>${esc(label)}</span>`:''}</button>`;
 let fieldSequence=0;
 const field=(key,label,value='',type='text',extra='')=>{
@@ -47,17 +48,19 @@ export function createArticleWritingEditor({element,content,lang,onUpdate,onSele
 
 export function mountArticleEditor({root,initial,repository,onClose,author='CoverMate'}) {
   registerArticleDocument();
-  for (const href of ['/admin/articles/editor.css','/assets/article-document.css','/assets/visitor/article-detail.css']) {
+  for (const href of ['/admin/articles/editor.css','/assets/article-document.css','/assets/visitor/article-detail.css','/assets/visitor/articles-index.css']) {
     if (!document.querySelector(`link[href="${href}"]`)) {const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.addEventListener('load',()=>{if(root.querySelector('.ae-workspace'))growFields();},{once:true});document.head.append(link);}
   }
   let draft=createArticleDraft(initial || {},author),lang='th',saved=JSON.stringify(draft),busy=false,destroyed=false;
+  for(const language of ['th','en'])prepareArticleSummary(draft.translations[language],language);
+  saved=JSON.stringify(draft);
   const cloud=repository?.cloud===true;
   const compactLayout=matchMedia('(max-width:1199px)');
   if(cloud){draft.cloudDraft=true;draft.localDraft=false;saved=JSON.stringify(draft);}
   const editors={},dialogs=new Set();
   let serverFields=[],inputFields=[];
   let settingsDialog,settingsOpener,lastSelection,canvas,canvasDocument,canvasFactory,writingReady=false,mediaOpening=false;
-  let readerPanel='',readerReturnScroll,fullscreenState;
+  let readerPanel='basic',fullscreenState,writingExpanded=false;
   const locale=()=>draft.translations[lang];
   const active=()=>editors[lang];
   const changed=()=>JSON.stringify(draft)!==saved||Boolean(root.querySelector('[data-field=tags]')?.value.trim());
@@ -82,34 +85,37 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   }
   function issues(publish=true,languages=[lang]) {
     const value={...draft,tags:[...new Set([...draft.tags,...(root.querySelector('[data-field=tags]')?.value||'').split(',').map(tag=>tag.trim()).filter(Boolean)])]};
-    return [...validateArticle(value,{publish,languages}),...inputFields,...serverFields];
+    return [...validateArticle(value,{publish,languages}),...inputFields,...serverFields].filter((issue,index,all)=>all.findIndex(other=>other.field===issue.field&&other.language===issue.language&&other.message===issue.message)===index);
   }
   function fieldFeedback(input,message,remark='',required=false) {
     const holder=input.closest('.ae-field,.ae-toggle');if(!holder)return;
     if(!input.id)input.id='ae-field-'+(++fieldSequence);
     let kind=holder.querySelector('.ae-field-kind');
     if(!kind){kind=document.createElement('small');kind.className='ae-field-kind';const label=holder.querySelector('span,label');label?.classList.add('ae-field-label');label?.append(kind);}
-    const contract=articleFieldContract(input.dataset.field,{cover:!!draft.cover.src});
+    const contract=articleFieldContract(input.dataset.field,{cover:!!locale().cover.src});
     if(kind){kind.textContent=contract.kind==='อัตโนมัติ'?contract.kind:required?'จำเป็น':'ไม่บังคับ';kind.dataset.required=String(required);}
     const descriptions=new Set((input.getAttribute('aria-describedby')||'').split(' ').filter(Boolean));
     for(const [suffix,content] of [['remark',remark],['error',message]]) {
       const id=input.id+'-'+suffix;let note=holder.querySelector('#'+id);
       if(!note){note=document.createElement('small');note.id=id;note.className='ae-field-'+suffix;holder.append(note);}
       note.textContent=content;note.hidden=!content;descriptions.add(id);
+      // Empty requirements live in the checklist, not repeated visual warnings.
+      note.classList.toggle('article-sr',suffix==='error'&&required&&!input.value?.trim());
     }
     input.setAttribute('aria-describedby',[...descriptions].join(' '));
     input.setAttribute('aria-invalid',String(!!message));input.setAttribute('aria-required',String(required));
+    input.dataset.invalid=String(!!message&&!!input.value?.trim());
   }
   function refreshValidation() {
     const panel=settingsDialog||root,images=articleImages(locale().document),imageFields=root.querySelector('[data-image-alt-fields]');
     if(imageFields){
       const signature=JSON.stringify(images.map(image=>image.src));
-      if(imageFields.dataset.images!==signature){imageFields.innerHTML=images.map((image,i)=>field('figure-alt-'+i,'Alt ภาพในเนื้อหา '+(i+1),image.alt||'')).join('');imageFields.dataset.images=signature;}
+      if(imageFields.dataset.images!==signature){imageFields.innerHTML=images.map((image,i)=>field('figure-alt-'+i,'คำอธิบายภาพในเนื้อหา '+(i+1)+' (Alt)',image.alt||'')).join('');imageFields.dataset.images=signature;}
       imageFields.querySelectorAll('[data-field]').forEach((input,i)=>{if(input!==document.activeElement)input.value=images[i].alt||'';});
     }
     const errors=issues();
     for(const input of [...root.querySelectorAll('[data-field]'),...(settingsDialog?.querySelectorAll('[data-field]')||[])]) {
-      const key=input.dataset.field,contract=articleFieldContract(key,{cover:!!draft.cover.src});
+      const key=input.dataset.field,contract=articleFieldContract(key,{cover:!!locale().cover.src});
       let remark=contract.hint;
       if(key==='slug'&&input.readOnly)remark='';
       if(['seoTitle','seoDescription'].includes(key)){
@@ -120,18 +126,37 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       fieldFeedback(input,message,remark,contract.required);
     }
     const bodyMessage=errors.filter(issue=>issue.field==='document'&&(!issue.language||issue.language===lang)).map(issue=>issue.message).join(' ');
-    const bodyError=root.querySelector('[data-document-error]');if(bodyError){bodyError.textContent=bodyMessage;bodyError.hidden=!bodyMessage;}
     active()?.view.dom.setAttribute('aria-invalid',String(!!bodyMessage));
     if(active()){
       let note=canvasDocument.getElementById('aeBodyError');
       if(!note){note=canvasDocument.createElement('p');note.id='aeBodyError';note.className='article-sr';active().view.dom.parentElement.append(note);}
       note.textContent=bodyMessage;active().view.dom.setAttribute('aria-describedby','aeBodyError');
     }
-    const summary=root.querySelector('.ae-validation-summary');
+    const summary=root.querySelector('.ae-validation-summary')||document.querySelector('.ae-checklist-target .ae-validation-summary');
     if(summary){
-      summary.hidden=!errors.length;
-      const html=`<p>ยังเผยแพร่บทความไม่ได้ กรุณาตรวจ ${errors.length} รายการ</p>${errors.map(issue=>`<button type="button" class="ae-text-button" data-ae="validation-field" data-key="${esc(issue.field)}" data-language="${issue.language||lang}">${issue.language?issue.language.toUpperCase()+': ':''}${esc(issue.message)}</button>`).join('')}`;
-      if(summary.innerHTML!==html)summary.innerHTML=html;
+      const requirements=[['title','ชื่อบทความ',lang],['categoryId','หมวดหมู่',null],['document','เนื้อหาบทความ',lang],['excerpt','คำโปรย',lang],['slug','ชื่อท้ายลิงก์ (Slug)',null],['authorName','ผู้เขียน',null]];
+      if(locale().cover.src)requirements.push(['coverAlt','คำอธิบายภาพปก (Alt)',lang]);
+      images.forEach((_,i)=>requirements.push(['figure-alt-'+i,'คำอธิบายภาพในเนื้อหา '+(i+1)+' (Alt)',lang]));
+      for(const issue of errors)if(!requirements.some(([key,,language])=>key===issue.field&&language===issue.language)){
+        const field=root.querySelector(`[data-field="${issue.field}"]`)||settingsDialog?.querySelector(`[data-field="${issue.field}"]`);
+        const label=field?.getAttribute('aria-label')||field?.closest('label')?.querySelector('span')?.childNodes[0]?.textContent||'ข้อมูลบทความ';
+        requirements.push([issue.field,label.trim(),issue.language]);
+      }
+      const items=requirements.map(([field,label,language])=>({field,label,language,issue:errors.find(issue=>issue.field===field&&issue.language===language)}));
+      const done=items.filter(item=>!item.issue).length;
+      const ready=!errors.length;
+      const status=summary.querySelector('[data-checklist-progress]');
+      const statusHtml=`<strong>${ready?icon('Check'):icon('ListChecks')}${ready?(cloud?'พร้อมเผยแพร่':'ข้อมูลครบแล้ว'):`เหลือ ${items.length-done} รายการ`}</strong><small>ครบแล้ว ${done} จาก ${items.length} รายการ</small>`;
+      if(status.innerHTML!==statusHtml)status.innerHTML=statusHtml;
+      const progress=summary.querySelector('progress');progress.max=items.length;progress.value=done;
+      summary.querySelector('[data-checklist-total]').textContent=`${done}/${items.length}`;
+      const completion={title:'ระบุชื่อบทความเรียบร้อยแล้ว',categoryId:'เลือกหมวดหมู่แล้ว',document:'มีเนื้อหาบทความแล้ว',excerpt:'ระบุคำโปรยแล้ว',slug:'กำหนด Slug เรียบร้อยแล้ว',authorName:'ระบุผู้เขียนแล้ว',coverAlt:'ระบุคำอธิบายภาพปกแล้ว'};
+      summary.dataset.ready=String(!errors.length);
+      const html=items.map(item=>`<li data-complete="${!item.issue}"><button type="button" data-ae="validation-field" data-key="${esc(item.field)}" data-language="${item.language||lang}"><span class="ae-check-mark" aria-hidden="true">${item.issue?'':icon('Check')}</span><span class="ae-check-copy"><strong>${esc(item.label)}${item.language?` <small>${item.language.toUpperCase()}</small>`:''}</strong><small>${esc(item.issue?item.issue.message.replace(/^กรุณา/,''):completion[item.field]||'ตรวจสอบข้อมูลเรียบร้อยแล้ว')}</small><span class="article-sr">${item.issue?' ยังไม่ครบ':' ครบแล้ว'}</span></span>${icon('ChevronRight')}</button></li>`).join('');
+      const list=summary.querySelector('ul');if(list.innerHTML!==html)list.innerHTML=html;
+      const footer=summary.querySelector('[data-checklist-footer]');
+      footer.hidden=!ready;footer.innerHTML=`${icon('Check')}<span><strong>${cloud?'ครบถ้วนแล้ว พร้อมเผยแพร่ได้เลย':'ตรวจสอบข้อมูลครบแล้ว'}</strong><small>${cloud?'บันทึกเป็น Draft ต่อได้ หรือเผยแพร่เมื่อพร้อม':'ร่างนี้บันทึกบนเครื่อง ยังไม่เชื่อมระบบเผยแพร่'}</small></span>`;
+      root.querySelectorAll('[data-checklist-count]').forEach(el=>el.textContent=errors.length?`Checklist · ${items.length-done}`:cloud?'พร้อมเผยแพร่':'ข้อมูลครบแล้ว');
     }
     const seo=createSeoModel({}, {path:'/articles/'+(draft.slug||'draft-preview'),lang,article:{...locale(),available:true},articleFeed:{settings:{enabled:true}}});
     for(const [key,value] of Object.entries({title:seo.title,description:seo.meta.description,url:seo.canonical})) {
@@ -142,7 +167,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   }
   function focusIssue(issue) {
     if(issue.language&&issue.language!==lang)switchLanguage(issue.language);
-    if(issue.field==='document'){settingsDialog?.close();showReaderPanel('');root.querySelector('.ae-canvas').scrollIntoView({block:'center'});active()?.commands.focus();return;}
+    if(issue.field==='document'){settingsDialog?.close();setWritingExpanded(true);root.querySelector('.ae-writing').scrollIntoView({block:'start'});active()?.commands.focus();return;}
     openSettings(issue.field==='cover'?'coverAlt':issue.field==='sources'?'source-label-0':issue.field);
   }
   function receiveFailure(error) {
@@ -156,7 +181,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     return `<div class="ae-note-control"><label class="ae-toggle"><span>แสดง${label}</span><input type="checkbox" role="switch" data-field="${key}Enabled" ${t[key+'Enabled']!==false?'checked':''}></label>${field(key,label+' · '+lang.toUpperCase(),t[key],'textarea',`maxlength="${max}"`)}</div>`;
   }
   function coverControls(){
-    return `<div class="ae-cover">${draft.cover.src?`<img src="${esc(draft.cover.src)}" alt="${esc(locale().coverAlt)}">`:''}<span class="ae-image-fallback" ${draft.cover.src?'hidden':''}>${icon('Image')}</span></div><div class="ae-cover-actions">${btn('cover','Image','เปลี่ยนภาพ')}<button type="button" class="ae-text-button" data-ae="clear-cover" ${draft.cover.src?'':'disabled'}>นำภาพออก</button></div>`;
+    const other=lang==='th'?'en':'th';
+    return `<button type="button" class="ae-cover ae-cover-dropzone" data-ae="cover" aria-label="${locale().cover.src?'เปลี่ยนภาพปก':'เพิ่มภาพปก'}">${locale().cover.src?`<img src="${esc(locale().cover.src)}" alt="${esc(locale().coverAlt)}">`:''}<span class="ae-image-fallback" ${locale().cover.src?'hidden':''}>${icon('Image')}<strong>เลือกรูปภาพปก</strong><small>หรือลากไฟล์มาวางที่นี่</small><small>PNG, JPEG, WebP, SVG · ไม่เกิน 8 MB</small><small>แนะนำ 16:9 · 1920 × 1080 px</small></span></button><div class="ae-cover-actions"><button type="button" class="ae-button ae-positive" data-ae="cover">${icon('Image')}${locale().cover.src?'เปลี่ยนภาพ':'เพิ่มภาพปก'}</button><button type="button" class="ae-button" data-ae="crop-cover" ${locale().cover.src?'':'disabled'}>${icon('Crop')}ครอปภาพ</button><button type="button" class="ae-text-button" data-ae="clear-cover" ${locale().cover.src?'':'disabled'}>${icon('Trash2')}นำภาพออก</button></div><button type="button" class="ae-button ae-reuse-cover" data-ae="reuse-cover" ${draft.translations[other].cover.src?'':'disabled'} title="${draft.translations[other].cover.src?'คัดลอกครั้งเดียว ภาพทั้งสองภาษาแก้แยกกันได้':other.toUpperCase()+' ยังไม่มีภาพปก'}">${icon('Copy')}ใช้ภาพปกจาก ${other.toUpperCase()}</button>`;
   }
   function renderTags(){
     root.querySelector('.ae-tag-list').innerHTML=draft.tags.map((tag,i)=>`<span class="ae-tag">${esc(tag)}<button type="button" data-ae="remove-tag" data-index="${i}" aria-label="นำแท็ก ${esc(tag)} ออก">${icon('X')}</button></span>`).join('');
@@ -171,15 +197,17 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     card.querySelector('[data-card=excerpt]').textContent=t.excerpt;
     card.querySelector('[data-card=category]').textContent=ARTICLE_CATEGORIES[draft.categoryId]?.[lang==='en'?1:0]||t.category;
     const date=card.querySelector('[data-card=date]');date.parentElement.hidden=!t.publishedAt;date.textContent=t.publishedAt?new Date(t.publishedAt).toLocaleDateString(lang==='th'?'th-TH-u-ca-gregory':'en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'}):'';
-    card.querySelector('[data-card=reading]').textContent=`${Math.max(1,Math.ceil(length/700))} นาที`;
-    const img=card.querySelector('img');img.hidden=!draft.cover.src||img.dataset.failedSrc===draft.cover.src;img.alt=t.coverAlt;
-    if(draft.cover.src&&img.getAttribute('src')!==draft.cover.src)img.src=draft.cover.src;
-    if(!draft.cover.src)img.removeAttribute('src');
+    card.querySelector('[data-card=reading]').textContent=lang==='th'?`อ่าน ${Math.max(1,Math.ceil(length/700))} นาที`:`${Math.max(1,Math.ceil(length/700))} min read`;
+    const delivery=articleImageDelivery(locale().cover,'thumbnail');
+    const img=card.querySelector('img');img.hidden=!locale().cover.src||img.dataset.failedSrc===delivery.src;img.alt=t.coverAlt;
+    if(locale().cover.src&&img.getAttribute('src')!==delivery.src)img.src=delivery.src;
+    img.srcset=delivery.srcset;img.sizes='(max-width:767px) 120px, 320px';img.toggleAttribute('data-failed',img.hidden);
+    if(!locale().cover.src)img.removeAttribute('src');
     card.querySelector('.ae-card-image > svg').toggleAttribute('hidden',!img.hidden);
   }
   function imageError(event){
     const img=event.target;if(!img.matches?.('.ae-cover img,.ae-card-image img'))return;
-    img.hidden=true;img.dataset.failedSrc=img.getAttribute('src');
+    img.hidden=true;img.setAttribute('data-failed','');img.dataset.failedSrc=img.getAttribute('src');
     const fallback=img.parentElement.querySelector('.ae-image-fallback,svg');fallback?.removeAttribute('hidden');
     img.parentElement.title='โหลดภาพไม่สำเร็จ';
   }
@@ -187,22 +215,21 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const t=locale();
     const section=(key,title,glyph,body)=>`<details class="ae-disclosure ae-responsive-section ae-${['card','cover'].includes(key)?key+'-section':key}" data-panel="${key}" ${compactLayout.matches?'':'open'}><summary><span>${icon(glyph)}${title}</span>${icon('ChevronDown')}</summary><div class="ae-panel-body">${body}</div></details>`;
     return section('publication','การเผยแพร่และตั้งค่า','Settings2',`<div class="ae-publication-state"><span class="ae-status-dot" data-live="${draft.basePublished}"></span>${draft.basePublished?(draft.publicationStatus==='scheduled'?'Scheduled':'Published'):'Unpublished'}<span class="ae-draft-label">Editing draft</span></div><label class="ae-toggle"><span>ปักหมุดบน Home</span><input type="checkbox" role="switch" data-field="featured" aria-describedby="aeHomePinHelp" ${draft.featured?'checked':''}></label><label class="ae-toggle"><span>ปักหมุดในหน้ารวมบทความ</span><input type="checkbox" role="switch" data-field="pinned" ${draft.pinned?'checked':''}></label><details class="ae-pin-help"><summary>การปักหมุดทำงานอย่างไร</summary><small id="aeHomePinHelp">Home ปักหมุดได้สูงสุด 10 บทความ แยกจากหมุดหน้ารวมบทความ ช่องที่เหลือเติมด้วยบทความล่าสุดที่ไม่ซ้ำ หมุดในร่างนับรวมในโควตา หากนำหมุดที่เผยแพร่แล้วออก ต้องเผยแพร่การเปลี่ยนแปลงด้วย</small></details><button type="button" class="ae-text-button ae-unpublish" data-ae="unpublish" ${cloud&&draft.basePublished?'':'hidden'}>${draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article'}</button>`)
-      +section('cover','ภาพปกบทความ','Image',`<div class="ae-cover-editor">${coverControls()}</div><small>อัตราส่วน 16:9 · จัดกรอบใหม่ได้จากภาพต้นฉบับ</small>${articleImageDelivery(draft.cover).srcset?`<dl class="ae-image-profiles">${ARTICLE_IMAGE_PROFILES.map(({label,width})=>`<div><dt>${label}</dt><dd>${Math.min(width,articleImageDelivery(draft.cover).maxWidth||1600)} px</dd></div>`).join('')}</dl>`:'<small>รูปที่อัปโหลดผ่าน Cloudinary จะมีขนาด thumbnail และ banner แยกอัตโนมัติ</small>'}${field('coverAlt','Alt ภาพปก',t.coverAlt)}${field('caption','คำบรรยายภาพปก',t.caption)}`)
-      +section('card','ตัวอย่างบทความ','Eye',`<article class="ae-card-preview"><div class="ae-card-image"><img alt="" hidden>${icon('Image')}<span data-card="category"></span></div><div class="ae-card-copy"><h3></h3><p data-card="excerpt"></p><div class="ae-card-meta"><span>${icon('CalendarDays')}<span data-card="date"></span></span><span>${icon('Clock3')}<span data-card="reading"></span></span></div></div></article><button type="button" class="ae-button ae-preview-link" data-ae="card-preview">ดูตัวอย่างหน้าเต็ม ${icon('ArrowRight')}</button>`)
+      +section('cover','ภาพปกบทความ','Image',`<div class="ae-cover-editor">${coverControls()}</div><div class="ae-cover-fields"><div class="ae-supporting-band">${icon('Lightbulb')}<div><strong>ภาพปกและรูปตัวอย่าง</strong><small>อัตราส่วน 16:9 · เก็บภาพต้นฉบับไว้ครอปใหม่ได้</small><small>รูปที่อัปโหลดจะมีขนาดสำหรับ thumbnail และ banner แยกกัน</small></div></div>${field('coverAlt','คำอธิบายภาพปก (Alt)',t.coverAlt,'text','placeholder="เช่น รถยนต์สีขาวบนถนนเลียบชายฝั่ง"')}${field('caption','ข้อความใต้ภาพปก / เครดิตภาพ',t.caption,'text','placeholder="เช่น ชื่อช่างภาพหรือแหล่งที่มาของภาพ"')}</div><div class="ae-cover-file-details ae-supporting-band">${icon('FileText')}<div><strong>รายละเอียดภาพ</strong><small>PNG, JPEG, WebP, SVG · ไม่เกิน 8 MB · แนะนำ 1920 × 1080 px</small>${articleImageDelivery(locale().cover).srcset?`<dl class="ae-image-profiles">${ARTICLE_IMAGE_PROFILES.map(({label,width})=>`<div><dt>${label}</dt><dd>${Math.min(width,articleImageDelivery(locale().cover).maxWidth||1600)} px</dd></div>`).join('')}</dl>`:'<small>ขนาดรูปที่สร้างจะแสดงหลังเลือกภาพจากคลังหรืออัปโหลดภาพ</small>'}</div></div>`)
+      +section('card','ตัวอย่างในหน้ารวมบทความ','Eye',`<div class="ae-card-preview-heading"><h3>ตัวอย่างในหน้ารวมบทความ</h3><code>/articles</code></div><div class="ar-index ae-card-sample"><div class="ar-item"><article class="ae-card-preview"><div class="ar-card-link"><div class="ar-media ae-card-image"><img alt="" hidden>${icon('Image')}</div><div class="ar-card-copy"><span class="ar-card-category" data-card="category"></span><h3></h3><p class="ar-excerpt" data-card="excerpt"></p><div class="ar-meta"><span>${icon('CalendarDays')}<span data-card="date"></span></span><span>${icon('Clock3')}<span data-card="reading"></span></span></div></div></div></article></div></div><div class="ae-card-edit-actions"><button type="button" class="ae-button" data-ae="validation-field" data-key="title">${icon('FileText')}แก้ชื่อและคำโปรย</button><button type="button" class="ae-button" data-ae="validation-field" data-key="coverAlt">${icon('Image')}แก้ภาพปก</button><button type="button" class="ae-button" data-ae="card-preview">${icon('Eye')}ดูหน้าบทความ</button></div>`)
       +`
       ${disclosure('metadata','ผู้เขียนและการจัดทำบทความ',`${field('publishedAt','วันที่บทความ · '+lang.toUpperCase()+' (เวลาไทย)',publicationDateInput(t.publishedAt),'datetime-local','min="1900-01-01T00:00" max="9999-12-31T23:59"')}<small>${cloud?'วันที่ในอนาคตใช้ตั้งเวลาเผยแพร่ ล้างวันที่แล้ว Publish อีกครั้งเพื่อยกเลิกเวลา':'เว้นว่างเพื่อไม่แสดงวันที่'}</small>${field('authorName','ผู้เขียน',draft.authorName)}<label class="ae-toggle"><span>แสดงข้อมูลผู้เขียนและการจัดทำบทความ · ${lang.toUpperCase()}</span><input type="checkbox" role="switch" data-field="authorDetailsEnabled" ${t.authorDetailsEnabled?'checked':''}></label>${field('authorBio','เกี่ยวกับผู้เขียน · '+lang.toUpperCase(),t.authorBio,'textarea')}${field('authorUrl','ลิงก์ข้อมูลผู้เขียน',t.authorUrl,'url')}${field('editorialNote','การจัดทำบทความนี้ · '+lang.toUpperCase(),t.editorialNote,'textarea')}<small>เว้นว่างเพื่อไม่แสดง เปิด–ปิดได้โดยไม่ลบข้อความ ชื่อผู้เขียนด้านบนบทความยังแสดงตามเดิม</small><div data-image-alt-fields></div>`)}
-      ${disclosure('seo','SEO และการแชร์',`${field('seoTitle','SEO title',t.seoTitle)}${field('seoDescription','SEO description',t.seoDescription,'textarea')}${field('canonical','Canonical URL','','text','readonly')}<div class="ae-seo-preview" aria-label="ตัวอย่างข้อมูลสำหรับผลค้นหา"><p data-seo-preview="url"></p><h3 data-seo-preview="title"></h3><p data-seo-preview="description"></p></div><small>รูปแชร์ใช้ภาพปกและ Alt ของบทความ ผลค้นหาอาจแสดงข้อความต่างจากนี้</small>`)}
-      ${disclosure('summary','สรุปประเด็นสำคัญ',`<button type="button" class="ae-text-button" data-ae="clear-takeaways">นำกล่องสรุปออก</button>${field('takeaways','Key takeaways (หนึ่งข้อต่อบรรทัด)',t.takeaways.join('\n'),'textarea')}${noteControl('takeawayNote','ข้อความลายมือข้างสรุป',500)}`)}
+      ${disclosure('seo','ผลค้นหาและการแชร์ (SEO)',`${field('seoTitle','ชื่อที่แสดงในผลค้นหา (SEO title)',t.seoTitle)}${field('seoDescription','คำอธิบายในผลค้นหา (SEO description)',t.seoDescription,'textarea')}${field('canonical','ลิงก์หลักสำหรับผลค้นหา (Canonical)','','text','readonly')}<div class="ae-seo-preview" aria-label="ตัวอย่างข้อมูลสำหรับผลค้นหา"><p data-seo-preview="url"></p><h3 data-seo-preview="title"></h3><p data-seo-preview="description"></p></div><small>รูปแชร์ใช้ภาพปกและ Alt ของบทความ ผลค้นหาอาจแสดงข้อความต่างจากนี้</small>`)}
+      ${disclosure('summary','สรุปประเด็นสำคัญ',`${field('takeaways','ประเด็นสำคัญที่ผู้อ่านควรรู้ (หนึ่งข้อต่อบรรทัด)',t.takeaways.join('\n'),'textarea')}${noteControl('takeawayNote','ข้อความลายมือข้างสรุปประเด็นสำคัญ',500)}`)}
       ${disclosure('sources','แหล่งอ้างอิง',`<div class="ae-source-list">${t.sources.map((source,i)=>`<div class="ae-source-row">${field('source-label-'+i,'ชื่อแหล่งอ้างอิง',source.label)}${field('source-url-'+i,'URL',source.url,'url')}<button class="ae-text-button" type="button" data-ae="remove-source" data-index="${i}">นำออก</button></div>`).join('')}</div><button type="button" class="ae-text-button" data-ae="add-source">เพิ่มแหล่งอ้างอิง</button>`)}
-      ${disclosure('notes','ข้อความประกอบบทความ',`${noteControl('headerNote','ข้อความลายมือส่วนหัว',500)}${noteControl('sidebarQuote','คำพูดข้างบทความ',1000)}<small>คำพูดข้างบทความที่เปิดไว้และเว้นว่าง จะใช้ข้อความกลางของเว็บไซต์ถ้ามี ปิดสวิตช์เพื่อซ่อนทั้งหมด</small>`)}`;
+      ${disclosure('notes','ข้อความตกแต่งบทความ',`${noteControl('headerNote','ข้อความลายมือข้างหัวบทความ',500)}${noteControl('sidebarQuote','คำคมข้างเนื้อหาบทความ',1000)}<small>คำคมที่เปิดไว้และเว้นว่าง จะใช้ข้อความกลางของเว็บไซต์ถ้ามี ปิดสวิตช์เพื่อซ่อนทั้งหมด</small>`)}`;
   }
   function syncLegacyControls(){
     const panel=root,attrs=active()?.state.doc.attrs || {};
     const titles=root.querySelector('.ae-title-fields');
-    if(titles&&!titles.querySelector('[data-ae="title-style"]'))titles.insertAdjacentHTML('beforeend','<details class="ae-type-settings" data-panel="title-tools"><summary>ปรับตัวอักษรชื่อและคำโปรย</summary><div class="ae-layout-actions"><button type="button" class="ae-button" data-ae="title-style">ขนาดและระยะชื่อบทความ</button><button type="button" class="ae-button" data-ae="excerpt-style">ขนาดและระยะคำโปรย</button></div><small>เว้นค่าว่างเพื่อใช้ขนาดตามดีไซน์ · Google Sans</small></details>');
+    if(titles&&!titles.querySelector('[data-ae="title-style"]'))titles.insertAdjacentHTML('beforeend',`<details class="ae-type-settings" data-panel="title-tools"><summary>${icon('Type')}<span>ปรับตัวอักษรชื่อและคำโปรย</span>${icon('ChevronRight')}</summary><div class="ae-layout-actions"><button type="button" class="ae-button" data-ae="title-style">ขนาดและระยะชื่อบทความ</button><button type="button" class="ae-button" data-ae="excerpt-style">ขนาดและระยะคำโปรย</button></div><small>เว้นค่าว่างเพื่อใช้ขนาดตามดีไซน์ · Google Sans</small></details>`);
     for(const [flag,keys,action,label] of [
-      ['takeawaysInDocument',['takeaways','takeawayNote','takeawayNoteEnabled'],'convert-takeaways','แปลงสรุปเดิมเป็นบล็อกที่ย้ายได้'],
-      ['sidebarQuoteInDocument',['sidebarQuote','sidebarQuoteEnabled'],'convert-sidebar','แปลง Quote เดิมเป็นบล็อกที่ย้ายได้']
+      ['sidebarQuoteInDocument',['sidebarQuote','sidebarQuoteEnabled'],'convert-sidebar','ย้ายคำคมด้านข้างไปไว้ในเนื้อหา']
     ]){
       for(const key of keys){const input=panel.querySelector(`[data-field="${key}"]`);if(input)input.closest('.ae-field,.ae-toggle').hidden=!!attrs[flag];}
       const anchor=panel.querySelector(`[data-field="${keys[0]}"]`)?.closest('.ae-panel-body,.ae-settings-section');
@@ -216,7 +243,6 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
         control.innerHTML=attrs[flag]?'<small>จัดวางในเนื้อหาแล้ว เลือกบล็อกในพื้นที่เขียนเพื่อแก้ไขหรือย้ายตำแหน่ง</small>':`<button type="button" class="ae-button" data-ae="${action}">${label}</button>`;
       }
     }
-    const clear=panel.querySelector('[data-ae="clear-takeaways"]');if(clear)clear.hidden=!!attrs.takeawaysInDocument;
   }
   function tool(action,name,label,mark=''){return btn(action,name,label,mark?`data-mark="${mark}" aria-pressed="false"`:'');}
   const formatTools = [
@@ -232,13 +258,13 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     <div class="ae-storage-notice" id="aeStorageNotice">${icon('Info')}<span>${cloud?'บันทึกและเผยแพร่เฉพาะบทความนี้ แยกจากร่างหน้าเว็บและบทความอื่น':'ร่างเก็บบนเบราว์เซอร์นี้เท่านั้น ยังไม่เชื่อมระบบเผยแพร่'}${initial?.sample?' · เนื้อหาตัวอย่าง':''}</span><span class="ae-save-status" data-save-state></span></div>
     <p class="ae-feedback" role="status" aria-live="polite"></p>
     <div class="ae-grid"><div class="ae-main-column"><section class="ae-basic" aria-label="ข้อมูลบทความ"><div class="ae-writing-head"><h2><button type="button" class="ae-basic-toggle" data-ae="toggle-basic" aria-expanded="true" aria-controls="aeBasicFields"><span>${icon('FileText')}ข้อมูลบทความ</span>${icon('ChevronDown')}</button></h2><div class="ae-language" role="group" aria-label="ภาษาเนื้อหา"><button type="button" data-lang="th" aria-pressed="true">TH</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
-      <div class="ae-title-fields"><div>${field('title','ชื่อบทความ',locale().title,'textarea','maxlength="240"')}<small class="ae-field-count" data-count="title"></small></div><div>${field('slug','Slug (URL)',draft.slug,'text',draft.basePublished||draft.slugLocked?'readonly aria-describedby="aeSlugHelp"':'pattern="[a-z0-9]+(-[a-z0-9]+)*" aria-describedby="aeSlugHelp"')}<small class="ae-slug-path" data-slug-path></small><small id="aeSlugHelp">${draft.basePublished||draft.slugLocked?'คง URL เดิมของบทความที่เผยแพร่แล้ว':'ใช้ภาษาอังกฤษ ตัวเลข และขีดกลาง'}</small></div><div>${field('excerpt','บทคัดย่อ / คำโปรยบนการ์ด',locale().excerpt,'textarea','maxlength="600"')}<small class="ae-field-count" data-count="excerpt"></small></div>${formSelect('categoryId','หมวดหมู่',Object.entries(ARTICLE_CATEGORIES).map(([id,names])=>[id,names[0]]),draft.categoryId)}<div class="ae-field"><label for="aeTags">แท็ก</label><div class="ae-tags"><div class="ae-tag-list"></div><input id="aeTags" data-field="tags" type="text" placeholder="เพิ่มแท็ก แล้วกด Enter" aria-label="เพิ่มแท็ก" autocomplete="off"></div></div></div></section>
+      <div class="ae-title-fields"><div>${field('title','ชื่อบทความ',locale().title,'textarea','maxlength="240"')}<small class="ae-field-count" data-count="title"></small></div><div>${field('slug','ชื่อท้ายลิงก์บทความ (Slug)',draft.slug,'text',draft.basePublished||draft.slugLocked?'readonly aria-describedby="aeSlugHelp"':'pattern="[a-z0-9]+(-[a-z0-9]+)*" aria-describedby="aeSlugHelp"')}<small class="ae-slug-path" data-slug-path></small><small id="aeSlugHelp">${draft.basePublished||draft.slugLocked?'คง URL เดิมของบทความที่เผยแพร่แล้ว':'ใช้ภาษาอังกฤษ ตัวเลข และขีดกลาง'}</small></div><div>${field('excerpt','คำโปรยในหน้ารวมบทความ',locale().excerpt,'textarea','maxlength="600"')}<small class="ae-field-count" data-count="excerpt"></small></div>${formSelect('categoryId','หมวดหมู่',Object.entries(ARTICLE_CATEGORIES).map(([id,names])=>[id,names[0]]),draft.categoryId)}<div class="ae-field"><label for="aeTags">คำค้นที่เกี่ยวข้อง (Tags)</label><div class="ae-tags"><div class="ae-tag-list"></div><input id="aeTags" data-field="tags" type="text" placeholder="เพิ่มแท็ก แล้วกด Enter" aria-label="เพิ่มแท็ก" autocomplete="off"></div></div></div></section>
       <section class="ae-writing" aria-labelledby="aeContentTitle"><div class="ae-writing-head"><h2 id="aeContentTitle">${icon('FileText')}เนื้อหาบทความ</h2><div class="ae-writing-actions"><span class="ae-fullscreen-actions">${btn('preview','Eye','Preview')}${btn('save','Save','Save draft')}</span><span class="ae-body-language" hidden>TH</span><button type="button" class="ae-button" data-ae="fullscreen" aria-pressed="false" aria-label="ขยายพื้นที่เขียนเต็มหน้าจอ">${icon('Maximize2')}<span>เต็มหน้าจอ</span></button></div></div><div class="ae-writing-body">
-      <nav class="ae-reader-nav" aria-label="แก้ไขเนื้อหาที่ผู้อ่านเห็น">${[['basic','หัวเรื่อง'],['cover','ภาพปก'],['summary','สรุป'],['notes','ข้อความประกอบ'],['metadata','ผู้เขียน / วันที่'],['sources','แหล่งอ้างอิง'],['card','การ์ดบทความ']].map(([key,label])=>`<button type="button" class="ae-button" data-reader-panel="${key}" aria-controls="aeReaderPanels" aria-expanded="false">${label}</button>`).join('')}</nav>
+      <nav class="ae-reader-nav" aria-label="แก้ไขเนื้อหาที่ผู้อ่านเห็น">${[['basic','ชื่อและคำโปรย','FileText'],['cover','ภาพปก','Image'],['summary','ประเด็นสำคัญ','List'],['notes','ข้อความตกแต่ง','Quote'],['metadata','ผู้เขียน / วันที่','UserRound'],['sources','แหล่งอ้างอิง','Link'],['card','ตัวอย่างในหน้ารวม','Eye']].map(([key,label,glyph])=>`<button type="button" class="ae-button" data-reader-panel="${key}" aria-controls="aeReaderPanels" aria-expanded="false">${icon(glyph)}<span>${label}</span></button>`).join('')}</nav>
       <div class="ae-summary-access"><button type="button" class="ae-summary-link" data-ae="takeaways" aria-label="แก้ไขสรุปประเด็นสำคัญของบทความ"><span class="ae-summary-bulb">${icon('Lightbulb')}</span><span>สรุปประเด็นสำคัญของบทความ<small>กล่องหลอดไฟ · รายการเช็ก · ข้อความประกอบ</small></span>${icon('Settings2')}</button></div>
       <div class="ae-toolbar" role="group" aria-label="จัดรูปแบบเนื้อหา"><div class="ae-format-row"><label class="ae-format-select"><span class="article-sr">รูปแบบย่อหน้า</span><select data-format="block" aria-label="รูปแบบย่อหน้า"><option value="mixed" disabled>หลายรูปแบบ</option><option value="paragraph">ย่อหน้า</option><option value="h2">หัวข้อ H2</option><option value="h3">หัวข้อ H3</option></select></label>${formatTools.map(args=>tool(...args)).join('')}</div>
-      <div class="ae-block-row">${[['summary','FileText','Summary ในเนื้อหา'],['keypoints','Lightbulb','Key points'],['feature','Info','การ์ดความคุ้มครอง'],['note','Info','หมายเหตุ'],['warning','TriangleAlert','ข้อควรระวัง']].map(([kind,name,label])=>`<button type="button" class="ae-block" data-ae="callout" data-kind="${kind}" aria-describedby="aeCalloutHelp">${icon(name)}${label}</button>`).join('')}<button type="button" class="ae-text-button" data-ae="unwrap">นำกรอบออก</button></div></div>
-      <div class="ae-layout-tools" aria-label="จัดวางบล็อกบทความ"><div class="ae-layout-add"><button type="button" class="ae-button" data-ae="add-takeaway">${icon('Lightbulb')} เพิ่มสรุปแบบหลอดไฟ</button><button type="button" class="ae-button" data-ae="add-quote-card">${icon('Quote')} เพิ่ม Quote card</button><button type="button" class="ae-button" data-ae="image">${icon('Image')} เพิ่มรูป / illustration</button></div><div class="ae-layout-selection"><label class="ae-field"><span>บล็อกที่เลือก</span><select data-block-select aria-label="บล็อกที่เลือก"></select></label><label class="ae-field"><span>ตำแหน่ง</span><select data-block-placement aria-label="ตำแหน่งบล็อก"><option value="body">คอลัมน์เนื้อหา</option><option value="sidebar">ด้านข้างเนื้อหา</option><option value="full">เต็มความกว้าง</option></select></label><div class="ae-layout-actions"><button type="button" class="ae-button" data-ae="block-up" aria-label="ย้ายบล็อกขึ้น">↑</button><button type="button" class="ae-button" data-ae="block-down" aria-label="ย้ายบล็อกลง">↓</button><button type="button" class="ae-button" data-ae="edit-block">แก้รายละเอียด</button><button type="button" class="ae-button" data-ae="block-duplicate">ทำสำเนา</button><button type="button" class="ae-button" data-ae="block-delete">ลบบล็อก</button></div></div></div>
+      <div class="ae-block-row">${[['summary','FileText','กล่องสรุปในเนื้อหา'],['keypoints','Lightbulb','ประเด็นที่ควรรู้'],['feature','Info','การ์ดความคุ้มครอง'],['note','Info','หมายเหตุ'],['warning','TriangleAlert','ข้อควรระวัง']].map(([kind,name,label])=>`<button type="button" class="ae-block" data-ae="callout" data-kind="${kind}" aria-describedby="aeCalloutHelp">${icon(name)}${label}</button>`).join('')}<button type="button" class="ae-text-button" data-ae="unwrap">นำกรอบออก</button></div></div>
+      <div class="ae-layout-tools" aria-label="จัดวางบล็อกบทความ"><div class="ae-layout-add"><button type="button" class="ae-button" data-ae="add-takeaway">${icon('Lightbulb')} เพิ่มสรุปแบบหลอดไฟ</button><button type="button" class="ae-button" data-ae="add-quote-card">${icon('Quote')} เพิ่มกล่องคำคม</button><button type="button" class="ae-button" data-ae="image">${icon('Image')} เพิ่มภาพในเนื้อหา</button></div><div class="ae-layout-selection"><label class="ae-field"><span>บล็อกที่เลือก</span><select data-block-select aria-label="บล็อกที่เลือก"></select></label><label class="ae-field"><span>ตำแหน่ง</span><select data-block-placement aria-label="ตำแหน่งบล็อก"><option value="body">คอลัมน์เนื้อหา</option><option value="sidebar">ด้านข้างเนื้อหา</option><option value="full">เต็มความกว้าง</option></select></label><div class="ae-layout-actions"><button type="button" class="ae-button" data-ae="block-up" aria-label="ย้ายบล็อกขึ้น">↑</button><button type="button" class="ae-button" data-ae="block-down" aria-label="ย้ายบล็อกลง">↓</button><button type="button" class="ae-button" data-ae="edit-block">แก้รายละเอียด</button><button type="button" class="ae-button" data-ae="block-duplicate">ทำสำเนา</button><button type="button" class="ae-button" data-ae="block-delete">ลบบล็อก</button></div></div></div>
       <p class="ae-callout-help" id="aeCalloutHelp">เพิ่มบล็อกหลังบล็อกที่เลือก ย้ายด้วย ↑ ↓ หรือเลือกตำแหน่งวาง ด้านข้างจะอยู่ข้างบล็อกเนื้อหาก่อนหน้า ส่วนมือถือเรียงตามลำดับบล็อก แก้ข้อความในหน้าได้ทันที และย้อนกลับได้ด้วย Undo</p>
       <div class="ae-writing-stage"><div class="ae-canvas"><div class="ae-canvas-controls"><div role="group" aria-label="หน้าจอที่ใช้เขียน"><button type="button" class="ae-button" data-canvas-size="desktop">${icon('Monitor')} Desktop</button><button type="button" class="ae-button" data-canvas-size="mobile">${icon('Smartphone')} Mobile</button></div><p class="ae-canvas-status" role="status"></p></div><div class="ae-canvas-scroll"><iframe class="ae-canvas-frame" title="พื้นที่เขียนบทความบนหน้าจริง" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" hidden></iframe></div></div>
       <aside id="aeReaderPanels" class="ae-reader-panels" aria-label="แก้ไขส่วนประกอบบทความ" hidden><div class="ae-reader-head"><h3></h3><button type="button" class="ae-button" data-ae="close-reader" aria-label="กลับไปเขียนบทความ">${icon('X')}</button></div><div class="ae-reader-fields"></div></aside></div>
@@ -247,8 +273,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     <div class="ae-file-actions">${btn('settings','Settings2','ตั้งค่าบทความ')}${btn('export','Download','ส่งออกฉบับร่าง')}${btn('import','Upload','นำเข้าฉบับร่าง')}<input class="ae-import-file" type="file" accept=".json,application/json" hidden></div>
     <div class="ae-mobile-save">${btn('save','Save','Save draft')}<button type="button" class="ae-button ae-primary" data-ae="publish" ${cloud?'':'disabled'} aria-describedby="aeStorageNotice">Publish article</button></div>
   </div>`;
-  root.querySelector('.ae-feedback').insertAdjacentHTML('afterend','<div class="ae-validation-summary" id="aePublishValidation" aria-live="polite" hidden></div>');
-  root.querySelector('.ae-canvas').insertAdjacentHTML('afterend','<p class="ae-field-error ae-document-error" data-document-error hidden></p>');
+  root.querySelector('.ae-feedback').insertAdjacentHTML('afterend',`<details class="ae-validation-summary" id="aePublishValidation" open><summary><span class="ae-checklist-icon">${icon('ListChecks')}</span><span class="ae-checklist-title"><strong>Checklist ก่อนเผยแพร่</strong><small>ตรวจสอบข้อมูลให้ครบก่อนเผยแพร่บทความ</small></span><span data-checklist-progress role="status" aria-live="polite"></span>${icon('ChevronDown')}</summary><div class="ae-checklist-meter"><progress value="0" max="6" aria-label="ความพร้อมของบทความ"></progress><span data-checklist-total></span></div><ul></ul><div class="ae-checklist-footer" data-checklist-footer hidden></div></details>`);
+  for(const count of root.querySelectorAll('[data-count]'))count.parentElement.querySelector('.ae-field-label').append(count);
   root.querySelector('#aeContentTitle').insertAdjacentHTML('beforeend','<small class="ae-field-kind" data-required="true">จำเป็น</small>');
   root.querySelectorAll('[data-ae=save]').forEach(el=>{el.setAttribute('aria-label','Save article draft');el.title='บันทึกเฉพาะร่างบทความนี้';});
   root.querySelectorAll('[data-ae=publish]').forEach(el=>{el.innerHTML=icon('Upload')+'<span>เผยแพร่บทความ</span>';el.setAttribute('aria-label','Publish article');el.setAttribute('aria-describedby','aeStorageNotice aePublishValidation');});
@@ -272,9 +298,29 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   let settingsPanels=[...root.querySelector('.ae-settings').children];
   const writing=root.querySelector('.ae-writing'),workspace=root.querySelector('.ae-workspace');
   const basic=root.querySelector('.ae-basic'),reader=root.querySelector('.ae-reader-panels');
-  const readerOverlay=matchMedia('(max-width:900px)');
-  function syncReaderOverlay(){root.querySelector('.ae-canvas').inert=Boolean(readerPanel&&readerOverlay.matches);}
-  readerOverlay.addEventListener('change',syncReaderOverlay);
+  const metadata=document.createElement('section');metadata.className='ae-metadata';metadata.setAttribute('aria-label','ข้อมูลและส่วนประกอบบทความ');
+  metadata.innerHTML=`<div class="ae-metadata-head"><h2>${icon('FileText')}ข้อมูลบทความ</h2></div>`;
+  writing.before(metadata);metadata.append(root.querySelector('.ae-reader-nav'),reader);
+  const sections=root.querySelector('.ae-file-actions');sections.classList.add('ae-section-actions');writing.before(sections);
+  sections.querySelector('[data-ae=settings] span').textContent='SEO และการตั้งค่า';
+  const backupTools=document.createElement('details');backupTools.className='ae-backup-tools';backupTools.innerHTML=`<summary>${icon('Download')}ตัวเลือกเพิ่มเติม${icon('ChevronDown')}</summary><div></div>`;
+  backupTools.querySelector('div').append(sections.querySelector('[data-ae=export]'),sections.querySelector('[data-ae=import]'));sections.append(backupTools);
+  const writingToggle=document.createElement('button');writingToggle.type='button';writingToggle.className='ae-button';writingToggle.dataset.ae='toggle-writing';writingToggle.setAttribute('aria-controls','aeWritingTools');
+  root.querySelector('.ae-layout-add').insertAdjacentHTML('beforeend',`<button type="button" class="ae-button" data-ae="reuse-image">${icon('Copy')}ใช้ภาพจากอีกภาษา</button>`);
+  writing.querySelector('.ae-writing-actions').prepend(writingToggle);
+  const tools=document.createElement('div');tools.id='aeWritingTools';tools.className='ae-writing-tools';
+  toolbar.before(tools);tools.append(toolbar,blockMore);
+  for(const disclosure of [formatMore,blockMore]){
+    disclosure.querySelector('summary').innerHTML=icon(disclosure===formatMore?'Settings2':'FileText')+`<span>${disclosure===formatMore?'รูปแบบเพิ่มเติม':'เพิ่มและจัดส่วนเนื้อหา'}</span>`;
+    disclosure.querySelector('summary').title=disclosure===formatMore?'รูปแบบเพิ่มเติม':'เพิ่มและจัดส่วนเนื้อหา';
+    const content=document.createElement('div');content.className='ae-tool-popover';
+    content.append(...[...disclosure.children].filter(child=>child.tagName!=='SUMMARY'));disclosure.append(content);
+    disclosure.addEventListener('toggle',()=>{if(disclosure.open)(disclosure===formatMore?blockMore:formatMore).open=false;});
+  }
+  const canvasControls=root.querySelector('.ae-canvas-controls');
+  canvasControls.insertAdjacentHTML('afterbegin',`<h3 class="ae-canvas-heading">${icon('Eye')}<span>ตัวอย่างบทความ</span></h3>`);
+  writing.querySelector('.ae-fullscreen-actions').insertAdjacentHTML('afterbegin',`<button type="button" class="ae-button" data-ae="checklist">${icon('ListChecks')}<span data-checklist-count>Checklist</span></button>`);
+  writing.querySelector('.ae-fullscreen-actions').insertAdjacentHTML('beforeend',`<button type="button" class="ae-button ae-primary" data-ae="publish" aria-label="Publish article" aria-describedby="aeStorageNotice aePublishValidation" disabled>${icon('Upload')}<span>Publish</span></button>`);
   basic.dataset.panel='basic';
   function placePanels(){
     const aside=root.querySelector('.ae-settings')||settingsDialog?.querySelector('.ae-settings');
@@ -289,26 +335,39 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     }
     basic.hidden=readerPanel!=='basic';
   }
-  function showReaderPanel(key,{focus=false}={}){
-    if(key&&!readerPanel)readerReturnScroll=canvas?.scrollPosition();
-    readerPanel=key||'';placePanels();reader.hidden=!readerPanel;syncReaderOverlay();
+  function showReaderPanel(key,{focus=false,reveal=true}={}){
+    if(key&&fullscreenState)setFullscreen(false);
+    readerPanel=key||'';placePanels();reader.hidden=!readerPanel;
     root.querySelectorAll('[data-reader-panel]').forEach(button=>button.setAttribute('aria-expanded',String(button.dataset.readerPanel===readerPanel)));
     const trigger=root.querySelector(`[data-reader-panel="${readerPanel}"]`);
     reader.querySelector('h3').textContent=trigger?.textContent||'';
     if(readerPanel){
-      writing.scrollIntoView({block:'nearest'});
+      if(reveal)metadata.scrollIntoView({block:'nearest'});
       reader.querySelector('.ae-reader-fields').scrollTop=0;growFields();
-      if(focus)canvas?.reveal({basic:'title',cover:'coverAlt',summary:'takeaways',notes:'headerNote',metadata:'authorName',sources:'source-label-0'}[key]);
-      if(focus)reader.querySelector('[data-ae="close-reader"]').focus({preventScroll:true});
-    }else canvas?.restoreScroll(readerReturnScroll);
+      if(focus)trigger?.focus({preventScroll:true});
+    }
   }
   placePanels();
   const languageControl=root.querySelector('.ae-language');
-  writing.querySelector('.ae-writing-actions').prepend(languageControl);
+  metadata.querySelector('.ae-metadata-head').append(languageControl);
+  showReaderPanel('basic',{reveal:false});
+  function setWritingExpanded(enabled){
+    if(!enabled&&fullscreenState)setFullscreen(false);
+    writingExpanded=enabled;writing.dataset.expanded=String(enabled);
+    writingToggle.setAttribute('aria-expanded',String(enabled));writingToggle.innerHTML=icon('ChevronDown')+`<span>${enabled?'ดูตัวอย่าง':'เขียนเนื้อหา'}</span>`;
+    writingToggle.setAttribute('aria-label',enabled?'ย่อ Text Editor':'ขยาย Text Editor');
+    root.querySelector('.ae-canvas-heading span').textContent=enabled?'พื้นที่เขียน':'ตัวอย่างบทความ';
+    for(const editor of Object.values(editors)){editor.setEditable(enabled,false);editor.view.dom.setAttribute('aria-readonly',String(!enabled));}
+    canvas?.setWriting(enabled);
+    formatMore.open=false;blockMore.open=false;
+  }
+  setWritingExpanded(false);
   // Keep the iframe and TipTap instance stationary across layout/fullscreen changes.
   function setFullscreen(enabled,{restoreFocus=true}={}){
     if(enabled===Boolean(fullscreenState))return;
     if(enabled){
+      setWritingExpanded(true);
+      languageControl.parentElement!==writing.querySelector('.ae-writing-actions')&&writing.querySelector('.ae-writing-actions').prepend(languageControl);
       const inert=[];
       for(let branch=workspace;branch?.parentElement;branch=branch.parentElement){
         for(const sibling of branch.parentElement.children)if(sibling!==branch&&!sibling.inert){sibling.inert=true;inert.push(sibling);}
@@ -321,6 +380,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     }else{
       const previous=fullscreenState;fullscreenState=null;
       workspace.classList.remove('ae-fullscreen');workspace.removeAttribute('role');workspace.removeAttribute('aria-modal');workspace.removeAttribute('aria-label');
+      metadata.querySelector('.ae-metadata-head').append(languageControl);
       document.body.style.overflow=previous.overflow;previous.inert.forEach(el=>{el.inert=false;});
       window.scrollTo({left:previous.scrollX,top:previous.scrollY,behavior:'instant'});
       // Frame focus/layout can scroll the outer document during this event.
@@ -333,12 +393,16 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     if(restoreFocus)button.focus({preventScroll:true});
   }
   function fullscreenKeys(event){
-    if(!fullscreenState||document.querySelector('dialog[open]')||event.defaultPrevented)return;
+    if(document.querySelector('dialog[open]')||event.defaultPrevented)return;
     if(event.key==='Escape'){
       // Shared dropdowns own the first Escape; don't collapse the workspace.
       if(root.querySelector('.cm-select-trigger[aria-expanded="true"]'))return;
+      const openTools=root.querySelector('.ae-tools-disclosure[open]');
+      if(openTools){event.preventDefault();event.stopPropagation();openTools.open=false;openTools.querySelector('summary').focus();return;}
+      if(!fullscreenState)return;
       event.preventDefault();event.stopPropagation();setFullscreen(false);return;
     }
+    if(!fullscreenState)return;
     if(event.key==='Tab'){
       if(event.currentTarget===canvasDocument){
         const inner=[...canvasDocument.querySelectorAll('a[href],button:not(:disabled),[tabindex="0"],[contenteditable="true"]')].filter(el=>el.getClientRects().length);
@@ -358,7 +422,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const host=canvasDocument.createElement('div');host.className='ae-editor-host';host.dataset.editorLang=key;host.hidden=key!==lang;
     canvasDocument.querySelector('.ad-prose').prepend(host);
     const editor=canvasFactory({element:host,content:draft.translations[key].document,lang:key,
-      onUpdate:()=>{serverFields=serverFields.filter(issue=>issue.language!==key||!(issue.field==='document'||issue.field.startsWith('figure-alt-')));dirty();updateToolbar();},onSelectionUpdate:()=>updateToolbar(),onTransaction:()=>{if(editors[key])updateToolbar();},
+      onUpdate:()=>{readSummaryFields(key);serverFields=serverFields.filter(issue=>issue.language!==key||!(issue.field==='document'||issue.field.startsWith('figure-alt-')));dirty();updateToolbar();},onSelectionUpdate:()=>updateToolbar(),onTransaction:()=>{if(editors[key])updateToolbar();},
       onImageRequest:request=>{
         if(destroyed||lang!==key)return;
         if(request.unsupported){setStatus('รูปที่วางเป็นข้อมูลชั่วคราว กรุณาเลือกไฟล์ผ่านปุ่มเพิ่มรูปเพื่ออัปโหลดและครอป',true);return;}
@@ -366,7 +430,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
         editArticleImage('image',{...request,insert:true}).catch(error=>setStatus(error.message || 'เปิดตัวแก้ไขรูปไม่ได้',true));
       }
     });
-    editors[key]=editor;return editor;
+    editors[key]=editor;editor.setEditable(writingExpanded,false);editor.view.dom.setAttribute('aria-readonly',String(!writingExpanded));return editor;
   }
   function updateToolbar(){
     const editor=active();if(!editor||destroyed)return;
@@ -419,7 +483,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   }
   canvas=mountArticleCanvas({root:root.querySelector('.ae-canvas'),getDetail:currentDetail,
     onReady:({document,createEditor:factory})=>{
-      canvasDocument=document;canvasDocument.addEventListener('keydown',fullscreenKeys,true);canvasFactory=factory;createEditor('th');createEditor('en');syncDocuments();
+      canvasDocument=document;canvasDocument.addEventListener('keydown',fullscreenKeys,true);canvasDocument.addEventListener('pointerdown',dismissTools);canvasFactory=factory;createEditor('th');createEditor('en');syncDocuments();
       // Initial schema defaults are not an author edit. Preserve any metadata
       // edits made while the page was loading, but compare normalized bodies.
       const baseline=JSON.parse(saved);
@@ -467,42 +531,56 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       d.querySelector('form').onsubmit=event=>{event.preventDefault();const {values,invalid}=check();if(invalid){invalid.focus();return;}resolve(values);d.close();};
     });
   }
+  async function chooseOtherImage(action){
+    const other=lang==='th'?'en':'th',source=draft.translations[other];
+    const candidates=[...(source.cover.src?[{...source.cover,label:'ภาพปก',alt:source.coverAlt}]:[]),...(action==='image'?articleImages(source.document).map((image,i)=>({...image,label:'ภาพในเนื้อหา '+(i+1)})):[])];
+    if(!candidates.length){setStatus(`${other.toUpperCase()} ยังไม่มีภาพให้คัดลอก`);return null;}
+    const d=modal(`ใช้ภาพจาก ${other.toUpperCase()}`,`<form class="ae-modal-form ae-media-reuse"><div class="ae-supporting-band">${icon('Info')}<div><strong>${action==='cover'?'แทนที่ภาพปกของ':'นำภาพมาใช้ใน'} ${lang.toUpperCase()}</strong><small>คัดลอกภาพและการครอปครั้งเดียว ไม่เชื่อมการแก้ไขภายหลัง ข้อความอธิบายและเครดิตภาพของภาษานี้จะไม่ถูกแทนที่</small></div></div><div class="ae-reuse-options">${candidates.map((media,i)=>`<label><input type="radio" name="reuse-image" value="${i}" ${candidates.length===1?'checked':''}><img src="${esc(articleImageDelivery(media).src)}" alt="${esc(media.alt||media.label)}"><span>${esc(media.label)} · ${other.toUpperCase()}</span></label>`).join('')}</div><div class="ae-modal-actions"><button type="button" class="ae-button" data-cancel>ยกเลิก</button><button type="submit" class="ae-button ae-primary" ${candidates.length===1?'':'disabled'}>${icon('Copy')}ยืนยันใช้ภาพนี้</button></div></form>`);
+    return new Promise(resolve=>{
+      d.querySelector('[data-cancel]').onclick=()=>d.close();
+      d.addEventListener('close',()=>resolve(null),{once:true});
+      d.addEventListener('change',()=>{d.querySelector('[type=submit]').disabled=!d.querySelector('[name=reuse-image]:checked');});
+      d.querySelector('form').onsubmit=event=>{event.preventDefault();const checked=d.querySelector('[name=reuse-image]:checked');if(!checked)return;resolve(normalizeArticleMedia(candidates[Number(checked.value)]));d.close();};
+    });
+  }
   async function editArticleImage(action,initial={}) {
     if(mediaOpening||destroyed||!writingReady)return;
     const editor=active(),language=lang,owner=draft;
     const selection=editor.state.selection;
     const selected=!initial.insert&&selection.node?.type.name==='figure'?{node:selection.node,pos:selection.from}:null;
-    const before=action==='cover'?structuredClone(draft.cover):selected?.node.attrs || {};
+    const before=action==='cover'?structuredClone(locale().cover):selected?.node.attrs || {};
     const docBefore=editor.state.doc;
     mediaOpening=true;
     try {
-      const values=await editFields(action==='cover'?'คำอธิบายภาพปก':'คำอธิบายภาพในเนื้อหา',[
+      const values=action==='cover'?{alt:locale().coverAlt,caption:locale().caption}:await editFields('คำอธิบายภาพในเนื้อหา',[
         ['alt','ข้อความอธิบายภาพ',action==='cover'?locale().coverAlt:initial.alt || before.alt || ''],
         ['caption','คำบรรยาย / เครดิตภาพ (ไม่บังคับ)',action==='cover'?locale().caption:initial.caption || before.caption || '']
       ],value=>!value.alt||value.alt.length>500?{field:'alt',message:'กรุณาใส่ข้อความอธิบายภาพ ไม่เกิน 500 ตัวอักษร'}:value.caption.length>1000?{field:'caption',message:'คำบรรยายต้องไม่เกิน 1,000 ตัวอักษร'}:null);
       if(!values||destroyed)return;
-      const current=()=>!destroyed&&draft===owner&&lang===language&&!editor.isDestroyed&&editor.state.doc===docBefore&&(action!=='cover'||JSON.stringify(draft.cover)===JSON.stringify(before));
+      const current=()=>!destroyed&&draft===owner&&lang===language&&!editor.isDestroyed&&editor.state.doc===docBefore&&(action!=='cover'||JSON.stringify(locale().cover)===JSON.stringify(before));
       if(!current())throw Error('ภาพหรือเนื้อหาถูกเปลี่ยนระหว่างแก้ไข กรุณาเปิดตัวแก้ไขรูปอีกครั้ง');
       const {width,height}=articleImageSize(before);
+      const applyImage=result=>{
+        if(!current())throw Error('ภาพหรือเนื้อหาถูกเปลี่ยนระหว่างแก้ไข กรุณาปิดแล้วเปิดตัวแก้ไขรูปอีกครั้ง');
+        const next=normalizeArticleMedia({...result,src:result.url});
+        if(result.url&&(!next.src||!next.sourceUrl&&!initial.reuse))throw Error('ที่อยู่ภาพไม่ถูกต้อง กรุณาลองใหม่');
+        if(action==='cover'){
+          locale().cover=next;locale().image=structuredClone(next);
+          locale().coverAlt=values.alt;locale().imageAlt=values.alt;locale().caption=values.caption;refreshSettings();dirty();
+        }else if(selected){
+          const retained=Object.fromEntries(Object.entries(before).filter(([key])=>!['src','sourceUrl','provider','sourceAsset','crop','width','height'].includes(key)));
+          editor.chain().focus().command(({tr})=>{closeHistory(tr);if(next.src)tr.setNodeMarkup(selected.pos,undefined,{...retained,...next,alt:values.alt,caption:values.caption});else tr.delete(selected.pos,selected.pos+selected.node.nodeSize);return true;}).run();
+        }else if(next.src)insertArticleBlock(editor,{type:'figure',attrs:{...next,alt:values.alt,caption:values.caption}});
+        updateToolbar();
+      };
+      if(initial.reuse){applyImage({...initial.reuse,url:initial.reuse.src});return;}
       const media=await import(window.location.origin+'/admin/media-editor.js');
       if(!current())return;
-      await media.editImage({slot:{path:'articles.'+draft.id+(action==='cover'?'.cover':'.'+language+'.figure'),label:action==='cover'?'ภาพปกบทความ':'ภาพในเนื้อหาบทความ',value:before.src || '',width,height},
+      await media.editImage({slot:{path:'articles.'+draft.id+(action==='cover'?'.'+language+'.cover':'.'+language+'.figure'),label:action==='cover'?'ภาพปกบทความ':'ภาพในเนื้อหาบทความ',value:before.src || '',width,height},
         source:before.sourceUrl || before.src || '',sourceAsset:before.sourceAsset,provider:before.provider,crop:before.crop,lang:'th',
         initialFile:initial.initialFile,initialUrl:initial.initialUrl,
         getToken:async()=>{if(!window.CoverMateFirebase)await import(window.location.origin+'/covermate-firebase.js');return window.CoverMateFirebase.getAdminIdToken(true);},
-        onApply:result=>{
-          if(!current())throw Error('ภาพหรือเนื้อหาถูกเปลี่ยนระหว่างแก้ไข กรุณาปิดแล้วเปิดตัวแก้ไขรูปอีกครั้ง');
-          const next=normalizeArticleMedia({...result,src:result.url});
-          if(result.url&&(!next.src||!next.sourceUrl))throw Error('ที่อยู่ภาพไม่ถูกต้อง กรุณาลองใหม่');
-          if(action==='cover') {
-            draft.cover=next;draft.image=structuredClone(next);
-            locale().coverAlt=values.alt;locale().imageAlt=values.alt;locale().caption=values.caption;refreshSettings();dirty();
-          } else if(selected) {
-            const retained=Object.fromEntries(Object.entries(before).filter(([key])=>!['src','sourceUrl','provider','sourceAsset','crop','width','height'].includes(key)));
-            editor.chain().focus().command(({tr})=>{closeHistory(tr);if(next.src)tr.setNodeMarkup(selected.pos,undefined,{...retained,...next,alt:values.alt,caption:values.caption});else tr.delete(selected.pos,selected.pos+selected.node.nodeSize);return true;}).run();
-          } else if(next.src)insertArticleBlock(editor,{type:'figure',attrs:{...next,alt:values.alt,caption:values.caption}});
-          updateToolbar();
-        }
+        onApply:applyImage
       });
     } finally {mediaOpening=false;}
   }
@@ -534,18 +612,17 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     if(action==='reset-text-size'){chain().command(({tr})=>{closeHistory(tr);return true;}).unsetMark('textStyle').run();return;}
     if(action==='add-paragraph'){insertArticleBlock(editor,{type:'paragraph'});editor.chain().focus().setTextSelection(selectedArticleBlock(editor).pos+1).run();return;}
     if(action.startsWith('block-')){changeArticleBlock(editor,action.slice(6));return;}
-    if(['convert-takeaways','convert-sidebar'].includes(action)){
-      const t=locale(),summary=action==='convert-takeaways';
-      const text=summary?t.takeaways.join('\n'):t.sidebarQuote || canvasDocument?.querySelector('.ad-side-note p')?.textContent?.trim() || '';
-      if(!text){setStatus(summary?'ยังไม่มีสรุปเดิม ใช้ปุ่มเพิ่มสรุปแบบหลอดไฟเพื่อสร้างบล็อกใหม่':'ยังไม่มี Quote เดิม ใช้ปุ่มเพิ่ม Quote card เพื่อสร้างบล็อกใหม่',true);return;}
-      insertArticleBlock(editor,summary?{type:'takeaway',attrs:{title:lang==='th'?'สรุปประเด็นสำคัญ':'Key takeaways',note:t.takeawayNoteEnabled!==false?t.takeawayNote:''},content:takeawayContent(text)}:{type:'quoteCard',attrs:{attribution:'CoverMate'},content:quoteContent(text)},{placement:summary?'full':'sidebar',flag:summary?'takeawaysInDocument':'sidebarQuoteInDocument'});
+    if(action==='convert-sidebar'){
+      const text=locale().sidebarQuote || canvasDocument?.querySelector('.ad-side-note p')?.textContent?.trim() || '';
+      if(!text){setStatus('ยังไม่มีคำคมด้านข้าง กรุณากรอกข้อความก่อน',true);return;}
+      insertArticleBlock(editor,{type:'quoteCard',attrs:{attribution:'CoverMate'},content:quoteContent(text)},{placement:'sidebar',flag:'sidebarQuoteInDocument'});
       refreshSettings();settingsDialog?.close();return;
     }
     if(['add-takeaway','add-quote-card','edit-block'].includes(action)){
       const selected=selectedArticleBlock(editor),editing=action==='edit-block',type=editing?selected.node.type.name:action==='add-takeaway'?'takeaway':'quoteCard';
       if(editing&&['figure','video','callout','blockquote'].includes(type)){await handleTool({figure:'image',video:'video',callout:'callout',blockquote:'quote'}[type],type==='callout'?{dataset:{kind:selected.node.attrs.kind}}:el);return;}
       const old=editing?selected.node.attrs:{},original=editing?blockPlainText(selected.node):'';
-      const values=await editFields(type==='takeaway'?'สรุปแบบหลอดไฟ':'Quote card',type==='takeaway'?[
+      const values=await editFields(type==='takeaway'?'สรุปประเด็นสำคัญ':'กล่องคำคม',type==='takeaway'?[
         ['title','หัวข้อ',editing?old.title:'สรุปประเด็นสำคัญ','text','data-optional'],['items','รายการสรุป (หนึ่งข้อต่อบรรทัด)',original,'textarea'],['note','ข้อความประกอบ (เว้นว่างเพื่อซ่อน)',old.note || '','textarea']
       ]:[['text','ข้อความ Quote',original,'textarea'],['attribution','ผู้กล่าว (เว้นว่างเพื่อซ่อน)',editing?old.attribution:'CoverMate']],v=>{const field=type==='takeaway'?'items':'text';return v[field]?null:{field,message:'กรุณาใส่เนื้อหาของบล็อก'};});
       if(values){const text=type==='takeaway'?values.items:values.text,json={type,attrs:{...old,...(type==='takeaway'?{title:values.title,note:values.note}:{attribution:values.attribution})},content:editing&&text===original?selected.node.toJSON().content:type==='takeaway'?takeawayContent(text):quoteContent(text)};
@@ -607,7 +684,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const opener=document.activeElement;
     if(!await save()||changed())return;
     const title=action==='publish'?'Publish article':draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article';
-    const d=modal(title,`<form class="ae-modal-form">${action==='publish'?`<fieldset class="ae-choice-group"><legend>ภาษาที่ต้องการเผยแพร่</legend><div class="ae-choice-options">${['th','en'].map(l=>`<label class="ae-checkbox"><input type="checkbox" name="language" value="${l}" ${l===lang?'checked':''}><span>${l.toUpperCase()}</span></label>`).join('')}</div></fieldset><p>เผยแพร่เฉพาะบทความนี้ตามฉบับที่บันทึกล่าสุด ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน วันที่ในอนาคตจะแสดงเมื่อถึงกำหนด หากปิดระบบบทความไว้ หน้าบ้านยังไม่แสดง</p>`:'<p>นำบทความนี้ออกจากหน้าบ้านทุกภาษา โดยเก็บร่างไว้ ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน</p>'}<p class="ae-form-error" role="alert"></p><div class="ae-modal-actions"><button class="ae-button" type="button" data-cancel>ยกเลิก</button><button class="ae-button ae-primary" type="submit">${action==='publish'?'Publish article':draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article'}</button></div></form>`,{opener});
+    const d=modal(title,`<form class="ae-modal-form ${action==='publish'?'ae-publication-review':''}">${action==='publish'?`<fieldset class="ae-choice-group"><legend>ภาษาที่ต้องการเผยแพร่</legend><div class="ae-choice-options">${['th','en'].map(l=>`<label class="ae-checkbox"><input type="checkbox" name="language" value="${l}" ${l===lang?'checked':''}><span><strong>${l.toUpperCase()} · ${l==='th'?'ภาษาไทย':'English'}</strong><small>${issues(true,[l]).length?'ยังมีข้อมูลที่ต้องตรวจสอบ':'ข้อมูลครบแล้ว'}</small></span></label>`).join('')}</div></fieldset><p>อัปเดตเนื้อหาเฉพาะภาษาที่เลือก ภาษาที่ไม่ได้เลือกคงฉบับเผยแพร่เดิม หมวดหมู่และการปักหมุดใช้ร่วมกันทั้งสองภาษา ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน วันที่ในอนาคตจะแสดงเมื่อถึงกำหนด</p>`:'<p>นำบทความนี้ออกจากหน้าบ้านทุกภาษา โดยเก็บร่างไว้ ร่างหน้าเว็บและบทความอื่นไม่เปลี่ยน</p>'}<p class="ae-form-error" role="alert"></p><div class="ae-modal-actions"><button class="ae-button" type="button" data-cancel>ยกเลิก</button><button class="ae-button ae-primary" type="submit">${action==='publish'?'Publish article':draft.publicationStatus==='scheduled'?'Cancel schedule':'Unpublish article'}</button></div></form>`,{opener});
     d.querySelector('[data-cancel]').onclick=()=>d.close();
     function validateLanguages(){
       if(action!=='publish')return [];
@@ -698,6 +775,14 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     settingsDialog.addEventListener('close',()=>{root.querySelector('.ae-grid')?.append(panel);panel.hidden=true;settingsDialog=null;placePanels();settingsOpener?.focus({preventScroll:true});},{once:true});
     if(focusKey)focusSetting(focusKey);
   }
+  function showChecklist(){
+    const summary=root.querySelector('.ae-validation-summary');
+    const d=modal('Checklist ก่อนเผยแพร่','<div class="ae-checklist-target"></div>');
+    const anchor=document.createComment('checklist');summary.before(anchor);summary.open=true;
+    d.querySelector('.ae-checklist-target').append(summary);
+    d.addEventListener('click',event=>{const button=event.target.closest('[data-ae=validation-field]');if(!button)return;const issue={field:button.dataset.key,language:button.dataset.language};d.close();requestAnimationFrame(()=>focusIssue(issue));});
+    d.addEventListener('close',()=>{anchor.replaceWith(summary);},{once:true});
+  }
   function input(event){
     const el=event.target,key=el.dataset.field;if(!key)return;
     serverFields=serverFields.filter(issue=>issue.field!==key||issue.language&&issue.language!==lang);
@@ -720,7 +805,28 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     else if(key==='coverAlt'){t.coverAlt=el.value;t.imageAlt=el.value;}
     else if(['slug','authorName','categoryId'].includes(key)){if(key==='slug'&&draft.basePublished)return;draft[key]=el.value;if(key==='categoryId')for(const l of ['th','en'])draft.translations[l].category=ARTICLE_CATEGORIES[el.value]?.[l==='en'?1:0] || '';}
     else if(key in t)t[key]=el.value;
+    if(['takeaways','takeawayNote','takeawayNoteEnabled'].includes(key))writeSummaryFields();
     dirty();
+  }
+  function readSummaryFields(language){
+    const editor=editors[language],t=draft.translations[language];if(!editor?.state.doc.attrs.takeawaysInDocument)return;
+    const summary=articleBlocks(editor).find(block=>block.node.type.name==='takeaway'&&block.node.attrs.articleSummary);
+    t.takeaways=summary?blockPlainText(summary.node).split('\n').filter(Boolean):[];
+    if(summary&&t.takeawayNoteEnabled)t.takeawayNote=summary.node.attrs.note||'';
+    if(language!==lang)return;
+    for(const [key,value] of [['takeaways',t.takeaways.join('\n')],['takeawayNote',t.takeawayNote]]){
+      const input=root.querySelector(`[data-field=${key}]`);if(input&&input!==document.activeElement)input.value=value;
+    }
+  }
+  function writeSummaryFields(){
+    const editor=active(),t=locale();if(!editor)return;
+    const summary=articleBlocks(editor).find(block=>block.node.type.name==='takeaway'&&block.node.attrs.articleSummary);
+    const tr=editor.state.tr;closeHistory(tr);
+    if(t.takeaways.length){
+      const node=editor.schema.nodeFromJSON({type:'takeaway',attrs:{...summary?.node.attrs,articleSummary:true,placement:summary?.node.attrs.placement||'full',title:summary?.node.attrs.title??(lang==='en'?'Key takeaways':'สรุปประเด็นสำคัญ'),note:t.takeawayNoteEnabled?t.takeawayNote:''},content:takeawayContent(t.takeaways.join('\n'))});
+      if(summary)tr.replaceWith(summary.pos,summary.pos+summary.node.nodeSize,node);else tr.insert(tr.doc.content.size,node);
+    }else if(summary)tr.delete(summary.pos,summary.pos+summary.node.nodeSize);
+    tr.setDocAttribute('takeawaysInDocument',true);tr.setDocAttribute('articleSummaryLinked',true);editor.view.dispatch(tr);
   }
   function change(event){
     if(event.target.matches('[data-block-select]'))changeArticleBlock(active(),'select',event.target.value);
@@ -735,6 +841,8 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     const action=el.dataset.ae;
     if(action==='close')return;
     if(action==='fullscreen'){setFullscreen(!fullscreenState);return;}
+    if(action==='toggle-writing'){setWritingExpanded(!writingExpanded);return;}
+    if(action==='checklist'){showChecklist();return;}
     if(action==='close-reader'){
       const opener=root.querySelector(`[data-reader-panel="${readerPanel}"]`);
       showReaderPanel('');opener?.focus({preventScroll:true});return;
@@ -748,18 +856,35 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     if(action==='toggle-basic'){expandBasics(el.getAttribute('aria-expanded')!=='true');return;}
     if(action==='settings'){openSettings();return;}
     if(action==='takeaways'){const block=active()&&articleBlocks(active()).find(b=>b.node.type.name==='takeaway');if(block){changeArticleBlock(active(),'select',block.index);await handleTool('edit-block',el);}else openSettings('takeaways');return;}
-    if(action==='clear-takeaways'){locale().takeaways=[];locale().takeawayNoteEnabled=false;refreshSettings();dirty();return;}
     if(action==='export'){exportDraft();return;}
     if(action==='import'){root.querySelector('.ae-import-file').click();return;}
     if(action==='clear-date'){const input=root.querySelector('[data-field=publishedAt]');if(input){input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}return;}
-    if(action==='clear-cover'){draft.cover={src:''};draft.image={src:''};serverFields=serverFields.filter(issue=>!['cover','coverAlt','imageAlt'].includes(issue.field));refreshSettings();dirty();return;}
+    if(action==='clear-cover'){locale().cover={src:''};locale().image={src:''};serverFields=serverFields.filter(issue=>!['cover','coverAlt','imageAlt'].includes(issue.field));refreshSettings();dirty();return;}
+    if(action==='crop-cover'){await editArticleImage('cover');return;}
+    if(['reuse-cover','reuse-image'].includes(action)){
+      const target=action==='reuse-cover'?'cover':'image',language=lang,owner=draft;
+      const media=await chooseOtherImage(target);
+      if(media&&!destroyed&&draft===owner&&lang===language)await editArticleImage(target,{reuse:media});
+      return;
+    }
     if(action==='remove-tag'){commitTags();draft.tags.splice(Number(el.dataset.index),1);renderTags();root.querySelector('[data-field=tags]').focus();dirty();return;}
     if(action==='add-source'){if(locale().sources.length<30){locale().sources.push({label:'',url:''});refreshSettings();dirty();focusSetting('source-label-'+(locale().sources.length-1));}return;}
     if(action==='remove-source'){locale().sources.splice(Number(el.dataset.index),1);serverFields=serverFields.filter(issue=>issue.language!==lang||!issue.field.startsWith('source-'));refreshSettings();dirty();return;}
     await handleTool(action,el);
+    formatMore.open=false;blockMore.open=false;
   }
   // Keep toolbar mouse presses from discarding the ProseMirror selection.
   function pointer(event){if(event.pointerType==='mouse'&&event.target.closest('.ae-toolbar button,.ae-layout-tools button'))event.preventDefault();}
+  function dismissTools(event){if(!tools.contains(event.target)){formatMore.open=false;blockMore.open=false;}}
+  function dragCover(event){if(event.target.closest('.ae-cover-dropzone')){event.preventDefault();event.dataTransfer.dropEffect='copy';}}
+  function dropCover(event){
+    if(!event.target.closest('.ae-cover-dropzone'))return;event.preventDefault();
+    const files=[...(event.dataTransfer?.files||[])];if(!files.length)return;
+    if(files.length!==1||files[0].size>8000000||!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(files[0].type)){setStatus('เลือกภาพปกครั้งละ 1 ไฟล์ PNG, JPEG, WebP หรือ SVG ขนาดไม่เกิน 8 MB',true);return;}
+    editArticleImage('cover',{initialFile:files[0]}).catch(error=>setStatus(error.message||'เปิดภาพปกไม่สำเร็จ',true));
+  }
+  root.addEventListener('dragover',dragCover);root.addEventListener('drop',dropCover);
+  document.addEventListener('pointerdown',dismissTools);
   root.addEventListener('input',input);root.addEventListener('change',change);root.addEventListener('click',click);root.addEventListener('pointerdown',pointer);
   root.addEventListener('error',imageError,true);
   root.querySelector('.ae-import-file').addEventListener('change',async event=>{
@@ -769,7 +894,13 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       if(file.size>2000000)throw Error('ไฟล์ใหญ่เกิน 2 MB');
       const next=parseDraftBackup(await file.text());
       if(!canLeave())return;
-      draft=next;serverFields=[];inputFields=[];if(cloud){draft.cloudDraft=true;draft.localDraft=false;}for(const l of ['th','en'])editors[l]?.commands.setContent(draft.translations[l].document,{emitUpdate:false});
+      draft=next;for(const language of ['th','en'])prepareArticleSummary(draft.translations[language],language);serverFields=[];inputFields=[];if(cloud){draft.cloudDraft=true;draft.localDraft=false;}
+      for(const language of ['th','en']){
+        const editor=editors[language],document=draft.translations[language].document;if(!editor)continue;
+        // setContent replaces children but retains the old ProseMirror doc attributes.
+        const attrs=editor.schema.nodeFromJSON(document).attrs;
+        editor.chain().setContent(document,{emitUpdate:false}).command(({tr})=>{for(const [key,value] of Object.entries(attrs))tr.setDocAttribute(key,value);return true;}).run();
+      }
       refreshSettings();dirty();setStatus('นำเข้าสำเนาฉบับร่างแล้ว กรุณาบันทึก');
     }catch(error){setStatus(error.message || 'อ่านไฟล์ไม่สำเร็จ',true);}finally{event.target.value='';}
   });
@@ -783,10 +914,11 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   viewport?.addEventListener('resize',keyboard);window.addEventListener('resize',growFields);root.addEventListener('focusin',keyboard);root.addEventListener('focusout',blur);
   function canLeave(){return !busy&&(!changed()||confirm('มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการออกโดยไม่บันทึกหรือไม่?'));}
   function destroy(){
-    if(destroyed)return;setFullscreen(false,{restoreFocus:false});destroyed=true;canvasDocument?.removeEventListener('keydown',fullscreenKeys,true);document.removeEventListener('keydown',fullscreenKeys);canvas?.destroy();for(const d of dialogs)d.close();
+    if(destroyed)return;setFullscreen(false,{restoreFocus:false});destroyed=true;canvasDocument?.removeEventListener('keydown',fullscreenKeys,true);canvasDocument?.removeEventListener('pointerdown',dismissTools);document.removeEventListener('pointerdown',dismissTools);document.removeEventListener('keydown',fullscreenKeys);canvas?.destroy();for(const d of dialogs)d.close();
     for(const editor of Object.values(editors))editor.destroy();window.removeEventListener('beforeunload',unload);viewport?.removeEventListener('resize',keyboard);window.removeEventListener('resize',growFields);
     root.removeEventListener('input',input);root.removeEventListener('change',change);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointer);root.removeEventListener('keydown',shortcut);root.removeEventListener('focusin',keyboard);root.removeEventListener('focusout',blur);
-    root.removeEventListener('error',imageError,true);readerOverlay.removeEventListener('change',syncReaderOverlay);
+    root.removeEventListener('error',imageError,true);
+    root.removeEventListener('dragover',dragCover);root.removeEventListener('drop',dropCover);
   }
   return {canLeave,destroy};
 }

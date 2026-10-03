@@ -67,6 +67,35 @@ try {
   assert.equal((await repository.detail('covermate-uat',run)).item.translations.th.title,liveTitle);
   assert.equal((await call('feed')).body.items.find(i=>i.id===run).translations.th.title,liveTitle,'Unpublished edits stay out of the Home canvas');
   if (!process.argv.includes('--feed-only')) {
+  // Integrated language/media and release-order contracts share this projection.
+  let localized=createArticleDraft({id:'localized-'+run,slug:'localized-'+run,authorName:'Localized QA'});
+  for(const lang of ['th','en'])Object.assign(localized.translations[lang],{
+    title:'Localized '+lang,excerpt:'Localized excerpt '+lang,document:structuredClone(draft.translations.th.document),
+    cover:{src:`https://media.example.test/${lang}.png`},image:{src:`https://media.example.test/${lang}-thumb.png`},
+    coverAlt:'Cover '+lang,imageAlt:'Thumbnail '+lang
+  });
+  const saveLocalized=async()=>{const response=await call('save',{article:localized,expectedRevision:localized.revision});assert.equal(response.status,200,JSON.stringify(response));localized=response.body;};
+  const publishLocalized=async lang=>{const response=await call('publish',{id:localized.id,expectedRevision:localized.revision,languages:[lang]});assert.equal(response.status,200,JSON.stringify(response));localized=response.body;};
+  await saveLocalized();await publishLocalized('th');
+  const thPublication=(await repository.detail('covermate-uat',localized.slug)).item.translations.th;
+  assert.equal((await repository.detail('covermate-uat',localized.slug)).item.translations.en,undefined);
+  localized.translations.th.cover={src:'https://media.example.test/unpublished-th.png'};
+  await saveLocalized();await publishLocalized('en');
+  let localizedLive=(await repository.detail('covermate-uat',localized.slug)).item;
+  assert.deepEqual(localizedLive.translations.th,thPublication,'Publishing EN preserves the published TH media, text and release time');
+  assert.equal(localizedLive.translations.en.cover.src,'https://media.example.test/en.png');
+  assert.equal(localizedLive.translations.en.image.src,'https://media.example.test/en-thumb.png');
+  localized.translations.en.cover={src:''};localized.translations.en.image={src:''};
+  await saveLocalized();await publishLocalized('en');
+  localizedLive=(await repository.detail('covermate-uat',localized.slug)).item;
+  assert.equal(localizedLive.translations.en.cover.src,'','Explicit blank EN never borrows TH media');
+  assert.deepEqual(localizedLive.translations.th,thPublication);
+  const catalogRef=db.doc('sites/covermate-uat/articleCatalog/'+localized.id),legacyCatalog=(await catalogRef.get()).data();
+  delete legacyCatalog.live.translations.th.releasedAt;delete legacyCatalog.live.translations.th.updatedAt;
+  await catalogRef.set(legacyCatalog);
+  assert.equal((await repository.feed('covermate-uat')).items.find(item=>item.id===localized.id).translations.th.releasedAt,thPublication.releasedAt,'Legacy catalog ordering is hydrated from the live publication');
+  localized=(await call('trash',{id:localized.id,expectedRevision:localized.revision})).body;
+  assert.equal((await call('delete',{id:localized.id,expectedRevision:localized.revision,confirmation:'DELETE'})).status,200);
   const duplicate=createArticleDraft(draft);duplicate.id='duplicate-'+crypto.randomUUID();duplicate.revision=0;duplicate.slugLocked=false;
   const dup=(await call('save',{article:duplicate,expectedRevision:0})).body;
   assert.equal((await call('publish',{id:dup.id,expectedRevision:dup.revision,languages:['th']})).status,409,'Slug is atomically reserved');
@@ -91,10 +120,11 @@ try {
   now=future+1;assert.ok((await repository.detail('covermate-uat',run)).item);assert.equal((await repository.catalog('covermate-uat')).items.find(i=>i.id===run).status,'published');
   draft=(await call('unpublish',{id:run,expectedRevision:draft.revision})).body;
   assert.equal(await repository.detail('covermate-uat',run),null);assert.ok((await call('read',null,'owner','&id='+run)).body.translations.th.document);
-  for(const action of ['archive','trash','restore','unpublish']) {
-    for(const role of ['missing','advisor','ops','readonly','inactive','unknown'])assert.equal((await call(action,{id:run,expectedRevision:draft.revision},role)).status,role==='missing'?401:403,action+' requires an active owner');
-    assert.equal((await fetch(baseUrl+'/api/articles?action='+action,{method:'POST',headers:{Authorization:'Bearer '+tokens.owner,'Content-Type':'application/json'},body:JSON.stringify({id:run,expectedRevision:draft.revision})})).status,403,'UAT owner cannot mutate production');
+  for(const action of ['archive','trash','restore','unpublish','delete']) {
+    for(const role of ['missing','advisor','ops','readonly','inactive','unknown'])assert.equal((await call(action,{id:run,expectedRevision:draft.revision,confirmation:'DELETE'},role)).status,role==='missing'?401:403,action+' requires an active owner');
+    assert.equal((await fetch(baseUrl+'/api/articles?action='+action,{method:'POST',headers:{Authorization:'Bearer '+tokens.owner,'Content-Type':'application/json'},body:JSON.stringify({id:run,expectedRevision:draft.revision,confirmation:'DELETE'})})).status,403,'UAT owner cannot mutate production');
   }
+  assert.equal((await call('delete',{id:run,expectedRevision:draft.revision,confirmation:'DELETE'})).status,409,'Active articles cannot be permanently deleted');
   draft.translations.th.publishedAt='2026-09-01T00:00:00Z';
   draft=(await call('save',{article:draft,expectedRevision:draft.revision})).body;
   draft=(await call('publish',{id:run,expectedRevision:draft.revision,languages:['th']})).body;
@@ -106,6 +136,7 @@ try {
   pinSettings=(await call('catalog')).body.settings;
   result=await call('archive',{id:run,expectedRevision:draft.revision});assert.equal(result.status,200);draft=result.body;
   assert.equal(draft.lifecycle,'archived');assert.equal(draft.basePublished,false);
+  assert.equal((await call('delete',{id:run,expectedRevision:draft.revision,confirmation:'DELETE'})).status,409,'Archive is retained until explicitly moved to Trash');
   assert.deepEqual(draft.translations,beforeArchive.translations,'Archive preserves authored content');
   assert.equal(draft.featured,false);assert.equal(draft.pinned,false);
   assert.equal((await call('catalog')).body.items.find(item=>item.id===run).status,'archived');
@@ -137,6 +168,31 @@ try {
   const direct=path=>fetch('http://127.0.0.1:8088/v1/projects/demo-covermate/databases/(default)/documents/sites/'+scope+'/'+path,{headers:{Authorization:'Bearer '+tokens.owner}});
   for(const path of ['articles/'+run,'articleCatalog/'+run,'articleSlugs/'+run,'articleSettings/current'])assert.equal((await direct(path)).status,403,'No direct SDK access: '+path);
   assert.ok((await db.doc('sites/covermate-uat').collection('articleAudit').where('articleId','==',run).get()).size>=5);
-  console.log('PASS real article API: roles, UAT isolation, shared drafts, CAS conflicts, publication/locales, live isolation, slug reservation, scheduling, all 8 toggle combinations, no-store, direct URL/Firestore guards, unpublish and audit.');
+  assert.equal((await fetch('http://127.0.0.1:8088/v1/projects/demo-covermate/databases/(default)/documents/sites/'+scope+'/articles/'+run,{method:'DELETE',headers:{Authorization:'Bearer '+tokens.owner}})).status,403,'Client SDK cannot bypass the permanent-delete gate');
+  draft=(await call('trash',{id:run,expectedRevision:draft.revision})).body;
+  for(const confirmation of [undefined,'','delete',' DELETE','DELETE '])assert.equal((await call('delete',{id:run,expectedRevision:draft.revision,confirmation})).status,422,'Exact DELETE confirmation required');
+  assert.deepEqual(await repository.get('covermate-uat',run),draft,'Invalid confirmations preserve all article content');
+  const staleDelete={id:run,expectedRevision:draft.revision,confirmation:'DELETE'};
+  draft=(await call('restore',{id:run,expectedRevision:draft.revision},'owner2')).body;
+  assert.equal((await call('delete',staleDelete)).status,409,'Concurrent restore prevents stale deletion');
+  assert.deepEqual(await repository.get('covermate-uat',run),draft,'The restored article is untouched');
+  draft=(await call('trash',{id:run,expectedRevision:draft.revision})).body;
+  const deletes=await Promise.all([0,1].map(()=>call('delete',{id:run,expectedRevision:draft.revision,confirmation:'DELETE'})));
+  assert.deepEqual(deletes.map(value=>value.status).sort(),[200,404],'Concurrent deletion commits exactly once');
+  assert.deepEqual(deletes.find(value=>value.status===200).body,{id:run,deleted:true,revision:draft.revision+1});
+  for(const path of ['articles/'+run,'articleCatalog/'+run,'articleSlugs/'+run])assert.equal((await db.doc('sites/covermate-uat/'+path).get()).exists,false,'Permanent deletion removes '+path);
+  assert.equal((await call('read',null,'owner','&id='+run)).status,404);
+  assert.equal((await call('catalog')).body.items.some(item=>item.id===run),false);
+  assert.equal((await repository.feed('covermate-uat')).items.some(item=>item.id===run),false);
+  assert.equal((await call('catalog')).body.settings.pinnedOrder.includes(run),false);
+  assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat')).status,404);
+  assert.notEqual((await call('restore',{id:run,expectedRevision:draft.revision})).status,200,'Deletion is not recoverable');
+  assert.equal((await call('save',{article:draft,expectedRevision:draft.revision})).status,409,'An old editor cannot resurrect a deleted article');
+  assert.deepEqual(await repository.get('covermate-uat',dup.id),untouched,'Permanent deletion does not touch other articles');
+  const deletionEvents=(await db.doc('sites/covermate-uat').collection('articleAudit').where('articleId','==',run).get()).docs.map(doc=>doc.data()).filter(event=>event.action==='delete');
+  assert.equal(deletionEvents.length,1);assert.equal(deletionEvents[0].lifecycle,'deleted');
+  assert.deepEqual(Object.keys(deletionEvents[0]).sort(),['action','actor','articleId','at','lifecycle','previousLifecycle','revision'],'Deletion audit retains only metadata, not authored content');
+  assert.equal((await call('publish',{id:dup.id,expectedRevision:dup.revision,languages:['th']})).status,200,'Permanent deletion releases its owned slug reservation');
+  console.log('PASS real article API: roles, UAT isolation, drafts/CAS, publication/locales, slug reservation, scheduling, toggles, lifecycle, exact DELETE gate, concurrent restore/deletion, atomic removal, no resurrection and metadata-only audit.');
   } else console.log('PASS owner feed API: authentication, roles, UAT isolation, published-only projection and unpublished-edit isolation.');
 } finally {await new Promise(resolve=>server.close(resolve));}

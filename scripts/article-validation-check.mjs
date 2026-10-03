@@ -48,12 +48,25 @@ await assert.rejects(repository.mutate(site,'publish',{id:saved.id,languages:['t
 assert.equal(JSON.stringify([...records]),before,'Invalid publication cannot write any records');
 await repository.changeSettings(site,{enabled:true,showHome:true,showNavigation:true},0,uid);
 let seoDraft=valid('seo-proof');Object.assign(seoDraft.translations.th,{seoTitle:'หัวข้อสำหรับผลค้นหา',seoDescription:'คำอธิบายสำหรับผลค้นหา',publishedAt:'2026-09-01T03:00:00Z',coverAlt:'รถยนต์บนถนน',imageAlt:'รถยนต์บนถนน'});
-seoDraft.cover=seoDraft.image={src:'/assets/article-preview/motor.jpg'};seoDraft.tags=['ประกันรถยนต์'];
+seoDraft.translations.th.cover=seoDraft.translations.th.image={src:'/assets/article-preview/motor.jpg'};seoDraft.tags=['ประกันรถยนต์'];
 seoDraft=await repository.mutate(site,'save',seoDraft,0,uid);
 assert.equal(await repository.detail(site,seoDraft.slug),null,'Draft SEO is private');
 seoDraft=await repository.mutate(site,'publish',{id:seoDraft.id,languages:['th']},seoDraft.revision,uid);
 const project=async slug=>projectArticleDetail(await repository.detail(site,slug),{slug,mediaUrl:value=>articleUrl(value,true)});
 const detail=await project(seoDraft.slug),model=createSeoModel({}, {path:'/articles/'+seoDraft.slug,article:detail,articleFeed:await repository.feed(site)});
+const released=()=>repository.feed(site).then(feed=>feed.items.find(item=>item.id===seoDraft.id).translations.th.releasedAt);
+const originalRelease=await released();
+assert.equal(originalRelease,records.get(`sites/${site}/articles/${seoDraft.id}`).live.translations.th.updatedAt,'Feed uses the server-owned Publish time');
+assert.notEqual(originalRelease,seoDraft.translations.th.publishedAt,'Optional display date is not the Publish clock');
+clock+=60000;
+seoDraft=await repository.mutate(site,'save',{...seoDraft,authorName:'Updated draft author'},seoDraft.revision,uid);
+assert.equal(await released(),originalRelease,'Saving a draft cannot change public search chronology');
+const legacyCatalog=records.get(`sites/${site}/articleCatalog/${seoDraft.id}`);
+delete legacyCatalog.live.translations.th.releasedAt;
+assert.equal(await released(),originalRelease,'Old catalog summaries recover the real live Publish time, not the newer draft save or optional date');
+assert.equal(legacyCatalog.live.translations.th.releasedAt,undefined,'Reading old summaries does not migrate or publish content');
+seoDraft=await repository.mutate(site,'publish',{id:seoDraft.id,languages:['th']},seoDraft.revision,uid);
+assert.ok(Date.parse(await released())>Date.parse(originalRelease),'Republish advances the actual Publish timestamp');
 assert.equal(model.title,'หัวข้อสำหรับผลค้นหา');assert.equal(model.meta.description,'คำอธิบายสำหรับผลค้นหา');
 assert.equal(model.properties['og:image:alt'],'รถยนต์บนถนน');assert.equal(model.meta['twitter:image:alt'],'รถยนต์บนถนน');
 const graph=model.graph['@graph'].find(item=>item['@type']==='Article');
@@ -70,6 +83,7 @@ let undatedDetail=await project(undated.slug);
 assert.equal(undatedDetail.date,'');assert.equal(undatedDetail.updated,'');assert.ok(undatedDetail.reading);
 const firstPublished=undatedDetail.datetime;
 const undatedFeed=await repository.feed(site);
+assert.equal(undatedFeed.items.find(item=>item.id===undated.id).translations.th.releasedAt,records.get(`sites/${site}/articles/${undated.id}`).live.translations.th.updatedAt,'Hidden display dates still carry the real Publish time');
 for(const item of [projectHomeArticles(undatedFeed).items.find(i=>i.key===undated.id),projectArticleIndex(undatedFeed).items.find(i=>i.key===undated.id)]){
   assert.equal(item.date,'');assert.ok(item.reading,'Undated cards keep useful reading metadata');
 }
@@ -99,6 +113,30 @@ const fixture=createArticleDraft({id:'browser-validation',cover:{src:'/assets/ar
 const imageIssues=validateArticle(fixture,{publish:true});assert.ok(imageIssues.some(i=>i.field==='coverAlt'));assert.ok(imageIssues.some(i=>i.field==='figure-alt-0'));
 await repository.mutate(site,'save',fixture,0,uid);
 console.log('PASS article validation and SEO: required/optional, malformed fields, conditional Alt, TH/EN, zero-write rejection, published metadata and fallback.');
+
+let bilingualMedia=valid('language-media');
+bilingualMedia.translations.th.cover=bilingualMedia.translations.th.image={src:'/assets/article-preview/motor.jpg',sourceUrl:'/assets/article-preview/motor.jpg'};
+bilingualMedia.translations.th.coverAlt=bilingualMedia.translations.th.imageAlt='รถยนต์';
+bilingualMedia.translations.en={...structuredClone(bilingualMedia.translations.th),title:'English article',excerpt:'Independent English content',document:body('English body'),cover:{src:'/assets/article-preview/health.jpg',sourceUrl:'/assets/article-preview/health.jpg'},image:{src:'/assets/article-preview/health.jpg'},coverAlt:'Medical equipment',imageAlt:'Medical equipment'};
+bilingualMedia=await repository.mutate(site,'save',bilingualMedia,0,uid);
+bilingualMedia=await repository.mutate(site,'publish',{id:bilingualMedia.id,languages:['th']},bilingualMedia.revision,uid);
+const thLive=(await repository.detail(site,bilingualMedia.slug)).item.translations.th;
+bilingualMedia.translations.th.cover=bilingualMedia.translations.th.image={src:'/assets/article-preview/life.jpg'};
+bilingualMedia=await repository.mutate(site,'save',bilingualMedia,bilingualMedia.revision,uid);
+bilingualMedia=await repository.mutate(site,'publish',{id:bilingualMedia.id,languages:['en']},bilingualMedia.revision,uid);
+let mediaPublic=await repository.detail(site,bilingualMedia.slug);
+assert.deepEqual(mediaPublic.item.translations.th,thLive,'EN publication leaves TH text and media snapshot untouched');
+assert.equal(mediaPublic.item.translations.en.cover.sourceUrl,undefined,'Private originals never leak in translated public media');
+assert.equal(projectArticleDetail(mediaPublic,{slug:bilingualMedia.slug,lang:'en',now:clock,mediaUrl:value=>value}).image,'/assets/article-preview/health.jpg');
+const localizedFeed=await repository.feed(site);
+assert.equal(projectHomeArticles(localizedFeed,{lang:'en',now:clock,mediaUrl:value=>value}).items.find(item=>item.slug===bilingualMedia.slug).image,'/assets/article-preview/health.jpg');
+bilingualMedia.translations.en.cover=bilingualMedia.translations.en.image={src:''};bilingualMedia.translations.en.coverAlt='';
+bilingualMedia=await repository.mutate(site,'save',bilingualMedia,bilingualMedia.revision,uid);
+bilingualMedia=await repository.mutate(site,'publish',{id:bilingualMedia.id,languages:['en']},bilingualMedia.revision,uid);
+mediaPublic=await repository.detail(site,bilingualMedia.slug);
+assert.equal(projectArticleDetail(mediaPublic,{slug:bilingualMedia.slug,lang:'en',now:clock,mediaUrl:value=>value}).image,'','Explicit EN clear never falls back to TH or legacy images');
+assert.deepEqual(mediaPublic.item.translations.th,thLive);
+console.log('PASS independent language media: TH/EN draft, publication, feed/detail projection, private metadata stripping and explicit clear.');
 
 if(process.argv.includes('--browser')) {
   const out='uat-results/article-validation';fs.mkdirSync(out,{recursive:true});
@@ -139,7 +177,7 @@ if(process.argv.includes('--browser')) {
     await articleField(page,'slug').fill('Bad Slug');assert.ok(await publish().isDisabled());assert.match(await fieldError('slug').textContent(),/ภาษาอังกฤษ/);
     await page.locator('.ae-basic').scrollIntoViewIfNeeded();await page.screenshot({path:out+'/'+engine+'-desktop-errors.png'});
     await articleField(page,'slug').fill('seo-proof');
-    await page.locator('[data-ae=validation-field][data-key=coverAlt]').click();assert.equal(await page.locator('[data-field=coverAlt]').getAttribute('aria-invalid'),'true');
+    await page.locator('.ae-validation-summary [data-ae=validation-field][data-key=coverAlt]').click();assert.equal(await page.locator('[data-field=coverAlt]').getAttribute('aria-invalid'),'true');
     await articleField(page,'coverAlt').fill('รถยนต์บนถนนเลียบชายฝั่ง');
     await articleField(page,'figure-alt-0').fill('อุปกรณ์ตรวจสุขภาพบนโต๊ะ');await closeSettings(page);
     assert.ok(await publish().isEnabled());
@@ -155,7 +193,7 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.locator('.ae-image-profiles dt').count(),4);
     await (await revealArticleControl(page,'.ae-cover-section')).scrollIntoViewIfNeeded();await page.screenshot({path:out+'/'+engine+'-image-profiles-admin.png'});
     await articleTool(page,'add-takeaway');
-    const summaryDialog=page.getByRole('dialog',{name:'สรุปแบบหลอดไฟ',exact:true});
+    const summaryDialog=page.getByRole('dialog',{name:'สรุปประเด็นสำคัญ',exact:true});
     await summaryDialog.locator('[data-field=title]').fill('');await summaryDialog.locator('[data-field=items]').fill('ตรวจความคุ้มครองที่มีอยู่');
     assert.equal(await summaryDialog.locator('[data-field=title]').getAttribute('aria-required'),'false','Summary title can still be intentionally hidden');
     await summaryDialog.locator('[type=submit]').click();await summaryDialog.waitFor({state:'detached'});
@@ -219,6 +257,34 @@ if(process.argv.includes('--browser')) {
     await page.locator('.ae-feedback').filter({hasText:'ถอนเผยแพร่แล้ว'}).waitFor();
     assert.equal(await repository.detail(site,'browser-validation'),null,'Unpublish confirmation from settings removes only the public copy');
     assert.ok((await repository.get(site,fixture.id)).translations.th.document,'Unpublish retains the editable document');
+    // The same article can publish EN alone even with an incomplete TH draft.
+    await articleField(page,'title').fill('');await articleField(page,'excerpt').fill('');
+    if(await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').fill('');
+    await page.locator('[data-lang=en]').click();
+    await articleField(page,'title').fill('Questions before choosing insurance');
+    await articleField(page,'excerpt').fill('Review your current cover and budget.');
+    await articleField(page,'coverAlt').fill('Car on a coastal road');
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').fill('Read the policy terms before selecting a plan.');
+    assert.ok(await publish().isEnabled(),'Incomplete TH never blocks a complete EN publication');
+    await publish().click();dialog=page.getByRole('dialog',{name:'Publish article',exact:true});
+    assert.ok(await dialog.locator('[name=language][value=en]').isChecked());assert.equal(await dialog.locator('[name=language][value=th]').isChecked(),false);
+    await dialog.locator('[name=language][value=en]').uncheck();assert.ok(await dialog.locator('[type=submit]').isDisabled(),'At least one language is required');
+    await dialog.locator('[name=language][value=en]').check();await dialog.locator('[name=language][value=th]').check();
+    assert.ok(await dialog.locator('[type=submit]').isDisabled(),'Selecting an incomplete TH version blocks that combined publication');
+    await dialog.locator('[name=language][value=th]').uncheck();
+    await page.screenshot({path:out+'/'+engine+'-publish-en-only.png'});
+    await dialog.locator('[type=submit]').click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับเผยแพร่แล้ว'}).waitFor();
+    const english=await repository.detail(site,'browser-validation');assert.deepEqual(Object.keys(english.item.translations),['en']);
+    await page.locator('[data-lang=th]').click();
+    await articleField(page,'title').fill('คำถามก่อนเลือกประกัน');await articleField(page,'excerpt').fill('ตรวจความคุ้มครองก่อนตัดสินใจ');
+    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').fill('อ่านรายละเอียดกรมธรรม์ก่อนเลือกแผน');
+    await publish().click();dialog=page.getByRole('dialog',{name:'Publish article',exact:true});
+    assert.equal(await dialog.locator('[name=language][value=en]').isChecked(),false);
+    await dialog.locator('[type=submit]').click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับเผยแพร่แล้ว'}).waitFor();
+    const bilingual=await repository.detail(site,'browser-validation');
+    assert.deepEqual(bilingual.item.translations.en,english.item.translations.en,'Publishing TH preserves the unselected EN live snapshot');
+    assert.equal(bilingual.item.translations.th.title,'คำถามก่อนเลือกประกัน');
     assert.deepEqual(errors,[]);assert.ok(requests.includes('save')&&requests.includes('publish'));
     fs.writeFileSync(out+'/'+engine+'-report.json',JSON.stringify({passed:true,engine,requests,errors,scope:'Actual editor + repository + visitor; isolated storage; auth not exercised'},null,2));
     console.log('PASS '+engine+' actual UI: field errors, draft save/reload, Alt, SEO preview/publication/visitor, TH/EN guard, slug conflict, mobile, live isolation, shortcut isolation.');

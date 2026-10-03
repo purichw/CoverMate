@@ -1,3 +1,5 @@
+import {articleMediaForLanguage} from '../../article-media.mjs';
+
 export const ARTICLE_STATUS = Object.freeze({published:'Published',draft:'Draft',scheduled:'Scheduled',archived:'Archived',trashed:'Trash',unknown:'Unknown'});
 export const ARTICLE_VIEWS = Object.freeze({active:'Active',published:'Published',unpublished:'Unpublished',archived:'Archived',trashed:'Trash'});
 export const ARTICLE_SORT = Object.freeze({ updated: 'อัปเดตล่าสุด', oldest: 'อัปเดตเก่าสุด', published: 'วันที่บทความใหม่สุด', earliest: 'วันที่บทความเก่าสุด', pinned: 'ปักหมุดก่อน', title: 'ชื่อบทความ ก–ฮ' });
@@ -25,6 +27,7 @@ export function normalizeArticleCatalog(payload) {
       return [lang, { title: text(source.title), excerpt: text(source.excerpt), category: text(source.category), imageAlt: text(source.imageAlt) }];
     }));
     const primary = translations.th.title ? translations.th : translations.en;
+    const media=articleMediaForLanguage(record,translations.th.title?'th':'en','image');
     // A working copy does not unpublish the original article in the catalog.
     const lifecycle=['archived','trashed'].includes(record.lifecycle)?record.lifecycle:'active';
     const status = lifecycle!=='active'?lifecycle:record.localDraft===true && record.basePublished===true ? 'published' : ['published', 'draft', 'scheduled'].includes(record.status) ? record.status : 'unknown';
@@ -38,9 +41,9 @@ export function normalizeArticleCatalog(payload) {
       title: primary.title || 'ยังไม่ได้ตั้งชื่อบทความ', excerpt: primary.excerpt,
       categoryId: text(record.categoryId) || 'uncategorized', category: primary.category || 'ยังไม่จัดหมวดหมู่',
       author: text(record.authorName) || 'ยังไม่ระบุผู้เขียน', updatedAt: time(record.updatedAt), scheduledAt: time(record.scheduledAt),
-      image: articleImageURL(record.image?.src),
-      imageX: Number.isFinite(record.image?.x) ? Math.max(0, Math.min(100, record.image.x)) : 50,
-      imageY: Number.isFinite(record.image?.y) ? Math.max(0, Math.min(100, record.image.y)) : 50
+      image: articleImageURL(media.src),
+      imageX: Number.isFinite(media.x) ? Math.max(0, Math.min(100, media.x)) : 50,
+      imageY: Number.isFinite(media.y) ? Math.max(0, Math.min(100, media.y)) : 50
     };
   });
   const categories = [...new Map(items.map(item => [item.categoryId, item.category])).entries()]

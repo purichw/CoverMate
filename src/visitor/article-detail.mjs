@@ -1,7 +1,7 @@
 import {projectPublishedArticles,articlePublicHref} from './home-articles.mjs';
 import {renderArticleDocument,articleDocumentText} from '../../article-document.mjs';
 import {articleTypographyAttributes} from '../../article-typography.mjs';
-import {articleImageDelivery} from '../../article-media.mjs';
+import {articleImageDelivery,articleMediaForLanguage} from '../../article-media.mjs';
 import {projectArticleAuthorDetails} from '../../article-author.mjs';
 
 export function articleDetailSlug(path = '') {
@@ -45,7 +45,8 @@ export function projectArticleDetail(payload, {slug,lang = 'th',now,mediaUrl = (
   const published = new Date(summary.publishedAt);
   const date = new Intl.DateTimeFormat(lang==='en'?'en-GB':'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
   const updated = Date.parse(copy.updatedAt);
-  const image=articleImageDelivery({...item.cover,src:mediaUrl(item.cover?.src)||mediaUrl(item.image?.src)},'banner');
+  const cover=articleMediaForLanguage(item,lang);
+  const image=articleImageDelivery({...cover,src:mediaUrl(cover.src)},'banner');
   return {...summary,available:true,sample:payload.sample===true,blocks,sources,languages:Object.keys(item.translations),
     ...projectArticleAuthorDetails(copy,lang),
     richDocument:rich ? JSON.stringify(rich.document) : '',

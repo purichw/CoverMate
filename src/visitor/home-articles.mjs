@@ -1,19 +1,16 @@
 // Read-only publication summaries, separate from the Home CMS document.
 // Only the server's live projection may populate the public feed.
-import {articleImageDelivery} from '../../article-media.mjs';
+import {articleImageDelivery,articleMediaForLanguage} from '../../article-media.mjs';
 export function articlePublicHref(path,lang='th') {
   const url=new URL(path,'https://covermateinsurance.com');
   if(lang==='en')url.searchParams.set('lang','en');
   const current=new URLSearchParams(globalThis.location?.search||'');
-  if(current.get('cm_env')==='uat')url.searchParams.set('cm_env','uat');
-  if(current.get('cm_emulator')==='1')url.searchParams.set('cm_emulator','1');
+  for(const [key,value] of [['cm_env','uat'],['cm_emulator','1']])if(current.get(key)===value)url.searchParams.set(key,value);
   return url.pathname+url.search+url.hash;
 }
 export function readHomeArticleFeed(root) {
-  try {
-    const node = root.querySelector('#covermate-article-feed');
-    return node ? JSON.parse(node.textContent) : null;
-  } catch { return null; }
+  try {return JSON.parse(root.querySelector('#covermate-article-feed')?.textContent||'null');}
+  catch {return null;}
 }
 
 export function projectPublishedArticles(feed, {lang = 'th', now = Date.now(), mediaUrl = () => ''} = {}) {
@@ -26,20 +23,23 @@ export function projectPublishedArticles(feed, {lang = 'th', now = Date.now(), m
     const copy = item?.translations?.[locale];
     const id = text(item?.id), slug = text(item?.slug);
     const publishedAt = Date.parse(copy?.publishedAt);
+    const releasedAt = Date.parse(copy?.releasedAt || copy?.updatedAt);
     if (!id || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || ids.has(id) || slugs.has(slug) ||
         item.status !== 'published' || copy?.status !== 'published' || !text(copy.title) ||
         !Number.isFinite(publishedAt) || publishedAt > now) return [];
     ids.add(id); slugs.add(slug);
-    const position = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0,Math.min(100,value)) : 50;
-    const image=articleImageDelivery({...item.image,src:mediaUrl(item.image?.src)});
-    return [{key:id, slug, publishedAt, showDate:copy.showDate!==false, title:text(copy.title), excerpt:text(copy.excerpt),
+    const position = value => Number.isFinite(value) ? Math.max(0,Math.min(100,value)) : 50;
+    const media=articleMediaForLanguage(item,locale,'image');
+    const image=articleImageDelivery({...media,src:mediaUrl(media.src)});
+    const readingMinutes=copy.readingMinutes,rank=featured.indexOf(id);
+    return [{key:id, slug, publishedAt, releasedAt:Number.isFinite(releasedAt)?releasedAt:0, showDate:copy.showDate!==false, title:text(copy.title), excerpt:text(copy.excerpt),
       pinned:item.pinned===true,homePinned:item.featured===true,tags:Array.isArray(item.tags)?item.tags.filter(tag=>typeof tag==='string').slice(0,20):[],
-      categoryId:text(item.categoryId) || text(item.translations?.th?.category) || text(item.translations?.en?.category) || text(copy.category),
-      readingMinutes:Number.isSafeInteger(copy.readingMinutes) && copy.readingMinutes > 0 ? copy.readingMinutes : null,
+      categoryId:text(item.categoryId) || text(item.translations.th?.category) || text(item.translations.en?.category),
+      readingMinutes:Number.isSafeInteger(readingMinutes) && readingMinutes > 0 ? readingMinutes : null,
       category:text(copy.category), image:image.src, imageSrcset:image.srcset, imageAlt:text(copy.imageAlt),
-      imageStyle:'object-position:' + position(item.image?.x) + '% ' + position(item.image?.y) + '%',
+      imageStyle:`object-position:${position(media.x)}% ${position(media.y)}%`,
       href:articlePublicHref('/articles/'+slug,locale), titleId:'home-article-' + slug,
-      rank:featured.includes(id) ? featured.indexOf(id) : item.featured===true ? featured.length : Number.MAX_SAFE_INTEGER}];
+      rank:rank>=0 ? rank : item.featured===true ? featured.length : Number.MAX_SAFE_INTEGER}];
   }).sort((a,b) => a.rank - b.rank || b.publishedAt - a.publishedAt || a.key.localeCompare(b.key));
   return items;
 }

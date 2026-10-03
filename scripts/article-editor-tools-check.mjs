@@ -41,7 +41,7 @@ try {
   const modalField=key=>page.locator(`.ae-modal-form [data-field="${key}"]`);
   const submit=async()=>{await page.locator('.ae-modal-form [type=submit]').click();if(!await page.locator('.ae-modal-form').count())await closeSettings(page);};
   const submitImage=async source=>{
-    await page.locator('.ae-modal-form [type=submit]').click();
+    if(await page.locator('.ae-modal-form [type=submit]').count())await page.locator('.ae-modal-form [type=submit]').click();
     const dialog=page.locator('.cm-media-dialog');await dialog.waitFor();
     if(source){await dialog.locator('input[type=text]').fill(source);await dialog.getByRole('button',{name:'ใช้ URL และจัดกรอบ',exact:true}).click();}
     await page.waitForFunction(()=>document.querySelector('.cm-media-dialog .cropper-container')&&!document.querySelector('.cm-media-primary').disabled);
@@ -54,6 +54,7 @@ try {
   const check=name=>{report.checks.push(name);console.log('PASS '+name);};
   const selectAll=async()=>{await body.click();await body.press('ControlOrMeta+a');};
   const plain=async(text='Selected text')=>{
+    if(await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
     await body.fill(text);await selectAll();await tool('clear');
   };
   const choose=async(name,label)=>{
@@ -129,8 +130,8 @@ try {
   await body.locator('figure img').click();await tool('image');await modalField('alt').fill('Edited alt');await submitImage();
   assert.equal(await body.locator('figure img').getAttribute('alt'),'Edited alt');
   assert.equal(await body.locator('figure').count(),1);
-  await tool('cover');
-  await modalField('alt').fill('Cover alt');await modalField('caption').fill('Cover caption');await submitImage('/assets/brand/articles-reading-v1.webp');
+  await field('coverAlt').fill('Cover alt');await field('caption').fill('Cover caption');
+  await tool('cover');await submitImage('/assets/brand/articles-reading-v1.webp');
   assert.equal(await field('coverAlt').inputValue(),'Cover alt');assert.equal(await field('caption').inputValue(),'Cover caption');
   await tool('clear-cover');assert.equal(await page.locator('.ae-cover img').count(),0);
   assert.equal(await body.locator('figure').count(),1,'Removing cover preserves body images');
@@ -193,18 +194,18 @@ try {
   while(await page.locator('[data-ae=remove-tag]').count())await page.locator('[data-ae=remove-tag]').last().click();
   await field('tags').fill('QA, health');await tool('add-source');await tool('save');assert.match(await fieldError('source-url-0'),/HTTPS/);
   await field('source-label-0').fill('Reference');await field('source-url-0').fill('https://example.com/source');
-  await tool('clear-takeaways');
-  await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways').waitFor({state:'detached'});
+  await field('takeaways').fill('');
+  await page.frameLocator('.ae-canvas-frame').locator('[data-article-summary=true]').waitFor({state:'detached'});
   assert.equal(await field('takeaways').inputValue(),'');
   assert.equal(await field('takeawayNote').inputValue(),articleNotes.th.takeawayNote);
   await field('takeaways').fill('Point one\nPoint two');await field('takeawayNoteEnabled').check();
-  await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways li').first().waitFor();
+  await page.frameLocator('.ae-canvas-frame').locator('[data-article-summary=true] li').first().waitFor();
   await closeSettings(page);
   await tool('add-source');await (await revealArticleControl(page,'[data-ae=remove-source][data-index="1"]')).click();await closeSettings(page);
   await save();
   await tool('preview');const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-sources a').waitFor();assert.equal(await preview.locator('.ad-sources a').getAttribute('href'),'https://example.com/source');
-  assert.equal(await preview.locator('.ad-takeaways li').count(),2);
-  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'.ad-takeaways-note'})){
+  assert.equal(await preview.locator('[data-article-summary=true] li').count(),2);
+  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'[data-article-summary=true] .article-takeaway-note'})){
     assert.equal(await preview.locator(selector).textContent(),articleNotes.th[key]);
     assert.equal(await preview.locator(selector).evaluate(el=>getComputedStyle(el).whiteSpace),'pre-line');
   }
@@ -212,8 +213,8 @@ try {
   await page.screenshot({path:out+'/'+engine+'-preview.png'});await close();
   for(const key of Object.keys(articleNotes.th))await field(key+'Enabled').uncheck();
   await save();await tool('preview');await preview.locator('.ad-prose').waitFor();
-  assert.equal(await preview.locator('.ad-header-note,.ad-side-note,.ad-takeaways-note').count(),0,'Each disabled note is absent, including any global sidebar fallback');
-  assert.equal(await preview.locator('.ad-takeaways li').count(),2,'Hiding the handwritten note retains the takeaway summary');
+  assert.equal(await preview.locator('.ad-header-note,.ad-side-note,[data-article-summary=true] .article-takeaway-note').count(),0,'Each disabled note is absent, including any global sidebar fallback');
+  assert.equal(await preview.locator('[data-article-summary=true] li').count(),2,'Hiding the handwritten note retains the takeaway summary');
   await page.screenshot({path:out+'/'+engine+'-notes-hidden-preview.png'});await close();
   const download=page.waitForEvent('download');await tool('export');const backup=await download;
   await backup.saveAs(out+'/'+engine+'-backup.json');
@@ -241,11 +242,11 @@ try {
   await save();
   await field('takeawayNoteEnabled').scrollIntoViewIfNeeded();
   await page.screenshot({path:out+'/'+engine+'-note-controls.png'});
-  await tool('preview');await preview.locator('.ad-takeaways-note').waitFor();
+  await tool('preview');await preview.locator('[data-article-summary=true] .article-takeaway-note').waitFor();
   assert.equal(await preview.locator('.ad-header-note').innerText(),articleNotes.th.headerNote);
   assert.equal(await preview.locator('.ad-side-note p').textContent(),articleNotes.th.sidebarQuote);
-  assert.equal(await preview.locator('.ad-takeaways-note').textContent(),'วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า','Re-enabled note uses the newly edited text');
-  await preview.locator('.ad-takeaways-note').scrollIntoViewIfNeeded();
+  assert.equal(await preview.locator('[data-article-summary=true] .article-takeaway-note').textContent(),'วางแผนวันนี้\nเพื่อสุขภาพที่ดี\nในวันข้างหน้า','Re-enabled note uses the newly edited text');
+  await preview.locator('[data-article-summary=true] .article-takeaway-note').scrollIntoViewIfNeeded();
   await page.screenshot({path:out+'/'+engine+'-notes-restored-preview.png'});await close();
   check('All three notes toggle off/on without losing text; localized visibility saves, exports, reloads and reaches the real full-page preview');
   check('Header, sidebar and takeaway notes remain independent in TH/EN, render escaped, export and persist/reload');
@@ -270,12 +271,13 @@ try {
   await failedSave.locator('[data-article-action=create]').click();
   await articleField(failedSave,'title').fill('Preserve me after failed save');
   await revealArticleControl(failedSave,'.ae-canvas-frame');
+  await failedSave.locator('[data-ae=toggle-writing]').click();
   await articleCanvas(failedSave).locator('.ae-editor-host:visible .tiptap').fill('Unsaved content');
   await failedSave.locator('[data-ae=save]:visible').first().click();
   await failedSave.locator('.ae-feedback[data-error=true]').waitFor();
   assert.match(await failedSave.locator('.ae-feedback').innerText(),/ส่งออกไฟล์สำรอง/);
   assert.equal(await failedSave.locator('[data-field=title]').inputValue(),'Preserve me after failed save');
-  const fallback=failedSave.waitForEvent('download');await failedSave.locator('[data-ae=export]').click();
+  const fallback=failedSave.waitForEvent('download');await articleTool(failedSave,'export');
   await (await fallback).saveAs(out+'/'+engine+'-failed-save-backup.json');
   assert.equal(JSON.parse(fs.readFileSync(out+'/'+engine+'-failed-save-backup.json','utf8')).translations.th.title,'Preserve me after failed save');
   await denied.close();

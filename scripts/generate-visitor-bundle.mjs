@@ -7,6 +7,7 @@ import {
   readVisitorSources,
   readVisitorStyleAssets,
   readSelectAsset,
+  readArticleSearchAsset,
   readAnalyticsAsset,
   readEditorPreviewAsset,
   readEditorVersionsAsset,
@@ -26,6 +27,7 @@ function main() {
   const assets = JSON.stringify(readImageVersions(), null, 2) + '\n';
   const styles = readVisitorStyleAssets();
   const select = readSelectAsset();
+  const search = readArticleSearchAsset();
   const analytics = readAnalyticsAsset();
   const editorPreview = readEditorPreviewAsset();
   const editorVersions = readEditorVersionsAsset();
@@ -51,7 +53,7 @@ function main() {
   const checkOnly = process.argv.includes("--check");
   if (checkOnly) {
     const current = fs.readFileSync(VISITOR_SOURCE_PATHS.index, "utf8");
-    if (current !== next || !fs.existsSync(VISITOR_SOURCE_PATHS.publicIndex) || readPublicIndex() !== publicIndex || admin !== nextAdmin || !fs.existsSync(assetFile) || fs.readFileSync(assetFile, 'utf8') !== assets || [select, analytics, editorPreview, editorVersions, payload, publicContract, articleReader, articleFeed, ...publicRuntime].some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.code) || styles.some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.css)) {
+    if (current !== next || !fs.existsSync(VISITOR_SOURCE_PATHS.publicIndex) || readPublicIndex() !== publicIndex || admin !== nextAdmin || !fs.existsSync(assetFile) || fs.readFileSync(assetFile, 'utf8') !== assets || [select, search, analytics, editorPreview, editorVersions, payload, publicContract, articleReader, articleFeed, ...publicRuntime].some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.code) || styles.some(asset => !fs.existsSync(asset.file) || fs.readFileSync(asset.file,'utf8') !== asset.css)) {
       console.error("Visitor/owner artifacts are out of sync with src/visitor sources. Run npm run build:visitor.");
       process.exit(1);
     }
@@ -67,6 +69,7 @@ function main() {
     fs.writeFileSync(asset.file,asset.css);
   }
   fs.writeFileSync(select.file,select.code);
+  fs.writeFileSync(search.file,search.code);
   fs.writeFileSync(analytics.file,analytics.code);
   fs.writeFileSync(editorPreview.file,editorPreview.code);
   fs.writeFileSync(editorVersions.file,editorVersions.code);

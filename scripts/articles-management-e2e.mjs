@@ -167,6 +167,68 @@ try {
     const axe=await new AxeBuilder({page}).include('.articles-workspace').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
     assert.deepEqual(axe.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
   }
+  await view('active');await openAction(2,'trash');await confirm();await view('trashed');
+  const retained=await repository.get(site,ids[2]);
+  await search.fill(specs[2][1]);await page.locator(`[data-article-id="${ids[2]}"] .article-more summary`).click();
+  await capture('desktop-trash-actions',false);await page.keyboard.press('Escape');
+  await openAction(2,'delete');
+  const deletionDialog=page.locator('.article-lifecycle-dialog'),confirmation=deletionDialog.locator('[name=confirmation]'),deleteButton=deletionDialog.locator('[data-lifecycle=confirm]');
+  assert.equal(await page.locator('footer [data-lifecycle=cancel]').evaluate(node=>node===document.activeElement),true,'Initial focus is on Cancel');
+  assert.equal(await deleteButton.isDisabled(),true);
+  await capture('desktop-delete-confirmation',false);
+  for(const value of ['delete',' DELETE','DELETE ','DELET']) {
+    await confirmation.fill(value);assert.equal(await deleteButton.isDisabled(),true);await confirmation.press('Enter');
+    assert.deepEqual(await repository.get(site,ids[2]),retained,'Wrong confirmation never deletes');
+  }
+  await confirmation.fill('DELETE');assert.equal(await deleteButton.isEnabled(),true);
+  await confirmation.fill('DELET');assert.equal(await deleteButton.isDisabled(),true,'Changing valid confirmation disables deletion again');
+  await page.keyboard.press('Escape');await deletionDialog.waitFor({state:'detached'});
+  assert.equal(await page.locator(`[data-article-id="${ids[2]}"] .article-more summary`).evaluate(node=>node===document.activeElement),true,'Cancel restores focus to the row menu');
+  assert.deepEqual(await repository.get(site,ids[2]),retained,'Cancel retains the article');
+  await openAction(2,'delete');await confirmation.fill('DELETE');
+  await db.doc('admins/'+signup.localId).update({active:false});await deleteButton.click();
+  await deletionDialog.locator('[role=alert]:not([hidden])').waitFor();assert.equal(await deleteButton.isDisabled(),true);
+  assert.equal(await confirmation.inputValue(),'DELETE');assert.deepEqual(await repository.get(site,ids[2]),retained,'Revoked owner cannot delete');
+  await db.doc('admins/'+signup.localId).update({active:true});await page.locator('footer [data-lifecycle=cancel]').click();
+  await openAction(2,'delete');await confirmation.fill('DELETE');
+  concurrent=await repository.get(site,ids[2]);await repository.mutate(site,'restore',{id:ids[2]},concurrent.revision,signup.localId);
+  await deleteButton.click();await deletionDialog.locator('[role=alert]:not([hidden])').waitFor();assert.equal(await deleteButton.isDisabled(),true);
+  assert.equal((await repository.get(site,ids[2])).lifecycle,'active','Concurrent restore survives stale delete');
+  await page.locator('[data-lifecycle=reload]').click();await ready();
+  await view('active');await openAction(2,'trash');await confirm();await view('trashed');
+  const deleteRoute=url=>url.pathname==='/api/articles'&&url.searchParams.get('action')==='delete';
+  await page.route(deleteRoute,route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'articles_unavailable',message:'Temporary test failure'})}));
+  await openAction(2,'delete');await confirmation.fill('DELETE');await deleteButton.click();
+  await deletionDialog.locator('[role=alert]:not([hidden])').waitFor();
+  assert.match(await deletionDialog.locator('[role=alert]').innerText(),/ยืนยันผลการลบไม่ได้/);
+  assert.equal(await deleteButton.isDisabled(),true,'Unknown outcome requires reload, not blind retry');
+  assert.equal(await confirmation.inputValue(),'DELETE');await page.unroute(deleteRoute);
+  await page.locator('[data-lifecycle=reload]').click();await ready();
+  await openAction(2,'delete');await confirmation.fill('DELETE');
+  for(const width of [1440,390,320]) {
+    await page.setViewportSize({width,height:width===1440?1000:844});await fit();
+    assert.equal(await deletionDialog.evaluate(node=>{const rect=node.getBoundingClientRect();return rect.left>=0&&rect.right<=innerWidth&&node.scrollWidth<=node.clientWidth;}),true,'Deletion dialog fits '+width);
+    const axe=await new AxeBuilder({page}).include('.article-lifecycle-dialog').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+    assert.deepEqual(axe.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[]);
+    if(width===390)await capture('mobile-delete-confirmation',false);
+  }
+  await page.setViewportSize({width:1440,height:1000});await capture('desktop-delete-ready',false);
+  let releaseDelete,markDeleteStarted,deleteRequests=0;
+  const heldDelete=new Promise(resolve=>releaseDelete=resolve),deleteStarted=new Promise(resolve=>markDeleteStarted=resolve);
+  await page.route(deleteRoute,async route=>{deleteRequests++;markDeleteStarted();await heldDelete;await route.continue();});
+  await deleteButton.click();await deleteStarted;
+  assert.equal(await deleteButton.isDisabled(),true);assert.equal(await confirmation.isDisabled(),true);
+  await page.keyboard.press('Escape');assert.equal(await deletionDialog.isVisible(),true,'Cannot dismiss an in-flight deletion');
+  releaseDelete();await deletionDialog.waitFor({state:'detached'});await ready();await page.unroute(deleteRoute);
+  assert.equal(deleteRequests,1,'Permanent delete is submitted once');
+  assert.equal((await db.doc('sites/'+site+'/articles/'+ids[2]).get()).exists,false);
+  assert.equal((await db.doc('sites/'+site+'/articleCatalog/'+ids[2]).get()).exists,false);
+  assert.equal(await page.locator(`[data-article-id="${ids[2]}"]`).count(),0);
+  await page.reload();await ready();await view('trashed');await search.fill('');
+  assert.equal(await page.locator(`[data-article-id="${ids[2]}"]`).count(),0,'Deleted row stays absent after reload');
+  assert.equal((await repository.catalog(site)).items.length,5,'Only the selected article is removed');
+  await capture('desktop-trash-after-delete',false);
+  report.checks.push('Permanent delete: Trash-only action, exact DELETE typing/editing, safe initial focus, Escape/cancel restoration, revoked owner, concurrent restore conflict, unknown-outcome reload, busy/double-submit guard, persisted deletion, desktop/390/320 dialog fit and axe');
   await db.doc('admins/'+signup.localId).update({role:'readonly'});await page.reload();await page.locator('[data-article-state=forbidden]').waitFor();
   assert.equal(await save.isDisabled(),true);assert.equal(await checked('enabled').isDisabled(),true);
   assert.equal(await page.locator('[data-article-action=create]').isDisabled(),true);assert.equal(await page.locator('[data-article-action=pin-order]').isDisabled(),true);

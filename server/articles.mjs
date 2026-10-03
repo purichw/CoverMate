@@ -4,6 +4,7 @@ import {articleSettings} from '../article-settings.mjs';
 import {createArticleDraft,ARTICLE_CATEGORIES} from '../admin/articles/drafts.mjs';
 import {articleDocumentText,articleUrl,normalizeArticleDocument,normalizeArticleMedia} from '../article-document.mjs';
 import {validateArticle} from '../article-validation.mjs';
+import {articleMediaForLanguage} from '../article-media.mjs';
 
 const identity = value => typeof value==='string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
 const slugOK = value => typeof value==='string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length<=160;
@@ -54,6 +55,9 @@ function publicItem(live,now,{summary=false}={}) {
     // Older publications predate showDate. Keep their date visible and avoid
     // undefined fields when persisting the public summary back to Firestore.
     translations[lang]=summary?Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt','showDate','status','readingMinutes'].map(key=>[key,key==='showDate'?t.showDate!==false:t[key]])):{...t,...(t.document?{document:normalizeArticleDocument(t.document,{includeMediaMetadata:false})}:{})};
+    for(const role of ['image','cover'])translations[lang][role]=normalizeArticleMedia(articleMediaForLanguage(live,lang,role),{includeMetadata:false});
+    // Live updatedAt is set by Publish, never by saving an unpublished draft.
+    translations[lang].releasedAt=t.releasedAt||t.updatedAt||null;
   }
   if(!Object.keys(translations).length)return null;
   const {id,slug,categoryId,tags,featured,pinned,image,cover}=live;
@@ -71,7 +75,7 @@ function catalogValue(record,now) {
   value.hasUnpublishedChanges=record.publishedRevision!==record.revision;
   value.publishedPinned=record.live?.pinned===true;
   value.publishedHomePinned=record.live?.featured===true;
-  value.translations=Object.fromEntries(Object.entries(value.translations).map(([lang,t])=>[lang,Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt'].map(key=>[key,t[key]]))]));
+  value.translations=Object.fromEntries(Object.entries(value.translations).map(([lang,t])=>[lang,{...Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt'].map(key=>[key,t[key]])),image:normalizeArticleMedia(articleMediaForLanguage(value,lang,'image'),{includeMetadata:false})}]));
   return value;
 }
 
@@ -125,10 +129,13 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
   async function mutate(site,action,input,expected,uid) {
     const r=refs(site),id=input?.id;
     if(!identity(id))fail('รหัสบทความไม่ถูกต้อง');
-    if(!['save','publish','unpublish','archive','trash','restore'].includes(action))fail('ไม่รู้จักการทำรายการ');
+    if(!['save','publish','unpublish','archive','trash','restore','delete'].includes(action))fail('ไม่รู้จักการทำรายการ');
+    if(action==='delete'&&input.confirmation!=='DELETE')throw error(422,'confirmation_required','กรุณาพิมพ์ DELETE ให้ตรงทุกตัวอักษรเพื่อยืนยันการลบถาวร');
     const normalized=action==='save'?draftValue(input):null;
     return db.runTransaction(async tx=>{
-      const ref=r.items.doc(id),old=(await tx.get(ref)).data();checkRevision(old,expected);
+      const ref=r.items.doc(id),old=(await tx.get(ref)).data();
+      if(!old&&action==='delete')throw error(404,'not_found','ไม่พบบทความนี้แล้ว กรุณาโหลดรายการล่าสุด');
+      checkRevision(old,expected);
       if(!old&&action!=='save')throw error(404,'not_found','ไม่พบบทความ');
       const previousLifecycle=lifecycleOf(old);
       if(['save','publish','unpublish','archive'].includes(action)&&!isActive(old))throw error(409,'inactive_article','บทความนี้อยู่ในที่เก็บถาวรหรือถังขยะ กรุณากู้คืนจากหน้ารายการก่อน');
@@ -136,6 +143,20 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
       if(action==='trash'&&previousLifecycle==='trashed')throw error(409,'invalid_transition','บทความนี้อยู่ในถังขยะแล้ว กรุณาโหลดรายการล่าสุด');
       if(action==='unpublish'&&!old.live)throw error(409,'invalid_transition','บทความนี้ยังไม่ได้เผยแพร่ กรุณาโหลดรายการล่าสุด');
       const at=new Date(now()).toISOString();
+      if(action==='delete') {
+        if(previousLifecycle!=='trashed')throw error(409,'invalid_transition','ลบถาวรได้เฉพาะบทความใน Trash กรุณาโหลดรายการล่าสุด');
+        const slugRef=old.lockedSlug?r.slugs.doc(old.lockedSlug):null;
+        const holder=slugRef?(await tx.get(slugRef)).data():null;
+        const pinSettings=articleSettings((await tx.get(r.settings)).data());
+        // Remove authored content and its projections atomically. Keep only a
+        // content-free audit event; shared media belongs to the media library.
+        tx.delete(ref);
+        tx.delete(r.catalog.doc(id));
+        if(holder?.id===id)tx.delete(slugRef);
+        if(pinSettings.pinnedOrder.includes(id))tx.set(r.settings,{...pinSettings,pinnedOrder:pinSettings.pinnedOrder.filter(value=>value!==id),revision:pinSettings.revision+1,updatedAt:at,updatedBy:uid});
+        tx.create(r.audit.doc(),{action,articleId:id,actor:uid,at,revision:expected+1,previousLifecycle,lifecycle:'deleted'});
+        return {id,deleted:true,revision:expected+1};
+      }
       let draft=normalized||old.draft,live=old?.live||null,lifecycle=previousLifecycle;
       if(old?.lockedSlug && draft.slug!==old.lockedSlug)fail('URL ของบทความที่เคยเผยแพร่แล้วเปลี่ยนไม่ได้','slug');
       let slugRef;
@@ -143,16 +164,16 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
         const langs=input.languages;
         if(!Array.isArray(langs)||!langs.length||langs.some(l=>!['th','en'].includes(l))||new Set(langs).size!==langs.length)fail('เลือกภาษาที่จะเผยแพร่');
         validate(draft,{publish:true,languages:langs});
-        const translations={...live?.translations};
+        const translations=Object.fromEntries(Object.entries(live?.translations||{}).map(([lang,t])=>[lang,{...t,cover:articleMediaForLanguage(live,lang),image:articleMediaForLanguage(live,lang,'image')}]));
         for(const lang of langs) {
           const t=draft.translations[lang];
           if(!t.title.trim()||!t.excerpt.trim()||!articleDocumentText(t.document).trim())fail(`${lang.toUpperCase()}: กรุณากรอกชื่อ คำโปรย และเนื้อหาให้ครบ`);
-          if(draft.cover.src&&!t.coverAlt.trim())fail(`${lang.toUpperCase()}: กรุณาใส่ข้อความอธิบายภาพปก`);
+          if(articleMediaForLanguage(draft,lang).src&&!t.coverAlt.trim())fail(`${lang.toUpperCase()}: กรุณาใส่ข้อความอธิบายภาพปก`);
           const priorDate=live?.translations[lang]?.publishedAt;
           // An omitted display date must not erase ordering/SEO timestamps or
           // retain a cancelled future schedule. Legacy live records keep dates.
           const publishedAt=t.publishedAt||(Date.parse(priorDate)<=Date.parse(at)?priorDate:at);
-          translations[lang]={...t,author:draft.authorName,status:'published',publishedAt,showDate:!!t.publishedAt,updatedAt:at,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
+          translations[lang]={...t,cover:articleMediaForLanguage(draft,lang),image:articleMediaForLanguage(draft,lang,'image'),author:draft.authorName,status:'published',publishedAt,showDate:!!t.publishedAt,updatedAt:at,readingMinutes:Math.max(1,Math.ceil(articleDocumentText(t.document).length/700))};
         }
         slugRef=r.slugs.doc(draft.slug);
         const holder=(await tx.get(slugRef)).data();
@@ -194,7 +215,18 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
   return {
     settings,changeSettings,reorderPins,get,mutate,
     async catalog(site){return {available:true,complete:true,settings:await settings(site),items:(await records(site)).map(record=>catalogValue(record,now()))};},
-    async feed(site){const flags=await settings(site),items=flags.enabled?(await records(site)).filter(isActive).map(record=>publicItem(record.live,now(),{summary:true})).filter(Boolean):[];const ids=new Set(items.filter(item=>item.pinned).map(item=>item.id));return {available:true,settings:{...flags,pinnedOrder:flags.pinnedOrder.filter(id=>ids.has(id))},items};},
+    async feed(site){
+      const flags=await settings(site);
+      // Older catalogs omitted the per-language Publish clock. Read their live
+      // source without rewriting content or using a draft's last-saved time.
+      const publications=flags.enabled?await Promise.all((await records(site)).filter(isActive).map(async record=>{
+        if(record.live?.id&&Object.values(record.live.translations||{}).some(t=>!t.releasedAt&&!t.updatedAt))return (await refs(site).items.doc(record.live.id).get()).data()||record;
+        return record;
+      })):[];
+      const items=publications.filter(isActive).map(record=>publicItem(record.live,now(),{summary:true})).filter(Boolean);
+      const ids=new Set(items.filter(item=>item.pinned).map(item=>item.id));
+      return {available:true,settings:{...flags,pinnedOrder:flags.pinnedOrder.filter(id=>ids.has(id))},items};
+    },
     async detail(site,slug){if(!slugOK(slug)||!(await settings(site)).enabled)return null;const r=refs(site),holder=(await r.slugs.doc(slug).get()).data();if(!holder)return null;const record=(await r.items.doc(holder.id).get()).data();const item=isActive(record)?publicItem(record?.live,now()):null;return item?{available:true,item}:null;}
   };
 }

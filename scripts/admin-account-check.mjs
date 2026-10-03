@@ -55,6 +55,8 @@ try {
   };
   const desktop = page.locator('.sidebar .admin-account');
   const mobile = page.locator('.admin-account-mobile');
+  const signOutDialog = page.locator('[data-signout-confirm]');
+  const confirmLogout = () => signOutDialog.getByRole('button',{name:'ออกจากระบบ',exact:true}).click();
   const openDesktop = async () => { if (await desktop.getAttribute('open') === null) await desktop.locator('summary').click(); };
   const closePanel = async () => { await page.keyboard.press('Escape'); await page.locator('.case-panel').waitFor({ state: 'detached' }); };
   await ready();
@@ -69,6 +71,17 @@ try {
   assert.equal(await desktop.locator('.admin-account-menu').isVisible(), false);
   assert.equal(await desktop.locator('summary').evaluate(node => node === document.activeElement), true);
   report.checks.push('Desktop account disclosure opens with Enter; Escape closes and restores focus; only real account/notification actions exist.');
+
+  for (const height of [720, 600, 480]) {
+    await page.setViewportSize({ width: 1440, height });
+    await openDesktop();
+    const bounds = await desktop.locator('.admin-account-menu').boundingBox();
+    assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= height, `Entire account menu fits ${height}px desktop without scrolling`);
+    assert.equal(await desktop.locator('.admin-account-menu').evaluate(node => node.scrollHeight <= node.clientHeight), true);
+    await page.keyboard.press('Escape');
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  report.checks.push('All desktop account actions fit immediately at 720/600/480px height without scrolling.');
 
   await openDesktop();
   await desktop.locator('[data-admin-account-action=details]').click();
@@ -107,6 +120,12 @@ try {
     await menu.click();
     await mobile.locator('summary').click();
     assert.equal(await mobile.locator('.admin-account-menu').isVisible(), true);
+    await mobile.locator('[data-action=logout]').click();
+    await signOutDialog.waitFor();
+    assert.equal(await signOutDialog.getByRole('button',{name:'ทำงานต่อ'}).evaluate(el=>el===document.activeElement),true);
+    await page.keyboard.press('Escape');
+    await signOutDialog.waitFor({state:'detached'});
+    assert.equal(report.signOutEvents.length,0,'Mobile menu cancellation does not sign out');
     assert.match(await mobile.locator('.admin-account-mobile-heading').innerText(), /CoverMate Preview[\s\S]*เจ้าของ \/ Admin/);
     const geometry = await mobile.locator('.admin-account-menu').boundingBox();
     assert.ok(geometry.x >= 0 && geometry.x + geometry.width <= width && geometry.y >= 0 && geometry.y + geometry.height <= 845, `Account panel fits ${width}px viewport`);
@@ -138,6 +157,13 @@ try {
   await closePanel();
   assert.equal(await homeAccount.evaluate(node => node === document.activeElement), true);
   await page.locator('.home-mobile-account [data-action=logout]').click();
+  await signOutDialog.waitFor();
+  await page.screenshot({path:path.join(output,'logout-mobile.png')});
+  await signOutDialog.getByRole('button',{name:'ทำงานต่อ'}).click();
+  assert.equal(report.signOutEvents.length,0,'Cancel leaves Home session intact');
+  assert.ok(await page.evaluate(()=>localStorage.getItem('covermate-admin-session')));
+  await page.locator('.home-mobile-account [data-action=logout]').click();
+  await confirmLogout();
   await page.waitForURL('**/admin/login*');
   assert.deepEqual(report.signOutEvents, ['sign-out-start', 'sign-out-complete', 'login'], 'Home logout waits for actual Firebase sign-out completion before requesting login');
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
@@ -153,6 +179,9 @@ try {
   let articleGuard = false;
   page.once('dialog', async dialog => { articleGuard = true; await dialog.dismiss(); });
   await desktop.locator('[data-action=logout]').click();
+  await signOutDialog.waitFor();
+  await page.screenshot({path:path.join(output,'logout-desktop.png')});
+  await confirmLogout();
   assert.equal(articleGuard, true);
   assert.equal(report.signOutEvents.length, 3, 'Cancelled article guard must not begin sign-out');
   assert.ok(await page.evaluate(() => localStorage.getItem('covermate-admin-session')));
@@ -170,6 +199,7 @@ try {
   await page.locator('[data-case-panel=new]').waitFor();
   await openDesktop();
   await desktop.locator('[data-action=logout]').click();
+  await confirmLogout();
   await page.locator('.case-discard').waitFor();
   await page.locator('[data-case-action=keep-editing]').click();
   assert.equal(report.signOutEvents.length, 3, 'Keep editing must not begin sign-out');
@@ -177,6 +207,7 @@ try {
   assert.equal(await page.locator('[data-case-panel=new]').isVisible(), true);
   await openDesktop();
   await desktop.locator('[data-action=logout]').click();
+  await confirmLogout();
   await page.locator('[data-case-action=discard]').click();
   await page.waitForURL('**/admin/login*');
   assert.deepEqual(report.signOutEvents.slice(3), ['sign-out-start', 'sign-out-complete', 'login'], 'Confirmed case logout waits for sign-out completion before requesting login');
@@ -189,6 +220,7 @@ try {
   await page.evaluate(() => sessionStorage.removeItem('account-fixture-signed-out'));
   await openDesktop();
   await desktop.locator('[data-action=logout]').click();
+  await confirmLogout();
   await page.waitForURL('**/admin/login*');
   assert.deepEqual(report.signOutEvents.slice(6), ['sign-out-start', 'sign-out-failed', 'login']);
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);
