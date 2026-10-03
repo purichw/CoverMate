@@ -1,6 +1,6 @@
 # CoverMate Release Runbook
 
-Last updated: 2026-10-02
+Last updated: 2026-10-03
 
 ## Authorization
 
@@ -65,8 +65,10 @@ files. Verify the served runtime, not just a changing deployment identifier.
 - Check: `chk_36161e4d-9d2e-49b7-9669-ef6c103d6473`.
 - Desired configuration: `.github/vercel-production-check.json`.
 - Scope: production only; blocks `deployment-alias`; timeout 3600 seconds.
-- Existing `verify` job runs full CI plus emulator Auth/Rules/API/Publish E2E;
-  no second CI suite or mandatory UAT job was added.
+- `verify` is the final aggregate check. Runtime changes require preflight, all
+  five browser suites and real Auth/Rules/API/Publish emulators. Documentation
+  changes may use the verified-baseline path described below; the summary must
+  disclose reused runtime evidence rather than claim tests were rerun.
 - Read-only drift check: `node scripts/check-deployment-gate.mjs`.
 - Keep the GitHub job name `verify` unique and stable. Rename the Vercel check's
   `externalCheckName` together if that job is deliberately renamed.
@@ -90,22 +92,71 @@ historical pass. Platform behavior and manual bypass details:
 | --- | --- |
 | Pushed | Intended commit is on the intended remote branch. |
 | Build ready | Identified Vercel deployment finished building; `READY` / `STAGED` is still awaiting promotion. |
-| CI passed | Required checks actually executed and succeeded on that deployment's exact SHA; record the run URL. |
+| CI passed | The exact SHA's `verify` passed. For a full run, all suites executed successfully. For docs-only, record the current docs run and the exact verified base/run whose unchanged runtime coverage was reused. |
 | Production promoted | Canonical alias points to the intended deployment and the alias check succeeded. |
 | Release verified | The requested deployed surface passes proportionate read-only verification; report any real-device/auth/CMS evidence not covered. |
 
-`.github/workflows/ci.yml` currently has one `verify` job, a 40-minute job limit,
-and `cancel-in-progress: true` for the same Git ref. It runs `check:ci` followed
-by `check:emulators`; the latter is a separate required step, not part of
-`check:ci`. A new push to the same ref can cancel the active run. Cancelled or
-skipped coverage is not successful coverage.
+The October 3 workflow implementation keeps `verify` as the unique required
+check and uses this graph:
+
+- `scope`: test CI policy/runner logic and classify the checked-out revision.
+- Full path: `preflight` builds the artifacts and checks performance budgets
+  first, then fast contracts. On success, `browser` runs five isolated jobs
+  (`visitor`, `articles`, `cms`, `admin`, `smoke`) alongside `emulators`.
+- Docs path: check only allowlisted Markdown (`README.md`, `PROJECT_MAP.md`,
+  `docs/**/*.md`, `skills/**/*.md`), whitespace and relative repository links.
+  No npm install, browser download or emulator startup is needed for this path.
+- `verify` runs even after a dependency failure and rejects failed, cancelled,
+  missing or unexpectedly skipped results. Browser matrix `fail-fast: false`
+  collects independent failures in the same run instead of hiding later shards.
+
+Docs-only selection requires a nonempty documentation-only diff from the event's
+base to the tested HEAD, an ancestor base, and completed successful `CoverMate CI`
+on that exact base SHA on `main`. Legacy runs must have executed both main and
+emulator checks. Split runs must have passed every required job; consecutive
+docs-only runs may reuse the preceding verified docs run. Missing history,
+incomplete jobs, API/permission failures or a failed/pending base force full CI.
+Workflow, scripts, config, assets and unknown files always require full CI;
+manual dispatch also forces it. Do not use a docs change to promote unverified
+runtime code.
+
+Each parallel job has its own checkout and runs the six build prerequisites.
+Commands stay sequential within each suite so fixtures and generated files
+cannot race. The shared inventory in `scripts/lib/ci-plan.mjs` preserves all
+90 original main commands plus both smoke commands; the emulator inventory is
+unchanged. Each command records elapsed time in logs and the job summary.
+Node 22, Java 21 and browser engines remain pinned/configured as before.
+
+`cancel-in-progress: true` remains scoped to the Git ref. A new push can cancel
+the active run; batch corrections before pushing. Timeouts are bounded per job:
+scope/docs/verify 5 minutes, preflight 10, browser shards 20, emulators 15.
 
 Observed on October 2 for `aa8b68d` / [run 36999361088](https://github.com/purichw/CoverMate/actions/runs/36999361088):
 Vercel build readiness took about 64 seconds, the main gate took 23m14s, and the
 Auth/Rules/API/Publish emulator step took 4m46s. Including queue/setup/cleanup,
 CI took 30m33s. The main gate ran 88 commands sequentially. These are historical
-measurements, not future ETAs. No parallelization or changed-file CI selection
-has been implemented by the documentation/skill update.
+measurements, not future ETAs. The October 3 workflow changes require a new
+hosted run before claiming a measured speedup; local routing tests alone do not
+prove runner scheduling, browser stability or production promotion.
+
+Focused workflow checks and commands:
+
+```bash
+node --test scripts/ci-policy.test.mjs
+npm run check:ci -- --suite preflight
+npm run check:ci -- --suite visitor
+npm run check:ci -- --suite articles
+npm run check:ci -- --suite cms
+npm run check:ci -- --suite admin
+npm run check:ci -- --suite smoke
+npm run check:ci -- --suite emulators
+```
+
+Run suites separately in a local checkout; parallelism belongs to isolated CI
+jobs. `npm run check:ci` still runs the full main inventory sequentially and
+keeps emulators as a separate command. Unknown suite names fail before any
+build/test runs. A budget failure remains a release blocker; do not raise or
+disable budgets to make the workflow green.
 
 ### Avoidable Restarts
 
@@ -214,11 +265,11 @@ COVERMATE_URL=http://127.0.0.1:4177 npm run smoke
 section structure, coverage controls, relationship cards,
 insurer logo items, and tier rows/columns.
 
-GitHub Actions runs `npm run check:ci` and then `npm run check:emulators` on
-pushes to `main`, pull requests and manual dispatch. CI uses Node 22, Java 21,
-and Playwright Chromium/WebKit with the shared launcher helper. Record the
-actual browser version when reproducing CI; a local Chrome fallback may differ
-from the installed Playwright browser.
+GitHub Actions runs the selected path described above on pushes to `main`, pull
+requests and manual dispatch. Full coverage retains Playwright Chromium/WebKit
+and real emulator integration. Preflight needs Chromium only; browser/emulator
+jobs install both engines. Record the actual browser version when reproducing
+CI; a local Chrome fallback may differ from the installed Playwright browser.
 
 ## UAT Trigger Policy
 

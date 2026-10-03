@@ -1,6 +1,58 @@
 # CoverMate Handoff
 
-Last updated: 2026-10-02
+Last updated: 2026-10-03
+
+## Local CI Workflow Update — October 3
+
+Implemented on top of `ff9bce0`, after the October 2 documentation push. This
+workflow change is local and has not been pushed or measured on GitHub yet.
+It preserves the stable production check name `verify`, moves performance
+budgets before the long browser suites, and splits the existing inventory into
+five isolated browser jobs plus parallel emulator integration after preflight.
+Docs-only checks require a green exact base and unchanged runtime; missing or
+failed baseline evidence forces full coverage. See the current execution graph
+and commands in [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md#release-status-and-timing).
+
+All 90 original commands plus two smoke commands remain in the shared inventory;
+the emulator suite is unchanged. Production identity below is a dated verified
+checkpoint, not a claim that this local workflow is live. The latest inspected
+hosted run for `ff9bce0` failed its existing script-byte performance budget. The
+workflow does not relax that budget; the separate local payload fix below now
+passes it.
+
+Local verification: 16 CI policy/runner/docs tests passed; workflow/composite
+YAML and the complete 92-command inventory were checked. CLI checks proved
+manual dispatch takes full coverage and a failed browser result fails `verify`.
+The historical `b4a0900` docs diff was classified against real Git/GitHub evidence
+as eligible to reuse the successful `aa8b68d` baseline. On this Mac (Node 26,
+local Chrome), all six build prerequisites completed and preflight immediately
+reproduced the existing 358,317-byte Home script payload against its 350,000-byte
+budget; that check took 5.8 seconds. This is a failing product check caught early,
+not a full preflight pass or hosted speed measurement. No full browser/emulator
+suites, push, deployment or CMS writes were performed for this workflow edit.
+
+## Local JavaScript Payload Fix — October 3
+
+The initial Home/Motor script payload now measures **348,393 bytes**, down from
+358,317 (9,924 bytes saved), against the unchanged 350,000-byte gate. Both routes
+passed on 390px mobile and 1440px desktop using local Chrome and CMS defaults.
+These are local checks, not a hosted CI run or production speed measurement.
+
+`build:visitor` now generates a compact `assets/visitor/article-feed.js` alongside
+the unchanged full `article-reader.js`. `server/seo-page.mjs` selects the feed
+for Home, Motor, Health, Life and the article index before browser startup.
+Detail pages, owner pages and static fallback HTML retain the full rich-document
+renderer. Both assets use the same feed/carousel source, hashed URLs and existing
+global bindings; no new request, publication cache or CMS contract is introduced.
+The generated HTML carries the build-owned feed URL for server selection.
+
+Verification passed: generated-source/bundle drift, route/content contracts,
+SEO and asset-selection cases, startup resource checks, and the article-detail
+browser suite. Browser checks cover populated Home/index-to-detail navigation,
+TH/EN, rich document blocks, TOC focus, save/share and 320–1440px layouts with no
+runtime errors. Existing full reader output is byte-for-byte unchanged. The
+full CI/emulator suite was not repeated. This fix and the CI workflow changes
+above remain local; no push or deploy has occurred.
 
 ## Current Source And Production Checkpoint
 
@@ -59,11 +111,11 @@ a stale one-card E2E assumption, and runs superseded by newer pushes. A cancelle
 run is not a failed product assertion or a successful gate. The final integrated
 revision passed the unchanged required workflow.
 
-CI still runs the main checks and emulator checks sequentially in one `verify`
-job. Parallelization or affected-check selection has not been implemented;
-updating the skills/runbook does not change the workflow. Historical credentials,
-delivery, real-device and CMS-publication limitations below retain their own
-scope and must be rechecked when relevant to a new task.
+The October 3 local workflow implementation is described at the top of this
+handoff. Its hosted duration and results remain unverified until an authorized
+push runs it. Historical credentials, delivery, real-device and CMS-publication
+limitations below retain their own scope and must be rechecked when relevant to
+a new task.
 
 ## Reading The Historical Entries
 

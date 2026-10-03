@@ -1,0 +1,26 @@
+name: CoverMate CI setup
+description: Install the locked toolchain and required browser engines.
+inputs:
+  browsers:
+    description: Playwright browser engines to install
+    default: chromium webkit
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: npm
+    - run: npm ci
+      shell: bash
+    - name: Use Ubuntu archive for browser dependencies
+      shell: bash
+      run: |
+        if [ -f /etc/apt/apt-mirrors.txt ]; then
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g; s|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+        fi
+    - name: Install Playwright browsers
+      shell: bash
+      env:
+        CI_BROWSERS: ${{ inputs.browsers }}
+      run: npx playwright install --with-deps $CI_BROWSERS

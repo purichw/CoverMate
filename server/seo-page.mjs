@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
 import { resolveCoverMateEnvironment, isVercelPreviewHost } from '../covermate-environment.mjs';
-import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy, cmsMedia, versionedAssetUrl } from '../covermate-contract.js';
+import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy, cmsMedia, versionedAssetUrl, PUBLIC_ROUTE_PATHS } from '../covermate-contract.js';
 import {articleDetailSlug,projectArticleDetail} from '../src/visitor/article-detail.mjs';
 import { extractBundlerTemplate, replaceBundlerTemplate } from './bundler-template.mjs';
 import { renderErrorPage } from './error-page.mjs';
@@ -30,7 +30,15 @@ export function renderPublicPage(html, config, options) {
       .replace(/(<html\b[^>]*\blang=")[^"]*(")/, '$1' + model.language + '$2')
       .replace('<html ', '<html data-covermate-environment="' + (options?.noindex && !options?.privatePage ? 'uat' : 'production') + '" ');
   }
-  let rendered = replaceHead(replaceBundlerTemplate(html, replaceHead(extractBundlerTemplate(html))));
+  let template = replaceHead(extractBundlerTemplate(html));
+  // Choose before browser startup, with no extra request or async registration.
+  // Article links navigate to a new document; private/detail/unknown routes and
+  // static HTML retain the full reader, including rich article preview support.
+  if (!options?.privatePage && PUBLIC_ROUTE_PATHS.has(options?.path)) {
+    template = template.replace(/<script src="\/assets\/visitor\/article-reader\.js\?v=[a-f0-9]{16}" data-covermate-article-feed="(\/assets\/visitor\/article-feed\.js\?v=[a-f0-9]{16})"><\/script>/,
+      (_, feedUrl) => `<script src="${feedUrl}"></script>`);
+  }
+  let rendered = replaceHead(replaceBundlerTemplate(html, template));
   const language = options?.lang === 'en' ? 'en' : 'th';
   const header = config?.brand?.media?.headerLogo;
   const selectedLogo = typeof header === 'string' ? header : header?.[language];

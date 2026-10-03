@@ -44,6 +44,8 @@ try {
     assert.equal(await page.locator('html').getAttribute('data-covermate-surface'), 'public');
     assert.equal(await page.locator('aside[data-editor-panel], [data-admin-owner-bar]').count(), 0);
     assert.equal(requests.some(url => /editor-(panel|tools|preview|versions)\.(css|js)|covermate-firebase\.js/.test(url)), false, 'Public boot never downloads owner tooling');
+    assert.equal(requests.filter(url => /\/article-feed\.js\?/.test(url)).length, 1, 'Non-detail startup loads one compact article feed');
+    assert.equal(requests.some(url => /\/article-reader\.js\?/.test(url)), false, 'Non-detail startup excludes the rich-document renderer');
     const header = page.locator('header img[data-cms-image]').first();
     await header.evaluate(image => image.decode());
     const originalLogo = '/assets/brand/covermate-advisory-logo-' + lang + '.png';

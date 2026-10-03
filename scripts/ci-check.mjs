@@ -1,125 +1,55 @@
 import { spawn } from "node:child_process";
+import { appendFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+import { commandsForSuite } from "./lib/ci-plan.mjs";
 
-import { startStaticServer } from "./lib/static-server.mjs";
-
-const commands = [
-  ["node", ["scripts/build-vendor.mjs"]],
-  ["npm", ["run", "build:telemetry"]],
-  ["npm", ["run", "build:media"]],
-  ["npm", ["run", "build:article-editor"]],
-  ["npm", ["run", "check:types"]],
-  ["npm", ["run", "check:refactor"]],
-  ["npm", ["run", "check:nfr"]],
-  ["npm", ["run", "check:public-request"]],
-  ["npm", ["run", "build:visitor"]],
-  ["node", ["scripts/startup-performance-check.mjs"]],
-  ["npm", ["run", "build:errors"]],
-  ["npm", ["run", "check:errors"]],
-  ["npm", ["run", "check:editor-history"]],
-  ["npm", ["run", "check:content-isolation"]],
-  ["npm", ["run", "check:editor-panel"]],
-  ["npm", ["run", "check:editor-versions"]],
-  ["npm", ["run", "check:admin-controls"]],
-  ["npm", ["run", "check:admin-home"]],
-  ["node", ["scripts/admin-home-refresh-check.mjs"]],
-  ["node", ["scripts/admin-account-check.mjs"]],
-  ["node", ["scripts/admin-content-check.mjs"]],
-  ["node", ["scripts/cms-entry-browser-check.mjs"]],
-  ["node", ["scripts/cases-list-design-check.mjs"]],
-  ["npm", ["run", "check:admin-analytics"]],
-  ["node", ["scripts/admin-shell-browser-check.mjs"]],
-  ["node", ["scripts/home-articles-check.mjs", "--browser"]],
-  ["node", ["scripts/home-articles-carousel-check.mjs"]],
-  ["node", ["scripts/articles-carousel-check.mjs", "--interactions-only"]],
-  ["node", ["scripts/editor-panel-browser-check.mjs", "--article-order"]],
-  ["node", ["scripts/articles-index-check.mjs", "--browser"]],
-  ["node", ["scripts/select-spacing-check.mjs"]],
-  ["node", ["scripts/articles-admin-check.mjs", "--browser"]],
-  ["node", ["scripts/article-detail-check.mjs", "--browser"]],
-  ["node", ["scripts/article-editor-check.mjs", "--browser"]],
-  ["node", ["scripts/article-media-check.mjs", "--browser"]],
-  ["node", ["scripts/article-delivery-check.mjs", "--browser"]],
-  ["node", ["scripts/article-editor-tools-check.mjs"]],
-  ["node", ["scripts/article-editor-metadata-check.mjs"]],
-  ["node", ["scripts/article-validation-check.mjs", "--browser"]],
-  ["node", ["scripts/article-reader-parity-check.mjs"]],
-  ["node", ["scripts/article-typography-check.mjs", "--browser"]],
-  ["node", ["scripts/article-blocks-check.mjs", "--browser"]],
-  ["node", ["scripts/article-feature-card-check.mjs", "--browser"]],
-  ["npm", ["run", "check:bundles"]],
-  ["npm", ["run", "check:seo"]],
-  ["node", ["scripts/service-page-check.mjs"]],
-  ["node", ["scripts/visitor-startup-check.mjs"]],
-  ["node", ["scripts/logo-variants-check.mjs"]],
-  ["npm", ["run", "check:contracts"]],
-  ["npm", ["run", "check:security"]],
-  ["npm", ["run", "check:ids"]],
-  ["npm", ["run", "check:uat"]],
-  ["npm", ["run", "check:needs"]],
-  ["npm", ["run", "check:needs-v2"]],
-  ["npm", ["run", "check:needs-contract"]],
-  ["node", ["scripts/release-needs-content.mjs", "--test"]],
-  ["npm", ["run", "check:contact"]],
-  ["node", ["scripts/line-contact-check.mjs"]],
-  ["node", ["scripts/custom-select-check.mjs"]],
-  ["npm", ["run", "check:advisor"]],
-  ["npm", ["run", "check:admin-structure"]],
-  ["npm", ["run", "check:motor-design", "--", "--contract-only"]],
-  ["npm", ["run", "check:motor-comparison"]],
-  ["npm", ["run", "check:text-editor"]],
-  ["npm", ["run", "check:inline-links"]],
-  ["npm", ["run", "check:boot"]],
-  ["npm", ["run", "check:loading"]],
-  ["node", ["scripts/runtime-error-check.mjs"]],
-  ["npm", ["run", "check:admin-loading"]],
-  ["node", ["scripts/server-boot-check.mjs"]],
-  ["npm", ["run", "check:live-content"]],
-  ["npm", ["run", "check:analytics"]],
-  ["npm", ["run", "check:consent"]],
-  ["npm", ["run", "check:analytics-api"]],
-  ["npm", ["run", "check:phase6"]],
-  ["npm", ["run", "check:cms"]],
-  ["npm", ["run", "check:faq"]],
-  ["node", ["scripts/copy-voice-check.mjs"]],
-  ["npm", ["run", "check:cms:site"]],
-  ["npm", ["run", "check:media"]],
-  ["npm", ["run", "check:media:provider"]],
-  ["npm", ["run", "check:media:upload"]],
-  ["npm", ["run", "check:media:inline"]],
-  ["npm", ["run", "check:ops"]],
-  ["npm", ["run", "check:case-links"]],
-  ["npm", ["run", "check:admin-email-template"]],
-  ["npm", ["run", "check:customer-email:template"]],
-  ["npm", ["run", "check:customer-email:browser"]],
-  ["npm", ["run", "check:performance"]],
-  ["git", ["diff", "--check"]]
-];
-
-function run(command, args, env = {}) {
+export function runCommand(command, args, env = {}) {
   return new Promise((resolve, reject) => {
-    console.log(`\n$ ${[command, ...args].join(" ")}`);
+    const label = [command, ...args].join(" ");
+    const started = performance.now();
+    console.log(`\n$ ${label}`);
     const child = spawn(command, args, {
       stdio: "inherit",
       env: { ...process.env, ...env }
     });
     child.on("error", reject);
     child.on("exit", (code) => {
+      const seconds = ((performance.now() - started) / 1000).toFixed(1);
+      console.log(`CI timing: ${seconds}s | ${label} | exit ${code}`);
+      if (process.env.GITHUB_STEP_SUMMARY) {
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- ${seconds}s — \`${label}\` — exit ${code}\n`);
+      }
       if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(" ")} exited with ${code}`));
+      else reject(new Error(`${label} exited with ${code}`));
     });
   });
 }
 
-for (const [command, args] of commands) {
-  await run(command, args);
+export async function runCi(suite = "all", {
+  execute = runCommand,
+  startServer = async () => {
+    const { startStaticServer } = await import("./lib/static-server.mjs");
+    return startStaticServer({ ownerRoutesToRoot: true });
+  }
+} = {}) {
+  const commands = commandsForSuite(suite); // Validate before any side effects.
+  let server, baseUrl;
+  try {
+    for (const [command, args] of commands) {
+      const smoke = args[0] === "run" && ["smoke", "smoke:admin-builder"].includes(args[1]);
+      if (smoke && !server) ({ server, baseUrl } = await startServer());
+      await execute(command, args, smoke ? { COVERMATE_URL: baseUrl } : {});
+    }
+  } finally {
+    if (server) await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+  }
+  console.log(`\nCoverMate CI ${suite} passed`);
 }
 
-const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true });
-try {
-  await run("npm", ["run", "smoke:admin-builder"], { COVERMATE_URL: baseUrl });
-  await run("npm", ["run", "smoke"], { COVERMATE_URL: baseUrl });
-} finally {
-  await new Promise((resolve) => server.close(resolve));
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  const args = process.argv.slice(2);
+  if (args.length && (args.length !== 2 || args[0] !== "--suite")) {
+    throw new Error("Usage: node scripts/ci-check.mjs [--suite all|build|preflight|visitor|articles|cms|admin|smoke|emulators]");
+  }
+  await runCi(args[1] || "all");
 }
-
-console.log("\nCoverMate CI gate passed");

@@ -115,17 +115,19 @@ const ARTICLE_READER_HELPERS = ['articleDetailSlug', 'readArticleDetail', 'artic
 const HOME_ARTICLE_HELPERS = ['articlePublicHref', 'readHomeArticleFeed', 'projectPublishedArticles', 'projectHomeArticles', 'homeArticleInsertionIndex'];
 const ARTICLE_READER_BINDINGS = `const {registerArticleDocument,registerArticleCarousel,${ARTICLE_READER_HELPERS.join(',')}} = CoverMateArticleReader;`;
 const HOME_ARTICLE_BINDINGS = `const {${HOME_ARTICLE_HELPERS.join(',')}} = CoverMateArticleReader;`;
-export function readArticleReaderAsset() {
+export function readArticleReaderAsset({ feedOnly = false } = {}) {
   const helpers = ARTICLE_READER_HELPERS;
-  // Reuse the existing reader request for feed helpers and responsive media.
-  // Full article-detail projection stays server-side.
+  // Non-detail public routes need cards, not the rich-document renderer.
+  // Keep identical bindings; detail, owner and static fallback use the full asset.
+  const documentRegistration = feedOnly ? 'export function registerArticleDocument() {}' : "export {registerArticleDocument} from './article-document.mjs';";
+  const name = feedOnly ? 'article-feed' : 'article-reader';
   const code = buildSync({
-    stdin: { contents: `export {registerArticleDocument} from './article-document.mjs'; export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs'; export {${HOME_ARTICLE_HELPERS.join(',')}} from './src/visitor/home-articles.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: 'article-reader.mjs' },
+    stdin: { contents: `${documentRegistration} export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs'; export {${HOME_ARTICLE_HELPERS.join(',')}} from './src/visitor/home-articles.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: name + '.mjs' },
     bundle: true, write: false, treeShaking: true, minify: true, format: 'iife',
     globalName: 'CoverMateArticleReader', target: 'es2022', charset: 'utf8'
   }).outputFiles[0].text;
   const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
-  return {code,file:new URL('assets/visitor/article-reader.js',ROOT),url:`/assets/visitor/article-reader.js?v=${hash}`};
+  return {code,file:new URL(`assets/visitor/${name}.js`,ROOT),url:`/assets/visitor/${name}.js?v=${hash}`};
 }
 
 export function readImageVersions(root = new URL("assets/", ROOT)) {
@@ -284,7 +286,7 @@ export function buildVisitorTemplate(sources = readVisitorSources()) {
   // Compact the static CSS blocks before inserting the runtime script.
   // The component runtime scans inert scripts as soon as it loads, so its
   // reader dependency must execute before the first runtime script.
-  const template = sources.template.replace('<script src=', `<script src="${readArticleReaderAsset().url}"></script>\n<script src=`).replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
+  const template = sources.template.replace('<script src=', `<script src="${readArticleReaderAsset().url}" data-covermate-article-feed="${readArticleReaderAsset({ feedOnly: true }).url}"></script>\n<script src=`).replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi,
     (_, open, css, close) => open + transformSync(css, { loader: 'css', minifyWhitespace: true }).code + close)
     // Omit source-only comments and tag indentation from shipped HTML. Keep
     // integration markers, word separators and raw-text blocks verbatim.

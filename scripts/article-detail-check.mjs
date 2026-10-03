@@ -47,10 +47,15 @@ if(process.argv.includes('--browser')) {
     const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
     await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.fulfill({status:403,body:'External traffic blocked'}));
     const newPage=async()=>{const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push(error.message));return page;};
+    const assertReaderAsset = async (page, name) => {
+      const scripts = await page.evaluate(() => performance.getEntriesByType('resource').filter(entry => entry.initiatorType === 'script' && /\/article-(reader|feed)\.js\?/.test(entry.name)).map(entry => new URL(entry.name).pathname));
+      assert.deepEqual(scripts, ['/assets/visitor/article-' + name + '.js'], 'Navigation selects exactly the needed article bundle');
+    };
     const ready=async(page,route=path)=>{
       const response=await page.goto(server.baseUrl+route);assert.equal(response.status(),200);
       await page.locator('.ad-prose').waitFor();await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-covermate-booting'));
       await page.evaluate(()=>document.fonts.ready);
+      await assertReaderAsset(page, 'reader');
       if(await page.locator('[data-cookie-reject]').isVisible())await page.locator('[data-cookie-reject]').click();
     };
     for(const [width,lang] of [[1440,'th'],[820,'th'],[390,'th'],[320,'en']]) {
@@ -103,11 +108,13 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.title(),item.translations.en.title);
     report.checks.push('TOC focus/deep-link/reload; local save/remove/reload; clipboard success/fallback; share links/fallback; TH/EN');
     await page.goto(server.baseUrl+'/articles');await page.locator('.ar-index').waitFor();
+    await assertReaderAsset(page, 'feed');
     await page.locator('#articles-search').fill(item.translations.th.title);await page.locator('#articles-search').press('Enter');
     await page.locator('.ar-grid a[href="'+path+'"]').click();
     await page.locator('.ad-prose').waitFor();await page.locator('.ad-related .ar-card-link').first().click();await page.locator('.ad-prose').waitFor();
     assert.notEqual(new URL(page.url()).pathname,path);await page.locator('.ad-breadcrumb a').nth(1).click();await page.locator('.ar-index').waitFor();
-    await page.goto(server.baseUrl+'/');await page.locator('.hm-article-card').first().click();await page.locator('.ad-prose').waitFor();
+    await page.goto(server.baseUrl+'/');await page.locator('.hm-article-card').first().waitFor();await assertReaderAsset(page, 'feed');
+    await page.locator('.hm-article-card').first().click();await page.locator('.ad-prose').waitFor();await assertReaderAsset(page, 'reader');
     report.checks.push('Index, related and Home cards open detail; breadcrumb returns to index');
     const mobile=await newPage();await mobile.setViewportSize({width:390,height:844});await ready(mobile);
     assert.equal(await mobile.locator('.ad-toc').evaluate(el=>el.open),false);

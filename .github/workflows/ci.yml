@@ -11,45 +11,101 @@ concurrency:
   group: covermate-ci-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    steps:
-      - name: Check out
-        uses: actions/checkout@v4
+permissions:
+  contents: read
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      mode: ${{ steps.scope.outputs.mode }}
+      base: ${{ steps.scope.outputs.base }}
+      baseline_run: ${{ steps.scope.outputs.baseline_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
+      - name: Check CI routing and gate logic
+        run: node --test scripts/ci-policy.test.mjs
+      - name: Classify changes and verify base coverage
+        id: scope
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci-scope.mjs
 
-      - name: Install dependencies
-        run: npm ci
+  docs:
+    needs: scope
+    if: needs.scope.outputs.mode == 'docs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check changed documentation
+        env:
+          CI_BASE_SHA: ${{ needs.scope.outputs.base }}
+        run: node scripts/ci-docs-check.mjs
 
-      - name: Use Ubuntu archive for browser dependencies
-        run: |
-          # Keep Ubuntu's signed package indexes; avoid the slow Azure mirror.
-          if [ -f /etc/apt/apt-mirrors.txt ]; then
-            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g; s|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
-          fi
+  preflight:
+    needs: scope
+    if: needs.scope.outputs.mode == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ci-setup
+        with:
+          browsers: chromium
+      - name: Build, budgets and fast contracts
+        run: npm run check:ci -- --suite preflight
 
-      - name: Install Playwright browser
-        run: |
-          npx playwright install --with-deps chromium webkit
+  browser:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        suite: [visitor, articles, cms, admin, smoke]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ci-setup
+      - name: Run isolated suite
+        env:
+          CI_SUITE: ${{ matrix.suite }}
+        run: npm run check:ci -- --suite "$CI_SUITE"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ci-failure-${{ matrix.suite }}
+          path: uat-results/
+          retention-days: 7
 
+  emulators:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ci-setup
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-
-      - name: Run CoverMate gate
-        run: npm run check:ci
-
       - name: Real Auth, Rules, API and Publish E2E
-        run: npm run check:emulators
-
+        run: npm run check:ci -- --suite emulators
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -58,3 +114,20 @@ jobs:
             uat-results/nfr/
             uat-results/articles-cloud/
           retention-days: 7
+
+  # Vercel waits for this exact check name. It must fail on missing, failed,
+  # cancelled or unexpectedly skipped dependencies, including any matrix shard.
+  verify:
+    if: always()
+    needs: [scope, docs, preflight, browser, emulators]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Require all selected checks
+        env:
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
+        run: node scripts/ci-verify.mjs

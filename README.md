@@ -35,10 +35,14 @@ Current workspace state can be ahead of production. Check `git status` and the
 release guardrail in [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md)
 before assuming changes are live.
 
-GitHub Actions runs `npm run check:ci` and then `npm run check:emulators` as
-separate required steps in the `verify` job on pushes to `main`, pull requests,
-and manual workflow dispatches. The current release process and evidence
-requirements live in [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md).
+GitHub Actions first runs build/budget/contract checks, then runs five isolated
+browser suites and the Auth/Rules/API/Publish emulator suite in parallel. The
+stable `verify` job requires every selected job to pass. Documentation-only
+changes can use lightweight checks only when the exact base revision has
+verified passing CI; otherwise they take the full path. Manual dispatch always
+runs full coverage. Local `npm run check:ci` still runs the entire main suite;
+`npm run check:ci -- --suite visitor` selects one suite with its build prerequisites.
+See [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) for evidence and commands.
 
 ## Project Documents
 

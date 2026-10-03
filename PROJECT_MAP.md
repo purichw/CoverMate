@@ -30,10 +30,12 @@ ephemeral static serving live in `scripts/lib/playwright.mjs` and
 `scripts/lib/static-server.mjs`. Do not reintroduce per-script template
 parsers, duplicate admin route constants, copied Playwright fallback paths, or
 fixed-port local servers in regression scripts.
-`npm run check:ci` is the broad local/CI gate. GitHub Actions runs it followed by
-`npm run check:emulators` as separate required steps in the same `verify` job on
-`main`, pull requests, and manual dispatch. The emulator command covers real
-Auth/Rules/API/browser integration and publication workflows.
+`npm run check:ci` is the broad local gate. GitHub Actions uses its shared command
+inventory for preflight and five isolated browser suites, with the emulator suite
+running alongside the browser suites. The final `verify` job requires all selected
+jobs; the docs-only path requires a verified green base with unchanged runtime.
+Manual dispatch forces full coverage. The separate `npm run check:emulators`
+command covers real Auth/Rules/API/browser integration and publication workflows.
 The Home Needs Calculator uses shared Life/CI/Health formulas and validated
 optional profile/PA inputs, with an explicit opt-in attachment to consultation.
 CMS owns methodology/source/catalog data; reviewed eligibility and product-fit
@@ -207,7 +209,8 @@ Detailed project documents:
 | `scripts/lib/uat-env.mjs` | Shared UAT smoke helper for local `.env.uat.local` loading, preview URL guards, Vercel protection-bypass headers, Firebase/gcloud credentials, and Firestore REST read/write helpers. It refuses non-UAT Firestore paths. |
 | `scripts/generate-visitor-bundle.mjs` | Generates both visitor artifacts and their assets from `src/visitor/*`; `--check` is wired into `npm run check:bundles` to catch generated artifact drift. |
 | `scripts/validate-bundles.mjs` | Fast embedded-template/runtime source validator for generated HTML edits. |
-| `scripts/ci-check.mjs`, `.github/workflows/ci.yml` | Broad gate for generated artifacts, contracts, browser checks, performance budgets and local smoke. CI runs the separate `check:emulators` integration step after this gate. |
+| `scripts/ci-check.mjs`, `scripts/lib/ci-plan.mjs`, `.github/workflows/ci.yml` | Shared command inventory for full local checks and isolated CI suites; build/performance/contracts precede parallel visitor, articles, CMS, Admin, smoke and emulator jobs. |
+| `scripts/ci-scope.mjs`, `scripts/lib/ci-policy.mjs`, `scripts/ci-docs-check.mjs`, `scripts/ci-verify.mjs` | Conservative docs-only selection with exact-base CI evidence, relative-link checks and a fail-closed aggregate `verify`. Policy/runner regression tests: `node --test scripts/ci-policy.test.mjs`. |
 | `scripts/emulator-suite.mjs` | Isolated Auth/Firestore/API/browser integration, including Cases, article API/publication and Home pin capacity; invoked by `npm run check:emulators`. |
 | `scripts/security-contract-check.mjs` | Static guard for Vercel security headers, Firestore deny-by-default/auth/lead validation rules, analytics PII boundaries, and server-side Operations API authorization. |
 | `scripts/performance-budget-check.mjs` | Playwright budget check for home and `/motor` mobile/desktop boot, LCP/CLS where browser entries are available, horizontal overflow, and payload budgets. |
@@ -287,6 +290,11 @@ Route contracts:
   `npm run build:visitor` after source edits; `server/visitor-public.html` and
   `index.html` are generated artifacts and `npm run check:visitor-source`
   catches drift.
+- The visitor generator emits both `assets/visitor/article-feed.js` and the full
+  `article-reader.js` from shared article sources. `server/seo-page.mjs` chooses
+  the compact feed on non-detail public routes; detail, owner and static fallback
+  HTML keep the full rich-document reader. Keep both generated assets and their
+  hashed HTML references in sync via `build:visitor`.
 - `/admin/index.html` owns the single Admin Portal shell. `/admin/ops/index.html`
   is only a compatibility shim; `admin/ops/app.js` mounts the Cases workspace
   from `admin/ops/cases.js`, the Articles workspace from

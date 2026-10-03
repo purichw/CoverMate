@@ -13,6 +13,22 @@ config.seo.title = { th: 'Home TH', en: 'Home EN' };
 config.seo.description = { th: 'Published Thai description', en: 'Published English description' };
 config.motorPage.seo = { title: { th: 'Motor TH', en: 'Motor EN' }, description: { th: 'Motor description TH', en: 'Motor description EN' } };
 const html = fs.readFileSync('index.html', 'utf8');
+// Only known non-detail public routes may omit rich-document registration.
+const readerScripts = source => [...extractBundlerTemplate(source).matchAll(/<script\b[^>]*\bsrc="([^"\s]*\/article-(?:reader|feed)\.js\?v=[a-f0-9]{16})"/g)].map(match => match[1]);
+for (const source of [html, fs.readFileSync('server/visitor-public.html', 'utf8')]) {
+  assert.equal(readerScripts(source).length, 1);
+  assert.match(readerScripts(source)[0], /\/article-reader\.js\?/, 'Static fallback keeps the complete reader');
+  for (const path of ['/', '/motor', '/health', '/life', '/articles']) {
+    const scripts = readerScripts(renderPublicPage(source, config, {path}));
+    assert.equal(scripts.length, 1, 'One article asset per page, without a second load');
+    assert.match(scripts[0], /\/article-feed\.js\?/, path + ' needs only the feed');
+  }
+  for (const options of [{path:'/articles/health-cover'}, {path:'/admin/edit',privatePage:true}, {path:'/admin/preview',privatePage:true}, {path:'/',privatePage:true}, {path:'/unknown'}, {}]) {
+    const scripts = readerScripts(renderPublicPage(source, config, options));
+    assert.equal(scripts.length, 1);
+    assert.match(scripts[0], /\/article-reader\.js\?/, 'Detail, owner and unknown routes keep the full reader');
+  }
+}
 // The first loading frame follows published branding, including deliberate blanks.
 const bootImage = (media, lang = 'th') => renderPublicPage(html,
   { ...config, brand: { ...config.brand, media } }, { path: '/', lang }).match(/<img data-covermate-boot-logo[^>]*>/)?.[0];
