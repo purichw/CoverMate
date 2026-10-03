@@ -6,6 +6,7 @@ import {startArticleDetailPreview} from './article-detail-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
 import {cmsMedia,migrateCmsContent,routePageFromLocationParts,CMS_CONTENT_VERSION} from '../covermate-contract.js';
 import {createSeoModel} from '../covermate-seo.mjs';
+import {checkContentProtection,checkContentProtectionBoundaries} from './lib/content-protection-check.mjs';
 
 const slug='health-insurance-checklist',path='/articles/'+slug;
 const item=articleDetailFixture.items.find(item=>item.slug===slug);
@@ -83,6 +84,10 @@ if(process.argv.includes('--browser')) {
       report.checks.push({width,lang,noOverflow:true,headings:5,related:4});await page.close();
     }
     const page=await newPage();await ready(page);
+    await checkContentProtection(page);
+    const protectionBoundaryPage=await newPage();await ready(protectionBoundaryPage);
+    await checkContentProtectionBoundaries(protectionBoundaryPage);await protectionBoundaryPage.close();
+    report.checks.push('Public copy/cut/select-all/image deterrent; share URL, contact, forms, editor and cleanup boundaries');
     const toc=page.locator('.ad-toc nav a').nth(2),anchor=await toc.getAttribute('href');
     await toc.click();assert.equal(new URL(page.url()).hash,anchor);
     await page.waitForFunction(id=>document.activeElement?.id===id,anchor.slice(1));

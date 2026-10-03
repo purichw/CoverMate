@@ -288,5 +288,21 @@ const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 assert.equal((sitemap.match(/<loc>/g) || []).length, 8);
 for(const route of ['/health','/life']) for(const suffix of ['','?lang=en']) assert.ok(sitemap.includes('https://covermateinsurance.com'+route+suffix+'</loc>'));
 assert.ok(!sitemap.includes('vercel.app') && !sitemap.includes('admin') && !sitemap.includes('<lastmod>'));
-assert.ok(fs.readFileSync('robots.txt', 'utf8').includes('Sitemap: https://covermateinsurance.com/sitemap.xml'));
+const robots = fs.readFileSync('robots.txt', 'utf8');
+assert.ok(robots.includes('Sitemap: https://covermateinsurance.com/sitemap.xml'));
+assert.ok(robots.includes('Sitemap: https://covermateinsurance.com/api/article-sitemap'));
+// Protect the explicit crawl-policy groups without confusing an AI training
+// opt-out with Google Search's indexing permission.
+const crawlGroups = robots.split(/\n\s*\n/).map(group => ({
+  agents: [...group.matchAll(/^User-agent:\s*(.+)$/gm)].map(match => match[1].toLowerCase()),
+  rules: group.split('\n').filter(line => /^(Allow|Disallow):/.test(line))
+}));
+for (const agent of ['googlebot', 'googlebot-image', 'googlebot-news', 'googlebot-video', 'google-inspectiontool', 'bingbot', 'applebot', 'oai-searchbot', 'claude-searchbot', 'perplexitybot', 'ahrefsbot', 'semrushbot', 'chrome-lighthouse', 'facebookexternalhit', 'line']) {
+  assert.deepEqual(crawlGroups.find(group => group.agents.includes(agent))?.rules,
+    ['Allow: /', 'Disallow: /api/', 'Allow: /api/article-sitemap$'], `${agent}: keep indexing/preview policy and private API boundary`);
+}
+for (const agent of ['*', 'google-extended', 'applebot-extended', 'gptbot', 'claudebot', 'ccbot']) {
+  assert.deepEqual(crawlGroups.find(group => group.agents.includes(agent))?.rules,
+    ['Disallow: /'], `${agent}: prohibit automated content collection`);
+}
 console.log('PASS: SEO routes/languages, raw + hydrated head model, CMS edits/blanks/escaping, cache isolation/timeout, noindex, redirects, sitemap.');
