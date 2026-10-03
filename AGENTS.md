@@ -17,6 +17,11 @@ when the working tree is dirty.
   files, workflow/config changes and missing evidence must use full CI.
 - Install only engines consumed by a suite. Visitor and emulators need WebKit;
   Chromium-only suites must not download it. Preserve actual browser coverage.
+- Reproduce browser timing failures with controlled event ordering before
+  changing waits. Article settings helpers must establish the real open dialog;
+  a reconnect must not let an older in-flight failure restore its retry backoff.
+  Preserve new-request backoff and the rejected original request in regression
+  coverage. Keep generated public runtime output aligned with its source.
 - Check the targeted consumer first, then use the relevant remote run when
   publishing. Do not run duplicate full local/remote checks without a new reason,
   dispatch a second full run on an already-tested SHA, or remove assertions to

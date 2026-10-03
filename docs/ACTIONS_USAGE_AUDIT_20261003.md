@@ -102,6 +102,32 @@ exact-origin/redirect safeguards are documented in the
 Provisioning requires the owner's approval; a passing local fixture does not
 prove acceptance of a live credential.
 
+After the owner approved provisioning, the exact `5e6c938` monitor passed on
+[run 37129849436](https://github.com/purichw/CoverMate/actions/runs/37129849436).
+The dedicated credential was accepted from a GitHub runner; all three rendered
+page checks passed. Its separate full
+[CI run 37129822375](https://github.com/purichw/CoverMate/actions/runs/37129822375)
+failed in two existing consumers, and `verify` correctly blocked promotion:
+
+- WebKit article publication reached Unpublish with Settings still closed.
+  A focused fixture reproduced the canvas appearing between pointer down/up,
+  moving the footer Settings button. The helper now activates that real button
+  with Enter and waits for the actual open dialog. Unpublish, its confirmation,
+  and persisted-content assertions remain intact. The two-engine fixture runs
+  in the emulator suite, where both browsers are already installed.
+- Visitor freshness timed out after reconnect. The original run had no network
+  event trace, so its precise ordering cannot be proved retrospectively. A
+  deterministic held-request probe reproduced a related runtime defect: an old
+  request rejecting after `online` restored the 60-second failure backoff.
+  Requests now capture a reconnect generation so an older failure cannot undo
+  the reset. The original request still rejects, the minimum gap remains, and
+  new failures after reconnect still back off. The probe failed before the fix
+  and passed afterward; bounded transition diagnostics cover future timeouts.
+
+These are changed-code repairs, not repeated unchanged full runs. A failed run
+does not establish savings, and the next exact-revision gate must pass before
+production promotion.
+
 Savings from reduced downloads are directional until the updated Linux workflow
 runs. Do not quote the entire 11.27-minute setup baseline as removable cost.
 Nine same-SHA push/manual pairs consumed 294 rounded minutes, 151 in manual

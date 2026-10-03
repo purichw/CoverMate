@@ -41,7 +41,10 @@ focus, visibility return, reconnect, BFCache resume, or a same-origin live-cache
 storage event. Bursts coalesce with a 5-second minimum gap; failed reads back off
 up to 5 minutes and retain the last valid state. A scheduled poll waits a full
 60 seconds after completion; lifecycle triggers still respect minimum-gap and
-failure backoff. Storage events trigger a server
+failure backoff. Reconnect resets failure backoff while preserving the minimum
+gap. A request started before reconnect still rejects on failure, but cannot
+reinstate the old backoff; failures from new requests retain normal backoff.
+Storage events trigger a server
 read, not publication of another tab's arbitrary local values.
 
 Content comparison includes normalized config and text, not just the CMS

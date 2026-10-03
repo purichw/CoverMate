@@ -151,7 +151,7 @@ export const fullSuiteJobNames = ["preflight", ...browserSuites.map(name => `bro
 
 export function commandsForSuite(suite = "all") {
   if (suite === "build") return [...buildCommands];
-  if (suite === "emulators") return [...buildCommands, ["npm", ["run", "check:emulators"]]];
+  if (suite === "emulators") return [...buildCommands, ["node", ["scripts/article-editor-ui-check.mjs"]], ["npm", ["run", "check:emulators"]]];
   if (suite === "all") return [...buildCommands, ...Object.values(checkGroups).flat()];
   if (!Object.hasOwn(checkGroups, suite)) throw new Error(`Unknown CI suite: ${suite}`);
   return [...buildCommands, ...checkGroups[suite]];

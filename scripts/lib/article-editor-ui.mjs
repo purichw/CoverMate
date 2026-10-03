@@ -7,7 +7,12 @@ async function revealDetails(control){
 async function ensureSettingsVisible(page){
   const settings=page.locator('.ae-settings');
   await settings.waitFor({state:'attached'});
-  if(!await settings.isVisible())await page.locator('[data-ae=settings]:visible').click();
+  const dialog=page.locator('.ae-settings-dialog[open]');
+  // The loading canvas can move this footer button between pointerdown/up.
+  // Keyboard activation uses the real button without depending on its position.
+  if(!await dialog.count())await page.locator('[data-ae=settings]:visible').press('Enter');
+  await dialog.waitFor({state:'visible'});
+  await settings.waitFor({state:'visible'});
 }
 export async function openSettings(page){
   await ensureSettingsVisible(page);

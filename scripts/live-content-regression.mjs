@@ -41,7 +41,7 @@ function encode(value) {
 
 const config = JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)'));
 let live = { config, text: {}, revision: 1 };
-let status = 200, requests = 0, delayNext;
+let status = 200, requests = 0, delayNext, abortNext = false, notifyHeld;
 const snapshot = () => JSON.stringify({ fields: encode(live).mapValue.fields, updateTime: '2026-09-07T00:00:00Z' });
 const { server, baseUrl } = await startStaticServer({ ownerRoutesToRoot: true });
 const browser = await launchChromium(loadPlaywright().chromium, { headless: true });
@@ -51,18 +51,35 @@ try {
   await context.route('**/v1/projects/**/documents/sites/**/states/live', async route => {
     requests++;
     const body = snapshot();
-    if (delayNext) { const hold = delayNext; delayNext = null; await hold; }
+    const abort = abortNext;
+    abortNext = false;
+    if (delayNext) { const hold = delayNext; delayNext = null; notifyHeld?.(); await hold; }
+    if (abort) return route.abort('internetdisconnected');
     await route.fulfill({ status, contentType: 'application/json', body });
   });
   await context.addInitScript(() => {
     window.__readyEvents = 0;
     window.__liveFetchModes = [];
+    window.__liveNetworkEvidence = [];
+    const record = (type, detail = {}) => {
+      window.__liveNetworkEvidence.push({ type, time: Date.now(), online: navigator.onLine, visibility: document.visibilityState, ...detail });
+      if (window.__liveNetworkEvidence.length > 32) window.__liveNetworkEvidence.shift();
+    };
+    for (const type of ['online', 'offline', 'focus']) window.addEventListener(type, () => record(type));
     window.__documentIdentity = Math.random();
     window.addEventListener('covermate:remote-content-ready', event => { if (event.detail.publicLive) window.__readyEvents++; });
     const original = window.fetch;
     window.fetch = (url, options) => {
-      if (String(url).endsWith('/states/live')) window.__liveFetchModes.push(options?.cache);
-      return original(url, options);
+      if (!String(url).endsWith('/states/live')) return original(url, options);
+      window.__liveFetchModes.push(options?.cache);
+      record('fetch');
+      return original(url, options).then(response => {
+        record('response', { status: response.status });
+        return response;
+      }, error => {
+        record('fetch-error', { name: error.name });
+        throw error;
+      });
     };
   });
   const page = await context.newPage();
@@ -157,13 +174,49 @@ try {
   status = 200;
   await context.setOffline(false);
   await page.clock.fastForward(5100);
-  await page.waitForFunction(() => document.querySelector('#hero h1')?.textContent === 'Back online');
+  await page.waitForFunction(() => document.querySelector('#hero h1')?.textContent === 'Back online').catch(async error => {
+    console.error('Reconnect evidence:', JSON.stringify(await page.evaluate(() => ({ heading: document.querySelector('#hero h1')?.textContent, events: window.__liveNetworkEvidence }))));
+    throw error;
+  });
   const savedLive = live;
   live = { text: {}, config: null };
   await refresh().then(() => assert.fail('Invalid state accepted'), () => {});
   assert.equal(await page.locator('#hero h1').innerText(), 'Back online');
   live = savedLive;
   console.log('PASS failure/invalid-response cache fallback, backoff and reconnect recovery');
+
+  // A request started before reconnect may reject after the online event.
+  // Its stale failure must not reinstate the pre-reconnect backoff.
+  let releaseStale;
+  delayNext = new Promise(resolve => { releaseStale = resolve; });
+  const held = new Promise(resolve => { notifyHeld = resolve; });
+  abortNext = true;
+  const stale = refresh().then(() => assert.fail('Aborted request accepted'), error => {
+    assert.match(error.message, /Failed to fetch|NetworkError|Load failed/);
+  });
+  let heldTimeout;
+  try {
+    await Promise.race([held, new Promise((_, reject) => {
+      heldTimeout = setTimeout(() => reject(new Error('Expected the stale request to reach the network fixture')), 15000);
+    })]);
+  } finally { clearTimeout(heldTimeout); }
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  live.text[key] = 'Recovered after stale network failure';
+  releaseStale();
+  await stale;
+  notifyHeld = null;
+  await page.clock.fastForward(5100);
+  await page.waitForFunction(() => document.querySelector('#hero h1')?.textContent === 'Recovered after stale network failure');
+  status = 503;
+  await refresh().then(() => assert.fail('Post-reconnect failure accepted'), error => {
+    assert.match(error.message, /Published content unavailable \(503\)/);
+  });
+  const postReconnectRequests = requests;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await page.clock.fastForward(5100);
+  assert.equal(requests, postReconnectRequests, 'A new failure after reconnect must still back off');
+  status = 200;
+  console.log('PASS reconnect while an older network request is still pending');
 
   live.text[key] = 'BFCache refresh';
   await page.evaluate(() => { window.dispatchEvent(new Event('online')); window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })); });
