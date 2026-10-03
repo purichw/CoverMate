@@ -53,7 +53,13 @@ try{
     if(!result.ok||result.admin.uatOnly!==true)throw Error('UAT owner authorization failed');
     return window.CoverMateFirebase.auth.currentUser.getIdToken();
   },customToken);
-  assert.equal((await call('catalog')).settings.enabled,true,'Existing UAT Articles must already be enabled');
+  const articlesEnabled=(await call('catalog')).settings.enabled;report.articlesEnabled=articlesEnabled;
+  async function publication(){
+    const feed=await call('feed');
+    if(articlesEnabled)return feed.items.find(item=>item.id===id);
+    assert.deepEqual(feed.items,[],'Disabled UAT Articles must remain hidden');
+    return (await db.doc('sites/covermate-uat/articleCatalog/'+id).get()).data()?.live;
+  }
   let draft=createArticleDraft({id,slug:id,authorName:'Synthetic release QA'});
   for(const lang of ['th','en'])Object.assign(draft.translations[lang],{
     title:'Release QA '+lang+' '+uid,excerpt:'Synthetic release verification '+lang,
@@ -63,13 +69,13 @@ try{
   });
   created=true;draft=await call('save',{article:draft,expectedRevision:0});
   draft=await call('publish',{id,expectedRevision:draft.revision,languages:['th']});
-  let feed=await call('feed'),th=feed.items.find(item=>item.id===id).translations.th;
-  assert.equal(feed.items.find(item=>item.id===id).translations.en,undefined);
+  const first=await publication(),th=first.translations.th;
+  assert.equal(first.translations.en,undefined);
   assert.equal(th.showDate,false);assert.ok(th.releasedAt);assert.ok(th.image.src);
   draft.translations.th.title='Unpublished TH change';draft.translations.th.cover={src:''};
   draft=await call('save',{article:draft,expectedRevision:draft.revision});
   draft=await call('publish',{id,expectedRevision:draft.revision,languages:['en']});
-  feed=await call('feed');const live=feed.items.find(item=>item.id===id);
+  const live=await publication();
   assert.deepEqual(live.translations.th,th,'EN Publish must preserve the TH publication');
   assert.equal(live.translations.en.image.src,'','An explicit EN blank never borrows TH media');
   report.checks.push('Real Firebase owner authentication, save, TH-only and EN-only Publish, independent images, optional dates, release time and draft isolation');
@@ -77,11 +83,18 @@ try{
   await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[name=query]').fill(id);
   await page.locator(`[data-article-id="${id}"] [data-article-action=edit]`).first().click();
-  await page.locator('.ae-metadata').waitFor();await page.evaluate(()=>document.fonts.ready);
+  await page.locator('.ae-metadata').waitFor();
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.ae-validation-summary ul')).display==='grid');
+  await page.frameLocator('.ae-canvas-frame').locator('.ae-editor-host:visible .tiptap').waitFor();
+  await page.evaluate(async()=>{await document.fonts.ready;scrollTo({top:0,behavior:'instant'});});
   await page.screenshot({path:out+'/editor-desktop.png'});report.screenshots.push('editor-desktop.png');
-  await page.setViewportSize({width:390,height:844});await page.screenshot({path:out+'/editor-mobile.png'});report.screenshots.push('editor-mobile.png');
+  await page.setViewportSize({width:390,height:844});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Hosted mobile editor fits its viewport');
+  await page.screenshot({path:out+'/editor-mobile.png'});report.screenshots.push('editor-mobile.png');
   const liveResponse=await fetch(new URL('/articles/'+id+'?lang=th',url),{headers:vercelBypassHeaders()});
-  assert.equal(liveResponse.status,200);assert.ok((await liveResponse.text()).includes(th.title));
+  assert.equal(liveResponse.status,articlesEnabled?200:404);
+  if(articlesEnabled)assert.ok((await liveResponse.text()).includes(th.title));
+  else report.checks.push('UAT Articles remain disabled: empty public feed and 404 reader, with publication verified in this run\'s stored public projection');
   await call('delete',{id,expectedRevision:draft.revision,confirmation:'DELETE'},409);
   draft=await call('trash',{id,expectedRevision:draft.revision});
   await call('delete',{id,expectedRevision:draft.revision,confirmation:'delete'},422);

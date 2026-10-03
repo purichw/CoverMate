@@ -56,11 +56,23 @@ Publish and visitor readback. Required CI additionally runs WebKit.
 creates only its own synthetic UAT article and temporary UAT-only owner. It
 checks TH/EN publication independence and guarded deletion, then removes the
 article and disables the test identity. It never changes existing UAT settings
-or production content. `scripts/article-release-smoke.mjs` performs read-only
+or production content. If UAT Articles are disabled, it verifies the synthetic
+record's stored public projection and asserts that the public feed remains
+empty and reader remains 404, without enabling existing UAT content.
+`scripts/article-release-smoke.mjs` performs read-only
 deployed asset hashes and desktop/mobile article-route checks.
 
-At commit time, hosted UAT, exact-SHA full CI and production promotion are still
-pending. A passing build alone is not a release: retain the required GitHub
+Hosted UAT passed against runtime commit `e25b51f` at
+`https://covermate-40s3axe5u-purich-w.vercel.app`. Articles remained disabled;
+publication isolation was verified in the synthetic record's stored projection.
+Authenticated desktop/mobile editor captures were inspected after CSS and the
+writing canvas finished loading. Cleanup confirmed the article was removed,
+the temporary allowlist deactivated and the Auth user disabled. Read-only hosted
+asset hashes match the candidate. Subsequent harness/documentation changes do
+not change that tested runtime.
+
+At commit time, exact-SHA full CI and production promotion are still pending.
+A passing build alone is not a release: retain the required GitHub
 `verify` deployment gate, then verify the canonical production alias and served
 assets. Follow `RELEASE_RUNBOOK.md` timing checkpoints. No Firestore Rules or
 environment configuration changes are part of this release.
