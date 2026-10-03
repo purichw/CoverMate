@@ -80,7 +80,7 @@ try {
   for(const width of [1440,390]){
     await page.setViewportSize({width,height:width===1440?1000:844});
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-    if(await page.locator('.ae-writing').getAttribute('open')===null)await page.locator('.ae-writing > summary').click();
+    assert.equal(await page.locator('.ae-writing').isVisible(),true,'Writing workspace stays available without opening a disclosure');
     await page.locator('.ae-toolbar').scrollIntoViewIfNeeded();
     await measure(width===1440?'Editor desktop':'Editor mobile');
     const buttons=await page.locator('.ae-format-row:not(.ae-format-more) > .ae-button').evaluateAll(nodes=>nodes.map(button=>{

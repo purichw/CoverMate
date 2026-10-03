@@ -62,11 +62,11 @@ if(process.argv.includes('--browser')) {
     const edit=async()=>{if(page.url().startsWith(server.baseUrl))await page.reload();else await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await page.locator('[data-article-action=edit]').first().click();await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor();};
     const details=async(alt,caption='')=>{const dialog=page.locator('.ae-dialog:not(.ae-settings-dialog)');await dialog.locator('[data-field=alt]').fill(alt);await dialog.locator('[data-field=caption]').fill(caption);await dialog.locator('.ae-modal-form [type=submit]').click();await page.locator('.article-media-fixture').waitFor();};
     const save=async()=>{await closeSettings(page);await page.locator('[data-ae=save]:visible').first().click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
-    await edit();await openSettings(page);await page.locator('[data-ae=cover]').click();await details('Cover alt','Cover credit');
+    await edit();await articleTool(page,'cover');await details('Cover alt','Cover credit');
     assert.deepEqual(await page.evaluate(()=>[window.__articleMediaCalls.at(-1).slot.width,window.__articleMediaCalls.at(-1).slot.height]),[1600,900]);
     const legacySource=await page.evaluate(()=>{window.__articleUseLegacySource=true;return window.__articleMediaCalls.at(-1).source;});
     assert.ok(legacySource.startsWith('/assets/'));
-    await page.locator('[data-media-use]').click();await save();await edit();await openSettings(page);await page.locator('[data-ae=cover]').click();await details('Cover alt','Cover credit');
+    await page.locator('[data-media-use]').click();await save();await edit();await articleTool(page,'cover');await details('Cover alt','Cover credit');
     const reopened=await page.evaluate(()=>window.__articleMediaCalls.at(-1));
     assert.equal(reopened.source,legacySource);assert.equal(reopened.sourceAsset,undefined);assert.deepEqual(reopened.crop,media.crop);
     await page.locator('[data-media-cancel]').click();await closeSettings(page);

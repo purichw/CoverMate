@@ -24,6 +24,15 @@ save/reopen, full Preview, Publish, visitor readback, draft/live isolation and
 Unpublish. The Home pin journey passed save/reload/publication and the concurrent
 ten-pin limit. These checks use synthetic isolated records, not production data.
 
+The first hosted run, `37124734382` for `bcadaa0`, passed preflight, CMS, smoke
+and emulators. Visitor/Admin/Articles stopped at three old test navigation
+assumptions: opening the removed writing disclosure, choosing a category before
+opening its content panel, and opening cover controls in publication settings.
+Those consumers now follow the real workspace controls. Focused select-spacing,
+Admin interaction and article-media checks passed after correction, along with
+delivery, typography and feature-card coverage. No runtime change, removed
+assertion, increased timeout or gate bypass was needed for this follow-up.
+
 Local evidence is under `uat-results/editor-pages/`, `editor-content/`,
 `editor-panel/` and `article-workspace-20261003/`. Desktop/mobile CMS captures
 were inspected after integration. Prior article comparison captures document

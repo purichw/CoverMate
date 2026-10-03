@@ -155,6 +155,7 @@ try {
     await editor.locator(':scope > p').first().click();
     await choose(page.locator('[data-format="block"]'),'h3');
     assert.ok(await editor.locator('h3').count()>0);
+    await revealArticleControl(page,'select[data-field="categoryId"]');
     await choose(page.locator('select[data-field="categoryId"]'),'health');
     assert.equal(await page.locator('select[data-field="categoryId"]').inputValue(),'health');
     await page.locator('[data-ae="back"]').click();
