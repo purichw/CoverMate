@@ -50,6 +50,17 @@ try {
   const feed=await repository.feed('covermate-uat');assert.equal(feed.items.find(i=>i.id===run).translations.th.readingMinutes,1);assert.equal(JSON.stringify(feed).includes('document'),false);assert.equal(JSON.stringify(feed).includes('เนื้อหาจากคลังกลาง'),false);
   assert.deepEqual((await call('feed')).body,feed,'Owner canvas reads exactly the Visitor publication projection');
   const detail=await repository.detail('covermate-uat',run);assert.equal(detail.item.translations.th.author,draft.authorName);assert.equal(detail.item.translations.en,undefined);
+  assert.equal(feed.items.find(i=>i.id===run).translations.th.showDate,false,'An explicitly hidden date stays hidden in feed summaries');
+  // Production articles published before optional dates have no showDate field.
+  // Replay that record shape against real Firestore, whose serializer rejects undefined.
+  const legacyRef=db.doc('sites/covermate-uat/articles/'+run),legacyRecord=(await legacyRef.get()).data();
+  delete legacyRecord.live.translations.th.showDate;
+  await legacyRef.set(legacyRecord);
+  result=await call('save',{article:{...draft,authorName:'Updated legacy author'},expectedRevision:draft.revision});
+  assert.equal(result.status,200,'Saving an old publication must not write undefined catalog fields: '+JSON.stringify(result));
+  draft=result.body;
+  assert.deepEqual((await legacyRef.get()).data().live,legacyRecord.live,'Saving author metadata preserves the live publication');
+  assert.equal((await repository.feed('covermate-uat')).items.find(i=>i.id===run).translations.th.showDate,true,'Legacy summaries retain their visible date');
   assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat')).status,200);assert.equal((await fetch(baseUrl+'/articles/'+run+'?cm_env=uat&lang=en')).status,404);
   const liveTitle=detail.item.translations.th.title;draft.translations.th.title='ยังไม่เผยแพร่การแก้ไข';
   draft=(await call('save',{article:draft,expectedRevision:draft.revision})).body;

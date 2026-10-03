@@ -51,7 +51,9 @@ function publicItem(live,now,{summary=false}={}) {
   const translations={};
   for(const [lang,t] of Object.entries(live.translations||{})) {
     if(!isDue(t,now))continue;
-    translations[lang]=summary?Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt','showDate','status','readingMinutes'].map(key=>[key,t[key]])):{...t,...(t.document?{document:normalizeArticleDocument(t.document,{includeMediaMetadata:false})}:{})};
+    // Older publications predate showDate. Keep their date visible and avoid
+    // undefined fields when persisting the public summary back to Firestore.
+    translations[lang]=summary?Object.fromEntries(['title','excerpt','category','imageAlt','publishedAt','showDate','status','readingMinutes'].map(key=>[key,key==='showDate'?t.showDate!==false:t[key]])):{...t,...(t.document?{document:normalizeArticleDocument(t.document,{includeMediaMetadata:false})}:{})};
   }
   if(!Object.keys(translations).length)return null;
   const {id,slug,categoryId,tags,featured,pinned,image,cover}=live;
