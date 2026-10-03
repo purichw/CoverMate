@@ -70,7 +70,7 @@ archiving or moving to Trash.
 Pins, Home recommendation, category, tags, author, cover, separate TH/EN body,
 takeaways, sources and SEO fields pass through the same server publication model.
 The existing `featured` field is now labeled **ปักหมุดบน Home**, independent of
-index pins. Home displays up to ten eligible publications: Home pins newest-first,
+index pins. Home displays up to twelve eligible publications: Home pins newest-first,
 then latest unique articles. Home pin capacity is ten unique draft/live selections,
 enforced transactionally even on concurrent saves. A published pin must be removed
 from both draft and live to release capacity; unpublished edits never alter the
