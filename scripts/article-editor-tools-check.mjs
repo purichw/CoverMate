@@ -193,14 +193,14 @@ try {
   while(await page.locator('[data-ae=remove-tag]').count())await page.locator('[data-ae=remove-tag]').last().click();
   await field('tags').fill('QA, health');await tool('add-source');await tool('save');assert.match(await fieldError('source-url-0'),/HTTPS/);
   await field('source-label-0').fill('Reference');await field('source-url-0').fill('https://example.com/source');
-  await openSettings(page);await page.locator('[data-ae=clear-takeaways]').click();
+  await tool('clear-takeaways');
   await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways').waitFor({state:'detached'});
   assert.equal(await field('takeaways').inputValue(),'');
   assert.equal(await field('takeawayNote').inputValue(),articleNotes.th.takeawayNote);
   await field('takeaways').fill('Point one\nPoint two');await field('takeawayNoteEnabled').check();
   await page.frameLocator('.ae-canvas-frame').locator('.ad-takeaways li').first().waitFor();
   await closeSettings(page);
-  await tool('add-source');await openSettings(page);await page.locator('[data-ae=remove-source][data-index="1"]').click();await closeSettings(page);
+  await tool('add-source');await (await revealArticleControl(page,'[data-ae=remove-source][data-index="1"]')).click();await closeSettings(page);
   await save();
   await tool('preview');const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-sources a').waitFor();assert.equal(await preview.locator('.ad-sources a').getAttribute('href'),'https://example.com/source');
   assert.equal(await preview.locator('.ad-takeaways li').count(),2);
@@ -229,7 +229,6 @@ try {
   await page.reload();await page.locator('[data-article-state=ready]').waitFor();
   await page.locator('[name=query]').fill('Toolbar interaction QA');await page.locator('[data-article-action=edit]').first().click();
   assert.equal(await field('slug').inputValue(),'qa-toolbar');assert.equal(await field('pinned').isChecked(),true);
-  await openSettings(page);
   assert.equal(await field('seoDescription').inputValue(),'SEO description');
   for(const lang of ['th','en']){
     await page.locator(`[data-lang=${lang}]`).click();

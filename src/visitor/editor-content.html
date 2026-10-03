@@ -2,7 +2,21 @@
     <sc-if value="{{ tabContent }}" hint-placeholder-val="{{ false }}">
       <div class="cm-editor-content-workspace">
         <section class="cm-editor-content-detail" data-content-detail="{{ curId }}">
-          <label class="cm-editor-field cm-editor-section-picker"><span>ส่วนที่แก้ไข</span><select data-editor-content-section aria-label="เลือกส่วนที่แก้ไขเนื้อหา" value="{{ curId }}" sc-camel-on-change="{{ selectContentSection }}"><sc-for list="{{ contentSections }}" as="section"><option value="{{ section.id }}">{{ section.order }}. {{ section.name }}</option></sc-for></select></label>
+          <div class="cm-editor-section-navigation">
+            <div class="cm-editor-section-card">
+              <div class="cm-editor-section-picker cm-editor-context-picker">
+                <span class="cm-editor-context-icon" aria-hidden="true"><svg sc-camel-view-box="0 0 24 24"><path d="M9 5h12M9 12h12M9 19h12"></path><path d="M3 5h.01M3 12h.01M3 19h.01" stroke-width="3.5"></path></svg></span>
+                <span class="cm-editor-context-copy" aria-hidden="true"><small>ส่วนที่แก้ไข</small><strong>{{ currentContentLabel }}</strong><span>จากทั้งหมด {{ contentSectionCount }} ส่วน</span></span>
+                <span class="cm-select-shell"><select data-editor-content-section aria-label="เลือกส่วนที่แก้ไขเนื้อหา" value="{{ curId }}" sc-camel-on-change="{{ selectContentSection }}"><sc-for list="{{ contentSections }}" as="section"><option value="{{ section.id }}">{{ section.order }}. {{ section.name }}</option></sc-for></select></span>
+              </div>
+              <label class="cm-editor-content-search"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"></circle><path d="m16 16 5 5"></path></svg><input type="search" data-content-section-search aria-label="ค้นหาส่วนที่แก้ไข" placeholder="ค้นหาส่วน..." value="{{ contentQuery }}" sc-camel-on-input="{{ onContentQuery }}" sc-camel-on-key-down="{{ onContentSearchKey }}"></label>
+            </div>
+            <div class="cm-editor-section-shortcuts" data-filtered="{{ contentSearching }}" role="group" aria-label="ทางลัดส่วนที่แก้ไข">
+              <div class="cm-editor-section-chips"><sc-for list="{{ contentQuickSections }}" as="section"><button type="button" data-content-shortcut="{{ section.id }}" aria-pressed="{{ section.sel }}" title="{{ section.name }}" sc-camel-on-click="{{ section.openContent }}">{{ section.order }}. {{ section.name }}</button></sc-for></div>
+              <button type="button" class="cm-editor-all-sections" aria-label="เลือกจากทุกส่วน" title="เลือกจากทุกส่วน" sc-camel-on-click="{{ openContentPicker }}"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.5"></path></svg></button>
+            </div>
+            <sc-if value="{{ contentSearching }}"><div class="cm-editor-search-result"><span role="status">{{ contentSearchSummary }}</span><button type="button" sc-camel-on-click="{{ clearContentQuery }}">ล้างคำค้น</button></div></sc-if>
+          </div>
           <div class="cm-editor-content-heading"><h3 tabindex="-1" data-editor-content-title>แก้ไข : {{ curName }}</h3><sc-if value="{{ selectedOutline.canToggle }}"><button type="button" class="cm-editor-visibility" data-content-visibility data-hero-visibility role="switch" aria-checked="{{ selectedOutline.on }}" aria-label="แสดงหรือซ่อนส่วนนี้" sc-camel-on-click="{{ selectedOutline.toggle }}">{{ selectedOutline.statusLabel }}</button></sc-if></div>
           <div class="cm-editor-content-meta"><p class="cm-editor-help">{{ contentScope }}</p><!-- COVERMATE_EDITOR_LANGUAGE --></div>
           <sc-if value="{{ contentDependency }}"><p class="cm-editor-notice">{{ contentDependency }}</p></sc-if>

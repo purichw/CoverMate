@@ -110,5 +110,14 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
   root.dataset.size=matchMedia('(max-width:767px)').matches?'mobile':'desktop';
   root.querySelectorAll('[data-canvas-size]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.canvasSize===root.dataset.size)));
   load();
-  return {update,destroy(){stopped=true;clearTimeout(timer);controller.abort();writingSection?.removeEventListener('toggle',revealWriting);}};
+  return {update,
+    scrollPosition:()=>ready?{x:frame.contentWindow.scrollX,y:frame.contentWindow.scrollY}:null,
+    restoreScroll:position=>{if(ready&&position)frame.contentWindow.scrollTo({left:position.x,top:position.y,behavior:'instant'});},
+    reveal(key){
+      if(!ready)return;
+      const selector=Object.entries(fields).find(([,field])=>field===key)?.[0];
+      const target=selector&&frame.contentDocument.querySelector(selector);
+      target?.scrollIntoView({block:'start',behavior:'instant'});
+    },
+    destroy(){stopped=true;clearTimeout(timer);controller.abort();writingSection?.removeEventListener('toggle',revealWriting);}};
 }

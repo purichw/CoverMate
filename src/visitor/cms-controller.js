@@ -121,6 +121,13 @@ export function withCmsController(Base, {
         return;
       }
       if (this.state.versionOpen) { this._versions?.versionKeydown(this, event); return; }
+      // Clear the local section query before Escape dismisses the whole panel.
+      if (event.key === 'Escape' && !event.isComposing && this.state.contentQuery && event.target.matches?.('[data-content-section-search]')) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.setState({contentQuery:''});
+        return;
+      }
       // This panel is non-modal: Escape closes it only while focus is inside.
       // Media dialogs and native selects retain their own dismissal behavior.
       if (event.key === 'Escape' && this.state.admin && !this.state.remoteBusy && !event.isComposing &&

@@ -69,6 +69,33 @@ implementation is included in `aa8b68d`; the dated results are not fresh checks.
 
 ## Content workspace
 
+### Context navigation refresh — 2026-10-03
+
+The page picker is a context card with the current page, document icon and short
+description. Desktop places it beside the heading/status; mobile stacks it below
+the heading. The same fragment is used by the inline Tools menu. The existing
+shared native/select surface still owns values, keyboard navigation, centered
+menu options, busy state and focus. Page choices come from `CMS_EDITABLE_PAGES`,
+including the implemented Health and Life landing pages.
+
+Content's section card shows the actual page order and total (including hidden
+sections), rather than the mockup's illustrative eight sections. Desktop adds a
+local search and quick section buttons; the overflow button opens the full shared
+picker. Search filters shortcuts only, never changes Draft or removes options.
+Enter selects a sole match, Arrow Down focuses results, and Escape clears a query
+before a later Escape can close the panel. Choosing a section or another page
+clears the query. Mobile uses the full-width section card and existing scrolling
+picker. Save/Preview are labelled icon buttons on mobile; Publish stays labelled.
+The bottom sheet, independent form scrolling and footer history remain intact.
+
+Verification: `check:editor-pages`, `check:editor-content`, controller checks,
+bundle validation and unchanged Home/Motor performance budgets passed locally.
+Content coverage includes search/empty/keyboard, hidden sections, full picker,
+Draft save/reload/Preview and 1440/768/390/320px layouts. Desktop and mobile
+reference/before/after images were personally reviewed under
+`uat-results/editor-navigation-20261003/`. This is an isolated local fixture with
+immutable Live; no production CMS publication or deployment is claimed.
+
 Introduced 2026-09-30. Content uses the same panel dimensions, action bars
 and scroll surface as the other tabs. The redundant embedded preview and second
 desktop section list have been removed. The shared section select follows the

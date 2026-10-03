@@ -134,7 +134,7 @@ if(process.argv.includes('--browser')) {
     await articleField(page,'publishedAt').fill('2026-09-15T10:30');
     await articleField(page,'tags').fill('policy-check, covermate');
     await save(page);
-    await page.locator('[data-ae=preview]').click();await page.locator('.ae-preview-dialog').waitFor();
+    await page.locator('[data-ae=preview]:visible').click();await page.locator('.ae-preview-dialog').waitFor();
     const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-prose table').waitFor();
     assert.deepEqual(await preview.locator('script[src*="/article-"]').evaluateAll(nodes=>nodes.map(node=>new URL(node.src).pathname)),['/assets/visitor/article-reader.js'],'Private draft preview loads the full reader even when its shell came from public Home');
     const previewHTML=await preview.locator('.ad-prose').innerHTML();assert.ok(previewHTML.includes('<table>'));assert.ok(previewHTML.includes('<cite>'));assert.ok(previewHTML.includes('data-kind="summary"'));assert.ok(previewHTML.includes('data-kind="keypoints"'));
@@ -159,10 +159,12 @@ if(process.argv.includes('--browser')) {
       assert.deepEqual(await articleCanvas(page).locator('.ae-editor-host:visible table').evaluate(table=>({table:getComputedStyle(table).display,row:getComputedStyle(table.rows[0]).display,cell:getComputedStyle(table.rows[1].cells[0]).display,size:getComputedStyle(table.rows[0].cells[0]).fontSize})),{table:'table',row:'table-row',cell:'table-cell',size:'14px'},'Article tables keep reader geometry, not Admin stacked rows');
       await page.screenshot({path:out+'/'+engine+'-'+width+'-top.png'});
       await page.locator('[data-ae=settings]:visible').click();await page.locator('.ae-settings-dialog').waitFor();
-      await (await revealArticleControl(page,'.ae-settings-dialog [data-field=coverAlt]')).fill('ข้อความอธิบายภาพจากมือถือ');
+      await (await revealArticleControl(page,'.ae-settings-dialog [data-field=seoTitle]')).fill('SEO บทความจากมือถือ');
       if(width===390)await page.screenshot({path:out+'/'+engine+'-mobile-settings.png'});
       await page.locator('.ae-settings-dialog .ae-done').click();
       await page.locator('.ae-settings-dialog').waitFor({state:'detached'});assert.equal(await page.locator('[data-field=title]').inputValue(),'ยังไม่บันทึก');
+      await articleField(page,'coverAlt').fill('ข้อความอธิบายภาพจากมือถือ');
+      await page.locator('[data-ae=close-reader]').click();
       if(width===390){
         const callout=articleCanvas(page).locator('.ae-editor-host:visible .article-callout').first();
         await page.locator('.ae-canvas-frame').scrollIntoViewIfNeeded();

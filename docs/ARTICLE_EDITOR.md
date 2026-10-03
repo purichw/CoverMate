@@ -114,22 +114,24 @@ authenticated production checks.
 
 ## Writing
 
-The editor follows the updated desktop/mobile reference while retaining the
-existing writer. At widths of 1200 px and above, basic information and the rich
-writing canvas share the left column. The right column contains the separate
-cover with its Alt and caption, publication state/date/pin controls, a live card
-preview and advanced metadata disclosures. Basic information groups title,
-stable slug, card excerpt, category and removable tags. The heading keeps three
-actions: Preview, Save article draft and Publish article.
+As of 2026-10-03, reader-facing fields live inside the writing workspace.
+The content navigation opens one contextual panel for header/title/excerpt,
+cover/Alt/caption, takeaways, decorative notes/quote, author/date, sources, or
+card preview. Desktop places that panel beside the canvas; narrow viewports
+use an overlay within the writing region with a visible return-to-writing
+button. The covered canvas is inert on narrow screens. Controls retain their
+single canonical field owners and existing limits; no content migration occurs.
+Clicking public-looking metadata in the live canvas opens the corresponding
+panel. Selecting a panel from navigation reveals that portion of the article
+when present; closing it restores the prior writing scroll position.
 
-Below 1200 px, these sections appear inline in this order: basic information,
-cover, writing, publication, card preview, then advanced metadata. Cover,
-writing, publication and card use native disclosures that start open on desktop
-and folded on narrower screens. Basic information has its existing fold toggle.
-The DOM and keyboard order follow this visual sequence; responsive rearrangement
-moves metadata panels while the live writing iframe stays mounted in place.
-Folding preserves the fields and both language documents; language, media and
-source refreshes preserve each disclosure's open or closed state.
+The writing header provides **เต็มหน้าจอ**, which expands the same mounted
+iframe/editor to the browser viewport. It keeps language, formatting, block
+insertion, content panels, Preview and Save draft available. The outside shell
+is inert and page scrolling is locked until exit. The exit button or Escape
+restores the page position and focus; open child dialogs own Escape first.
+No iframe reparenting/recreation occurs: selection, undo and unsaved documents
+survive entry/exit, language switches and responsive changes.
 
 The common writing controls stay visible inside the writing section. Secondary
 formatting and numeric text sizing are grouped in a folded formatting disclosure;
@@ -137,9 +139,10 @@ callouts, block insertion/order/placement and block help are grouped in a separa
 folded block-tools disclosure. These expose the existing controls and document
 operations without removing advanced capabilities.
 
-The settings shortcut beside the backup actions still opens the optional sheet.
-The sheet moves the same settings controls instead of maintaining a second form;
-mobile authors can also edit those controls directly in the inline disclosures.
+The settings shortcut beside the backup actions opens publication pins/state
+and SEO controls only. Reader-visible fields remain reachable from the writing
+workspace without scrolling to a separate settings rail. Editorial date stays
+with author metadata and retains the same scheduling behavior and guidance.
 Full-page Preview and safe-area Save/Publish remain available. Tags
 accept Enter or comma-separated input and commit on blur/save; removing a tag
 never drops text currently being entered. Validation reveals a folded invalid
@@ -192,13 +195,12 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
   The private writing frame starts at the body and hides public navigation,
   footer and floating contact controls. Full-page Preview retains that public
   chrome; only the writing frame's own scroll moves when it first opens.
-- Desktop places the real-page writing canvas below basic metadata in the left
-  column, alongside the cover/publication/settings rail. Desktop/Mobile canvas
-  modes retain their independent reader viewport within the writing frame.
-  On narrow screens the writing section opens inline; the settings sheet is an
-  optional shortcut to the same fields. Toolbar disclosures stay in normal flow
-  below the shared shell. Bottom save actions
-  respect safe-area padding and hide when a detected software keyboard opens.
+- The canvas occupies the content workspace on desktop and mobile. Its
+  Desktop/Mobile controls select the reader viewport independently of the
+  Admin viewport. The contextual reader panel and fullscreen controls remain
+  within this workspace. Bottom save actions respect safe-area padding and hide
+  when a detected software keyboard opens.
+
 
 Images support HTTPS URLs, local assets and uploads through the configured media
 provider, with explicit crop confirmation. Revision-history restore, server autosave, whole-article duplication,
@@ -460,3 +462,15 @@ Current visual evidence is under `uat-results/article-typography/` and
 in normal flow so it cannot cover text selected inside the independently
 scrolling writing frame. This is browser-engine QA, not a physical-device test.
 Broader site/release checks are outside this typography pass.
+
+### Content workspace and fullscreen verification (2026-10-03)
+
+`node scripts/article-workspace-check.mjs` (also available via the existing
+`article-editor-layout-check.mjs` entry point) checks one field owner, live
+metadata selection, independent TH/EN content, canvas/editor identity, selected
+text and Undo across fullscreen, child-dialog Escape, Save/Preview/reopen,
+explicit hidden notes, and 820/390/320px writing. Existing
+`article-editor-check.mjs --browser` retains broad authoring and stale-tab
+checks. `article-editor-tools-check.mjs` owns advanced formatting and media QA.
+Evidence: `uat-results/article-workspace-20261003/`. Local synthetic data only;
+this workflow change does not certify production deployment or authentication.

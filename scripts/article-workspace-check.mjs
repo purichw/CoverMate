@@ -1,0 +1,99 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
+import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {articleCanvas,articleField,articleTool,closeSettings} from './lib/article-editor-ui.mjs';
+
+const server=await startArticlesAdminPreview(),pw=loadPlaywright(),engine=process.env.BROWSER||'chromium';
+const browser=engine==='chromium'?await launchChromium(pw.chromium):await pw[engine].launch();
+const out='uat-results/article-workspace-20261003';await fs.mkdir(out,{recursive:true});
+const report={engine,url:server.baseUrl+'/admin#articles',environment:'Synthetic account and local IndexedDB; no production writes',checks:[],errors:[]};
+try {
+  const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+  await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
+  const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push(error.message));
+  const field=key=>articleField(page,key),body=()=>articleCanvas(page).locator('.ae-editor-host:visible .tiptap');
+  const edit=async()=>{await page.locator('[data-article-action=edit]').first().click();await body().waitFor();};
+  const save=async()=>{await closeSettings(page);await page.locator('[data-ae=save]:visible').first().click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างบนเครื่องแล้ว'}).waitFor();};
+  const dismiss=async()=>{if(await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();};
+  await page.goto(report.url);await page.locator('[data-article-state=ready]').waitFor();await edit();
+  async function backup(name){const download=page.waitForEvent('download');await page.locator('[data-ae=export]').click();const file=await download;await file.saveAs(out+'/'+name+'.json');return JSON.parse(await fs.readFile(out+'/'+name+'.json','utf8'));}
+  const untouched=await backup('before-navigation');
+  await page.locator('[data-reader-panel=summary]').click();await dismiss();
+  await page.locator('[data-ae=fullscreen]').click();await page.locator('[data-ae=fullscreen]').click();
+  assert.deepEqual(await backup('after-navigation'),untouched,'Opening navigation does not alter draft content');
+  assert.equal(await page.locator('[data-save-state]').first().getAttribute('data-dirty'),'false','Opening panels/fullscreen alone does not edit the draft');
+  const identity=await page.locator('.ae-canvas-frame').evaluateHandle(frame=>({doc:frame.contentDocument,body:frame.contentDocument.querySelector('.tiptap')}));
+  const same=async()=>assert.equal(await page.evaluate(old=>{const doc=document.querySelector('.ae-canvas-frame').contentDocument;return doc===old.doc&&doc.querySelector('.tiptap')===old.body;},identity),true,'Canvas document and editor node remain mounted');
+  const selection=()=>body().evaluate(el=>{const s=el.ownerDocument.getSelection();return {text:s.toString(),offset:s.anchorOffset,focus:s.focusOffset};});
+  for(const key of ['title','excerpt','coverAlt','caption','publishedAt','authorName','authorBio','editorialNote','takeaways','headerNote','sidebarQuote','takeawayNote']){
+    assert.equal(await page.locator(`.ae-writing [data-field=${key}]`).count(),1,key+' has one content-workspace owner');
+    assert.equal(await page.locator(`.ae-settings [data-field=${key}]`).count(),0,key+' is not hidden in publication settings');
+  }
+  await field('takeaways').fill('สรุปจากพื้นที่เขียน\nแก้ไขและเห็นผลทันที');
+  await field('takeawayNote').fill('เข้าใจวันนี้');
+  await field('headerNote').fill('ดูแลทุกความเข้าใจ');
+  await field('sidebarQuote').fill('ข้อมูลครบในพื้นที่เขียนเดียว');
+  await field('sidebarQuoteEnabled').uncheck();
+  await field('authorBio').fill('ผู้เขียนตัวอย่างสำหรับการทดสอบ');await field('authorDetailsEnabled').check();
+  await articleTool(page,'add-source');await field('source-label-0').fill('แหล่งข้อมูลตัวอย่าง');await field('source-url-0').fill('https://example.com/reference');
+  await page.locator('[data-lang=en]').click();await field('headerNote').fill('English header note');
+  await page.locator('[data-lang=th]').click();assert.equal(await field('headerNote').inputValue(),'ดูแลทุกความเข้าใจ');
+  await same();await dismiss();
+  await articleCanvas(page).locator('.ad-takeaways li').filter({hasText:'สรุปจากพื้นที่เขียน'}).waitFor();
+  assert.equal(await articleCanvas(page).locator('.ad-side-note').count(),0,'Explicit off is reflected in live canvas');
+  await articleCanvas(page).locator('.ad-takeaways').click();
+  assert.equal(await field('takeaways').isVisible(),true,'Clicking reader content opens its adjacent editor');
+  await dismiss();
+  await body().locator('p').first().click();await page.keyboard.press('End');await page.keyboard.type(' workspace-check');
+  await page.keyboard.press('Shift+ArrowLeft');await page.keyboard.press('Shift+ArrowLeft');
+  const selected=await selection();
+  await page.locator('[data-ae=fullscreen]').scrollIntoViewIfNeeded();
+  const beforeScroll=await page.evaluate(()=>({x:scrollX,y:scrollY,overflow:document.body.style.overflow}));
+  await page.locator('[data-ae=fullscreen]').evaluate(el=>el.addEventListener('click',()=>{window.__workspaceEntryScroll={x:scrollX,y:scrollY,overflow:document.body.style.overflow};},{once:true,capture:true}));
+  await page.locator('[data-ae=fullscreen]').click();await same();
+  assert.deepEqual(await selection(),selected,'Fullscreen preserves text selection');
+  assert.deepEqual(await page.locator('.ae-fullscreen').evaluate(el=>{const b=el.getBoundingClientRect();return [b.x,b.y,b.width,b.height];}),[0,0,1440,1000]);
+  assert.equal(await page.locator('.ae-fullscreen .ae-writing').evaluate(el=>Math.round(el.getBoundingClientRect().width)),1440);
+  assert.equal(await page.locator('#sideNav').evaluate(el=>Boolean(el.closest('[inert]'))),true,'Outside navigation is inert');
+  await articleTool(page,'undo');assert.ok(!(await body().innerText()).includes('workspace-check'));
+  await articleTool(page,'redo');assert.match(await body().innerText(),/workspace-check/);
+  await articleTool(page,'link');await page.locator('.ae-modal-form [data-field=href]').press('Escape');
+  assert.equal(await page.locator('.ae-fullscreen').count(),1,'Escape dismisses child dialog first');
+  await page.locator('[data-reader-panel=summary]').click();await field('takeawayNote').fill('เขียนเต็มหน้าจอได้');
+  await save();await same();
+  await page.locator('.ae-fullscreen [data-ae=preview]:visible').click();const preview=page.frameLocator('.ae-preview-frame');
+  await preview.locator('.ad-takeaways li').filter({hasText:'สรุปจากพื้นที่เขียน'}).waitFor();
+  assert.equal(await preview.locator('.ad-takeaways-note').textContent(),'เขียนเต็มหน้าจอได้');
+  assert.equal(await preview.locator('.ad-side-note').count(),0);
+  await page.locator('.ae-preview-dialog [data-ae=close]').click();await dismiss();
+  await body().press('Escape');assert.equal(await page.locator('.ae-fullscreen').count(),0,'Escape from iframe exits fullscreen');
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await page.locator('[data-ae=fullscreen]').evaluate(el=>el===document.activeElement),true);
+  assert.equal(await page.locator('#sideNav').evaluate(el=>Boolean(el.closest('[inert]'))),false);
+  const scrollDebug=await page.evaluate(()=>({actual:{x:scrollX,y:scrollY,overflow:document.body.style.overflow},entry:window.__workspaceEntryScroll,height:document.documentElement.scrollHeight,workspace:document.querySelector('.ae-workspace').getBoundingClientRect().toJSON()}));
+  report.scroll={before:beforeScroll,...scrollDebug};
+  assert.deepEqual(scrollDebug.actual,scrollDebug.entry,'Exit restores outer scroll and overflow at the entry click');
+  await same();report.checks.push('Single reader-field owner, live-canvas selection, TH/EN, retained iframe/caret/undo, nested Escape, preview and fullscreen save');
+  await page.reload();await page.locator('[data-article-state=ready]').waitFor();await edit();
+  assert.equal(await field('takeawayNote').inputValue(),'เขียนเต็มหน้าจอได้');
+  assert.equal(await field('source-label-0').inputValue(),'แหล่งข้อมูลตัวอย่าง');
+  assert.equal(await field('sidebarQuoteEnabled').isChecked(),false);
+  assert.equal(await field('sidebarQuote').inputValue(),'ข้อมูลครบในพื้นที่เขียนเดียว');
+  await page.locator('[data-lang=en]').click();assert.equal(await field('headerNote').inputValue(),'English header note');
+  await page.locator('[data-lang=th]').click();assert.match(await body().innerText(),/workspace-check/);
+  for(const width of [820,390,320]){
+    await page.setViewportSize({width,height:844});await dismiss();
+    await page.locator('[data-ae=fullscreen]').click();
+    await page.locator('[data-reader-panel=notes]').click();
+    await field('headerNote').fill('เขียนบนมือถือได้');
+    const fits=await page.locator('.ae-reader-panels').evaluate(el=>{const b=el.getBoundingClientRect();return b.left>=0&&b.right<=innerWidth&&b.bottom<=innerHeight;});
+    assert.equal(fits,true,width+'px panel fits writing viewport');
+    await dismiss();await body().locator('p').first().click();await page.keyboard.press('End');await page.keyboard.type(' '+width);
+    await page.locator('[data-ae=fullscreen]').click();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,width+'px no page overflow');
+  }
+  await save();report.checks.push('Saved/reopened content, independent languages and explicit off; 820/390/320px panels and fullscreen writing');
+  assert.deepEqual(report.errors,[]);report.passed=true;console.log('PASS '+report.checks.join('; '));
+}catch(error){report.failure=error.stack;throw error;}
+finally{await fs.writeFile(out+'/'+engine+'-checks.json',JSON.stringify(report,null,2));await browser.close();await new Promise(resolve=>server.server.close(resolve));}

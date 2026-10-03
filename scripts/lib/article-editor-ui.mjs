@@ -7,12 +7,11 @@ async function revealDetails(control){
 async function ensureSettingsVisible(page){
   const settings=page.locator('.ae-settings');
   await settings.waitFor({state:'attached'});
-  // Narrow layouts move the same panels into reading/tab order outside the aside.
-  if(!await page.locator('.ae-settings-panel:visible').count()&&!await settings.locator(':scope > :visible').count())await page.locator('[data-ae=settings]:visible').click();
+  if(!await settings.isVisible())await page.locator('[data-ae=settings]:visible').click();
 }
 export async function openSettings(page){
   await ensureSettingsVisible(page);
-  const closed=()=>page.locator('.ae-settings details:not([open]), .ae-settings-panel:not([open]), .ae-settings-panel details:not([open])');
+  const closed=()=>page.locator('.ae-settings details:not([open])');
   while(await closed().count())await closed().first().locator(':scope > summary').click();
 }
 export async function closeSettings(page){
@@ -22,9 +21,18 @@ export async function closeSettings(page){
 export async function revealArticleControl(page,selector){
   const control=(typeof selector==='string'?page.locator(selector):selector).first();
   await control.waitFor({state:'attached'});
+  const readerPanel=await control.evaluate(el=>el.closest('.ae-reader-fields > [data-panel]')?.dataset.panel);
+  if(readerPanel){
+    await closeSettings(page);
+    const trigger=page.locator(`[data-reader-panel="${readerPanel}"]`);
+    if(await trigger.getAttribute('aria-expanded')!=='true')await trigger.click();
+    await revealDetails(control);
+    return control;
+  }
   if(await control.evaluate(el=>Boolean(el.closest('.ae-settings,.ae-settings-panel'))))await ensureSettingsVisible(page);
   else{
     await closeSettings(page);
+    if(await control.evaluate(el=>el.matches('.ae-canvas-frame'))&&await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();
     if(await control.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," ae-basic ")]').count()&&await page.locator('[data-ae=toggle-basic]').getAttribute('aria-expanded')==='false')await page.locator('[data-ae=toggle-basic]').click();
   }
   await revealDetails(control);

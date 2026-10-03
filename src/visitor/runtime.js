@@ -364,6 +364,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     tab: 'sections',
     sel: 'hero',
     outlineQuery: '',
+    contentQuery: '',
     outlineNotice: '',
     mobileInspector: false,
     editorPanelExpanded: false,
@@ -701,7 +702,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
   selectContentSection(id) {
     const active = document.activeElement;
     if (active?.closest?.('[data-editor-panel]') && /^(INPUT|TEXTAREA)$/.test(active.tagName)) active.blur();
-    this.setState({sel:id,tab:'content'}, () => requestAnimationFrame(() => {
+    this.setState({sel:id,tab:'content',contentQuery:''}, () => requestAnimationFrame(() => {
       const detail = document.querySelector('[data-content-detail]');
       if (detail) detail.scrollTop = 0;
       const scroller = document.querySelector('[data-admin-panel-scroll]');
@@ -1463,7 +1464,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       try { window.localStorage.removeItem(K_ADMIN_EVER); } catch (e) {}
     }
     if (!editMode) this.disableEdit?.();
-    const pageSelection = switchedPage ? { sel:window.CoverMateContract.CMS_EDITABLE_PAGES.find(page=>page.id===routePage)?.section, outlineQuery:'', outlineNotice:'', mobileInspector:false } : {};
+    const pageSelection = switchedPage ? { sel:window.CoverMateContract.CMS_EDITABLE_PAGES.find(page=>page.id===routePage)?.section, outlineQuery:'', contentQuery:'', outlineNotice:'', mobileInspector:false } : {};
     const finishMode = () => {
       if (switchedPage) document.querySelector('[data-admin-panel-scroll]')?.scrollTo(0, 0);
       this.syncSeo();
@@ -2354,6 +2355,10 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     const outlineQuery = String(S.outlineQuery || '');
     const outlineNeedle = outlineQuery.trim().toLocaleLowerCase('th');
     const outlineRows = secList.filter(row => !outlineNeedle || [row.name,row.group,row.role,row.sub,row.summary].some(value => String(value || '').toLocaleLowerCase('th').includes(outlineNeedle)));
+    const contentQuery = String(S.contentQuery || '');
+    const contentNeedle = contentQuery.trim().toLocaleLowerCase('th');
+    const contentMatches = secList.filter(row => !contentNeedle || [row.name,row.group,row.role,row.sub].some(value => String(value || '').toLocaleLowerCase('th').includes(contentNeedle)));
+    const contentQuickSections = contentNeedle ? contentMatches : secList.filter((row,index) => index < 5 || row.sel);
     const contactField = (path,label,options = {}) => ({
       key:path,path,label,big:!!options.big,small:!options.big,hint:options.hint || '',
       ...cmsInput(path,options)
@@ -3283,6 +3288,18 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       heroHasArtwork:sharedDesign,editHeroArtwork:()=>this.editMedia('homeDesign.botanicalIllustration'),
       heroBackgrounds:['bg','surface','sage','dark'].map((key,index)=>({key,label:['พื้นหลังหลัก','พื้นหลังรอง','เขียวอ่อน','เข้ม'][index],color:['var(--color-bg)','var(--color-surface)','var(--color-accent-2-200)','var(--color-neutral-900)'][index],selected:cur?.bg===key,choose:()=>selectedSectionUpdater(section=>{section.bg=key;})})),
       contentSections:secList,
+      currentContentLabel:selectedOutline ? selectedOutline.order + '. ' + selectedOutline.name : '',
+      contentSectionCount:secList.length,
+      contentQuery,contentSearching:!!contentNeedle,contentQuickSections,
+      contentSearchSummary:contentMatches.length ? 'พบ ' + contentMatches.length + ' ส่วน' : 'ไม่พบส่วนที่ตรงกับคำค้น',
+      onContentQuery:event=>this.setState({contentQuery:event.target.value}),
+      clearContentQuery:()=>this.setState({contentQuery:''},()=>requestAnimationFrame(()=>document.querySelector('[data-content-section-search]')?.focus({preventScroll:true}))),
+      onContentSearchKey:event=>{
+        if(event.isComposing)return;
+        if(event.key==='Enter' && contentNeedle && contentMatches.length===1){event.preventDefault();this.selectContentSection(contentMatches[0].id);}
+        if(event.key==='ArrowDown'){event.preventDefault();document.querySelector('[data-content-shortcut]')?.focus({preventScroll:true});}
+      },
+      openContentPicker:()=>{const shell=document.querySelector('[data-editor-content-section]')?.parentElement;const trigger=shell?.querySelector('.cm-select-trigger');if(trigger)trigger.click();else shell?.querySelector('select')?.focus();},
       selectContentSection:event=>this.selectContentSection(event.target.value),
       outlineNotice:selectedOutline && !selectedOutline.on ? 'ส่วนนี้ซ่อนอยู่ในหน้าตัวอย่าง ข้อมูลยังอยู่และแก้ไขได้' + (selectedOutline.dependency ? ' · ' + selectedOutline.dependency : '') : (S.outlineNotice || ''),
       showContactInspector:isContactInspector,
