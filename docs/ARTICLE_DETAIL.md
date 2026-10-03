@@ -44,6 +44,22 @@ for the current production publication, visibility, SEO and storage contract.
 - Save stores up to 100 slugs under `covermate-saved-articles-v1`, only on an
   explicit click. This is device-local, not an account, bookmark library or sync.
   Storage denial is surfaced. Saved state survives reload and can be removed.
+- Public main content deters ordinary copy/cut (including select-all) and text
+  or image dragging. Image context menus are suppressed outside links/controls;
+  ordinary text/link menus and text selection remain available. Attempts show a
+  short TH/EN message suggesting sharing the page link. `src/visitor/content-protection.mjs`
+  is bundled into both existing reader/feed assets and installed/disposed by the
+  visitor runtime. This applies to public Home/service/index content too.
+  Admin, inline CMS editing, Draft Preview and the article canvas are excluded.
+  Forms, contact information, calculator results, and the share URL fallback
+  remain copyable. `[data-copy-allowed]` is an explicit future opt-out.
+  This is a browser deterrent only: readable HTML/SEO, direct image URLs,
+  screenshots, disabled JavaScript, browser overrides, and scraping remain
+  possible. This browser layer does not disable print/devtools shortcuts or
+  selection. See [CONTENT_PROTECTION.md](CONTENT_PROTECTION.md) for the separate
+  live edge firewall and crawl-policy rollout status.
+  The article browser suite covers cancellation and exemptions; test real-device
+  long-press behavior separately before promising any iOS image-save restriction.
 - Related articles use the entire eligible summary feed, prioritize the same
   category and exclude the current article. They share the index card renderer.
 - The index and reader share `article-cta.html` and its CMS copy/destination.

@@ -34,7 +34,11 @@ Internal Home/Motor links preserve language.
 dates, priorities, admin pages and hash aliases. `robots.txt` advertises the
 new sitemap and excludes API endpoints. It allows crawling admin login HTML
 so crawlers can read its noindex directive; authentication remains the security
-boundary, not robots.txt.
+boundary, not robots.txt. The current local crawl policy permits explicit search,
+SEO audit and share-preview agents while defaulting other automated collection
+to Disallow. See [CONTENT_PROTECTION.md](CONTENT_PROTECTION.md) for the live
+Vercel bot-verification rules, discovery endpoint exceptions, deployment status
+and hosted verification caveats; robots permissions alone never grant a WAF bypass.
 
 ## Metadata Ownership
 

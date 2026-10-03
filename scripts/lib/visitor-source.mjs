@@ -113,7 +113,7 @@ export function readContactPayloadAsset() {
 
 const ARTICLE_READER_HELPERS = ['articleDetailSlug', 'readArticleDetail', 'articleShareUrl', 'articleSaved', 'toggleSavedArticle'];
 const HOME_ARTICLE_HELPERS = ['articlePublicHref', 'readHomeArticleFeed', 'projectPublishedArticles', 'projectHomeArticles', 'homeArticleInsertionIndex'];
-const ARTICLE_READER_BINDINGS = `const {registerArticleDocument,registerArticleCarousel,${ARTICLE_READER_HELPERS.join(',')}} = CoverMateArticleReader;`;
+const ARTICLE_READER_BINDINGS = `const {installContentProtection,registerArticleDocument,registerArticleCarousel,${ARTICLE_READER_HELPERS.join(',')}} = CoverMateArticleReader;`;
 const HOME_ARTICLE_BINDINGS = `const {${HOME_ARTICLE_HELPERS.join(',')}} = CoverMateArticleReader;`;
 export function readArticleReaderAsset({ feedOnly = false } = {}) {
   const helpers = ARTICLE_READER_HELPERS;
@@ -122,7 +122,7 @@ export function readArticleReaderAsset({ feedOnly = false } = {}) {
   const documentRegistration = feedOnly ? 'export function registerArticleDocument() {}' : "export {registerArticleDocument} from './article-document.mjs';";
   const name = feedOnly ? 'article-feed' : 'article-reader';
   const code = buildSync({
-    stdin: { contents: `${documentRegistration} export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs'; export {${HOME_ARTICLE_HELPERS.join(',')}} from './src/visitor/home-articles.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: name + '.mjs' },
+    stdin: { contents: `${documentRegistration} export {installContentProtection} from './src/visitor/content-protection.mjs'; export {registerArticleCarousel} from './src/visitor/article-carousel.mjs'; export {${helpers.join(',')}} from './src/visitor/article-detail.mjs'; export {${HOME_ARTICLE_HELPERS.join(',')}} from './src/visitor/home-articles.mjs';`, resolveDir: fileURLToPath(ROOT), sourcefile: name + '.mjs' },
     bundle: true, write: false, treeShaking: true, minify: true, format: 'iife',
     globalName: 'CoverMateArticleReader', target: 'es2022', charset: 'utf8'
   }).outputFiles[0].text;

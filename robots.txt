@@ -1,7 +1,60 @@
-User-agent: *
+# Search indexing, search diagnostics and SEO audits remain permitted.
+# This is a cooperative policy, not authentication: Vercel Bot Protection
+# verifies bots independently and challenges unverified automated clients.
+User-agent: Googlebot
+User-agent: Googlebot-Image
+User-agent: Googlebot-News
+User-agent: Googlebot-Video
+User-agent: Google-InspectionTool
+User-agent: Google-Site-Verification
+User-agent: AdsBot-Google
+User-agent: AdsBot-Google-Mobile
+User-agent: Bingbot
+User-agent: BingPreview
+User-agent: DuckDuckBot
+User-agent: Applebot
+User-agent: Slurp
+User-agent: YandexBot
+User-agent: Baiduspider
+User-agent: Yeti
+User-agent: OAI-SearchBot
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: AhrefsBot
+User-agent: AhrefsSiteAudit
+User-agent: SemrushBot
+User-agent: SiteAuditBot
+User-agent: Lighthouse
+User-agent: Chrome-Lighthouse
 Allow: /
 Disallow: /api/
 Allow: /api/article-sitemap$
+
+# Preserve ordinary link previews. These names do not grant a WAF bypass.
+User-agent: facebookexternalhit
+User-agent: Facebot
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: Line
+User-agent: Slackbot
+User-agent: Discordbot
+User-agent: WhatsApp
+User-agent: TelegramBot
+Allow: /
+Disallow: /api/
+Allow: /api/article-sitemap$
+
+# Explicit opt-out from training/reuse, distinct from search indexing.
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: CCBot
+Disallow: /
+
+# Other automated collection is not permitted.
+User-agent: *
+Disallow: /
 
 Sitemap: https://covermateinsurance.com/sitemap.xml
 Sitemap: https://covermateinsurance.com/api/article-sitemap

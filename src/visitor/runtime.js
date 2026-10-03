@@ -404,6 +404,9 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
 
   componentDidMount() {
     this._articlePreviewUpdate = window.__covermateArticlePreview?.attach?.(this);
+    this._disposeContentProtection = installContentProtection(document,
+      () => !this.state.admin && !this.state.editMode && !this.state.preview && !window.__covermateArticlePreview && !this.ownerModeFromPath(location.pathname),
+      () => this.state.lang);
     // Owner listeners do not run in the public-only build.
     // COVERMATE_OWNER_LISTENERS_BEGIN
     this._editorKeydown = event => this.editorKeydown(event);
@@ -565,6 +568,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     } catch {/* Invalid or unavailable tab memory never blocks the calculator. */}
   }
   componentWillUnmount() {
+    this._disposeContentProtection?.();
     if (window.__covermateArticlePreview?.update === this._articlePreviewUpdate) delete window.__covermateArticlePreview.update;
     document.removeEventListener('keydown', this._editorKeydown, true);
     document.removeEventListener('input', this._editorInput, true);
