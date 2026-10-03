@@ -295,6 +295,10 @@ Route contracts:
   the compact feed on non-detail public routes; detail, owner and static fallback
   HTML keep the full rich-document reader. Keep both generated assets and their
   hashed HTML references in sync via `build:visitor`.
+  Admin article preview reuses public Home as its iframe shell:
+  `src/admin/article-preview.mjs` restores the hashed full reader from the feed
+  tag's `data-covermate-article-reader` before boot. Preserve this consumer when
+  changing public bundle selection; test the real preview iframe as well as detail.
 - `/admin/index.html` owns the single Admin Portal shell. `/admin/ops/index.html`
   is only a compatibility shim; `admin/ops/app.js` mounts the Cases workspace
   from `admin/ops/cases.js`, the Articles workspace from

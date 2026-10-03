@@ -4,14 +4,24 @@
 
 Follow-up to [the October 1 audit](PERFORMANCE_AUDIT_20261001.md), measured against
 production/source `cd200006433cf795a399fabec8d4fe955ad125c7`.
-The owner authorized push and production deploy on October 2. This candidate is
-not considered deployed until exact-SHA CI and production readback pass. No production CMS
+The owner authorized push and production deploy on October 2. The original
+candidate required exact-SHA CI and production readback before release. No production CMS
 writes, credentials changes, Rules changes, cache relaxation, or database
 migration were performed. Authenticated production Admin performance remains
 unmeasured; owner regression checks use isolated synthetic sessions.
 Release receipts belong in `uat-results/performance-release-20261002/` and must
 record the exact commit, CI, Vercel deployment/alias, hosted read-only checks,
 and post-deploy timings. No production content mutation is a rollout step.
+
+October 3 follow-up: `526caad` passed the complete hosted workflow and was
+promoted to production; see [HANDOFF.md](HANDOFF.md#current-source-and-production-checkpoint)
+for the exact CI/deployment evidence. Public non-detail routes now use the
+generated compact article feed, while detail and private article preview keep
+the full reader. Local Home/Motor initial JavaScript measured 348,393 bytes
+(previously 358,317), passing the unchanged 350,000-byte budget; hosted preflight
+also passed. Production readback verified the feed/reader/editor asset hashes
+and five public route/language cases. This does not update the original lab
+timings below or establish a new production performance benchmark.
 
 ## Production Baseline
 

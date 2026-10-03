@@ -2,7 +2,12 @@
 
 Last updated: 2026-10-03
 
-## October 3 Release Follow-up
+## October 3 Release Follow-up — Deployed
+
+Repair commit `526caad` passed the complete required
+[hosted run 37104173139](https://github.com/purichw/CoverMate/actions/runs/37104173139)
+and reached production. The current source, deployment identity and read-only
+production evidence are recorded in the checkpoint below.
 
 `ed8e224` was pushed to `main`. Its first hosted
 [CI run](https://github.com/purichw/CoverMate/actions/runs/37093971380) passed
@@ -21,16 +26,15 @@ The emulator journey also now expects the existing public image dimensions
 alongside `src`, while still requiring private original/crop metadata to be
 absent. The corrected real Auth/Firestore article journey passed locally in
 Chromium through Preview, Publish and visitor readback; local WebKit could not
-launch because its executable is missing, so that evidence must come from CI.
+launch because its executable is missing. The subsequent hosted emulator job
+passed its full required coverage, including Chromium and WebKit.
 The smoke harness verifies aborted thumbnail fallback requests against the same
 preview iframe's successfully loaded, declared `srcset` candidate before a tab
 is removed. It still fails unverified cancellations and broken selected images.
 Focused delayed-success and broken-selected-image checks pass. Two local mobile
 smoke attempts stopped earlier at unchanged login-font settling; the full hosted
-smoke remains mandatory before promotion rather than claiming a local pass.
+smoke subsequently passed in CI before promotion; this is not a local smoke pass.
 A failed release is not evidence to relax the production `verify` gate.
-The dated October 2 production checkpoint below remains historical; check the
-new candidate's exact SHA, terminal CI result and canonical alias on release.
 
 ## CI Workflow Update — October 3
 
@@ -44,11 +48,11 @@ failed baseline evidence forces full coverage. See the current execution graph
 and commands in [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md#release-status-and-timing).
 
 All 90 original commands plus two smoke commands remain in the shared inventory;
-the emulator suite is unchanged. Production identity below is a dated verified
-checkpoint, not a claim that this local workflow is live. The latest inspected
-hosted run for `ff9bce0` failed its existing script-byte performance budget. The
-workflow does not relax that budget; the separate local payload fix below now
-passes it.
+the emulator suite is unchanged. The earlier hosted run for `ff9bce0` failed its
+existing script-byte performance budget. The payload fix below passes the same
+budget, and the split workflow completed successfully for `526caad` in about
+9m49s from run creation to its completed update. This is one measured successful
+run, not an SLA; see the runbook for timings and diagnostic thresholds.
 
 Local verification: 16 CI policy/runner/docs tests passed; workflow/composite
 YAML and the complete 92-command inventory were checked. CLI checks proved
@@ -58,15 +62,18 @@ as eligible to reuse the successful `aa8b68d` baseline. On this Mac (Node 26,
 local Chrome), all six build prerequisites completed and preflight immediately
 reproduced the existing 358,317-byte Home script payload against its 350,000-byte
 budget; that check took 5.8 seconds. This is a failing product check caught early,
-not a full preflight pass or hosted speed measurement. No full browser/emulator
-suites, push, deployment or CMS writes were performed for this workflow edit.
+not a full preflight pass or hosted speed measurement. Those checks preceded
+the later push and complete hosted run recorded above; no live CMS write was
+part of this release.
 
-## Local JavaScript Payload Fix — October 3
+## JavaScript Payload Fix — October 3
 
 The initial Home/Motor script payload now measures **348,393 bytes**, down from
 358,317 (9,924 bytes saved), against the unchanged 350,000-byte gate. Both routes
 passed on 390px mobile and 1440px desktop using local Chrome and CMS defaults.
-These are local checks, not a hosted CI run or production speed measurement.
+These byte measurements are local checks. The same budget also passed in hosted
+preflight; the production readback confirmed the deployed assets and routes,
+not a new production speed measurement.
 
 `build:visitor` now generates a compact `assets/visitor/article-feed.js` alongside
 the unchanged full `article-reader.js`. `server/seo-page.mjs` selects the feed
@@ -86,21 +93,31 @@ subsequent hosted run and preview repair are recorded above.
 
 ## Current Source And Production Checkpoint
 
-Rechecked on October 2 against GitHub and Vercel. This checkpoint supersedes the
+Rechecked on October 3 against GitHub and Vercel. This checkpoint supersedes the
 candidate/deployment wording in the historical entries below.
 
 | Evidence | Confirmed state |
 | --- | --- |
-| Verified runtime baseline and production Git SHA at this checkpoint | `aa8b68d5968c90b84766b32cf09aa4c5c511a9f4` |
-| Required GitHub `verify` | [36999361088](https://github.com/purichw/CoverMate/actions/runs/36999361088), success; both the main gate and Auth/Rules/API/Publish emulator step executed |
-| Vercel deployment | `dpl_TgjPJPK8E3ZHC7bPtMzzAhKfLmph`, `READY` / `PROMOTED`; `deployment-alias` check succeeded |
-| Canonical production | [covermateinsurance.com](https://covermateinsurance.com), assigned to that deployment |
-| October 2 timeline, Asia/Bangkok | Deployment created 18:08:29; build ready 18:09:33; CI completed 18:39:02; production alias check completed 18:39:03 |
+| Verified runtime baseline and production Git SHA at this checkpoint | `526caade513e775e6a9bac993c4f0aca5b323f60` |
+| Required GitHub `verify` | [37104173139](https://github.com/purichw/CoverMate/actions/runs/37104173139), attempt 1, success; scope, preflight, all five browser suites and Auth/Rules/API/Publish emulators passed; docs intentionally skipped |
+| Vercel deployment | `dpl_75N1tkswgeo2EVeSf1dGjGq8u3oa`, `READY` / `PROMOTED`; `deployment-alias` check succeeded |
+| Canonical production | [covermateinsurance.com](https://covermateinsurance.com) and its `www` alias assigned to that deployment |
+| October 3 timeline, Asia/Bangkok | CI created 13:46:59; deployment created 13:47:01; build ready 13:47:51; CI completed update 13:56:48; production alias check completed 13:56:49 |
 
-This documentation pass verified repository, CI and deployment metadata. It did
-not rerun browser/real-device smoke, log in, send customer messages, or inspect
-or modify live CMS documents. CI success and alias identity do not establish
-new visual, real LINE, or live content-publication evidence.
+Read-only production verification at 13:57:29 checked Home TH/mobile,
+Home EN/desktop, Motor/mobile, the article index/desktop and an article detail
+on mobile. All five routes returned 200 with the expected bundles and no page
+errors. Served feed, full reader and article-editor JavaScript matched the
+candidate's exact hashes. Evidence is in ignored
+`uat-results/ci-workflow/526caad-hosted.json` and `production-verified.json`.
+There were zero writes. This does not establish real-device, real LINE,
+authenticated live Admin/CMS publication or production performance evidence.
+
+Historical October 2 checkpoint: runtime `aa8b68d5968c90b84766b32cf09aa4c5c511a9f4`
+passed [run 36999361088](https://github.com/purichw/CoverMate/actions/runs/36999361088)
+and deployment `dpl_TgjPJPK8E3ZHC7bPtMzzAhKfLmph` was promoted. In Asia/Bangkok,
+it was created at 18:08:29, ready at 18:09:33, CI completed at 18:39:02 and the
+alias check completed at 18:39:03. It is superseded by the October 3 checkpoint.
 
 Current implementation carried by this revision:
 
@@ -125,12 +142,13 @@ Current implementation carried by this revision:
   live CMS content replacement.
 
 This documentation/skill update is based on the runtime revision above and
-changes no runtime files. The owner authorized committing and pushing these
-documentation/skill changes; no separate manual deployment or CMS publication
-was requested. The documentation revision advances Git beyond this verified
-production checkpoint; it does not establish a newer deployment result.
+changes no runtime files. Later documentation revisions and upstream commits
+do not establish a newer production result without their own release evidence.
+Apply the current task's authorization and the release runbook before publishing;
+code/docs pushes and CMS draft publication remain separate actions.
 Installed and versioned `covermate-new-chat` copies are synchronized; the generic
-`release-gate` and `efficient-execution` skills live outside this repository.
+`release-gate`, `efficient-execution`, `github-actions-repair` and global
+`AGENTS.md` live outside this repository.
 
 ## Release Execution And Remaining Work
 
@@ -141,11 +159,11 @@ a stale one-card E2E assumption, and runs superseded by newer pushes. A cancelle
 run is not a failed product assertion or a successful gate. The final integrated
 revision passed the unchanged required workflow.
 
-The October 3 local workflow implementation is described at the top of this
-handoff. Its hosted duration and results remain unverified until an authorized
-push runs it. Historical credentials, delivery, real-device and CMS-publication
-limitations below retain their own scope and must be rechecked when relevant to
-a new task.
+The October 3 split workflow and preview repair are deployed and verified above.
+Use [When To Stop Waiting And Diagnose](RELEASE_RUNBOOK.md#when-to-stop-waiting-and-diagnose)
+when a release stops making progress or repeats a failure. Historical
+credentials, delivery, real-device and CMS-publication limitations below retain
+their own scope and must be rechecked when relevant to a new task.
 
 ## Reading The Historical Entries
 

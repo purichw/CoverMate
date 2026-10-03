@@ -14,10 +14,11 @@ Other generic skills referenced by these files are dependencies of the local
 Codex environment, not bundled CoverMate sources.
 
 Release work uses the installed `release-gate` for changed-behavior/test
-mapping, `efficient-execution` for batching local checks and release reviews,
-and `github-actions-repair` for failed-run diagnosis. Their rules do not modify
-the project's CI workflow or authorize publishing. The current project process
-is maintained in [RELEASE_RUNBOOK.md](../docs/RELEASE_RUNBOOK.md).
+mapping, `efficient-execution` for batching and release-delay checkpoints,
+and `github-actions-repair` for failed, stalled or missing-run diagnosis. Their
+rules do not modify the project's CI workflow or authorize publishing. The current project process
+and measured investigation thresholds are maintained in
+[RELEASE_RUNBOOK.md](../docs/RELEASE_RUNBOOK.md#when-to-stop-waiting-and-diagnose).
 
 The canonical design specification is
 [docs/covermate-website-full-design-spec.md](../docs/covermate-website-full-design-spec.md).

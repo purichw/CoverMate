@@ -79,7 +79,7 @@ files. Verify the served runtime, not just a changing deployment identifier.
 - Prefer the Git-triggered deployment of the tested SHA. A manual CLI deployment
   may lack Git check provenance; do not bypass checks to make it live.
 
-The October 2 readback confirmed the integrated revision's passing `verify`,
+The October 3 readback confirmed `526caad`'s passing `verify`,
 successful `deployment-alias` check and canonical alias assignment; see
 [HANDOFF.md](HANDOFF.md#current-source-and-production-checkpoint). For each new
 authorized release, record the stages separately rather than reusing that
@@ -135,11 +135,57 @@ Observed on October 2 for `aa8b68d` / [run 36999361088](https://github.com/puric
 Vercel build readiness took about 64 seconds, the main gate took 23m14s, and the
 Auth/Rules/API/Publish emulator step took 4m46s. Including queue/setup/cleanup,
 CI took 30m33s. The main gate ran 88 commands sequentially. These are historical
-measurements, not future ETAs. The October 3 workflow changes require a new
-hosted run before claiming a measured speedup; local routing tests alone do not
-prove runner scheduling, browser stability or production promotion.
+measurements, not future ETAs.
 
-Focused workflow checks and commands:
+On October 3, `526caad` / [run 37104173139](https://github.com/purichw/CoverMate/actions/runs/37104173139)
+passed the complete split workflow on attempt 1. Run creation to its completed
+update took about **9m49s** (scope start to completed `verify`: 9m45s). Preflight
+took 1m59s; isolated jobs took 4m43s Articles, 5m28s Admin, 6m38s Smoke, 6m53s
+Visitor, 7m19s CMS and 7m13s Emulators. Setup steps ranged from 1m19s to 2m00s.
+Vercel was ready about 50 seconds after creation and its alias check completed
+about one second after the completed CI update. These are separate stage
+measurements from one successful run, not guaranteed durations or a production
+page-speed benchmark. The required tests and budgets were not relaxed.
+
+### When To Stop Waiting And Diagnose
+
+These thresholds start investigation; they are not automatic failure,
+cancellation or timeout rules. Do not power through with repeated unchanged
+polls, retries or new pushes after a trigger.
+
+| Trigger | Inspect |
+| --- | --- |
+| Any failure, timeout, authentication error, wrong SHA, unexpected cancellation or required check missing at completion | Immediately inspect the first causal error and exact release identity. |
+| Ordinary small push has no progress for 2 minutes | Check Git transport/authentication and whether the intended remote ref already advanced. |
+| Expected CI or Git deployment missing 3 minutes after push | Check remote SHA, event, workflow filters, permissions and Git integration. |
+| Queued work or no real progress for 5 minutes | Inspect runner allocation, concurrency and current step/log timestamps; an unchanged job status alone does not prove a stall. |
+| Setup or preflight exceeds 4 minutes | Compare download/cache/build progress with the observed 1m19s–2m00s setup and 1m59s preflight. |
+| Full CI exceeds 15 minutes | Inspect the critical job and individual command times against the provisional 9m49s baseline. |
+| Vercel build exceeds 3 minutes | Inspect build logs against the observed roughly 50-second build readiness. |
+| Alias remains pending over 2 minutes after build ready and exact-SHA `verify` passed | Inspect required-check delivery, deployment SHA and canonical alias assignment. |
+
+Prefer the latest 3–5 comparable successful runs with the same workflow graph,
+full/docs mode and runner environment when recalibrating. Use
+`max(1.5 × normal duration, normal duration + 2 minutes)` as the next diagnostic
+threshold. The single October 3 pass is a provisional
+baseline, not an SLA; productive logs may justify a bounded longer checkpoint.
+
+On a trigger, stop blind retries and new pushes. Read the intended SHA, run and
+deployment identity, active step, queue/concurrency state and first causal errors
+across all failed jobs before choosing a correction. Distinguish product/test
+failures from setup, missing browser, network or provider failures. If real
+progress is valid, state the evidence and next bounded checkpoint, then wait.
+
+Allow at most one unchanged rerun only when evidence supports a transient cause.
+If the same cause recurs, or two repair cycles fail, revise the hypothesis and
+test the affected condition locally before another push. Batch independent
+known corrections; retain evidence for untouched surfaces. Do not weaken
+budgets/assertions, bypass the required gate, create a duplicate manual deploy,
+or cancel unrelated runs to escape a delay. Report push, build, CI, promotion
+and deployed verification separately; complete only when the requested stage
+has its own evidence.
+
+### Focused Workflow Checks
 
 ```bash
 node --test scripts/ci-policy.test.mjs

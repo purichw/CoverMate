@@ -181,11 +181,17 @@ Report release stages with their own evidence:
 - **Live:** the production alias resolves to that deployment and the requested
   deployed surface has been verified. CMS publication remains a separate action.
 
-For delay investigations, compare build, CI, and alias-promotion timestamps for
-the same SHA. Read the current workflow's concurrency behavior before a new
-push; do not assume a new commit can reuse an older commit's green checks or
-that build duration measures time to production. Keep historical timings out of
-new release estimates unless current evidence supports them.
+Before waiting, read `docs/RELEASE_RUNBOOK.md#when-to-stop-waiting-and-diagnose`
+and choose the next diagnostic checkpoint from current comparable evidence.
+Compare push acceptance, trigger/queue, setup/tests, build and alias timestamps
+for the same SHA. Investigate errors immediately; on overdue or repeated failure,
+inspect the current step/logs and all independent causes before another attempt.
+A stable `in_progress` label alone is not a stall. Read concurrency behavior
+before a new push; do not assume a new commit can reuse another commit's green
+checks or that build duration measures time to production. If a transient rerun
+repeats the same cause, or two repairs fail, revise the diagnosis and focused
+verification instead of starting another full run by habit. Keep historical
+timings out of new estimates unless current evidence supports them.
 
 ## Common Source Areas
 
