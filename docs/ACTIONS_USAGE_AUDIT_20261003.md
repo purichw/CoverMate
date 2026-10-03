@@ -99,8 +99,8 @@ and `x-vercel-mitigated: challenge` on its 429 response. That confirms the monit
 separate bot-protection access problem. Its dedicated automation credential and
 exact-origin/redirect safeguards are documented in the
 [release runbook](RELEASE_RUNBOOK.md#scheduled-availability-and-vercel-automation-access).
-Provisioning requires the owner's approval; a passing local fixture does not
-prove acceptance of a live credential.
+Provisioning was subsequently approved and completed as recorded below;
+a passing local fixture alone does not prove acceptance of a live credential.
 
 After the owner approved provisioning, the exact `5e6c938` monitor passed on
 [run 37129849436](https://github.com/purichw/CoverMate/actions/runs/37129849436).
@@ -124,12 +124,21 @@ failed in two existing consumers, and `verify` correctly blocked promotion:
   new failures after reconnect still back off. The probe failed before the fix
   and passed afterward; bounded transition diagnostics cover future timeouts.
 
-These are changed-code repairs, not repeated unchanged full runs. A failed run
-does not establish savings, and the next exact-revision gate must pass before
-production promotion.
+The combined repair `6095b0675d4e604a92d55a1caf0d9b3d1cf3f20d` passed
+[run 37131260872](https://github.com/purichw/CoverMate/actions/runs/37131260872),
+attempt 1, at 2026-10-03 15:01:26 UTC. Scope, preflight, all five browser suites,
+emulators and `verify` succeeded; docs intentionally skipped in full mode.
+Elapsed time was 7m52s; summed job time was 33m47s (39 rounded minutes estimate).
+Vercel deployment `dpl_536L8WextNBpSoCFcqR1soX1XNjf` was verified
+READY/PROMOTED at 15:02 UTC with the exact SHA and production aliases assigned.
+A fresh read-only check rendered `/`, `/motor` and `/admin/login` successfully.
+See [the current handoff checkpoint](HANDOFF.md#current-source-and-production-checkpoint).
+These are changed-code repairs, not repeated unchanged full runs. The failed
+intermediate run is not a successful baseline or evidence of savings.
 
-Savings from reduced downloads are directional until the updated Linux workflow
-runs. Do not quote the entire 11.27-minute setup baseline as removable cost.
+The updated Linux workflow has passed, but durable savings still require several
+comparable post-change runs. Do not quote the entire 11.27-minute setup baseline
+as removable cost or attribute the public-runner change to this optimization.
 Nine same-SHA push/manual pairs consumed 294 rounded minutes, 151 in manual
 runs; reasons differ, so this is an opportunity to reuse evidence, not proof that
 every manual run should be removed. No duplicate same-SHA push group was found.

@@ -419,6 +419,14 @@ that the live credential is accepted.
 
 Focused local access/redirect regression: `node scripts/uptime-access-check.mjs`.
 
+Provisioning was completed with owner approval on 2026-10-03 and the intended
+GitHub runner monitor passed. Reuse the dedicated entry; do not create another
+credential merely because an older audit describes the original setup gap.
+See [the handoff checkpoint](HANDOFF.md#current-source-and-production-checkpoint)
+for run/SHA evidence. When diagnosing a later incident, identify the monitor's
+checked-out SHA and the deployment actually served by the production alias
+separately; a green monitor does not replace the new commit's required CI.
+
 ### After deployment
 
 After production deployment:

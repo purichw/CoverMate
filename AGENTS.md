@@ -1,7 +1,9 @@
 # CoverMate agent instructions
 
 Read `README.md`, `PROJECT_MAP.md` and the relevant owner documentation before
-changing behavior. Follow `docs/RELEASE_RUNBOOK.md` for publishing authorization,
+changing behavior. `docs/HANDOFF.md` owns the latest verified release checkpoint;
+older dated entries retain their original verification scope. Follow
+`docs/RELEASE_RUNBOOK.md` for publishing authorization,
 the stable `verify` check, exact revision evidence and deployment promotion.
 Inspect git status first and preserve unrelated changes; use an isolated checkout
 when the working tree is dirty.

@@ -2,6 +2,11 @@
 
 Last updated: 2026-10-03
 
+The latest verified release is `6095b06`, checked on October 3 at 22:02
+Asia/Bangkok. See [the current checkpoint](#current-source-and-production-checkpoint)
+for exact CI, production and monitoring evidence. Earlier sections below retain
+their original scope and do not describe the newest release.
+
 ## October 3 Release Follow-up — Deployed
 
 Repair commit `526caad` passed the complete required
@@ -93,16 +98,42 @@ subsequent hosted run and preview repair are recorded above.
 
 ## Current Source And Production Checkpoint
 
-Rechecked on October 3 against GitHub and Vercel. This checkpoint supersedes the
-candidate/deployment wording in the historical entries below.
+Rechecked on October 3 at 22:02 Asia/Bangkok against GitHub and Vercel. This
+checkpoint supersedes candidate/deployment wording in historical entries.
 
 | Evidence | Confirmed state |
 | --- | --- |
-| Verified runtime baseline and production Git SHA at this checkpoint | `526caade513e775e6a9bac993c4f0aca5b323f60` |
-| Required GitHub `verify` | [37104173139](https://github.com/purichw/CoverMate/actions/runs/37104173139), attempt 1, success; scope, preflight, all five browser suites and Auth/Rules/API/Publish emulators passed; docs intentionally skipped |
-| Vercel deployment | `dpl_75N1tkswgeo2EVeSf1dGjGq8u3oa`, `READY` / `PROMOTED`; `deployment-alias` check succeeded |
+| Verified runtime baseline and production Git SHA at this checkpoint | `6095b0675d4e604a92d55a1caf0d9b3d1cf3f20d` on `main` |
+| Required GitHub `verify` | [37131260872](https://github.com/purichw/CoverMate/actions/runs/37131260872), attempt 1, success; scope, preflight, all five browser suites and Auth/Rules/API/Publish emulators passed; docs intentionally skipped in full mode |
+| Vercel deployment | `dpl_536L8WextNBpSoCFcqR1soX1XNjf`, `READY` / `PROMOTED`; exact SHA and aliases verified |
 | Canonical production | [covermateinsurance.com](https://covermateinsurance.com) and its `www` alias assigned to that deployment |
-| October 3 timeline, Asia/Bangkok | CI created 13:46:59; deployment created 13:47:01; build ready 13:47:51; CI completed update 13:56:48; production alias check completed 13:56:49 |
+| October 3 timeline, Asia/Bangkok | CI created 21:53:34; completed 22:01:26; production promotion read back at 22:02 |
+| Availability access | [37129849436](https://github.com/purichw/CoverMate/actions/runs/37129849436) passed at 21:31:54 with monitor source `5e6c938`; this is separate evidence from the final application CI |
+
+The three release commits reduce unused browser installation, repair preview
+image evidence, add exact-origin automation access for the availability monitor,
+preserve reconnect recovery against late failures from older requests, and make
+article Settings checks independent of a loading canvas moving the button.
+The intermediate `5e6c938` application CI failed and remained staged; it was
+superseded by the combined repair above. No failed gate was bypassed.
+
+After promotion, a fresh read-only `node scripts/uptime-check.mjs` passed `/`,
+`/motor` and `/admin/login` with rendered-content and page-error assertions.
+This verifies public availability, not authenticated production Admin/CMS flows.
+The owner-approved dedicated bypass entry and GitHub secret were provisioned;
+the successful earlier monitor proves real runner access without granting app
+login. Monitor source SHA, checked production deployment and final CI SHA are
+distinct evidence fields. Credential values are not included in documentation.
+
+Full CI elapsed time was 7m52s; summed job time was 33m47s. One successful run,
+especially across a visibility change, does not prove monthly savings.
+See [ACTIONS_USAGE_AUDIT_20261003.md](ACTIONS_USAGE_AUDIT_20261003.md) for scope,
+measurements and failure diagnoses, and
+[the monitor runbook](RELEASE_RUNBOOK.md#scheduled-availability-and-vercel-automation-access)
+for credential ownership and redirect safeguards. Local receipts are in the
+ignored `.tools/usage-audit-20261003/` directory of the primary project checkout.
+
+Historical earlier October 3 production proof for `526caad`:
 
 Read-only production verification at 13:57:29 checked Home TH/mobile,
 Home EN/desktop, Motor/mobile, the article index/desktop and an article detail
@@ -119,7 +150,7 @@ and deployment `dpl_TgjPJPK8E3ZHC7bPtMzzAhKfLmph` was promoted. In Asia/Bangkok,
 it was created at 18:08:29, ready at 18:09:33, CI completed at 18:39:02 and the
 alias check completed at 18:39:03. It is superseded by the October 3 checkpoint.
 
-Current implementation carried by this revision:
+Historical implementation details carried by `526caad`:
 
 - Home article pages show two compact horizontal cards on desktop, one on
   tablet, and three stacked horizontal cards on mobile. Mobile thumbnails are
