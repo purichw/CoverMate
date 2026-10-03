@@ -7,6 +7,7 @@ import { importCoverMateContract } from "./lib/contract-loader.mjs";
 import { launchChromium, loadPlaywright } from "./lib/playwright.mjs";
 import { readImageVersions } from "./lib/visitor-source.mjs";
 import { installMediaFixture } from "./media-upload-browser-check.mjs";
+import { createPreviewImageEvidence } from "./lib/preview-image-evidence.mjs";
 
 const playwright = loadPlaywright();
 const { chromium } = playwright;
@@ -1500,6 +1501,10 @@ for (const [name, width, height] of viewports) {
   const requestNavigation = new WeakMap();
   const navigationAssetAborts = [];
   const previewImageAborts = [];
+  const previewImageEvidence = createPreviewImageEvidence();
+  const requestIds = new WeakMap();
+  const successfulImageRequests = new WeakSet();
+  let requestId = 0;
   const completedFontRequests = new Set();
   let expectedAuthRedirect = null;
   const authRedirectAborts = [];
@@ -1540,8 +1545,12 @@ for (const [name, width, height] of viewports) {
       navigationId++;
     }
     requestNavigation.set(request, navigationId);
+    requestIds.set(request, ++requestId);
   });
   page.on('requestfinished', request => {
+    if (successfulImageRequests.has(request)) {
+      previewImageEvidence.recordCompleted(request.frame(), requestNavigation.get(request), request.url(), requestIds.get(request));
+    }
     if (request.resourceType() === 'font' && new URL(request.url()).origin === baseOrigin) {
       completedFontRequests.add(`${requestNavigation.get(request)}:${request.url()}`);
     }
@@ -1558,8 +1567,9 @@ for (const [name, width, height] of viewports) {
         request.frame().url() === 'about:blank' && new URL(page.url()).pathname === '/admin/content') {
       // Importing a responsive image can start its fallback before srcset wins.
       // Keep this a failure unless the exact preview frame later proves that
-      // image loaded a declared responsive candidate before the tab is removed.
-      previewImageAborts.push({ request, navigation: requestNavigation.get(request), replacement: null });
+      // image loaded a declared candidate or a successful same-URL replacement
+      // before the tab is removed.
+      previewImageAborts.push({ request, navigation: requestNavigation.get(request), requestId: requestIds.get(request) });
       return;
     }
     // A prior public document can still cancel its font as an Admin redirect
@@ -1614,6 +1624,9 @@ for (const [name, width, height] of viewports) {
   page.on("response", (response) => {
     const url = response.url();
     const status = response.status();
+    if (status >= 200 && status < 400 && response.request().resourceType() === 'image' && new URL(url).origin === baseOrigin) {
+      successfulImageRequests.add(response.request());
+    }
     if (status < 400) return;
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
@@ -2536,15 +2549,12 @@ for (const [name, width, height] of viewports) {
         return doc?.body.firstElementChild && [...doc.images].every(image => image.complete && image.naturalWidth > 0);
       });
       const previewFrame = await (await page.locator('[data-editor-preview] iframe').elementHandle()).contentFrame();
-      const responsiveImages = await previewFrame.evaluate(() => [...document.images].filter(image => {
+      const imageSnapshotRequestId = requestId;
+      const previewImages = await previewFrame.evaluate(() => [...document.images].map(image => {
         const candidates = image.srcset.split(',').filter(Boolean).map(candidate => new URL(candidate.trim().split(/\s+/)[0], document.baseURI).href);
-        return image.complete && image.naturalWidth > 0 && image.currentSrc !== image.src && candidates.includes(image.currentSrc);
-      }).map(image => ({ fallback: image.src, selected: image.currentSrc })));
-      for (const abort of previewImageAborts) {
-        if (abort.request.frame() === previewFrame && abort.navigation === navigationId) {
-          abort.replacement = responsiveImages.find(image => image.fallback === abort.request.url())?.selected || null;
-        }
-      }
+        return { fallback: image.src, selected: image.currentSrc, candidates, complete: image.complete, naturalWidth: image.naturalWidth };
+      }));
+      previewImageEvidence.recordImages(previewFrame, navigationId, previewImages, imageSnapshotRequestId);
     }
     if (tabName === 'เนื้อหา' && await page.locator('[data-editor-preview]').count()) {
       failures.push(`${name} /admin/content: content tab duplicates the live page with a thumbnail`);
@@ -2945,9 +2955,10 @@ for (const [name, width, height] of viewports) {
       failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified auth redirect, request navigation ${navigation}, source ${redirect.sourcePath}, source commits ${[...redirect.sourceCommits]}, login ${redirect.loginCommit}, fonts ${redirect.fontsVerified})`);
     }
   }
-  for (const { request, navigation, replacement } of previewImageAborts) {
+  for (const { request, navigation, requestId } of previewImageAborts) {
+    const replacement = previewImageEvidence.resolve(request.frame(), navigation, request.url(), requestId);
     if (replacement) {
-      console.log(`${name}: confirmed responsive preview image ${request.url()} -> ${replacement}`);
+      console.log(`${name}: confirmed preview image replacement ${request.url()} -> ${replacement}`);
     } else {
       failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified preview image, request navigation ${navigation})`);
     }

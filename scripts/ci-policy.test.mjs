@@ -23,7 +23,7 @@ function scopeInput({ paths = ['docs/HANDOFF.md'], runs = [passingRun], jobs = l
 }
 
 test('only allowlisted documentation qualifies; mixed changes, assets and unknown paths require tests', () => {
-  assert.ok(isDocsOnly(['README.md', 'PROJECT_MAP.md', 'docs/nested/guide.md', 'skills/tool/SKILL.md']));
+  assert.ok(isDocsOnly(['README.md', 'PROJECT_MAP.md', 'AGENTS.md', 'docs/nested/guide.md', 'skills/tool/SKILL.md']));
   for (const paths of [[], ['docs/figure.png'], ['docs/data.json'], ['src/public/README.md'], ['.github/workflows/ci.yml'], ['package.json'], ['skills/tool/run.js'], ['docs/a.md', 'src/a.js'], ['docs/../src/a.md']]) assert.equal(isDocsOnly(paths), false);
 });
 

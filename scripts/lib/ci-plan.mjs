@@ -46,6 +46,7 @@ export const buildCommands = [
 export const checkGroups = {
   preflight: [
     ["npm",["run","check:performance"]],
+    ["node",["scripts/smoke-evidence-check.mjs"]],
     ["npm",["run","check:types"]],
     ["npm",["run","check:refactor"]],
     ["npm",["run","check:nfr"]],

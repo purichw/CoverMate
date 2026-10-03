@@ -103,7 +103,7 @@ check and uses this graph:
 - Full path: `preflight` builds the artifacts and checks performance budgets
   first, then fast contracts. On success, `browser` runs five isolated jobs
   (`visitor`, `articles`, `cms`, `admin`, `smoke`) alongside `emulators`.
-- Docs path: check only allowlisted Markdown (`README.md`, `PROJECT_MAP.md`,
+- Docs path: check only allowlisted Markdown (`README.md`, `PROJECT_MAP.md`, `AGENTS.md`,
   `docs/**/*.md`, `skills/**/*.md`), whitespace and relative repository links.
   No npm install, browser download or emulator startup is needed for this path.
 - `verify` runs even after a dependency failure and rejects failed, cancelled,
@@ -123,9 +123,16 @@ runtime code.
 Each parallel job has its own checkout and runs the six build prerequisites.
 Commands stay sequential within each suite so fixtures and generated files
 cannot race. The shared inventory in `scripts/lib/ci-plan.mjs` preserves all
-90 original main commands plus both smoke commands; the emulator inventory is
-unchanged. Each command records elapsed time in logs and the job summary.
-Node 22, Java 21 and browser engines remain pinned/configured as before.
+90 original main commands plus both smoke commands and the focused preview-image
+evidence regression check; the emulator inventory is unchanged. Each command
+records elapsed time in logs and the job summary. Node 22 and Java 21 are unchanged.
+Install Chromium for preflight, articles, CMS, admin and smoke; install Chromium
+and WebKit for visitor (`runtime-error-check`) and emulators (NFR/articles-cloud).
+An engine added to a suite must also be added to its setup. The availability
+workflow uses Chromium's headless shell because its launcher has no browser
+channel or headed mode. Do not apply this shortcut to channel/extension tests.
+See [Actions usage audit](ACTIONS_USAGE_AUDIT_20261003.md) for measured job time,
+the visibility transition, billing caveats and optimization decisions.
 
 `cancel-in-progress: true` remains scoped to the Git ref. A new push can cancel
 the active run; batch corrections before pushing. Timeouts are bounded per job:

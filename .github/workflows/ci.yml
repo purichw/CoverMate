@@ -82,6 +82,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/ci-setup
+        # Only visitor runs a WebKit consumer (runtime-error-check).
+        # Articles/CMS/admin/smoke use Chromium; emulators keep both engines.
+        with:
+          browsers: ${{ matrix.suite == 'visitor' && 'chromium webkit' || 'chromium' }}
       - name: Run isolated suite
         env:
           CI_SUITE: ${{ matrix.suite }}

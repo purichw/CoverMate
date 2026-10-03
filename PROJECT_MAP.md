@@ -46,6 +46,8 @@ require explicit owner approval in the current task.
 Cloudinary Free is the selected media adapter; Firebase Storage is not the
 upload backend. [CMS_MEDIA.md](docs/CMS_MEDIA.md) owns media and cost policy.
 Deployment requires the release runbook's exact-SHA CI and endpoint evidence.
+CI usage and setup decisions are recorded in
+[`docs/ACTIONS_USAGE_AUDIT_20261003.md`](docs/ACTIONS_USAGE_AUDIT_20261003.md).
 
 Product decision checkpoint: the 2026-08-11 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
