@@ -47,6 +47,7 @@ export const checkGroups = {
   preflight: [
     ["npm",["run","check:performance"]],
     ["node",["scripts/smoke-evidence-check.mjs"]],
+    ["node",["scripts/uptime-access-check.mjs"]],
     ["npm",["run","check:types"]],
     ["npm",["run","check:refactor"]],
     ["npm",["run","check:nfr"]],

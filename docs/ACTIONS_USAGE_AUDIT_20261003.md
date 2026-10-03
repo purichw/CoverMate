@@ -89,6 +89,19 @@ Changes in this patch:
   HTTP 429 happened after successful setup; it is not an install timeout. Keep
   non-2xx failures and do not hide them with blanket retries.
 
+Publication evidence: `c0f7310` passed every full-mode job on
+[run 37128477965](https://github.com/purichw/CoverMate/actions/runs/37128477965)
+and the matching Vercel production deployment promoted through the existing
+`verify` gate. A fresh local read-only check rendered all three monitored pages.
+[Availability run 37128514020](https://github.com/purichw/CoverMate/actions/runs/37128514020)
+completed the reduced browser setup, then exposed `Vercel Security Checkpoint`
+and `x-vercel-mitigated: challenge` on its 429 response. That confirms the monitor's
+separate bot-protection access problem. Its dedicated automation credential and
+exact-origin/redirect safeguards are documented in the
+[release runbook](RELEASE_RUNBOOK.md#scheduled-availability-and-vercel-automation-access).
+Provisioning requires the owner's approval; a passing local fixture does not
+prove acceptance of a live credential.
+
 Savings from reduced downloads are directional until the updated Linux workflow
 runs. Do not quote the entire 11.27-minute setup baseline as removable cost.
 Nine same-SHA push/manual pairs consumed 294 rounded minutes, 151 in manual

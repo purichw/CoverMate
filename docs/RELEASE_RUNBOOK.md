@@ -123,8 +123,8 @@ runtime code.
 Each parallel job has its own checkout and runs the six build prerequisites.
 Commands stay sequential within each suite so fixtures and generated files
 cannot race. The shared inventory in `scripts/lib/ci-plan.mjs` preserves all
-90 original main commands plus both smoke commands and the focused preview-image
-evidence regression check; the emulator inventory is unchanged. Each command
+90 original main commands plus both smoke commands and focused preview-image
+evidence/availability-access regression checks; the emulator inventory is unchanged. Each command
 records elapsed time in logs and the job summary. Node 22 and Java 21 are unchanged.
 Install Chromium for preflight, articles, CMS, admin and smoke; install Chromium
 and WebKit for visitor (`runtime-error-check`) and emulators (NFR/articles-cloud).
@@ -386,6 +386,40 @@ When a dedicated UAT test admin is used, its `admins/{uid}` document should have
 `uatOnly: true`; production API and Firestore paths reject that account.
 
 ## Production Smoke
+
+### Scheduled availability and Vercel automation access
+
+The six-hourly `CoverMate production availability` workflow runs only on `main`
+and checks real HTTP success, visible rendered content and runtime errors for
+`/`, `/motor` and `/admin/login`. A Vercel bot challenge remains a failure.
+Its dedicated GitHub repository secret is `VERCEL_AUTOMATION_BYPASS_SECRET`;
+missing provisioning fails clearly instead of skipping the check. Only the
+page-check step receives it; pull-request CI does not use it.
+
+Provisioning a new credential requires owner approval because Vercel's
+[Protection Bypass for Automation](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation)
+grants access to all deployments of the `covermate` project until revoked.
+After approval, create a separate entry named `covermate-github-availability`
+in `purich-w / covermate / Settings / Deployment Protection / Protection Bypass
+for Automation`, then store its value directly in `purichw/CoverMate` GitHub
+Actions repository secrets under the name above. Preserve existing bypass
+entries; never paste values into chat, logs, committed files or URL queries.
+Rotate this entry independently and update its matching GitHub secret.
+
+The monitor sends the header only to `https://covermateinsurance.com` and
+fetches each protected request without automatic redirects, so another origin
+cannot inherit the credential. Third-party resources receive no bypass header.
+Protected redirects fail clearly and require reviewing the canonical URL; they
+do not silently pass a redirected request that lost its automation access.
+The token bypasses ordinary bot/system challenges and deployment protection;
+active attack mitigations and application authentication still apply. It does
+not grant Firebase admin access. Validate the configured monitor on the exact
+committed `main` revision after provisioning; a local fixture cannot prove
+that the live credential is accepted.
+
+Focused local access/redirect regression: `node scripts/uptime-access-check.mjs`.
+
+### After deployment
 
 After production deployment:
 

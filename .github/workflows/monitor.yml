@@ -7,6 +7,8 @@ permissions:
   contents: read
 jobs:
   check:
+    # This credential-bearing monitor never checks out pull-request/fork code.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -30,4 +32,7 @@ jobs:
         run: npx playwright install --with-deps --only-shell chromium
       - name: Check production pages
         timeout-minutes: 3
+        env:
+          COVERMATE_REQUIRE_BYPASS: '1'
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: node scripts/uptime-check.mjs
