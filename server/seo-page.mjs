@@ -35,8 +35,10 @@ export function renderPublicPage(html, config, options) {
   // Article links navigate to a new document; private/detail/unknown routes and
   // static HTML retain the full reader, including rich article preview support.
   if (!options?.privatePage && PUBLIC_ROUTE_PATHS.has(options?.path)) {
-    template = template.replace(/<script src="\/assets\/visitor\/article-reader\.js\?v=[a-f0-9]{16}" data-covermate-article-feed="(\/assets\/visitor\/article-feed\.js\?v=[a-f0-9]{16})"><\/script>/,
-      (_, feedUrl) => `<script src="${feedUrl}"></script>`);
+    template = template.replace(/<script src="(\/assets\/visitor\/article-reader\.js\?v=[a-f0-9]{16})" data-covermate-article-feed="(\/assets\/visitor\/article-feed\.js\?v=[a-f0-9]{16})"><\/script>/,
+      // Article authoring reuses the published Home shell for its private
+      // srcdoc preview. Preserve the matching full reader URL for that consumer.
+      (_, readerUrl, feedUrl) => `<script src="${feedUrl}" data-covermate-article-reader="${readerUrl}"></script>`);
   }
   let rendered = replaceHead(replaceBundlerTemplate(html, template));
   const language = options?.lang === 'en' ? 'en' : 'th';

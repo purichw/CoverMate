@@ -1499,6 +1499,7 @@ for (const [name, width, height] of viewports) {
   let navigationId = 0;
   const requestNavigation = new WeakMap();
   const navigationAssetAborts = [];
+  const previewImageAborts = [];
   const completedFontRequests = new Set();
   let expectedAuthRedirect = null;
   const authRedirectAborts = [];
@@ -1552,6 +1553,15 @@ for (const [name, width, height] of viewports) {
     if (url.endsWith("/favicon.ico")) return;
     if (url.endsWith("/.image-slots.state.json")) return;
     if (Date.now() - navigationStarted < 2500 && isBenignNavigationAbort(url, failureText)) return;
+    if (failureText === 'net::ERR_ABORTED' && request.resourceType() === 'image' &&
+        new URL(url).origin === baseOrigin && request.frame() !== page.mainFrame() &&
+        request.frame().url() === 'about:blank' && new URL(page.url()).pathname === '/admin/content') {
+      // Importing a responsive image can start its fallback before srcset wins.
+      // Keep this a failure unless the exact preview frame later proves that
+      // image loaded a declared responsive candidate before the tab is removed.
+      previewImageAborts.push({ request, navigation: requestNavigation.get(request), replacement: null });
+      return;
+    }
     // A prior public document can still cancel its font as an Admin redirect
     // starts. Classify by the request's document before attributing it to auth.
     if (failureText === 'net::ERR_ABORTED' && Date.now() - navigationStarted < 2500 && requestNavigation.get(request) < navigationId) {
@@ -2523,6 +2533,16 @@ for (const [name, width, height] of viewports) {
         const doc = document.querySelector('[data-editor-preview] iframe')?.contentDocument;
         return doc?.body.firstElementChild && [...doc.images].every(image => image.complete && image.naturalWidth > 0);
       });
+      const previewFrame = await (await page.locator('[data-editor-preview] iframe').elementHandle()).contentFrame();
+      const responsiveImages = await previewFrame.evaluate(() => [...document.images].filter(image => {
+        const candidates = image.srcset.split(',').filter(Boolean).map(candidate => new URL(candidate.trim().split(/\s+/)[0], document.baseURI).href);
+        return image.complete && image.naturalWidth > 0 && image.currentSrc !== image.src && candidates.includes(image.currentSrc);
+      }).map(image => ({ fallback: image.src, selected: image.currentSrc })));
+      for (const abort of previewImageAborts) {
+        if (abort.request.frame() === previewFrame && abort.navigation === navigationId) {
+          abort.replacement = responsiveImages.find(image => image.fallback === abort.request.url())?.selected || null;
+        }
+      }
     }
     if (tabName === 'เนื้อหา' && await page.locator('[data-editor-preview]').count()) {
       failures.push(`${name} /admin/content: content tab duplicates the live page with a thumbnail`);
@@ -2921,6 +2941,13 @@ for (const [name, width, height] of viewports) {
       navigationAssetAborts.push({ path: new URL(request.url()).pathname, fromNavigation: navigation, toNavigation: navigation, reason: "verified login font replacement" });
     } else {
       failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified auth redirect, request navigation ${navigation}, source ${redirect.sourcePath}, source commits ${[...redirect.sourceCommits]}, login ${redirect.loginCommit}, fonts ${redirect.fontsVerified})`);
+    }
+  }
+  for (const { request, navigation, replacement } of previewImageAborts) {
+    if (replacement) {
+      console.log(`${name}: confirmed responsive preview image ${request.url()} -> ${replacement}`);
+    } else {
+      failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified preview image, request navigation ${navigation})`);
     }
   }
   if (navigationAssetAborts.length) console.log(`${name}: confirmed prior-document asset cancellations ${JSON.stringify(navigationAssetAborts)}`);

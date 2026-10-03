@@ -2,10 +2,40 @@
 
 Last updated: 2026-10-03
 
-## Local CI Workflow Update — October 3
+## October 3 Release Follow-up
 
-Implemented on top of `ff9bce0`, after the October 2 documentation push. This
-workflow change is local and has not been pushed or measured on GitHub yet.
+`ed8e224` was pushed to `main`. Its first hosted
+[CI run](https://github.com/purichw/CoverMate/actions/runs/37093971380) passed
+preflight (including the unchanged JavaScript budget), Visitor, CMS and Admin.
+Articles, emulators and smoke failed, so Vercel correctly held deployment
+`dpl_H4AsRXXjAjtgvCvqmmVVxHpCxicr` in `READY` / `STAGED`; it was not promoted.
+
+The follow-up preserves the full reader's hashed URL in public Home HTML and
+restores that reader when Admin builds a private article-preview iframe. Preview
+fetches Home as its shell, so testing only `/admin/preview` or public article
+detail does not cover this consumer. Regression checks now exercise this actual
+public-shell-to-private-frame path. Local editor, reader parity, rich blocks,
+SEO, generated bundles, types and the original performance budget pass.
+
+The emulator journey also now expects the existing public image dimensions
+alongside `src`, while still requiring private original/crop metadata to be
+absent. The corrected real Auth/Firestore article journey passed locally in
+Chromium through Preview, Publish and visitor readback; local WebKit could not
+launch because its executable is missing, so that evidence must come from CI.
+The smoke harness verifies aborted thumbnail fallback requests against the same
+preview iframe's successfully loaded, declared `srcset` candidate before a tab
+is removed. It still fails unverified cancellations and broken selected images.
+Focused delayed-success and broken-selected-image checks pass. Two local mobile
+smoke attempts stopped earlier at unchanged login-font settling; the full hosted
+smoke remains mandatory before promotion rather than claiming a local pass.
+A failed release is not evidence to relax the production `verify` gate.
+The dated October 2 production checkpoint below remains historical; check the
+new candidate's exact SHA, terminal CI result and canonical alias on release.
+
+## CI Workflow Update — October 3
+
+Implemented on top of `ff9bce0`, after the October 2 documentation push, and
+pushed in `ed8e224`. The first hosted run is recorded above.
 It preserves the stable production check name `verify`, moves performance
 budgets before the long browser suites, and splits the existing inventory into
 five isolated browser jobs plus parallel emulator integration after preflight.
@@ -51,8 +81,8 @@ SEO and asset-selection cases, startup resource checks, and the article-detail
 browser suite. Browser checks cover populated Home/index-to-detail navigation,
 TH/EN, rich document blocks, TOC focus, save/share and 320–1440px layouts with no
 runtime errors. Existing full reader output is byte-for-byte unchanged. The
-full CI/emulator suite was not repeated. This fix and the CI workflow changes
-above remain local; no push or deploy has occurred.
+full CI/emulator suite was not repeated locally before the first push. The
+subsequent hosted run and preview repair are recorded above.
 
 ## Current Source And Production Checkpoint
 

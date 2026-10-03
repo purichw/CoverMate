@@ -125,7 +125,9 @@ export async function authorRichArticle(page,{out,engine}) {
 
 export function assertPersistedArticle(actual,expected,{published=false}={}) {
   assert.deepEqual(normalizeArticleDocument(actual.translations.th.document),normalizeArticleDocument(expected.translations.th.document,{includeMediaMetadata:!published}),'UI-authored rich document survives storage/public projection');
-  for(const key of ['image','cover'])assert.deepEqual(actual[key],published?{src:expected[key].src}:expected[key],'Preserved '+key+' with the correct private/public media boundary');
+  // Public delivery keeps dimensions for responsive candidates, while original
+  // URLs, provider identifiers and crop geometry remain private to the draft.
+  for(const key of ['image','cover'])assert.deepEqual(actual[key],published?{src:expected[key].src,width:expected[key].width,height:expected[key].height}:expected[key],'Preserved '+key+' with the correct private/public media boundary');
   if(published)assert.doesNotMatch(JSON.stringify(actual),/"(?:sourceUrl|sourceAsset|crop)"\s*:/,'Public projection omits private re-crop metadata');
   for(const key of ['takeaways','sources','coverAlt','caption',...Object.keys(authoredArticle.notes)])assert.deepEqual(actual.translations.th[key],expected.translations.th[key],'Preserved '+key);
 }

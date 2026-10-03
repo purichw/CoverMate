@@ -136,6 +136,7 @@ if(process.argv.includes('--browser')) {
     await save(page);
     await page.locator('[data-ae=preview]').click();await page.locator('.ae-preview-dialog').waitFor();
     const preview=page.frameLocator('.ae-preview-frame');await preview.locator('.ad-prose table').waitFor();
+    assert.deepEqual(await preview.locator('script[src*="/article-"]').evaluateAll(nodes=>nodes.map(node=>new URL(node.src).pathname)),['/assets/visitor/article-reader.js'],'Private draft preview loads the full reader even when its shell came from public Home');
     const previewHTML=await preview.locator('.ad-prose').innerHTML();assert.ok(previewHTML.includes('<table>'));assert.ok(previewHTML.includes('<cite>'));assert.ok(previewHTML.includes('data-kind="summary"'));assert.ok(previewHTML.includes('data-kind="keypoints"'));
     await page.locator('.ae-preview-dialog [data-ae=mobile]').click();await page.screenshot({path:out+'/'+engine+'-preview.png'});
     await page.locator('.ae-preview-dialog [data-ae=close]').click();

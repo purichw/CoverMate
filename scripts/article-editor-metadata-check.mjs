@@ -6,6 +6,7 @@ import {articleUrl} from '../article-document.mjs';
 import fs from 'node:fs';
 import {createArticlePreviewPage} from '../src/admin/article-preview.mjs';
 import {extractBundlerTemplate} from '../server/bundler-template.mjs';
+import {renderPublicPage} from '../server/seo-page.mjs';
 
 // Exercise the real normalization, repository publication and public projection
 // against an isolated store. This does not connect to Firebase or certify auth.
@@ -115,6 +116,14 @@ for(const key of keys)assert.equal(unsafeProjection[key],unsafe,'Projection carr
 assert.deepEqual(select(live.item.translations.en),notes.en,'Publishing TH notes preserves EN');
 const previewSource=fs.readFileSync('index.html','utf8').replace('</head>','<script id="covermate-published-state" type="application/json">'+JSON.stringify({state:{config:{sections:[]},text:{}}})+'</script></head>');
 const unsafeHTML=createArticlePreviewPage(previewSource,unsafeProjection,{origin:'https://preview.example.test'});
+// Real Admin Preview fetches public Home, not static index.html. Its optimized
+// feed bundle must be upgraded before the disposable rich-document frame boots.
+const publicHome=renderPublicPage(previewSource,{sections:[]},{path:'/'});
+assert.match(extractBundlerTemplate(publicHome),/<script src="\/assets\/visitor\/article-feed\.js\?v=/);
+const fullReaderURL=extractBundlerTemplate(previewSource).match(/<script src="([^"\s]+\/article-reader\.js\?v=[a-f0-9]{16})"/)[1];
+const richPreview=extractBundlerTemplate(createArticlePreviewPage(publicHome,unsafeProjection,{origin:'https://preview.example.test'}));
+assert.ok(richPreview.includes(`<script src="${fullReaderURL}"></script>`),'Preview uses the full reader from the same generated build');
+assert.doesNotMatch(richPreview,/<script src="\/assets\/visitor\/article-feed\.js\?/,'Preview does not load both bundles');
 assert.equal(unsafeHTML.includes(unsafe),false,'No unescaped authored note reaches preview HTML');
 assert.equal(unsafeHTML.includes('<script>bad()</script>'),false);
 const readPreviewDetail=html=>JSON.parse(/<script id="covermate-article-detail" type="application\/json">([\s\S]*?)<\/script>/.exec(extractBundlerTemplate(html))[1]);

@@ -45,6 +45,10 @@ export function createArticlePreviewPage(html,detail,{lang='th',origin}={}) {
   const head='<meta name="robots" content="noindex,nofollow,noarchive">';
   const clean=source=>source.replace(/<script\b[^>]*\bsrc="(?:\/(?:covermate-analytics\.js|assets\/telemetry\.js)|https:\/\/vercel\.live\/_next-live\/feedback\/feedback\.js)(?:\?[^"\s]*)?"[^>]*>\s*<\/script>/gi,'').replace(/<!-- COVERMATE_SEO_START -->[\s\S]*?<!-- COVERMATE_SEO_END -->/g,'');
   let template=clean(extractBundlerTemplate(html)).replace(/<head[^>]*>/i,match=>match+head);
+  // The published Home shell ships only feed helpers. A draft preview renders
+  // rich documents, so select its build-matched full reader before frame boot.
+  template=template.replace(/<script src="\/assets\/visitor\/article-feed\.js\?v=[a-f0-9]{16}" data-covermate-article-reader="(\/assets\/visitor\/article-reader\.js\?v=[a-f0-9]{16})"><\/script>/,
+    (_,readerUrl)=>`<script src="${readerUrl}"></script>`);
   template=template.replace(/<script\b[^>]*\bid="covermate-article-detail"[^>]*>[\s\S]*?<\/script>/gi,'');
   template=template.replace('</head>',`<script id="covermate-article-detail" type="application/json">${encode(payload.detail)}</script></head>`);
   const result=clean(replaceBundlerTemplate(html,template));
