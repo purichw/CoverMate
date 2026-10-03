@@ -452,6 +452,7 @@ function normalizeTierRemarks(config, options = {}) {
 }
 
 const CMS_CONTENT_VERSION = 26;
+
 function localizedCmsFields(prefix,group,entries,legacyInline) {
   return entries.map(([key,label,th,en])=>{
     const field={path:prefix+'.'+key,label,group,localized:true};
@@ -1286,6 +1287,15 @@ function sanitizeCmsFields(config) {
     });
   });
   const design = config.homeDesign;
+  if (config.pageLayout && typeof config.pageLayout === 'object') {
+    config.pageLayout = Object.fromEntries(['home','motor','health','life'].filter(page=>config.pageLayout[page] && typeof config.pageLayout[page] === 'object').map(page=>{
+      const layout = config.pageLayout[page];
+      return [page,{
+        order:[...new Set((Array.isArray(layout.order)?layout.order:[]).filter(id=>typeof id==='string' && /^[\w-]{1,120}$/.test(id)))].slice(0,100),
+        hidden:[...new Set((Array.isArray(layout.hidden)?layout.hidden:[]).filter(id=>['articles','licences','service-content'].includes(id)))]
+      }];
+    }));
+  } else delete config.pageLayout;
   // Missing placement keeps the legacy slot; an empty anchor means the last movable section.
   if (typeof design.articlesBefore !== 'string' || (design.articlesBefore !== '' && !(config.sections || []).some(section => section?.id === design.articlesBefore))) delete design.articlesBefore;
   for (const key of ['featuredTierIds', 'previewAxisIds']) {
@@ -1365,7 +1375,23 @@ function adaptLegacyHomeCopy(config, overrides) {
   });
   return { config: next, text };
 }
+
+// Presentation-only placeholder detection. Stored visibility and owner copy are
+// never rewritten, and an unfinished translation cannot hide the other locale.
+function isPlaceholderStoryItem(item, lang) {
+  const bucket = item && item[lang];
+  if (!bucket || typeof bucket !== 'object') return false;
+  const pattern = lang === 'th'
+    ? /^(?:รอความคิดเห็นจริง|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่(?:เมื่อได้รับอนุญาต)?|ตัวอย่างโครงสร้าง|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง(?:ตรงนี้(?: — 1 ถึง 2 ประโยคจะอ่านง่ายที่สุด)?)?|ชื่อลูกค้า|อาชีพ\s*·\s*ประกันที่ทำ)[.!?…]*$/i
+    : lang === 'en'
+      ? /^(?:Awaiting real feedback|Client feedback will appear here(?: once permission is granted)?|Placeholder structure|Customer name|Client name|Occupation\s*·\s*policy held|Role\s*·\s*policy|sample review|Paste a real quote here(?: — one or two sentences reads best)?)[.!?…]*$/i
+      : null;
+  return !!pattern && ['quote','body','title','value','label','name','meta'].some(field =>
+    typeof bucket[field] === 'string' && pattern.test(bucket[field].replace(/\s+/g, ' ').trim().replace(/^⟨|⟩$/g,''))
+  );
+}
 // COVERMATE_CMS_SCHEMA_END
+
 
 // Persist URLs and bounded editing coordinates, never the original image bytes.
 // Kept outside the embedded schema: browser and server use this one validator.
@@ -1400,7 +1426,7 @@ function cmsMediaEdit(edit, output) {
   return result;
 }
 
-export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, normalizeTierRemarks, cmsGet, cmsSet, cmsMedia, cmsImageSlots, migrateCmsContent, resolveCmsContent, sanitizeCmsFields, isSemanticCopyPath, adaptLegacyHomeCopy };
+export { CMS_CONTENT_VERSION, CMS_CONTENT_FIELDS, normalizeTierRemarks, cmsGet, cmsSet, cmsMedia, cmsImageSlots, migrateCmsContent, resolveCmsContent, sanitizeCmsFields, isSemanticCopyPath, adaptLegacyHomeCopy, isPlaceholderStoryItem };
 export const DEFAULT_SEO = {
   title: { th: "", en: "" },
   description: { th: "", en: "" }
@@ -1677,43 +1703,6 @@ function reorderKnownLegacySections(sections) {
   return PRODUCT_SECTION_ORDER.map((id) => byId.get(id)).filter(Boolean);
 }
 
-function storyTextChunks(item) {
-  if (!item || typeof item !== "object" || item.on === false) return [];
-  const chunks = [];
-  ["th", "en"].forEach((lang) => {
-    const bucket = item[lang] || {};
-    ["quote", "body", "title", "value", "label", "meta"].forEach((field) => {
-      if (bucket[field]) chunks.push(String(bucket[field]));
-    });
-  });
-  return chunks;
-}
-
-function hasRealStoryContent(section) {
-  const items = Array.isArray(section && section.items) ? section.items : [];
-  const placeholderPattern =
-    /รอความคิดเห็นจริง|เผยแพร่เมื่อได้รับอนุญาต|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ตัวอย่างโครงสร้าง|เสียงจากลูกค้า|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|ชื่อลูกค้า|อาชีพ\s*·\s*ประกันที่ทำ|Awaiting real feedback|Published with permission|Client feedback will appear here|Placeholder structure|Customer voice|Customer name|Role\s*·\s*policy|sample review/i;
-  return items.some((item) => {
-    const allText = storyTextChunks(item).join(" ").trim();
-    if (!allText || placeholderPattern.test(allText)) return false;
-    const meaningful = [];
-    ["th", "en"].forEach((lang) => {
-      const bucket = (item && item[lang]) || {};
-      ["quote", "body", "title"].forEach((field) => {
-        if (bucket[field]) meaningful.push(String(bucket[field]));
-      });
-    });
-    return meaningful.join(" ").trim().length >= 20;
-  });
-}
-
-function suppressPlaceholderStories(section) {
-  if (!section || (section.id !== "voices" && section.type !== "stories" && section.type !== "testimonials")) {
-    return;
-  }
-  if (!hasRealStoryContent(section)) section.on = false;
-}
-
 function cleanMediaReference(value, fallback = "") {
   const text = cleanText(value, 500);
   if (!text) return fallback;
@@ -1872,7 +1861,6 @@ export function sanitizeMotorCountConfig(config, options = {}) {
     editableContentSections(next).forEach((section) => {
       if (!section) return;
       ensureNeedsCalculatorSection(section);
-      suppressPlaceholderStories(section);
     });
     editableContentSections(next).forEach((section) => {
       if (!section || (section.id !== "talk" && section.type !== "contact")) return;
@@ -1964,6 +1952,7 @@ const contract = {
   migrateCmsContent,
   resolveCmsContent,
   sanitizeCmsFields,
+  isPlaceholderStoryItem,
   SESSION_KEY,
   SESSION_MS,
   ADMIN_EVER_KEY,

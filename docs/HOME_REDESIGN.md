@@ -8,6 +8,22 @@ approved no-large-portrait Desktop, Tablet and Mobile references. Later owner
 direction explicitly includes the palette, contrast, icons and illustrations,
 not merely rearrangement of the previous page.
 
+The Page Structure control follow-up below is implemented locally on
+2026-10-03. Targeted local verification passed for shared `cm-switch` controls,
+keyboard interaction, route ordering, Save/reload/Preview and licence rendering.
+The latest build, contract/bundle parity and four performance cases also passed.
+The source change is committed in `ba26af7`; earlier release evidence retains
+its dated scope, and deployment verification is separate from CMS publication.
+The later request to fill the empty claims area adds three explicitly labelled
+illustrative scenarios through a separate Website Draft content update. The
+content-only helper's exact-seed and preservation checks passed, followed by a
+compare-and-set write/readback from Draft revision 93 to 94. Only nine `voices`
+paths changed; IDs and the existing off state remain intact. There is no schema
+change, added visitor startup payload, automatic enabling, Live/article write
+or publication. See
+[CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up)
+for preservation rules and the distinction from real customer stories.
+
 ## Implementation Owners
 
 Home advisor identity is a three-placement addition, not another section redesign.
@@ -30,7 +46,7 @@ tokens, responsive styles and contact/renewal forms. `home.html`, `home.css` and
 `homeDesign.*` keep their existing names for compatibility; they are shared
 owners, not a Home-only fork. Do not copy their markup or add a Motor stylesheet.
 `motorPage.sections`, `hero/trust/cover` and its navigation remain authoritative.
-Home-only sections are not injected. The final licence band is a presentation
+Home-only sections are not injected. The licence band is a presentation
 of the existing insurer cards, not a new CMS section. Motor filters those cards
 by the Admin-editable `licenceRole:broker`; Footer still includes AIA. See
 `scripts/motor-shared-design-check.mjs` for focused regression and visual proof.
@@ -48,7 +64,8 @@ by the Admin-editable `licenceRole:broker`; Footer still includes AIA. See
 | Per-class illustration | `sections.@tiers.items.@id.illustration`, existing section row editor |
 | Featured tiers and preview axes | Stable item/head ID arrays in Home composition controls |
 | Task shortcuts | Separate ID-bearing `homeDesign.taskLinks`; not insurance categories |
-| Original text, items, matrix, visibility/order | Existing `config.sections`, shared by Home/Motor where applicable |
+| Original text, items, matrix and section visibility | Existing `config.sections`, shared by Home/Motor where applicable |
+| Complete outline order and synthetic-row visibility | Local follow-up: `config.pageLayout[page].order/hidden`; Footer visibility remains shared `footer.show` |
 
 The real logo files and Google Sans families are unchanged. Home uses warmer
 ivory/white surfaces, sage insurer/contact bands, terracotta actions, restrained
@@ -63,11 +80,24 @@ Admin navigation no longer excludes it. Unknown section types are not routed
 into the new Home template accidentally.
 
 The Admin Sections list uses the same route projection, with hidden sections
-retained for restore. Licence cards have a separate fixed final-band editor,
-still writing `sections.@insurers.cards`; Footer follows as the final fixed row.
-These two presentation entries are not inserted into stored section arrays.
-Motor's licence editor and visitor share the broker-only card filter. See
-`scripts/admin-structure-check.mjs` and `scripts/admin-structure-browser.mjs`.
+retained for restore. In the local follow-up, all rows have working show/hide
+and move controls; Articles, Licences, Footer and Health/Life content participate
+in the same order. Visibility uses the shared Brand-derived `cm-switch` track
+and thumb with a 44px touch target, accessible checked state and state tooltip;
+Outline, Inspector, Content and repeatable controls share the same primitive.
+`pageLayout[home|motor|health|life].order` changes the actual
+rendered DOM and keyboard sequence, not only visual CSS order. Missing order
+keeps the previous composition, including the compatible Home article anchor.
+
+Licence cards still write `sections.@insurers.cards`; presentation entries are
+not duplicated into stored section arrays. `pageLayout[page].hidden` controls
+Articles, Licences and the complete Health/Life service content. Normal sections
+retain `section.on`; Footer retains global `footer.show`, with per-route position.
+The licence band is independent of insurer-logo visibility, while Motor's editor
+and visitor retain their broker-only card filter. Unavailable feeds/cards have
+an explanation alongside their saved preference. See
+[CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up)
+and the focused `scripts/editor-panel-browser-check.mjs --article-order` harness.
 
 ## Compact Reference Composition
 
@@ -240,9 +270,11 @@ the fixture. `home-release-check.mjs <handoff-dir>` verifies these invariants.
 
 ## Licence Section
 
-Home licence/relationship details are the final main section before Footer,
-always expanded. The former insurer-band disclosure is removed. Card content,
-logos and visibility still belong to `sections.@insurers.cards`, and its intro
+Home licence/relationship details default to the position before Footer and
+remain expanded when displayed. The local Page Structure follow-up permits
+moving or hiding the band independently of the insurer-logo grid. The former
+insurer-band disclosure is removed. Card content, logos and individual-card
+visibility still belong to `sections.@insurers.cards`, and its intro
 still belongs to `sections.@insurers.{th,en}.body`. Hero/Footer licence summaries
 remain unchanged. Motor now uses this same component with broker-role cards
 only; the shared Home intro is omitted there because it describes AIA as well.

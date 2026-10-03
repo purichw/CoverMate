@@ -305,9 +305,9 @@ try {
   assert.equal(changed.heads[1].id, head.id);
   assert.equal(changed.items.find(item => item.id === first.id).st[1], 'n');
   assert.deepEqual(changed.items.find(item => item.id === first.id).cellRemarks, beforeOrder.items.find(item => item.id === first.id).cellRemarks, 'Head reorder keeps durable remark mapping');
-  await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('button', { name: 'แสดงหรือซ่อนหัวข้อ', exact: true }).click();
+  await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('switch').click();
   changed = tiers((await localSnapshot()).config); assert.equal(changed.heads.find(row => row.id === head.id).on, false);
-  await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('button', { name: 'แสดงหรือซ่อนหัวข้อ', exact: true }).click();
+  await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('switch').click();
   await page.locator(`[data-admin-repeatable-head-id="${head.id}"]`).getByRole('button', { name: 'ทำสำเนาหัวข้อความคุ้มครอง', exact: true }).click();
   changed = tiers((await localSnapshot()).config);
   const copiedHead = changed.heads.find(row => !beforeOrder.heads.some(old => old.id === row.id));
@@ -317,7 +317,7 @@ try {
     assert.equal(item.st[copiedHeadIndex], item.st[changed.heads.findIndex(row => row.id === head.id)]);
     assert.deepEqual(item.cellRemarks[copiedHead.id], item.cellRemarks[head.id], 'Duplicate topic copies only its corresponding remark');
   }
-  await page.locator(`[data-admin-repeatable-head-id="${copiedHead.id}"]`).getByRole('button', { name: 'แสดงหรือซ่อนหัวข้อ', exact: true }).click();
+  await page.locator(`[data-admin-repeatable-head-id="${copiedHead.id}"]`).getByRole('switch').click();
   const itemRow = page.locator(`[data-admin-repeatable-id="${first.id}"]`);
   await reveal(itemRow.getByRole('button', { name: 'เลื่อนรายการลง', exact: true, includeHidden: true }));
   await itemRow.getByRole('button', { name: 'เลื่อนรายการลง', exact: true }).click();
@@ -328,7 +328,7 @@ try {
   const duplicate = changed.items.find(item => !beforeOrder.items.some(old => old.id === item.id));
   assert.ok(duplicate?.id && duplicate.id !== first.id);
   assert.deepEqual(duplicate.cellRemarks, changed.items.find(item => item.id === first.id).cellRemarks, 'Duplicating a tier copies its independent remarks');
-  const duplicateHide = page.locator(`[data-admin-repeatable-id="${duplicate.id}"]`).getByRole('button', { name: 'ซ่อน', exact: true, includeHidden: true });
+  const duplicateHide = page.locator(`[data-admin-repeatable-id="${duplicate.id}"]`).getByRole('switch', { includeHidden: true });
   await reveal(duplicateHide); await duplicateHide.click();
   changed = tiers((await localSnapshot()).config); assert.equal(changed.items.find(item => item.id === duplicate.id).on, false);
   report.checks.push('Actual Tools controls reorder/hide/restore/duplicate axes and reorder/duplicate/hide tiers without changing status/remark associations');

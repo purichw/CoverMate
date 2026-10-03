@@ -723,12 +723,92 @@ textarea.input { min-height: 90px; resize: vertical; }
 <sc-if value="{{ menuOpen }}"><div class="hm-menu" data-noedit sc-camel-on-click="{{ closeMenu }}"><div class="hm-menu-panel" role="dialog" aria-modal="true" aria-label="{{ homeCopy.menuLabel }}"><button class="hm-menu-button" type="button" aria-label="{{ homeCopy.closeLabel }}" sc-camel-on-click="{{ closeMenu }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button><nav><sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span></a></sc-for></nav><sc-if value="{{ hasLine }}"><a class="hm-button" href="{{ lineUrl }}"><!-- COVERMATE_LINE_MARK --><span data-cms-copy="header.cta">{{ headerCta }}</span></a></sc-if></div></div></sc-if>
 
 <main id="top" style="display:block">
-<!-- COVERMATE_SERVICE_PAGE_TEMPLATE -->
-<!-- COVERMATE_ARTICLES_INDEX_TEMPLATE -->
-<!-- COVERMATE_ARTICLE_DETAIL_TEMPLATE -->
   <sc-if value="{{ publicNotice }}"><p class="hm-content-notice" role="status">{{ publicNotice }}</p></sc-if>
 <sc-for list="{{ sectionGroups }}" as="group"><div class="{{ group.className }}" style="{{ group.style }}">
 <sc-for list="{{ group.sections }}" as="s" hint-placeholder-count="4">
+<sc-if value="{{ s.serviceContent }}"><!-- COVERMATE_SERVICE_PAGE_TEMPLATE --></sc-if>
+<sc-if value="{{ s.articleIndex }}"><!-- COVERMATE_ARTICLES_INDEX_TEMPLATE --></sc-if>
+<sc-if value="{{ s.articleDetail }}"><!-- COVERMATE_ARTICLE_DETAIL_TEMPLATE --></sc-if>
+<sc-if value="{{ s.homeLicences }}">
+  <section id="licences" class="hm-band hm-licence-band" data-home-section="licences" data-cms-background="homeDesign.licenceBackground" style="{{ s.licence.homeLicenceStyle }}" aria-labelledby="home-licence-title">
+    <div class="hm-wrap">
+      <div class="hm-licence-heading">
+        <div class="hm-section-copy">
+          <sc-if value="{{ homeCopy.licenceEyebrow }}"><p class="hm-eyebrow" data-cms-copy="homeDesign.licenceEyebrow">{{ homeCopy.licenceEyebrow }}</p></sc-if>
+          <h2 id="home-licence-title" data-cms-copy="homeDesign.licenceTitle">{{ homeCopy.licenceTitle }}</h2>
+          <sc-if value="{{ s.licence.hasLicenceIntro }}"><p data-content-path="{{ s.licence.copy.body }}">{{ s.licence.body }}</p></sc-if>
+        </div>
+        <sc-if value="{{ homeCopy.licenceStatement }}"><div class="hm-licence-statement"><p data-cms-copy="homeDesign.licenceStatement">{{ homeCopy.licenceStatement }}</p><span class="hm-statement-stroke" aria-hidden="true"></span></div></sc-if>
+      </div>
+      <sc-if value="{{ homeAdvisor.name }}"><p class="hm-licence-advisor"><span data-cms-copy="advisor.licenceLabel">{{ homeAdvisor.licenceLabel }}</span> <span data-cms-copy="advisor.fullName">{{ homeAdvisor.name }}</span></p></sc-if>
+      <div class="hm-licence-grid">
+        <sc-for list="{{ s.licence.cards }}" as="cd">
+          <article class="hm-licence-card" data-licence-role="{{ cd.licenceRole }}" data-content-id="{{ cd.key }}">
+            <sc-if value="{{ cd.hasLogo }}"><div class="hm-licence-logo"><img data-cms-image="{{ cd.mediaLogoPath }}" sc-camel-src="{{ cd.logo }}" alt="{{ cd.logoAlt }}" width="136" height="160" loading="lazy"></div></sc-if>
+            <div class="hm-licence-copy">
+              <p class="hm-eyebrow" data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p>
+              <h3 data-content-path="{{ cd.copy.title }}">{{ cd.title }}</h3>
+              <div class="hm-licence-description"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ licenceFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg><p data-content-path="{{ cd.copy.body }}">{{ cd.body }}</p></div>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+      <sc-if value="{{ homeCopy.logoNotice }}"><p class="hm-licence-notice hm-help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span data-cms-copy="homeDesign.logoNotice">{{ homeCopy.logoNotice }}</span></p></sc-if>
+    </div>
+  </section>
+</sc-if>
+<sc-if value="{{ s.pageFooter }}">
+<footer id="footer" role="contentinfo" class="cm-footer" style="{{ footerStyle }}">
+  <div class="cm-footer-inner">
+    <div class="cm-footer-grid" data-cm-footer-grid="true">
+      <div class="cm-footer-brand">
+        <sc-if value="{{ hasFooterLogo }}"><img class="cm-footer-logo" sc-camel-src="{{ footerBrandLogo }}" sc-camel-src-set="{{ footerBrandSrcset }}" sizes="{{ logoResponsiveSizes }}" alt="{{ brandLogoAlt }}" data-cms-image="{{ footerLogoPath }}" loading="lazy" decoding="async" width="1200" height="375"></sc-if>
+        <p class="cm-footer-tagline" data-cms-copy="footer.tagline">{{ footTagline }}</p>
+        <div class="cm-footer-advisor">
+          <sc-if value="{{ hasAdvisorPhoto }}"><img data-cms-image="brand.media.photo" sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" loading="lazy" decoding="async"></sc-if>
+          <div><p class="cm-footer-name" data-cms-copy="brand.fullName">{{ brandFull }}</p><p class="cm-footer-credential" data-cms-copy="brand.credential">{{ brandCred }}</p></div>
+        </div>
+      </div>
+      <div class="cm-footer-licences">
+        <div class="cm-footer-heading"><span class="{{ footerIcons.licence.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.licence.image }}"><img sc-camel-src="{{ footerIcons.licence.image }}" alt="" data-cms-image="{{ footerIcons.licence.path }}"></sc-if><sc-if value="{{ !footerIcons.licence.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.licence.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.licenceHeading">{{ footerLicenceHeading }}</h3><p data-cms-copy="footer.licenceHelper">{{ footerCopy.licenceHelper }}</p></div></div>
+        <div class="cm-footer-licence-list">
+          <sc-if value="{{ hasLifeLicence }}"><div class="cm-footer-licence">
+            <sc-if value="{{ hasLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" data-cms-image="licences.life.logo" loading="lazy" decoding="async" width="52" height="54"></span></sc-if>
+            <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerLifeLabel }}</span><span>{{ footerLifeNumber }}</span></span>
+          </div></sc-if>
+          <sc-if value="{{ hasNonLifeLicence }}"><div class="cm-footer-licence">
+            <sc-if value="{{ hasNonLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" data-cms-image="licences.nonLife.logo" loading="lazy" decoding="async" width="52" height="54"></span></sc-if>
+            <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerNonLifeLabel }}</span><span>{{ footerNonLifeNumber }}</span></span>
+          </div></sc-if>
+        </div>
+        <sc-if value="{{ hasVerifyLink }}"><a class="cm-footer-verify" href="{{ footerOicHref }}" target="_blank" rel="noopener"><span data-cms-copy="licences.verifyLabel">{{ footerOicLabel }}</span><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"></path></svg></a></sc-if>
+      </div>
+      <nav class="cm-footer-nav" aria-label="{{ footerNavHeading }}">
+        <div class="cm-footer-heading"><span class="{{ footerIcons.nav.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.nav.image }}"><img sc-camel-src="{{ footerIcons.nav.image }}" alt="" data-cms-image="{{ footerIcons.nav.path }}"></sc-if><sc-if value="{{ !footerIcons.nav.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.nav.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.navHeading">{{ footerNavHeading }}</h3><p data-cms-copy="footer.navHelper">{{ footerCopy.navHelper }}</p></div></div>
+        <div class="cm-footer-links">
+          <sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-for>
+          <sc-if value="{{ showFooterPrivacyNav }}"><a href="{{ footerPrivacyHref }}"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+        </div>
+      </nav>
+      <div class="cm-footer-contact">
+        <div class="cm-footer-heading"><span class="{{ footerIcons.contact.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.contact.image }}"><img sc-camel-src="{{ footerIcons.contact.image }}" alt="" data-cms-image="{{ footerIcons.contact.path }}"></sc-if><sc-if value="{{ !footerIcons.contact.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.contact.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.contactHeading">{{ footerContactHeading }}</h3><p data-cms-copy="footer.contactHelper">{{ footerCopy.contactHelper }}</p></div></div>
+        <div class="cm-footer-links">
+          <sc-if value="{{ hasLine }}"><a class="cm-footer-social cm-footer-line" href="{{ lineUrl }}"><span class="{{ footerIcons.line.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.line.image }}"><img sc-camel-src="{{ footerIcons.line.image }}" alt="" data-cms-image="{{ footerIcons.line.path }}"></sc-if><sc-if value="{{ !footerIcons.line.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.line.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span>LINE <span data-cms-copy="contact.lineId">{{ lineId }}</span></span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ hasFacebook }}"><a class="cm-footer-social cm-footer-facebook" href="{{ facebookUrl }}" target="_blank" rel="noopener"><span class="{{ footerIcons.facebook.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.facebook.image }}"><img sc-camel-src="{{ footerIcons.facebook.image }}" alt="" data-cms-image="{{ footerIcons.facebook.path }}"></sc-if><sc-if value="{{ !footerIcons.facebook.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.facebook.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span>Facebook <span data-cms-copy="contact.facebookName">{{ facebookName }}</span></span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}"><span data-cms-copy="contact.phone">{{ phone }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+          <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}"><span data-cms-copy="contact.email">{{ email }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
+        </div>
+        <sc-if value="{{ hours }}"><div class="cm-footer-hours"><span class="{{ footerIcons.hours.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.hours.image }}"><img sc-camel-src="{{ footerIcons.hours.image }}" alt="" data-cms-image="{{ footerIcons.hours.path }}"></sc-if><sc-if value="{{ !footerIcons.hours.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.hours.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span data-cms-copy="contact.hours">{{ hours }}</span></div></sc-if>
+      </div>
+    </div>
+    <div class="cm-footer-bottom">
+      <p class="cm-footer-category" data-cms-copy="footer.categoryLine">{{ footerCopy.categoryLine }}</p>
+      <sc-if value="{{ showCookieControls }}"><button type="button" class="cm-cookie-settings" data-cookie-settings sc-camel-on-click="{{ onCookieSettings }}" data-cms-copy="cookieConsent.settings">{{ cookieCopy.settings }}</button></sc-if>
+      <sc-if value="{{ footerCopy.statement }}"><p class="cm-footer-statement" data-cms-copy="footer.statement">{{ footerCopy.statement }}</p></sc-if>
+    </div>
+  </div>
+</footer>
+</sc-if>
 <!-- COVERMATE_HOME_ARTICLES_TEMPLATE -->
 <!-- COVERMATE_HOME_TEMPLATE -->
 
@@ -1551,87 +1631,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 </sc-for>
 </div></sc-for>
-<sc-for list="{{ homeLicenceSections }}" as="s">
-  <section id="licences" class="hm-band hm-licence-band" data-home-section="licences" data-cms-background="homeDesign.licenceBackground" style="{{ s.homeLicenceStyle }}" aria-labelledby="home-licence-title">
-    <div class="hm-wrap">
-      <div class="hm-licence-heading">
-        <div class="hm-section-copy">
-          <sc-if value="{{ homeCopy.licenceEyebrow }}"><p class="hm-eyebrow" data-cms-copy="homeDesign.licenceEyebrow">{{ homeCopy.licenceEyebrow }}</p></sc-if>
-          <h2 id="home-licence-title" data-cms-copy="homeDesign.licenceTitle">{{ homeCopy.licenceTitle }}</h2>
-          <sc-if value="{{ s.hasLicenceIntro }}"><p data-content-path="{{ s.copy.body }}">{{ s.body }}</p></sc-if>
-        </div>
-        <sc-if value="{{ homeCopy.licenceStatement }}"><div class="hm-licence-statement"><p data-cms-copy="homeDesign.licenceStatement">{{ homeCopy.licenceStatement }}</p><span class="hm-statement-stroke" aria-hidden="true"></span></div></sc-if>
-      </div>
-      <sc-if value="{{ homeAdvisor.name }}"><p class="hm-licence-advisor"><span data-cms-copy="advisor.licenceLabel">{{ homeAdvisor.licenceLabel }}</span> <span data-cms-copy="advisor.fullName">{{ homeAdvisor.name }}</span></p></sc-if>
-      <div class="hm-licence-grid">
-        <sc-for list="{{ s.cards }}" as="cd">
-          <article class="hm-licence-card" data-licence-role="{{ cd.licenceRole }}" data-content-id="{{ cd.key }}">
-            <sc-if value="{{ cd.hasLogo }}"><div class="hm-licence-logo"><img data-cms-image="{{ cd.mediaLogoPath }}" sc-camel-src="{{ cd.logo }}" alt="{{ cd.logoAlt }}" width="136" height="160" loading="lazy"></div></sc-if>
-            <div class="hm-licence-copy">
-              <p class="hm-eyebrow" data-content-path="{{ cd.copy.kicker }}">{{ cd.kicker }}</p>
-              <h3 data-content-path="{{ cd.copy.title }}">{{ cd.title }}</h3>
-              <div class="hm-licence-description"><svg viewBox="0 0 24 24" aria-hidden="true"><sc-for list="{{ licenceFilePaths }}" as="d"><path d="{{ d }}"/></sc-for></svg><p data-content-path="{{ cd.copy.body }}">{{ cd.body }}</p></div>
-            </div>
-          </article>
-        </sc-for>
-      </div>
-      <sc-if value="{{ homeCopy.logoNotice }}"><p class="hm-licence-notice hm-help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span data-cms-copy="homeDesign.logoNotice">{{ homeCopy.logoNotice }}</span></p></sc-if>
-    </div>
-  </section>
-</sc-for>
 </main>
-<sc-if value="{{ showFooter }}" hint-placeholder-val="{{ true }}">
-<footer class="cm-footer" style="{{ footerStyle }}">
-  <div class="cm-footer-inner">
-    <div class="cm-footer-grid" data-cm-footer-grid="true">
-      <div class="cm-footer-brand">
-        <sc-if value="{{ hasFooterLogo }}"><img class="cm-footer-logo" sc-camel-src="{{ footerBrandLogo }}" sc-camel-src-set="{{ footerBrandSrcset }}" sizes="{{ logoResponsiveSizes }}" alt="{{ brandLogoAlt }}" data-cms-image="{{ footerLogoPath }}" loading="lazy" decoding="async" width="1200" height="375"></sc-if>
-        <p class="cm-footer-tagline" data-cms-copy="footer.tagline">{{ footTagline }}</p>
-        <div class="cm-footer-advisor">
-          <sc-if value="{{ hasAdvisorPhoto }}"><img data-cms-image="brand.media.photo" sc-camel-src="{{ advisorPhoto }}" alt="{{ brandFull }}" loading="lazy" decoding="async"></sc-if>
-          <div><p class="cm-footer-name" data-cms-copy="brand.fullName">{{ brandFull }}</p><p class="cm-footer-credential" data-cms-copy="brand.credential">{{ brandCred }}</p></div>
-        </div>
-      </div>
-      <div class="cm-footer-licences">
-        <div class="cm-footer-heading"><span class="{{ footerIcons.licence.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.licence.image }}"><img sc-camel-src="{{ footerIcons.licence.image }}" alt="" data-cms-image="{{ footerIcons.licence.path }}"></sc-if><sc-if value="{{ !footerIcons.licence.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.licence.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.licenceHeading">{{ footerLicenceHeading }}</h3><p data-cms-copy="footer.licenceHelper">{{ footerCopy.licenceHelper }}</p></div></div>
-        <div class="cm-footer-licence-list">
-          <sc-if value="{{ hasLifeLicence }}"><div class="cm-footer-licence">
-            <sc-if value="{{ hasLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerAiaLogo }}" alt="{{ footerAiaAlt }}" data-cms-image="licences.life.logo" loading="lazy" decoding="async" width="52" height="54"></span></sc-if>
-            <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerLifeLabel }}</span><span>{{ footerLifeNumber }}</span></span>
-          </div></sc-if>
-          <sc-if value="{{ hasNonLifeLicence }}"><div class="cm-footer-licence">
-            <sc-if value="{{ hasNonLifeLogo }}"><span class="cm-footer-provider"><img sc-camel-src="{{ footerSrikrungLogo }}" alt="{{ footerSrikrungAlt }}" data-cms-image="licences.nonLife.logo" loading="lazy" decoding="async" width="52" height="54"></span></sc-if>
-            <span class="cm-footer-licence-copy" data-noedit="true"><span>{{ footerNonLifeLabel }}</span><span>{{ footerNonLifeNumber }}</span></span>
-          </div></sc-if>
-        </div>
-        <sc-if value="{{ hasVerifyLink }}"><a class="cm-footer-verify" href="{{ footerOicHref }}" target="_blank" rel="noopener"><span data-cms-copy="licences.verifyLabel">{{ footerOicLabel }}</span><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"></path></svg></a></sc-if>
-      </div>
-      <nav class="cm-footer-nav" aria-label="{{ footerNavHeading }}">
-        <div class="cm-footer-heading"><span class="{{ footerIcons.nav.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.nav.image }}"><img sc-camel-src="{{ footerIcons.nav.image }}" alt="" data-cms-image="{{ footerIcons.nav.path }}"></sc-if><sc-if value="{{ !footerIcons.nav.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.nav.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.navHeading">{{ footerNavHeading }}</h3><p data-cms-copy="footer.navHelper">{{ footerCopy.navHelper }}</p></div></div>
-        <div class="cm-footer-links">
-          <sc-for list="{{ navItems }}" as="n"><a href="{{ n.href }}"><span data-content-path="{{ n.copy }}">{{ n.label }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-for>
-          <sc-if value="{{ showFooterPrivacyNav }}"><a href="{{ footerPrivacyHref }}"><span data-cms-copy="footer.privacyLabel">{{ footerPrivacyNavText }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
-        </div>
-      </nav>
-      <div class="cm-footer-contact">
-        <div class="cm-footer-heading"><span class="{{ footerIcons.contact.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.contact.image }}"><img sc-camel-src="{{ footerIcons.contact.image }}" alt="" data-cms-image="{{ footerIcons.contact.path }}"></sc-if><sc-if value="{{ !footerIcons.contact.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.contact.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><div><h3 data-cms-copy="footer.contactHeading">{{ footerContactHeading }}</h3><p data-cms-copy="footer.contactHelper">{{ footerCopy.contactHelper }}</p></div></div>
-        <div class="cm-footer-links">
-          <sc-if value="{{ hasLine }}"><a class="cm-footer-social cm-footer-line" href="{{ lineUrl }}"><span class="{{ footerIcons.line.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.line.image }}"><img sc-camel-src="{{ footerIcons.line.image }}" alt="" data-cms-image="{{ footerIcons.line.path }}"></sc-if><sc-if value="{{ !footerIcons.line.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.line.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span>LINE <span data-cms-copy="contact.lineId">{{ lineId }}</span></span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
-          <sc-if value="{{ hasFacebook }}"><a class="cm-footer-social cm-footer-facebook" href="{{ facebookUrl }}" target="_blank" rel="noopener"><span class="{{ footerIcons.facebook.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.facebook.image }}"><img sc-camel-src="{{ footerIcons.facebook.image }}" alt="" data-cms-image="{{ footerIcons.facebook.path }}"></sc-if><sc-if value="{{ !footerIcons.facebook.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.facebook.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span>Facebook <span data-cms-copy="contact.facebookName">{{ facebookName }}</span></span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
-          <sc-if value="{{ hasPhone }}"><a href="{{ phoneUrl }}" aria-label="{{ callLabel }}"><span data-cms-copy="contact.phone">{{ phone }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
-          <sc-if value="{{ hasEmail }}"><a href="{{ mailUrl }}"><span data-cms-copy="contact.email">{{ email }}</span><svg class="cm-footer-chevron" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg></a></sc-if>
-        </div>
-        <sc-if value="{{ hours }}"><div class="cm-footer-hours"><span class="{{ footerIcons.hours.className }}" aria-hidden="true"><sc-if value="{{ footerIcons.hours.image }}"><img sc-camel-src="{{ footerIcons.hours.image }}" alt="" data-cms-image="{{ footerIcons.hours.path }}"></sc-if><sc-if value="{{ !footerIcons.hours.image }}"><svg sc-camel-view-box="0 0 24 24"><sc-for list="{{ footerIcons.hours.paths }}" as="path"><path d="{{ path }}"></path></sc-for></svg></sc-if></span><span data-cms-copy="contact.hours">{{ hours }}</span></div></sc-if>
-      </div>
-    </div>
-    <div class="cm-footer-bottom">
-      <p class="cm-footer-category" data-cms-copy="footer.categoryLine">{{ footerCopy.categoryLine }}</p>
-      <sc-if value="{{ showCookieControls }}"><button type="button" class="cm-cookie-settings" data-cookie-settings sc-camel-on-click="{{ onCookieSettings }}" data-cms-copy="cookieConsent.settings">{{ cookieCopy.settings }}</button></sc-if>
-      <sc-if value="{{ footerCopy.statement }}"><p class="cm-footer-statement" data-cms-copy="footer.statement">{{ footerCopy.statement }}</p></sc-if>
-    </div>
-  </div>
-</footer>
-</sc-if>
+
 
 <sc-if value="{{ showCookieFallback }}"><div class="cm-cookie-settings-fallback"><button type="button" class="cm-cookie-settings" data-cookie-settings sc-camel-on-click="{{ onCookieSettings }}">{{ cookieCopy.settings }}</button></div></sc-if>
 
@@ -1812,7 +1813,7 @@ textarea.input { min-height: 90px; resize: vertical; }
             <div class="cm-editor-move"><sc-if value="{{ r.canMove }}"><span class="cm-editor-move-arrows"><button type="button" sc-camel-on-click="{{ r.up }}" disabled="{{ r.first }}" aria-label="เลื่อนส่วนนี้ขึ้น"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg></button><button type="button" sc-camel-on-click="{{ r.down }}" disabled="{{ r.last }}" aria-label="เลื่อนส่วนนี้ลง"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></span><details class="cm-editor-move-menu"><summary aria-label="จัดลำดับส่วนนี้"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" stroke-width="3"></path></svg></summary><div><button type="button" sc-camel-on-click="{{ r.up }}" disabled="{{ r.first }}" aria-label="เลื่อนส่วนนี้ขึ้น">↑ ขึ้น</button><button type="button" sc-camel-on-click="{{ r.down }}" disabled="{{ r.last }}" aria-label="เลื่อนส่วนนี้ลง">↓ ลง</button></div></details></sc-if></div>
             <span class="cm-editor-order">{{ r.order }}</span>
             <button type="button" class="cm-editor-outline-pick" data-outline-select="{{ r.id }}" data-admin-outline-select="{{ r.id }}" sc-camel-on-click="{{ r.inspect }}" aria-pressed="{{ r.sel }}"><strong>{{ r.name }}</strong><small>{{ r.summary }}</small></button>
-            <sc-if value="{{ r.canToggle }}"><button type="button" class="cm-editor-visibility" role="switch" aria-checked="{{ r.on }}" aria-label="แสดงหรือซ่อนส่วนนี้" sc-camel-on-click="{{ r.toggle }}">{{ r.statusLabel }}</button></sc-if><sc-if value="{{ !r.canToggle }}"><span class="cm-editor-visibility">{{ r.statusLabel }}</span></sc-if>
+            <button type="button" class="cm-switch cm-editor-visibility" role="switch" aria-checked="{{ r.on }}" aria-label="แสดงหรือซ่อน {{ r.name }}" title="{{ r.statusLabel }}" sc-camel-on-click="{{ r.toggle }}"></button>
             <button type="button" class="cm-editor-edit" sc-camel-on-click="{{ r.pick }}" data-admin-section-edit="{{ r.id }}">แก้ไข</button>
           </div>
         </sc-for>
@@ -1820,7 +1821,7 @@ textarea.input { min-height: 90px; resize: vertical; }
         </div>
       </section>
       <section data-editor-inspector class="cm-editor-inspector">
-        <div class="cm-editor-inspector-head"><h3 data-admin-inspector-title tabindex="-1">แก้ไข : {{ curName }}</h3><span class="cm-editor-visibility">{{ selectedOutline.statusLabel }}</span></div>
+        <div class="cm-editor-inspector-head"><h3 data-admin-inspector-title tabindex="-1">แก้ไข : {{ curName }}</h3><button type="button" class="cm-switch cm-editor-visibility" role="switch" aria-checked="{{ selectedOutline.on }}" aria-label="แสดงหรือซ่อน {{ curName }}" title="{{ selectedOutline.statusLabel }}" sc-camel-on-click="{{ selectedOutline.toggle }}"></button></div>
         <div class="cm-editor-inspector-body">
           <sc-if value="{{ outlineNotice }}"><p class="cm-editor-notice">{{ outlineNotice }}</p></sc-if>
           <sc-if value="{{ !editingHero }}"><!-- COVERMATE_EDITOR_LANGUAGE --></sc-if>

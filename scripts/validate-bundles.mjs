@@ -110,7 +110,8 @@ for (const file of htmlFiles) {
       if (templateJson.includes("__COVERMATE_SCRIPT_OPEN__") && !html.includes("replace(/__COVERMATE_SCRIPT_OPEN__/g")) {
         failures.push(`${file}: embedded template masks <script> markers but the wrapper does not restore them`);
       }
-      if (templateJson.includes("__COVERMATE_RESOURCE_") && !html.includes("restoreTemplateResourceRefs")) {
+      // Local function names may be minified; the restoration operation must remain.
+      if (templateJson.includes("__COVERMATE_RESOURCE_") && !html.includes("replace(/__COVERMATE_RESOURCE_")) {
         failures.push(`${file}: embedded template masks resource refs but the wrapper does not restore them`);
       }
       const visitorBundle = ["index.html", "server/visitor-public.html"].includes(file);

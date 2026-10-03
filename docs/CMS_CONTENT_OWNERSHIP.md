@@ -1,6 +1,6 @@
 # CMS Content Ownership
 
-Updated: 2026-10-02. Current source schema: `CMS_CONTENT_VERSION = 25` in
+Updated: 2026-10-03. Current source schema: `CMS_CONTENT_VERSION = 26` in
 `covermate-contract.js`. The entries below retain their schema-history scope;
 consult [HANDOFF.md](HANDOFF.md) for source versus release status. Version 3 adds
 Home design media/copy and ID-based featured classes, axes and task controls.
@@ -9,7 +9,7 @@ answer, optional topic and reading time in both languages. The old section is
 retained only as `cmsArchives.guides` for recovery, never as a public fallback.
 Version 5 reconciles section/Admin field names and legacy navigation labels.
 Version 6 adds the Home licence section's presentation fields without moving
-or rewriting its existing insurer card data. The section renders before Footer;
+or rewriting its existing insurer card data. The default position is before Footer;
 its heading/eyebrow/statement/background are under Brand & contact > Licence band design
 (the internal group key remains `Home licences`).
 Versions 7/8 add Home contact and Footer design presentation fields. Their
@@ -90,14 +90,15 @@ absent. Firestore content wins, including deliberate blanks and empty arrays.
 | Menu labels/order/targets and header CTA | `header.nav/cta`, `motorPage.nav`, Brand & contact for selected page |
 | Home Hero secondary/accident link destinations | `sections[hero].cta2href/claimHref`, Brand & contact > Navigation |
 | Insurer logos/count | `sections[insurers].items`; Sections > Motor insurer logos |
-| Final licence cards | `sections[insurers].cards`; Sections > Licences & service roles; fixed before Footer, not a new CMS section |
+| Licence cards | `sections[insurers].cards`; Sections > Licences & service roles; card data is not duplicated into a new CMS section |
 | Motor relationship visibility | `sections.@insurers.cards.@id.licenceRole`; Licences & service roles > Licence role; Motor lists broker cards only, Home retains all roles |
 | Home tier illustrations | `sections.@tiers.items.@id.illustration`; same row's Admin editor |
 | FAQ and former reading items | `sections.@faq.items.@id.{th,en}.{q,a,label,meta}`; FAQ row editor |
 | Shared quote/artwork and disclosure labels | `homeDesign.*`, Brand & contact > Shared page design (internal key `Home design`) |
 | Fees/Privacy disclosure presentation | `homeDesign.{fees,privacy}{Statement,ClosingStatement,SummaryLabel,Icon}` and `homeDesign.transparencyNoteIcon`; Brand & contact > Transparency design |
 | Fees/Privacy item icons and fee-card icons | `sections.@id.items.@id.iconImage`, `sections.@fees.cards.@id.iconImage`; Images & crop, with item vector/tone selection in the section editor |
-| Shared final licence section presentation | `homeDesign.licenceEyebrow/Title/Statement/Background`, Brand & contact > Licence band design; existing insurer cards retain their owners |
+| Shared licence section presentation | `homeDesign.licenceEyebrow/Title/Statement/Background`, Brand & contact > Licence band design; existing insurer cards retain their owners |
+| Page Structure order and presentation visibility | Local follow-up: `pageLayout[home\|motor\|health\|life].order`; `.hidden` only for `articles`, `licences`, `service-content`; real section visibility remains `section.on`, Footer visibility remains shared `footer.show` |
 | Featured tiers, comparison axes and task links | Stable IDs in `homeDesign`, Shared page composition controls; task links remain Home-only |
 | Footer headings/privacy link | `footer.licenceHeading/navHeading/contactHeading/privacyLabel` |
 | Footer helper/closing copy, icons and art | `footer.licenceHelper/navHelper/contactHelper/statement/categoryLine`, `footer.icon*`, `footer.backgroundArt`; Brand & contact > Footer design |
@@ -157,6 +158,99 @@ without a post-save rollback toast; Publish's separate 30-second rollback
 changes Live. See [CMS_EDITOR_HISTORY.md](CMS_EDITOR_HISTORY.md) for history,
 uncommitted JSON buffers and failure recovery. The source refactor changes no
 schema, stored content, Publish behavior or cache duration.
+
+### Page Structure Controls — Local Follow-up
+
+Implemented locally on 2026-10-03. Targeted local verification passed for
+Home/Motor/Health/Life controls, persistence, Preview and publication isolation.
+The shared switches, keyboard interaction and route checks also passed. The
+pre-integration build, contract regression, exported-API/normalizer bundle parity and all
+four performance cases passed: initial scripts 349,861 / 350,000 bytes, maximum
+compressed public shell 194,223 / 195,000 bytes. The minifier bundle step retains
+the contract API; claim-example copy is not added to startup JavaScript. The code
+is committed in `ba26af7`; deployment requires the exact release revision's CI
+and promotion evidence. The separate content update is
+saved in Website Draft revision 94 and has not been published.
+
+Every outline row uses the same working show/hide switch and move-up/down
+controls, including Articles, Licences, Footer and Health/Life content. The shared
+`cm-switch` primitive comes from the existing Brand toggle, with the same track
+and thumb centered inside a 44px touch target. Outline, Inspector, Content,
+repeatable items/heads/cards, service task links and Brand inputs use it.
+Visibility is an actual switch rather than a text status-chip button: its
+accessible checked state uses native `checked` or `aria-checked`, with a named
+control and state tooltip. The row reflects the saved preference; unavailable
+content has a separate explanation instead of a read-only badge.
+
+`pageLayout[page].order` stores the complete outline order for `home`, `motor`,
+`health` or `life`. The rendered DOM and keyboard sequence use the same order.
+Without a stored order, the previous composition is retained; the existing
+`homeDesign.articlesBefore` anchor is read and maintained for compatibility.
+The order references existing owners rather than copying their content.
+
+`pageLayout[page].hidden` owns only presentation rows `articles`, `licences` and
+`service-content`. Existing sections keep `section.on`. Footer keeps the single
+`footer.show` owner shared by all routes and Brand controls, while its position
+is saved per route. Health/Life visibility applies to the complete service page,
+including its Hero, rather than only the inner `#service-content` body.
+
+The licence band can be hidden or moved independently of the insurer-logo
+section. Individual card `on` values and Motor's `licenceRole:broker` filter
+remain authoritative. The Home Articles switch is a website presentation
+preference: article master/Home settings and eligible published translations
+still gate the feed. It never changes `articleSettings` or article records.
+All these controls follow the existing Website Draft, Save, Undo/Redo, Reset,
+Preview and Publish path; article drafts/publications remain independent.
+
+Story/testimonial normalization no longer forces `section.on` to false. Public
+rendering filters known pending/placeholder items per language using
+`isPlaceholderStoryItem`; the editor retains them so the owner can replace them.
+Genuine short entries and a completed translation remain eligible even when
+the other translation is pending. No real customer story is invented or seeded.
+
+The later owner request adds three clearly labelled **illustrative** claim
+assistance scenarios in TH/EN: contacting the insurer after a vehicle accident,
+preparing medical-claim documents, and following up a submitted claim. They
+contain no real customer identity, claim result, coverage promise or paid amount.
+`CLAIM_GUIDANCE_EXAMPLES` in `scripts/lib/claim-guidance-content.mjs` is the single
+copy definition. This is content-only preparation for an explicitly authorized
+Website Draft update, not a schema migration or visitor startup dependency.
+`fillClaimGuidanceExamples(config)` returns a copied config and auditable
+`changedPaths`; it performs no database writes. For existing `voices`/`stories`,
+only exact untouched legacy locale buckets in the first three rows are replaced.
+Matching section copy changes only when an item in that language was replaced.
+For the older `voices`/`testimonials` shape, all three rows and both complete
+section/item locale buckets must match the known seed before the presentation
+type changes to `stories`. Any authored, extra, blank or missing locale field
+blocks that entire type conversion. IDs, item/section visibility, metadata and
+unrelated fields remain unchanged. Empty arrays and removed sections stay empty.
+Schema remains v26 and bundled defaults stay unchanged. Repeated preparation
+produces no further changes; no automatic enabling or publication occurs.
+The pure preservation/idempotence checks passed. A compare-and-set Draft write
+and readback passed at `2026-10-03T10:31:07.190695Z`, moving Website Draft revision
+93 to 94. Exactly nine `voices` paths changed; all three stable IDs and the
+section's `on:false` were retained, with unrelated config and text unchanged.
+There were no Live or article writes and no Publish. Local evidence is
+`uat-results/section-controls/claim-guidance-draft-report.json`; its `backup`
+field identifies the saved pre-write state. Content is now available in Draft,
+while code release and CMS publication remain separate operations.
+
+Focused verification commands are
+`node scripts/editor-panel-browser-check.mjs --article-order`,
+`node scripts/home-licences-check.mjs`,
+`node scripts/contract-regression-check.mjs`,
+`node scripts/claim-guidance-content-check.mjs`,
+`node scripts/text-editor-browser-check.mjs` and
+`npm run check:content-isolation`. They use local fixtures, not production CMS
+writes. Licence checks cover TH/EN at 1440/820/390px, independent band/card
+visibility, real DOM placement and Motor broker filtering. Story checks cover
+saved visibility, per-language placeholders and genuine short entries; the
+local browser checks also cover enable/Save/reload, Preview filtering and disable.
+Repeatable controls passed hide/restore/add without deletion or matrix corruption;
+explicit blanks, hidden-target links and editor-panel dismissal also passed.
+`node scripts/claim-guidance-content-check.mjs` checks the separate content-only
+preparation helper, exact legacy matching and owner-data preservation without
+writing to a database.
 
 ### FAQ Collection Editing
 

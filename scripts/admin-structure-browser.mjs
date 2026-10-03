@@ -57,19 +57,25 @@ else {
     const ready=async route=>{await page.goto(baseUrl+route);await row('licences').waitFor();await page.evaluate(()=>document.fonts.ready);};
     const sections=()=>page.getByRole('button',{name:'โครงสร้างหน้า',exact:true}).click();
     const content=id=>page.locator(`[data-admin-section-edit="${id}"]`).click();
+    const reveal=async control=>{const parents=control.locator('xpath=ancestor::details');for(let i=0;i<await parents.count();i++){const details=parents.nth(i);if(!await details.evaluate(el=>el.open))await details.locator(':scope>summary').click();}};
     const state=async()=>{await page.waitForFunction(()=>!!localStorage.getItem('purich-draft-config-v3'));return page.evaluate(()=>JSON.parse(localStorage.getItem('purich-draft-config-v3')));};
     const parity=async()=>{
       const config=await state();
       const isMotor=new URL(page.url()).searchParams.get('page')==='motor';
       const localIds=['motor','motor-trust','motor-cover'];
       const source=isMotor?config.motorPage.sections.map(id=>localIds.includes(id)?config.motorPage[['hero','trust','cover'][localIds.indexOf(id)]]:config.sections.find(s=>s.id===id)).filter(s=>s&&s.id!=='cover'):config.sections;
+      const layout=config.pageLayout?.[isMotor?'motor':'home']||{},base=source.map(s=>s.id);
+      if(!isMotor){const before=config.homeDesign.articlesBefore||'talk',index=base.indexOf(before);base.splice(index<0?base.length:index,0,'articles');}
+      base.push('licences','footer');
+      const expected=[...new Set([...(layout.order||[]),...base])].filter(id=>base.includes(id));
       const admin=await page.locator('[data-admin-section-row]').evaluateAll(nodes=>nodes.map(node=>node.dataset.adminSectionRow));
-      assert.deepEqual(admin,[...source.map(s=>s.id),'licences','footer']);
-      const publicIds=await page.locator('main section[id]').evaluateAll(nodes=>nodes.map(node=>node.id));
+      assert.deepEqual(admin,expected,'All configured sections, including virtual rows, follow the saved page order');
+      const publicIds=await page.locator('main section[id],main footer.cm-footer').evaluateAll((nodes,isMotor)=>nodes.map(node=>!isMotor&&node.id==='motor'?'insurers':node.id),isMotor);
       const visible=source.filter(s=>s.on!==false).map(s=>s.id);
       const insurer=source.find(s=>s.type==='insurers');
-      if(insurer?.on!==false&&insurer?.cards.some(c=>c.on!==false&&(!isMotor||c.licenceRole==='broker')))visible.push('licences');
-      assert.deepEqual(publicIds,visible,'DOM order follows Admin, with hidden rows omitted');
+      if(insurer?.cards.some(c=>c.on!==false&&(!isMotor||c.licenceRole==='broker')))visible.push('licences');
+      if(config.footer.show!==false)visible.push('footer');
+      assert.deepEqual(publicIds,expected.filter(id=>visible.includes(id)&&!(layout.hidden||[]).includes(id)),'DOM order follows Admin, with hidden rows and the unavailable article feed omitted');
     };
     if(process.argv.includes('--needs')) {
       await ready('/admin/content');await content('fit');
@@ -106,8 +112,10 @@ else {
     } else {
     await ready('/admin/content');await parity();
     assert.equal(await row('hero').getByRole('button',{name:'เลื่อนส่วนนี้ขึ้น',exact:true}).isDisabled(),true);
-    assert.equal(await row('licences').getByRole('button',{name:/เลื่อนส่วนนี้/}).count(),0);
-    assert.equal(await row('licences').getByRole('switch').count(),0);
+    for(const id of ['articles','licences','footer']) {
+      assert.equal(await row(id).getByRole('button',{name:/เลื่อนส่วนนี้/}).count(),2,id+' has working move controls');
+      assert.equal(await row(id).getByRole('switch').isEnabled(),true,id+' has a reversible visibility control');
+    }
     // Technical anchors remain searchable without making every compact row
     // carry implementation metadata.
     await page.locator('[data-outline-search]').fill('#motor');
@@ -118,21 +126,28 @@ else {
     assert.notDeepEqual((await state()).sections.map(s=>s.id),oldOrder);
     await row('tiers').getByRole('button',{name:'เลื่อนส่วนนี้ลง',exact:true}).click();await parity();
     const insurerSwitch=row('insurers').getByRole('switch');
-    await insurerSwitch.click();assert.equal(await page.locator('main #licences').count(),0);
-    assert.match(await row('licences').innerText(),/ซ่อนส่วนบริษัทประกันอยู่/);
+    await insurerSwitch.click();assert.equal(await page.locator('main #licences').count(),1,'Licence visibility is independent of the logo grid');
+    const licenceSwitch=row('licences').getByRole('switch');
+    await licenceSwitch.click();assert.equal(await page.locator('main #licences').count(),0);
+    await licenceSwitch.click();assert.equal(await page.locator('main #licences').count(),1);
     await insurerSwitch.click();await parity();
+    await row('footer').getByRole('button',{name:'เลื่อนส่วนนี้ขึ้น',exact:true}).click();await parity();
+    await row('footer').getByRole('button',{name:'เลื่อนส่วนนี้ลง',exact:true}).click();await parity();
     await content('insurers');
     assert.equal(await page.locator('[data-admin-repeatable-card-id]').count(),0);
     assert.ok(await page.locator('[data-admin-repeatable-id]').count()>0);
     await sections();await content('licences');
     const title=page.locator('[data-admin-repeatable-card-id]').first().locator('[data-admin-copy-key="title"]');
     const cardId=await page.locator('[data-admin-repeatable-card-id]').first().getAttribute('data-admin-repeatable-card-id');
+    await reveal(title);
     await title.fill('Local licence ownership check');await title.press('Tab');
     await page.waitForFunction(()=>JSON.parse(localStorage.getItem('purich-draft-config-v3')).sections.find(s=>s.id==='insurers').cards.some(c=>c.th.title==='Local licence ownership check'));
     assert.ok((await page.locator('main #licences').innerText()).includes('Local licence ownership check'));
+    await reveal(page.locator('[data-admin-content-shortcut="Home licences"]'));
     await page.locator('[data-admin-content-shortcut="Home licences"]').click();
     assert.equal(await page.locator('[data-cms-group="Home licences"]').evaluate(el=>el.open),true);
     await sections();await content('tiers');
+    await reveal(page.locator('[data-admin-content-shortcut="Page composition"]'));
     await page.locator('[data-admin-content-shortcut="Page composition"]').click();
     assert.equal(await page.locator('[data-home-design-controls]').evaluate(el=>el.open),true);
     await sections();await content('footer');
@@ -181,7 +196,7 @@ else {
     assert.ok(await page.getByText('Save draft หน้าเว็บ?',{exact:true}).isVisible());
     await page.getByRole('button',{name:'ยกเลิก',exact:true}).click();
     assert.deepEqual(errors,[]);
-    fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({passed:true,saves,checks:['Home/Motor DOM order','route-specific reordering','visibility dependency','canonical licence edit','design shortcuts','draft reload','no live writes','desktop/mobile fit'],errors,network:'All external traffic blocked; in-memory drafts only.'},null,2));
+    fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({passed:true,saves,checks:['Home/Motor DOM order including virtual rows','route-specific reordering','independent licence visibility','movable footer','canonical licence edit','design shortcuts','draft reload','no live writes','desktop/mobile fit'],errors,network:'All external traffic blocked; in-memory drafts only.'},null,2));
     console.log('PASS local Admin actions, Home/Motor DOM parity, draft save/reload and desktop/mobile screenshots. No publish or live writes.');
     }
   } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}

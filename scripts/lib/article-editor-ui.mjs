@@ -32,7 +32,7 @@ export async function revealArticleControl(page,selector){
   if(await control.evaluate(el=>Boolean(el.closest('.ae-settings,.ae-settings-panel'))))await ensureSettingsVisible(page);
   else{
     await closeSettings(page);
-    if(await control.evaluate(el=>el.matches('.ae-canvas-frame'))&&await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();
+    if(await control.evaluate(el=>Boolean(el.closest('.ae-canvas')))&&await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();
     if(await control.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," ae-basic ")]').count()&&await page.locator('[data-ae=toggle-basic]').getAttribute('aria-expanded')==='false')await page.locator('[data-ae=toggle-basic]').click();
   }
   await revealDetails(control);

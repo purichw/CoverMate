@@ -1875,19 +1875,13 @@ for (const [name, width, height] of viewports) {
         navHrefs,
         homeMotorLinks,
         headerCtaText,
-        placeholderStoriesVisible:
-          Array.from(document.querySelectorAll("section#voices")).some((section) => {
-            const rect = section.getBoundingClientRect();
-            const style = window.getComputedStyle(section);
-            return (
-              rect.width > 0 &&
-              rect.height > 0 &&
-              style.display !== "none" &&
-              style.visibility !== "hidden" &&
-              style.opacity !== "0"
-            );
-          }) ||
-          /รอความคิดเห็นจริง|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|Awaiting real feedback|Client feedback will appear here|Customer name|sample review/i.test(bodyText),
+        // Genuine owner stories may be visible; reject the actual placeholder
+        // copy in rendered item fields, never a section merely by its ID.
+        placeholderStoriesVisible: Array.from(document.querySelectorAll(
+          'section[data-screen-label="Voices"] [data-content-path*=".items."], section[data-screen-label="Claim stories"] [data-content-path*=".items."]'
+        )).filter(isVisible).some(node =>
+          /^(?:รอความคิดเห็นจริง|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่(?:เมื่อได้รับอนุญาต)?|ตัวอย่างโครงสร้าง|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง(?:ตรงนี้(?: — 1 ถึง 2 ประโยคจะอ่านง่ายที่สุด)?)?|ชื่อลูกค้า|อาชีพ\s*·\s*ประกันที่ทำ|Awaiting real feedback|Client feedback will appear here(?: once permission is granted)?|Placeholder structure|Customer name|Client name|Occupation\s*·\s*policy held|Role\s*·\s*policy|sample review|Paste a real quote here(?: — one or two sentences reads best)?)[.!?…]*$/i.test((node.innerText || '').replace(/\s+/g, ' ').trim().replace(/^⟨|⟩$/g,''))
+        ),
         hasQueryTypeSelect: selectOptions.some((text) =>
           /ขอใบเสนอราคา|Request a quote|Compare plans|เปรียบเทียบแผน/.test(text)
         ),
@@ -1905,7 +1899,14 @@ for (const [name, width, height] of viewports) {
         hasLifeRelationshipProof: /AIA/.test(document.querySelector('#licences')?.innerText || insurerText),
         hasMotorRelationshipProof: /Srikrung|ศรีกรุง/i.test(document.querySelector('#licences')?.innerText || insurerText),
         hasFooterLifeCredential: /AIA/.test(document.querySelector('footer')?.innerText || ''),
-        hasFinalLicenceSection: Boolean(document.querySelector('main > section#licences:last-child')),
+        hasConfiguredLicenceSection: (() => {
+          const licence=document.querySelector('main #licences');if(!licence)return false;
+          const config=JSON.parse(localStorage.getItem('purich-live-config-v3')||'{}');
+          const order=config.pageLayout?.home?.order||[];
+          const actual=Array.from(document.querySelectorAll('main section[id],main footer.cm-footer')).map(node=>node.id==='motor'?'insurers':node.id);
+          if(!order.length)return actual.filter(id=>id!=='footer').at(-1)==='licences';
+          return JSON.stringify(actual.filter(id=>order.includes(id)))===JSON.stringify(order.filter(id=>actual.includes(id)));
+        })(),
         missingAnchors,
         duplicateHeaderNavLabels: headerNavLabels.filter(
           (label, index, labels) => labels.indexOf(label) !== index
@@ -2015,7 +2016,7 @@ for (const [name, width, height] of viewports) {
       if (visibleHomeMotorLinks.length !== 0) {
         failures.push(`${name} ${route}: retired dedicated /motor CTA is visible (${JSON.stringify(state.homeMotorLinks)})`);
       }
-      if (!state.hasFinalLicenceSection) failures.push(`${name} ${route}: licences must be the final main section`);
+      if (!state.hasConfiguredLicenceSection) failures.push(`${name} ${route}: licences must follow the saved page order (default: before Footer)`);
     }
     if ((route === "/#motor" || route === "/#life") && state.missingAnchors.length) {
       failures.push(`${name} ${route}: header links target missing anchors ${state.missingAnchors.join(", ")}`);
@@ -2524,10 +2525,11 @@ for (const [name, width, height] of viewports) {
   ]) {
     await page.getByRole("button", { name: tabName, exact: true }).click();
     await page.waitForTimeout(500);
-    if (tabName === 'แบรนด์และติดต่อ' && await page.locator('.cm-brand-preview > summary').isVisible()) {
+    if (tabName === 'แบรนด์และติดต่อ') {
       // The live thumbnail owns a disposable iframe. Verify its images before
-      // switching tabs, which intentionally removes that document.
-      await page.locator('.cm-brand-preview > summary').click();
+      // switching tabs, even when the desktop layout hides the disclosure.
+      const previewDisclosure = page.locator('.cm-brand-preview > summary');
+      if (await previewDisclosure.isVisible()) await previewDisclosure.click();
       await page.locator('[data-editor-preview][data-preview-ready]').waitFor({state:'attached'});
       await page.waitForFunction(() => {
         const doc = document.querySelector('[data-editor-preview] iframe')?.contentDocument;

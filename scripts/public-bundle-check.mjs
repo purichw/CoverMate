@@ -3,6 +3,12 @@ import fs from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { buildVisitorIndex, readVisitorSources } from './lib/visitor-source.mjs';
 import { extractBundlerTemplate } from './lib/bundler-template.mjs';
+import * as canonicalContract from '../covermate-contract.js';
+import * as browserContract from '../assets/visitor/contract.js';
+
+assert.deepEqual(Object.keys(browserContract),Object.keys(canonicalContract),'Bundled contract retains the canonical API');
+const contractFixture={config:{sections:[{id:'voices',type:'stories',on:true,items:[]}],pageLayout:{home:{order:['footer','voices'],hidden:['articles']}}},text:{}};
+assert.deepEqual(browserContract.sanitizeStateDoc(contractFixture),canonicalContract.sanitizeStateDoc(contractFixture),'Bundled contract preserves CMS values and layout normalization');
 
 const sources = readVisitorSources();
 const owner = fs.readFileSync('index.html', 'utf8');

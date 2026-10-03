@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {launchChromium,loadPlaywright} from './lib/playwright.mjs';
 import {authorRichArticle,assertPersistedArticle,assertEditorArticle,assertReaderArticle,openArticleSettings,closeArticleSettings} from './lib/article-authoring-journey.mjs';
+import {articleField,articleTool} from './lib/article-editor-ui.mjs';
 
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.COVERMATE_TEST_MODE!=='emulator')throw Error('Isolated emulators required');
 const require=createRequire(import.meta.url),firebase=require('../server/firebase.cjs'),baseDb=firebase.serverDb();
@@ -78,11 +79,11 @@ try {
       await admin.getByRole('button',{name:'สร้างบทความใหม่',exact:true}).click();
       const slug='cloud-'+crypto.randomUUID(),title='ทดสอบบทความจาก CMS '+engine+' '+slug.slice(-8);
       await openArticleSettings(admin);
-      await admin.locator('[data-field=title]').fill(title);
-      await admin.locator('[data-field=excerpt]').fill('ข้อมูลทดสอบเฉพาะ Emulator ไม่เผยแพร่บนเว็บไซต์จริง');
-      await admin.locator('[data-field=slug]').fill(slug);
-      await admin.locator('[data-field=featured]').check();
-      await admin.locator('[data-field=pinned]').check();
+      await articleField(admin,'title').fill(title);
+      await articleField(admin,'excerpt').fill('ข้อมูลทดสอบเฉพาะ Emulator ไม่เผยแพร่บนเว็บไซต์จริง');
+      await articleField(admin,'slug').fill(slug);
+      await articleField(admin,'featured').check();
+      await articleField(admin,'pinned').check();
       await closeArticleSettings(admin);
       const authored=await authorRichArticle(admin,{out,engine});
       await assertReaderArticle(admin.frameLocator('.ae-canvas-frame'),authored);
@@ -103,7 +104,7 @@ try {
       assertPersistedArticle(concurrent,authored);
       await repository.mutate('covermate-uat','save',concurrent,concurrent.revision,account.localId);
       await openArticleSettings(admin);
-      await admin.locator('[data-field=excerpt]').fill('ฉบับที่ยังไม่บันทึกหลังแท็บอื่นแก้ไข');
+      await articleField(admin,'excerpt').fill('ฉบับที่ยังไม่บันทึกหลังแท็บอื่นแก้ไข');
       await closeArticleSettings(admin);
       await admin.locator('.ae-actions [data-ae=save]').click();
       await admin.locator('.ae-feedback').filter({hasText:'อุปกรณ์อื่น'}).waitFor();
@@ -111,7 +112,7 @@ try {
       const download=admin.waitForEvent('download');await admin.locator('[data-ae=export]').click();assert.match((await download).suggestedFilename(),/draft.json$/);
       await admin.locator('[data-ae=back]').click();
       await admin.getByRole('button',{name:'แก้ไข: '+title,exact:true}).click();
-      await admin.locator('[data-ae=preview]').click();
+      await admin.locator('[data-ae=preview]:visible').click();
       const previewDialog=admin.getByRole('dialog',{name:'Preview · Unpublished draft',exact:true});
       const preview=previewDialog.frameLocator('.ae-preview-frame');
       await preview.getByRole('heading',{name:title,exact:true}).waitFor();
@@ -144,7 +145,7 @@ try {
       await visitor.screenshot({path:out+'/'+engine+'-published-desktop.png',fullPage:true});
       await visitor.setViewportSize({width:390,height:844});
       await openArticleSettings(admin);
-      await admin.locator('[data-field=title]').fill(title+' แก้ไข');
+      await articleField(admin,'title').fill(title+' แก้ไข');
       await closeArticleSettings(admin);
       await admin.locator('.ae-actions [data-ae=save]').click();
       await admin.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างในคลังแล้ว'}).waitFor();
@@ -168,8 +169,8 @@ try {
       for(const path of ['/articles','/articles/'+slug])assert.equal((await visitor.request.get(baseUrl+path+suffix)).status(),404);
       await admin.reload();await admin.locator('[data-article-state=ready]').waitFor();
       await admin.getByRole('button',{name:'แก้ไข: '+title+' แก้ไข',exact:true}).click();
-      await admin.locator('[data-ae=unpublish]').click();
-      await admin.getByRole('dialog').getByRole('button',{name:'Unpublish article',exact:true}).click();
+      await articleTool(admin,'unpublish');
+      await admin.getByRole('dialog',{name:'Unpublish article',exact:true}).locator('[type=submit]').click();
       await admin.locator('.ae-feedback').filter({hasText:'ถอนเผยแพร่แล้ว'}).waitFor();
       assert.ok((await repository.get('covermate-uat',published.item.id)).translations.th.document);
       await admin.screenshot({path:out+'/'+engine+'-editor.png'});

@@ -165,10 +165,10 @@ try {
   await reveal(row.locator('textarea'));
   await row.getByRole('button',{name:'เลื่อนรายการขึ้น',exact:true}).click();
   await reveal(row.locator('textarea'));
-  await row.getByRole('button',{name:'ซ่อน',exact:true}).click();
+  await row.getByRole('switch').click();
   assert.equal(await page.locator(`#faq [data-content-id="${moved.id}"]`).count(),0);
   await reveal(row.locator('textarea'));
-  await row.getByRole('button',{name:'แสดงอีกครั้ง',exact:true}).click();
+  await row.getByRole('switch').click();
   assert.equal(await page.locator('#faq details').count(),visibleCount + 1);
   const deletedId = section.items.find(item => item.sourceGuideId && item.id !== moved.id).id;
   const beforeDeleteIds = await page.locator('[data-admin-repeatable-id]').evaluateAll(rows => rows.map(row => row.dataset.adminRepeatableId));

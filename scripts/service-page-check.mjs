@@ -89,11 +89,17 @@ for(const lang of ['th','en']) {
 for(const file of ['src/visitor/home.html','src/visitor/template.html']) {
   assert.doesNotMatch(fs.readFileSync(file,'utf8'),/\bserviceLinks\b|href=["']\/(?:health|life)(?:[/?#"'])/,'Shared Home and footer templates must not add direct service-page entries');
 }
+for(const route of ['health','life']) for(const lang of ['th','en']) {
+  app.state.routePage=route;app.state.lang=lang;
+  const rendered=app.renderVals();
+  const entries=Array.from(rendered.sectionGroups).flatMap(group=>Array.from(group.sections));
+  assert.equal(rendered.isServicePage,true);
+  assert.equal(entries.filter(section=>section.serviceContent).length,1,'Service content renders once within the ordered layout');
+  assert.equal(entries.filter(section=>section.pageFooter).length,1,'Shared Footer renders once within the ordered layout');
+  assert.ok(entries.every(section=>section.serviceContent||section.homeLicences||section.pageFooter),'Service routes can share licences and Footer but cannot render Home content sections');
+}
 app.state.routePage='health';app.state.lang='th';app.state.sel='service-content';
 let view=app.renderVals();
-assert.equal(view.isServicePage,true);
-assert.equal(view.sectionGroups.length,0,'Service routes cannot render the Home sections');
-assert.equal(view.homeLicenceSections.length,0);
 assert.equal(view.headerHomeHref,'/');
 assert.equal(view.footerPrivacyHref,'/#privacy');
 assert.equal(view.contentSections[0].id,'service-content');

@@ -6,16 +6,32 @@ in that release; see [HANDOFF.md](HANDOFF.md) for its CI and deployment evidence
 Article publication and management are documented in `ARTICLES_PUBLISHING.md`
 and `ADMIN_ARTICLES.md`. This documentation refresh did not run new visual smoke.
 
+The Page Structure visibility/order follow-up is implemented locally on
+2026-10-03. Targeted local verification passed for shared `cm-switch` controls,
+keyboard interaction, visibility, order, Save/reload/Preview and website/article
+isolation. The source change is committed in `ba26af7`; deployment verification
+is separate from CMS publication.
+The separate claims-content change is saved only in Website Draft revision 94;
+it made no article/settings or Live writes. See
+[CMS ownership](CMS_CONTENT_OWNERSHIP.md#page-structure-controls--local-follow-up).
+
 ## Presentation
 
-- Home only: Articles appears in Page Structure and can move up/down using the
-  existing controls. Its stable next-section anchor is `homeDesign.articlesBefore`.
-  Missing/invalid anchors retain the default before Contact (or after tiers/end
-  when Contact is absent); an empty anchor means the last movable section, before
-  the fixed licence/Footer bands. Hidden anchors use the next visible section.
-  Normal sections can also move across Articles. Draft/Undo/Redo/publication use
-  the existing site workflow; article records and visibility settings stay separate.
-- Compact cards: two horizontal cards per page at 1024px+, one horizontal card
+- Home only: Articles uses the same working show/hide and move controls as the
+  other Page Structure rows. Its visibility control uses the shared `cm-switch`
+  track/thumb and 44px touch target, with an accessible checked state and state
+  tooltip rather than a text status chip. In the local follow-up, `pageLayout.home.order`
+  stores the whole outline order, including Articles, Licences and Footer; the
+  rendered DOM and keyboard sequence follow it. `pageLayout.home.hidden` can
+  hide the Articles presentation without changing article records or settings.
+  With no stored order, `homeDesign.articlesBefore` preserves its legacy position:
+  default before Contact (or after tiers/end when Contact is absent), and an empty
+  anchor retains the prior position before Licences/Footer. Hidden anchors use
+  the next visible section. The legacy anchor is maintained for compatibility.
+  Normal sections and presentation rows can move across Articles. Draft, Save,
+  Reset, Undo/Redo, Preview and Publish use the existing website workflow;
+  article records and independently saved article settings stay separate.
+- Compact cards: three horizontal cards per page at 1024px+, one horizontal card
   at 768–1023px, and three compact cards stacked vertically on mobile.
   Desktop/tablet covers sit left of the copy; mobile uses centered square
   thumbnails beside the text. Full pages reserve stable row heights; a partial
@@ -36,10 +52,13 @@ and `ADMIN_ARTICLES.md`. This documentation refresh did not run new visual smoke
 - One native link per card covers image, title and reading label. Keyboard focus
   has a visible outline. Home opts into `[data-carousel-pages]` for compact,
   clickable page bars with one tab stop and ArrowLeft/ArrowRight/Home/End keys.
-  Mobile shows up to four page indicators for the ten-article feed, retaining 44px
-  touch targets without overflowing when all ten articles are present.
-  Desktop shows up to five indicators; tablet shows a moving window of five
-  for its single-card pages. Hidden cards are inert and excluded from navigation.
+  Desktop and mobile show four page indicators for the twelve-article feed,
+  retaining 44px touch targets without overflowing when all twelve are present.
+  Tablet shows a moving window of five for its single-card pages. Previous/next
+  arrows use 44px circular targets with localized labels/tooltips. Desktop/tablet
+  arrows sit outside the card track at its vertical center without covering content;
+  mobile arrows flank the page indicators below the cards.
+  Hidden cards are inert and excluded from navigation.
   The index carousel retains its previous/next controls. Both support swipe and
   automatic ten-second rotation without a Play/Pause button. Pointer navigation
   restarts the interval; hover does not stop rotation. Focused cards/keyboard
@@ -60,7 +79,7 @@ CMS v21 adds only five localized fields in the existing Brand & contact group
 `articlesAll`, `articlesRead`. Migration fills absent translations only and keeps
 intentional blanks/custom values. These same fields are now also available in
 Content > Articles. Article titles, media and excerpts are **not**
-duplicated into Home config or the fixed-layout page editor.
+duplicated into Home config or the website page editor.
 
 The public server injects `script#covermate-article-feed[type=application/json]`
 inside the decoded Visitor template. Owner Home canvases load the same published
@@ -68,7 +87,10 @@ summary projection through authenticated `GET /api/articles?action=feed`, using
 the existing article repository and environment-aware client. Failure clears the
 canvas feed and offers retry in Content > Articles. Empty/disabled/error rows
 remain reorderable; returning publications keep their configured slot. The
-existing Articles settings remain the only owner of master/Home visibility.
+local website presentation switch remains operable in these states and explains
+why content is unavailable. Existing Articles settings still own the master and
+Home feed gates; website `pageLayout.home.hidden` is an additional presentation
+preference and does not overwrite them.
 The payload contains no drafts, private content or complete editor documents:
 
 ```js
@@ -88,13 +110,14 @@ The payload contains no drafts, private content or complete editor documents:
 }
 ```
 
-Absent/unavailable/empty feeds hide the entire section. Only published,
+Absent/unavailable/empty feeds, or a hidden website presentation, hide the entire
+section. Only published,
 non-future, titled translations are selected. No cross-language fallback.
 `featured` is the existing persisted
 **Pin to Home** flag, now labeled `ปักหมุดบน Home` in CMS; old selections survive.
 Select Home pins newest-first, then fill remaining slots with latest unique
-articles, up to ten total. Zero pins gives ten latest, three pins gives seven
-latest excluding those pins, and ten pins gives no latest filler. The independent
+articles, up to twelve total. Zero pins gives twelve latest, three pins gives nine
+latest excluding those pins, and ten pins gives two latest fillers. The independent
 `pinned` flag and `settings.pinnedOrder` belong only to `/articles`, still unlimited.
 Home ignores legacy fixture-only `featuredIds` order.
 IDs/slugs are deduplicated. Fewer articles leave
@@ -102,8 +125,9 @@ only the actual cards, with no fabricated fillers. Links are `/articles` and
 `/articles/{slug}` with `?lang=en` in English. Slugs cannot inject other routes.
 Image URLs go through the existing CMS media validator and asset version helper.
 
-Use the actual Articles management module for records and visibility; the Home
-editor does not duplicate these settings or create placeholder articles.
+Use the Articles management module for records and master/Home feed settings.
+The Home editor changes only website presentation visibility and placement;
+it does not save or publish articles, duplicate the settings, or create placeholders.
 
 Home pin capacity is enforced in the server transaction, including concurrent
 saves/imports. A unique article with either a pinned draft or pinned live snapshot
@@ -111,7 +135,7 @@ reserves one of ten slots. Removing a live pin from a draft does not free the sl
 until republished (or unpublished with an unpinned draft). Draft/future pins never
 appear publicly; eligible latest publications fill their slots. Existing over-limit
 legacy selections are not deleted: they can be edited/reduced, but cannot expand,
-and the visitor projection remains capped at ten. Capacity changes serialize on
+and the visitor projection remains capped at twelve, with up to ten pins. Capacity changes serialize on
 the settings revision and preserve the independent index pin order and switches.
 
 ## Local Preview And Checks

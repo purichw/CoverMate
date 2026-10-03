@@ -112,8 +112,8 @@ try {
     await writing.locator('.ad-takeaways').scrollIntoViewIfNeeded();
     await writing.locator('.ad-takeaways h2').click();
     await snap(editor,`writing-${mode}-summary-settings`);
-    await editor.locator('.ae-settings-dialog .ae-done').click();
-    await editor.locator('.ae-settings-dialog').waitFor({state:'detached'});
+    await editor.locator('[data-ae=close-reader]').click();
+    await editor.locator('.ae-reader-panels').waitFor({state:'hidden'});
   }
   const storageBeforePreview=await editor.evaluate(()=>({local:{...localStorage},session:{...sessionStorage}}));
   await editor.locator('[data-ae=preview]:visible').click();

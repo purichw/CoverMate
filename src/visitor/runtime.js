@@ -87,7 +87,7 @@ const FIELD_LABEL = {
 const TYPE_LABEL = {
   claim: L('เกิดเหตุทำอย่างไร', 'Claim help'), renew: L('เตือนต่ออายุ', 'Renewal reminders'),
   review: L('ตรวจกรมธรรม์เดิม', 'Policy review'), pdpa: L('ความเป็นส่วนตัว', 'Privacy / PDPA'),
-  guides: L('บทความ', 'Guides'), fees: L('ค่าตอบแทนของเรา', 'How CoverMate is compensated'), stories: L('เคสเคลมจริง', 'Claim stories'),
+  guides: L('บทความ', 'Guides'), fees: L('ค่าตอบแทนของเรา', 'How CoverMate is compensated'), stories: L('เคสเคลม', 'Claim stories'),
   hero: L('ฮีโร่', 'Hero'), trust: L('แถบความน่าเชื่อถือ', 'Trust chips'), products: L('ความคุ้มครอง', 'Cover cards'),
   fit: L('เครื่องคำนวณ', 'Calculator'), steps: L('ขั้นตอน', 'Steps'), insurers: L('บริษัทที่เทียบได้', 'Insurers'),
   tiers: L('เทียบชั้นประกันรถ', 'Motor tier comparison'),
@@ -109,7 +109,7 @@ const SECTION_ADMIN_META = {
   tiers: { group: 'ประกันรถ', title: 'เปรียบเทียบความคุ้มครองรถ', role: 'การ์ดชั้นประกันแนะนำและตารางเปรียบเทียบเต็ม ใช้ข้อมูลความคุ้มครองชุดเดียวกัน' },
   claim: { group: 'ความช่วยเหลือ', title: 'ช่วยเหลือเคลม', role: 'ขั้นตอนเมื่อเกิดเหตุ สายด่วน และเอกสารสำหรับเคลม' },
   renew: { group: 'ความช่วยเหลือ', title: 'เตือนต่ออายุ', role: 'ฟอร์มขอรับการแจ้งเตือนต่ออายุกรมธรรม์' },
-  voices: { group: 'ตัวอย่างบริการ', title: 'เคสเคลม', role: 'ตัวอย่างการดูแลเคลม โดยใช้ข้อมูลจริงและไม่สร้างรีวิวขึ้นเอง' },
+  voices: { group: 'ตัวอย่างบริการ', title: 'เคสเคลม', role: 'กรณีตัวอย่างการช่วยประสานงานเคลม พร้อมระบุที่มาของเนื้อหาให้ชัดเจน' },
   about: { group: 'ข้อมูลบริการ', title: 'เกี่ยวกับ CoverMate', role: 'แนะนำบริการและผู้ให้คำปรึกษา รายละเอียดใบอนุญาตอยู่ส่วนท้าย' },
   faq: { group: 'ข้อมูลบริการ', title: 'คำถามที่พบบ่อย', role: 'แก้ไขคำตอบ หมวดคำถาม และเวลาอ่านได้ที่นี่' },
   fees: { group: 'ข้อมูลบริการ', title: 'ค่าตอบแทนของ CoverMate', role: 'อธิบายค่าตอบแทนและขั้นตอนการชำระอย่างโปร่งใส' },
@@ -1008,40 +1008,6 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     return productOrder.map(id => byId.get(id)).filter(Boolean);
   }
 
-  storyTextChunks(item) {
-    if (!item || typeof item !== 'object' || item.on === false) return [];
-    const chunks = [];
-    ['th', 'en'].forEach(lang => {
-      const bucket = item[lang] || {};
-      ['quote', 'body', 'title', 'value', 'label', 'meta'].forEach(field => {
-        if (bucket[field]) chunks.push(String(bucket[field]));
-      });
-    });
-    return chunks;
-  }
-
-  hasRealStoryContent(section) {
-    const items = Array.isArray(section && section.items) ? section.items : [];
-    const placeholderPattern = /รอความคิดเห็นจริง|เผยแพร่เมื่อได้รับอนุญาต|ความคิดเห็นจากลูกค้าจะเผยแพร่ที่นี่|ตัวอย่างโครงสร้าง|เสียงจากลูกค้า|ยังไม่ได้ใส่รีวิวจริง|ใส่คำรีวิวจริง|ชื่อลูกค้า|อาชีพ\s*·\s*ประกันที่ทำ|Awaiting real feedback|Published with permission|Client feedback will appear here|Placeholder structure|Customer voice|Customer name|Role\s*·\s*policy|sample review/i;
-    return items.some(item => {
-      const allText = this.storyTextChunks(item).join(' ').trim();
-      if (!allText || placeholderPattern.test(allText)) return false;
-      const meaningful = [];
-      ['th', 'en'].forEach(lang => {
-        const bucket = (item && item[lang]) || {};
-        ['quote', 'body', 'title'].forEach(field => {
-          if (bucket[field]) meaningful.push(String(bucket[field]));
-        });
-      });
-      return meaningful.join(' ').trim().length >= 20;
-    });
-  }
-
-  suppressPlaceholderStories(section) {
-    if (!section || (section.id !== 'voices' && section.type !== 'stories' && section.type !== 'testimonials')) return;
-    if (!this.hasRealStoryContent(section)) section.on = false;
-  }
-
   // Keeps persisted/local/remote configs aligned with the current schema without
   // replacing live admin-edited copy. DEFAULTS supplies only missing sections,
   // nav anchors, language buckets, and newly-added fields.
@@ -1190,8 +1156,6 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       });
     });
 
-    cfg.sections.forEach(section => this.suppressPlaceholderStories(section));
-    ['hero', 'trust', 'cover'].forEach(key => this.suppressPlaceholderStories(cfg.motorPage && cfg.motorPage[key]));
     sanitizeCmsControlsConfig(cfg);
     if (shouldEnsureRepeatableIds) ensureRepeatableIds(cfg);
     normalizeTierRemarks(cfg, { mutate: true });
@@ -1810,6 +1774,12 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     homeAdvisor.hasContactIntro = !!(homeAdvisor.name && (homeAdvisor.contactBefore || homeAdvisor.contactAfter));
     const routeCards = section => (section?.cards || []).filter(card => card && (!isMotor || section.type !== 'insurers' || card.licenceRole === 'broker'));
     const homeDesign = site.homeDesign || {};
+    const pageLayout = site.pageLayout?.[routePage] || {};
+    const layoutVisible = id => !(pageLayout.hidden || []).includes(id);
+    const orderPageEntries = entries => {
+      const byId = new Map(entries.map(entry => [entry.id,entry]));
+      return [...new Set([...(pageLayout.order || []),...byId.keys()])].map(id=>byId.get(id)).filter(Boolean);
+    };
     const insurerSection = (site.sections || []).find(section => section.type === 'insurers');
     const brokerCard = insurerSection?.on !== false ? insurerSection?.cards?.find(card => card.on !== false && card.licenceRole === 'broker') : null;
     const brokerCardPath = brokerCard ? 'sections.@' + insurerSection.id + '.cards.@' + brokerCard.id : '';
@@ -1840,7 +1810,10 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       if (cover) workSections.push(Object.assign({}, cover, { id: 'life-cover', bg: 'surface', cols: 3, items: lifeItems }));
       ['fit', 'review', 'how', 'faq', 'talk', 'privacy'].forEach(id => { const sec = find(id); if (sec) workSections.push(sec); });
     }
-    const rawVisibleSections = workSections.filter(s => s && s.on !== false);
+    const isStorySection = s => s.id === 'voices' || ['stories','testimonials'].includes(s.type);
+    const activeItems = s => (s.items || []).filter(it=>it && it.on !== false);
+    const storyItems = s => activeItems(s).filter(it=>!isPlaceholderStoryItem(it,lk));
+    const rawVisibleSections = workSections.filter(s => s && s.on !== false && (S.editMode || !isStorySection(s) || storyItems(s).length));
     const visibleAnchorIds = new Set(rawVisibleSections.map(s => s && s.id).filter(Boolean));
     const heroRaw = rawVisibleSections.find(s => s && s.type === 'hero');
     const embeddedCover = (site.sections || []).find(s => s && s.id === 'cover');
@@ -1867,7 +1840,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const target = normalizeSectionHref(href).replace(/^#/, '');
       return target === 'top' || visibleAnchorIds.has(target);
     };
-    const sections = workSections.filter(s => s && s.on !== false).map(rawSection => {
+    const projectedSections = workSections.filter(Boolean).map(rawSection => {
       const s = resolveCmsContent(rawSection, site);
       const motorKey = ['hero','trust','cover'].find(key => motorPageConfig[key]?.id === s.id);
       const sectionPath = motorKey ? 'motorPage.' + motorKey : 'sections.@' + (s.id === 'life-cover' ? 'cover' : s.id);
@@ -1902,7 +1875,8 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
             deep: heroTone.deep
           };
         })) : [];
-      const items = (s.items || []).filter(it => it && it.on !== false).map((it, i) => {
+      const isStory = isStorySection(s);
+      const items = (isStory && !S.editMode ? storyItems(s) : activeItems(s)).map((it, i) => {
         const ic = it[lk] || {};
         const tile = s.type === 'insurers' ? insTile(it, lk) : null;
         const tone = it.tone === 'sage' ? { fill: 'var(--color-accent-2)', soft: 'var(--color-accent-2-200)', deep: 'var(--color-accent-2-800)' }
@@ -1956,7 +1930,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const heroClaimHref = s[lk] && s[lk].claimHref !== undefined ? s[lk].claimHref : (s.claimHref || '');
       const hideSelfMotorCta = s.type === 'insurers' && /^\/motor(?:[/?#]|$)/.test(cta1href);
       const sectionView = {
-        id: s.id, key: s.id, cols: s.cols,
+        id: s.id, key: s.id, cols: s.cols, on:s.on !== false, renderable:!isStory || items.length > 0,
         cmsKicker: s.id === 'life' ? 'lifeFocus.kicker' : '', cmsTitle: s.id === 'life' ? 'lifeFocus.title' : '',
         cmsBody: s.id === 'life' ? 'lifeFocus.body' : '', cmsCta1: s.id === 'life' ? 'lifeFocus.cta1' : '',
         cmsCta2: s.id === 'life' ? 'lifeFocus.cta2' : '', cmsNote: s.id === 'life' ? 'lifeFocus.note' : '',
@@ -2068,11 +2042,16 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       return sectionView;
     });
 
+    const sections = projectedSections.filter(section=>section.on && section.renderable);
     const homeArticles = projectHomeArticles(isHome ? S.articleFeed : null, {lang:lk, mediaUrl:value => assetURL(cmsMedia(value))});
     const articleSlot = homeArticleInsertionIndex(workSections, homeDesign.articlesBefore);
     const articleBefore = workSections[articleSlot]?.id || '';
-    const displaySections = standaloneRoute ? [] : sections.slice();
-    if (homeArticles.visible) displaySections.splice(homeArticleInsertionIndex(sections,articleBefore,workSections), 0, {id:'articles', key:'articles', homeArticles:true,homeStyle:'--hm-card:'+(site.theme.radius === 'sharp' ? 8 : 16)+'px'});
+    let displaySections = isServicePage ? (layoutVisible('service-content') ? [{id:'service-content',key:'service-content',serviceContent:true}] : []) : isArticles ? [{id:'article-index',key:'article-index',articleIndex:true}] : isArticleDetail ? [{id:'article-detail',key:'article-detail',articleDetail:true}] : sections.slice();
+    if (homeArticles.visible && layoutVisible('articles')) displaySections.splice(homeArticleInsertionIndex(sections,articleBefore,workSections), 0, {id:'articles', key:'articles', homeArticles:true,homeStyle:'--hm-card:'+(site.theme.radius === 'sharp' ? 8 : 16)+'px'});
+    const licenceView = projectedSections.find(section=>section.homeInsurers);
+    if (sharedDesign && !standaloneRoute && licenceView?.cards.length && layoutVisible('licences')) displaySections.push({id:'licences',key:'licences',homeLicences:true,licence:licenceView});
+    if (site.footer.show !== false) displaySections.push({id:'footer',key:'footer',pageFooter:true});
+    displaySections = orderPageEntries(displaySections);
     const articleIndex = projectArticleIndex(isArticles ? S.articleFeed : null, {search:window.location.search,lang:lk,mediaUrl:value=>assetURL(cmsMedia(value))});
     const articleCopy = Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Articles index' && field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
     const articleAddress = changes => articleIndexAddress(window.location.search,{page:null,...changes});
@@ -2251,18 +2230,18 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       return parts.join(' · ');
     };
     // Use the visitor's route projection, retaining hidden rows for recovery.
-    // Fixed presentation rows keep their existing CMS owners, never new sections.
+    // Presentation rows share the page order; their content keeps its existing owner.
     // COVERMATE_OWNER_OUTLINE_BEGIN
-    const orderedAdminPairs = isServicePage ? [{id:'service-content',kind:'service',fixed:true,s:{id:'service-content',type:'service',on:true}}] : workSections.filter(Boolean).map(s => {
+    const orderedAdminPairs = isServicePage ? [{id:'service-content',kind:'service',s:{id:'service-content',type:'service',on:layoutVisible('service-content')}}] : workSections.filter(Boolean).map(s => {
       const motorKey = routePage === 'motor' && ['hero','trust','cover'].find(key => motorPageConfig[key]?.id === s.id);
       return { source: motorKey ? 'motorPage' : 'sections', motorKey, s, id:s.id, ownerId:s.id };
     });
-    if (isHome) orderedAdminPairs.splice(articleSlot,0,{id:'articles',kind:'articles',s:{id:'articles',type:'articles',on:homeArticles.visible}});
+    if (isHome) orderedAdminPairs.splice(articleSlot,0,{id:'articles',kind:'articles',s:{id:'articles',type:'articles',on:layoutVisible('articles')}});
     const licencePair = orderedAdminPairs.find(pair => pair.s.type === 'insurers');
-    const adminSectionPairs = orderedAdminPairs.concat(
-      sharedDesign && licencePair ? [{...licencePair, id:'licences', kind:'licences', fixed:true}] : [],
-      [{id:'footer',kind:'footer',fixed:true,s:{type:'footer',on:site.footer.show}}]
-    );
+    const adminSectionPairs = orderPageEntries(orderedAdminPairs.concat(
+      sharedDesign && licencePair ? [{...licencePair, id:'licences', kind:'licences'}] : [],
+      [{id:'footer',kind:'footer',s:{type:'footer',on:site.footer.show}}]
+    ));
     const openAdminGroup = key => this.openBrandGroup(key);
     const fallbackAdminPair = adminSectionPairs.find(pair => pair.s.type !== 'hero') || adminSectionPairs[0] || null;
     const selectedAdminPair = adminSectionPairs.find(pair => pair.id === S.sel) || fallbackAdminPair;
@@ -2282,19 +2261,20 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       if (section) fn(section, draft);
     });
     const moveAdminPair = (pair, dir) => {
-      if (!pair || pair.fixed) return;
-      const target = orderedAdminPairs[orderedAdminPairs.findIndex(entry => entry.id === pair.id) + dir];
+      if (!pair) return;
+      const index = adminSectionPairs.findIndex(entry=>entry.id===pair.id);
+      const target = adminSectionPairs[index + dir];
       if (!target) return;
       this.upd(draft => {
-        const order = routePage === 'motor' ? draft.motorPage.sections : draft.sections;
+        const next = adminSectionPairs.map(entry=>entry.id);
+        [next[index],next[index+dir]] = [next[index+dir],next[index]];
+        draft.pageLayout ||= {};
+        draft.pageLayout[routePage] = {...draft.pageLayout[routePage],order:next};
+        const order = routePage === 'motor' ? draft.motorPage.sections : isHome ? draft.sections : [];
         const idOf = entry => typeof entry === 'string' ? entry : entry.id;
-        const i = order.findIndex(entry => idOf(entry) === pair.id);
-        const j = order.findIndex(entry => idOf(entry) === target.id);
-        if (i >= 0 && j >= 0) [order[i],order[j]] = [order[j],order[i]];
+        order.sort((a,b)=>next.indexOf(idOf(a))-next.indexOf(idOf(b)));
         if (isHome) {
-          const next = orderedAdminPairs.map(entry => entry.id), index = next.indexOf(pair.id);
-          [next[index],next[index+dir]] = [next[index+dir],next[index]];
-          draft.homeDesign.articlesBefore = next[next.indexOf('articles')+1] || '';
+          draft.homeDesign.articlesBefore = next.slice(next.indexOf('articles')+1).find(id=>order.some(section=>section.id===id)) || '';
         }
       });
     };
@@ -2309,17 +2289,17 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const s = pair.s;
       const meta = SECTION_ADMIN_META[pair.id] || SECTION_ADMIN_META[s.type] || { group: 'ส่วนของหน้า', title: (TYPE_LABEL[s.type]?.th || s.type), role: 'ส่วนของเว็บไซต์ที่แก้ไขได้' };
       const isLicence = pair.kind === 'licences', isFooter = pair.kind === 'footer', isArticleSection = pair.kind === 'articles', isServiceSection = pair.kind === 'service';
-      const visible = s.on !== false && (!isLicence || countVisible(routeCards(s)) > 0);
+      const visible = isLicence ? layoutVisible('licences') : s.on !== false;
+      const dependency = isArticleSection && !homeArticles.visible ? (S.editorArticleFeedLoading ? 'กำลังโหลดบทความ' : S.editorArticleFeedError ? 'โหลดบทความไม่ได้ ลองโหลดใหม่' : S.articleFeed?.settings?.enabled===false ? 'ระบบบทความปิดอยู่ เปิดได้ในหน้าจัดการบทความ' : S.articleFeed?.settings?.showHome===false ? 'บทความถูกปิดบน Home ในหน้าจัดการบทความ' : 'จะแสดงเมื่อมีบทความที่เผยแพร่แล้ว') : isLicence && !countVisible(routeCards(s)) ? 'จะแสดงเมื่อมีการ์ดใบอนุญาตที่เปิดใช้งาน' : isStorySection(s) && !storyItems(s).length ? 'เปิดส่วนนี้ได้ ข้อมูลตัวอย่างจะแสดงเฉพาะตอนแก้ไข กรุณาใส่เนื้อหาก่อนเผยแพร่' : '';
       const scope = isFooter ? 'ใช้ร่วมกันทุกหน้า' : isServiceSection ? 'เฉพาะหน้า'+servicePage.copy.navLabel+' · รายการเช็กลิสต์ใช้หนึ่งรายการต่อบรรทัด' : pair.source === 'motorPage' ? 'เฉพาะหน้าประกันรถ' : motorPageConfig.sections.includes(pair.ownerId) ? 'ใช้ร่วมกับ' + (isMotor ? 'หน้าแรก' : 'ประกันรถยนต์') : 'เฉพาะหน้าแรก';
       return {
         key: pair.id, id: pair.id, order:adminOrder + 1, on: visible, sel: activeAdminSel === pair.id,
         name: isServiceSection ? servicePage.copy.navLabel : meta.title || (TYPE_LABEL[s.type]?.th || s.type), group: meta.group || 'ส่วนของหน้า', role: meta.role || '',
         sub: isFooter ? 'Footer' : '#' + (pair.id === 'insurers' && isHome ? 'motor' : pair.id),
         summary: isArticleSection ? homeArticles.items.length + ' บทความบนหน้าแรก' : isFooter ? 'ส่วนท้ายหน้า' : isLicence ? countVisible(routeCards(s)) + (isMotor ? ' การ์ดนายหน้า' : ' การ์ดใบอนุญาต') : sectionSummary(s),
-        scope, position:pair.fixed && !isServiceSection ? 'อยู่ท้ายหน้าเสมอ' : '',
-        dependency:isLicence ? 'แสดงตามส่วนบริษัทประกันและการ์ดใบอนุญาตแต่ละใบ' : '',
-        canEditContent:isFooter || isArticleSection || isServiceSection || !!SCHEMA[s.type], canMove:!pair.fixed, canToggle:!isLicence && !isArticleSection && !isServiceSection, hasLayout:!pair.fixed && !isArticleSection,
-        statusLabel: isArticleSection && S.editorArticleFeedLoading ? 'กำลังโหลด' : isArticleSection && S.editorArticleFeedError ? 'โหลดไม่ได้' : visible ? 'แสดงอยู่' : isArticleSection ? (S.articleFeed?.settings?.enabled===false ? 'ปิดระบบ' : S.articleFeed?.settings?.showHome===false ? 'ปิดบน Home' : 'ไม่มีบทความ') : isLicence && s.on === false ? 'ซ่อนส่วนบริษัทประกันอยู่' : isLicence ? 'ไม่มีการ์ดที่แสดงอยู่' : 'ซ่อนอยู่',
+        scope, position:'', dependency,
+        canEditContent:isFooter || isArticleSection || isServiceSection || !!SCHEMA[s.type], canMove:true, canToggle:true, hasLayout:!pair.kind,
+        statusLabel:visible ? 'แสดงอยู่' : 'ซ่อนอยู่',
         statusBg: visible ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)',
         statusFg: visible ? 'var(--color-accent-2-900)' : 'var(--color-accent-800)',
         cols: String(s.cols), hasCols: !!(SCHEMA[s.type] || {}).cols && (!sharedDesign || !['trust','insurers','review','steps','claim','tiers'].includes(s.type)),
@@ -2329,8 +2309,16 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
         dim: visible ? '1' : '.52',
         swBg: visible ? A.base : 'var(--color-neutral-400)',
         swX: visible ? 'translateX(18px)' : 'none',
-        first: pair.fixed || adminOrder === 0, last: pair.fixed || adminOrder === orderedAdminPairs.length - 1,
-        toggle: () => { if (isLicence || isArticleSection) return; if (isFooter) this.upd(draft=>{draft.footer.show=!draft.footer.show;}); else updatePair(pair, section => { section.on = section.on === false; }); },
+        first:adminOrder === 0, last:adminOrder === adminSectionPairs.length - 1,
+        toggle: () => {
+          if (isFooter) this.upd(draft=>{draft.footer.show=draft.footer.show===false;});
+          else if (pair.kind) this.upd(draft=>{
+            draft.pageLayout ||= {};
+            const layout = draft.pageLayout[routePage] ||= {};
+            layout.hidden = visible ? [...new Set([...(layout.hidden || []),pair.id])] : (layout.hidden || []).filter(id=>id!==pair.id);
+          });
+          else updatePair(pair, section=>{section.on=section.on===false;});
+        },
         up: () => moveAdminPair(pair, -1), down: () => moveAdminPair(pair, 1),
         openContent: () => this.selectContentSection(pair.id),
         inspect: () => s.type === 'hero' ? this.setState({sel:pair.id,tab:'content'}) : this.inspectOutlineSection(pair.id, visible),
@@ -2936,7 +2924,6 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       articleNext:event=>this.navigateArticles(articleIndex.nextHref,event),
       articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,true),
       articleReload:()=>window.location.reload(),
-      homeLicenceSections: sharedDesign && !standaloneRoute ? sections.filter(section => section.homeInsurers && section.cards.length) : [],
       licenceFilePaths: ICONS.file,
       sectionGroups: displaySections.reduce((groups, section) => {
         const cluster = isHome && ['about','review','how'].includes(section.id);
@@ -3301,7 +3288,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       },
       openContentPicker:()=>{const shell=document.querySelector('[data-editor-content-section]')?.parentElement;const trigger=shell?.querySelector('.cm-select-trigger');if(trigger)trigger.click();else shell?.querySelector('select')?.focus();},
       selectContentSection:event=>this.selectContentSection(event.target.value),
-      outlineNotice:selectedOutline && !selectedOutline.on ? 'ส่วนนี้ซ่อนอยู่ในหน้าตัวอย่าง ข้อมูลยังอยู่และแก้ไขได้' + (selectedOutline.dependency ? ' · ' + selectedOutline.dependency : '') : (S.outlineNotice || ''),
+      outlineNotice:selectedOutline && !selectedOutline.on ? 'ส่วนนี้ซ่อนอยู่ในหน้าตัวอย่าง ข้อมูลยังอยู่และแก้ไขได้' + (selectedOutline.dependency ? ' · ' + selectedOutline.dependency : '') : (selectedOutline?.dependency || S.outlineNotice || ''),
       showContactInspector:isContactInspector,
       contactTitleFields,
       contactTitlePrimaryFields:contactTitleFields.filter(field => !field.path.startsWith('advisor.') && !(homeAdvisor.hasContactIntro && sharedDesign && field.path === curPath + '.' + lk + '.body')),
@@ -3318,7 +3305,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       curName:secList.find(row=>row.id===activeAdminSel)?.name || '', curId:activeAdminSel,
       contentShortcuts,
       contentScope:secList.find(row=>row.id===activeAdminSel)?.scope || '',
-      contentDependency:cur?.type==='articles' ? 'การเปิด–ปิดและรายการบทความใช้การตั้งค่าจากหน้าจัดการบทความ ตำแหน่งบนหน้านี้จะเปลี่ยนบนเว็บจริงเมื่อ Publish หน้าเว็บไซต์' : editingLicences ? (isMotor ? 'หน้านี้แสดงเฉพาะใบอนุญาตนายหน้าประกันรถ ใบอนุญาตประเภทอื่นยังอยู่ในหน้าแรก ' : '') + 'การแสดงส่วนนี้ขึ้นอยู่กับส่วนโลโก้บริษัทประกันรถ และซ่อนหรือแสดงการ์ดแต่ละใบได้ที่นี่' : '',
+      contentDependency:cur?.type==='articles' ? 'เปิด–ปิดและจัดตำแหน่งส่วนบทความได้บนหน้านี้ แล้ว Publish หน้าเว็บไซต์เพื่อแสดงบนเว็บจริง ส่วนเนื้อหาและการเผยแพร่แต่ละบทความจัดการในหน้าบทความ' : editingLicences ? (isMotor ? 'หน้านี้แสดงเฉพาะใบอนุญาตนายหน้าประกันรถ ใบอนุญาตประเภทอื่นยังอยู่ในหน้าแรก ' : '') + 'เปิด–ปิดและจัดตำแหน่งส่วนนี้ได้แยกจากโลโก้บริษัทประกันรถ และเลือกแสดงการ์ดแต่ละใบได้ที่นี่' : '',
       editFields: editFields, editItems: editItems, editLinks: editLinks,
       hasCalculatorFields:calculatorFields.length>0,calculatorFields,...calculatorDataView,
       goMedia:()=>this.openBrandGroup('Images & crop'),

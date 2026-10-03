@@ -144,14 +144,14 @@ if(process.argv.includes('--browser')){
     await page.locator('.ae-feedback').filter({hasText:'นำเข้าสำเนาฉบับร่างแล้ว'}).waitFor();await save();
     await articleCanvas(page).locator('.ad-takeaways li').first().waitFor();assert.equal(await articleCanvas(page).locator('.ad-takeaways li').count(),2);
     const beforeConvert=await doc();
-    await openSettings(page);await page.locator('[data-ae=convert-takeaways]:visible').click();await closeSettings(page);
+    await tool('convert-takeaways');
     await body().locator('.article-takeaway-card').waitFor();
     await articleCanvas(page).locator('.ad-takeaways').waitFor({state:'detached'});
     assert.equal((await doc()).attrs.takeawaysInDocument,true);
     await tool('undo');assert.deepEqual(await doc(),beforeConvert,'Undo conversion restores document and metadata presentation');
     await articleCanvas(page).locator('.ad-takeaways li').first().waitFor();assert.equal(await articleCanvas(page).locator('.ad-takeaways li').count(),2);
     await tool('redo');await articleCanvas(page).locator('.ad-takeaways').waitFor({state:'detached'});
-    await openSettings(page);
+    await revealArticleControl(page,'[data-ae=convert-sidebar]');
     const quoteConversion=await page.locator('[data-ae=convert-sidebar]:visible').elementHandle();
     await body().locator('p').first().click();
     assert.equal(await quoteConversion.evaluate(el=>el.isConnected),true,'Selection changes preserve the conversion button and its pending click');

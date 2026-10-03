@@ -17,7 +17,7 @@
             </div>
             <sc-if value="{{ contentSearching }}"><div class="cm-editor-search-result"><span role="status">{{ contentSearchSummary }}</span><button type="button" sc-camel-on-click="{{ clearContentQuery }}">ล้างคำค้น</button></div></sc-if>
           </div>
-          <div class="cm-editor-content-heading"><h3 tabindex="-1" data-editor-content-title>แก้ไข : {{ curName }}</h3><sc-if value="{{ selectedOutline.canToggle }}"><button type="button" class="cm-editor-visibility" data-content-visibility data-hero-visibility role="switch" aria-checked="{{ selectedOutline.on }}" aria-label="แสดงหรือซ่อนส่วนนี้" sc-camel-on-click="{{ selectedOutline.toggle }}">{{ selectedOutline.statusLabel }}</button></sc-if></div>
+          <div class="cm-editor-content-heading"><h3 tabindex="-1" data-editor-content-title>แก้ไข : {{ curName }}</h3><button type="button" class="cm-switch cm-editor-visibility" data-content-visibility data-hero-visibility role="switch" aria-checked="{{ selectedOutline.on }}" aria-label="แสดงหรือซ่อน {{ curName }}" title="{{ selectedOutline.statusLabel }}" sc-camel-on-click="{{ selectedOutline.toggle }}"></button></div>
           <div class="cm-editor-content-meta"><p class="cm-editor-help">{{ contentScope }}</p><!-- COVERMATE_EDITOR_LANGUAGE --></div>
           <sc-if value="{{ contentDependency }}"><p class="cm-editor-notice">{{ contentDependency }}</p></sc-if>
           <sc-if value="{{ editingHomeArticles }}"><div class="cm-editor-shortcuts"><a class="cm-editor-button" href="{{ articleManagementHref }}">จัดการบทความ</a><sc-if value="{{ editorArticleFeedError }}"><button type="button" class="cm-editor-button" sc-camel-on-click="{{ retryEditorArticleFeed }}">โหลดบทความใหม่</button></sc-if></div></sc-if>
@@ -58,7 +58,7 @@
               <button type="button" sc-camel-on-click="{{ it.up }}" aria-label="เลื่อนรายการขึ้น" title="เลื่อนรายการขึ้น" class="cm-editor-item-action" style="opacity:{{ it.upOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ it.down }}" aria-label="เลื่อนรายการลง" title="เลื่อนรายการลง" class="cm-editor-item-action" style="opacity:{{ it.downOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ it.duplicate }}" aria-label="ทำสำเนารายการ" title="ทำสำเนารายการ" class="cm-editor-item-action"><svg sc-camel-view-box="0 0 24 24"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ it.toggleVisible }}" class="cm-editor-button">{{ it.visibilityLabel }}</button>
+              <button type="button" class="cm-switch" role="switch" aria-checked="{{ !it.hidden }}" aria-label="แสดงหรือซ่อน {{ it.rowLabel }}" title="{{ it.stateLabel }}" sc-camel-on-click="{{ it.toggleVisible }}"></button>
               <sc-if value="{{ it.canDeleteFaq }}"><button type="button" class="om-faq-delete" sc-camel-on-click="{{ it.deleteFaq }}" aria-label="ลบคำถาม" title="ลบคำถาม"><svg sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></sc-if>
             </span>
           </div>
@@ -119,7 +119,7 @@
             <input aria-label="ชื่อหัวข้อความคุ้มครอง" value="{{ hd.value }}" sc-camel-on-change="{{ hd.onInput }}" >
             <span style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:{{ hd.stateBg }};color:{{ hd.stateFg }}">{{ hd.stateLabel }}</span>
             <button type="button" sc-camel-on-click="{{ hd.duplicate }}" aria-label="ทำสำเนาหัวข้อความคุ้มครอง" class="cm-editor-button">ทำสำเนา</button>
-            <button type="button" sc-camel-on-click="{{ hd.toggleVisible }}" aria-label="แสดงหรือซ่อนหัวข้อ" class="cm-editor-button">{{ hd.visibilityLabel }}</button>
+            <button type="button" class="cm-switch" role="switch" aria-checked="{{ !hd.hidden }}" aria-label="แสดงหรือซ่อนหัวข้อ {{ hd.value }}" title="{{ hd.stateLabel }}" sc-camel-on-click="{{ hd.toggleVisible }}"></button>
           </div>
         </sc-for>
         <button type="button" class="cm-editor-button cm-editor-add" sc-camel-on-click="{{ addHead }}">+ เพิ่มหัวข้อความคุ้มครอง</button></div></details>
@@ -136,7 +136,7 @@
               <button type="button" sc-camel-on-click="{{ cd.up }}" aria-label="เลื่อนการ์ดขึ้น" title="เลื่อนการ์ดขึ้น" class="cm-editor-item-action" style="opacity:{{ cd.upOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ cd.down }}" aria-label="เลื่อนการ์ดลง" title="เลื่อนการ์ดลง" class="cm-editor-item-action" style="opacity:{{ cd.downOpacity }}"><svg sc-camel-view-box="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg></button>
               <button type="button" sc-camel-on-click="{{ cd.duplicate }}" aria-label="ทำสำเนาการ์ด" title="ทำสำเนาการ์ด" class="cm-editor-item-action"><svg sc-camel-view-box="0 0 24 24"><path d="M8 8h10v10H8zM6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-              <button type="button" sc-camel-on-click="{{ cd.toggleVisible }}" aria-label="แสดงหรือซ่อนการ์ด" class="cm-editor-button">{{ cd.visibilityLabel }}</button>
+              <button type="button" class="cm-switch" role="switch" aria-checked="{{ !cd.hidden }}" aria-label="แสดงหรือซ่อนการ์ด {{ cd.n }}" title="{{ cd.stateLabel }}" sc-camel-on-click="{{ cd.toggleVisible }}"></button>
             </div>
 <sc-for list="{{ cd.fields }}" as="f" hint-placeholder-count="3"><!-- COVERMATE_EDITOR_FIELD --></sc-for>
             <sc-if value="{{ cd.showLogo }}" hint-placeholder-val="{{ false }}">

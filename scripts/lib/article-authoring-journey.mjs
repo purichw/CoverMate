@@ -150,7 +150,10 @@ export async function assertEditorArticle(page) {
 export async function openArticleSettings(page){
   await openSettings(page);
 }
-export async function closeArticleSettings(page){await closeSettings(page);}
+export async function closeArticleSettings(page){
+  await closeSettings(page);
+  if(await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();
+}
 
 export async function assertReaderArticle(surface,expected) {
   const a=authoredArticle,prose=surface.locator('.ad-prose .cm-article-prose:visible');

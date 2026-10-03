@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {createArticleDraft} from '../admin/articles/drafts.mjs';
 import {projectHomeArticles} from '../src/visitor/home-articles.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
-import {openSettings} from './lib/article-editor-ui.mjs';
+import {articleField,openSettings,closeSettings} from './lib/article-editor-ui.mjs';
 
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088'||process.env.FIREBASE_AUTH_EMULATOR_HOST!=='127.0.0.1:9098'||process.env.COVERMATE_TEST_MODE!=='emulator'||process.env.VERCEL)throw Error('Local emulators required');
 const require=createRequire(import.meta.url),firebase=require('../server/firebase.cjs'),baseDb=firebase.serverDb();
@@ -35,8 +35,8 @@ try {
   }
   const flags=await repository.settings(site);await repository.changeSettings(site,{enabled:true,showHome:true,showNavigation:true},flags.revision,signup.localId);
   const home=async()=>(projectHomeArticles(await repository.feed(site))).items.map(item=>item.key);
-  assert.deepEqual(await home(),[0,10,12,1,2,3,4,5,6,7].map(i=>ids[i]));
-  console.log('PASS isolated publication seed: three pins and seven latest.');
+  assert.deepEqual(await home(),[0,10,12,1,2,3,4,5,6,7,8,9].map(i=>ids[i]));
+  console.log('PASS isolated publication seed: three pins and nine latest.');
   browser=await launchChromium(loadPlaywright().chromium,{headless:true});
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),admin=await context.newPage(),visitor=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'}),errors=[];
   for(const page of [admin,visitor]){page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));}
@@ -44,10 +44,10 @@ try {
   await admin.goto(baseUrl+'/'+suffix);
   await admin.evaluate(async({email,password})=>{await import('/covermate-firebase.js');const sdk=await import('https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js');await sdk.signInWithEmailAndPassword(window.CoverMateFirebase.auth,email,password);if(!(await window.CoverMateFirebase.syncSessionFromCurrentUser()).ok)throw Error('Auth failed');},{email,password});
   const list=async()=>{await admin.goto('about:blank');await admin.goto(baseUrl+'/admin'+suffix+'#articles');await admin.locator('[data-article-state=ready]').waitFor({timeout:60000});};
-  const edit=async(id)=>{await list();await admin.locator('[name=query]').fill(id);await admin.locator(`[data-article-action=edit][data-id="${id}"]:visible`).click();await admin.locator('[data-field=featured]').waitFor();};
-  const save=async()=>{await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback:not([data-error=true])').filter({hasText:/^บันทึกฉบับร่างในคลังแล้ว/}).waitFor();};
+  const edit=async(id)=>{await list();await admin.locator('[name=query]').fill(id);await admin.locator(`[data-article-action=edit][data-id="${id}"]:visible`).click();await admin.locator('[data-field=featured]').waitFor({state:'attached'});};
+  const save=async()=>{await closeSettings(admin);await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback:not([data-error=true])').filter({hasText:/^บันทึกฉบับร่างในคลังแล้ว/}).waitFor();};
   const publish=async()=>{await admin.locator('[data-ae=publish]:visible').click();await admin.getByRole('dialog').getByRole('button',{name:'Publish article',exact:true}).click();await admin.locator('.ae-feedback').filter({hasText:'เผยแพร่แล้ว'}).waitFor();};
-  await edit(ids[11]);await admin.getByRole('switch',{name:'ปักหมุดบน Home'}).check();
+  await edit(ids[11]);await articleField(admin,'featured').check();
   assert.equal(await admin.locator('[data-field=pinned]').isChecked(),false,'Home pin does not change index pin');
   await save();assert.equal((await home()).includes(ids[11]),false,'Draft pin stays private');
   await admin.reload();await admin.locator('[data-article-state=ready]').waitFor();await admin.locator('[name=query]').fill(ids[11]);await admin.locator(`[data-article-action=edit][data-id="${ids[11]}"]:visible`).click();
@@ -74,7 +74,7 @@ try {
   const rejected=candidates[outcomes.findIndex(r=>r.status===422)];
   assert.equal((await call('save',{article:rejected,expectedRevision:rejected.revision},null)).status,401);
   const catalog=await repository.catalog(site);assert.equal(catalog.items.filter(item=>item.featured||item.publishedHomePinned).length,10);
-  await edit(rejected.id);await admin.getByRole('switch',{name:'ปักหมุดบน Home'}).check();await admin.locator('[data-field=title]').fill('ข้อความที่ต้องไม่หายเมื่อเกินโควตา');
+  await edit(rejected.id);await articleField(admin,'featured').check();await articleField(admin,'title').fill('ข้อความที่ต้องไม่หายเมื่อเกินโควตา');
   await admin.locator('[data-ae=save]:visible').click();await admin.locator('.ae-feedback[data-error=true]').filter({hasText:'ไม่เกิน 10'}).waitFor();
   assert.equal(await admin.locator('[data-field=title]').inputValue(),'ข้อความที่ต้องไม่หายเมื่อเกินโควตา');assert.equal(await admin.locator('[data-field=featured]').isChecked(),true);
   await admin.screenshot({path:out+'/admin-limit-desktop.png',fullPage:true});
@@ -88,7 +88,8 @@ try {
   const retry=await call('save',{article:rejected,expectedRevision:rejected.revision});assert.equal(retry.status,200,'Published unpin frees slot');
   for(const item of (await repository.catalog(site)).items.filter(item=>item.featured)){const d=await repository.get(site,item.id);await repository.mutate(site,'publish',{id:d.id,languages:['th']},d.revision,signup.localId);}
   const allPins=(await repository.feed(site)).items.filter(item=>item.featured).map(item=>item.id);
-  assert.equal(allPins.length,10);assert.deepEqual(new Set(await home()),new Set(allPins),'Ten live pins leave no latest filler');
-  assert.deepEqual(errors,[]);report.checks=['real save/reload/publish','independent Home/index pins','public carousel and reader link','concurrent tenth slot','eleventh rejected with edits preserved','published unpin releases slot','ten pins only','mobile settings'];report.passed=true;
+  assert.equal(allPins.length,10);assert.deepEqual(new Set((await home()).slice(0,10)),new Set(allPins),'All ten live pins lead the Home feed');
+  assert.equal(new Set(await home()).size,12,'Ten live pins leave two unique latest slots');
+  assert.deepEqual(errors,[]);report.checks=['real save/reload/publish','independent Home/index pins','public carousel and reader link','concurrent tenth slot','eleventh rejected with edits preserved','published unpin releases slot','ten pins plus two latest','mobile settings'];report.passed=true;
   fs.writeFileSync(out+'/cms-report.json',JSON.stringify(report,null,2));console.log('PASS Home pins CMS/API/Visitor and concurrent ten-pin cap.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
