@@ -22,7 +22,8 @@ Initial settings: master off, Home/navigation on. No configuration/environment
 variable or deployment is needed to change the switches. UAT and production
 store independent settings; an empty collection is not treated as enabled.
 
-Create/edit an article, save the draft, preview, then choose Publish and confirm
+Create/edit an article, wait for the draft Autosave confirmation (or press Save),
+preview, then choose Publish and confirm
 the languages. Only complete selected translations become public. Saving edits
 to a published article does not replace its live content. Republish explicitly.
 Unpublish removes every public translation but retains the editable draft.
@@ -43,7 +44,7 @@ does not publish existing drafts or alter any hosted CMS data.
 ### Independent publication boundary
 
 Website Save, Publish, Reset draft, Undo/Redo and version restore never save,
-publish or reset article drafts. Article Save/Publish/Unpublish/Archive/Trash/Restore/Delete affects only the
+publish or reset article drafts. Article Autosave/Save/Publish/Unpublish/Archive/Trash/Restore/Delete affects only the
 selected article and its catalog/slug/audit records; it leaves website drafts,
 website published content, website version history and other article drafts intact.
 Article visibility settings remain separately saved under `articleSettings`.
@@ -87,6 +88,12 @@ cron delivery job. Do not expect already-open pages to refresh without navigatio
 Published slugs remain reserved and immutable, including after unpublishing,
 archiving or moving to Trash.
 
+Public article search also receives `releasedAt`: the actual server timestamp
+of the selected translation's last Publish (`live.translations[lang].updatedAt`).
+It breaks relevance/pin ties in search independently of the optional visible date.
+Draft Save never changes this timestamp. Older catalog summaries recover it from
+the full live record on read without publishing or modifying stored content.
+
 Pins, Home recommendation, category, tags, author, cover, separate TH/EN body,
 takeaways, sources and SEO fields pass through the same server publication model.
 The existing `featured` field is now labeled **ปักหมุดบน Home**, independent of
@@ -101,10 +108,33 @@ JSON import/export remains available for backup and stale-write recovery.
 
 ## Shared Image Editing
 
+The redesigned cover panel uses a single-image dropzone, a crop/replace/remove
+action group, inline localized Alt/caption fields and the four automatic delivery
+profiles. The actual upload limit remains 8 MB (PNG/JPEG/WebP/SVG), not the 10 MB
+suggested by the illustrative mock. Cover selection opens the shared image editor
+directly; body-image insertion still asks for its own Alt/caption.
+
+Cover and thumbnail media now belong to `translations.th` / `translations.en`.
+Opening a legacy draft snapshots its shared media into both translations without
+a storage write. `articleMediaForLanguage` is the shared resolver for Admin,
+public feed/detail and SEO; an explicitly empty localized image never falls back
+to the other language. Publishing a selected language preserves the unselected
+live translation's media, including legacy publications. Public projections strip
+original/crop metadata from localized media as well as shared legacy media.
+
+The cover and body tools can reuse a cover/body image from the other language.
+A confirmation identifies the target language and warns that this is a one-time
+copy, not synchronized content. Alt/caption text is not copied across languages;
+existing target text remains editable. Cancel leaves content untouched. Reuse
+keeps the original/crop reference, does not reupload, save or publish, and later
+editing/removal affects only the current translation.
+
 Cover images and body figures now use `src/admin/media-editor.js`, the same
-dialog used by website CMS image owners. Enter alt text and an optional
-caption/credit, then choose a file or image URL and inspect Crop or Fit whole
-image before applying. New article images default to 1600 × 900 output;
+dialog used by website CMS image owners. Cover selection opens that dialog
+directly, with alt text and caption/credit editable in the cover panel. Body
+figures collect alt text and optional caption/credit before choosing a file or
+image URL. Inspect Crop or Fit whole image before applying. New article images
+default to 1600 × 900 output;
 recropping retains existing output dimensions when available. This does not
 change the visitor's cover or figure layout rules.
 

@@ -46,6 +46,8 @@ export const buildCommands = [
 export const checkGroups = {
   preflight: [
     ["npm",["run","check:performance"]],
+    ["node",["scripts/smoke-evidence-check.mjs"]],
+    ["node",["scripts/uptime-access-check.mjs"]],
     ["npm",["run","check:types"]],
     ["npm",["run","check:refactor"]],
     ["npm",["run","check:nfr"]],
@@ -96,6 +98,7 @@ export const checkGroups = {
     ["node",["scripts/article-editor-check.mjs","--browser"]],
     ["node",["scripts/article-leave-check.mjs"]],
     ["node",["scripts/article-workspace-check.mjs"]],
+    ["node",["scripts/article-summary-check.mjs","--browser"]],
     ["node",["scripts/article-media-check.mjs","--browser"]],
     ["node",["scripts/article-delivery-check.mjs","--browser"]],
     ["node",["scripts/article-editor-tools-check.mjs"]],
@@ -127,6 +130,7 @@ export const checkGroups = {
     ["npm",["run","check:admin-home"]],
     ["node",["scripts/admin-home-refresh-check.mjs"]],
     ["node",["scripts/admin-account-check.mjs"]],
+    ["node",["scripts/admin-owner-panel-check.mjs"]],
     ["node",["scripts/admin-content-check.mjs"]],
     ["node",["scripts/cms-entry-browser-check.mjs"]],
     ["node",["scripts/cases-list-design-check.mjs"]],
@@ -150,7 +154,7 @@ export const fullSuiteJobNames = ["preflight", ...browserSuites.map(name => `bro
 
 export function commandsForSuite(suite = "all") {
   if (suite === "build") return [...buildCommands];
-  if (suite === "emulators") return [...buildCommands, ["npm", ["run", "check:emulators"]]];
+  if (suite === "emulators") return [...buildCommands, ["node", ["scripts/article-editor-ui-check.mjs"]], ["npm", ["run", "check:emulators"]]];
   if (suite === "all") return [...buildCommands, ...Object.values(checkGroups).flat()];
   if (!Object.hasOwn(checkGroups, suite)) throw new Error(`Unknown CI suite: ${suite}`);
   return [...buildCommands, ...checkGroups[suite]];

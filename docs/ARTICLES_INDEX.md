@@ -69,14 +69,45 @@ This documentation refresh did not run new visual smoke.
 - Featured desktop media occupies 48% of the card (approximately 1.88:1 image);
   mobile uses 2:3 portrait media without stretching at narrow widths. Stacked
   grid slides reserve the largest card height to avoid content jumping.
-- `q`, `category`, `sort`, `page` are URL state. Search is submitted, not live
-  filtering. Changing filters resets pagination. Back, reload and TH/EN work.
+- `q`, `category`, `sort`, `page` are URL state. Typing opens up to five live
+  suggestions without changing the URL or replacing the current results.
+  Submit or **View all results** applies the query and resets pagination.
+  Back, reload and TH/EN work.
 - Mobile accumulates entries through `page`; desktop shows that page only.
   Load more focuses the first added article; filtering focuses the result heading.
 - Sort uses the shared accessible custom-select control. Cards have one native
   article link each. Missing list thumbnails use a text-led card layout.
 - Empty, no-match and unavailable states are distinct. Reading time is omitted
   when absent, never fabricated from a title or excerpt.
+
+### Search suggestions
+
+The existing search input opens a compact panel, following hora-astro's search
+interaction pattern while retaining CoverMate colours, type, category controls
+and card proportions. Empty focus offers categories and Browse all. Matching
+results use vertically centred cover thumbnails; missing covers remain text-led.
+The popup follows the input, constrains its height to the visual viewport and
+supports touch, composition input, Arrow Up/Down, Enter, Escape and outside dismissal.
+Only the suggestion list scrolls; the full-results action remains visible on
+short mobile viewports.
+Suggestions are local projections of the already-loaded published feed; typing
+does not issue additional API requests or expose draft/scheduled translations.
+
+Suggestions and submitted search in default sort share one matching function:
+exact title, title phrase, category/tag, excerpt, then partial term coverage.
+Higher relevance always precedes pins. Equal scores sort by index pin, then
+actual per-language Publish time descending, then stable ID. The saved pinned
+carousel order and explicit oldest/title sort remain separate choices.
+The server exposes `releasedAt` from the live translation's server-owned
+`updatedAt`, which changes only on Publish. It never uses the optional display
+date or a draft save timestamp. Older catalog summaries read their full live
+source to recover this clock without a migration/write. Truly missing clocks
+sort after known clocks at equal relevance/pin state.
+
+`src/visitor/article-search.mjs` owns the progressive enhancement and uses the
+matching helpers in `articles-index.mjs`; it loads only on `/articles`. The
+original form still submits normally if the enhancement cannot load. Focused
+coverage lives in `articles-index-check.mjs` and `article-validation-check.mjs`.
 
 ## Ownership
 

@@ -372,12 +372,14 @@ async function handleClick(event) {
     if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
     if (action === "logout") {
-      if (articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return;
-      if (!(await casesWorkspace.canLeave())) return;
-      // The in-app guard already confirmed discarding article edits; remove its
-      // unload listener before the intentional sign-out redirect.
-      if (articlesWorkspace?.active) articlesWorkspace.leave();
-      signOutAdmin();
+      await signOutAdmin({beforeSignOut: async () => {
+        if (articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return false;
+        if (!(await casesWorkspace.canLeave())) return false;
+        // The article decision already confirmed discarding pending edits.
+        // Remove its unload listener before the intentional sign-out redirect.
+        if (articlesWorkspace?.active) articlesWorkspace.leave();
+        return true;
+      }});
       return;
     }
     if (action === 'account') return casesWorkspace.openAccount();

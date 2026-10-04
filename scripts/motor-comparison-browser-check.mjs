@@ -336,9 +336,11 @@ try {
   await page.goto(baseUrl + '/admin/edit?page=motor'); await ready(page);
   await save();
   await tools();
-  const popup = context.waitForEvent('page');
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
-  const preview = await popup; await ready(preview); await preview.locator('[data-admin-preview-bar]').waitFor();
+  const [preview] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator('#covermate-owner-tools-panel').getByRole('button', { name: 'ดูตัวอย่าง (Preview)', exact: true }).click()
+  ]);
+  await ready(preview); await preview.locator('[data-admin-preview-bar]').waitFor();
   assert.equal(await preview.locator('[data-home-section="tiers"] [data-tier-status], [data-home-section="tiers"] [data-tier-remark]').count(), 0, 'Preview does not expose edit buttons');
   assert.ok((await preview.locator('#home-tier-comparison').textContent()).includes('ข้อจำกัดในช่องที่ไม่คุ้มครอง'));
   assert.deepEqual(live, baseline, 'Preview leaves Published unchanged');

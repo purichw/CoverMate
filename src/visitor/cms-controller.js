@@ -97,6 +97,7 @@ export function withCmsController(Base, {
     }
 
     editorKeydown(event) {
+      if (document.querySelector('[data-signout-confirm][open]')) return;
       if (!(this.state.admin || this.state.editMode)) return;
       if (this.state.tierRemarkEditor) {
         if (event.key === 'Escape') { event.preventDefault(); this.closeTierRemark(); }

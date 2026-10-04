@@ -19,6 +19,12 @@
 .nav-button.active { color:#fff;background:var(--admin-shell-active); }
 .nav-icon svg { stroke-width:1.8; }
 .sidebar-footer { margin-top:auto;padding:20px 0 0;border-top:1px solid #ffffff21; }
+.sidebar > .brand,.sidebar-footer { flex-shrink:0; }
+.sidebar > .nav { min-height:0;overflow-y:auto; }
+.sidebar .admin-account { position:relative; }
+.sidebar .admin-account-menu { position:absolute;z-index:2;left:0;right:0;bottom:calc(100% + 8px);max-height:calc(100dvh - 152px);overflow-y:auto;border:1px solid #ffffff26;border-radius:8px;background:#332f25;box-shadow:0 8px 24px #0004; }
+.sidebar .admin-account-chevron { transform:rotate(180deg); }
+.sidebar .admin-account[open] .admin-account-chevron { transform:none; }
 .admin-account { border:1px solid #ffffff26;border-radius:14px;background:#ffffff04;color:#f8f3ed; }
 .admin-account > summary { display:flex;align-items:center;gap:8px;min-height:92px;padding:12px;list-style:none;cursor:pointer;border-radius:14px; }
 .admin-account > summary::-webkit-details-marker { display:none; }

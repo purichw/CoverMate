@@ -43,6 +43,8 @@ verified passing CI; otherwise they take the full path. Manual dispatch always
 runs full coverage. Local `npm run check:ci` still runs the entire main suite;
 `npm run check:ci -- --suite visitor` selects one suite with its build prerequisites.
 See [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) for evidence and commands.
+The [Actions usage audit](docs/ACTIONS_USAGE_AUDIT_20261003.md) separates elapsed
+time, summed runner time and billing, and records which engines each suite needs.
 Before waiting or retrying a release, use its
 [diagnostic checkpoints](docs/RELEASE_RUNBOOK.md#when-to-stop-waiting-and-diagnose)
 to distinguish healthy CI progress from a stalled push, run or promotion.

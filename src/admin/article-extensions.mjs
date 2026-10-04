@@ -5,6 +5,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import {TableKit,Table} from '@tiptap/extension-table';
+import {createElement,GripVertical} from 'lucide';
 import {articleUrl,articleVideo} from '../../article-document.mjs';
 import {ARTICLE_TYPE_LIMITS,articleTypographyAttributes,parseArticleTypography,normalizeArticleTypography} from '../../article-typography.mjs';
 
@@ -27,7 +28,7 @@ const Video=Node.create({
   renderHTML({node,HTMLAttributes}){return ['a',mergeAttributes(HTMLAttributes,{class:'article-video',href:node.attrs.src,'data-title':node.attrs.title,tabindex:'-1'}),['span',{},'▶'],['span',{},node.attrs.title,['small',{},'YouTube ↗']]];}
 });
 const Layout=Extension.create({name:'articleLayout',addGlobalAttributes(){return [
-  {types:['doc'],attributes:{layout:{default:null},takeawaysInDocument:{default:false},sidebarQuoteInDocument:{default:false},titleStyle:{default:null},excerptStyle:{default:null}}},
+  {types:['doc'],attributes:{layout:{default:null},takeawaysInDocument:{default:false},articleSummaryLinked:{default:false},sidebarQuoteInDocument:{default:false},titleStyle:{default:null},excerptStyle:{default:null}}},
   {types:['paragraph','heading','bulletList','orderedList','blockquote','callout','figure','horizontalRule','table','video','quoteCard','takeaway'],attributes:{placement:{default:'body',parseHTML:el=>['sidebar','full'].includes(el.dataset.placement)?el.dataset.placement:'body',renderHTML:attrs=>({'data-placement':['sidebar','full'].includes(attrs.placement)?attrs.placement:'body'})}}}
 ];}});
 const Typography=Extension.create({name:'articleTypography',addGlobalAttributes(){return [{
@@ -54,10 +55,10 @@ const QuoteCard=Node.create({name:'quoteCard',group:'block',content:'(paragraph|
   parseHTML(){return [{tag:'aside.article-quote-card',contentElement:'div'}];},
   renderHTML({node,HTMLAttributes}){return ['aside',mergeAttributes(HTMLAttributes,{class:'article-quote-card'}),['span',{class:'article-quote-mark','aria-hidden':'true',contenteditable:'false'},'“'],['div',{},0],...(node.attrs.attribution?[['cite',{contenteditable:'false'},node.attrs.attribution]]:[])];}
 });
-const Takeaway=Node.create({name:'takeaway',group:'block',content:'(paragraph|bulletList|orderedList)+',defining:true,
-  addAttributes(){return {title:{default:'',parseHTML:el=>el.querySelector('.article-takeaway-title')?.textContent || ''},note:{default:'',parseHTML:el=>el.querySelector('.article-takeaway-note')?.textContent || ''}};},
+const Takeaway=Node.create({name:'takeaway',group:'block',content:'(paragraph|bulletList|orderedList)+',defining:true,draggable:true,
+  addAttributes(){return {articleSummary:{default:false,parseHTML:el=>el.dataset.articleSummary==='true',renderHTML:attrs=>attrs.articleSummary?{'data-article-summary':'true','data-canvas-field':'takeaways',tabindex:'0'}:{}},title:{default:'',parseHTML:el=>el.querySelector('.article-takeaway-title')?.textContent || ''},note:{default:'',parseHTML:el=>el.querySelector('.article-takeaway-note')?.textContent || ''}};},
   parseHTML(){return [{tag:'aside.article-takeaway-card',contentElement:'div'}];},
-  renderHTML({node,HTMLAttributes}){return ['aside',mergeAttributes(HTMLAttributes,{class:'article-takeaway-card'}),...(node.attrs.title?[['p',{class:'article-takeaway-title',contenteditable:'false'},node.attrs.title]]:[]),['div',{},0],...(node.attrs.note?[['p',{class:'article-takeaway-note',contenteditable:'false'},node.attrs.note]]:[])];}
+  renderHTML({node,HTMLAttributes}){return ['aside',mergeAttributes(HTMLAttributes,{class:'article-takeaway-card'}),['span',{class:'ae-block-drag',contenteditable:'false',draggable:'true','data-drag-handle':'',title:'ลากเพื่อย้ายสรุปประเด็นสำคัญ','aria-label':'ลากเพื่อย้ายสรุปประเด็นสำคัญ'},createElement(GripVertical,{width:20,height:20,'aria-hidden':'true'})],...(node.attrs.title?[['p',{class:'article-takeaway-title',contenteditable:'false'},node.attrs.title]]:[]),['div',{},0],...(node.attrs.note?[['p',{class:'article-takeaway-note',contenteditable:'false'},node.attrs.note]]:[])];}
 });
 export function articleExtensions(){return [
   StarterKit.configure({heading:{levels:[1,2,3,4,5,6]},codeBlock:false,link:{openOnClick:false,autolink:true,defaultProtocol:'https',isAllowedUri:url=>!!articleUrl(url)},blockquote:false}),

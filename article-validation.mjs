@@ -1,6 +1,7 @@
 import {ARTICLE_CATEGORIES} from './admin/articles/drafts.mjs';
 import {articleDocumentText,articleUrl} from './article-document.mjs';
 import {ARTICLE_AUTHOR_LIMITS,articleAuthorUrl} from './article-author.mjs';
+import {articleMediaForLanguage} from './article-media.mjs';
 
 export const ARTICLE_FIELD_LIMITS={title:240,excerpt:600,seoTitle:240,seoDescription:600,coverAlt:500,imageAlt:500,caption:1000,headerNote:500,sidebarQuote:1000,takeawayNote:500};
 const text=value=>typeof value==='string'?value:'';
@@ -14,7 +15,7 @@ export function articleFieldContract(key,{cover=false}={}) {
   const hints={
     title:'ชื่อที่แสดงบนหน้าบทความและการ์ด',excerpt:'ข้อความสั้นสำหรับการ์ดบทความ แยกจาก SEO description',
     slug:'ภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลาง ไม่เกิน 160 ตัวอักษร',
-    authorName:'ชื่อผู้เขียนที่แสดงบนบทความ',coverAlt:cover?'บรรยายสิ่งสำคัญในภาพ ไม่ต้องใส่คำค้นซ้ำ ๆ':'จำเป็นเมื่อเพิ่มภาพปก',
+    authorName:'ชื่อผู้เขียนที่แสดงบนบทความ',coverAlt:cover?'บรรยายสิ่งสำคัญในภาพสำหรับผู้ใช้โปรแกรมอ่านหน้าจอ ไม่ต้องใส่คำค้นซ้ำ ๆ':'จำเป็นเมื่อเพิ่มภาพปก สำหรับผู้ใช้โปรแกรมอ่านหน้าจอ',
     authorBio:'ระบุเฉพาะประวัติหรือความเชี่ยวชาญที่ยืนยันแล้ว เว้นว่างได้ ไม่เกิน 1,200 ตัวอักษร',
     authorUrl:'ลิงก์ HTTPS ของผู้เขียนที่ตรวจสอบได้ เช่น หน้าแนะนำตัวหรือโปรไฟล์วิชาชีพ',
     editorialNote:'อธิบายวิธีจัดทำหรือทบทวนบทความตามที่ทำจริง ไม่ระบุว่ามีผู้ตรวจหากยังไม่ได้ตรวจ',
@@ -56,7 +57,8 @@ export function validateArticle(draft,{publish=false,languages=['th']}={}) {
     if(required)for(const [field,label] of [['title','ชื่อบทความ'],['excerpt','คำโปรย'],['document','เนื้อหาบทความ']]) {
       if(!(field==='document'?articleDocumentText(t.document):text(t[field])).trim())add(field,`กรุณากรอก${label}`,language);
     }
-    if(required&&draft.cover?.src&&!text(t.coverAlt).trim())add('coverAlt','กรุณาใส่ข้อความอธิบายภาพปก',language);
+    for(const role of ['cover','image'])if(t[role]!==undefined&&(!t[role]||typeof t[role]!=='object'||typeof t[role].src!=='string'||t[role].src&&!articleUrl(t[role].src,true)))add('cover','ลิงก์ภาพไม่ถูกต้อง กรุณาเลือกภาพใหม่',language);
+    if(required&&articleMediaForLanguage(draft,language).src&&!text(t.coverAlt).trim())add('coverAlt','กรุณาใส่ข้อความอธิบายภาพปก',language);
     articleImages(t.document).forEach((image,index)=>{
       if(required&&!text(image.alt).trim())add('figure-alt-'+index,`กรุณาใส่ Alt ของภาพในเนื้อหา ${index+1}`,language);
       else if(text(image.alt).length>500)add('figure-alt-'+index,'Alt ต้องไม่เกิน 500 ตัวอักษร',language);

@@ -1,6 +1,7 @@
 import {closeHistory} from '@tiptap/pm/history';
+import {articleDocumentText} from '../../article-document.mjs';
 
-const labels={paragraph:'ย่อหน้า',heading:'หัวข้อ',bulletList:'รายการ',orderedList:'รายการลำดับ',blockquote:'คำพูด',callout:'กล่องข้อความ',figure:'รูปภาพ',horizontalRule:'เส้นคั่น',table:'ตาราง',video:'วิดีโอ',takeaway:'สรุปประเด็นสำคัญ',quoteCard:'Quote card'};
+const labels={paragraph:'ย่อหน้า',heading:'หัวข้อ',bulletList:'รายการ',orderedList:'รายการลำดับ',blockquote:'คำพูด',callout:'กล่องข้อความ',figure:'รูปภาพ',horizontalRule:'เส้นคั่น',table:'ตาราง',video:'วิดีโอ',takeaway:'สรุปประเด็นสำคัญ',quoteCard:'กล่องคำคม'};
 export function articleBlocks(editor){
   const result=[];editor.state.doc.forEach((node,pos,index)=>result.push({node,pos,index,label:`${index+1}. ${labels[node.type.name] || node.type.name}${node.attrs.title || node.textContent?' · '+(node.attrs.title || node.textContent).slice(0,50):''}`}));return result;
 }
@@ -26,7 +27,11 @@ export function changeArticleBlock(editor,action,value){
   if(action==='select'){const target=all[Number(value)];return target&&editor.chain().focus().setNodeSelection(target.pos).run();}
   if(action==='placement')return commit(editor,tr=>{tr.setNodeMarkup(current.pos,undefined,{...current.node.attrs,placement:value});return current.pos;});
   if(action==='replace')return commit(editor,tr=>{tr.replaceWith(current.pos,current.pos+current.node.nodeSize,editor.schema.nodeFromJSON(value));return current.pos;});
-  if(action==='duplicate')return commit(editor,tr=>{const pos=current.pos+current.node.nodeSize;tr.insert(pos,current.node);return pos;});
+  if(action==='duplicate')return commit(editor,tr=>{
+    const pos=current.pos+current.node.nodeSize;
+    const node=current.node.attrs.articleSummary?current.node.type.create({...current.node.attrs,articleSummary:false},current.node.content,current.node.marks):current.node;
+    tr.insert(pos,node);return pos;
+  });
   if(action==='delete')return commit(editor,tr=>{
     if(all.length===1){tr.replaceWith(0,current.node.nodeSize,editor.schema.nodes.paragraph.create());return 0;}
     tr.delete(current.pos,current.pos+current.node.nodeSize);return all[current.index+1]?current.pos:all[current.index-1].pos;
@@ -37,4 +42,19 @@ export function changeArticleBlock(editor,action,value){
 }
 export function takeawayContent(value){return [{type:'bulletList',content:value.split('\n').map(text=>text.trim()).filter(Boolean).map(text=>({type:'listItem',content:[{type:'paragraph',content:[{type:'text',text}]}]}))}];}
 export function quoteContent(value){return value.split('\n').map(text=>({type:'paragraph',...(text.trim()?{content:[{type:'text',text:text.trim()}]}:{})}));}
+export function prepareArticleSummary(translation,lang){
+  const doc=translation.document;
+  if(doc.attrs?.takeawaysInDocument){
+    const summaries=doc.content.filter(node=>node.type==='takeaway');
+    if(!doc.attrs.articleSummaryLinked&&summaries.length&&!summaries.some(node=>node.attrs?.articleSummary))summaries[0].attrs={...summaries[0].attrs,articleSummary:true};
+    doc.attrs.articleSummaryLinked=true;
+    const summary=summaries.find(node=>node.attrs?.articleSummary);
+    translation.takeaways=(summary?.content||[]).flatMap(child=>['bulletList','orderedList'].includes(child.type)?child.content.map(articleDocumentText):[articleDocumentText(child)]).filter(Boolean);
+    if(summary&&translation.takeawayNoteEnabled)translation.takeawayNote=summary.attrs?.note||'';
+    return;
+  }
+  if(!translation.takeaways.length)return;
+  doc.attrs={...doc.attrs,takeawaysInDocument:true,articleSummaryLinked:true};
+  doc.content=[...(doc.content||[]),{type:'takeaway',attrs:{articleSummary:true,placement:'full',title:lang==='en'?'Key takeaways':'สรุปประเด็นสำคัญ',note:translation.takeawayNoteEnabled?translation.takeawayNote:''},content:takeawayContent(translation.takeaways.join('\n'))}];
+}
 export function blockPlainText(node){return node.type.name==='takeaway' ? [...node.content.content].flatMap(child=>child.type.name==='bulletList'||child.type.name==='orderedList'?child.content.content.map(item=>item.textContent):[child.textContent]).join('\n') : node.content.content.map(child=>child.textContent).join('\n');}

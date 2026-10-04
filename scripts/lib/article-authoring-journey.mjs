@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {normalizeArticleDocument} from '../../article-document.mjs';
-import {articleField,articleTool,openSettings,closeSettings,revealArticleControl} from './article-editor-ui.mjs';
+import {articleField,articleTool,openSettings,closeSettings,revealArticleControl,openArticleWriting} from './article-editor-ui.mjs';
 
 // Start with the empty CMS editor: no injected JSON, imported draft or sample article.
 export const authoredArticle = {
@@ -16,6 +16,7 @@ export const authoredArticle = {
 };
 
 export async function authorRichArticle(page,{out,engine}) {
+  await openArticleWriting(page);
   await (await revealArticleControl(page,'.ae-canvas-frame')).scrollIntoViewIfNeeded();
   const body=page.frameLocator('.ae-canvas-frame').getByRole('textbox',{name:'เนื้อหาบทความภาษาไทย',exact:true});
   const field=key=>articleField(page,key);
@@ -73,8 +74,8 @@ export async function authorRichArticle(page,{out,engine}) {
   await (await revealArticleControl(page,'[data-ae=callout][data-kind=feature]')).click();
   await modalField('title').fill('ประกันสุขภาพแบบเหมาจ่าย');await submit();
   await openArticleSettings(page);
-  await tool('cover');await modalField('alt').fill('ภาพประกอบบทความที่เลือกจาก Editor');
-  await modalField('caption').fill('ภาพปกและคำบรรยายจาก CMS');await submit();
+  await field('coverAlt').fill('ภาพประกอบบทความที่เลือกจาก Editor');
+  await field('caption').fill('ภาพปกและคำบรรยายจาก CMS');await tool('cover');
   const coverMedia=await cropBundledImage();
   await field('authorName').fill('ทีมบรรณาธิการ CoverMate');await choose('หมวดหมู่','ประกันสุขภาพ');
   await field('takeaways').fill(a.takeaways.join('\n'));
@@ -82,14 +83,13 @@ export async function authorRichArticle(page,{out,engine}) {
   await tool('add-source');await field('source-label-0').fill('แหล่งอ้างอิงสำหรับการทดสอบ');await field('source-url-0').fill('https://example.com/article-source');
   await closeArticleSettings(page);
   const canvas=page.frameLocator('.ae-canvas-frame'),sameEditor=await body.elementHandle();
-  await canvas.locator('.ad-takeaways').waitFor();
-  await canvas.locator('.ad-takeaways h2').click();
-  await tool('clear-takeaways');
-  await canvas.locator('.ad-takeaways').waitFor({state:'detached'});
+  await body.locator('[data-article-summary=true]').waitFor();
+  await field('takeaways').fill('');
+  await body.locator('[data-article-summary=true]').waitFor({state:'detached'});
   assert.equal(await field('takeaways').inputValue(),'');
   assert.equal(await field('takeawayNote').inputValue(),a.notes.takeawayNote,'Removing the summary preserves its disabled note for reuse');
   await field('takeaways').fill(a.takeaways.join('\n'));await field('takeawayNoteEnabled').check();
-  await canvas.locator('.ad-takeaways li').first().waitFor();
+  await body.locator('[data-article-summary=true] li').first().waitFor();
   await closeArticleSettings(page);
   assert.ok(await sameEditor.evaluate(el=>el.isConnected),'Updating or clearing metadata preserves the live TipTap node');
   await body.locator('h4').click();
@@ -112,8 +112,8 @@ export async function authorRichArticle(page,{out,engine}) {
   assert.equal(draft.translations.th.document.content.find(n=>n.type==='callout')?.content[0]?.type,'bulletList');
   assert.ok(draft.translations.th.document.content.some(n=>n.type==='callout'&&n.attrs.kind==='feature'));
   assert.equal(draft.translations.th.document.content.find(n=>n.type==='quoteCard').attrs.placement,'sidebar');
-  assert.equal(draft.translations.th.document.content.find(n=>n.type==='takeaway').attrs.placement,'full');
-  for(const [actual,accepted] of [[draft.cover,coverMedia],[draft.image,coverMedia],[draft.translations.th.document.content.find(n=>n.type==='figure').attrs,figureMedia]]){
+  assert.equal(draft.translations.th.document.content.find(n=>n.type==='takeaway'&&!n.attrs.articleSummary).attrs.placement,'full');
+  for(const [actual,accepted] of [[draft.translations.th.cover,coverMedia],[draft.translations.th.image,coverMedia],[draft.translations.th.document.content.find(n=>n.type==='figure').attrs,figureMedia]]){
     assert.equal(actual.src,accepted.url,'Draft stores the accepted derivative');
     assert.equal(actual.sourceUrl,a.image,'Draft preserves the original image');
     assert.deepEqual(actual.crop,accepted.crop,'Draft preserves exact crop geometry');
@@ -127,7 +127,10 @@ export function assertPersistedArticle(actual,expected,{published=false}={}) {
   assert.deepEqual(normalizeArticleDocument(actual.translations.th.document),normalizeArticleDocument(expected.translations.th.document,{includeMediaMetadata:!published}),'UI-authored rich document survives storage/public projection');
   // Public delivery keeps dimensions for responsive candidates, while original
   // URLs, provider identifiers and crop geometry remain private to the draft.
-  for(const key of ['image','cover'])assert.deepEqual(actual[key],published?{src:expected[key].src,width:expected[key].width,height:expected[key].height}:expected[key],'Preserved '+key+' with the correct private/public media boundary');
+  for(const key of ['image','cover']){
+    const media=expected.translations.th[key];
+    assert.deepEqual(actual.translations.th[key],published?{src:media.src,width:media.width,height:media.height}:media,'Preserved localized '+key+' with the correct private/public media boundary');
+  }
   if(published)assert.doesNotMatch(JSON.stringify(actual),/"(?:sourceUrl|sourceAsset|crop)"\s*:/,'Public projection omits private re-crop metadata');
   for(const key of ['takeaways','sources','coverAlt','caption',...Object.keys(authoredArticle.notes)])assert.deepEqual(actual.translations.th[key],expected.translations.th[key],'Preserved '+key);
 }
@@ -141,7 +144,7 @@ export async function assertEditorArticle(page) {
   assert.equal(await body.locator('.article-callout[data-kind=keypoints] li').count(),2);
   assert.equal(await body.locator('[data-kind=feature] .article-callout-title').innerText(),'ประกันสุขภาพแบบเหมาจ่าย');
   assert.equal(await body.locator('blockquote cite').innerText(),'ทีม CoverMate');
-  assert.equal(await body.locator('.article-takeaway-title').innerText(),'สรุประหว่างบทความ');
+  assert.equal(await body.locator('.article-takeaway-card:not([data-article-summary=true]) .article-takeaway-title').innerText(),'สรุประหว่างบทความ');
   assert.equal((await body.locator('.article-quote-card > div').innerText()).trim(),'เลือกความคุ้มครองที่สอดคล้องกับชีวิตของคุณ');
   assert.equal(await body.locator('figure img').getAttribute('alt'),'ภาพประกอบที่แทรกจาก Editor');
   for(const [key,value] of Object.entries(a.notes))assert.equal(await page.locator(`[data-field=${key}]`).inputValue(),value);
@@ -152,7 +155,7 @@ export async function openArticleSettings(page){
 }
 export async function closeArticleSettings(page){
   await closeSettings(page);
-  if(await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-ae=close-reader]').click();
+  if(await page.locator('.ae-reader-panels:visible').count())await page.locator('[data-reader-panel][aria-expanded=true]').click();
 }
 
 export async function assertReaderArticle(surface,expected) {
@@ -164,12 +167,12 @@ export async function assertReaderArticle(surface,expected) {
   assert.equal(await prose.locator('.article-callout[data-kind=keypoints] li').count(),2);
   assert.equal(await prose.locator('[data-kind=feature] .article-callout-title').innerText(),'ประกันสุขภาพแบบเหมาจ่าย');
   assert.equal(await prose.locator('blockquote cite').innerText(),'ทีม CoverMate');
-  assert.equal(await prose.locator('.article-takeaway-title').innerText(),'สรุประหว่างบทความ');
-  assert.equal(await prose.locator('.article-takeaway-card').getAttribute('data-placement'),'full');
+  assert.equal(await prose.locator('.article-takeaway-card:not([data-article-summary=true]) .article-takeaway-title').innerText(),'สรุประหว่างบทความ');
+  assert.equal(await prose.locator('.article-takeaway-card:not([data-article-summary=true])').getAttribute('data-placement'),'full');
   assert.equal(await prose.locator('.article-quote-card').getAttribute('data-placement'),'sidebar');
   assert.equal(await prose.locator('figure img').getAttribute('alt'),'ภาพประกอบที่แทรกจาก Editor');
   assert.equal(await surface.locator('.ad-toc nav a').count(),2,'Headings authored in the editor generate real TOC links');
-  assert.equal(await surface.locator('.ad-cover img').getAttribute('src'),expected.cover.src,'Reader uses the accepted cover derivative');
+  assert.equal(await surface.locator('.ad-cover img').getAttribute('src'),expected.translations.th.cover.src,'Reader uses the accepted localized cover derivative');
   assert.equal(await prose.locator('figure img').getAttribute('src'),expected.translations.th.document.content.find(n=>n.type==='figure').attrs.src,'Reader uses the accepted body derivative');
   for(const image of [surface.locator('.ad-cover img'),prose.locator('figure img')]){
     await image.scrollIntoViewIfNeeded();
@@ -177,8 +180,8 @@ export async function assertReaderArticle(surface,expected) {
   }
   assert.equal(await surface.locator('.ad-cover figcaption').innerText(),'ภาพปกและคำบรรยายจาก CMS');
   assert.equal((await surface.locator('.ad-author').innerText()).trim(),'ทีมบรรณาธิการ CoverMate');
-  assert.equal(await surface.locator('.ad-takeaways li').count(),2);
-  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'.ad-takeaways-note'})){
+  assert.equal(await surface.locator('[data-article-summary=true]:visible li').count(),2);
+  for(const [key,selector] of Object.entries({headerNote:'.ad-header-note',sidebarQuote:'.ad-side-note p',takeawayNote:'[data-article-summary=true]:visible .article-takeaway-note'})){
     assert.equal(await surface.locator(selector).textContent(),a.notes[key]);
     assert.equal(await surface.locator(selector).evaluate(el=>getComputedStyle(el).whiteSpace),'pre-line','Authored note line breaks remain visible');
   }
@@ -188,10 +191,10 @@ export async function assertReaderArticle(surface,expected) {
     check:getComputedStyle(el.querySelector('li'),'::before').backgroundImage
   }));
   assert.match(visuals.bulb,/svg/,'Authored callout displays the bulb');assert.match(visuals.check,/svg/,'Authored bullet list displays check circles');
-  const bulb=await surface.locator('.ad-takeaways-bulb svg').boundingBox();assert.ok(bulb?.width>0&&bulb?.height>0,'Full-width summary displays its bulb');
-  const layout=await surface.locator('.ad-page').evaluate(el=>({width:el.getBoundingClientRect().width,overflow:document.documentElement.scrollWidth>innerWidth+1,summary:el.querySelector('.ad-takeaways').getBoundingClientRect().top,prose:el.querySelector('.ad-prose').getBoundingClientRect().top}));
+  const bulb=await surface.locator('[data-article-summary=true]:visible').evaluate(el=>getComputedStyle(el,'::before').backgroundImage);assert.match(bulb,/svg/,'Movable summary displays its bulb');
+  const layout=await surface.locator('.ad-page').evaluate(el=>({width:el.getBoundingClientRect().width,overflow:document.documentElement.scrollWidth>innerWidth+1,summary:el.querySelector('[data-article-summary=true]').getBoundingClientRect().top,prose:el.querySelector('.ad-prose').getBoundingClientRect().top}));
   assert.equal(layout.overflow,false,'Authored article fits its viewport');
-  assert.ok(layout.width<768?Number(layout.summary)<Number(layout.prose):Number(layout.summary)>Number(layout.prose),'Summary placement follows the actual responsive page');
+  assert.ok(layout.summary>=layout.prose,'Movable summary retains its authored body position on every viewport');
 }
 
 async function assertAuthoredTypography(prose) {

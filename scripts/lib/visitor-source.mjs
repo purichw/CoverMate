@@ -62,6 +62,12 @@ export function readSelectAsset() {
   return { code, file:new URL('assets/visitor/select.js', ROOT), url:`/assets/visitor/select.js?v=${hash}` };
 }
 
+export function readArticleSearchAsset() {
+  const code=buildSync({entryPoints:[fileURLToPath(new URL('src/visitor/article-search.mjs',ROOT))],bundle:true,write:false,minify:true,format:'esm',target:'es2022',charset:'utf8'}).outputFiles[0].text;
+  const hash=createHash('sha256').update(code).digest('hex').slice(0,16);
+  return {code,file:new URL('assets/visitor/article-search.js',ROOT),url:`/assets/visitor/article-search.js?v=${hash}`};
+}
+
 export function readAnalyticsAsset() {
   const code = transformSync(readText(new URL('covermate-analytics.js', ROOT)), { minify:true, target:'es2022', charset:'utf8' }).code;
   const hash = createHash('sha256').update(code).digest('hex').slice(0,16);
@@ -237,7 +243,7 @@ export function buildVisitorRuntime(sources = readVisitorSources()) {
   assertSingleSlot(sources.runtime, VISITOR_ASSET_VERSIONS_SLOT, "src/visitor/runtime.js");
   assertSingleSlot(sources.runtime, '// COVERMATE_CMS_SCHEMA_SOURCE', 'src/visitor/runtime.js');
   assertSingleSlot(sources.runtime, '// COVERMATE_CMS_CONTROLLER_SOURCE', 'src/visitor/runtime.js');
-  return sources.runtime.replace(VISITOR_DEFAULTS_SLOT, () => sources.defaults.trimEnd())
+  return sources.runtime.replace('/assets/visitor/article-search.js',readArticleSearchAsset().url).replace(VISITOR_DEFAULTS_SLOT, () => sources.defaults.trimEnd())
     .replace('// COVERMATE_CMS_SCHEMA_SOURCE', () => sources.cmsSchema)
     .replace('// COVERMATE_LOGO_VARIANTS_SOURCE', () => sources.logoVariantsSource)
     .replace('// COVERMATE_ADMIN_LABELS_SOURCE', () => sources.adminLabels)

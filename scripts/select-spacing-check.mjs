@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {startArticlesIndexPreview} from './articles-index-preview.mjs';
 import {startArticlesAdminPreview} from './articles-admin-preview.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
+import {openArticleWriting} from './lib/article-editor-ui.mjs';
 
 const visitor=await startArticlesIndexPreview(),admin=await startArticlesAdminPreview();
 const pw=loadPlaywright(),engine=process.env.BROWSER||'chromium';
@@ -75,12 +76,12 @@ try {
     }
   }
   if(!centerOnly) {
-  await page.locator('[data-article-action=edit]').first().click();await page.locator('.ae-format-select .cm-select-trigger').waitFor();
+  await page.locator('[data-article-action=edit]').first().click();await openArticleWriting(page);await page.locator('.ae-format-select .cm-select-trigger').waitFor();
   await measure('Editor desktop');
   for(const width of [1440,390]){
     await page.setViewportSize({width,height:width===1440?1000:844});
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-    assert.equal(await page.locator('.ae-writing').isVisible(),true,'Writing workspace stays available without opening a disclosure');
+    assert.equal(await page.locator('.ae-writing-tools').isVisible(),true,'Expanded writing tools stay available across viewport changes');
     await page.locator('.ae-toolbar').scrollIntoViewIfNeeded();
     await measure(width===1440?'Editor desktop':'Editor mobile');
     const buttons=await page.locator('.ae-format-row:not(.ae-format-more) > .ae-button').evaluateAll(nodes=>nodes.map(button=>{

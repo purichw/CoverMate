@@ -1,5 +1,12 @@
 // Delivery variants share the saved crop; the private original stays untouched.
 import {LOCAL_ARTICLE_IMAGES} from './article-image-assets.mjs';
+// An explicit empty language image means "no image", never fallback to another language.
+export function articleMediaForLanguage(article,lang,role='cover') {
+  const translation=article?.translations?.[lang]||{};
+  const key=Object.hasOwn(translation,role)?role:'cover';
+  const media=Object.hasOwn(translation,key)?translation[key]:role==='cover'&&article?.cover?.src?article.cover:article?.image;
+  return media||{src:''};
+}
 export const ARTICLE_IMAGE_PROFILES = Object.freeze([
   {label:'Mobile thumbnail',width:320},
   {label:'Desktop thumbnail',width:640},

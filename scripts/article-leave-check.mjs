@@ -5,7 +5,7 @@ import { firebaseMock } from './fixtures/ops-portal.mjs';
 import { adminArticleFixture } from './fixtures/home-articles/admin-feed.mjs';
 import { editorArticleFixture } from './fixtures/home-articles/editor-feed.mjs';
 import { createArticleDraft } from '../admin/articles/drafts.mjs';
-import { articleCanvas, articleField, revealArticleControl } from './lib/article-editor-ui.mjs';
+import { articleCanvas, articleField, openArticleWriting } from './lib/article-editor-ui.mjs';
 import { launchChromium, loadPlaywright } from './lib/playwright.mjs';
 
 // Real editor and routing, isolated fixture identity and local IndexedDB only.
@@ -22,18 +22,24 @@ try {
   await context.route('**/covermate-firebase.js', route => route.fulfill({ contentType: 'text/javascript', body: firebaseMock.replace('signOut: async () => {}', 'signOut: async () => { await window.__leaveSignOut(); }') }));
   await context.route('**/admin/login*', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Fixture login</title><p>Signed out</p>' }));
   page = await context.newPage();
+  await page.clock.install();
   page.setDefaultTimeout(12000);
   page.on('pageerror', error => report.errors.push(error.message));
   page.on('dialog', async dialog => { report.nativeDialogs.push({ type: dialog.type(), message: dialog.message() }); await dialog.dismiss(); });
   const ready = async (module = 'articles') => {
+    await page.clock.resume();
     await page.goto(preview.baseUrl + '/admin#' + module);
     await page.waitForFunction(id => document.body.dataset.boot === 'ready' && document.body.dataset.module === id, module);
     if (module === 'articles') await page.locator('[data-article-state=ready]').waitFor();
   };
   const edit = async () => {
+    await page.clock.resume();
     if (!await page.locator('[data-article-action=edit]:visible').count()) await page.locator('.article-more > summary').first().click();
     await page.locator('[data-article-action=edit]:visible').first().click();
-    await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor();
+    await articleCanvas(page).locator('.tiptap').first().waitFor({state:'attached'});
+    await openArticleWriting(page);
+    // Hold the debounce clock so navigation checks exercise pending edits.
+    await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now()+1000)));
   };
   const back = () => page.locator('[data-ae=back]').click();
   const stay = () => page.locator('[data-leave=stay]').click();
@@ -109,7 +115,7 @@ try {
   report.checks.push('Import cancellation preserves edits; confirmed import loads the backup without saving or publishing it.');
 
   await edit(); await articleField(page, 'title').fill(title);
-  await revealArticleControl(page, '.ae-canvas-frame');
+  await openArticleWriting(page);
   await page.locator('[data-ae=fullscreen]').click();
   await page.evaluate(() => { location.hash = '#home'; });
   await dialog.waitFor();
@@ -129,8 +135,11 @@ try {
     assert.equal(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth), true);
     await page.screenshot({ path: `${out}/mobile-${width}.png` });
     const { default: AxeBuilder } = await import('@axe-core/playwright');
+    // Axe uses timers; the open warning itself must now keep Autosave paused.
+    await page.clock.resume();
     const a11y = await new AxeBuilder({ page }).include('.ae-leave-dialog').analyze();
     assert.deepEqual(a11y.violations, [], 'Dialog accessibility');
+    await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now()+1000)));
     await stay(); await closed(); await expectTitle(title);
     await page.locator('.case-menu-trigger').click();
     await page.locator('[data-case-panel=navigation] [data-module=home]').click();
@@ -147,10 +156,12 @@ try {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await edit(); await articleField(page, 'title').fill(title);
   await (await openAccount()).locator('[data-action=logout]').click();
+  await page.locator('[data-signout-confirm] button[value=confirm]').click();
   await stay(); await closed(); await expectTitle(title);
   assert.equal(report.signOuts, 0);
   assert.ok(await page.evaluate(() => localStorage.getItem('covermate-admin-session')));
   await (await openAccount()).locator('[data-action=logout]').click();
+  await page.locator('[data-signout-confirm] button[value=confirm]').click();
   await discard(); await page.waitForURL('**/admin/login*');
   assert.equal(report.signOuts, 1);
   assert.equal(await page.evaluate(() => localStorage.getItem('covermate-admin-session')), null);

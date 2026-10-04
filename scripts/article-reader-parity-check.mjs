@@ -6,6 +6,7 @@ import {adminArticleFixture} from './fixtures/home-articles/admin-feed.mjs';
 import {editorArticleFixture} from './fixtures/home-articles/editor-feed.mjs';
 import {loadPlaywright,launchChromium} from './lib/playwright.mjs';
 import {articleField,articleCanvas} from './lib/article-editor-ui.mjs';
+import {prepareArticleSummary} from '../src/admin/article-blocks.mjs';
 
 // Presentation contract only: existing editor suites own saving, undo and backup.
 // Both surfaces consume the same source-owned sample and real shared renderer.
@@ -17,9 +18,11 @@ fixture.translations.th={...fixture.translations.th,status:'published',published
 const noCover=structuredClone(fixture);
 noCover.id='sample-no-cover';noCover.slug='sample-no-cover';noCover.cover={src:''};noCover.image={src:''};
 Object.assign(noCover.translations.th,{caption:'คำบรรยายที่เก็บไว้แม้ยังไม่มีภาพปก',headerNote:'',sidebarQuote:'',takeawayNote:''});
+noCover.translations.th.cover={src:''};noCover.translations.th.image={src:''};
 const hiddenNotes=structuredClone(fixture);
 hiddenNotes.id='sample-hidden-notes';hiddenNotes.slug='sample-hidden-notes';
 Object.assign(hiddenNotes.translations.th,{headerNote:'เก็บข้อความหัวไว้',headerNoteEnabled:false,sidebarQuote:'',sidebarQuoteEnabled:false,takeawayNote:'เก็บข้อความสรุปไว้',takeawayNoteEnabled:false});
+for(const item of [fixture,noCover,hiddenNotes])prepareArticleSummary(item.translations.th,'th');
 const report={engine,environment:'Loopback fixture servers; synthetic account; no publication or backend writes',checks:[],comparisons:[],screenshots:[],errors:[],passed:false};
 const services=[];
 let browser;
@@ -35,7 +38,7 @@ async function ready(page,root) {
 const geometry=root=>root.evaluate(element=>{
   const rect=selector=>{const box=element.querySelector(selector).getBoundingClientRect();return {left:box.left,right:box.right,top:box.top,bottom:box.bottom,width:box.width,height:box.height};};
   const css=getComputedStyle(element),box=element.getBoundingClientRect();
-  return {viewport:innerWidth,container:box.width-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)-parseFloat(css.borderLeftWidth)-parseFloat(css.borderRightWidth),layout:getComputedStyle(element.querySelector('.ad-layout')).display,cover:rect('.ad-cover'),sidebar:rect('.ad-sidebar'),toc:rect('.ad-toc'),share:rect('.ad-share-panel'),body:rect('.ad-prose'),takeaways:rect('.ad-takeaways')};
+  return {viewport:innerWidth,container:box.width-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)-parseFloat(css.borderLeftWidth)-parseFloat(css.borderRightWidth),layout:getComputedStyle(element.querySelector('.ad-layout')).display,cover:rect('.ad-cover'),sidebar:rect('.ad-sidebar'),toc:rect('.ad-toc'),share:rect('.ad-share-panel'),body:rect('.ad-prose'),takeaways:rect('[data-article-summary=true]')};
 });
 
 const typography=root=>root.evaluate(element=>{
@@ -74,7 +77,7 @@ async function assertContent(root) {
   assert.equal(await body.locator('table tr').count(),3);
   assert.equal(await body.locator('table th').count(),2);
   assert.equal(await body.locator('table td').count(),4);
-  assert.equal(await root.locator('.ad-takeaways li').count(),2,'Metadata takeaways remain separate from authored callouts');
+  assert.equal(await root.locator('[data-article-summary=true] li').count(),2,'Metadata takeaways remain separate from authored callouts');
 }
 
 async function assertRichStyle(root,{publicReader=false}={}) {
@@ -119,7 +122,7 @@ function assertMobile(box,label) {
   assert.ok(Math.abs(box.toc.width-box.body.width)<=2,label+' gives contents the reading-column width while allowing a full-bleed hero');
   assert.ok(box.toc.top>=box.cover.bottom-2,label+' places contents after the hero');
   assert.ok(box.takeaways.top>=box.toc.bottom-2,label+' places contents before the takeaways');
-  assert.ok(box.takeaways.bottom<=box.body.top+2,label+' places takeaways before the body');
+  assert.ok(box.takeaways.top>=box.body.top && box.takeaways.bottom<=box.body.bottom+2,label+' retains the authored summary inside the body');
   assert.ok(box.share.top>=box.body.bottom-2,label+' keeps sharing after the body');
 }
 
@@ -150,10 +153,10 @@ async function assertLongNotes(root,label) {
     for(const [selector,parent,text] of [
       ['.ad-header-note','.ad-heading-band > .hm-wrap','การวางแผนเพื่อสุขภาพที่ดีในอนาคต '.repeat(25).slice(0,500)],
       ['.ad-side-note p','.ad-sidebar-sticky','UnbrokenEnglishWord'.repeat(55).slice(0,1000)],
-      ['.ad-takeaways-note','.ad-takeaways','UnbrokenEnglishWord'.repeat(28).slice(0,500)]
+      ['[data-article-summary=true] .article-takeaway-note','[data-article-summary=true]','UnbrokenEnglishWord'.repeat(28).slice(0,500)]
     ]) {
       let node=element.querySelector(selector);const created=!node;let added;
-      if(created){node=document.createElement('p');added=node;if(selector==='.ad-side-note p'){added=document.createElement('div');added.className='ad-side-note';added.append(node);}else node.className=selector.slice(1);element.querySelector(parent).append(added);}
+      if(created){node=document.createElement('p');added=node;if(selector==='.ad-side-note p'){added=document.createElement('div');added.className='ad-side-note';added.append(node);}else node.className=selector.includes('article-takeaway-note')?'article-takeaway-note':selector.slice(1);element.querySelector(parent).append(added);}
       changes.push({node,added,text:node.textContent});node.textContent=text;
     }
     const header=element.querySelector('.ad-header-note').getBoundingClientRect(),toc=element.querySelector('.ad-toc').getBoundingClientRect();
@@ -193,7 +196,7 @@ try {
     await canvas.evaluate(el=>el.ownerDocument.fonts.ready);
     assert.deepEqual(await typography(canvas),await typography(publicPage.locator('.ad-page')),mode+' editable prose styles match the real reader while writing');
     const selector='.ae-editor-host:not([hidden]) .tiptap';
-    assert.equal(await canvas.locator(selector).getAttribute('contenteditable'),'true');
+    assert.equal(await canvas.locator(selector).getAttribute('contenteditable'),'false','Collapsed canvas is a read-only preview');
     if(mode==='desktop'){
       const rows=await canvas.locator('.ad-share-links > *').evaluateAll(nodes=>nodes.map(el=>Math.round(el.getBoundingClientRect().top)));
       assert.equal(new Set(rows).size,1,'All four share actions fit on one row beside the writing column');
@@ -201,7 +204,7 @@ try {
     await canvas.locator(selector).scrollIntoViewIfNeeded();
     await editorPage.screenshot({path:`${out}/${engine}-writing-${mode}.png`});
   }
-  report.checks.push('Editable writing canvas matches public prose typography, callouts and tables at the same desktop/mobile viewport');
+  report.checks.push('Collapsed canvas matches public prose typography, callouts and tables at the same desktop/mobile viewport');
   // Vercel injects its feedback toolbar into hosted preview HTML. It must not
   // execute inside the private article frame or send deployment telemetry.
   await editorPage.route(url=>url.pathname==='/'&&url.searchParams.has('lang'),async route=>{
@@ -283,7 +286,7 @@ try {
   await ready(publicPage,published);await assertContent(published);await assertRichStyle(published,{publicReader:true});
   assert.equal(await published.locator('.ad-cover,.ad-cover .hm-article-fallback').count(),0,'An empty cover/image does not create a fixed image placeholder');
   assert.equal(await published.locator('.ad-cover-caption').innerText(),noCover.translations.th.caption,'Clearing the cover retains its authored caption');
-  assert.equal(await published.locator('.ad-header-note,.ad-takeaways-note').count(),0,'Empty optional notes do not create empty handwriting blocks');
+  assert.equal(await published.locator('.ad-header-note,[data-article-summary=true] .article-takeaway-note').count(),0,'Empty optional notes do not create empty handwriting blocks');
   for(const text of await published.locator('.ad-side-note p').allInnerTexts())assert.ok(text.trim(),'Any global sidebar fallback has content rather than an empty quote card');
   const emptyGeometry=await published.evaluate(element=>{const caption=element.querySelector('.ad-cover-caption').getBoundingClientRect(),body=element.querySelector('.ad-prose').getBoundingClientRect();return {captionHeight:caption.height,bodyGap:body.top-caption.bottom};});
   assert.ok(emptyGeometry.captionHeight<80&&emptyGeometry.bodyGap<=64,'No empty image-sized gap remains above the body');
@@ -295,8 +298,8 @@ try {
   for(const width of [1440,390]){
     await publicPage.setViewportSize({width,height:1000});
     await publicPage.goto(reader.baseUrl+'/articles/'+hiddenNotes.slug);await ready(publicPage,published);
-    assert.equal(await published.locator('.ad-header-note,.ad-side-note,.ad-takeaways-note').count(),0,'Disabled notes and global sidebar fallback stay hidden at '+width);
-    assert.equal(await published.locator('.ad-takeaways li').count(),fixture.translations.th.takeaways.length,'Disabling note retains summary content');
+    assert.equal(await published.locator('.ad-header-note,.ad-side-note,[data-article-summary=true] .article-takeaway-note').count(),0,'Disabled notes and global sidebar fallback stay hidden at '+width);
+    assert.equal(await published.locator('[data-article-summary=true] li').count(),fixture.translations.th.takeaways.length,'Disabling note retains summary content');
   }
   report.checks.push('Public reader respects all three disabled notes on desktop/mobile, blocks sidebar fallback and retains the summary');
   await editorPage.setViewportSize({width:1440,height:1000});

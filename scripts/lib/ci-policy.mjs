@@ -4,7 +4,7 @@ import { fullSuiteJobNames } from './ci-plan.mjs';
 // paths always take the full path, including Markdown outside these locations.
 export function isDocumentationPath(path) {
   if (path.split('/').some(part => part === '.' || part === '..')) return false;
-  return ['README.md', 'PROJECT_MAP.md'].includes(path)
+  return ['README.md', 'PROJECT_MAP.md', 'AGENTS.md'].includes(path)
     || /^(docs|skills)\/.+\.md$/.test(path);
 }
 

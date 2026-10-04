@@ -7,6 +7,8 @@ permissions:
   contents: read
 jobs:
   check:
+    # This credential-bearing monitor never checks out pull-request/fork code.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -26,7 +28,11 @@ jobs:
             sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g; s|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
           fi
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        # uptime-check uses Playwright's default headless Chromium, no channel.
+        run: npx playwright install --with-deps --only-shell chromium
       - name: Check production pages
         timeout-minutes: 3
+        env:
+          COVERMATE_REQUIRE_BYPASS: '1'
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: node scripts/uptime-check.mjs

@@ -68,6 +68,7 @@ export function bindAdminAccounts(actions) {
     document.querySelectorAll('.admin-account[open]').forEach(account => {if(!account.contains(event.target))close(account);});
   });
   document.addEventListener('keydown', event => {
+    if(event.target.closest?.('[data-signout-confirm]'))return;
     if(event.key !== 'Escape')return;
     const account=document.querySelector('.admin-account[open]');
     if(account){event.preventDefault();event.stopImmediatePropagation();close(account,true);}

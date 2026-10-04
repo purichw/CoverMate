@@ -19,6 +19,7 @@ const { server, baseUrl } = await startNfrServer();
 const browser = await launchChromium(loadPlaywright().chromium);
 const suffix = '?cm_env=uat&cm_emulator=1';
 const report = { form: false, adminReadback: false, sameDocumentTabs: false, previewNamespace: false, publicNewTab: false, panelClose: false, motorNavigation: false, keyboardFaq: false, reflow320: false, axe: [] };
+fs.mkdirSync('uat-results/nfr', { recursive: true });
 try {
   const visitorContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   const visitor = await visitorContext.newPage();
@@ -142,9 +143,10 @@ try {
   assert.equal(new URL(admin.url()).pathname, '/admin/edit');
   report.panelClose = true;
   await admin.locator('label[for=covermate-owner-tools-toggle]').click();
-  const previewPromise = owner.waitForEvent('page');
-  await admin.getByRole('button', { name: 'Preview', exact: true }).click();
-  const preview = await previewPromise;
+  const [preview] = await Promise.all([
+    owner.waitForEvent('page'),
+    admin.locator('#covermate-owner-tools-panel').getByRole('button', { name: 'ดูตัวอย่าง (Preview)', exact: true }).click()
+  ]);
   await preview.waitForLoadState();
   assert.equal(new URL(preview.url()).pathname, '/admin/preview');
   await preview.locator('[data-admin-preview-bar]').waitFor();
@@ -190,6 +192,13 @@ try {
   console.log(JSON.stringify(report, null, 2));
   assert.ok(report.axe.every(r => r.violations.length === 0), 'Accessibility violations; see journeys.json.');
   }
+} catch (error) {
+  report.error = error.stack;
+  for (const [index, context] of browser.contexts().entries()) {
+    const page = context.pages()[0];
+    if (page) await page.screenshot({ path: `uat-results/nfr/journey-failed-${index}.png` }).catch(() => {});
+  }
+  throw error;
 } finally {
   fs.writeFileSync('uat-results/nfr/journeys.json', JSON.stringify(report, null, 2));
   console.log('Closing journey browser.');

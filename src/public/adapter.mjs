@@ -10,6 +10,7 @@ let appCheckPromise;
 const pendingIds = new Map();
 let inFlight, lastSignature, lastAttempt = 0, failures = 0, timer, syncing = false, queued = false;
 let routeGeneration = 0;
+let reconnectGeneration = 0;
 
 function publicRoute() {
   return !isAdminNamespacePath(location.pathname) && !isOwnerHash(location.hash);
@@ -37,7 +38,7 @@ function requestRefresh() {
   if (inFlight) { queued = true; return; }
   scheduleRefresh(0);
 }
-function onOnline() { failures = 0; requestRefresh(); }
+function onOnline() { reconnectGeneration++; failures = 0; requestRefresh(); }
 function onPageShow(event) { if (event.persisted) requestRefresh(); }
 function onStorage(event) {
   if ([LIVE_CONFIG_KEY, LIVE_TEXT_KEY].includes(event.key)) requestRefresh();
@@ -126,6 +127,7 @@ export function hydrateLocalContent() {
     } catch { /* Invalid/mismatched snapshots use the existing remote fallback. */ }
   }
   const generation = routeGeneration;
+  const connection = reconnectGeneration;
   inFlight = (async () => {
     const { response, data: snapshot } = await fetchJSON(`${publicFirestoreRoot()}/sites/${environment.siteId}/states/live`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Published content unavailable (${response.status}).`);
@@ -143,7 +145,9 @@ export function hydrateLocalContent() {
     if (changed) window.dispatchEvent(new CustomEvent('covermate:remote-content-ready', { detail: result }));
     return result;
   })().catch(error => {
-    failures++;
+    // An older request may reject after reconnect reset the retry budget.
+    // Keep its rejection, without delaying the queued fresh-connection read.
+    if (connection === reconnectGeneration) failures++;
     throw error;
   }).finally(() => {
     inFlight = null;

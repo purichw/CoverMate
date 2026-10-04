@@ -1,5 +1,22 @@
 import {projectPublishedArticles} from './home-articles.mjs';
 
+const normalizeSearch=value=>String(value||'').normalize('NFKC').toLocaleLowerCase().replace(/\s+/g,' ').trim();
+export function articleMatchScore(item,query) {
+  const q=normalizeSearch(query),title=normalizeSearch(item.title);
+  if(!q)return 0;
+  if(title===q)return 100;
+  if(title.includes(q))return 95;
+  const topics=[item.category,...item.tags].map(normalizeSearch);
+  if(topics.includes(q))return 90;
+  if(topics.some(value=>value.includes(q)))return 85;
+  const excerpt=normalizeSearch(item.excerpt);
+  if(excerpt.includes(q))return 80;
+  const words=[...new Set(q.split(' '))];
+  const matched=words.filter(word=>[title,excerpt,...topics].some(value=>value.includes(word))).length;
+  return matched?70*matched/words.length:0;
+}
+export const compareArticleMatches=(a,b)=>b.score-a.score||Number(b.pinned)-Number(a.pinned)||b.releasedAt-a.releasedAt||a.key.localeCompare(b.key);
+
 export function articleCardSummary(item, lang = 'th') {
   const date = new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'});
   return {...item,hasImage:!!item.image,titleId:'article-title-'+item.slug,date:item.showDate===false?'':date.format(item.publishedAt),datetime:new Date(item.publishedAt).toISOString(),
@@ -25,10 +42,8 @@ export function projectArticleIndex(feed, {search = '', lang = 'th', now, mediaU
   const available = feed?.available === true && Array.isArray(feed.items);
   const all = projectPublishedArticles(feed, {lang, now, mediaUrl});
   const categories = [...new Map(all.filter(item => item.category).map(item => [item.categoryId,{key:item.categoryId,label:item.category}])).values()];
-  const normalize = value => value.normalize('NFKC').toLocaleLowerCase(lang).replace(/\s+/g,' ');
-  let items = all.filter(item => (!category || item.categoryId === category) &&
-    (!query || normalize([item.title,item.excerpt,item.category,...item.tags].join(' ')).includes(normalize(query))));
-  items.sort((a,b) => sort === 'title' ? a.title.localeCompare(b.title,lang) || a.key.localeCompare(b.key) :
+  let items = all.map(item=>({...item,score:articleMatchScore(item,query)})).filter(item => (!category || item.categoryId === category) && (!query||item.score>0));
+  items.sort((a,b) => query && sort==='latest' ? compareArticleMatches(a,b) : sort === 'title' ? a.title.localeCompare(b.title,lang) || a.key.localeCompare(b.key) :
     (sort === 'oldest' ? a.publishedAt-b.publishedAt : Number(b.pinned)-Number(a.pinned) || b.publishedAt-a.publishedAt) || a.key.localeCompare(b.key));
   const total = items.length;
   const pinOrder=new Map((feed?.settings?.pinnedOrder||[]).map((id,index)=>[id,index]));

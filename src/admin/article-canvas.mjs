@@ -6,16 +6,14 @@ import {appendEnvironmentSearch} from '../../covermate-environment.mjs';
 export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,onError}) {
   const frame=root.querySelector('.ae-canvas-frame'),status=root.querySelector('.ae-canvas-status');
   const controller=new AbortController();let stopped=false,timer,ready=false,latest;
-  let resolvePaint=Promise.resolve(),startedWriting=false;
+  let resolvePaint=Promise.resolve(),writing=false;
   const writingSection=root.closest('.ae-writing');
   function revealWriting(){
-    if(!ready||startedWriting||!root.getClientRects().length)return;
+    if(!ready||!root.getClientRects().length)return;
     const win=frame.contentWindow,prose=frame.contentDocument.querySelector('.ad-prose');
     if(!prose)return;
-    // Start at editable content without moving the outer Admin page. The full
-    // reader and its metadata remain reachable within the same writing frame.
-    win.scrollTo({top:Math.max(0,prose.getBoundingClientRect().top+win.scrollY-24),behavior:'instant'});
-    startedWriting=true;
+    // Preserve the frame while switching between focused writing and the reader preview.
+    win.scrollTo({top:writing?Math.max(0,prose.getBoundingClientRect().top+win.scrollY-24):0,behavior:'instant'});
   }
   writingSection?.addEventListener('toggle',revealWriting);
   const style=`
@@ -34,11 +32,25 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
     .ProseMirror-selectednode{outline:2px solid #a4511d;outline-offset:3px}
     .selectedCell{background:#e3edf5!important}
     .tableWrapper{overflow:auto;margin-block:24px}
+    #aeBodyError{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    .ae-writing-document .ad-heading-band,.ae-writing-document .ad-sidebar,.ae-writing-document .ad-related,.ae-writing-document .ar-consult,.ae-writing-document .cm-line-contact{display:none!important}
+    .ae-writing-document .ad-layout{display:block!important;max-width:1120px!important;width:100%!important;margin:0 auto!important;padding:24px 40px!important}
+    .ae-writing-document .ad-layout > :not(.ad-prose){display:none!important}
+    .ae-writing-document .ad-prose{width:100%!important;max-width:none!important;min-width:0;padding:0!important;margin:0!important}
+    .ae-writing-document .ae-editor-host .tiptap{min-height:calc(100dvh - 64px)!important;align-content:start;cursor:text}
+    .ae-writing-document .ae-editor-host .tiptap:focus{outline:none}
+    .ae-block-drag{display:none}
+    .ae-writing-document .ae-editor-host .tiptap .article-takeaway-card{position:relative;padding-right:54px}
+    .ae-writing-document .ae-block-drag{position:absolute;right:10px;top:10px;display:grid;place-items:center;width:36px;height:36px;color:#557248;background:#ffffffb8;border:1px solid #cbd8bf;border-radius:6px;cursor:grab;user-select:none;touch-action:none}
+    .ae-writing-document .ae-block-drag:active{cursor:grabbing}
+    .ae-writing-document .ae-editor-host .tiptap > p:only-child:has(> br:only-child)::before{content:'เริ่มเขียนเนื้อหาบทความ…';position:absolute;color:#76796f;pointer-events:none}
+    @media(max-width:767px){.ae-writing-document .ad-layout{padding:20px!important}}
   `;
-  const fields={'.ad-header h1':'title','.ad-deck':'excerpt','.ad-header .hm-article-category':'categoryId','.ad-cover':'coverAlt','.ad-cover-caption':'caption','.ad-author':'authorName','.ad-author-details':'authorBio','.ad-author-profile':'authorUrl','.ad-editorial-note':'editorialNote','.ad-header-note':'headerNote','.ad-side-note':'sidebarQuote','.ad-takeaways':'takeaways','.ad-takeaways-note':'takeawayNote','.ad-sources':'source-label-0'};
+  const fields={'.ad-header h1':'title','.ad-deck':'excerpt','.ad-header .hm-article-category':'categoryId','.ad-cover':'coverAlt','.ad-cover-caption':'caption','.ad-author':'authorName','.ad-author-details':'authorBio','.ad-author-profile':'authorUrl','.ad-editorial-note':'editorialNote','.ad-header-note':'headerNote','.ad-side-note':'sidebarQuote','.ad-takeaways':'takeaways','.article-takeaway-card[data-article-summary=true]':'takeaways','.ad-takeaways-note':'takeawayNote','.ad-sources':'source-label-0'};
   function decorate(){
     const doc=frame.contentDocument;
     for(const [selector,key] of Object.entries(fields))doc.querySelectorAll(selector).forEach(el=>{
+      if(el.closest('.tiptap'))return;
       el.dataset.canvasField=key;el.tabIndex=0;el.title='คลิกเพื่อแก้ไข';
     });
     doc.querySelector('cm-article-document')?.setAttribute('data-canvas-replaced','');
@@ -94,7 +106,7 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
         if(['Enter',' '].includes(event.key)&&event.target.matches('[data-canvas-field]')){event.preventDefault();onSelect(event.target.dataset.canvasField);}
       });
       await onReady({document:doc,createEditor:frame.contentWindow.CoverMateArticleWritingEditor});
-      ready=true;decorate();update();status.textContent='เขียนบนหน้าจริง · คลิกข้อความหรือกล่องเพื่อแก้ไข · ยังไม่เผยแพร่';
+      ready=true;doc.documentElement.classList.toggle('ae-writing-document',writing);decorate();update();status.textContent='Draft';
       frame.hidden=false;
       requestAnimationFrame(revealWriting);
     } catch(error){
@@ -111,6 +123,7 @@ export function mountArticleCanvas({root,getDetail,onReady,onSelect,onShortcut,o
   root.querySelectorAll('[data-canvas-size]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.canvasSize===root.dataset.size)));
   load();
   return {update,
+    setWriting(value){writing=value;if(!ready)return;frame.contentDocument.documentElement.classList.toggle('ae-writing-document',writing);revealWriting();},
     scrollPosition:()=>ready?{x:frame.contentWindow.scrollX,y:frame.contentWindow.scrollY}:null,
     restoreScroll:position=>{if(ready&&position)frame.contentWindow.scrollTo({left:position.x,top:position.y,behavior:'instant'});},
     reveal(key){

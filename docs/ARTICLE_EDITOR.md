@@ -1,7 +1,8 @@
 # Article Editor
 
-Updated 2026-10-02 against live source `aa8b68d`; see [HANDOFF.md](HANDOFF.md)
-for CI and deployment evidence. Publication and cloud-storage behavior is specified in
+Updated 2026-10-03 for the local editor concept redesign; this update is not a
+deployment claim. See [HANDOFF.md](HANDOFF.md) for release evidence.
+Publication and cloud-storage behavior is specified in
 [ARTICLES_PUBLISHING.md](ARTICLES_PUBLISHING.md); this document covers authoring
 and reader presentation.
 
@@ -12,10 +13,10 @@ editing a draft. The shared Admin sidebar, verified session and role gate stay
 in place. Readonly sessions cannot open the writer. A full article document is
 required for editing; a list summary must never overwrite the body.
 
-Production drafts use the verified server repository with explicit Save/Publish
-and revision checks. Existing local recovery drafts and the isolated test editor
+Production drafts use the verified server repository with draft Autosave,
+explicit Publish and revision checks. Existing local recovery drafts and the isolated test editor
 use IndexedDB `covermate-article-drafts-v1`, scoped by verified
-UID and environment. Save is explicit, not autosave. Revision checks run inside
+UID and environment. Both repositories use the same Autosave flow. Revision checks run inside
 an atomic read/write transaction, so a stale tab cannot overwrite a newer draft.
 Storage errors preserve current edits. JSON export/import provides a local backup;
 import creates a new identity, clears the revision and does not publish anything.
@@ -31,15 +32,44 @@ keeps all edits; **ออกโดยไม่บันทึก** discards only
 cancel and restore focus. Back, sidebar/history navigation, draft import and
 logout await this decision; duplicate navigation cannot open multiple warnings.
 Browser refresh/tab-close still uses the browser's required `beforeunload`
-warning. Verify with `node scripts/article-leave-check.mjs`.
+warning. Queued Autosave pauses while the decision is open, resumes on cancel,
+and stays cancelled when discarding. Verify with `node scripts/article-leave-check.mjs`.
+
+### Draft Autosave
+
+After an author edit, the editor saves after 700 ms of inactivity, with a
+30-second maximum wait during continuous editing. Opening an untouched article
+does not write. TH/EN bodies, metadata, cover and pending tags share one serialized
+save path; input composition defers saving until it ends. Autosave does not clear
+the tag field, move focus or replace the document. Edits made during a request
+are saved by a subsequent request using the acknowledged revision.
+
+The existing status shows pending, saving, saved time, invalid input, offline or
+failure. Save/⌘S/Ctrl+S flushes the same draft immediately and retries a failed
+save; Publish remains an explicit, confirmed action. Incomplete drafts can save,
+but malformed supplied values pause Autosave until corrected. Failures preserve
+edits in the open editor and stop blind retries. Reconnecting resumes offline or
+connectivity failures; revision conflicts and permission errors require explicit
+recovery. Export remains available for a backup before reopening a stale draft.
+There is no new durable offline recovery store: closing before a successful save
+can still lose pending changes, so existing leave/unload warnings remain active.
+Discarding edits cancels queued writes. No website or other article draft is saved.
+
+`scripts/lib/article-autosave-check.mjs`, run by `article-validation-check.mjs
+--browser`, exercises the real editor/repository using isolated storage and delayed,
+failed and conflicting writes. Local evidence does not certify a production deploy.
 
 ## Field Requirements And SEO
 
 `article-validation.mjs` owns the shared field requirements used by the editor
 and article repository. Fields identify **จำเป็น**, **ไม่บังคับ**, or
 **อัตโนมัติ** beside the label. Validation messages appear immediately below the
-corresponding control with `aria-invalid` and `aria-describedby`. A linked
-validation summary reveals the affected field, opening its disclosure/sheet or
+corresponding control with `aria-invalid` and `aria-describedby`. Empty required
+fields are collected in a green readiness checklist with screen-reader field
+descriptions, rather than repeated visible error paragraphs. Invalid nonempty
+values retain inline corrective messages. The collapsible checklist shows
+completed/pending icons, a count and progress bar; it uses two columns on desktop
+and one on mobile. Its linked rows reveal the affected field, opening its disclosure/sheet or
 switching language as needed. Invalid input stays in place for correction.
 
 | Field | Publication requirement | Behavior |
@@ -67,7 +97,7 @@ The **SEO และการแชร์** disclosure contains separate title/de
 effective character counts, canonical URL and a live search-result approximation.
 60/160-character guidance is advisory, not a publication limit; storage limits
 remain 240/600. Google may choose different titles/snippets. Sharing uses the
-article cover and its Alt. Metadata, Open Graph/Twitter and Article JSON-LD are
+selected language's cover and its Alt. Metadata, Open Graph/Twitter and Article JSON-LD are
 derived from the published snapshot, never unsaved or saved-only draft text.
 Article JSON-LD includes the visible headline, publication/modification dates,
 author, category and tags. Tags do not create an obsolete meta-keywords field.
@@ -121,34 +151,36 @@ authenticated production checks.
 
 ## Writing
 
-As of 2026-10-03, reader-facing fields live inside the writing workspace.
-The content navigation opens one contextual panel for header/title/excerpt,
-cover/Alt/caption, takeaways, decorative notes/quote, author/date, sources, or
-card preview. Desktop places that panel beside the canvas; narrow viewports
-use an overlay within the writing region with a visible return-to-writing
-button. The covered canvas is inert on narrow screens. Controls retain their
-single canonical field owners and existing limits; no content migration occurs.
-Clicking public-looking metadata in the live canvas opens the corresponding
-panel. Selecting a panel from navigation reveals that portion of the article
-when present; closing it restores the prior writing scroll position.
+Reader-facing fields live in one independent **ข้อมูลบทความ** section above
+the writer. Icon/text tabs group title/excerpt/slug/category/tags, cover,
+key takeaways, decorative notes, author/date, sources and the actual index-card
+preview. Fields have a single owner, a two-column desktop layout and a one-column
+mobile layout. TH/EN stays in the section header. Advanced typography is folded.
+Clicking metadata in the collapsed reader preview opens its corresponding field.
+The index-card preview uses real Visitor styling, with direct actions to edit
+title/cover or open full-page Preview; it does not save or publish.
 
 The writing header provides **เต็มหน้าจอ**, which expands the same mounted
 iframe/editor to the browser viewport. It keeps language, formatting, block
-insertion, content panels, Preview and Save draft available. The outside shell
+insertion, Preview, Save draft, Publish and checklist access available.
+Unrelated metadata, reader heading/share/related/CTA sections and the main
+checklist do not consume the fullscreen text area. The outside shell
 is inert and page scrolling is locked until exit. The exit button or Escape
 restores the page position and focus; open child dialogs own Escape first.
 No iframe reparenting/recreation occurs: selection, undo and unsaved documents
 survive entry/exit, language switches and responsive changes.
 
-The common writing controls stay visible inside the writing section. Secondary
+The writer starts collapsed, showing a read-only article preview. Expanding it
+enables the same editor instance. The common writing controls stay visible. Secondary
 formatting and numeric text sizing are grouped in a folded formatting disclosure;
 callouts, block insertion/order/placement and block help are grouped in a separate
-folded block-tools disclosure. These expose the existing controls and document
+folded block-tools disclosure. In fullscreen these open bounded overlays without
+shrinking the writing area. These expose the existing controls and document
 operations without removing advanced capabilities.
 
 The settings shortcut beside the backup actions opens publication pins/state
-and SEO controls only. Reader-visible fields remain reachable from the writing
-workspace without scrolling to a separate settings rail. Editorial date stays
+and SEO controls only. Reader-visible fields stay in the metadata section rather
+than covering the writer. Editorial date stays
 with author metadata and retains the same scheduling behavior and guidance.
 Full-page Preview and safe-area Save/Publish remain available. Tags
 accept Enter or comma-separated input and commit on blur/save; removing a tag
@@ -159,9 +191,10 @@ The live card uses the active draft language, category, cover, excerpt, editoria
 date and body reading time. It does not save or publish. Its action opens the
 existing real Visitor preview. Missing/failed cover images keep a stable frame;
 the body image is independent. Card excerpts and SEO descriptions stay separate.
-There is no pretend autosave, publication-status selector, slug-availability
+There is no publication-status selector, slug-availability
 button or scheduled-unpublish control: these mock details have no corresponding
-supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
+supported action. Draft Autosave uses the real repository; immediate Save,
+Publish and confirmed Unpublish are preserved.
 
 - Independent TH/EN documents, titles, excerpts, dates, SEO and cover captions.
 - H1–H6, paragraphs, bold/italic/underline/strike/highlight, sub/superscript,
@@ -204,14 +237,15 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
   chrome; only the writing frame's own scroll moves when it first opens.
 - The canvas occupies the content workspace on desktop and mobile. Its
   Desktop/Mobile controls select the reader viewport independently of the
-  Admin viewport. The contextual reader panel and fullscreen controls remain
-  within this workspace. Bottom save actions respect safe-area padding and hide
+  Admin viewport. Metadata is above the writer; fullscreen isolates text editing.
+  Bottom save actions respect safe-area padding and hide
   when a detected software keyboard opens.
 
 
 Images support HTTPS URLs, local assets and uploads through the configured media
-provider, with explicit crop confirmation. Revision-history restore, server autosave, whole-article duplication,
-and archive/trash are not implemented controls. The offline test adapter has no
+provider, with explicit crop confirmation. Revision-history restore and
+whole-article duplication are not implemented controls. Archive/Trash/Restore are managed
+in the article list. Draft Autosave is described above. The offline test adapter has no
 publication capability; the real verified repository supports explicit Publish.
 
 ## Typography Controls
@@ -305,13 +339,16 @@ right-hand cell beside its immediately preceding body block; a full-width block
 starts a complete row. Mobile follows document order, with every block stacked.
 This is structured responsive composition, not unrestricted pixel positioning.
 
-Existing metadata summaries/quotes keep their original layout until explicitly
-converted with the settings buttons. Conversion inserts a real document block
-and sets `takeawaysInDocument` or `sidebarQuoteInDocument` in the same history
-transaction. The public projection then suppresses the old summary/quote,
-including the global sidebar fallback. Original metadata remains saved for
-Undo; deleting a converted block does not resurrect that old content. Each
-language owns its flags and document independently.
+Legacy metadata summaries become a `takeaway` document node when a draft opens,
+without writing storage or marking the draft dirty. `articleSummary:true` identifies
+the single node connected to the persistent summary form; other takeaway blocks
+remain independent. Both form and canvas edits update that node, preserving its
+position. A visible grip supports native drag/drop; existing block move controls
+provide a non-drag alternative. Duplicate makes an independent block. Clearing
+the form or deleting the node does not resurrect old metadata. The conversion
+and separate remove-summary buttons no longer exist. `takeawaysInDocument`
+suppresses the old public summary. Explicit sidebar-quote conversion retains its
+existing behavior and `sidebarQuoteInDocument` flag. Each language is independent.
 
 Preview loads the real public page bundle and its current published website
 configuration into a disposable iframe. It injects only the safely projected
@@ -326,8 +363,8 @@ Article title is H1; authored headings support H1–H6, with H2 recommended belo
 
 Summary and Key points use sage cards, a gold lightbulb badge, and botanical
 decoration. Bulleted lists inside these blocks receive checkmarks; paragraphs
-and numbered/nested lists retain their meaning. Key takeaways in settings are
-a separate, responsive article summary, not a second copy of an authored block.
+and numbered/nested lists retain their meaning. Key takeaways in metadata edit
+the canonical summary block; they do not render a second copy of that block.
 Quotes, body images, sources and tables retain their supported content.
 
 The reader custom element applies its own real `cm-article-prose` class on
@@ -437,12 +474,10 @@ readiness. Schema defaults do not mark an untouched article dirty; metadata
 edits made during loading remain dirty. A failed canvas load retains the draft
 and offers Retry and JSON export.
 
-The gold-bulb “สรุปประเด็นสำคัญ” shortcut opens the localized Key takeaways field.
-“นำกล่องสรุปออก” clears the checklist and disables its decorative note, removing
-the full-width summary immediately from the writing canvas. The disabled note
-text stays available for reuse. Clearing only the checklist retains an enabled
-nonempty note. A Summary block inserted with the toolbar is a separate
-body block at the authored position. The coverage feature block (`kind: feature`)
+The key-takeaways form stays available whether the summary is at its initial
+position or has been moved. It edits the canonical summary block directly,
+without a conversion action. A Summary block inserted with the toolbar is a
+separate body block at the authored position. The coverage feature block (`kind: feature`)
 has a hospital icon and editable title/body; it survives the same document
 normalization, backup and publication flow as other callouts.
 

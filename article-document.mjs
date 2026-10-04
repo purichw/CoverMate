@@ -99,7 +99,7 @@ export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(
       if (['tableCell','tableHeader'].includes(type)) attrs = {colspan:Math.max(1,Math.min(12,Math.floor(Number(a.colspan))||1)),rowspan:Math.max(1,Math.min(50,Math.floor(Number(a.rowspan))||1))};
       if (type === 'blockquote') attrs.attribution = text(a.attribution);
       if (type === 'quoteCard') {attrs.attribution=text(a.attribution);children=new Set(['paragraph','heading','bulletList','orderedList']);}
-      if (type === 'takeaway') {attrs={title:text(a.title),note:text(a.note)};children=new Set(['paragraph','bulletList','orderedList']);}
+      if (type === 'takeaway') {attrs={title:text(a.title),note:text(a.note),...(a.articleSummary===true?{articleSummary:true}:{})};children=new Set(['paragraph','bulletList','orderedList']);}
       if (type === 'callout') attrs = {kind:['summary','keypoints','note','warning','feature'].includes(a.kind) ? a.kind : 'note',title:text(a.title)};
       let content = nodes(n.content,children,depth+1);
       if (type === 'listItem' && content[0]?.type !== 'paragraph') content.unshift({type:'paragraph'});
@@ -110,8 +110,9 @@ export function normalizeArticleDocument(input, {mediaUrl = value => articleUrl(
     });
   }
   const content=nodes(input?.type === 'doc' ? input.content : [],blocks,0),attrs={};
-  if(input?.attrs?.layout==='blocks'||content.some(n=>['quoteCard','takeaway'].includes(n.type)||n.attrs?.placement))attrs.layout='blocks';
-  for(const key of ['takeawaysInDocument','sidebarQuoteInDocument'])if(input?.attrs?.[key]===true)attrs[key]=true;
+  // Adopting the article summary must not change the rest of a classic layout.
+  if(input?.attrs?.layout==='blocks'||content.some(n=>!n.attrs?.articleSummary&&(['quoteCard','takeaway'].includes(n.type)||n.attrs?.placement)))attrs.layout='blocks';
+  for(const key of ['takeawaysInDocument','articleSummaryLinked','sidebarQuoteInDocument'])if(input?.attrs?.[key]===true)attrs[key]=true;
   for(const key of ['titleStyle','excerptStyle']){const style=normalizeArticleTypography(input?.attrs?.[key]);if(Object.keys(style).length)attrs[key]=style;}
   return {type:'doc',...(Object.keys(attrs).length?{attrs}:{}),content};
 }
@@ -150,7 +151,7 @@ export function renderArticleDocument(input, options) {
       case 'horizontalRule': return '<hr>';
       case 'blockquote': return `<blockquote>${inner}${a.attribution?'<cite>'+esc(a.attribution)+'</cite>':''}</blockquote>`;
       case 'quoteCard': return `<aside class="article-quote-card"><span class="article-quote-mark" aria-hidden="true">“</span><div>${inner}</div>${a.attribution?'<cite>'+esc(a.attribution)+'</cite>':''}</aside>`;
-      case 'takeaway': return `<aside class="article-takeaway-card">${a.title?'<p class="article-takeaway-title">'+esc(a.title)+'</p>':''}<div>${inner}</div>${a.note?'<p class="article-takeaway-note">'+esc(a.note)+'</p>':''}</aside>`;
+      case 'takeaway': return `<aside class="article-takeaway-card"${a.articleSummary?' data-article-summary="true"':''}>${a.title?'<p class="article-takeaway-title">'+esc(a.title)+'</p>':''}<div>${inner}</div>${a.note?'<p class="article-takeaway-note">'+esc(a.note)+'</p>':''}</aside>`;
       case 'callout': return `<aside class="article-callout" data-kind="${a.kind}">${a.title?'<p class="article-callout-title">'+esc(a.title)+'</p>':''}<div>${inner}</div></aside>`;
       case 'figure': {const image=articleImageDelivery(a,'banner');return `<figure><img src="${esc(image.src)}"${image.srcset?` srcset="${esc(image.srcset)}" sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1100px) 66vw, 880px"`:''} alt="${esc(a.alt)}" loading="lazy" decoding="async">${a.caption?'<figcaption>'+esc(a.caption)+'</figcaption>':''}</figure>`;}
       case 'table': return `<div class="article-table-scroll" role="region" aria-label="Table" tabindex="0"><table><tbody>${inner}</tbody></table></div>`;

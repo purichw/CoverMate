@@ -175,9 +175,10 @@ try {
   assert.equal(await cell().getAttribute('data-status'), expectedStatus);
   report.checks.push('Status cycle and localized remark persist through real Save/readback/reload; Published is unchanged');
   await tools(true);
-  const previewEvent = owner.waitForEvent('page', { timeout: 30000 });
-  await admin.getByRole('button', { name: 'Preview', exact: true }).click();
-  const preview = await previewEvent;
+  const [preview] = await Promise.all([
+    owner.waitForEvent('page', { timeout: 30000 }),
+    admin.locator('#covermate-owner-tools-panel').getByRole('button', { name: 'ดูตัวอย่าง (Preview)', exact: true }).click()
+  ]);
   await preview.waitForLoadState('domcontentloaded');
   await preview.locator('[data-admin-preview-bar]').waitFor({ timeout: 60000 });
   await assertBrowserUat(preview);

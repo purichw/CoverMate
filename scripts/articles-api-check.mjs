@@ -67,6 +67,35 @@ try {
   assert.equal((await repository.detail('covermate-uat',run)).item.translations.th.title,liveTitle);
   assert.equal((await call('feed')).body.items.find(i=>i.id===run).translations.th.title,liveTitle,'Unpublished edits stay out of the Home canvas');
   if (!process.argv.includes('--feed-only')) {
+  // Integrated language/media and release-order contracts share this projection.
+  let localized=createArticleDraft({id:'localized-'+run,slug:'localized-'+run,authorName:'Localized QA'});
+  for(const lang of ['th','en'])Object.assign(localized.translations[lang],{
+    title:'Localized '+lang,excerpt:'Localized excerpt '+lang,document:structuredClone(draft.translations.th.document),
+    cover:{src:`https://media.example.test/${lang}.png`},image:{src:`https://media.example.test/${lang}-thumb.png`},
+    coverAlt:'Cover '+lang,imageAlt:'Thumbnail '+lang
+  });
+  const saveLocalized=async()=>{const response=await call('save',{article:localized,expectedRevision:localized.revision});assert.equal(response.status,200,JSON.stringify(response));localized=response.body;};
+  const publishLocalized=async lang=>{const response=await call('publish',{id:localized.id,expectedRevision:localized.revision,languages:[lang]});assert.equal(response.status,200,JSON.stringify(response));localized=response.body;};
+  await saveLocalized();await publishLocalized('th');
+  const thPublication=(await repository.detail('covermate-uat',localized.slug)).item.translations.th;
+  assert.equal((await repository.detail('covermate-uat',localized.slug)).item.translations.en,undefined);
+  localized.translations.th.cover={src:'https://media.example.test/unpublished-th.png'};
+  await saveLocalized();await publishLocalized('en');
+  let localizedLive=(await repository.detail('covermate-uat',localized.slug)).item;
+  assert.deepEqual(localizedLive.translations.th,thPublication,'Publishing EN preserves the published TH media, text and release time');
+  assert.equal(localizedLive.translations.en.cover.src,'https://media.example.test/en.png');
+  assert.equal(localizedLive.translations.en.image.src,'https://media.example.test/en-thumb.png');
+  localized.translations.en.cover={src:''};localized.translations.en.image={src:''};
+  await saveLocalized();await publishLocalized('en');
+  localizedLive=(await repository.detail('covermate-uat',localized.slug)).item;
+  assert.equal(localizedLive.translations.en.cover.src,'','Explicit blank EN never borrows TH media');
+  assert.deepEqual(localizedLive.translations.th,thPublication);
+  const catalogRef=db.doc('sites/covermate-uat/articleCatalog/'+localized.id),legacyCatalog=(await catalogRef.get()).data();
+  delete legacyCatalog.live.translations.th.releasedAt;delete legacyCatalog.live.translations.th.updatedAt;
+  await catalogRef.set(legacyCatalog);
+  assert.equal((await repository.feed('covermate-uat')).items.find(item=>item.id===localized.id).translations.th.releasedAt,thPublication.releasedAt,'Legacy catalog ordering is hydrated from the live publication');
+  localized=(await call('trash',{id:localized.id,expectedRevision:localized.revision})).body;
+  assert.equal((await call('delete',{id:localized.id,expectedRevision:localized.revision,confirmation:'DELETE'})).status,200);
   const duplicate=createArticleDraft(draft);duplicate.id='duplicate-'+crypto.randomUUID();duplicate.revision=0;duplicate.slugLocked=false;
   const dup=(await call('save',{article:duplicate,expectedRevision:0})).body;
   assert.equal((await call('publish',{id:dup.id,expectedRevision:dup.revision,languages:['th']})).status,409,'Slug is atomically reserved');
