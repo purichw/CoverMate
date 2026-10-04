@@ -150,15 +150,14 @@ try {
   await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor();
   await articleField(page, 'title').fill('Account logout guard — unsaved fixture');
   await openDesktop();
-  let articleGuard = false;
-  page.once('dialog', async dialog => { articleGuard = true; await dialog.dismiss(); });
   await desktop.locator('[data-action=logout]').click();
-  assert.equal(articleGuard, true);
+  await page.locator('.ae-leave-dialog').waitFor();
+  await page.locator('[data-leave=stay]').click();
   assert.equal(report.signOutEvents.length, 3, 'Cancelled article guard must not begin sign-out');
   assert.ok(await page.evaluate(() => localStorage.getItem('covermate-admin-session')));
   assert.equal(await articleField(page, 'title').inputValue(), 'Account logout guard — unsaved fixture');
-  page.once('dialog', dialog => dialog.accept());
   await page.locator('[data-ae=back]').click();
+  await page.locator('[data-leave=discard]').click();
   await page.locator('[data-article-state=ready]').waitFor();
   report.checks.push('Cancelling logout from an unsaved article retains session and edited content.');
 

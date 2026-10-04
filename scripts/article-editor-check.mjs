@@ -80,9 +80,9 @@ if(process.argv.includes('--browser')) {
     const lateCatalog=page.waitForResponse(response=>response.url()===server.baseUrl+'/__preview/articles');
     releaseCatalog();await (await lateCatalog).finished();
     assert.equal(await page.locator('[data-field=title]').inputValue(),'ร่างระหว่างโหลดคลัง');
-    page.once('dialog',d=>d.dismiss());await page.locator('[data-ae=back]').click();
+    await page.locator('[data-ae=back]').click();await page.locator('[data-leave=stay]').click();
     assert.equal(await page.locator('[data-field=title]').inputValue(),'ร่างระหว่างโหลดคลัง','Late catalog preserves the dirty editor and its leave warning');
-    page.once('dialog',d=>d.accept());await page.locator('[data-ae=back]').click();
+    await page.locator('[data-ae=back]').click();await page.locator('[data-leave=discard]').click();
     await page.locator('[data-article-state=ready]').waitFor();
     assert.ok(await page.locator('.article-table tbody tr').count(),'Returning from Create reloads the catalog');
     assert.deepEqual(report.errors,[],'Late catalog completion must not render into the editor');
@@ -150,8 +150,8 @@ if(process.argv.includes('--browser')) {
     assert.equal(await page.locator('[data-field=pinned]').isChecked(),true);
     assert.equal(await page.locator('[data-field=publishedAt]').inputValue(),'2026-09-15T10:30','Bangkok date survives a non-Thai device zone');
     await page.locator('[data-lang=en]').click();assert.equal(await page.locator('[data-field=title]').inputValue(),'Draft in English');await page.locator('[data-lang=th]').click();
-    await articleField(page,'title').fill('ยังไม่บันทึก');page.once('dialog',d=>d.dismiss());await page.locator('[data-ae=back]').click();assert.ok(await page.locator('.ae-workspace').count());
-    page.once('dialog',d=>d.dismiss());await page.locator('#sideNav [data-module=analytics]').click();assert.ok(await page.locator('.ae-workspace').count());
+    await articleField(page,'title').fill('ยังไม่บันทึก');await page.locator('[data-ae=back]').click();await page.locator('[data-leave=stay]').click();assert.ok(await page.locator('.ae-workspace').count());
+    await page.locator('#sideNav [data-module=analytics]').click();await page.locator('[data-leave=stay]').click();assert.ok(await page.locator('.ae-workspace').count());
     await save(page);report.checks.push('Persist/reload, preserved languages, Back and sidebar unsaved warning');
     for(const width of [820,390,320]) {
       await page.setViewportSize({width,height:900});await page.evaluate(()=>scrollTo(0,0));await fit();

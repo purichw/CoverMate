@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { normalizeArticleCatalog, articleListView, articleImageURL, articlePageNumbers } from '../admin/articles/model.mjs';
 import { createCloudArticleRepository } from '../admin/articles/data.mjs';
+import { articleLifecycleActions } from '../admin/articles/lifecycle.mjs';
 import { adminPortalRouteStateFromLocation, adminPortalUrl } from '../covermate-contract.js';
 import { ADMIN_MODULES } from '../admin/shell.js';
 import { adminArticleFixture } from './fixtures/home-articles/admin-feed.mjs';
@@ -17,6 +18,8 @@ await adapter.save({id:'draft'},2);await adapter.publish('draft',3,['th']);await
 assert.deepEqual(calls.map(c=>c[0]),['catalog','save','publish','settings']);
 assert.equal(calls[1][1].expectedRevision,2);
 for(const action of ['unpublish','archive','trash','restore']){await adapter[action]('draft',9);assert.deepEqual(calls.at(-1),[action,{id:'draft',expectedRevision:9}]);}
+await adapter.delete('draft',9,'DELETE');assert.deepEqual(calls.at(-1),['delete',{id:'draft',expectedRevision:9,confirmation:'DELETE'}]);
+for(const lifecycle of ['active','archived','trashed'])assert.equal(articleLifecycleActions({lifecycle}).some(item=>item.action==='delete'),lifecycle==='trashed','Only Trash offers permanent deletion');
 assert.equal(adminPortalRouteStateFromLocation('/admin', '#articles').module, 'articles');
 assert.equal(adminPortalUrl('articles'), '/admin#articles');
 assert.equal(ADMIN_MODULES.findIndex(item => item.id === 'articles'), 3);

@@ -19,6 +19,7 @@ export function createCloudArticleRepository({request}={}) {
     archive:(id,expectedRevision)=>call('archive',{id,expectedRevision}),
     trash:(id,expectedRevision)=>call('trash',{id,expectedRevision}),
     restore:(id,expectedRevision)=>call('restore',{id,expectedRevision}),
+    delete:(id,expectedRevision,confirmation)=>call('delete',{id,expectedRevision,confirmation}),
     reorderPins:(order,expectedRevision)=>call('pin-order',{order,expectedRevision}),
     settings:(settings,expectedRevision)=>call('settings',{settings,expectedRevision})};
 }

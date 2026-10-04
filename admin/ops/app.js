@@ -372,8 +372,11 @@ async function handleClick(event) {
     if (actionEl.tagName === "A") event.preventDefault();
     const action = actionEl.dataset.action;
     if (action === "logout") {
-      if (articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
+      if (articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return;
       if (!(await casesWorkspace.canLeave())) return;
+      // The in-app guard already confirmed discarding article edits; remove its
+      // unload listener before the intentional sign-out redirect.
+      if (articlesWorkspace?.active) articlesWorkspace.leave();
       signOutAdmin();
       return;
     }
@@ -985,11 +988,11 @@ function openLead(id) {
 
 async function setModule(moduleId, options = {}) {
   if (isOperationsTab(moduleId)) {
-    setOperationsTab(moduleId, options);
+    await setOperationsTab(moduleId, options);
     return;
   }
   if (!MODULES.some((item) => item.id === moduleId)) return;
-  if (moduleId !== 'articles' && articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
+  if (moduleId !== 'articles' && articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return;
   if (moduleId !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) return;
   state.module = moduleId;
   state.recordId = null;
@@ -1001,9 +1004,9 @@ async function setModule(moduleId, options = {}) {
   else if (moduleId !== 'operations' && !state.data.leads.length && !state.loading.size) loadAllData();
 }
 
-function setOperationsTab(tabId, options = {}) {
+async function setOperationsTab(tabId, options = {}) {
   if (!isOperationsTab(tabId)) return;
-  if (articlesWorkspace?.active && !articlesWorkspace.canLeave()) return;
+  if (articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return;
   state.module = "operations";
   state.operationsTab = tabId;
   state.recordId = null;
@@ -1218,23 +1221,31 @@ function routeStateFromLocation() {
   return adminPortalRouteStateFromLocation(location.pathname, hash);
 }
 
+let routeSyncPending = false;
 async function syncRouteFromLocation() {
-  const next = routeStateFromLocation();
-  if (next.module !== 'articles' && articlesWorkspace?.active && !articlesWorkspace.canLeave()) {writeRoute({replace:true});return;}
-  if (next.module === state.module && next.operationsTab === state.operationsTab) {
+  // A history traversal can emit both popstate and hashchange. Ask once and
+  // keep the editor mounted until the in-app decision has completed.
+  if (routeSyncPending) return;
+  routeSyncPending = true;
+  try {
+    let next = routeStateFromLocation();
+    if (next.module !== 'articles' && articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) {writeRoute({replace:true});return;}
+    next = routeStateFromLocation();
+    if (next.module === state.module && next.operationsTab === state.operationsTab) {
+      normalizeRetiredSettingsUrl();
+      if (next.module === 'operations') await casesWorkspace?.syncLocation();
+      return;
+    }
+    if (next.module !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) { writeRoute({ replace: true }); casesWorkspace.restoreLocation(); return; }
+    state.module = next.module;
+    state.operationsTab = next.operationsTab;
+    state.recordId = null;
     normalizeRetiredSettingsUrl();
-    if (next.module === 'operations') await casesWorkspace?.syncLocation();
-    return;
-  }
-  if (next.module !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) { writeRoute({ replace: true }); casesWorkspace.restoreLocation(); return; }
-  state.module = next.module;
-  state.operationsTab = next.operationsTab;
-  state.recordId = null;
-  normalizeRetiredSettingsUrl();
-  render();
-  if (next.module === 'home') loadHomeData();
-  if (next.module === 'analytics') loadAnalyticsData();
-  if (next.module === 'content') loadContentData();
+    render();
+    if (next.module === 'home') loadHomeData();
+    if (next.module === 'analytics') loadAnalyticsData();
+    if (next.module === 'content') loadContentData();
+  } finally { routeSyncPending = false; }
 }
 
 function normalizeRetiredSettingsUrl() {

@@ -133,7 +133,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
     const more = `<details class="article-more"><summary class="article-button" aria-label="ตัวเลือก: ${esc(item.title)}" title="ตัวเลือกบทความ">${icon('more')}</summary><div class="article-actions-popover">
       ${button('inspect', icon('eye') + 'ดูข้อมูลบทความ', `data-id="${esc(item.id)}"`)}
       ${!inactive?`<button class="article-button" type="button" data-article-action="edit" data-id="${esc(item.id)}" ${editable?'':'disabled'} title="${editorReason}">${icon('edit')}แก้ไขเนื้อหา</button>`:''}
-      ${cloud?articleLifecycleActions(item).map(({action,label,icon:glyph})=>button(action,icon(glyph)+label,`data-id="${esc(item.id)}" ${editable?'':'disabled'}`,action==='trash'?'article-danger':'')).join(''):''}
+      ${cloud?articleLifecycleActions(item).map(({action,label,icon:glyph})=>button(action,icon(glyph)+label,`data-id="${esc(item.id)}" ${editable?'':'disabled'}`,['trash','delete'].includes(action)?'article-danger':'')).join(''):''}
       <small>${inactive?'กู้คืนเป็นฉบับร่างก่อนแก้ไขหรือเผยแพร่':editorReason}</small></div></details>`;
     return `<tr data-article-id="${esc(item.id)}">
       <td class="article-image-cell">${media(item)}</td>
@@ -286,14 +286,14 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
       s.view=target.dataset.view;s.status='';s.page=1;filters();results();
       root.querySelector(`[data-view="${s.view}"]`)?.focus({preventScroll:true});return;
     }
-    if(['unpublish','archive','trash','restore'].includes(action)) {
+    if(['unpublish','archive','trash','restore','delete'].includes(action)) {
       const item=s.catalog?.items.find(item=>item.id===target.dataset.id);
       if(!cloud||!editable||!item||!articleLifecycleActions(item).some(entry=>entry.action===action)||!leaveSettings())return;
       proposedVisibility=null;renderVisibility();
       const disclosure=target.closest('details');if(disclosure)disclosure.open=false;
       lifecycleDialog=openArticleLifecycle({item,action,repository,opener:disclosure?.querySelector('summary')||target,icon,
         onClose:()=>{lifecycleDialog=null;},onReload:reload,
-        onChanged:async()=>{notice={unpublish:'ถอนเผยแพร่แล้ว เนื้อหายังอยู่ในฉบับร่าง',archive:'เก็บบทความถาวรแล้ว กู้คืนได้จาก Archived',trash:'ย้ายไป Trash แล้ว ยังสามารถกู้คืนได้',restore:'กู้คืนเป็นฉบับร่างแล้ว ยังไม่เผยแพร่และไม่ปักหมุด'}[action];await reload();root.querySelector(`[data-view="${s.view}"]`)?.focus({preventScroll:true});}});
+        onChanged:async()=>{notice={unpublish:'ถอนเผยแพร่แล้ว เนื้อหายังอยู่ในฉบับร่าง',archive:'เก็บบทความแล้ว กู้คืนได้จาก Archived',trash:'ย้ายไป Trash แล้ว สามารถกู้คืนหรือลบถาวรได้จาก Trash',restore:'กู้คืนเป็นฉบับร่างแล้ว ยังไม่เผยแพร่และไม่ปักหมุด',delete:'ลบบทความถาวรแล้ว ไม่สามารถกู้คืนได้'}[action];await reload();root.querySelector(`[data-view="${s.view}"]`)?.focus({preventScroll:true});}});
       return;
     }
     if(action==='pin-order') {
@@ -355,7 +355,7 @@ export function createArticlesWorkspace({ root, load, loadArticle, repository:cl
   }
   return {
     get active() { return s.active; }, setSearch,
-    canLeave() { return !opening && (!lifecycleDialog||lifecycleDialog.canLeave()) && (!pinDialog||pinDialog.canLeave()) && leaveSettings() && (!editor || editor.canLeave()); },
+    async canLeave() { return !opening && (!lifecycleDialog||lifecycleDialog.canLeave()) && (!pinDialog||pinDialog.canLeave()) && leaveSettings() && (!editor || await editor.canLeave()); },
     mount() {
       if (s.active && (editor || opening || root.querySelector('.articles-workspace'))) return;
       s.active = true; searchInput.value = s.query; shell();

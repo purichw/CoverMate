@@ -823,13 +823,14 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
     });
   }
 
-  navigateArticles(href, event, more = false) {
+  navigateArticles(href, event, {more = false, preservePosition = false} = {}) {
     if (event?.metaKey || event?.ctrlKey || event?.shiftKey || event?.altKey) return;
     event?.preventDefault();
     const previousCount = document.querySelectorAll('.ar-grid .ar-item').length;
     window.history.pushState(null, '', href);
     this._routeLocation = window.location.href;
     this.setState({articleNavigation:Date.now(),articleSearchDraft:null}, () => requestAnimationFrame(() => {
+      if (preservePosition) return;
       const target = more ? document.querySelectorAll('.ar-grid .ar-card-link')[previousCount] : document.getElementById('articles-results') || document.getElementById('articles-title');
       target?.focus({preventScroll:more});
       if (!more && target) this.scrollToAnchor(target.id, {smooth:false});
@@ -2062,7 +2063,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const href=articleAddress({category:category.key});
       return {...category,href,selected:category.key===articleIndex.category?'true':'false',className:category.key===articleIndex.category?'ar-category is-current':'ar-category',
         paths:articleCategoryPaths(category.key),
-        click:event=>this.navigateArticles(href,event)};
+        click:event=>this.navigateArticles(href,event,{preservePosition:true})};
     });
     articleIndex.pagination = articleIndex.pagination.map(item=>({...item,click:event=>this.navigateArticles(item.href,event)}));
     const detailCopy=Object.fromEntries(CMS_CONTENT_FIELDS.filter(field=>field.group==='Article reader'&&field.localized).map(field=>[field.path.split('.')[1],cmsText(field.path)]));
@@ -2922,7 +2923,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       articleClear:event=>this.navigateArticles(articleIndex.clearHref,event),
       articlePrevious:event=>this.navigateArticles(articleIndex.previousHref,event),
       articleNext:event=>this.navigateArticles(articleIndex.nextHref,event),
-      articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,true),
+      articleMore:event=>this.navigateArticles(articleIndex.nextHref,event,{more:true}),
       articleReload:()=>window.location.reload(),
       licenceFilePaths: ICONS.file,
       sectionGroups: displaySections.reduce((groups, section) => {

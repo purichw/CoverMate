@@ -125,10 +125,13 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
   async function mutate(site,action,input,expected,uid) {
     const r=refs(site),id=input?.id;
     if(!identity(id))fail('รหัสบทความไม่ถูกต้อง');
-    if(!['save','publish','unpublish','archive','trash','restore'].includes(action))fail('ไม่รู้จักการทำรายการ');
+    if(!['save','publish','unpublish','archive','trash','restore','delete'].includes(action))fail('ไม่รู้จักการทำรายการ');
+    if(action==='delete'&&input.confirmation!=='DELETE')throw error(422,'confirmation_required','กรุณาพิมพ์ DELETE ให้ตรงทุกตัวอักษรเพื่อยืนยันการลบถาวร');
     const normalized=action==='save'?draftValue(input):null;
     return db.runTransaction(async tx=>{
-      const ref=r.items.doc(id),old=(await tx.get(ref)).data();checkRevision(old,expected);
+      const ref=r.items.doc(id),old=(await tx.get(ref)).data();
+      if(!old&&action==='delete')throw error(404,'not_found','ไม่พบบทความนี้แล้ว กรุณาโหลดรายการล่าสุด');
+      checkRevision(old,expected);
       if(!old&&action!=='save')throw error(404,'not_found','ไม่พบบทความ');
       const previousLifecycle=lifecycleOf(old);
       if(['save','publish','unpublish','archive'].includes(action)&&!isActive(old))throw error(409,'inactive_article','บทความนี้อยู่ในที่เก็บถาวรหรือถังขยะ กรุณากู้คืนจากหน้ารายการก่อน');
@@ -136,6 +139,20 @@ export function createArticleRepository({db=serverDb(),now=Date.now}={}) {
       if(action==='trash'&&previousLifecycle==='trashed')throw error(409,'invalid_transition','บทความนี้อยู่ในถังขยะแล้ว กรุณาโหลดรายการล่าสุด');
       if(action==='unpublish'&&!old.live)throw error(409,'invalid_transition','บทความนี้ยังไม่ได้เผยแพร่ กรุณาโหลดรายการล่าสุด');
       const at=new Date(now()).toISOString();
+      if(action==='delete') {
+        if(previousLifecycle!=='trashed')throw error(409,'invalid_transition','ลบถาวรได้เฉพาะบทความใน Trash กรุณาโหลดรายการล่าสุด');
+        const slugRef=old.lockedSlug?r.slugs.doc(old.lockedSlug):null;
+        const holder=slugRef?(await tx.get(slugRef)).data():null;
+        const pinSettings=articleSettings((await tx.get(r.settings)).data());
+        // Remove authored content and its projections atomically. Keep only a
+        // content-free audit event; shared media belongs to the media library.
+        tx.delete(ref);
+        tx.delete(r.catalog.doc(id));
+        if(holder?.id===id)tx.delete(slugRef);
+        if(pinSettings.pinnedOrder.includes(id))tx.set(r.settings,{...pinSettings,pinnedOrder:pinSettings.pinnedOrder.filter(value=>value!==id),revision:pinSettings.revision+1,updatedAt:at,updatedBy:uid});
+        tx.create(r.audit.doc(),{action,articleId:id,actor:uid,at,revision:expected+1,previousLifecycle,lifecycle:'deleted'});
+        return {id,deleted:true,revision:expected+1};
+      }
       let draft=normalized||old.draft,live=old?.live||null,lifecycle=previousLifecycle;
       if(old?.lockedSlug && draft.slug!==old.lockedSlug)fail('URL ของบทความที่เคยเผยแพร่แล้วเปลี่ยนไม่ได้','slug');
       let slugRef;

@@ -28,8 +28,10 @@ to a published article does not replace its live content. Republish explicitly.
 Unpublish removes every public translation but retains the editable draft.
 The October 2 local follow-up also exposes Archive, Move to Trash and Restore to
 Draft from the list. Archive/Trash remove public access and clear both pin types.
-Restore is private and unpinned until explicitly published again. Trash is
-reversible: no article, media or URL reservation is physically deleted.
+Restore is private and unpinned until explicitly published again. Moving to Trash
+is reversible. The October 3 follow-up adds **ลบถาวร** in Trash: the owner must
+type exact uppercase `DELETE` before deleting the article and its owned URL
+reservation permanently. Shared media remains in the media library.
 
 The September 30 validation follow-up labels required/optional fields and
 disables article Publish until its requirements pass. Drafts may be incomplete;
@@ -41,7 +43,7 @@ does not publish existing drafts or alter any hosted CMS data.
 ### Independent publication boundary
 
 Website Save, Publish, Reset draft, Undo/Redo and version restore never save,
-publish or reset article drafts. Article Save/Publish/Unpublish/Archive/Trash/Restore affects only the
+publish or reset article drafts. Article Save/Publish/Unpublish/Archive/Trash/Restore/Delete affects only the
 selected article and its catalog/slug/audit records; it leaves website drafts,
 website published content, website version history and other article drafts intact.
 Article visibility settings remain separately saved under `articleSettings`.
@@ -144,7 +146,7 @@ protocol, compatibility path and orphan-retention policy.
 `api/articles.js` reuses existing verified Firebase identity, revoked/disabled
 account checks, active owner allowlist and UAT-only restriction. No client role
 or local session alone authorizes a write. GET reads catalog/full draft; POST
-handles save, publish, unpublish, archive, trash, restore, settings and `pin-order`.
+handles save, publish, unpublish, archive, trash, restore, delete, settings and `pin-order`.
 All API responses are no-store.
 
 Under `sites/{covermate|covermate-uat}`:
@@ -173,6 +175,16 @@ requests are rejected. Restore of an already active record is rejected.
 Public feed/detail reads independently exclude inactive records, even if a stale
 live snapshot remains. Pin membership changes invalidate the settings revision
 and removed index pins leave the saved order, so stale reorder requests conflict.
+
+`delete` accepts `{id, expectedRevision, confirmation: "DELETE"}` only for a
+trashed article. It checks the active owner/environment and exact confirmation,
+then revision and lifecycle in the transaction. It deletes the complete article,
+catalog and slug reservation owned by that article, clears any remaining pin
+order entry, and records a content-free audit event. There is no restore after
+deletion; an old editor revision cannot recreate the record. Concurrent restores
+conflict, and repeated deletion returns 404. Neither shared media nor another
+article's slug reservation is deleted. The UI disables repeat submission while
+busy and requires explicit reload after a stale/denied/unknown outcome.
 
 `pin-order` accepts `{order: string[], expectedRevision}`. It requires an exact
 permutation of current draft/live pins and saves the ordered IDs plus audit in

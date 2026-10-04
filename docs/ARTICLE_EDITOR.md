@@ -26,6 +26,13 @@ Existing published articles produce a separate working draft and keep their
 slug read-only. Back, sidebar navigation, logout and browser unload guard unsaved
 changes. Saving during continued typing does not mark later edits saved.
 
+Unsaved article navigation uses the shared in-app editor dialog: **แก้ไขต่อ**
+keeps all edits; **ออกโดยไม่บันทึก** discards only unsaved changes. X and Escape
+cancel and restore focus. Back, sidebar/history navigation, draft import and
+logout await this decision; duplicate navigation cannot open multiple warnings.
+Browser refresh/tab-close still uses the browser's required `beforeunload`
+warning. Verify with `node scripts/article-leave-check.mjs`.
+
 ## Field Requirements And SEO
 
 `article-validation.mjs` owns the shared field requirements used by the editor

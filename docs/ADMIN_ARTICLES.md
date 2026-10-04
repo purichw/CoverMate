@@ -166,7 +166,7 @@ draft has unpinned it. Draft/future pins can be positioned but do not appear in 
 public carousel until eligible. The carousel excludes missing public translations.
 `scripts/articles-pins-e2e.mjs` verifies this with the actual API and emulators.
 
-## Article Lifecycle (Local, October 2)
+## Article Lifecycle (Local, October 3)
 
 View buttons use **Active / Published / Unpublished / Archived / Trash**. Active
 includes all non-archived/non-trashed records, not only public articles.
@@ -174,18 +174,25 @@ Unpublished combines Draft and Scheduled. The Status filter can narrow those
 states and composes with search/category/pins/author/date/sort. Counts on the
 view buttons and summary cards describe the complete catalog, not filtered rows.
 
-The row menu exposes Unpublish (or Cancel schedule), Archive and Move to Trash
-as applicable. Archived/trashed rows cannot be edited or published until Restore
+The row menu exposes Unpublish (or Cancel schedule), Archive, Move to Trash and
+permanent deletion (Trash only) as applicable. Archived/trashed rows cannot be edited or published until Restore
 to Draft. Every transition requires confirmation, identifies the article and
 explains its public effect. Cancel does not write. Failed requests retain the
 dialog; denied or stale operations require explicit reload. Busy actions block
 duplicate submission and navigation. Existing visibility edits warn before leaving.
 
 - Unpublish removes every public translation and retains the editable draft.
-- Archive removes the article from Active and all public surfaces.
-- Move to Trash is reversible soft deletion, not permanent record/media deletion.
+- Archive removes the article from Active and all public surfaces while retaining it.
+- Move to Trash is reversible soft deletion. Trash offers Restore to Draft or
+  **ลบถาวร**; Archive must first be moved to Trash to permanently delete it.
+- Permanent deletion requires exact uppercase `DELETE` in the confirmation
+  dialog and at the server. It removes the draft/live content in all languages,
+  catalog and owned URL reservation atomically; it cannot be restored. Shared
+  media and content-free audit events remain. A revoked owner, stale revision
+  or concurrent restore blocks deletion. Unknown outcomes require a reload.
 - Archive/Trash/Restore clear both Home and index pins. Restore returns a private
-  Draft, never automatically republishes or reclaims pins. Published URLs stay reserved.
+  Draft, never automatically republishes or reclaims pins. Published URLs stay
+  reserved until permanent deletion.
 
 English is used for standard states and commands across Articles, the Editor,
 CMS status badges and account Online/Offline. Thai descriptions, errors, content
@@ -196,10 +203,13 @@ These commands remain separate from Save draft / Publish article.
 Verification uses actual isolated Auth/Firestore and API routes in
 `articles-api-check.mjs` and `articles-management-e2e.mjs`, including lifecycle
 cancel/confirm/reload, public exclusion, stale revision/permission rejection,
-scheduled cancellation and mobile restore. `content-lifecycle-isolation-check.mjs`
+scheduled cancellation, mobile restore, typed permanent-delete confirmation,
+cancellation, revoked permissions, stale/uncertain outcomes and persisted deletion.
+`content-lifecycle-isolation-check.mjs`
 also verifies no website or unrelated article changes. Current local screenshots
-and provenance are in `uat-results/articles-management/`. No production writes,
-deployment, permanent deletion or data migration is part of this follow-up.
+and provenance are in `uat-results/articles-management/`. Permanent-delete tests
+use synthetic emulator records only. No production writes, deployment or data
+migration is part of this follow-up.
 
 ## Scaling Boundary
 

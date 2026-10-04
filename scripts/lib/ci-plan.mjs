@@ -94,6 +94,7 @@ export const checkGroups = {
     ["node",["scripts/articles-admin-check.mjs","--browser"]],
     ["node",["scripts/article-detail-check.mjs","--browser"]],
     ["node",["scripts/article-editor-check.mjs","--browser"]],
+    ["node",["scripts/article-leave-check.mjs"]],
     ["node",["scripts/article-workspace-check.mjs"]],
     ["node",["scripts/article-media-check.mjs","--browser"]],
     ["node",["scripts/article-delivery-check.mjs","--browser"]],

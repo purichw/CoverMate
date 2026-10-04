@@ -56,7 +56,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   if(cloud){draft.cloudDraft=true;draft.localDraft=false;saved=JSON.stringify(draft);}
   const editors={},dialogs=new Set();
   let serverFields=[],inputFields=[];
-  let settingsDialog,settingsOpener,lastSelection,canvas,canvasDocument,canvasFactory,writingReady=false,mediaOpening=false;
+  let settingsDialog,settingsOpener,lastSelection,canvas,canvasDocument,canvasFactory,writingReady=false,mediaOpening=false,leaveDialog;
   let readerPanel='',readerReturnScroll,fullscreenState;
   const locale=()=>draft.translations[lang];
   const active=()=>editors[lang];
@@ -742,7 +742,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     if(action==='validation-field'){focusIssue({field:el.dataset.key,language:el.dataset.language});return;}
     if(action==='save'){await save();return;}
     if(action==='publish'||action==='unpublish'){await publication(action);return;}
-    if(action==='back'){if(canLeave()){destroy();onClose();}return;}
+    if(action==='back'){if(await canLeave()){destroy();onClose();}return;}
     if(action==='preview'||action==='card-preview'){preview();return;}
     if(action==='content'){showReaderPanel('basic');expandBasics();root.querySelector('[data-field=title]').focus();return;}
     if(action==='toggle-basic'){expandBasics(el.getAttribute('aria-expanded')!=='true');return;}
@@ -768,7 +768,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       if(!writingReady)throw Error('กรุณารอพื้นที่เขียนพร้อมก่อนนำเข้าฉบับร่าง');
       if(file.size>2000000)throw Error('ไฟล์ใหญ่เกิน 2 MB');
       const next=parseDraftBackup(await file.text());
-      if(!canLeave())return;
+      if(!(await canLeave()))return;
       draft=next;serverFields=[];inputFields=[];if(cloud){draft.cloudDraft=true;draft.localDraft=false;}for(const l of ['th','en'])editors[l]?.commands.setContent(draft.translations[l].document,{emitUpdate:false});
       refreshSettings();dirty();setStatus('นำเข้าสำเนาฉบับร่างแล้ว กรุณาบันทึก');
     }catch(error){setStatus(error.message || 'อ่านไฟล์ไม่สำเร็จ',true);}finally{event.target.value='';}
@@ -781,7 +781,25 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   function keyboard(){const focused=document.activeElement?.matches('input,textarea,[contenteditable=true]')||canvasDocument?.activeElement?.matches('input,textarea,[contenteditable=true]');root.querySelector('.ae-workspace')?.classList.toggle('ae-keyboard',Boolean(focused&&viewport&&window.innerHeight-viewport.height>140));}
   function blur(event){if(event.target.matches('[data-field=tags]')&&!event.relatedTarget?.closest('[data-ae=remove-tag]')){commitTags();dirty();}keyboard();}
   viewport?.addEventListener('resize',keyboard);window.addEventListener('resize',growFields);root.addEventListener('focusin',keyboard);root.addEventListener('focusout',blur);
-  function canLeave(){return !busy&&(!changed()||confirm('มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการออกโดยไม่บันทึกหรือไม่?'));}
+  async function canLeave(){
+    if(busy||destroyed||leaveDialog)return false;
+    if(!changed())return true;
+    const title=locale().title.trim()||'บทความไม่มีชื่อ';
+    const d=modal('ออกโดยไม่บันทึก?',`<div class="ae-leave-body"><p class="ae-leave-article">${esc(title)}</p><p id="ae-leave-description">การแก้ไขล่าสุดยังไม่ได้บันทึก หากออกตอนนี้ การแก้ไขเหล่านี้จะหายไป ฉบับที่บันทึกไว้ก่อนหน้ายังคงเดิม</p></div><div class="ae-modal-actions ae-leave-actions"><button type="button" class="ae-button ae-primary" data-leave="stay">แก้ไขต่อ</button><button type="button" class="ae-button ae-leave-discard" data-leave="discard">ออกโดยไม่บันทึก</button></div>`);
+    leaveDialog=d;d.classList.add('ae-leave-dialog');d.setAttribute('aria-describedby','ae-leave-description');
+    d.addEventListener('keydown',event=>{
+      if(event.key==='Escape')event.stopPropagation();
+      if(event.key!=='Tab')return;
+      event.stopPropagation();
+      const controls=[...d.querySelectorAll('button')],first=controls[0],last=controls.at(-1);
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    });
+    d.querySelector('[data-leave=stay]').onclick=()=>d.close();
+    d.querySelector('[data-leave=discard]').onclick=()=>d.close('discard');
+    d.querySelector('[data-leave=stay]').focus({preventScroll:true});
+    return new Promise(resolve=>d.addEventListener('close',()=>{leaveDialog=null;resolve(d.returnValue==='discard'&&!busy&&!destroyed);},{once:true}));
+  }
   function destroy(){
     if(destroyed)return;setFullscreen(false,{restoreFocus:false});destroyed=true;canvasDocument?.removeEventListener('keydown',fullscreenKeys,true);document.removeEventListener('keydown',fullscreenKeys);canvas?.destroy();for(const d of dialogs)d.close();
     for(const editor of Object.values(editors))editor.destroy();window.removeEventListener('beforeunload',unload);viewport?.removeEventListener('resize',keyboard);window.removeEventListener('resize',growFields);
