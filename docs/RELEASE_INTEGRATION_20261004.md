@@ -77,6 +77,30 @@ A passing build alone is not a release: retain the required GitHub
 assets. Follow `RELEASE_RUNBOOK.md` timing checkpoints. No Firestore Rules or
 environment configuration changes are part of this release.
 
+### CI Consumer Repair
+
+Full run `37143660957` on `0638b0d` rejected the candidate, and the production
+alias correctly remained on `28e8c60`. Preflight, Articles and CMS passed.
+The failed Admin/Visitor journeys used the previously always-expanded article
+toolbar; Smoke omitted the newly required logout confirmation; NFR used the
+old owner-panel Preview label. The Motor comparison consumers had the same
+stale Preview locator and were corrected in the same repair pass.
+The Analytics auth fixture also serves the new shared confirmation module,
+retaining all unauthenticated and unauthorized redirect assertions.
+
+The test helper now waits for the article workspace to mount before expanding
+it. Tests open the real writing disclosure, target Preview inside the owner
+panel, and confirm logout through the shared dialog. Existing geometry,
+navigation, publishing and sign-out assertions remain required. These repairs
+do not change runtime files or the hosted UAT candidate. A new exact-SHA full
+CI result and canonical-alias readback are required before claiming release.
+
+Before the repair push, the full local Admin suite, the previously blocked
+Visitor tail and complete Smoke passed. Real emulator Rules, NFR navigation,
+article authoring in Chromium/WebKit and Home pin publication/race checks also
+passed. NFR now creates its own evidence directory and captures failures when
+run independently. No required assertion, budget or CI job was removed.
+
 Recovery is a reviewed follow-up reverting the integrated source to `28e8c60`
 through the same CI gate; do not reset production content or discard the source
 worktrees. Permanent article deletion is irreversible and is never a rollout

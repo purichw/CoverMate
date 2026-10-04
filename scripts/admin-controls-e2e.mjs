@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { startArticlesAdminPreview } from './articles-admin-preview.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
-import { revealArticleControl } from './lib/article-editor-ui.mjs';
+import { openArticleWriting, revealArticleControl } from './lib/article-editor-ui.mjs';
 import { createCasesFixture } from './fixtures/cases.mjs';
 import Cases from '../server/cases-contract.cjs';
 
@@ -150,7 +150,7 @@ try {
       await page.locator('.article-more[open] [data-article-action="edit"]').click();
     } else await page.locator('.article-desktop-action[data-article-action="edit"]').first().click();
     await page.locator('.ae-workspace').waitFor();
-    await revealArticleControl(page, '.ae-canvas-frame');
+    await openArticleWriting(page);
     const editor=page.frameLocator('.ae-canvas-frame').locator('.tiptap:visible');
     await editor.locator(':scope > p').first().click();
     await choose(page.locator('[data-format="block"]'),'h3');

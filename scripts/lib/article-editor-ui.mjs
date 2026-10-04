@@ -1,6 +1,7 @@
 // Exercise inline disclosures or the optional settings sheet through real UI.
 export const articleCanvas=page=>page.frameLocator('.ae-canvas-frame');
 export async function openArticleWriting(page){
+  await page.locator('.ae-writing[data-expanded]').waitFor({state:'attached'});
   await closeSettings(page);
   if(await page.locator('.ae-writing[data-expanded=false]').count())await page.locator('[data-ae=toggle-writing]').click();
   await articleCanvas(page).locator('.ae-editor-host:visible .tiptap[contenteditable=true]').waitFor();

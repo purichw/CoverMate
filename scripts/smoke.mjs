@@ -2938,6 +2938,7 @@ for (const [name, width, height] of viewports) {
   if (mobileSignOut) await page.locator('.case-menu-trigger').click();
   await page.locator(`${mobileSignOut ? '.admin-mobile-account' : '.sidebar'} .admin-account > summary`).click();
   await page.locator(`${mobileSignOut ? '.admin-mobile-account' : '.sidebar'} [data-action="logout"]`).click();
+  await page.locator('[data-signout-confirm]').getByRole('button', { name: 'ออกจากระบบ', exact: true }).click();
   await page.waitForURL(/\/admin\/login\/?$/, { timeout: 5000 }).catch(() => {});
   if (!page.url().includes("/admin/login")) {
     failures.push(`${name} /admin sign out: expected /admin/login, got ${page.url()}`);

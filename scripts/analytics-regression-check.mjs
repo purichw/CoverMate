@@ -88,8 +88,8 @@ async function routeStatic(page, firebaseBody = "export {};", analyticsPayload =
     if (url.pathname === "/covermate-firebase.js") {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: firebaseBody });
     }
-    if (url.pathname === "/admin/session.js") {
-      return route.fulfill({ status: 200, contentType: "application/javascript", body: read("admin/session.js") });
+    if (["/admin/session.js", "/admin/sign-out-confirm.js"].includes(url.pathname)) {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: read(url.pathname.slice(1)) });
     }
     if (url.pathname === "/admin/analytics-data.js") {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: read("admin/analytics-data.js") });
