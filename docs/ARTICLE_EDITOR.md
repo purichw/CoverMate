@@ -13,10 +13,10 @@ editing a draft. The shared Admin sidebar, verified session and role gate stay
 in place. Readonly sessions cannot open the writer. A full article document is
 required for editing; a list summary must never overwrite the body.
 
-Production drafts use the verified server repository with explicit Save/Publish
-and revision checks. Existing local recovery drafts and the isolated test editor
+Production drafts use the verified server repository with draft Autosave,
+explicit Publish and revision checks. Existing local recovery drafts and the isolated test editor
 use IndexedDB `covermate-article-drafts-v1`, scoped by verified
-UID and environment. Save is explicit, not autosave. Revision checks run inside
+UID and environment. Both repositories use the same Autosave flow. Revision checks run inside
 an atomic read/write transaction, so a stale tab cannot overwrite a newer draft.
 Storage errors preserve current edits. JSON export/import provides a local backup;
 import creates a new identity, clears the revision and does not publish anything.
@@ -26,6 +26,30 @@ that backup. Do not use this store as an authorization or public publication sou
 Existing published articles produce a separate working draft and keep their
 slug read-only. Back, sidebar navigation, logout and browser unload guard unsaved
 changes. Saving during continued typing does not mark later edits saved.
+
+### Draft Autosave
+
+After an author edit, the editor saves after 700 ms of inactivity, with a
+30-second maximum wait during continuous editing. Opening an untouched article
+does not write. TH/EN bodies, metadata, cover and pending tags share one serialized
+save path; input composition defers saving until it ends. Autosave does not clear
+the tag field, move focus or replace the document. Edits made during a request
+are saved by a subsequent request using the acknowledged revision.
+
+The existing status shows pending, saving, saved time, invalid input, offline or
+failure. Save/⌘S/Ctrl+S flushes the same draft immediately and retries a failed
+save; Publish remains an explicit, confirmed action. Incomplete drafts can save,
+but malformed supplied values pause Autosave until corrected. Failures preserve
+edits in the open editor and stop blind retries. Reconnecting resumes offline or
+connectivity failures; revision conflicts and permission errors require explicit
+recovery. Export remains available for a backup before reopening a stale draft.
+There is no new durable offline recovery store: closing before a successful save
+can still lose pending changes, so existing leave/unload warnings remain active.
+Discarding edits cancels queued writes. No website or other article draft is saved.
+
+`scripts/lib/article-autosave-check.mjs`, run by `article-validation-check.mjs
+--browser`, exercises the real editor/repository using isolated storage and delayed,
+failed and conflicting writes. Local evidence does not certify a production deploy.
 
 ## Field Requirements And SEO
 
@@ -159,9 +183,10 @@ The live card uses the active draft language, category, cover, excerpt, editoria
 date and body reading time. It does not save or publish. Its action opens the
 existing real Visitor preview. Missing/failed cover images keep a stable frame;
 the body image is independent. Card excerpts and SEO descriptions stay separate.
-There is no pretend autosave, publication-status selector, slug-availability
+There is no publication-status selector, slug-availability
 button or scheduled-unpublish control: these mock details have no corresponding
-supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
+supported action. Draft Autosave uses the real repository; immediate Save,
+Publish and confirmed Unpublish are preserved.
 
 - Independent TH/EN documents, titles, excerpts, dates, SEO and cover captions.
 - H1–H6, paragraphs, bold/italic/underline/strike/highlight, sub/superscript,
@@ -210,9 +235,9 @@ supported action. Explicit Save, Publish and confirmed Unpublish are preserved.
 
 
 Images support HTTPS URLs, local assets and uploads through the configured media
-provider, with explicit crop confirmation. Revision-history restore, server autosave
-and whole-article duplication are not implemented controls. Archive/Trash/Restore
-live in article management, not inside the writer. The offline test adapter has no
+provider, with explicit crop confirmation. Revision-history restore and
+whole-article duplication are not implemented controls. Archive/Trash/Restore are managed
+in the article list. Draft Autosave is described above. The offline test adapter has no
 publication capability; the real verified repository supports explicit Publish.
 
 ## Typography Controls

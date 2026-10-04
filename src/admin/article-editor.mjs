@@ -55,6 +55,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   for(const language of ['th','en'])prepareArticleSummary(draft.translations[language],language);
   saved=JSON.stringify(draft);
   const cloud=repository?.cloud===true;
+  let autosaveTimer,firstPendingAt=0,autosaveError=null,saving=false,composing=false;
   const compactLayout=matchMedia('(max-width:1199px)');
   if(cloud){draft.cloudDraft=true;draft.localDraft=false;saved=JSON.stringify(draft);}
   const editors={},dialogs=new Set();
@@ -63,13 +64,18 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   let readerPanel='basic',fullscreenState,writingExpanded=false;
   const locale=()=>draft.translations[lang];
   const active=()=>editors[lang];
-  const changed=()=>JSON.stringify(draft)!==saved||Boolean(root.querySelector('[data-field=tags]')?.value.trim());
+  const draftSnapshot=()=>({...draft,tags:[...new Set([...draft.tags,...(root.querySelector('[data-field=tags]')?.value||'').split(',').map(tag=>tag.trim()).filter(Boolean)])]});
+  const changed=()=>JSON.stringify(draftSnapshot())!==saved;
   const setStatus=(text,error=false)=>{if(destroyed)return;const el=root.querySelector('.ae-feedback');el.textContent=text;el.dataset.error=String(error);};
   function syncDocuments(){for(const [key,editor] of Object.entries(editors)){draft.translations[key].document=editor.getJSON();editor.view.dom.dataset.layout=key===lang?editor.state.doc.attrs.layout || 'classic':'classic';}}
   function dirty(){
     syncDocuments();
     if(changed()&&!busy&&root.querySelector('.ae-feedback')?.dataset.error!=='true')setStatus('');
-    root.querySelectorAll('[data-save-state]').forEach(el=>{el.dataset.dirty=String(changed());el.textContent=changed()?'Unsaved changes':draft.updatedAt?(cloud?'Saved · ':'Saved locally · ')+new Date(draft.updatedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'New draft';});
+    const pending=changed(),invalidDraft=issues(false).length>0,offline=cloud&&navigator.onLine===false;
+    const state=saving?'saving':pending?(autosaveError?'error':offline?'offline':invalidDraft?'invalid':'pending'):'saved';
+    const stamp=draft.updatedAt?new Date(draft.updatedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'';
+    const status=saving?'กำลังบันทึกร่าง…':pending?(autosaveError?'บันทึกไม่สำเร็จ · กด Save เพื่อลองใหม่':offline?'ออฟไลน์ · รอเชื่อมต่อเพื่อบันทึก':invalidDraft?'รอบันทึก · ตรวจข้อมูลที่ระบุ':'รอบันทึกอัตโนมัติ…'):stamp?(cloud?'บันทึกแล้ว · ':'บันทึกบนเครื่องแล้ว · ')+stamp:'บันทึกอัตโนมัติเมื่อเริ่มแก้ไข';
+    root.querySelectorAll('[data-save-state]').forEach(el=>{el.dataset.dirty=String(pending);el.dataset.saveState=state;if(el.textContent!==status)el.textContent=status;});
     root.querySelectorAll('[data-ae="save"]').forEach(el=>{el.disabled=busy||!writingReady;});
     const invalid=refreshValidation();
     root.querySelectorAll('[data-ae="publish"]').forEach(el=>{el.disabled=busy||!cloud||!writingReady||invalid.length>0;});
@@ -82,6 +88,12 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     updateCard(length);
     growFields();
     canvas?.update();
+    clearTimeout(autosaveTimer);
+    if(!pending)firstPendingAt=0;
+    else if(!destroyed&&writingReady&&!busy&&!composing&&!autosaveError&&!invalidDraft&&!offline){
+      firstPendingAt ||= Date.now();
+      autosaveTimer=setTimeout(()=>save({automatic:true}),Math.min(700,Math.max(0,30000-(Date.now()-firstPendingAt))));
+    }
   }
   function issues(publish=true,languages=[lang]) {
     const value={...draft,tags:[...new Set([...draft.tags,...(root.querySelector('[data-field=tags]')?.value||'').split(',').map(tag=>tag.trim()).filter(Boolean)])]};
@@ -255,7 +267,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   root.innerHTML=`<div class="ae-workspace">
     <div class="ae-breadcrumb">${btn('back','ArrowLeft','บทความ')}<span> / ${draft.basePublished?'แก้ไขบทความ':'Draft'}</span></div>
     <div class="ae-heading"><div class="ae-heading-copy"><h1>${draft.basePublished?'แก้ไขบทความ':'เขียนบทความ'}</h1><p>จัดเนื้อหาให้ครบ แล้วเผยแพร่ความรู้ที่เป็นประโยชน์</p></div><div class="ae-mobile-language"></div><div class="ae-actions">${btn('preview','Eye','Preview')}${btn('save','Save','Save draft')}<button class="ae-button ae-primary" type="button" data-ae="publish" ${cloud?'':'disabled'} aria-describedby="aeStorageNotice">${icon('Upload')}เผยแพร่บทความ</button></div></div>
-    <div class="ae-storage-notice" id="aeStorageNotice">${icon('Info')}<span>${cloud?'บันทึกและเผยแพร่เฉพาะบทความนี้ แยกจากร่างหน้าเว็บและบทความอื่น':'ร่างเก็บบนเบราว์เซอร์นี้เท่านั้น ยังไม่เชื่อมระบบเผยแพร่'}${initial?.sample?' · เนื้อหาตัวอย่าง':''}</span><span class="ae-save-status" data-save-state></span></div>
+    <div class="ae-storage-notice" id="aeStorageNotice">${icon('Info')}<span>${cloud?'บันทึกร่างอัตโนมัติ · กด Publish เมื่อต้องการเผยแพร่ เฉพาะบทความนี้':'บันทึกร่างอัตโนมัติบนเบราว์เซอร์นี้เท่านั้น ยังไม่เชื่อมระบบเผยแพร่'}${initial?.sample?' · เนื้อหาตัวอย่าง':''}</span><span class="ae-save-status" data-save-state role="status" aria-live="polite"></span></div>
     <p class="ae-feedback" role="status" aria-live="polite"></p>
     <div class="ae-grid"><div class="ae-main-column"><section class="ae-basic" aria-label="ข้อมูลบทความ"><div class="ae-writing-head"><h2><button type="button" class="ae-basic-toggle" data-ae="toggle-basic" aria-expanded="true" aria-controls="aeBasicFields"><span>${icon('FileText')}ข้อมูลบทความ</span>${icon('ChevronDown')}</button></h2><div class="ae-language" role="group" aria-label="ภาษาเนื้อหา"><button type="button" data-lang="th" aria-pressed="true">TH</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
       <div class="ae-title-fields"><div>${field('title','ชื่อบทความ',locale().title,'textarea','maxlength="240"')}<small class="ae-field-count" data-count="title"></small></div><div>${field('slug','ชื่อท้ายลิงก์บทความ (Slug)',draft.slug,'text',draft.basePublished||draft.slugLocked?'readonly aria-describedby="aeSlugHelp"':'pattern="[a-z0-9]+(-[a-z0-9]+)*" aria-describedby="aeSlugHelp"')}<small class="ae-slug-path" data-slug-path></small><small id="aeSlugHelp">${draft.basePublished||draft.slugLocked?'คง URL เดิมของบทความที่เผยแพร่แล้ว':'ใช้ภาษาอังกฤษ ตัวเลข และขีดกลาง'}</small></div><div>${field('excerpt','คำโปรยในหน้ารวมบทความ',locale().excerpt,'textarea','maxlength="600"')}<small class="ae-field-count" data-count="excerpt"></small></div>${formSelect('categoryId','หมวดหมู่',Object.entries(ARTICLE_CATEGORIES).map(([id,names])=>[id,names[0]]),draft.categoryId)}<div class="ae-field"><label for="aeTags">คำค้นที่เกี่ยวข้อง (Tags)</label><div class="ae-tags"><div class="ae-tag-list"></div><input id="aeTags" data-field="tags" type="text" placeholder="เพิ่มแท็ก แล้วกด Enter" aria-label="เพิ่มแท็ก" autocomplete="off"></div></div></div></section>
@@ -483,7 +495,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   }
   canvas=mountArticleCanvas({root:root.querySelector('.ae-canvas'),getDetail:currentDetail,
     onReady:({document,createEditor:factory})=>{
-      canvasDocument=document;canvasDocument.addEventListener('keydown',fullscreenKeys,true);canvasDocument.addEventListener('pointerdown',dismissTools);canvasFactory=factory;createEditor('th');createEditor('en');syncDocuments();
+      canvasDocument=document;canvasDocument.addEventListener('keydown',fullscreenKeys,true);canvasDocument.addEventListener('pointerdown',dismissTools);canvasDocument.addEventListener('compositionstart',compositionStart);canvasDocument.addEventListener('compositionend',compositionEnd);canvasFactory=factory;createEditor('th');createEditor('en');syncDocuments();
       // Initial schema defaults are not an author edit. Preserve any metadata
       // edits made while the page was loading, but compare normalized bodies.
       const baseline=JSON.parse(saved);
@@ -669,14 +681,31 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     }
     updateToolbar();
   }
-  async function save(){
-    if(busy||!writingReady)return;commitTags();syncDocuments();
+  async function save({automatic=false}={}){
+    if(busy||!writingReady||destroyed||composing)return false;
+    clearTimeout(autosaveTimer);firstPendingAt=0;
+    if(!automatic)commitTags();syncDocuments();
+    if(automatic&&!changed())return true;
+    if(cloud&&navigator.onLine===false){dirty();return false;}
     const invalid=issues(false);refreshValidation();
-    if(invalid.length){setStatus('ยังบันทึกไม่ได้ กรุณาแก้ข้อมูลที่ระบุใต้ช่องกรอก',true);focusIssue(invalid[0]);return false;}
-    busy=true;dirty();setStatus(cloud?'กำลังบันทึกในคลัง...':'กำลังบันทึกบนเครื่อง...');
-    const snapshot=structuredClone(draft);
-    try{const result=await repository.save(snapshot,draft.revision);draft.revision=result.revision;draft.updatedAt=result.updatedAt;saved=JSON.stringify({...snapshot,revision:result.revision,updatedAt:result.updatedAt});setStatus(cloud?'บันทึกฉบับร่างในคลังแล้ว ยังไม่เปลี่ยนฉบับเผยแพร่':'บันทึกฉบับร่างบนเครื่องแล้ว ยังไม่มีการเผยแพร่');return true;}
-    catch(error){receiveFailure(error);return false;}finally{busy=false;dirty();}
+    if(invalid.length){if(!automatic){setStatus('ยังบันทึกไม่ได้ กรุณาแก้ข้อมูลที่ระบุใต้ช่องกรอก',true);focusIssue(invalid[0]);}dirty();return false;}
+    autosaveError=null;busy=true;saving=true;dirty();if(!automatic)setStatus(cloud?'กำลังบันทึกในคลัง...':'กำลังบันทึกบนเครื่อง...');
+    const snapshot=structuredClone(draftSnapshot());
+    try{
+      const result=await repository.save(snapshot,draft.revision);
+      if(destroyed)return false;
+      draft.revision=result.revision;draft.updatedAt=result.updatedAt;saved=JSON.stringify({...snapshot,revision:result.revision,updatedAt:result.updatedAt});
+      if(!automatic)setStatus(cloud?'บันทึกฉบับร่างในคลังแล้ว ยังไม่เปลี่ยนฉบับเผยแพร่':'บันทึกฉบับร่างบนเครื่องแล้ว ยังไม่มีการเผยแพร่');
+      else setStatus('');
+      return true;
+    }
+    catch(error){
+      if(destroyed)return false;
+      autosaveError=error;
+      if(automatic){serverFields=Array.isArray(error.fields)?error.fields:[];setStatus((error.message||'เชื่อมต่อเพื่อบันทึกไม่ได้')+' · ข้อความยังอยู่ในหน้านี้ กด Save เพื่อลองใหม่ หรือส่งออกฉบับร่างก่อนออก',true);}
+      else receiveFailure(error);
+      return false;
+    }finally{busy=false;saving=false;if(!destroyed)dirty();}
   }
   async function publication(action){
     if(!cloud||busy)return;
@@ -713,7 +742,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
     };
   }
   function exportDraft(){
-    syncDocuments();const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    syncDocuments();const blob=new Blob([JSON.stringify(draftSnapshot(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='covermate-'+(draft.slug.replace(/[^a-z0-9-]/g,'') || 'article')+'-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setStatus('ส่งออกไฟล์ฉบับร่างแล้ว');
   }
   function preview(){
@@ -894,18 +923,28 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
       if(file.size>2000000)throw Error('ไฟล์ใหญ่เกิน 2 MB');
       const next=parseDraftBackup(await file.text());
       if(!canLeave())return;
-      draft=next;for(const language of ['th','en'])prepareArticleSummary(draft.translations[language],language);serverFields=[];inputFields=[];if(cloud){draft.cloudDraft=true;draft.localDraft=false;}
+      clearTimeout(autosaveTimer);firstPendingAt=0;autosaveError=null;draft=next;for(const language of ['th','en'])prepareArticleSummary(draft.translations[language],language);serverFields=[];inputFields=[];if(cloud){draft.cloudDraft=true;draft.localDraft=false;}
       for(const language of ['th','en']){
         const editor=editors[language],document=draft.translations[language].document;if(!editor)continue;
         // setContent replaces children but retains the old ProseMirror doc attributes.
         const attrs=editor.schema.nodeFromJSON(document).attrs;
         editor.chain().setContent(document,{emitUpdate:false}).command(({tr})=>{for(const [key,value] of Object.entries(attrs))tr.setDocAttribute(key,value);return true;}).run();
       }
-      refreshSettings();dirty();setStatus('นำเข้าสำเนาฉบับร่างแล้ว กรุณาบันทึก');
+      refreshSettings();dirty();setStatus('นำเข้าสำเนาฉบับร่างแล้ว ระบบจะบันทึกอัตโนมัติ');
     }catch(error){setStatus(error.message || 'อ่านไฟล์ไม่สำเร็จ',true);}finally{event.target.value='';}
   });
   function unload(event){if(changed()){event.preventDefault();event.returnValue='';}}
   window.addEventListener('beforeunload',unload);
+  function compositionStart(){composing=true;clearTimeout(autosaveTimer);}
+  function compositionEnd(){composing=false;dirty();}
+  function connection(){
+    // Only connectivity failures resume automatically. A stale revision or
+    // expired permission needs an explicit recovery, never blind retries.
+    if(navigator.onLine&&autosaveError&&(!autosaveError.status||autosaveError.status>=500)&&cloud)autosaveError=null;
+    dirty();
+  }
+  root.addEventListener('compositionstart',compositionStart);root.addEventListener('compositionend',compositionEnd);
+  window.addEventListener('online',connection);window.addEventListener('offline',connection);
   function shortcut(event){if(event.target.matches('[data-field=tags]')&&event.key==='Enter'){event.preventDefault();commitTags();dirty();}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='s'){event.preventDefault();event.stopPropagation();save();}}
   root.addEventListener('keydown',shortcut);
   const viewport=window.visualViewport;
@@ -914,7 +953,7 @@ export function mountArticleEditor({root,initial,repository,onClose,author='Cove
   viewport?.addEventListener('resize',keyboard);window.addEventListener('resize',growFields);root.addEventListener('focusin',keyboard);root.addEventListener('focusout',blur);
   function canLeave(){return !busy&&(!changed()||confirm('มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการออกโดยไม่บันทึกหรือไม่?'));}
   function destroy(){
-    if(destroyed)return;setFullscreen(false,{restoreFocus:false});destroyed=true;canvasDocument?.removeEventListener('keydown',fullscreenKeys,true);canvasDocument?.removeEventListener('pointerdown',dismissTools);document.removeEventListener('pointerdown',dismissTools);document.removeEventListener('keydown',fullscreenKeys);canvas?.destroy();for(const d of dialogs)d.close();
+    if(destroyed)return;clearTimeout(autosaveTimer);setFullscreen(false,{restoreFocus:false});destroyed=true;canvasDocument?.removeEventListener('keydown',fullscreenKeys,true);canvasDocument?.removeEventListener('pointerdown',dismissTools);document.removeEventListener('pointerdown',dismissTools);canvasDocument?.removeEventListener('compositionstart',compositionStart);canvasDocument?.removeEventListener('compositionend',compositionEnd);root.removeEventListener('compositionstart',compositionStart);root.removeEventListener('compositionend',compositionEnd);window.removeEventListener('online',connection);window.removeEventListener('offline',connection);document.removeEventListener('keydown',fullscreenKeys);canvas?.destroy();for(const d of dialogs)d.close();
     for(const editor of Object.values(editors))editor.destroy();window.removeEventListener('beforeunload',unload);viewport?.removeEventListener('resize',keyboard);window.removeEventListener('resize',growFields);
     root.removeEventListener('input',input);root.removeEventListener('change',change);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointer);root.removeEventListener('keydown',shortcut);root.removeEventListener('focusin',keyboard);root.removeEventListener('focusout',blur);
     root.removeEventListener('error',imageError,true);

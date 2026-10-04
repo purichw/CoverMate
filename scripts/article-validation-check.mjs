@@ -146,7 +146,7 @@ if(process.argv.includes('--browser')) {
     const url=new URL(req.url,'http://localhost');
     const send=(type,data,status=200)=>{res.writeHead(status,{'Content-Type':type});res.end(data);return true;};
     if(url.pathname==='/__validation/client.mjs')return send('text/javascript',fs.readFileSync('admin/articles/data.mjs','utf8'));
-    if(url.pathname==='/admin/articles/data.mjs')return send('text/javascript',`import {createCloudArticleRepository as create} from '/__validation/client.mjs';const request=async(action,body,id)=>{const response=await fetch('/__validation/repository?action='+action+(id?'&id='+id:''),{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json();if(!response.ok)throw Object.assign(Error(result.message),result);return result;};const repository=create({request});export const createCloudArticleRepository=()=>repository;export const loadArticleCatalog=()=>repository.catalog();export const loadArticleForEditor=id=>repository.get(id);`);
+    if(url.pathname==='/admin/articles/data.mjs')return send('text/javascript',`import {createCloudArticleRepository as create} from '/__validation/client.mjs';const request=async(action,body,id)=>{const response=await fetch('/__validation/repository?action='+action+(id?'&id='+id:''),{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json();if(!response.ok)throw Object.assign(Error(result.message),result,{status:response.status});return result;};const repository=create({request});export const createCloudArticleRepository=()=>repository;export const loadArticleCatalog=()=>repository.catalog();export const loadArticleForEditor=id=>repository.get(id);`);
     if(url.pathname==='/__validation/repository'){
       const action=url.searchParams.get('action');let input={};for await(const chunk of req)input.raw=(input.raw||'')+chunk;
       if(input.raw)input=JSON.parse(input.raw);requests.push(action);
@@ -166,9 +166,11 @@ if(process.argv.includes('--browser')) {
   await context.route('**/*',route=>new URL(route.request().url()).origin===server.baseUrl?route.continue():route.abort());
   const publish=()=>page.locator('[data-ae=publish]:visible').first();
   const fieldError=key=>page.locator('.ae-field,.ae-toggle').filter({has:page.locator(`[data-field="${key}"]`)}).locator('.ae-field-error');
-  const edit=async()=>{if(page.url()===server.baseUrl+'/admin#articles')await page.reload();else await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await page.locator('[data-article-action=edit][data-id="browser-validation"]:visible').first().click();await revealArticleControl(page,'.ae-canvas-frame');await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor({timeout:30000});};
+  const edit=async(id='browser-validation')=>{if(page.url()===server.baseUrl+'/admin#articles')await page.reload();else await page.goto(server.baseUrl+'/admin#articles');await page.locator('[data-article-state=ready]').waitFor();await page.locator(`[data-article-action=edit][data-id="${id}"]:visible`).first().click();await revealArticleControl(page,'.ae-canvas-frame');await articleCanvas(page).locator('.ae-editor-host:visible .tiptap').waitFor({timeout:30000});};
   const save=async()=>{await closeSettings(page);await page.locator('[data-ae=save]:visible').first().click();await page.locator('.ae-feedback').filter({hasText:'บันทึกฉบับร่างในคลังแล้ว'}).waitFor();};
   try{
+    const {checkArticleAutosave}=await import('./lib/article-autosave-check.mjs');
+    await checkArticleAutosave({page,context,repository,site,uid,records,valid,edit,out,requests});
     await edit();assert.ok(await publish().isDisabled());assert.match(await fieldError('title').textContent(),/กรุณา/);
     await save();assert.equal((await repository.get(site,fixture.id)).translations.th.title,'','Incomplete draft save works');
     await articleField(page,'title').fill('เลือกประกันรถยนต์อย่างไรให้เหมาะกับการใช้งาน');

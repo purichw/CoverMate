@@ -34,6 +34,7 @@
 .ae-heading-copy { min-width:0; }.ae-heading-copy p { margin:5px 0 0;color:var(--ae-muted);font-size:13px;line-height:1.6; }
 .ae-mobile-language { display:none!important; }
 .ae-save-status { display:inline-flex;align-items:center;gap:6px;margin-left:auto;color:#45623e;background:#edf4e8;border-radius:20px;padding:6px 10px;font-size:11px;line-height:1.5;white-space:nowrap; }.ae-save-status::before { content:'';width:6px;height:6px;border-radius:50%;background:currentColor; }.ae-save-status[data-dirty=true] { color:#8b531f;background:#fbefde; }
+.ae-save-status { white-space:normal;max-width:100%; }.ae-save-status::before { flex:none; }.ae-save-status[data-save-state=error] { color:#973b29;background:#fff0ea; }
 .ae-actions { display:flex;flex-wrap:wrap;gap:8px; }.ae-actions [data-ae=settings] { display:none; }
 .ae-actions .ae-content-link { display:none; }
 .ae-storage-notice { display:flex;align-items:center;gap:8px;color:#71603c;padding:0 0 14px;font-size:12px;line-height:1.6; }

@@ -22,7 +22,8 @@ Initial settings: master off, Home/navigation on. No configuration/environment
 variable or deployment is needed to change the switches. UAT and production
 store independent settings; an empty collection is not treated as enabled.
 
-Create/edit an article, save the draft, preview, then choose Publish and confirm
+Create/edit an article, wait for the draft Autosave confirmation (or press Save),
+preview, then choose Publish and confirm
 the languages. Only complete selected translations become public. Saving edits
 to a published article does not replace its live content. Republish explicitly.
 Unpublish removes every public translation but retains the editable draft.
@@ -43,7 +44,7 @@ does not publish existing drafts or alter any hosted CMS data.
 ### Independent publication boundary
 
 Website Save, Publish, Reset draft, Undo/Redo and version restore never save,
-publish or reset article drafts. Article Save/Publish/Unpublish/Archive/Trash/Restore/Delete affects only the
+publish or reset article drafts. Article Autosave/Save/Publish/Unpublish/Archive/Trash/Restore/Delete affects only the
 selected article and its catalog/slug/audit records; it leaves website drafts,
 website published content, website version history and other article drafts intact.
 Article visibility settings remain separately saved under `articleSettings`.
