@@ -25,3 +25,12 @@ data deletion, Rules or configuration change is requested. Record the final
 run, deployment and read-only production evidence separately; a local pass or
 ready preview alone does not establish production success. Recovery is a new
 reviewed revert on current main, preserving subsequent work and stored drafts.
+
+Preview `4e11baa` passed hosted synthetic UAT, including the mobile leave dialog,
+draft persistence and cleanup, without production writes. Its first full CI
+run (`37240808540`) identified two legacy test consumers that still expected a
+native confirmation: Admin controls and the article cloud conflict journey.
+Both now explicitly choose discard in the in-app dialog and passed their local
+targeted runs (desktop/mobile controls and Chromium Firebase emulator journey).
+This follow-up changes tests only, so runtime bundle and hosted UAT evidence
+remain valid; full CI must pass again for the final revision before promotion.

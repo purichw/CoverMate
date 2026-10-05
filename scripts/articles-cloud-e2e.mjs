@@ -112,6 +112,7 @@ try {
       assert.equal(await admin.locator('[data-field=excerpt]').inputValue(),'ฉบับที่ยังไม่บันทึกหลังแท็บอื่นแก้ไข');
       const download=admin.waitForEvent('download');await articleTool(admin,'export');assert.match((await download).suggestedFilename(),/draft.json$/);
       await admin.locator('[data-ae=back]').click();
+      await admin.locator('[data-leave=discard]').click();
       await admin.getByRole('button',{name:'แก้ไข: '+title,exact:true}).click();
       await admin.locator('[data-ae=preview]:visible').click();
       const previewDialog=admin.getByRole('dialog',{name:'Preview · Unpublished draft',exact:true});

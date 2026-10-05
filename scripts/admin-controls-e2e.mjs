@@ -159,6 +159,7 @@ try {
     await choose(page.locator('select[data-field="categoryId"]'),'health');
     assert.equal(await page.locator('select[data-field="categoryId"]').inputValue(),'health');
     await page.locator('[data-ae="back"]').click();
+    await page.locator('[data-leave=discard]').click();
     await page.locator('[data-article-state="ready"]').waitFor();
 
     mark('Analytics stat cards and return to Cases');
