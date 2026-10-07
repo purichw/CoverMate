@@ -168,11 +168,15 @@ try {
   await page.clock.fastForward(10000);
   assert.equal(requests, failedRequests, 'Failure backoff ignored');
   await context.setOffline(true);
+  // Network emulation resolves before the page necessarily handles its event.
+  // Observe each native transition before advancing the virtual timers it sets.
+  await page.waitForFunction(() => window.__liveNetworkEvidence.some(event => event.type === 'offline' && event.online === false));
   live.text[key] = 'Back online';
   await page.clock.fastForward(180000);
   assert.equal(requests, failedRequests, 'Offline tab polled');
   status = 200;
   await context.setOffline(false);
+  await page.waitForFunction(() => window.__liveNetworkEvidence.some(event => event.type === 'online' && event.online === true));
   await page.clock.fastForward(5100);
   await page.waitForFunction(() => document.querySelector('#hero h1')?.textContent === 'Back online').catch(async error => {
     console.error('Reconnect evidence:', JSON.stringify(await page.evaluate(() => ({ heading: document.querySelector('#hero h1')?.textContent, events: window.__liveNetworkEvidence }))));
