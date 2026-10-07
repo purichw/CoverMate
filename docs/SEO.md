@@ -4,7 +4,7 @@ Articles publication adds an independent visibility gate, published-locale
 metadata and the dynamic `/api/article-sitemap` advertised by `robots.txt`.
 See [Articles Publishing](ARTICLES_PUBLISHING.md) for the current contract.
 
-Last updated: 2026-09-24. See `HANDOFF.md` for current source, authorization and
+Last updated: 2026-10-07. See `HANDOFF.md` for current source, authorization and
 preview/production evidence. This document describes the maintained SEO contract.
 
 ## Primary Domain
@@ -23,6 +23,13 @@ Current indexable URLs:
 - `https://covermateinsurance.com/?lang=en`
 - `https://covermateinsurance.com/motor`
 - `https://covermateinsurance.com/motor?lang=en`
+- `https://covermateinsurance.com/health`
+- `https://covermateinsurance.com/health?lang=en`
+- `https://covermateinsurance.com/life`
+- `https://covermateinsurance.com/life?lang=en`
+- `/articles` and `/articles?lang=en` only when that language has at least one
+  published article. Article detail URLs follow their independently published
+  translations.
 
 Thai is the default. Each page has its own canonical and reciprocal
 `th-TH`, `en` and `x-default` links. Campaign parameters and fragments are not
@@ -30,15 +37,55 @@ canonical; English language selection is. Language links are real anchors,
 with an in-place update for ordinary clicks so an unfinished form is retained.
 Internal Home/Motor links preserve language.
 
-`sitemap.xml` contains those four URLs only. It omits invented/stale lastmod
-dates, priorities, admin pages and hash aliases. `robots.txt` advertises the
-new sitemap and excludes API endpoints. It allows crawling admin login HTML
+The static `sitemap.xml` contains the eight Home/Motor/Health/Life URLs. The dynamic
+`/api/article-sitemap` includes all eight service/Home URLs plus eligible article
+collections and published article translations. Both omit invented/stale lastmod
+dates, priorities, admin pages and hash aliases. `robots.txt` advertises both
+sitemaps and excludes other API endpoints. It allows crawling admin login HTML
 so crawlers can read its noindex directive; authentication remains the security
 boundary, not robots.txt. The current local crawl policy permits explicit search,
 SEO audit and share-preview agents while defaulting other automated collection
 to Disallow. See [CONTENT_PROTECTION.md](CONTENT_PROTECTION.md) for the live
 Vercel bot-verification rules, discovery endpoint exceptions, deployment status
 and hosted verification caveats; robots permissions alone never grant a WAF bypass.
+
+## Article Collection Eligibility
+
+`articleIndexLanguages` derives indexable collection languages from the public
+article feed, shared by server HTML, hydrated metadata and the dynamic sitemap.
+An empty language remains a normal HTTP 200 empty-state page with
+`noindex,follow` in both robots metadata and `X-Robots-Tag`. It is omitted from
+the sitemap, hreflang alternates and CollectionPage structured data. A populated
+language only advertises other populated languages; x-default prefers TH, then
+EN. Search/category filters do not change this language-level eligibility.
+
+Publishing the first article translation makes its collection indexable through
+the existing public feed/cache path without a code deployment. Draft, archived,
+future-scheduled and unpublished translations must never be published or exposed
+to address an indexing report. Private/preview noindex rules and feed-failure
+503 responses remain unchanged.
+
+### October 7 Search Console Review
+
+- The redirect report contained only `http://covermateinsurance.com/`. Its
+  permanent HTTP-to-HTTPS redirect is intentional; the HTTPS Home was indexed
+  and its live test passed. No redirect or firewall settings were changed.
+- The unindexed Thai Life page passed Google's live crawl/fetch/indexing checks.
+  Google accepted Request indexing for `/life`, `/?lang=en`, `/health?lang=en`,
+  `/life?lang=en` and `/motor?lang=en`. Acceptance means queued, not indexed.
+- `/articles?lang=en` had no published EN articles. It was intentionally not
+  submitted, and the eligibility fix above removes the empty collection from
+  search discovery until actual content is published.
+- Both submitted sitemaps showed Success, last read October 5. No duplicate
+  submission was needed; Google can recrawl the same endpoints after deployment.
+- Local SEO contracts and rendered desktop/mobile checks cover no articles,
+  TH-only, EN-only, bilingual, language switching and first-publication recovery.
+  Build, bundle and performance checks passed. Production rollout requires the
+  exact revision's CI gate and hosted readback; these local results alone are
+  not deployment evidence.
+
+Google notes that crawling can take days to weeks and a request does not
+guarantee indexing: [Request recrawling](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl).
 
 ## Metadata Ownership
 

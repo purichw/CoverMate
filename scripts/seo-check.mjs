@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
+import { articleIndexLanguages, createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
+import articleSitemap from '../api/article-sitemap.js';
 import { createPageHandler, createPublishedReader, renderPublicPage } from '../server/seo-page.mjs';
 import { extractBundlerTemplate } from './lib/bundler-template.mjs';
 import { resolveCoverMateEnvironment } from '../covermate-environment.mjs';
@@ -76,7 +77,7 @@ const editorialConfig = structuredClone(config);
 editorialConfig.seo.homeServiceName = { th: 'คำปรึกษาประกันภัย', en: 'Insurance advisory' };
 editorialConfig.seo.motorServiceName = { th: 'เปรียบเทียบประกันรถยนต์', en: 'Motor comparison' };
 editorialConfig.articleDetail = { home: { th: 'หน้าแรก', en: 'Homepage' }, all: { th: 'อ่านบทความทั้งหมด', en: 'Insurance guides' } };
-const articleFeed = { available: true, settings: { enabled: true }, items: [] };
+const articleFeed = { available: true, settings: { enabled: true }, items: [{ id:'guide', slug:'health-cover', status:'published', translations:{th:{status:'published'},en:{status:'published'}} }] };
 const article = {
   available: true, title: 'Health cover <guide>', seoTitle: 'Insurance guide | CoverMate', excerpt: 'Read the policy terms.',
   languages: ['th', 'en'], author: 'CoverMate', datetime: '2026-10-01T03:00:00.000Z', updatedDatetime: '2026-10-02T03:00:00.000Z',
@@ -177,6 +178,49 @@ await assert.rejects(timeout('covermate'), /aborted/);
 function response() {
   return { headers: {}, setHeader(key, value) { this.headers[key] = value; }, end(body = '') { this.body = body; } };
 }
+// Index eligibility follows the same published-locale feed in HTTP, hydration
+// and discovery. Query filters do not turn a populated language into noindex.
+for (const languages of [[], ['th'], ['en'], ['th','en']]) {
+  const feed = structuredClone(articleFeed);
+  feed.items[0].translations = Object.fromEntries(languages.map(lang => [lang,{status:'published'}]));
+  assert.deepEqual(articleIndexLanguages(feed), languages);
+  const sitemapHandler = articleSitemap.createArticleSitemapHandler({readFeed:async()=>feed});
+  const sitemapResponse = response();
+  await sitemapHandler({url:'/api/article-sitemap',headers:{host:'covermateinsurance.com'}},sitemapResponse);
+  for (const lang of ['th','en']) {
+    const path = '/articles' + (lang === 'en' ? '?lang=en' : '');
+    const model = createSeoModel(config,{path:'/articles',lang,articleFeed:feed});
+    const visible = languages.includes(lang);
+    assert.equal(model.meta.robots.startsWith('noindex'), !visible);
+    assert.equal(model.graph === null, !visible);
+    assert.equal(sitemapResponse.body.includes('<loc>https://covermateinsurance.com'+path+'</loc>'), visible);
+    assert.equal(sitemapResponse.body.includes('<loc>https://covermateinsurance.com/articles/health-cover'+(lang==='en'?'?lang=en':'')+'</loc>'), visible);
+    assert.equal(Boolean(model.alternates.en), visible && languages.includes('en'));
+    assert.equal(Boolean(model.alternates['th-TH']), visible && languages.includes('th'));
+    if (visible) assert.equal(model.alternates['x-default'],'https://covermateinsurance.com/articles'+(languages[0]==='en'?'?lang=en':''));
+    const rendered = renderPublicPage(html,config,{path:'/articles',lang,articleFeed:feed});
+    for (const surface of [rendered,extractBundlerTemplate(rendered)]) {
+      assert.ok(surface.split('</head>')[0].includes('content="'+model.meta.robots+'"'));
+    }
+    const res = response();
+    await createPageHandler({readPublished:async()=>config,readArticles:async()=>feed})({method:'GET',url:path+(lang==='en'?'&':'?')+'q=absent',headers:{host:'covermateinsurance.com'}},res);
+    assert.equal(res.statusCode,200,'An empty locale keeps the real empty-state page');
+    assert.equal(res.headers['X-Robots-Tag'],visible?undefined:'noindex, follow');
+    assert.match(res.body,/data-covermate-environment="production"/,'Empty locales are not UAT');
+  }
+  const privatePage = response();
+  await createPageHandler({readPublished:async()=>config,readArticles:async()=>feed})({method:'GET',url:'/articles',headers:{host:'covermate-example.vercel.app'}},privatePage);
+  assert.equal(privatePage.headers['X-Robots-Tag'],'noindex, nofollow, noarchive','Preview remains private even for an empty language');
+  const uatSitemap = response();
+  await sitemapHandler({url:'/api/article-sitemap',headers:{host:'covermate-example.vercel.app'}},uatSitemap);
+  assert.doesNotMatch(uatSitemap.body,/<loc>/);
+}
+for (const feed of [null, {...articleFeed,available:false}, {...articleFeed,settings:{enabled:false}}, {...articleFeed,items:[{status:'draft',translations:{th:{status:'published'}}}]}, {...articleFeed,items:[{status:'published',translations:{en:{status:'draft'}}}]}]) {
+  assert.deepEqual(articleIndexLanguages(feed),[],'Unavailable and draft-only feeds never advertise an index language');
+}
+const sitemapFailure = response();
+await articleSitemap.createArticleSitemapHandler({readFeed:async()=>{throw new Error('offline');}})({url:'/api/article-sitemap',headers:{host:'covermateinsurance.com'}},sitemapFailure);
+assert.equal(sitemapFailure.statusCode,503);assert.equal(sitemapFailure.headers['Retry-After'],'60');
 const handler = createPageHandler({ readPublished: read, readHtml: () => html });
 for (const [url, host, noindex] of [
   ['/motor?lang=en', 'covermateinsurance.com', false],

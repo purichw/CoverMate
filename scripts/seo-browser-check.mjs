@@ -7,16 +7,22 @@ import { toFirestoreFields } from './lib/uat-env.mjs';
 import { createPageHandler } from '../server/seo-page.mjs';
 import { sanitizeStateDoc } from '../covermate-contract.js';
 import { createHomeFixture } from './lib/home-redesign-fixture.mjs';
+import { articleIndexFixture } from './fixtures/home-articles/index-feed.mjs';
 
 const output = 'uat-results/seo';
 fs.mkdirSync(output, { recursive: true });
 const packageRoot = process.env.COVERMATE_HOME_HANDOFF;
 const fixture = packageRoot ? await createHomeFixture(packageRoot) : { state: { config: JSON.parse(vm.runInNewContext(fs.readFileSync('src/visitor/defaults.js', 'utf8') + '\nJSON.stringify(DEFAULTS)')), text: {}, revision: 1 } };
 const live = sanitizeStateDoc(fixture.state);
-const pageHandler = createPageHandler({ readPublished: async () => live.config });
+// Exercise a CMS-configured cross-page link; defaults use the Home anchor.
+const motorNavigation = live.config.header.nav.find(item => item.href === '#motor');
+if (motorNavigation) motorNavigation.href = '/motor';
+let articleFeed = structuredClone(articleIndexFixture);
+articleFeed.settings = {enabled:true,showHome:true,showNavigation:true};
+const pageHandler = createPageHandler({ readPublished: async () => live.config, readArticles: async () => articleFeed });
 const { server, baseUrl } = await startStaticServer({ onRequest: async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
-  if (['/', '/motor'].includes(url.pathname)) { await pageHandler(req, res); return true; }
+  if (['/', '/motor', '/articles'].includes(url.pathname)) { await pageHandler(req, res); return true; }
   if (url.pathname === '/covermate-public.mjs') {
     res.writeHead(200, { 'content-type': 'application/javascript' });
     res.end(fs.readFileSync('src/public/adapter.mjs', 'utf8').replace('${publicFirestoreRoot()}', '${location.origin}/__seo-fixture'));
@@ -53,6 +59,24 @@ try {
       if (path === '/' && lang === 'en') await page.screenshot({ path: `${output}/${device}-home-en.png` });
       evidence.browser.push({ device, path, lang, title: read.title, canonical: read.canonical, result: 'PASS' });
     }
+    const bilingual = structuredClone(articleFeed);
+    for (const item of articleFeed.items) delete item.translations.en;
+    await page.goto(baseUrl + '/articles?lang=en');
+    await page.locator('.ar-index').waitFor();
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex,follow');
+    assert.equal(await page.locator('.ar-item').count(),0);
+    assert.equal(await page.locator('link[hreflang]').count(),0,'Do not advertise empty language alternates after hydration');
+    await page.locator('header [data-language-switch="th"]').click();
+    await page.waitForFunction(() => document.documentElement.lang === 'th-TH' && document.querySelector('meta[name="robots"]')?.content.startsWith('index,'));
+    assert.ok(await page.locator('.ar-item').count());
+    assert.equal(await page.locator('link[hreflang="en"]').count(),0);
+    articleFeed = bilingual;
+    await page.goto(baseUrl + '/articles?lang=en');
+    await page.locator('.ar-index').waitFor();
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content.startsWith('index,'));
+    assert.ok(await page.locator('.ar-item').count(),'Publishing the first EN article restores an indexable collection');
+    assert.equal(await page.locator('link[hreflang="en"]').count(),1);
+    evidence.browser.push({device,path:'/articles',result:'PASS',states:['TH-only feed: EN noindex','language switch to TH','first EN publication: index restored']});
     await page.goto(baseUrl + '/?lang=en');
     await page.locator('header [data-language-switch="th"]').waitFor();
     await page.waitForFunction(() => window.__covermateRemoteContent?.live === true);
@@ -65,7 +89,12 @@ try {
     await page.locator('header [data-language-switch="en"]').click();
     await page.waitForFunction(() => document.documentElement.lang === 'en');
     assert.equal(new URL(page.url()).searchParams.get('lang'), 'en');
-    await page.locator('a[href="/motor?lang=en"]').first().click();
+    if (device === 'mobile') {
+      await page.locator('header .hm-menu-button').click();
+      await page.locator('.hm-menu-panel a[href="/motor?lang=en"]').click();
+    } else {
+      await page.locator('header a[href="/motor?lang=en"]').click();
+    }
     await page.waitForURL('**/motor?lang=en');
     await page.waitForFunction(() => document.documentElement.lang === 'en');
     assert.deepEqual(errors, []);

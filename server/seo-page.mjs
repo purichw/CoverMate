@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
+import { articleIndexLanguages, createSeoModel, renderSeoHead } from '../covermate-seo.mjs';
 import { resolveCoverMateEnvironment, isVercelPreviewHost } from '../covermate-environment.mjs';
 import { sanitizeStateDoc, validStateDoc, adaptLegacyHomeCopy, cmsMedia, versionedAssetUrl, PUBLIC_ROUTE_PATHS } from '../covermate-contract.js';
 import {articleDetailSlug,projectArticleDetail} from '../src/visitor/article-detail.mjs';
@@ -171,6 +171,9 @@ export function createPageHandler({ readPublished = createPublishedReader({ incl
         if(articles.error){if(route==='/articles'||articleSlug)throw articles.error;articleFeed={available:false,settings:{enabled:false,showHome:false,showNavigation:false},items:[]};}
         else articleFeed=articles.feed;
         if((route==='/articles'||articleSlug)&&articleFeed.settings?.enabled!==true){sendError(404,loadedConfig);return;}
+      }
+      if(route === '/articles' && !noindex && articleFeed?.available === true && !articleIndexLanguages(articleFeed).includes(url.searchParams.get('lang') === 'en' ? 'en' : 'th')) {
+        res.setHeader('X-Robots-Tag', 'noindex, follow');
       }
       let article=null;
       if(articleSlug) {

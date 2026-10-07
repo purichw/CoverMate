@@ -1,5 +1,11 @@
 import { servicePageMetadata } from './src/visitor/service-page.mjs';
 
+// The public feed already excludes drafts, archived and scheduled translations.
+export function articleIndexLanguages(feed) {
+  return feed?.available === true && feed.settings?.enabled === true && Array.isArray(feed.items)
+    ? ['th', 'en'].filter(lang => feed.items.some(item => item?.status === 'published' && item.translations?.[lang]?.status === 'published')) : [];
+}
+
 // Shared by the initial HTTP response and CMS-driven client metadata.
 export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage = false, noindex = privatePage, motorDefaults = {}, article = null, articleFeed = null, assetPath = value => value } = {}) {
   const root = 'https://covermateinsurance.com';
@@ -7,6 +13,8 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
   path = isArticle ? path.replace(/\/$/,'') : ['/motor','/health','/life','/articles'].includes(path) ? path : '/';
   noindex = noindex || ((path === '/articles' || isArticle) && articleFeed?.settings?.enabled!==true);
   lang = lang === 'en' ? 'en' : 'th';
+  const indexLanguages = path === '/articles' ? articleIndexLanguages(articleFeed) : null;
+  const emptyIndex = indexLanguages && !indexLanguages.includes(lang);
   const servicePage = ['/health', '/life'].includes(path) ? servicePageMetadata(site, path.slice(1), lang) : null;
   const clean = value => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
   const localized = value => clean(typeof value === 'string' ? value : value?.[lang]);
@@ -104,7 +112,7 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
   return {
     title, language, canonical,
     meta: {
-      description, robots: noindex ? 'noindex,nofollow,noarchive' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
+      description, robots: noindex ? 'noindex,nofollow,noarchive' : emptyIndex ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
       'twitter:card': image ? 'summary_large_image' : 'summary',
       'twitter:title': title, 'twitter:description': description, 'twitter:image': image, 'twitter:image:alt': image ? imageAlt : ''
     },
@@ -114,8 +122,11 @@ export function createSeoModel(site = {}, { path = '/', lang = 'th', privatePage
       'og:image': image, 'og:image:secure_url': image.startsWith('https:') ? image : '', 'og:image:alt': image ? imageAlt : ''
     },
     icons: { icon: url(media.favicon), 'apple-touch-icon': url(media.mark) },
-    alternates: noindex ? {} : isArticle ? Object.fromEntries((article?.languages||[lang]).map(l=>[l==='th'?'th-TH':'en',base+(l==='en'?'?lang=en':'')])) : { 'th-TH': base, en: base + '?lang=en', 'x-default': base },
-    graph: noindex ? null : { '@context': 'https://schema.org', '@graph': graph }
+    alternates: noindex || emptyIndex ? {} : isArticle || indexLanguages ? {
+      ...Object.fromEntries((indexLanguages || article?.languages || [lang]).map(l=>[l==='th'?'th-TH':'en',base+(l==='en'?'?lang=en':'')])),
+      ...(indexLanguages ? { 'x-default': base + (indexLanguages[0] === 'en' ? '?lang=en' : '') } : {})
+    } : { 'th-TH': base, en: base + '?lang=en', 'x-default': base },
+    graph: noindex || emptyIndex ? null : { '@context': 'https://schema.org', '@graph': graph }
   };
 }
 
