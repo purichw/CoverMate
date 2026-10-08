@@ -238,12 +238,28 @@ function enhance(select) {
   if (document.activeElement === select) button.focus();
 }
 
+const labelledInputTypes = new Set(['text','search','tel','url','email','password','number','date','datetime-local','time','month','week','file','range','color']);
+let fieldLabels = new Set();
+function syncFieldLabels() {
+  const next = new Set();
+  // Use native associations, including labels outside the field wrapper. Do not
+  // reparent framework-owned nodes or center checkbox/radio captions and prose.
+  document.querySelectorAll('select,textarea,input').forEach(field => {
+    if (field.tagName === 'INPUT' && !labelledInputTypes.has(field.type)) return;
+    for (const label of field.labels || []) next.add(label);
+  });
+  for (const label of fieldLabels) if (!next.has(label)) label.classList.remove('cm-field-label');
+  for (const label of next) label.classList.add('cm-field-label');
+  fieldLabels = next;
+}
+
 export function refresh() {
   for (const [select, control] of controls) {
     if (!select.isConnected) { if (openControl === control) close(); controls.delete(select); }
     else sync(control);
   }
   document.querySelectorAll('select').forEach(enhance);
+  syncFieldLabels();
 }
 
 let scheduled = false;
@@ -254,8 +270,8 @@ function schedule() {
 }
 new MutationObserver(records => {
   if (records.some(record => !record.target.closest?.('.cm-select-trigger,.cm-select-menu') &&
-    (record.type !== 'attributes' || record.target.tagName === 'SELECT' || record.target.tagName === 'OPTION'))) schedule();
-}).observe(document, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['disabled','selected','label','value','aria-invalid','aria-describedby','aria-label','aria-labelledby','required'] });
+    (record.type !== 'attributes' || ['SELECT','OPTION','INPUT','TEXTAREA','LABEL'].includes(record.target.tagName)))) schedule();
+}).observe(document, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['disabled','selected','label','value','aria-invalid','aria-describedby','aria-label','aria-labelledby','required','for','id','type'] });
 document.addEventListener('pointerdown', event => {
   if (openControl && !popup.contains(event.target) && !openControl.button.contains(event.target)) close();
 });

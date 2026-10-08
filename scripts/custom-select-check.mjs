@@ -136,6 +136,27 @@ else {
     if(!process.argv.includes('--admin-only')) {
     const page=await browser.newPage();page.on('pageerror',error=>report.errors.push(error.message));
     await page.goto(baseUrl+'/select-fixture');
+    await page.waitForFunction(()=>document.querySelector('label[for=fixture]').classList.contains('cm-field-label'));
+    await page.evaluate(()=>{
+      const field=document.createElement('div');
+      field.innerHTML='<label for="picker-fixture">Date</label><input id="picker-fixture" type="date"><small>Keep helper prose left aligned</small><label for="notes-fixture">Notes</label><textarea id="notes-fixture"></textarea><label><input type="checkbox">Consent</label>';
+      document.querySelector('form').append(field);
+    });
+    await page.waitForFunction(()=>document.querySelector('label[for=picker-fixture]').classList.contains('cm-field-label'));
+    await page.waitForFunction(()=>document.querySelector('label[for=notes-fixture]').classList.contains('cm-field-label'));
+    assert.equal(await page.locator('label:has(input[type=checkbox])').evaluate(n=>n.classList.contains('cm-field-label')),false);
+    await page.locator('#picker-fixture').evaluate(n=>n.type='text');
+    await page.evaluate(()=>window.CoverMateSelect.refresh());
+    assert.equal(await page.locator('label[for=picker-fixture]').evaluate(n=>getComputedStyle(n).textAlign),'center');
+    assert.equal(await page.locator('#picker-fixture').evaluate(n=>getComputedStyle(n).textAlign),'start');
+    await page.locator('#picker-fixture').evaluate(n=>n.type='checkbox');
+    await page.waitForFunction(()=>!document.querySelector('label[for=picker-fixture]').classList.contains('cm-field-label'));
+    await page.locator('label[for=fixture]').evaluate(n=>n.htmlFor='picker-fixture');
+    await page.waitForFunction(()=>[...document.querySelectorAll('label[for=picker-fixture]')].every(n=>!n.classList.contains('cm-field-label')));
+    await page.locator('#notes-fixture').evaluate(n=>n.id='notes-renamed');
+    await page.waitForFunction(()=>!document.querySelector('label[for=notes-fixture]').classList.contains('cm-field-label'));
+    await page.locator('label').first().evaluate(n=>n.htmlFor='fixture');
+    await page.waitForFunction(()=>document.querySelector('label[for=fixture]').classList.contains('cm-field-label'));
     const trigger=page.locator('#fixture + button');await trigger.click();
     await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');assert.equal(await page.locator('#fixture').inputValue(),'a');
     await trigger.press('b');await page.keyboard.press('Enter');assert.equal(await page.locator('#fixture').inputValue(),'b');
@@ -149,7 +170,8 @@ else {
     assert.ok((await page.locator('[role=listbox]').boundingBox()).y<(await trigger.boundingBox()).y,'Menu flips above near viewport bottom');
     await page.keyboard.press('Escape');
     await trigger.click();await page.locator('#fixture').evaluate(n=>n.parentElement.remove());await page.waitForFunction(()=>!document.querySelector('[role=listbox]'));
-    report.checks.push('Primitive: labels, required, optgroups, disabled skip/control, typeahead, reset, dynamic options, unmount cleanup');
+    await page.waitForFunction(()=>!document.querySelector('label[for=fixture]').classList.contains('cm-field-label'));
+    report.checks.push('Primitive: centered select/text/date/textarea labels, checkbox exclusions and reassociation cleanup, required, optgroups, disabled skip/control, typeahead, reset, dynamic options, unmount cleanup');
     await page.close();
     }
     const context=await browser.newContext({viewport:{width:390,height:844}});

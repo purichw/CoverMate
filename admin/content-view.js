@@ -71,9 +71,9 @@ export function contentView({ cms, groups, tools, readonly, icon, previewPath, h
     </section>
     <section class="cms-panel cms-overview" aria-labelledby="cmsOverviewTitle">
       <div class="cms-overview-heading"><span class="cms-group-icon">${icon('chart')}</span><div><h2 id="cmsOverviewTitle">สรุปภาพรวมเว็บไซต์</h2><p>สถานะเนื้อหาและการอัปเดตล่าสุด</p></div></div>
-      <div class="cms-overview-stat"><span class="cms-overview-icon"><i class="cms-published-dot${publicationDate ? '' : ' unknown'}" aria-hidden="true"></i></span><div><h3>เผยแพร่ล่าสุด</h3><p>${cms.loading ? 'กำลังอ่านข้อมูล' : publicationDate || (cms.connected ? 'ยังไม่มีข้อมูลวันที่เผยแพร่' : 'ยังตรวจสอบไม่ได้')}</p></div></div>
-      <div class="cms-overview-stat"><span class="cms-overview-icon">${icon('file')}</span><div><h3>ฉบับร่างเว็บไซต์</h3><p>${cms.draftState === 'changed' ? '1 ฉบับรอเผยแพร่' : draftTitle}</p>${draftDate ? `<small>แก้ไขล่าสุด ${escape(draftDate)}</small>` : ''}${link('ดูฉบับร่าง', previewPath, 'cms-small-link', false, glyph('arrow'))}</div></div>
-      <div class="cms-overview-stat"><span class="cms-overview-icon">${glyph('clock')}</span><div><h3>ประวัติล่าสุด</h3><p>${historyCopy}</p>${link('ดูประวัติ', historyPath, 'cms-small-link', historyDisabled, glyph('arrow'))}</div></div>
+      <div class="cms-overview-stat cm-stat-card"><span class="cms-overview-icon"><i class="cms-published-dot${publicationDate ? '' : ' unknown'}" aria-hidden="true"></i></span><div><h3>เผยแพร่ล่าสุด</h3><p>${cms.loading ? 'กำลังอ่านข้อมูล' : publicationDate || (cms.connected ? 'ยังไม่มีข้อมูลวันที่เผยแพร่' : 'ยังตรวจสอบไม่ได้')}</p></div></div>
+      <div class="cms-overview-stat cm-stat-card"><span class="cms-overview-icon">${icon('file')}</span><div><h3>ฉบับร่างเว็บไซต์</h3><p>${cms.draftState === 'changed' ? '1 ฉบับรอเผยแพร่' : draftTitle}</p>${draftDate ? `<small>แก้ไขล่าสุด ${escape(draftDate)}</small>` : ''}${link('ดูฉบับร่าง', previewPath, 'cms-small-link', false, glyph('arrow'))}</div></div>
+      <div class="cms-overview-stat cm-stat-card"><span class="cms-overview-icon">${glyph('clock')}</span><div><h3>ประวัติล่าสุด</h3><p>${historyCopy}</p>${link('ดูประวัติ', historyPath, 'cms-small-link', historyDisabled, glyph('arrow'))}</div></div>
       ${link('ดูประวัติการเผยแพร่', historyPath, 'cms-mobile-overview-link', historyDisabled, glyph('arrow'))}
     </section>
   </div>`;

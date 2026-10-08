@@ -1,4 +1,14 @@
 select,select option,select optgroup { text-align:center; text-align-last:center; }
+/* Field names share one alignment; entered text and helper prose do not. */
+label.cm-field-label { text-align:center; }
+label.cm-field-label:not(:has(input,select,textarea)),label.cm-field-label > span:not(.cm-select-shell) { justify-content:center; text-align:center; }
+label.cm-field-label :is(small,p,textarea,input:not([type="date"]):not([type="datetime-local"]):not([type="time"]):not([type="month"]):not([type="week"])) { text-align:start; }
+/* Native pickers retain their platform UI and editing behavior. Balance the
+   calendar slot so empty and populated values share the field's center. */
+:root input:is([type="date"],[type="datetime-local"],[type="time"],[type="month"],[type="week"]) { position:relative; min-width:0; padding-inline:32px; text-align:center; }
+:root input:is([type="date"],[type="datetime-local"],[type="time"],[type="month"],[type="week"])::-webkit-datetime-edit { display:block; padding:0; text-align:center; }
+:root input:is([type="date"],[type="datetime-local"],[type="time"],[type="month"],[type="week"])::-webkit-date-and-time-value { min-height:1.5em; text-align:center; }
+:root input:is([type="date"],[type="datetime-local"],[type="time"],[type="month"],[type="week"])::-webkit-calendar-picker-indicator { position:absolute; right:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; margin:0; padding:0; }
 .cm-select-shell { position:relative; display:inline-grid; vertical-align:middle; min-width:0; max-width:100%; }
 .cm-select-shell[hidden] { display:none!important; }
 .cm-select-shell > select { grid-area:1 / 1; min-width:0; max-width:100%; }

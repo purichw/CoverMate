@@ -639,7 +639,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       });
     }
     window.CoverMateSelect?.refresh();
-    if (!this._selectLoader && [...document.querySelectorAll('select')].some(select => { const r=select.getBoundingClientRect(); return r.height && r.top < innerHeight + 600 && r.bottom > 0; })) this._selectLoader=import(location.origin+'/assets/visitor/select.js').catch(()=>{this._selectLoader=null;});
+    if (!this._selectLoader && [...document.querySelectorAll('select,input,textarea')].some(field => { const r=field.getBoundingClientRect(); return r.height && r.top < innerHeight + 600 && r.bottom > 0; })) this._selectLoader=import(location.origin+'/assets/visitor/select.js').catch(()=>{this._selectLoader=null;});
     this.syncInlineMedia?.();
     this.syncVisitorDock();
     this.syncEditorPanelViewport();

@@ -15,3 +15,4 @@
 .cm-stat-card .article-stat-label { order:2; }
 .cm-stat-card.analytics-kpi { padding-block:16px; }
 .cm-stat-card .analytics-kpi-head { flex-direction:column;justify-content:center; }
+.cm-stat-card.cms-overview-stat { align-self:stretch;padding-inline:10px;row-gap:6px; }
