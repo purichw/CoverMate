@@ -4,11 +4,25 @@ const { error, readBody } = require('./http.cjs');
 const C = require('./cases-contract.cjs');
 const vault = require('./customer-vault.cjs');
 const documents = require('./customer-documents.cjs');
+const { contactKeys } = require('../field-validation.mjs');
 const model = import('../customer-model.mjs');
 const safeId = id => { if (!/^[\w-]{1,128}$/.test(id || '')) throw error(404, 'not_found', 'Record not found.'); return id; };
 function stores(actor) {
   const db = serverDb(), suffix = actor.environment?.isUat ? 'Uat' : '';
-  return { db, customers: db.collection(`customers${suffix}`), cases: db.collection(actor.environment?.leadCollection || 'contactLeads') };
+  return { db, customers: db.collection(`customers${suffix}`), contactLock: db.doc(`customerRegistryState/${suffix || 'Production'}`), cases: db.collection(actor.environment?.leadCollection || 'contactLeads') };
+}
+async function contactGuard(tx, customers, lock, profile, { excludeId, allowDuplicate = false } = {}) {
+  // Serialize contact changes and compare legacy rows without a destructive migration.
+  const previous = await tx.get(lock), keys = contactKeys(profile);
+  if (!allowDuplicate) {
+    const rows = await tx.get(customers);
+    for (const row of rows.docs) {
+      if (row.id === excludeId) continue;
+      const existing = contactKeys(row.data().profile || {});
+      if (Object.keys(keys).some(key => keys[key] && keys[key] === existing[key])) throw error(409, 'duplicate_customer', 'พบลูกค้าที่มีข้อมูลติดต่อเดียวกัน กรุณาตรวจสอบก่อนยืนยันใช้ข้อมูลติดต่อร่วมกัน');
+    }
+  }
+  return () => tx.set(lock, { revision: (previous.data()?.revision || 0) + 1 });
 }
 function requestKey(req) {
   const key = req.headers['idempotency-key'];
@@ -20,7 +34,7 @@ const event = (actor, action, now, targetId = null) => ({ id: randomUUID(), acto
 const conflict = () => { throw error(409, 'version_conflict', 'Record changed. Reload before saving.'); };
 async function handle(req, actor, path) {
   if (actor.role !== 'owner') throw error(403, 'forbidden', 'Customers are available to the verified owner.');
-  const M = await model, { db, customers, cases } = stores(actor), method = req.method || 'GET';
+  const M = await model, { db, customers, cases, contactLock } = stores(actor), method = req.method || 'GET';
   const now = new Date().toISOString(), params = new URL(req.url, 'https://covermate.local').searchParams;
   if (method === 'GET' && path.length === 1) {
     const q = (params.get('search') || '').trim().toLowerCase(), status = params.get('status') || 'Active';
@@ -39,19 +53,13 @@ async function handle(req, actor, path) {
     return db.runTransaction(async tx => {
       const old = await tx.get(ref);
       if (old.exists) { if (old.data().fingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request changed.'); return { id }; }
-      if (!body.allowDuplicate) {
-        for (const field of ['phone', 'email', 'lineId']) {
-          if (!profile[field]) continue;
-          const matches = await tx.get(customers.where(`profile.${field}`, '==', profile[field]).limit(1));
-          if (!matches.empty) throw error(409, 'duplicate_customer', 'พบลูกค้าที่มีข้อมูลติดต่อเดียวกัน กรุณาตรวจสอบก่อนสร้างแยก');
-        }
-      }
+      const commitContacts = await contactGuard(tx, customers, contactLock, profile, body);
       const source = sourceRef ? await tx.get(sourceRef) : null;
       if (sourceRef && !source.exists) throw error(404, 'not_found', 'Case not found.');
       if (source?.data()?.customerId) throw error(409, 'already_linked', 'Case already linked.');
       const record = { id, code: `CU-${id.slice(0, 10).toUpperCase()}`, profile, version: 1, createdAt: now, updatedAt: now,
         consents: [{ ...consent, id: randomUUID(), recordedAt: now, recordedBy: actor.uid }], fingerprint };
-      tx.create(ref, record);
+      commitContacts(); tx.create(ref, record);
       const a = event(actor, 'customer_created', now); tx.create(ref.collection('activities').doc(a.id), a);
       if (sourceRef) tx.update(sourceRef, { customerId: id });
       return { id };
@@ -87,8 +95,13 @@ async function handle(req, actor, path) {
     const audit = event(actor, '', now), changes = { version: r.version + 1, updatedAt: now };
     let result = { id: r.id }, targetId;
     if (path.length === 2 && method === 'PATCH') {
-      M.only(body, ['expectedVersion', 'profile']); changes.profile = M.validateProfile(body.profile); audit.action = 'profile_updated';
+      M.only(body, ['expectedVersion', 'profile', 'allowDuplicate']); changes.profile = M.validateProfile(body.profile); audit.action = 'profile_updated';
+      if (body.allowDuplicate !== undefined && typeof body.allowDuplicate !== 'boolean') M.invalid('allowDuplicate', 'ข้อมูลไม่ถูกต้อง');
       if (C.hash({ ...changes.profile, status: r.profile.status }) !== C.hash(r.profile)) requireConsent('profile');
+      if (C.hash(contactKeys(changes.profile)) !== C.hash(contactKeys(r.profile))) {
+        const commitContacts = await contactGuard(tx, customers, contactLock, changes.profile, { excludeId: r.id, allowDuplicate: body.allowDuplicate });
+        commitContacts();
+      }
     } else if (path[2] === 'consents' && path.length === 3 && method === 'POST') {
       M.only(body, ['expectedVersion', 'consent']); const c = M.validateConsent(body.consent);
       if (r.consents.length >= 200) throw error(409, 'record_limit', 'Consent history limit reached.');
@@ -105,10 +118,9 @@ async function handle(req, actor, path) {
       audit.action = `${kind}_${existing.exists ? 'updated' : 'created'}`;
     } else if (path[2] === 'identity' && method === 'POST' && path.length === 3) {
       M.only(body, ['expectedVersion', 'type', 'number', 'expiresAt']); requireConsent('identity');
-      if (!['National ID', 'Passport'].includes(body.type) || typeof body.number !== 'string' || !(body.type === 'National ID' ? /^\d{13}$/ : /^[A-Za-z0-9 -]{4,40}$/).test(body.number)) M.invalid('number', 'ตรวจรูปแบบเลขบัตร 13 หลัก หรือ Passport');
-      const expiresAt = M.validateFields({ expiresAt: body.expiresAt || '' }, [{ key: 'expiresAt', label: 'วันหมดอายุ', type: 'date', max: 10 }]).expiresAt;
-      const sealed = vault.seal(Buffer.from(body.number), `${ref.path}:identity`);
-      tx.set(ref.collection('private').doc('identity'), { sealed, type: body.type, suffix: body.number.slice(-4), expiresAt }); audit.action = 'identity_updated';
+      const identity = M.validateIdentity({ type: body.type, number: body.number, expiresAt: body.expiresAt });
+      const sealed = vault.seal(Buffer.from(identity.number), `${ref.path}:identity`);
+      tx.set(ref.collection('private').doc('identity'), { sealed, type: identity.type, suffix: identity.number.slice(-4), expiresAt: identity.expiresAt }); audit.action = 'identity_updated';
     } else if (path[2] === 'identity-reveal' && method === 'POST' && path.length === 3) {
       M.only(body, ['expectedVersion']); requireConsent('identity');
       const identity = (await tx.get(ref.collection('private').doc('identity'))).data();

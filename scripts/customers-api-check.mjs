@@ -14,7 +14,7 @@ process.env.COVERMATE_CUSTOMER_VAULT_KEY=randomBytes(32).toString('hex');
 const documentObjects=new Map();require('../server/customer-documents.cjs').useTestStore(documentObjects);
 const {server,baseUrl}=await startNfrServer(),tokens={},runId=randomUUID();let browser;
 const out='uat-results/customers';fs.mkdirSync(out,{recursive:true});
-const profile={...M.emptyFields(M.PROFILE_FIELDS),firstName:'กานต์',lastName:`ข้อมูลทดสอบ ${runId.slice(0,8)}`,phone:`000${Date.now()}`,email:`customer-${runId}@example.test`,language:'TH',address:'ที่อยู่สังเคราะห์สำหรับ QA เท่านั้น'};
+const profile={...M.emptyFields(M.PROFILE_FIELDS),firstName:'กานต์',lastName:`ข้อมูลทดสอบ ${runId.slice(0,8)}`,phone:`0${String(Date.now()).slice(-9)}`,email:`customer-${runId}@example.test`,language:'TH',address:'ที่อยู่สังเคราะห์สำหรับ QA เท่านั้น'};
 const consent={...M.emptyFields(M.CONSENT_FIELDS),status:'Granted',scopes:Object.keys(M.SCOPES),occurredAt:'2026-01-01',channel:'Signed form',noticeVersion:'qa-v1',noticeText:'ข้อมูลและหลักฐานสังเคราะห์สำหรับทดสอบระบบเท่านั้น',evidence:'QA only; not a real consent'};
 try {
   for(const role of ['owner','advisor','readonly','inactive']){
@@ -29,6 +29,10 @@ try {
   assert.deepEqual((await call('customers','POST',{profile,consent},'owner',key)).body,created.body);
   assert.equal((await call('customers','POST',{profile:{...profile,firstName:'Changed'},consent},'owner',key)).status,409);
   assert.equal((await call('customers','POST',{profile,consent})).body.code,'duplicate_customer');
+  const raceEmail=`race-${runId}@example.test`;
+  const concurrent=await Promise.all([raceEmail,raceEmail.toUpperCase()].map(email=>call('customers','POST',{profile:{...profile,firstName:'Concurrent fixture',phone:'',email},consent})));
+  assert.deepEqual(concurrent.map(r=>r.status).sort(),[201,409],'Concurrent normalized contact creates cannot both succeed.');
+  assert.equal(concurrent.find(r=>r.status===409).body.code,'duplicate_customer');
   const id=created.body.id,ref=db.collection('customersUat').doc(id);
   const get=async()=>{const r=await call('customers/'+id);assert.equal(r.status,200,JSON.stringify(r));return r.body;};
   let r=await get();assert.equal(r.profile.address,profile.address);assert.equal(r.consents.length,1);
@@ -38,6 +42,18 @@ try {
   let result=await call('customers/'+id,'PATCH',{expectedVersion:r.version,profile:{...profile,nickname:'แก้ด้วยมือ'}});assert.equal(result.status,200);
   assert.equal((await call('customers/'+id,'PATCH',{expectedVersion:r.version,profile})).status,409);
   r=await get();assert.equal(r.profile.nickname,'แก้ด้วยมือ');
+  const normalizedDuplicate = await call('customers','POST',{profile:{...profile,phone:'+66 '+profile.phone.slice(1),email:'',lineId:''},consent});
+  assert.equal(normalizedDuplicate.body.code,'duplicate_customer');
+  const second = await call('customers','POST',{profile:{...profile,firstName:'Second fixture',phone:'',email:`second-${runId}@example.test`},consent});
+  assert.equal(second.status,201,JSON.stringify(second));
+  const secondRecord = (await call('customers/'+second.body.id)).body;
+  const collision = {expectedVersion:secondRecord.version,profile:{...secondRecord.profile,phone:'+66'+profile.phone.slice(1)}};
+  assert.equal((await call('customers/'+second.body.id,'PATCH',collision)).body.code,'duplicate_customer');
+  assert.equal((await call('customers/'+second.body.id,'PATCH',{...collision,allowDuplicate:true})).status,200,'Shared contact needs explicit confirmation on edit too.');
+  for (const bad of [{phone:'abc'},{email:'a..b@example.test'},{preferredChannel:'Email',email:''},{postalCode:'12/34'}]) {
+    assert.equal((await call('customers/'+id,'PATCH',{expectedVersion:r.version,profile:{...profile,...bad}})).status,422);
+  }
+  for (const identity of [{type:'National ID',number:'1234567890123'},{type:'Passport',number:'   '}]) assert.equal((await call(`customers/${id}/identity`,'POST',{expectedVersion:r.version,...identity})).status,422);
   const policy={...M.emptyFields(M.POLICY_FIELDS),insurer:'บริษัทประกันตัวอย่าง',plan:'แผนสุขภาพตัวอย่าง',type:'Health',status:'Active',policyNumber:'QA-POLICY-001',premium:'25000.00',frequency:'Yearly',coverage:'IPD ตามวงเงินที่ระบุในเอกสารตัวอย่าง',startsAt:'2026-01-01',endsAt:'2027-01-01',nextDueAt:'2027-01-01',insured:M.fullName(profile)};
   result=await call(`customers/${id}/policies`,'POST',{expectedVersion:r.version,record:policy});assert.equal(result.status,200,JSON.stringify(result));
   r=await get();const policyId=r.policies[0].id;assert.equal(r.policies[0].policyNumber,policy.policyNumber);
@@ -88,7 +104,17 @@ try {
   // Native fields stay authoritative under the shared enhanced select.
   await page.locator('[name="consent.channel"]').selectOption({label:'Signed form'},{force:true});
   await page.locator('[name="consent.noticeVersion"]').fill('qa-browser-v1');await page.locator('[name="consent.noticeText"]').fill(consent.noticeText);await page.locator('[name="consent.evidence"]').fill('Synthetic browser evidence');
-  await page.locator('[name=scopes][value=policies]').check();await page.getByRole('button',{name:'สร้างทะเบียนลูกค้า',exact:true}).click();
+  await page.locator('[name=scopes][value=policies]').check();
+  await page.locator('[name=phone]').fill('abc');await page.getByRole('button',{name:'ตรวจสอบข้อมูล',exact:true}).click();
+  await page.locator('[name=phone][aria-invalid=true]').waitFor();
+  assert.equal(await page.locator('[name=firstName]').inputValue(),'มาลี','Invalid submit preserves other input');
+  await page.screenshot({path:out+'/validation-desktop.png'});
+  await page.setViewportSize({width:390,height:844});await page.locator('[name=phone]').scrollIntoViewIfNeeded();await page.screenshot({path:out+'/validation-mobile.png'});
+  await page.setViewportSize({width:1440,height:1000});await page.locator('[name=phone]').fill(profile.phone+'1');
+  await page.getByRole('button',{name:'ตรวจสอบข้อมูล',exact:true}).click();
+  await page.locator('[data-customer-review]:not([hidden])').waitFor();
+  await page.getByRole('button',{name:'สร้างทะเบียนลูกค้า',exact:true}).click();
+  await page.locator('.customer-success-next [data-customer-action=open]').click();
   await page.locator('.customer-tabs').waitFor();assert.equal(await page.locator('h1').textContent(),'มาลี '+browserLastName);
   const browserId=new URL(page.url()).searchParams.get('customer');assert(browserId);
   await page.locator('[name=nickname]').fill('ชื่อเล่นที่กรอกเอง');

@@ -1,5 +1,6 @@
 const { createHash } = require('node:crypto');
 const { error } = require('./http.cjs');
+const { validContactEmail, validPhone, validLineId } = require('../field-validation.mjs');
 
 const STATUSES = ['new', 'in_progress', 'contacted_reachable', 'contacted_no_answer', 'closed_completed', 'closed_declined'];
 const INTERESTS = ['motor', 'life', 'health', 'accident', 'savings', 'unsure', 'other'];
@@ -25,7 +26,9 @@ function contact(value) {
   const result = { name: text(value.name, 150, 'name', 1) };
   for (const [key, max] of Object.entries({ phone: 64, lineId: 100, email: 254, rawContact: 300 })) result[key] = value[key] === null ? null : text(value[key], max, key, 1);
   if (!fields.slice(1).some(key => result[key])) fail('contact', 'Add at least one contact channel.');
-  if (result.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.email)) fail('email', 'Enter a valid email address.');
+  if (result.email && !validContactEmail(result.email)) fail('email', 'Enter a valid email address.');
+  if (result.phone && !validPhone(result.phone)) fail('phone', 'Enter a phone number with 7–15 digits; country code, spaces and hyphens are allowed.');
+  if (result.lineId && !validLineId(result.lineId)) fail('lineId', 'Enter a LINE ID, not a display name.');
   return result;
 }
 function parseContact(name, raw) {

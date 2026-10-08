@@ -200,7 +200,7 @@ function cleanPhoneLike(value, fallback) {
   return text || fallback || '';
 }
 function cleanEmailAddress(value, fallback) {
-  const text = cleanAdminText(value, 160);
+  const text = cleanAdminText(value, 254);
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text) ? text : (fallback || '');
 }
 function cleanLocalizedSeo(value, limit) {
@@ -209,7 +209,7 @@ function cleanLocalizedSeo(value, limit) {
 }
 function acceptsMediaRef(value) { return !!cleanMediaRef(value, ''); }
 function acceptsHttpsUrl(value, allowEmpty) { const text = cleanAdminText(value, 500); return (!text && allowEmpty) || !!cleanHttpsUrl(text, ''); }
-function acceptsEmail(value) { return !!cleanEmailAddress(value, ''); }
+function acceptsEmail(value) { return validContactEmail(value); }
 function sanitizeCmsControlsConfig(cfg) {
   cfg.brand = cfg.brand && typeof cfg.brand === 'object' ? cfg.brand : {};
   cfg.contact = cfg.contact && typeof cfg.contact === 'object' ? cfg.contact : {};
@@ -1733,19 +1733,31 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const saved = cmsGet(site, path) || '';
       const edits = S.cmsEdits || {};
       const validateOnCommit = field.media || field.url || field.email || field.nav;
+      const value = Object.prototype.hasOwnProperty.call(edits,path) ? edits[path] : saved;
       return {
         path,
-        value: Object.prototype.hasOwnProperty.call(edits, path) ? edits[path] : saved,
+        value, maxLength:this.cmsFieldLimit(path,field), error:this.cmsFieldError(path,value,field),
+        validationHint:this.cmsFieldError(path,value,field) || `${value.length} / ${this.cmsFieldLimit(path,field)}`,
+        errorId:'cms-error-'+path.replace(/[^a-z0-9]/gi,'-'),
         change: (e) => {
           const value = e.target.value;
           // Copy shares the live Draft renderer; incomplete URLs stay in a buffer.
-          if (validateOnCommit) this.setState({ cmsEdits: { ...(this.state.cmsEdits || {}), [path]: value } });
+          if (validateOnCommit || this.cmsFieldError(path,value,field) || Object.prototype.hasOwnProperty.call(this.state.cmsEdits || {},path)) {
+            this.invalidateDraftQueue();
+            this.setState({ cmsEdits: { ...(this.state.cmsEdits || {}), [path]: value } });
+          }
           else this.upd(config => setCmsCopy(config, path, value));
         },
         commit: (e) => {
           const value = validateOnCommit ? e.target.value.trim() : e.target.value;
           const pending = { ...(this.state.cmsEdits || {}) };
           const wasEdited = Object.prototype.hasOwnProperty.call(pending, path);
+          const validationError = this.cmsFieldError(path,value,field);
+          if (validationError) {
+            this.setState({cmsEdits:{...pending,[path]:value}});
+            this.showActionToast({kind:'error',title:'ยังไม่บันทึกช่องนี้',body:validationError});
+            return;
+          }
           delete pending[path];
           this.setState({ cmsEdits: pending });
           if (value && ((field.media && !cmsMedia(value)) || (field.url && !acceptsHttpsUrl(value, true)) || (field.email && !acceptsEmail(value)) || (field.nav && !/^(#[A-Za-z0-9_-]+|\/(?:motor|health|life)?(?:#[A-Za-z0-9_-]+)?)$/.test(value)))) {
@@ -1766,7 +1778,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       fields: CMS_CONTENT_FIELDS.filter(field => field.group === group && field.path !== 'brand.media.mark').map(field => {
         const path = field.path + (field.localized ? '.' + lk : '');
         const value = cmsGet(site, path) || '';
-        return { key: path, path: path, label: cmsAdminLabel(field.label), inputLabel:field.media ? 'Path รูปภาพ / HTTPS URL' : cmsAdminLabel(field.label), big:!field.media, maxLength:10000, value: value,
+        return { key: path, path: path, label: cmsAdminLabel(field.label), inputLabel:field.media ? 'Path รูปภาพ / HTTPS URL' : cmsAdminLabel(field.label), big:!field.media, value: value,
           hasImage: !!(field.media && value), image: field.media ? assetURL(value) : '',
           isMedia:!!field.media, editImage:()=>this.editMedia(path), clearImage:()=>cmsInput(path,field).commit({target:{value:''}}),
           ...cmsInput(path, field)
@@ -2666,7 +2678,7 @@ class Component extends /* COVERMATE_OWNER_BASE_BEGIN */ CoverMateCms.withCmsCon
       const definition = {...CMS_CONTENT_FIELDS.find(field=>field.path===base),...options};
       const path = base + (definition.localized ? '.'+lk : '');
       const input = cmsInput(path,definition), value = cmsGet(site,path) || '';
-      return {...input,key:path,label,inputLabel:definition.media?'Path รูปภาพ / HTTPS URL':label,big:!!definition.big,maxLength:base==='brand.initial'?2:10000,
+      return {...input,key:path,label,inputLabel:definition.media?'Path รูปภาพ / HTTPS URL':label,big:!!definition.big,
         isMedia:!!definition.media,hasImage:!!value,image:definition.media?assetURL(value):'',
         editImage:()=>this.editMedia(path),clearImage:()=>input.commit({target:{value:''}})};
     };

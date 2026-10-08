@@ -2,6 +2,26 @@
 import {normalizeArticleTypography,articleTypographyAttributes} from './article-typography.mjs';
 import {articleImageDelivery} from './article-media.mjs';
 export const ARTICLE_DOCUMENT_VERSION = 1;
+export function articleDocumentIssues(document) {
+  const issues = [], seen = new Set(); let count = 0;
+  const add = message => { if (!issues.includes(message)) issues.push(message); };
+  function visit(node, depth) {
+    if (!node || typeof node !== 'object' || Array.isArray(node) || seen.has(node)) { add('รูปแบบบล็อกเนื้อหาไม่ถูกต้อง'); return; }
+    if (++count > 5001 || depth > 13) { add('เนื้อหามีบล็อกหรือระดับซ้อนมากเกินไป กรุณาแบ่งเนื้อหา'); return; }
+    seen.add(node);
+    if (node.type === 'text' && (typeof node.text !== 'string' || node.text.length > 50000)) add('ข้อความต่อช่วงต้องไม่เกิน 50,000 ตัวอักษร กรุณาแบ่งย่อหน้า');
+    if (node.content !== undefined) {
+      if (!Array.isArray(node.content)) add('รายการบล็อกเนื้อหาไม่ถูกต้อง');
+      else if (node.content.length > 1000) add('หนึ่งกลุ่มมีบล็อกได้ไม่เกิน 1,000 บล็อก');
+      else node.content.forEach(child => visit(child, depth + 1));
+    }
+    for (const [key, value] of Object.entries(node.attrs || {})) if (typeof value === 'string' && value.length > (key === 'alt' ? 500 : ['caption','attribution','note','title'].includes(key) ? 1000 : 50000)) add('ข้อความประกอบบล็อกยาวเกินกำหนด: ' + key);
+    if (node.marks !== undefined && (!Array.isArray(node.marks) || node.marks.length > 16)) add('รูปแบบข้อความต่อช่วงต้องไม่เกิน 16 แบบ');
+  }
+  if (document?.type !== 'doc') add('รูปแบบเนื้อหาบทความไม่ถูกต้อง');
+  else visit(document, 0);
+  return issues;
+}
 export const articleEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function articleUrl(value, image = false) {
   if (typeof value !== 'string' || /[\u0000-\u0020\\]/.test(value)) return '';

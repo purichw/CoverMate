@@ -1,5 +1,5 @@
 import {ARTICLE_CATEGORIES} from './admin/articles/drafts.mjs';
-import {articleDocumentText,articleUrl} from './article-document.mjs';
+import {articleDocumentText,articleUrl,articleDocumentIssues} from './article-document.mjs';
 import {ARTICLE_AUTHOR_LIMITS,articleAuthorUrl} from './article-author.mjs';
 import {articleMediaForLanguage} from './article-media.mjs';
 
@@ -38,6 +38,8 @@ export function validateArticle(draft,{publish=false,languages=['th']}={}) {
   const issues=[];
   const add=(field,message,language=null)=>issues.push({field,message,language});
   if(!draft||!draft.translations){add('document','ข้อมูลบทความไม่ถูกต้อง');return issues;}
+  try { if(new TextEncoder().encode(JSON.stringify(draft)).length>350000)add('document','บทความรวมสองภาษาต้องไม่เกิน 350 KB กรุณาแบ่งเนื้อหา'); }
+  catch { add('document','รูปแบบข้อมูลบทความไม่ถูกต้อง'); return issues; }
   if(typeof draft.slug!=='string'||draft.slug&&(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(draft.slug)||draft.slug.length>160))add('slug','ใช้ภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลาง ไม่เกิน 160 ตัวอักษร');
   else if(publish&&!text(draft.slug).trim())add('slug','กรุณากรอก Slug สำหรับลิงก์บทความ');
   if(!Object.hasOwn(ARTICLE_CATEGORIES,draft.categoryId))add('categoryId','กรุณาเลือกหมวดหมู่ที่มีในรายการ');
@@ -48,6 +50,8 @@ export function validateArticle(draft,{publish=false,languages=['th']}={}) {
   for(const language of ['th','en']) {
     const t=draft.translations[language],required=publish&&languages.includes(language);
     if(!t||t.document?.type!=='doc'){add('document','รูปแบบเนื้อหาบทความไม่ถูกต้อง',language);continue;}
+    const documentIssues=articleDocumentIssues(t.document);
+    documentIssues.forEach(message=>add('document',message,language));
     for(const [field,max] of Object.entries(ARTICLE_AUTHOR_LIMITS))if(t[field]!==undefined&&(typeof t[field]!=='string'||t[field].length>max))add(field,`กรอกข้อความไม่เกิน ${max.toLocaleString('th-TH')} ตัวอักษร`,language);
     if(typeof t.authorUrl==='string'&&t.authorUrl.trim()&&!articleAuthorUrl(t.authorUrl))add('authorUrl','กรุณาใส่ลิงก์ HTTPS ของผู้เขียนที่ถูกต้อง',language);
     if(t.authorDetailsEnabled!==undefined&&typeof t.authorDetailsEnabled!=='boolean')add('authorDetailsEnabled','การแสดงข้อมูลผู้เขียนต้องเป็นค่าเปิดหรือปิด',language);
@@ -55,11 +59,12 @@ export function validateArticle(draft,{publish=false,languages=['th']}={}) {
       if(!(t[field]===undefined&&['headerNote','sidebarQuote','takeawayNote'].includes(field))&&(typeof t[field]!=='string'||t[field].length>max))add(field,`กรอกข้อความไม่เกิน ${max.toLocaleString('th-TH')} ตัวอักษร`,language);
     }
     if(required)for(const [field,label] of [['title','ชื่อบทความ'],['excerpt','คำโปรย'],['document','เนื้อหาบทความ']]) {
+      if(field==='document'&&documentIssues.length)continue;
       if(!(field==='document'?articleDocumentText(t.document):text(t[field])).trim())add(field,`กรุณากรอก${label}`,language);
     }
     for(const role of ['cover','image'])if(t[role]!==undefined&&(!t[role]||typeof t[role]!=='object'||typeof t[role].src!=='string'||t[role].src&&!articleUrl(t[role].src,true)))add('cover','ลิงก์ภาพไม่ถูกต้อง กรุณาเลือกภาพใหม่',language);
     if(required&&articleMediaForLanguage(draft,language).src&&!text(t.coverAlt).trim())add('coverAlt','กรุณาใส่ข้อความอธิบายภาพปก',language);
-    articleImages(t.document).forEach((image,index)=>{
+    (documentIssues.length?[]:articleImages(t.document)).forEach((image,index)=>{
       if(required&&!text(image.alt).trim())add('figure-alt-'+index,`กรุณาใส่ Alt ของภาพในเนื้อหา ${index+1}`,language);
       else if(text(image.alt).length>500)add('figure-alt-'+index,'Alt ต้องไม่เกิน 500 ตัวอักษร',language);
       if(!articleUrl(image.src,true))add('document',`ลิงก์ภาพในเนื้อหา ${index+1} ไม่ถูกต้อง`,language);

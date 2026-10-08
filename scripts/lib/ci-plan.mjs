@@ -47,6 +47,7 @@ export const buildCommands = [
 export const checkGroups = {
   preflight: [
     ["npm",["run","check:performance"]],
+    ["node",["scripts/validation-boundaries-check.mjs"]],
     ["npm",["run","check:customers"]],
     ["node",["scripts/smoke-evidence-check.mjs"]],
     ["node",["scripts/uptime-access-check.mjs"]],
@@ -112,6 +113,7 @@ export const checkGroups = {
     ["node",["scripts/article-feature-card-check.mjs","--browser"]],
   ],
   cms: [
+    ["node",["scripts/editor-panel-browser-check.mjs","--validation"]],
     ["npm",["run","check:editor-history"]],
     ["npm",["run","check:content-isolation"]],
     ["npm",["run","check:editor-panel"]],

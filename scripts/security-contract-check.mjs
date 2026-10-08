@@ -66,8 +66,10 @@ assert.match(leads, /updatedAt: FieldValue\.serverTimestamp\(\)/);
 assert.match(leads, /verifyToken\(String\(token\)\)/);
 assert.match(leads, /db\.runTransaction/);
 assert.match(leads, /env\.leadCollection/, 'Server lead writes must use the shared environment collection.');
-assert.match(firebaseClient, /content-conflict/);
-assert.match(firebaseClient, /runTransaction/);
+assert.match(firebaseClient, /\/api\/cms/);
+assert.match(read('server/cms.mjs'), /content-conflict/);
+assert.match(read('server/cms.mjs'), /db\.runTransaction/);
+assert.match(read('server/cms.mjs'), /assertCmsState/);
 
 const analytics = read("covermate-analytics.js");
 assert.match(analytics, /G-5TF3C235EF/, "GA4 measurement ID must stay explicit.");

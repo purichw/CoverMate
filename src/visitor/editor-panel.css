@@ -253,6 +253,8 @@
 .cm-editor-field { display:flex; flex-direction:column; gap:5px; min-width:0; font-size:12px; }
 .cm-editor-field>span { font-weight:600; }
 .cm-editor-field small { color:var(--editor-muted); font-size:10px; line-height:1.5; }
+.cm-editor-field [aria-invalid="true"] { border-color:var(--editor-accent); }
+.cm-editor-field:has([aria-invalid="true"]) small { color:var(--editor-accent); font-size:12px; }
 .cm-editor-field :is(input,textarea,select) { width:100%; min-width:0; min-height:36px; padding:7px 9px; border:1px solid #d8d6cf; border-radius:6px; background:#fff; color:#292721; font:inherit; line-height:1.5; }
 .cm-editor-field textarea { resize:vertical; min-height:68px; }
 .cm-editor-add { border-style:dashed; justify-content:center; }

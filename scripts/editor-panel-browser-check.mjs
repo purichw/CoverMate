@@ -11,6 +11,7 @@ import { checkEditorParity } from './lib/editor-parity-check.mjs';
 import { checkEditorPages } from './lib/editor-pages-check.mjs';
 import { checkContentWorkspace } from './lib/editor-content-check.mjs';
 import { checkBrandWorkspace } from './lib/editor-brand-check.mjs';
+import { checkCmsValidation } from './lib/cms-validation-browser-check.mjs';
 import { checkVersionsWorkspace } from './lib/editor-versions-check.mjs';
 import { checkArticleSectionOrder } from './lib/editor-article-order-check.mjs';
 import { homeArticleFixture } from './fixtures/home-articles/feed.mjs';
@@ -65,7 +66,7 @@ const firebaseFixture = `
   const user={uid:'local-panel-owner',email:'panel@example.invalid',displayName:'Local design review',getIdToken:async()=> 'local-fixture-only'};
   const session={firebase:true,uid:user.uid,email:user.email,name:user.displayName,role:'owner',exp:Date.now()+86400000};
   localStorage.setItem('covermate-admin-session',JSON.stringify(session));
-  window.CoverMateFirebase={auth:{currentUser:user},waitForAuth:async()=>user,
+  window.CoverMateFirebase={auth:{currentUser:user},waitForAuth:async()=>user,getAdminIdToken:async()=> 'local-fixture-only',
     syncSessionFromCurrentUser:async()=>({ok:true,user,session,admin:{role:'owner',active:true}}),
     hydrateLocalContent:async()=>{const states=await fetch('${fixturePath}').then(r=>r.json());cacheSiteState('live',states.live);cacheSiteState('draft',states.draft);cacheVersions(states.versions);return {live:true,draft:true,source:'remote'};},
     loadVersions:async()=>{const response=await fetch('${fixturePath}/versions');if(!response.ok)throw new TypeError('Local fixture: history offline');return response.json();},
@@ -140,6 +141,10 @@ if (process.argv.includes('--serve')) {
       report.blockedRequests.push({url:url.origin+url.pathname,method:request.method()});
       return route.abort('blockedbyclient');
     });
+    if(process.argv.includes('--brand')) {
+      const {installMediaFixture}=await import('./media-upload-browser-check.mjs');
+      await installMediaFixture(context,{token:'local-fixture-only',useActualApi:true});
+    }
     context.on('page',newPage=>newPage.on('pageerror',error=>report.errors.push(error.message)));
     page=await context.newPage();page.setDefaultTimeout(15000);
     const panel=()=>page.locator('aside[data-editor-panel]');
@@ -192,7 +197,9 @@ if (process.argv.includes('--serve')) {
     }
 
     await page.goto(baseUrl+'/admin/content');await ready();
-    if (process.argv.includes('--article-order')) {
+    if (process.argv.includes('--validation')) {
+      await checkCmsValidation({page,panel,poll,shot,assertFit,readDraft:()=>draft,report});
+    } else if (process.argv.includes('--article-order')) {
       await checkArticleSectionOrder({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,setFeed:value=>{articleFeed=value;},failFeed:value=>{articleFeedFailure=value;},report});
     } else if (process.argv.includes('--versions')) {
       await checkVersionsWorkspace({page,panel,poll,shot,assertFit,baseUrl,contract,readDraft:()=>draft,readVersions:()=>versions,setVersions:value=>{versions=value;},failHistory:value=>{versionsFailure=value;},failDraft:value=>{draftFailure=value;},report});

@@ -649,6 +649,14 @@ When a release changes Cases contracts or Rules, verify compatible API/site
 behavior before applying the Rules. Do not infer a lead/CMS content migration
 from an ordinary code deployment.
 
+For the CMS validation/API boundary introduced on 2026-10-08, deploy compatible
+`/api/cms` and browser code first, verify Save/Publish/Reset and conflicts in UAT,
+then deploy Rules denying direct state/history writes. Verify again after Rules;
+already-open legacy editor tabs must reload. Code deployment alone does not close
+the old direct-write route. Do not reopen that route for rollback; retain an
+API-compatible build. No content migration or automatic Draft publication is
+part of this change. See [validation boundaries](VALIDATION_20261008.md).
+
 Historical server-side lead migration guidance: configure Vercel server secrets and verify
 real App Check submission on a registered preview hostname first. See
 [NFR_HARDENING.md](NFR_HARDENING.md) for backup and hosted verification.

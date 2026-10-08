@@ -4,7 +4,8 @@
   "functions": {
     "api/notification-worker.js": { "maxDuration": 60 },
     "api/page.js": { "regions": ["sin1"], "includeFiles": "{index.html,server/visitor-public.html,src/visitor/defaults.js,server/asset-versions.json,src/error-page/**}" },
-    "api/articles.js": { "regions": ["sin1"] }
+    "api/articles.js": { "regions": ["sin1"] },
+    "api/cms.js": { "regions": ["sin1"] }
   },
   "redirects": [
     { "source": "/:path*", "has": [{ "type": "host", "value": "covermate.vercel.app" }], "destination": "https://covermateinsurance.com/:path*", "permanent": true },

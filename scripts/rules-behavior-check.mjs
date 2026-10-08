@@ -27,15 +27,17 @@ try {
   const owner = env.authenticatedContext('owner').firestore();
   await assertSucceeds(setDoc(doc(owner, 'sites/covermate/analytics/settings'), { enabled: true }));
   await assertFails(setDoc(doc(env.authenticatedContext('readonly').firestore(), 'sites/covermate/analytics/settings'), { enabled: false }));
-  await assertSucceeds(updateDoc(doc(owner, 'sites/covermate/states/draft'), { revision: 2, text: { blank: '' } }));
+  await assertFails(updateDoc(doc(owner, 'sites/covermate/states/draft'), { revision: 2, text: { blank: '' } }));
   await assertFails(updateDoc(doc(owner, 'sites/covermate/states/draft'), { revision: 2, text: { overwritten: true } }));
-  assert.equal((await getDoc(doc(owner, 'sites/covermate/states/draft'))).data().text.blank, '');
+  assert.deepEqual((await getDoc(doc(owner, 'sites/covermate/states/draft'))).data().text, {});
   const uat = env.authenticatedContext('uat-owner').firestore();
-  await assertSucceeds(updateDoc(doc(uat, 'sites/covermate-uat/states/draft'), { revision: 2 }));
+  await assertFails(updateDoc(doc(uat, 'sites/covermate-uat/states/draft'), { revision: 2 }));
   const version = doc(owner, `sites/covermate/versions/test-${Date.now()}`);
-  await assertSucceeds(setDoc(version, { config: {}, text: {} }));
+  await assertFails(setDoc(version, { config: {}, text: {} }));
+  await assertFails(setDoc(doc(owner,'sites/covermate/states/live'),{revision:2,config:{},text:{}}));
+  await assertFails(setDoc(doc(owner,'sites/covermate/cmsMutations/forged'),{result:{}}));
   await assertFails(updateDoc(version, { text: { rewrite: true } }));
   await assertFails(setDoc(doc(publicDb, 'abuseLimits/test'), {}));
   await assertFails(getDoc(doc(env.authenticatedContext('unknown').firestore(), 'contactLeads/x')));
-  console.log('Firestore emulator: public, roles, UAT isolation, revision and immutable history checks passed.');
+  console.log('Firestore emulator: public reads, roles, UAT isolation and denied direct CMS/history writes passed.');
 } finally { await env.cleanup(); }

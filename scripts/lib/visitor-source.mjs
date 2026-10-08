@@ -227,7 +227,7 @@ export function readVisitorSources() {
     }).outputFiles[0].text.replace('/assets/visitor/editor-versions.js',readEditorVersionsAsset().url),
     calculatorSource: readText(new URL('covermate-calculator.mjs', ROOT)).replace(/^export /gm, ''),
     recommendationSource: readText(new URL('covermate-recommendations.mjs', ROOT)).replace(/^export /gm, ''),
-    submissionSource: readText(new URL('covermate-submission.mjs', ROOT)).replace(/^export /gm, ''),
+    submissionSource: buildSync({ entryPoints:[fileURLToPath(new URL('covermate-submission.mjs',ROOT))],bundle:true,write:false,format:'esm',target:'es2022',charset:'utf8' }).outputFiles[0].text.replace(/export \{[^}]*\};?\s*$/, ''),
     homeArticlesSource: ['article-image-assets.mjs','article-media.mjs','src/visitor/home-articles.mjs'].map(file=>readText(new URL(file,ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, '')).join('\n'),
     servicePageSource: readText(new URL('src/visitor/service-page.mjs', ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, ''),
     articlesIndexSource: readText(new URL('src/visitor/articles-index.mjs', ROOT)).replace(/^import .*;\n/gm, '').replace(/^export /gm, ''),

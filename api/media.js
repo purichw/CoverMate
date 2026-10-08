@@ -35,7 +35,7 @@ async function authorize(req, deps = {
   const env = resolveCoverMateEnvironment({headers:req.headers,url:req.url,vercelEnv:process.env.VERCEL_ENV});
   const admin = await deps.readAdmin(user.uid);
   if (!admin?.active || !canEditContent(admin.role) || (admin.uatOnly === true && !env.isUat)) throw error(403,'forbidden','This account cannot edit media in this environment.');
-  return {uid:user.uid,env};
+  return {uid:user.uid,email:user.email || '',role:admin.role,env};
 }
 
 async function reserve(actor) {

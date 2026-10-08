@@ -1,7 +1,7 @@
-import { createElement, UsersRound, UserRound, ShieldCheck, FileText, ClipboardCheck, History, Plus, ArrowLeft, ChevronRight, ChevronDown, CalendarDays, MapPin, Settings2, RefreshCw, Save, Search, LockKeyhole, Download, Upload, Eye, Link, X, Check, Phone, Mail } from 'lucide';
-import { PROFILE_FIELDS, POLICY_FIELDS, CONSENT_FIELDS, SERVICE_FIELDS, SCOPES, emptyFields, fullName, hasConsent } from '../../customer-model.mjs';
+import { createElement, UsersRound, UserRound, UserRoundPlus, ShieldCheck, FileText, ClipboardCheck, History, Plus, ArrowLeft, ChevronRight, ChevronDown, CalendarDays, MapPin, Settings2, RefreshCw, Save, Search, LockKeyhole, Download, Upload, Eye, Link, X, Check, Phone, Mail, Pencil, Copy, List, Send } from 'lucide';
+import { PROFILE_FIELDS, POLICY_FIELDS, CONSENT_FIELDS, SERVICE_FIELDS, SCOPES, emptyFields, fullName, hasConsent, validateProfile, validatePolicy, validateConsent, validateFields, validateIdentity, profileRelationErrors, consentRelationErrors } from '../../customer-model.mjs';
 
-const icons = { users: UsersRound, user: UserRound, policy: ShieldCheck, file: FileText, consent: ClipboardCheck, history: History, plus: Plus, back: ArrowLeft, next: ChevronRight, down: ChevronDown, calendar: CalendarDays, address: MapPin, settings: Settings2, refresh: RefreshCw, save: Save, search: Search, lock: LockKeyhole, download: Download, upload: Upload, eye: Eye, link: Link, close: X, check: Check, phone: Phone, email: Mail };
+const icons = { users: UsersRound, user: UserRound, newCustomer: UserRoundPlus, policy: ShieldCheck, file: FileText, consent: ClipboardCheck, history: History, plus: Plus, back: ArrowLeft, next: ChevronRight, down: ChevronDown, calendar: CalendarDays, address: MapPin, settings: Settings2, refresh: RefreshCw, save: Save, search: Search, lock: LockKeyhole, download: Download, upload: Upload, eye: Eye, link: Link, close: X, check: Check, phone: Phone, email: Mail, edit: Pencil, copy: Copy, list: List, send: Send };
 const icon = name => createElement(icons[name] || FileText, { width: 20, height: 20, 'stroke-width': 1.8, 'aria-hidden': 'true' }).outerHTML;
 const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const date = value => value ? new Intl.DateTimeFormat('th-TH-u-ca-gregory', { dateStyle: 'medium', timeZone: 'Asia/Bangkok' }).format(new Date(value)) : 'ยังไม่ระบุ';
@@ -12,6 +12,8 @@ const tabs = [['profile','Profile','user'],['policies','Policies','policy'],['do
 const policyTypeLabels = { Life: 'ประกันชีวิต (Life)', Health: 'ประกันสุขภาพ (Health)', Motor: 'ประกันรถยนต์ (Motor)', Accident: 'ประกันอุบัติเหตุ (Accident)', Savings: 'ประกันสะสมทรัพย์ (Savings)', Other: 'ประกันอื่น ๆ (Other)' };
 const policyEditorFields = POLICY_FIELDS.map(f => f.key === 'type' ? { ...f, optionLabels: policyTypeLabels } : f);
 const profileGroups = [['ข้อมูลหลัก', ['firstName','lastName','nickname','language'], false, 'user'], ['ช่องทางติดต่อ', ['phone','email','lineId','preferredChannel'], false, 'phone'], ['ข้อมูลส่วนตัวเพิ่มเติม', ['firstNameEn','lastNameEn','birthDate','nationality','occupation','contactTime'], true, 'user'], ['ที่อยู่และบันทึก', ['address','postalCode','source','notes'], true, 'address'], ['การจัดเก็บข้อมูล', ['retentionReviewAt','status'], true, 'settings']];
+const profileDescriptions = ['ชื่อและภาษาที่ลูกค้าสะดวก', 'เบอร์โทร อีเมล และ LINE', 'วันเกิด อาชีพ และข้อมูลเพิ่มเติม', 'ที่อยู่ ช่องทางที่มา และบันทึก', 'สถานะทะเบียนและวันทบทวนข้อมูล'];
+const newCustomerPlaceholders = { firstName: 'กรอกชื่อ', lastName: 'กรอกนามสกุล', nickname: 'ชื่อที่ใช้เรียก', phone: 'กรอกเบอร์โทรศัพท์', email: 'name@example.com', lineId: 'กรอก LINE ID', firstNameEn: 'Enter first name', lastNameEn: 'Enter last name', nationality: 'กรอกสัญชาติ', occupation: 'กรอกอาชีพ', contactTime: 'เช่น 09:00–12:00 น.', address: 'กรอกที่อยู่ติดต่อ', postalCode: 'กรอกรหัสไปรษณีย์', source: 'เช่น Facebook, LINE หรือเพื่อนแนะนำ', notes: 'รายละเอียดเพิ่มเติมเกี่ยวกับลูกค้า', noticeVersion: 'เช่น CM-Privacy-v1', noticeText: 'ข้อความที่แจ้งลูกค้าจริง', evidence: 'เช่น ชื่อเอกสาร วันที่สนทนา หรือเลขอ้างอิง' };
 const policyGroups = [['ข้อมูลกรมธรรม์', ['insurer','plan','policyNumber','type','status','source','agent'], false, 'policy'], ['บุคคลในกรมธรรม์', ['policyholder','insured','payer','beneficiaries'], true, 'users'], ['ระยะคุ้มครองและเบี้ยประกัน', ['issuedAt','startsAt','endsAt','premium','frequency','nextDueAt','renewalAt'], true, 'calendar'], ['ความคุ้มครอง', ['sumAssured','ipd','opd','room','deductible','copay','vehicle','riders','coverage','exclusions','notes'], true, 'policy']];
 const fieldHints = {
   phone: 'ระบุเบอร์โทร อีเมล หรือ LINE อย่างน้อยหนึ่งช่องทาง',
@@ -22,14 +24,17 @@ const fieldHints = {
   ipd: 'ระบุวงเงินและรอบความคุ้มครอง เช่น บาทต่อปี',
   opd: 'ระบุวงเงินต่อครั้งและจำนวนครั้ง ตามกรมธรรม์',
   room: 'ระบุวงเงินต่อวันและสกุลเงิน',
-  copay: 'ระบุสัดส่วนหรือจำนวนเงินตามกรมธรรม์'
+  copay: 'ระบุสัดส่วนหรือจำนวนเงินตามกรมธรรม์',
+  postalCode: 'ไทยใช้ 5 หลัก หรือรหัสไปรษณีย์ของที่อยู่ต่างประเทศ',
+  lineId: 'ใช้ LINE ID ไม่ใช่ชื่อที่แสดง'
 };
 const readFields = (form, definitions, prefix = '') => Object.fromEntries(definitions.map(f => [f.key, form.elements.namedItem(prefix + f.key)?.value || '']));
 function field(f, value, prefix = '') {
   const name = prefix + f.key, id = `customer-${name.replaceAll('.', '-')}`;
-  const hint = fieldHints[f.key];
+  const hint = f.hint ?? fieldHints[f.key];
   const attributes = `id="${id}" name="${esc(name)}" data-field-label="${esc(f.label)}" aria-describedby="${id}-error${hint ? ` ${id}-hint` : ''}" ${f.required ? 'required' : ''} ${f.max ? `maxlength="${f.max}"` : ''}`;
-  const control = f.type === 'select' ? `<select ${attributes}><option value="">${f.required ? 'เลือกรายการ' : 'ยังไม่ระบุ'}</option>${f.options.map(o => `<option value="${esc(o)}" ${value === o ? 'selected' : ''}>${esc(f.optionLabels?.[o] || o)}</option>`).join('')}</select>` : f.type === 'textarea' ? `<textarea ${attributes} rows="3">${esc(value)}</textarea>` : `<input ${attributes} type="${f.type}" value="${esc(value)}" ${f.type === 'number' ? 'min="0" max="1000000000000" step="0.01" inputmode="decimal"' : ''}>`;
+  const placeholder = f.placeholder ? `placeholder="${esc(f.placeholder)}"` : '';
+  const control = f.type === 'select' ? `<select ${attributes}><option value="">${f.required ? 'เลือกรายการ' : 'ยังไม่ระบุ'}</option>${f.options.map(o => `<option value="${esc(o)}" ${value === o ? 'selected' : ''}>${esc(f.optionLabels?.[o] || o)}</option>`).join('')}</select>` : f.type === 'textarea' ? `<textarea ${attributes} ${placeholder} rows="3">${esc(value)}</textarea>` : `<input ${attributes} ${placeholder} type="${f.type}" value="${esc(value)}" ${f.type === 'number' ? 'min="0" max="1000000000000" step="0.01" inputmode="decimal"' : ''}>`;
   return `<div class="customer-field ${f.type === 'textarea' ? 'wide' : ''}" data-field-type="${f.type}"><label for="${id}">${esc(f.label)}${f.required ? '<span aria-hidden="true"> *</span>' : ''}</label>${control}${hint ? `<small class="customer-field-hint" id="${id}-hint">${esc(hint)}</small>` : ''}<small class="customer-field-error" id="${id}-error" data-customer-field-error hidden></small>${f.type === 'textarea' && f.max ? `<small class="customer-field-count" data-customer-field-count>${value.length} / ${f.max}</small>` : ''}</div>`;
 }
 const fields = (defs, values = {}, prefix = '') => `<div class="customer-fields">${defs.map(f => field(f, values[f.key] || '', prefix)).join('')}</div>`;
@@ -38,8 +43,44 @@ const formSection = (title, content, symbol = 'file') => `<section class="custom
 const groups = (definitions, layout, values, prefix = '') => layout.map(([title, keys, collapsed, symbol = 'file']) => collapsed
   ? `<details class="customer-form-section customer-disclosure"><summary>${sectionTitle(title, symbol)}${icon('down')}</summary>${fields(keys.map(key => definitions.find(f => f.key === key)), values, prefix)}</details>`
   : formSection(title, fields(keys.map(key => definitions.find(f => f.key === key)), values, prefix), symbol)).join('');
-const consentForm = (initial = false) => `<fieldset class="customer-scopes"><legend>ขอบเขตที่ลูกค้ายินยอม *</legend>${Object.entries(SCOPES).map(([id, text]) => `<label><input name="scopes" type="checkbox" value="${id}" ${initial && id === 'profile' ? 'checked' : ''}>${text}</label>`).join('')}</fieldset>${fields(CONSENT_FIELDS, { status: 'Granted' }, 'consent.')}`;
+const consentScopes = (initial = false) => `<fieldset class="customer-scopes"><legend>ขอบเขตที่ลูกค้ายินยอม *</legend>${Object.entries(SCOPES).map(([id, text]) => `<label><input name="scopes" type="checkbox" value="${id}" ${initial && id === 'profile' ? 'checked' : ''}>${text}</label>`).join('')}</fieldset>`;
+const consentForm = (initial = false) => `${consentScopes(initial)}${fields(CONSENT_FIELDS, { status: 'Granted' }, 'consent.')}`;
 const consentInput = form => ({ ...readFields(form, CONSENT_FIELDS, 'consent.'), scopes: [...form.querySelectorAll('[name=scopes]:checked')].map(el => el.value) });
+const customerLanguages = { TH: 'TH · ภาษาไทย', EN: 'EN · English', Other: 'Other' };
+const newCustomerFields = (defs, values, prefix = '') => fields(defs.map(f => ({ ...f, placeholder: newCustomerPlaceholders[f.key], ...(f.key === 'phone' ? { hint: '' } : {}), ...(f.key === 'language' ? { optionLabels: customerLanguages } : {}) })), values, prefix);
+function newCustomerSection(index, title, description, symbol, content, open = false) {
+  return `<details class="customer-new-section" data-customer-section="${index}" ${open ? 'open' : ''}><summary><span class="customer-section-number" aria-hidden="true">${index}</span><span class="customer-new-section-heading">${sectionTitle(title, symbol)}<span class="customer-section-description">${esc(description)}</span><span class="customer-section-progress" data-section-progress hidden></span></span><span class="customer-section-chevron">${icon('down')}</span></summary><div class="customer-new-section-body">${content}</div></details>`;
+}
+function newCustomerSections(values) {
+  return profileGroups.map(([title, keys, collapsed, symbol], index) => newCustomerSection(index + 1, title, profileDescriptions[index], symbol, `${index === 1 ? '<p class="customer-contact-requirement">ระบุเบอร์โทร อีเมล หรือ LINE อย่างน้อยหนึ่งช่องทาง</p>' : ''}${newCustomerFields(keys.map(key => PROFILE_FIELDS.find(f => f.key === key)), values)}`, !collapsed)).join('')
+    + newCustomerSection(6, 'หลักฐาน Consent', 'คำตอบและหลักฐานความยินยอมของลูกค้า', 'consent', `<div class="customer-new-consent"><div>${consentScopes(true)}<small class="customer-field-error" id="customer-scopes-error" data-scope-error hidden></small></div>${newCustomerFields(CONSENT_FIELDS.slice(0, 4), { status: 'Granted' }, 'consent.')}</div><div class="customer-new-consent-text">${newCustomerFields(CONSENT_FIELDS.slice(4), {}, 'consent.')}</div>`, true);
+}
+function customerSteps(current) {
+  return `<ol class="customer-steps" aria-label="ขั้นตอนสร้างลูกค้า">${['กรอกข้อมูล', 'ตรวจสอบ', 'บันทึกสำเร็จ'].map((label, i) => {
+    const complete = i + 1 < current;
+    return `<li data-step-state="${complete ? 'complete' : i + 1 === current ? current === 3 ? 'success' : 'current' : 'pending'}" ${i + 1 === current ? 'aria-current="step"' : ''}><span class="customer-step-marker" aria-hidden="true">${complete ? icon('check') : i + 1}</span><span>${label}${complete ? '<span class="case-sr-only"> เสร็จแล้ว</span>' : ''}</span></li>`;
+  }).join('')}</ol>`;
+}
+function reviewValue(value) {
+  if (!value) return '<span class="customer-review-empty">ยังไม่ระบุ</span>';
+  if (value.length <= 240) return esc(value);
+  return `<details class="customer-review-long-text"><summary><span class="customer-review-excerpt">${esc(value.slice(0, 240))}…</span><span class="customer-review-read-more">อ่านข้อความทั้งหมด</span><span class="customer-review-read-less">ย่อข้อความ</span></summary><p>${esc(value)}</p></details>`;
+}
+function reviewRows(definitions, values, prefix = '') {
+  return definitions.map(f => {
+    const value = values[f.key] || '';
+    const content = f.key === 'status' ? badge(value) : f.type === 'date' && value ? esc(date(value)) : reviewValue(f.key === 'language' ? customerLanguages[value] || value : value);
+    return `<div data-review-field="${prefix + f.key}"><dt>${esc(f.label)}</dt><dd>${content}</dd></div>`;
+  }).join('');
+}
+function reviewSection(index, title, symbol, content) {
+  return `<article class="customer-review-section" data-review-section="${index}"><header><h3><button type="button" data-review-toggle="${index}" aria-expanded="true" aria-controls="customer-review-body-${index}">${sectionTitle(title, symbol)}${icon('down')}</button></h3><button type="button" class="customer-review-edit" data-review-edit="${index}" aria-label="แก้ไข${esc(title)}">${icon('edit')}<span>แก้ไข</span></button></header><dl id="customer-review-body-${index}">${content}</dl></article>`;
+}
+function customerReview({ profile, consent }) {
+  const sections = profileGroups.map(([title, keys, , symbol], index) => reviewSection(index + 1, title, symbol, reviewRows(keys.map(key => PROFILE_FIELDS.find(f => f.key === key)), profile))).join('');
+  const scopes = Object.entries(SCOPES).map(([key, label]) => `<div data-review-scope="${key}"><dt>${esc(label)}</dt><dd>${badge(consent.scopes.includes(key) ? consent.status : 'Not recorded')}</dd></div>`).join('');
+  return `<h2 id="customer-review-title" tabindex="-1">ตรวจสอบข้อมูล</h2><div class="customer-review-ready"><span class="customer-ready-icon">${icon('check')}</span><div><strong>ข้อมูลที่จำเป็นครบแล้ว พร้อมยืนยันสร้างลูกค้า</strong><p>ข้อมูลยังไม่ถูกบันทึกในระบบ</p></div></div><div class="customer-review-grid">${sections}${reviewSection(6, 'หลักฐาน Consent', 'consent', scopes + reviewRows(CONSENT_FIELDS, consent, 'consent.'))}</div>`;
+}
 
 export function createCustomersWorkspace({ root, api, session, searchInput, openCase }) {
   const s = { active: false, record: null, tab: 'profile', rows: [], total: 0, offset: 0, nextOffset: null, status: 'Active', query: '', loading: false, error: '', dirty: false, busy: false, generation: 0, creating: false, sourceCase: null };
@@ -112,11 +153,18 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
     const controls = [...target.querySelectorAll('button,input,select,textarea')].filter(el => !el.disabled);
     controls.forEach(el => { if (el.matches('input,select,textarea')) fieldError(el); el.disabled = true; }); saveState(target, 'Saving…'); message('กำลังบันทึก…', false, target);
     try {
+      if (body.profile) validateProfile(body.profile);
+      if (body.consent) validateConsent(body.consent);
+      if (/\/policies(?:\/|$)/.test(path)) validatePolicy(body.record);
+      if (/\/services(?:\/|$)/.test(path)) validateFields(body.record, SERVICE_FIELDS);
+      if (path.endsWith('/identity')) validateIdentity({ type: body.type, number: body.number, expiresAt: body.expiresAt });
       const result = await api(path, { method, body, headers: { 'Idempotency-Key': requestKey } });
       requestKey = null; requestSignature = null; s.dirty = false; dialogDirty = false;
       saveState(target, 'Saved');
       return result;
     } catch (error) {
+      if (error.fieldErrors) error.payload = { code: error.code, fieldErrors: error.fieldErrors };
+      if (target.dataset.customerStep === '2' && Object.keys(error.payload?.fieldErrors || {}).length) setCreationStep(target, 1);
       const code = error.payload?.code;
       s.lastError = code;
       const text = Object.values(error.payload?.fieldErrors || {}).join(' · ') || ({ consent_required: 'ยังไม่มี Consent ที่ครอบคลุมข้อมูลส่วนนี้ บันทึกหลักฐานในแท็บ Consent ก่อน', vault_unavailable: 'ยังไม่ได้ตั้งค่าพื้นที่เก็บข้อมูลส่วนตัว กรุณาติดต่อผู้ดูแลระบบ', document_storage_unavailable: 'พื้นที่เก็บเอกสารส่วนตัวยังไม่พร้อม ไฟล์ยังไม่ได้บันทึก กรุณาติดต่อผู้ดูแลระบบ', already_linked: 'Case นี้เชื่อมกับลูกค้ารายอื่นแล้ว', too_large: 'ไฟล์ต้องมีขนาดไม่เกิน 2 MB', duplicate_customer: 'มีข้อมูลติดต่อซ้ำกับลูกค้าเดิม กรุณาตรวจสอบก่อนเพิ่ม' }[code]) || error.message;
@@ -131,7 +179,8 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
         const input = [...target.querySelectorAll('input,select,textarea')].find(el => el.name === key || el.name.endsWith('.' + key));
         fieldError(input, text); firstInvalid ||= input;
       }
-      if (firstInvalid) queueMicrotask(() => firstInvalid.focus());
+      if (firstInvalid && target.hasAttribute('data-customer-step')) focusCustomerField(target, firstInvalid.name);
+      else if (firstInvalid) queueMicrotask(() => firstInvalid.focus());
       else target.querySelector('[data-customer-feedback]')?.scrollIntoView({ block: 'nearest' });
       return null;
     } finally { s.busy = false; target.removeAttribute('aria-busy'); controls.forEach(el => { el.disabled = false; }); }
@@ -153,14 +202,39 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
       <section class="customer-list" aria-label="รายชื่อลูกค้า" aria-busy="${s.loading}">${s.loading ? blank('กำลังโหลดรายชื่อลูกค้า','','users') : s.error ? blank('โหลดรายชื่อไม่ได้',s.error,'file',button('refresh','ลองอีกครั้ง','refresh')) : !s.rows.length ? blank(s.query ? 'ไม่พบลูกค้าที่ตรงกับคำค้น' : 'ยังไม่มีลูกค้าในรายการนี้',s.query ? 'ลองค้นด้วยชื่อ เบอร์โทร อีเมล หรือ LINE' : '', 'users', button('new','เพิ่มลูกค้า','plus','',true)) : `<table class="customer-table"><thead><tr><th>ลูกค้า</th><th>ช่องทางติดต่อ</th><th>Status</th><th>อัปเดตล่าสุด</th><th><span class="case-sr-only">เปิดข้อมูล</span></th></tr></thead><tbody>${s.rows.map(r => `<tr><td><button type="button" class="customer-person" data-customer-action="open" data-id="${r.id}"><span class="customer-avatar">${esc([...r.profile.firstName][0])}</span><span><strong>${esc(fullName(r.profile))}</strong><small>${esc(r.code)}</small></span></button></td><td><span>${esc(r.profile.phone || r.profile.email || r.profile.lineId)}</span>${r.profile.phone && r.profile.email ? `<small>${esc(r.profile.email)}</small>` : ''}</td><td>${badge(r.profile.status)}</td><td>${date(r.updatedAt)}</td><td>${button('open','','next',`data-id="${r.id}" aria-label="เปิดข้อมูล ${esc(fullName(r.profile))}" title="เปิดข้อมูลลูกค้า"`)}</td></tr>`).join('')}</tbody></table>`}</section>
       <footer class="customer-pagination"><span>${s.rows.length && !s.loading && !s.error ? `${s.offset + 1}–${s.offset + s.rows.length} จาก ${s.total} รายชื่อ` : ''}</span><div>${button('previous','ก่อนหน้า',null,s.offset === 0 || s.loading ? 'disabled' : '')}${button('next','ถัดไป',null,s.nextOffset === null || s.loading ? 'disabled' : '')}</div></footer>`);
   }
-  async function loadRecord(id) {
+  async function loadRecord(id, { created = false } = {}) {
     const generation = ++s.generation; paint(blank('กำลังโหลดข้อมูลลูกค้า…','','user'));
-    try { const result = await api('customers/' + encodeURIComponent(id)); if (!s.active || generation !== s.generation) return; s.record = result; s.creating = false; s.dirty = false; renderRecord(); }
-    catch (e) { if (s.active && generation === s.generation) paint(blank('เปิดข้อมูลลูกค้าไม่ได้',e.message,'file',button('back','กลับไป Customers','back'))); }
+    try { const result = await api('customers/' + encodeURIComponent(id)); if (!s.active || generation !== s.generation) return; s.record = result; s.creating = false; s.dirty = false; created ? renderCreated() : renderRecord(); }
+    catch (e) {
+      if (!s.active || generation !== s.generation) return;
+      paint(blank(created ? 'สร้างลูกค้าแล้ว แต่โหลดรายละเอียดไม่ได้' : 'เปิดข้อมูลลูกค้าไม่ได้', created ? 'ข้อมูลถูกบันทึกแล้ว กรุณาโหลดรายละเอียดอีกครั้ง ไม่ต้องสร้างลูกค้าใหม่' : e.message, 'file', `<div class="customer-recovery-actions">${button(created ? 'retry-created' : 'open','โหลดรายละเอียดอีกครั้ง','refresh',`data-id="${esc(id)}"`)}${button('back','กลับไป Customers','back')}</div>`));
+      const title = root.querySelector('h2'); title.tabIndex = -1; title.focus();
+    }
   }
-  function header() {
-    const r = s.record;
-    return `<div class="customer-breadcrumb">${button('back','Customers','back')}<span>/ ${s.creating ? 'New Customer' : esc(r.code)}</span></div><header class="customer-page-head customer-record-head"><div class="customer-heading"><span class="customer-avatar large">${s.creating ? icon('user') : esc([...r.profile.firstName][0])}</span><div><h1>${s.creating ? 'New Customer' : esc(fullName(r.profile))}</h1>${s.creating ? '' : `<p>${esc(r.profile.phone || r.profile.email || r.profile.lineId)} <span class="customer-divider">/</span> ${esc(r.profile.language || 'TH')}</p>`}</div>${s.creating ? '' : badge(r.profile.status)}</div>${!s.creating ? button('new-case','สร้างงานติดต่อ','plus') : ''}</header>`;
+  function header({ creationStep = s.creating ? 1 : null } = {}) {
+    const r = s.record, creating = Boolean(creationStep);
+    return `<div class="customer-breadcrumb">${button('back','Customers','back')}<span>/ ${creating ? 'New Customer' : esc(r.code)}</span></div><header class="customer-page-head customer-record-head"><div class="customer-heading"><span class="customer-avatar large">${creating ? icon('user') : esc([...r.profile.firstName][0])}</span><div><h1>${creating ? 'New Customer' : esc(fullName(r.profile))}</h1>${creating ? creationStep === 3 ? '' : '<p data-creation-description>สร้างข้อมูลลูกค้าใหม่</p>' : `<p>${esc(r.profile.phone || r.profile.email || r.profile.lineId)} <span class="customer-divider">/</span> ${esc(r.profile.language || 'TH')}</p>`}</div>${creating ? '' : badge(r.profile.status)}</div>${!creating ? button('new-case','สร้างงานติดต่อ','plus') : `<div data-customer-steps>${customerSteps(creationStep)}</div>`}</header>`;
+  }
+  function renderCreated() {
+    const r = s.record, p = r.profile;
+    const savedAt = new Intl.DateTimeFormat('th-TH-u-ca-gregory', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(r.createdAt));
+    const actor = r.activities.find(a => a.action === 'customer_created');
+    const recorder = actor?.actorId === session.uid ? session.name || 'บัญชีนี้' : '';
+    const row = (key, label, value) => `<div data-saved-field="${key}"><dt>${esc(label)}</dt><dd>${value}</dd></div>`;
+    const granted = Object.entries(SCOPES).filter(([key]) => hasConsent(r.consents, key));
+    paint(`<div class="customer-new customer-success">${header({ creationStep: 3 })}
+      <section class="customer-success-intro" aria-labelledby="customer-success-title"><div class="customer-success-mark" aria-hidden="true"><span>${icon('check')}</span>${Array.from({ length: 8 }, () => '<i></i>').join('')}</div><h2 id="customer-success-title" tabindex="-1">สร้างข้อมูลลูกค้าสำเร็จ</h2><p>บันทึกข้อมูลลูกค้าเรียบร้อยแล้ว</p></section>
+      <section class="customer-success-summary" aria-labelledby="customer-saved-title"><header><h3 id="customer-saved-title">${sectionTitle('ข้อมูลลูกค้าที่บันทึก', 'user')}</h3>${badge(p.status)}</header><div class="customer-success-data"><dl>
+        ${row('code', 'รหัสลูกค้า', `<span class="customer-saved-code" data-customer-code>${esc(r.code)}</span>${button('copy-code', '', 'copy', 'aria-label="คัดลอกรหัสลูกค้า" title="คัดลอกรหัสลูกค้า"')}`)}
+        ${row('name', 'ชื่อ–นามสกุล', reviewValue(fullName(p)))}${['phone', 'email', 'lineId'].map(key => row(key, PROFILE_FIELDS.find(f => f.key === key).label, reviewValue(p[key]))).join('')}
+      </dl><div class="customer-saved-meta"><dl>${row('createdAt', 'วันที่สร้าง', esc(savedAt))}</dl><button type="button" class="customer-saved-toggle" aria-expanded="false" aria-controls="customer-saved-more">รายละเอียดเพิ่มเติม${icon('down')}</button><dl id="customer-saved-more">${row('language', 'ภาษาที่สะดวก', reviewValue(customerLanguages[p.language] || p.language))}${row('source', 'ช่องทางที่รู้จัก', reviewValue(p.source))}${recorder ? row('recorder', 'ผู้บันทึก', esc(recorder)) : ''}</dl></div></div><p class="customer-copy-feedback" data-copy-feedback role="status" aria-live="polite"></p></section>
+      <section class="customer-success-consent" aria-labelledby="customer-saved-consent-title"><div><h3 id="customer-saved-consent-title">${sectionTitle('บันทึกหลักฐาน Consent แล้ว', 'policy')}</h3><ul>${granted.map(([key, label]) => `<li data-saved-scope="${key}">${icon('check')}<span>${esc(label)}</span></li>`).join('')}</ul><p>${r.documents.length ? `เอกสารแนบ ${r.documents.length} รายการ` : 'ยังไม่มีเอกสารแนบ'}</p></div><div class="customer-consent-mark" aria-hidden="true">${icon('file')}<span>${icon('check')}</span></div></section>
+      <section class="customer-success-next" aria-labelledby="customer-next-title"><h3 id="customer-next-title">${sectionTitle('ดำเนินการต่อ', 'send')}</h3><div>${button('open', 'ดูข้อมูลลูกค้า', 'eye', `data-id="${esc(r.id)}"`, true)}${button('new', 'สร้างใหม่อีกคน', 'newCustomer')}${button('back', 'ไปที่รายชื่อลูกค้า', 'list')}</div></section>
+    </div>`);
+    const more = root.querySelector('.customer-saved-toggle');
+    more.addEventListener('click', () => more.setAttribute('aria-expanded', String(more.getAttribute('aria-expanded') !== 'true')));
+    root.querySelector('#customer-success-title').focus({ preventScroll: true });
+    root.querySelector('.customer-breadcrumb').scrollIntoView({ block: 'start' });
   }
   function renderRecord() {
     const r = s.record;
@@ -168,20 +242,168 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
     bindProfile();
   }
   function profileForm(values, creating = false) {
-    return `<form id="customer-profile-form" autocomplete="off">${groups(PROFILE_FIELDS, profileGroups, values)}${creating ? `<section class="customer-form-section"><h3>${icon('consent')} หลักฐาน Consent ก่อนสร้างทะเบียน</h3>${consentForm(true)}</section>` : ''}${feedback}<footer class="customer-savebar"><span class="customer-save-state" data-customer-dirty aria-live="polite">${creating ? 'New customer' : 'Saved'}</span><div>${button('reset-profile','ยกเลิก')}<button class="article-button article-create" type="submit">${icon('save')}${creating ? 'สร้างทะเบียนลูกค้า' : 'บันทึกข้อมูลลูกค้า'}</button></div></footer></form>${!creating ? identityView() : ''}`;
+    return `<form id="customer-profile-form" autocomplete="off" ${creating ? 'novalidate data-customer-step="1"' : ''}>${creating ? `<div data-customer-entry><div class="customer-validation-summary" data-validation-summary role="alert" tabindex="-1" hidden></div>${newCustomerSections(values)}</div><section class="customer-review" data-customer-review aria-labelledby="customer-review-title" hidden></section>${feedback}` : groups(PROFILE_FIELDS, profileGroups, values) + feedback}<footer class="customer-savebar"><span class="customer-save-state" data-customer-dirty aria-live="polite">${creating ? 'ยังไม่ได้บันทึก' : 'Saved'}</span><div>${button(creating ? 'back' : 'reset-profile','ยกเลิก',null, creating ? 'data-create-back' : '')}<button class="article-button article-create" type="submit">${icon(creating ? 'next' : 'save')}${creating ? 'ตรวจสอบข้อมูล' : 'บันทึกข้อมูลลูกค้า'}</button></div></footer></form>${!creating ? identityView() : ''}`;
+  }
+  function setCreationStep(form, step, sectionIndex) {
+    form.dataset.customerStep = String(step);
+    form.querySelector('[data-customer-entry]').hidden = step === 2;
+    form.querySelector('[data-customer-review]').hidden = step !== 2;
+    root.querySelector('[data-customer-steps]').innerHTML = customerSteps(step);
+    root.querySelector('[data-creation-description]').textContent = step === 2 ? 'ตรวจสอบข้อมูลก่อนบันทึกในระบบ' : 'สร้างข้อมูลลูกค้าใหม่';
+    const back = form.querySelector('[data-create-back]');
+    back.innerHTML = step === 2 ? `${icon('back')}<span>กลับไปแก้ไข</span>` : '<span>ยกเลิก</span>';
+    step === 2 ? back.removeAttribute('data-customer-action') : back.setAttribute('data-customer-action', 'back');
+    const submit = form.querySelector('[type=submit]');
+    submit.innerHTML = `${icon(step === 2 ? 'save' : 'next')}${step === 2 ? 'สร้างทะเบียนลูกค้า' : 'ตรวจสอบข้อมูล'}`;
+    saveState(form, 'ยังไม่ได้บันทึก');
+    message('', false, form);
+    if (step === 2) {
+      const title = form.querySelector('#customer-review-title');
+      title.focus({ preventScroll: true }); root.querySelector('.customer-record-head').scrollIntoView({ block: 'start' });
+    } else if (sectionIndex) {
+      const name = sectionIndex === 6 ? 'consent.status' : profileGroups[sectionIndex - 1][1][0];
+      focusCustomerField(form, name);
+    } else {
+      root.querySelector('h1').scrollIntoView({ block: 'center' });
+      const summary = form.querySelector('[data-customer-section] summary');
+      summary.focus({ preventScroll: true });
+    }
+  }
+  function newCustomerErrors(form) {
+    const errors = {}, profile = readFields(form, PROFILE_FIELDS), consent = consentInput(form);
+    const capture = (check, prefix = '') => {
+      try { check(); } catch (error) {
+        if (!error.fieldErrors) throw error;
+        for (const [name, text] of Object.entries(error.fieldErrors)) errors[prefix + name] = text;
+      }
+    };
+    for (const f of PROFILE_FIELDS) capture(() => validateFields({ [f.key]: profile[f.key] }, [f]));
+    for (const f of CONSENT_FIELDS) capture(() => validateFields({ [f.key]: consent[f.key] }, [f]), 'consent.');
+    for (const [name, text] of Object.entries(profileRelationErrors(profile))) errors[name] ||= text;
+    for (const [name, text] of Object.entries(consentRelationErrors(consent))) errors['consent.' + name] ||= text;
+    if (consent.status !== 'Granted') errors['consent.status'] = 'ต้องได้รับความยินยอม (Granted) ก่อนสร้างทะเบียนลูกค้า';
+    if (!consent.scopes.includes('profile')) errors['consent.scopes'] = 'ต้องมี Consent สำหรับข้อมูลลูกค้าและการติดต่อก่อนสร้างทะเบียน';
+    // Incomplete native dates can expose an empty value even when segments were entered.
+    for (const input of form.querySelectorAll('input[type=date]')) if (input.validity.badInput) errors[input.name] = 'กรุณาระบุวันที่ให้ครบถ้วน';
+    return errors;
+  }
+  function newCustomerInput(form, name) {
+    return name === 'consent.scopes' ? form.querySelector('[name=scopes][value=profile]') : form.elements.namedItem(name);
+  }
+  function focusCustomerField(form, name) {
+    const input = newCustomerInput(form, name);
+    if (!input) return;
+    const section = input.closest('details'); if (section) section.open = true;
+    requestAnimationFrame(() => {
+      const control = input.closest('.cm-select-shell')?.querySelector('.cm-select-trigger') || input;
+      control.focus({ preventScroll: true }); control.scrollIntoView({ block: 'center' });
+    });
+  }
+  function showNewCustomerErrors(form, errors) {
+    const summary = form.querySelector('[data-validation-summary]');
+    const entries = Object.entries(errors);
+    summary.hidden = !entries.length;
+    summary.innerHTML = entries.length ? `<strong>ตรวจสอบข้อมูลอีก ${entries.length} รายการก่อนสร้างทะเบียน</strong><ul>${entries.map(([name, text]) => `<li><button type="button" data-error-field="${esc(name)}">${esc(text)}${icon('next')}</button></li>`).join('')}</ul>` : '';
+    for (const input of form.querySelectorAll('.customer-field input,.customer-field select,.customer-field textarea')) fieldError(input, errors[input.name]);
+    const scopes = form.querySelector('[data-scope-error]');
+    scopes.hidden = !errors['consent.scopes']; scopes.textContent = errors['consent.scopes'] || '';
+    const scopeInput = newCustomerInput(form, 'consent.scopes');
+    if (!scopes.hidden) { scopeInput.closest('details').open = true; scopeInput.setAttribute('aria-invalid', 'true'); }
+    else scopeInput.removeAttribute('aria-invalid');
+  }
+  function bindNewCustomer(form) {
+    let submitted = false;
+    newCustomerInput(form, 'consent.scopes').setAttribute('aria-describedby', 'customer-scopes-error');
+    const update = () => {
+      const errors = newCustomerErrors(form);
+      for (const section of form.querySelectorAll('[data-customer-section]')) {
+        const index = Number(section.dataset.customerSection), label = section.querySelector('[data-section-progress]');
+        const names = index === 6 ? [...CONSENT_FIELDS.map(f => 'consent.' + f.key), 'consent.scopes'] : profileGroups[index - 1][1];
+        const hasValue = names.some(name => name !== 'consent.scopes' && newCustomerInput(form, name)?.value.trim());
+        const valid = !names.some(name => errors[name]);
+        const optional = index === 3 || index === 4;
+        const complete = valid && hasValue && index !== 5;
+        label.hidden = !complete && !optional && index !== 5;
+        label.dataset.complete = String(complete);
+        const retention = form.elements.retentionReviewAt.value;
+        label.innerHTML = complete ? `${icon('check')}${optional ? 'มีข้อมูลแล้ว' : 'ข้อมูลครบ'}` : optional ? 'ไม่บังคับ' : esc((form.elements.status.value || 'ยังไม่เลือก Status') + (retention && !errors.retentionReviewAt ? ` · ทบทวน ${date(retention)}` : ''));
+      }
+      if (submitted) showNewCustomerErrors(form, errors);
+      return errors;
+    };
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    form.addEventListener('focusout', event => {
+      const input = event.target.matches('.cm-select-trigger') ? event.target.closest('.customer-field')?.querySelector('select') : event.target;
+      if (submitted || !input?.matches('.customer-field input,.customer-field textarea,.customer-field select')) return;
+      fieldError(input, newCustomerErrors(form)[input.name]);
+    });
+    form.addEventListener('click', event => {
+      const target = event.target.closest('[data-error-field]');
+      if (target) focusCustomerField(form, target.dataset.errorField);
+    });
+    update();
+    return () => {
+      submitted = true;
+      const errors = update();
+      if (!Object.keys(errors).length) return true;
+      saveState(form, 'Check required fields');
+      form.querySelector('[data-validation-summary]').focus();
+      return false;
+    };
   }
   function bindProfile() {
     const form = root.querySelector('#customer-profile-form'); if (!form) return;
     bindFormState(form, () => { s.dirty = true; });
+    const validateNew = s.creating ? bindNewCustomer(form) : null;
+    let reviewedBody = null;
+    if (validateNew) form.addEventListener('click', event => {
+      if (s.busy) return;
+      if (event.detail > 1 && event.target.closest('[type=submit]')) { event.preventDefault(); return; }
+      const edit = event.target.closest('[data-review-edit]');
+      if (edit || (event.target.closest('[data-create-back]') && form.dataset.customerStep === '2')) {
+        reviewedBody = null;
+        setCreationStep(form, 1, edit ? Number(edit.dataset.reviewEdit) : null);
+        // The footer is handled here rather than by the list-navigation handler.
+        event.stopPropagation();
+      }
+      const toggle = event.target.closest('[data-review-toggle]');
+      if (toggle) {
+        const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+        toggle.setAttribute('aria-expanded', String(expanded));
+        form.querySelector(`#${toggle.getAttribute('aria-controls')}`).hidden = !expanded;
+      }
+    });
+    if (validateNew) form.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && event.repeat && form.dataset.customerStep === '2') event.preventDefault();
+    });
     form.addEventListener('submit', async e => {
-      e.preventDefault(); const body = { profile: readFields(form,PROFILE_FIELDS) };
+      e.preventDefault();
+      if (s.busy) return;
+      if (validateNew && !validateNew()) {
+        if (form.dataset.customerStep === '2') { setCreationStep(form, 1); form.querySelector('[data-validation-summary]').focus(); }
+        return;
+      }
+      const body = { profile: readFields(form,PROFILE_FIELDS) };
       if (s.creating) { body.consent = consentInput(form); if (s.sourceCase) body.sourceCaseId = s.sourceCase; }
       else body.expectedVersion = s.record.version;
-      let result = await mutate(s.creating ? 'customers' : 'customers/' + s.record.id, body, s.creating ? 'POST' : 'PATCH', form);
-      if (!result && s.creating && s.lastError === 'duplicate_customer' && await confirm('พบข้อมูลติดต่อซ้ำ', 'มีลูกค้าที่ใช้เบอร์โทร อีเมล หรือ LINE นี้แล้ว ต้องการสร้างเป็นอีกคนแยกจากข้อมูลเดิมหรือไม่?', 'สร้างแยกเป็นอีกคน')) {
-        result = await mutate('customers', { ...body, allowDuplicate: true }, 'POST', form);
+      if (validateNew) {
+        body.profile = validateProfile(body.profile); body.consent = validateConsent(body.consent);
+        if (form.dataset.customerStep !== '2' || JSON.stringify(body) !== JSON.stringify(reviewedBody)) {
+          const changed = form.dataset.customerStep === '2';
+          reviewedBody = body;
+          form.querySelector('[data-customer-review]').innerHTML = customerReview(body);
+          setCreationStep(form, 2);
+          if (changed) message('ข้อมูลมีการเปลี่ยนแปลง กรุณาตรวจสอบอีกครั้งก่อนยืนยัน', false, form);
+          return;
+        }
       }
-      if (result) { route(result.id); await loadRecord(result.id); message('บันทึกข้อมูลลูกค้าแล้ว'); }
+      const creating = s.creating;
+      let result = await mutate(creating ? 'customers' : 'customers/' + s.record.id, body, creating ? 'POST' : 'PATCH', form);
+      if (!result && s.lastError === 'duplicate_customer' && await confirm('พบข้อมูลติดต่อซ้ำ', 'มีลูกค้ารายอื่นใช้เบอร์โทร อีเมล หรือ LINE นี้แล้ว ยืนยันว่าเป็นคนละคนและต้องการใช้ข้อมูลติดต่อร่วมกันหรือไม่?', 'ยืนยันใช้ข้อมูลติดต่อร่วมกัน')) {
+        result = await mutate(s.creating ? 'customers' : 'customers/' + s.record.id, { ...body, allowDuplicate: true }, s.creating ? 'POST' : 'PATCH', form);
+      }
+      if (result) { route(result.id); await loadRecord(result.id, { created: creating }); if (!creating) message('บันทึกข้อมูลลูกค้าแล้ว'); }
     });
   }
   async function create(sourceCaseId = null) {
@@ -192,7 +414,7 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
       try { const result = await api('cases/' + encodeURIComponent(sourceCaseId)); if (!s.active || generation !== s.generation) return; Object.assign(profile, { firstName: result.record.contact.name, phone: result.record.contact.phone || '', email: result.record.contact.email || '', lineId: result.record.contact.lineId || '' }); }
       catch(e) { if (s.active && generation === s.generation) paint(blank('เปิดงานติดต่อไม่ได้',e.message,'file',button('back','กลับไป Customers','back'))); return; }
     }
-    paint(`${header()}<div class="customer-content">${profileForm(profile,true)}</div>`); bindProfile();
+    paint(`<div class="customer-new">${header()}${profileForm(profile,true)}</div>`); bindProfile();
   }
   function identityView() {
     const r = s.record, ready = r.vaultAvailable && hasConsent(r.consents,'identity');
@@ -224,6 +446,14 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
   async function action(e) {
     const b = e.target.closest('[data-customer-action]'); if (!b || !s.active || s.busy || b.disabled) return;
     const a = b.dataset.customerAction, id = b.dataset.id;
+    if (a === 'retry-created') return loadRecord(id, { created: true });
+    if (a === 'copy-code' && s.record) {
+      const note = root.querySelector('[data-copy-feedback]'); b.disabled = true;
+      try { await navigator.clipboard.writeText(s.record.code); if (note?.isConnected) note.textContent = 'คัดลอกรหัสลูกค้าแล้ว'; }
+      catch { if (note?.isConnected) { note.textContent = 'คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกรหัสลูกค้าแล้วคัดลอก'; const code = root.querySelector('[data-customer-code]'), range = document.createRange(); range.selectNodeContents(code); window.getSelection()?.removeAllRanges(); window.getSelection()?.addRange(range); } }
+      finally { b.disabled = false; }
+      return;
+    }
     if (a === 'new') { if (!await guard()) return; route(null); return create(); }
     if (a === 'open') { if (!await guard()) return; s.tab = 'profile'; route(id); return loadRecord(id); }
     if (a === 'back') { if (!await guard()) return; route(null); return loadList(); }

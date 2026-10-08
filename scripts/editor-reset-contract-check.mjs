@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { importCoverMateContract } from './lib/contract-loader.mjs';
 import { canEditContent, normalizeAdminRole } from '../covermate-roles.mjs';
+import { assertCmsState } from '../cms-validation.mjs';
+import { mutateCms } from '../server/cms.mjs';
+import { randomUUID } from 'node:crypto';
 
 // Execute the real client and its write/revision helpers. Only the Firebase SDK
 // and browser cache boundary are mocked; this check never connects to a project.
@@ -38,7 +41,7 @@ async function fixture() {
     const value = copy(documents.get(key));
     return { exists: () => value !== undefined, data: () => copy(value) };
   };
-  const auth = { currentUser: { uid: 'reset-test-owner', email: 'reset-test@example.invalid' } };
+  const auth = { currentUser: { uid: 'reset-test-owner', email: 'reset-test@example.invalid', getIdToken:async () => 'fixture-token' } };
   const firestore = {
     getFirestore: () => ({}),
     doc: (_db, ...segments) => segments.join('/'),
@@ -51,15 +54,16 @@ async function fixture() {
       const result = await operation({
         get: async ref => {
           assert.equal(pending.length, 0, 'Firestore reads precede writes');
-          transactionReads.push(ref);
+          if (!ref.includes('/cmsMutations/')) transactionReads.push(ref);
           return read(ref);
         },
-        set: (ref, value) => pending.push({ ref, value: copy(value) })
+        set: (ref, value) => pending.push({ ref, value: copy(value) }),
+        create: (ref, value) => { assert(!documents.has(ref)); pending.push({ref,value:copy(value)}); }
       });
       // Apply only after the callback succeeds, matching transaction atomicity.
       for (const entry of pending) {
         documents.set(entry.ref, copy(entry.value));
-        writes.push(entry);
+        if (!entry.ref.includes('/cmsMutations/')) writes.push(entry);
       }
       return result;
     }
@@ -79,6 +83,13 @@ async function fixture() {
   };
   const scope = {
     ...contract,
+    assertCmsState, crypto:{randomUUID}, AbortSignal,
+    fetch:async (_url,options) => {
+      const result = await mutateCms({uid:'reset-test-owner',env:{siteId:'reset-test'}},JSON.parse(options.body),{
+        doc:path=>path, runTransaction:operation=>firestore.runTransaction(null,operation)
+      });
+      return {ok:true,json:async()=>result};
+    },
     canEditContent, normalizeAdminRole,
     firebaseConfig: () => ({}), emulatorEnabled: () => false, FIREBASE_VERSION: 'test',
     resolveCoverMateEnvironment: () => ({ siteId: 'reset-test', isUat: true, name: 'test' }),
@@ -235,7 +246,8 @@ for (const admin of [{ role: 'readonly', active: true }, { role: 'owner', active
   assert.equal(f.draft().revision, 9, 'The newest explicit save uses the revision from the background save');
   assert.deepEqual(f.draft().config, newer.config);
   assert.deepEqual(f.draft().text, newer.text);
-  assert.deepEqual(f.localDraft(), f.draft(), 'The default save still refreshes local Draft');
+  assert.deepEqual(f.localDraft().config, f.draft().config, 'The default save still refreshes local Draft');
+  assert.equal(f.localDraft().revision,f.draft().revision);
   assert.deepEqual(f.caches.map(entry => entry.name), ['draft']);
 
   const latest = state('Published after background save', 18);
@@ -244,7 +256,8 @@ for (const admin of [{ role: 'readonly', active: true }, { role: 'owner', active
   assert.equal(f.draft().revision, 10, 'Reset also continues from the updated revision');
   assert.deepEqual(f.draft().config, latest.config);
   assert.deepEqual(f.draft().text, latest.text);
-  assert.deepEqual(f.localDraft(), f.draft(), 'Reset replaces local Draft with the confirmed latest published baseline');
+  assert.deepEqual(f.localDraft().config, f.draft().config, 'Reset replaces local Draft with the confirmed latest published baseline');
+  assert.equal(f.localDraft().revision,f.draft().revision);
   assert.deepEqual(f.live(), latest, 'Background save, explicit save and Reset do not write Live');
   assert.ok(f.writes.every(entry => entry.ref === 'sites/reset-test/states/draft'));
 }

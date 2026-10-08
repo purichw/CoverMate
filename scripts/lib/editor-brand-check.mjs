@@ -13,7 +13,15 @@ export async function checkBrandWorkspace({page,panel,poll,shot,assertFit,baseUr
   }
   async function edit(path,value){
     await reveal(input(path));await input(path).fill(value);await input(path).press('Tab');
+    if(path.startsWith('brand.media.') && value && value!==saved(path)) {
+      const dialog=page.getByRole('dialog',{name:'แก้ไขรูปภาพ',exact:true});await dialog.waitFor();
+      await dialog.getByRole('button',{name:'ใช้รูปนี้ใน draft',exact:true}).click();
+      await dialog.waitFor({state:'detached'});
+      await poll(()=>readDraft().config.mediaEdits?.[path]?.source.replace(/^\//,'')===value,'Confirmed media retains original source');
+      return saved(path);
+    }
     await poll(()=>saved(path)===value,'Draft persisted '+path);
+    return saved(path);
   }
   async function toggle(path,checked){
     const control=panel().locator(`[data-brand-toggle="${path}"]`);await reveal(control);await control.setChecked(checked);
@@ -31,19 +39,19 @@ export async function checkBrandWorkspace({page,panel,poll,shot,assertFit,baseUr
   await panel().getByRole('button',{name:'แก้ไขเนื้อหาภาษาไทย',exact:true}).click();
 
   const imagePath='brand.media.headerLogo.th', imageValue=saved(imagePath);
-  await edit(imagePath,'assets/brand/covermate-footer-logo-th.png');
-  await poll(async()=>/covermate-footer-logo-th/.test(await stage.locator('header img[data-cms-image]').getAttribute('src')),'Media replacement reaches header');
+  const replacement=await edit(imagePath,'assets/brand/covermate-footer-logo-th.png');
+  await poll(async()=>await stage.locator('header img[data-cms-image]').getAttribute('src')===replacement,'Media replacement reaches header');
   const media=panel().locator(`[data-brand-field="${imagePath}"]`);
   await media.getByRole('button',{name:'นำรูปออก',exact:true}).click();
   await poll(()=>saved(imagePath)==='','Media can be intentionally cleared');
   assert.equal(await stage.locator('header img[data-cms-image]').count(),0,'Clear does not revive bundled logo');
   await panel().locator('[data-editor-undo]').click();
-  await poll(()=>saved(imagePath)==='assets/brand/covermate-footer-logo-th.png','Undo restores media');
-  await edit(imagePath,imageValue);
+  await poll(()=>saved(imagePath)===replacement,'Undo restores media');
+  const restoredImage=await edit(imagePath,imageValue);
   await media.getByRole('button',{name:'เปลี่ยนรูป',exact:true}).click();
   const dialog=page.getByRole('dialog',{name:'แก้ไขรูปภาพ',exact:true});await dialog.waitFor();
   await dialog.getByRole('button',{name:'ยกเลิก',exact:true}).last().click();
-  assert.equal(saved(imagePath),imageValue,'Existing media editor cancel preserves image');
+  assert.equal(saved(imagePath),restoredImage,'Existing media editor cancel preserves image');
 
   await edit('licences.life.number','6401006222');
   await poll(async()=>await stage.textContent().then(text=>text.includes('6401006222')),'Licence reference resolves on Visitor');
@@ -54,10 +62,12 @@ export async function checkBrandWorkspace({page,panel,poll,shot,assertFit,baseUr
   assert.ok(await stage.locator('a[href="https://example.invalid/brand-line"]').count()>1,'Shared LINE links updated');
   const valid=saved('contact.lineUrl');
   await reveal(input('contact.lineUrl'));await input('contact.lineUrl').fill('javascript:alert(1)');await input('contact.lineUrl').press('Tab');
-  await poll(async()=>await page.getByText('ลิงก์ติดต่อไม่ถูกต้อง',{exact:true}).count()>0,'Invalid URL produces feedback');
+  await poll(async()=>await input('contact.lineUrl').getAttribute('aria-invalid')==='true','Invalid URL produces field feedback');
   assert.equal(saved('contact.lineUrl'),valid,'Invalid URL never persisted');
+  assert.equal(await input('contact.lineUrl').inputValue(),'javascript:alert(1)','Invalid input is retained until corrected');
+  await edit('contact.lineUrl',valid);
   await reveal(input('contact.email'));await input('contact.email').fill('bad-email');await input('contact.email').press('Tab');
-  await poll(async()=>await page.getByText('อีเมลไม่ถูกต้อง',{exact:true}).count()>0,'Invalid email produces feedback');
+  await poll(async()=>await input('contact.email').getAttribute('aria-invalid')==='true','Invalid email produces field feedback');
   assert.equal(saved('contact.email'),'brand@example.invalid','Invalid email never persisted');
   await edit('contact.email','');
   await poll(async()=>await stage.locator('footer a[href^="mailto:"]').count()===0,'Empty email removes public link');

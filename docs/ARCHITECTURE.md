@@ -27,8 +27,12 @@ The current visitor bundle is maintained against the product specs, repository d
 Downloaded offline prototype HTML is not automatically portable. Some exports can depend on sidecar runtime files such as `support.js`, `image-slot.js`, and `_ds/*/_ds_bundle.js`; if those files are absent, the browser can render raw template placeholders like `{{ brandName }}`. Treat those files as historical references until they are compiled into self-contained HTML or shipped with a complete dependency folder.
 
 Backend APIs use Vercel functions: `/api/ops/*`, `/api/analytics`, `/api/leads`
-and `/api/telemetry`, plus `/api/page`, `/api/media`, `/api/articles` and
+and `/api/telemetry`, plus `/api/page`, `/api/media`, `/api/cms`, `/api/articles` and
 `/api/article-sitemap`.
+`/api/cms` runs in `sin1` and owns website Draft/Publish/Reset/history mutations.
+It validates raw input before normalization, checks revisions transactionally,
+and records retry receipts. Firestore Rules deny direct CMS/history writes.
+See [validation boundaries](VALIDATION_20261008.md) for limits and rollout order.
 The media API uses signed Cloudinary uploads with a Free-plan quota guard;
 see [CMS_MEDIA.md](CMS_MEDIA.md). Admin identity is
 backed by Firebase Auth plus Firestore `admins/{uid}` allowlist checks, and CMS
@@ -55,8 +59,10 @@ flowchart TD
   Public --> LeadAPI["/api/leads: App Check, validation, limits, idempotency"]
   LeadAPI --> Leads["Firestore: runtime lead collection"]
   Public --> Store["localStorage fallback cache"]
-  PublicAdmin --> Draft["Firestore: states/draft"]
-  PublicAdmin --> Versions["Firestore: versions/*"]
+  PublicAdmin --> CmsAPI["/api/cms: verified content editor, validation, revisions"]
+  CmsAPI --> Draft["Firestore: states/draft"]
+  CmsAPI --> Live
+  CmsAPI --> Versions["Firestore: versions/*"]
   Login --> Firebase
   Firebase --> Session["localStorage cache: covermate-admin-session"]
   Launcher --> Session

@@ -133,10 +133,10 @@ try {
         await cm.saveSiteState('draft', current.config, { ...current.text, 'nfr:concurrent': 'winner' });
       });
       const conflict = await stale.evaluate(async () => {
-        try { await window.CoverMateFirebase.saveSiteState('draft', JSON.parse(localStorage.getItem('purich-draft-config-v3')), { loser: true }); return false; }
-        catch (err) { return err.code === 'content-conflict'; }
+        try { await window.CoverMateFirebase.saveSiteState('draft', JSON.parse(localStorage.getItem('purich-draft-config-v3')), { loser: 'stale text' }); return 'unexpected-success'; }
+        catch (err) { return err.code || err.message; }
       });
-      assert.equal(conflict, true, 'Stale CMS writes must be rejected.');
+      assert.equal(conflict, 'content-conflict', 'Stale CMS writes must be rejected.');
       const checks = await new AxeBuilder({ page: freshPage }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
       fs.writeFileSync(`uat-results/nfr/${engine}-axe.json`, JSON.stringify(checks.violations, null, 2));
       evidence.push({ engine, publish: 'real UI -> Auth/Firestore emulators -> open and fresh Visitors', openVisitorUpdated: true, visitorFormPreserved: true, blankSlot: true, languageIsolation: true, draftIsolation: true, conflictRejected: true, accessibilityViolations: checks.violations.map(v => ({ id: v.id, impact: v.impact, count: v.nodes.length })), navigationCancellations: navigationCancellations.length, errors });

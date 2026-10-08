@@ -1,4 +1,5 @@
 import { createEditorHistory } from './editor-history.js';
+import { assertCmsState, cmsStateIssues, cmsFieldError, cmsFieldLimit } from '../../cms-validation.mjs';
 
 /**
  * CMS editing and persistence controller for the existing visitor renderer.
@@ -11,6 +12,25 @@ export function withCmsController(Base, {
   DEFAULTS, clone, K_DRAFT, K_DRAFT_TEXT, K_LIVE, K_LIVE_TEXT, K_HIST, HIST_CAP, CMS_CONTENT_FIELDS, isSemanticCopyPath, setCmsCopy, cmsGet, cmsImageSlots, cmsAdminMediaLabel, repeatableIndex, createRepeatableId, usedRepeatableIds
 }) {
   return class CmsController extends Base {
+    cmsFieldError(path, value, field) { return cmsFieldError(path,value,field); }
+    cmsFieldLimit(path, field) { return cmsFieldLimit(path,field); }
+
+    validateCmsEdit(config = this.pendingInlineConfig(), text = this.textOv || {}, announce = false) {
+      const issues = cmsStateIssues({config,text});
+      for (const [path,value] of Object.entries(this.state.cmsEdits || {})) {
+        const message = cmsFieldError(path,value);
+        if (message) issues.push({path,message});
+      }
+      const issue = issues[0];
+      if (issue) {
+        this.invalidateDraftQueue();
+        this.setState({remoteError:`ยังไม่บันทึก: ${issue.label || issue.path} · ${issue.message}`});
+        if (announce) this.showActionToast({kind:'error',title:'ตรวจข้อมูลก่อนบันทึก',body:issue.message});
+        return false;
+      }
+      if (this.state.remoteError?.startsWith('ยังไม่บันทึก:')) this.setState({remoteError:''});
+      return true;
+    }
     async firebase() {
       if (!/^https?:$/.test(window.location.protocol)) return null;
       await import(window.location.origin + '/covermate-firebase.js');
@@ -191,6 +211,7 @@ export function withCmsController(Base, {
 
     queueRemoteDraft(config, text) {
       if (!this.hasSession()) return;
+      if (!this.validateCmsEdit(config,text)) return;
       const cfg = this.normalizeConfig(config || this.state.site, { repeatableIds: true });
       const txt = this.sanitizeTextOverrides(text || this.textOv || {});
       const generation = this.invalidateDraftQueue();
@@ -261,6 +282,7 @@ export function withCmsController(Base, {
 
     requestSaveDraft() {
       if (this.state.remoteBusy) return;
+      if (!this.validateCmsEdit(undefined,undefined,true)) return;
       this.setState({
         confirmAction: {
           kind: 'save',
@@ -275,6 +297,7 @@ export function withCmsController(Base, {
 
     requestPublish() {
       if (this.state.remoteBusy || !this.dirtyVs(this.state.site, this.textOv)) return;
+      if (!this.validateCmsEdit(undefined,undefined,true)) return;
       this.setState({
         confirmAction: {
           kind: 'publish',
@@ -303,6 +326,7 @@ export function withCmsController(Base, {
     }
 
     async writeDraftSnapshot(snapshot) {
+      assertCmsState(snapshot);
       const cfg = this.normalizeConfig(snapshot.config || DEFAULTS, { repeatableIds: true });
       const txt = this.sanitizeTextOverrides(snapshot.text || {});
       this.invalidateDraftQueue();
@@ -316,6 +340,7 @@ export function withCmsController(Base, {
     }
 
     async writePublishedSnapshot(snapshot, metadata) {
+      assertCmsState(snapshot);
       const cfg = this.normalizeConfig(snapshot.config || DEFAULTS, { repeatableIds: true });
       const txt = this.sanitizeTextOverrides(snapshot.text || {});
       this.invalidateDraftQueue();
@@ -334,6 +359,7 @@ export function withCmsController(Base, {
     }
 
     async saveDraftConfirmed(undoSnapshot) {
+      if (!this.validateCmsEdit(undefined,undefined,true)) { this.finishAdminConfirm(); return; }
       const snapshot = this.currentSnapshot();
       this.textOv = clone(snapshot.text);
       this.writeJSON(K_DRAFT, snapshot.config); this.writeJSON(K_DRAFT_TEXT, snapshot.text);
@@ -392,6 +418,7 @@ export function withCmsController(Base, {
     }
 
     persistDraft() {
+      if (!this.validateCmsEdit()) return;
       const cfg = this.normalizeConfig(this.pendingInlineConfig(), { repeatableIds: true }), txt = this.sanitizeTextOverrides(this.textOv || {});
       this.textOv = clone(txt);
       this.writeJSON(K_DRAFT, cfg); this.writeJSON(K_DRAFT_TEXT, txt);
@@ -400,6 +427,7 @@ export function withCmsController(Base, {
     }
 
     async doPublish(options) {
+      if (!this.validateCmsEdit(undefined,undefined,true)) { this.finishAdminConfirm(); return; }
       const snapshot = this.currentSnapshot();
       this.textOv = clone(snapshot.text);
       this.writeJSON(K_DRAFT, snapshot.config); this.writeJSON(K_DRAFT_TEXT, snapshot.text);
@@ -463,6 +491,7 @@ export function withCmsController(Base, {
     }
 
     saveText() {
+      if (!this.validateCmsEdit()) return;
       const txt = this.sanitizeTextOverrides(this.textOv || {});
       this.textOv = clone(txt);
       this.writeJSON(K_DRAFT_TEXT, txt);
@@ -495,6 +524,7 @@ export function withCmsController(Base, {
         this.textOv['cms:' + path] = el.textContent || '';
         if (commit) {
           const site = this.pendingInlineConfig();
+          if (!this.validateCmsEdit(site,this.textOv)) return;
           delete this.textOv['cms:' + path];
           this.save(site);
         } else this.saveText();
@@ -547,6 +577,12 @@ export function withCmsController(Base, {
 
     save(site) {
       if (this.state.remoteBusy || this._applyingHistory) return;
+      if (!this.validateCmsEdit(site)) {
+        // Keep the exact input visible in this session. Only valid content
+        // enters normalization, history and remote persistence.
+        this.setState({site});
+        return;
+      }
       const cfg = this.normalizeConfig(site, { repeatableIds: true }), txt = clone(this.textOv || {});
       this.recordEditorHistory({ config: cfg, text: txt });
       this.setState({ site: cfg });

@@ -13,7 +13,7 @@ export async function startNfrServer({pageHandler}={}) {
     const pathname = new URL(req.url, 'http://localhost').pathname;
     if(pageHandler&&(['/','/motor','/articles'].includes(pathname)||pathname.startsWith('/articles/'))){await pageHandler(req,res);return true;}
     const name = pathname.startsWith('/api/ops') ? 'ops' : pathname.slice(5);
-    if (!pathname.startsWith('/api/') || !['leads', 'ops', 'analytics', 'telemetry', 'articles', 'article-sitemap'].includes(name)) return false;
+    if (!pathname.startsWith('/api/') || !['leads', 'ops', 'analytics', 'telemetry', 'articles', 'article-sitemap', 'cms'].includes(name)) return false;
     await require(`../api/${name}.js`)(req, res);
     return true;
   } });

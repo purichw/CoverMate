@@ -91,7 +91,8 @@ Implications:
 - localStorage is an admin-session cache, not the remote authorization source
 - local UAT should use a separate local port/origin from normal local
   development so the browser fallback cache stays isolated
-- Firestore Security Rules enforce remote admin data access and CMS writes
+- Firestore Security Rules enforce reads and deny direct CMS/history writes;
+  `/api/cms` verifies identity, role, environment, validation and revisions for writes
 - runtime SEO metadata and JSON-LD derive from the hydrated live state, so stale
   cache/defaults must not override live metadata either
 - public lead submissions use `/api/leads` to atomically create validated lead,
@@ -333,18 +334,20 @@ See [CMS content ownership](CMS_CONTENT_OWNERSHIP.md) for migration and release 
 | Path | Access model | Purpose |
 | --- | --- | --- |
 | `admins/{uid}` | Signed-in users can read their own admin doc; admins can read admin docs; writes are blocked by rules. | Manual owner allowlist. Bootstrap from Firebase Console. |
-| `sites/covermate/states/live` | Public read; owner create/update with revision checks. | Published visitor CMS state. |
-| `sites/covermate/states/draft` | Scoped admin read; owner create/update with revision checks. | Working Draft. |
-| `sites/covermate/versions/{versionId}` | Scoped admin read; owner create only; update/delete denied. | Immutable publish/restore history, newest first by `ts`. |
+| `sites/covermate/states/live` | Public read; verified content editor writes through `/api/cms`, with validation/revisions; direct client writes denied. | Published visitor CMS state. |
+| `sites/covermate/states/draft` | Scoped admin read; same API write boundary as Live. | Working Draft. |
+| `sites/covermate/versions/{versionId}` | Scoped admin read; API create only; client writes denied. | Immutable publish/restore history, newest first by `ts`. |
+| `sites/{site}/cmsMutations/{uid-requestId}` | Server-only; client reads/writes denied. | Idempotent CMS mutation receipts. |
 | `contactLeads/{leadId}` | Public intake through `/api/leads`; no direct public writes. Canonical `caseRecord` documents are owner-readable and server-written. Legacy-only rows retain role-gated reads/creates/updates; browser delete denied. | Lead intake plus additive Cases record. |
 | `sites/covermate/analytics/{analyticsDoc}` | Scoped admin read; owner write. | Reserved analytics summaries/exports. |
 | `sites/covermate-uat/states/{live\|draft}` | Same content rules as production, with UAT namespace scope. | Isolated UAT CMS states. |
-| `sites/covermate-uat/versions/{versionId}` | Scoped admin read; owner create only. | UAT publish/restore history. |
+| `sites/covermate-uat/versions/{versionId}` | Scoped admin read; same API write boundary as production. | UAT publish/restore history. |
 | `contactLeadsUat/{leadId}` | Same canonical/legacy split as production, with UAT scope. | Isolated UAT lead/Cases store. |
 | `sites/covermate-uat/analytics/{analyticsDoc}` | Scoped admin read; owner write. | Reserved UAT analytics summaries. |
 | `{leadCollection}/{id}/caseActivities/{activityId}` | Authorized server API only; browser Rules deny. | Immutable canonical activity entries. |
 | `{leadCollection}/{id}/caseMutations/{mutationId}` | Authorized server API only; browser Rules deny. | Per-owner idempotent mutation receipts. |
 | `caseNotifications{Uat?}/{id}`, `casePreferences{Uat?}/{uid}` | Authorized owner API only; browser Rules deny. | Per-owner notifications/preferences; `Uat` suffix isolates preview data. |
+| `customerRegistryState/{Production\|Uat}` | Server-only; client reads/writes denied. | Serializes normalized customer contact collision checks. |
 
 Here owner includes the normalized `owner`, `admin`, and `administrator`
 allowlist aliases. Unknown roles are denied. `uatOnly` admins cannot access

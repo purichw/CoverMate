@@ -17,6 +17,7 @@ import {
 } from "./covermate-contract.js";
 import { resolveCoverMateEnvironment } from "./covermate-environment.mjs";
 import { canEditContent, normalizeAdminRole } from "./covermate-roles.mjs";
+import { assertCmsState } from './cms-validation.mjs';
 import { firebaseConfig, emulatorEnabled, FIREBASE_VERSION } from './covermate-firebase-config.mjs';
 
 const FIREBASE_CONFIG = firebaseConfig();
@@ -56,14 +57,24 @@ function serializeWrite(operation) {
   return result;
 }
 
-function nextRevision(name, snapshot) {
-  const actual = snapshot.exists() ? Number(snapshot.data().revision || 0) : 0;
-  if (!loadedRevisions.has(name) || loadedRevisions.get(name) !== actual) {
-    const error = new Error('Content changed in another session. Your edits are preserved; reload the latest draft before saving.');
-    error.code = 'content-conflict';
-    throw error;
-  }
-  return actual + 1;
+let unresolvedMutation;
+async function writeCms(action, data = {}) {
+  const user = auth.currentUser || await waitForAuth();
+  const admin = await readAdmin(user);
+  if (!admin || !canEditContent(admin.role)) throw new Error('Not authorized to save CoverMate content.');
+  if (action !== 'reset') assertCmsState({config:data.config,text:data.text || {}});
+  const payload = {action,...data,revisions:Object.fromEntries(loadedRevisions)};
+  const signature = JSON.stringify(payload);
+  // Reuse the same receipt after an uncertain response; publishing twice must
+  // not create duplicate history or overwrite a newer revision.
+  if (unresolvedMutation?.signature !== signature) unresolvedMutation = {signature,requestId:crypto.randomUUID()};
+  const requestId = unresolvedMutation.requestId;
+  const response = await fetch('/api/cms' + (COVERMATE_ENVIRONMENT.isUat ? '?cm_env=uat' : ''),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify({...payload,requestId}),signal:AbortSignal.timeout(30000)});
+  const result = await response.json();
+  if (!response.ok) throw Object.assign(new Error(result.message),{code:result.error,fields:result.fields});
+  unresolvedMutation = null;
+  Object.entries(result.revisions).forEach(([name,revision]) => loadedRevisions.set(name,revision));
+  return result;
 }
 const provider = new authMod.GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
@@ -146,83 +157,27 @@ async function saveSiteState(name, config, text, options = {}) {
 }
 
 async function saveSiteStateNow(name, config, text, options = {}) {
-  const user = auth.currentUser || await waitForAuth();
-  const admin = await readAdmin(user);
-  if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to save CoverMate content.");
-  const { config: cleanConfig, text: cleanText } = sanitizeStateDoc({ config, text: text || {} }, { repeatableIds: true });
-  const payload = {
-    config: cleanConfig,
-    text: cleanText,
-    updatedAt: firestoreMod.serverTimestamp(),
-    updatedBy: {
-      uid: user.uid,
-      email: user.email || "",
-      role: admin.role || "admin"
-    }
-  };
-  await firestoreMod.runTransaction(db, async (transaction) => {
-    const snapshot = await transaction.get(stateRef(name));
-    payload.revision = nextRevision(name, snapshot);
-    transaction.set(stateRef(name), payload);
-  });
-  loadedRevisions.set(name, payload.revision);
+  const result = await writeCms('save',{name,config,text:text || {}});
+  const payload = {...sanitizeStateDoc({config,text:text || {}},{repeatableIds:true}),revision:result.revisions[name]};
   // Background editing owns its local Draft. A delayed acknowledgment must
   // never replace a newer local edit/Undo while the next write is queued.
   if (!(name === 'draft' && options.cache === false)) cacheState(name, payload);
-}
-
-function versionRef() {
-  return firestoreMod.doc(firestoreMod.collection(db, "sites", SITE_ID, "versions"));
 }
 
 // Reset is a Draft operation, not a publish or a restoration of a cached version.
 // Transactions require the server and retry if Live changes during the copy.
 async function resetDraftToPublished() {
   return serializeWrite(async () => {
-    const user = auth.currentUser || await waitForAuth();
-    const admin = await readAdmin(user);
-    if (!admin || !canEditContent(admin.role)) throw new Error('Not authorized to save CoverMate content.');
-    let live, payload;
-    await firestoreMod.runTransaction(db, async (transaction) => {
-      const liveSnapshot = await transaction.get(stateRef('live'));
-      const draftSnapshot = await transaction.get(stateRef('draft'));
-      live = liveSnapshot.exists() ? liveSnapshot.data() : null;
-      if (!validStateDoc(live)) throw new Error('ยังไม่มีเวอร์ชันที่ Publish ให้ Reset กรุณาเก็บ Draft นี้ไว้ก่อน');
-      const revision = nextRevision('draft', draftSnapshot);
-      const clean = sanitizeStateDoc(live, { repeatableIds: true });
-      payload = { config: clean.config, text: clean.text, revision,
-        updatedAt: firestoreMod.serverTimestamp(),
-        updatedBy: { uid: user.uid, email: user.email || '', role: admin.role || 'admin' } };
-      transaction.set(stateRef('draft'), payload);
-    });
-    loadedRevisions.set('draft', payload.revision);
-    loadedRevisions.set('live', Number(live.revision || 0));
-    cacheState('live', live);
+    const result = await writeCms('reset');
+    const payload = {config:result.config,text:result.text,revision:result.revisions.draft};
+    cacheState('live', {...payload,revision:result.revisions.live});
     cacheState('draft', payload);
     return { config: payload.config, text: payload.text };
   });
 }
 
 async function appendVersion(config, text, metadata = {}) {
-  const user = auth.currentUser || await waitForAuth();
-  const admin = await readAdmin(user);
-  if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to publish CoverMate content.");
-  const { config: cleanConfig, text: cleanText } = sanitizeStateDoc({ config, text: text || {} }, { repeatableIds: true });
-  const ref = versionRef();
-  const version = {
-    ...metadata,
-    config: cleanConfig,
-    text: cleanText,
-    ts: Date.now(),
-    createdAt: firestoreMod.serverTimestamp(),
-    createdBy: {
-      uid: user.uid,
-      email: user.email || "",
-      role: admin.role || "admin"
-    }
-  };
-  await firestoreMod.setDoc(ref, version);
-  return { id: ref.id, ...version };
+  return serializeWrite(async () => (await writeCms('version',{config,text:text || {},metadata})).version);
 }
 
 async function publishSiteState(config, text, metadata = {}) {
@@ -230,52 +185,16 @@ async function publishSiteState(config, text, metadata = {}) {
 }
 
 async function publishSiteStateNow(config, text, metadata = {}) {
-  const user = auth.currentUser || await waitForAuth();
-  const admin = await readAdmin(user);
-  if (!admin || !canEditContent(admin.role)) throw new Error("Not authorized to publish CoverMate content.");
-  const { config: cleanConfig, text: cleanText } = sanitizeStateDoc({ config, text: text || {} }, { repeatableIds: true });
-  const ref = versionRef();
-  const ts = Date.now();
-  const by = {
-    uid: user.uid,
-    email: user.email || "",
-    role: admin.role || "admin"
-  };
-  const livePayload = {
-    config: cleanConfig,
-    text: cleanText,
-    updatedAt: firestoreMod.serverTimestamp(),
-    updatedBy: by
-  };
-  const version = {
-    ...metadata,
-    config: cleanConfig,
-    text: cleanText,
-    ts,
-    createdAt: firestoreMod.serverTimestamp(),
-    createdBy: by
-  };
-  let liveRevision;
-  let draftRevision;
-  await firestoreMod.runTransaction(db, async (transaction) => {
-    const live = await transaction.get(stateRef('live'));
-    const draft = await transaction.get(stateRef('draft'));
-    liveRevision = nextRevision('live', live);
-    draftRevision = nextRevision('draft', draft);
-    transaction.set(stateRef('live'), { ...livePayload, revision: liveRevision });
-    transaction.set(stateRef('draft'), { ...livePayload, revision: draftRevision });
-    transaction.set(ref, version);
-  });
-  loadedRevisions.set('live', liveRevision);
-  loadedRevisions.set('draft', draftRevision);
-  cacheState("live", livePayload);
-  cacheState("draft", livePayload);
+  const {version,revisions} = await writeCms('publish',{config,text:text || {},metadata});
+  const payload = {config:version.config,text:version.text};
+  cacheState('live',{...payload,revision:revisions.live});
+  cacheState('draft',{...payload,revision:revisions.draft});
   const cachedHistory = readJSON(HISTORY_KEY);
   if (Array.isArray(cachedHistory)) {
-    cachedHistory.unshift({ id: ref.id, ...version });
+    cachedHistory.unshift(version);
     cacheVersions(cachedHistory);
   }
-  return { id: ref.id, ...version };
+  return version;
 }
 
 async function loadVersions(limitCount = HISTORY_LIMIT, options = {}) {

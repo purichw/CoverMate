@@ -555,6 +555,8 @@ const CMS_CONTENT_FIELDS = [
     ['privacyLink','อ่านว่าข้อมูลของคุณถูกใช้อย่างไร','How we use your information'],
     ['unavailable','ช่องทางติดต่อออนไลน์ยังไม่พร้อม กรุณาลองใหม่ภายหลัง','Online contact is currently unavailable. Please try again later.'],
     ['nameRequired','กรุณากรอกชื่อที่ให้เรียก','Please enter your name.'],
+    ['nameTooLong','กรอกชื่อไม่เกิน 120 ตัวอักษร','Keep your name within 120 characters.'],
+    ['contactTooLong','กรอกข้อมูลติดต่อไม่เกิน 160 ตัวอักษร','Keep your contact details within 160 characters.'],
     ['contactRequired','กรุณากรอก LINE ID หรือเบอร์โทร','Please enter your LINE ID or phone number.'],
     ['emailInvalid','กรุณาตรวจสอบรูปแบบอีเมล หรือเว้นว่างหากไม่ต้องการรับอีเมล','Please enter a valid email, or leave this field blank.'],
     ['consentRequired','กรุณายืนยันความยินยอมก่อนส่งคำขอ','Please confirm your consent before submitting.'],
@@ -1731,7 +1733,7 @@ function cleanPhoneLike(value, fallback = "") {
 }
 
 function cleanEmailAddress(value, fallback = "") {
-  const text = cleanText(value, 160);
+  const text = cleanText(value, 254);
   if (!text) return fallback;
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) return text;
   return fallback;
@@ -1754,11 +1756,7 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
 
   next.brand.advisorLogo = cleanMediaReference(next.brand.advisorLogo, "");
   next.brand.advisorLogoAlt = cleanText(next.brand.advisorLogoAlt, 120);
-  next.brand.credential = next.brand.credential && typeof next.brand.credential === "object"
-    ? next.brand.credential
-    : {};
-  next.brand.credential.th = cleanText(next.brand.credential.th, 180);
-  next.brand.credential.en = cleanText(next.brand.credential.en, 180);
+  next.brand.credential = cleanLocalizedSeo(next.brand.credential, 180);
 
   next.contact.lineId = cleanText(next.contact.lineId, 80);
   next.contact.lineUrl = cleanHttpsUrl(next.contact.lineUrl, "");
@@ -1771,11 +1769,7 @@ export function sanitizeCmsControlsConfig(config, options = {}) {
   next.seo.title = cleanLocalizedSeo(next.seo.title, 68);
   next.seo.description = cleanLocalizedSeo(next.seo.description, 155);
 
-  next.footer.legal = next.footer.legal && typeof next.footer.legal === "object"
-    ? next.footer.legal
-    : {};
-  next.footer.legal.th = cleanText(next.footer.legal.th, 2000);
-  next.footer.legal.en = cleanText(next.footer.legal.en, 2000);
+  next.footer.legal = cleanLocalizedSeo(next.footer.legal, 2000);
   sanitizeCmsFields(next);
 
   editableContentSections(next).forEach((section) => {

@@ -1,13 +1,14 @@
+import { validContactEmail, validPhone, validLineId, validPostalCode, validCalendarDate, bangkokDate, identityNumber } from './field-validation.mjs';
 // Shared field definitions and validation for manual entry and the owner API.
 const field = (key, label, type = 'text', extra = {}) => ({ key, label, type, max: 200, ...extra });
 export const PROFILE_FIELDS = [
   field('firstName', 'ชื่อ', 'text', { required: true, max: 100 }), field('lastName', 'นามสกุล', 'text', { required: true, max: 100 }),
   field('firstNameEn', 'ชื่อภาษาอังกฤษ'), field('lastNameEn', 'นามสกุลภาษาอังกฤษ'), field('nickname', 'ชื่อที่ใช้เรียก'),
   field('birthDate', 'วันเกิด', 'date'), field('nationality', 'สัญชาติ'), field('occupation', 'อาชีพ'),
-  field('phone', 'เบอร์โทรศัพท์', 'tel', { max: 64 }), field('email', 'อีเมล', 'email'), field('lineId', 'LINE ID'),
+  field('phone', 'เบอร์โทรศัพท์', 'tel', { max: 64 }), field('email', 'อีเมล', 'email', { max: 254 }), field('lineId', 'LINE ID', 'text', { max: 101 }),
   field('preferredChannel', 'ช่องทางติดต่อที่สะดวก', 'select', { options: ['Phone', 'LINE', 'Email', 'Other'] }),
   field('language', 'ภาษาที่สะดวก', 'select', { options: ['TH', 'EN', 'Other'] }), field('contactTime', 'เวลาที่สะดวกให้ติดต่อ'),
-  field('address', 'ที่อยู่ติดต่อ', 'textarea', { max: 1000 }), field('postalCode', 'รหัสไปรษณีย์'),
+  field('address', 'ที่อยู่ติดต่อ', 'textarea', { max: 1000 }), field('postalCode', 'รหัสไปรษณีย์', 'text', { max: 16 }),
   field('source', 'รู้จัก CoverMate จากช่องทางใด'), field('notes', 'บันทึกเกี่ยวกับลูกค้า', 'textarea', { max: 2000 }),
   field('retentionReviewAt', 'วันที่ทบทวนความจำเป็นในการเก็บข้อมูล', 'date'),
   field('status', 'Status', 'select', { options: ['Active', 'Archived'], required: true })
@@ -59,18 +60,28 @@ export function validateFields(input, fields) {
     const text = raw.trim();
     if (f.required && !text) invalid(f.key, `กรุณาระบุ${f.label}`);
     if (text && f.options && !f.options.includes(text)) invalid(f.key, `กรุณาเลือก${f.label}`);
-    if (text && f.type === 'date' && (!/^\d{4}-\d{2}-\d{2}$/.test(text) || !Number.isFinite(Date.parse(text)) || new Date(text).toISOString().slice(0, 10) !== text)) invalid(f.key, `${f.label}: วันที่ไม่ถูกต้อง`);
+    if (text && f.type === 'date' && !validCalendarDate(text)) invalid(f.key, `${f.label}: วันที่ไม่ถูกต้อง`);
     if (text && f.type === 'number' && (!/^\d+(\.\d{1,2})?$/.test(text) || Number(text) > 1e12)) invalid(f.key, `${f.label}: ระบุจำนวนตั้งแต่ 0 ถึง 1 ล้านล้าน`);
-    if (text && f.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) invalid(f.key, 'รูปแบบอีเมลไม่ถูกต้อง');
+    if (text && f.type === 'email' && !validContactEmail(text)) invalid(f.key, 'รูปแบบอีเมลไม่ถูกต้อง');
+    if (text && f.type === 'tel' && !validPhone(text)) invalid(f.key, 'กรอกเบอร์โทร 7–15 หลัก ใช้ + รหัสประเทศ เว้นวรรค หรือขีดได้');
+    if (text && f.key === 'lineId' && !validLineId(text)) invalid(f.key, 'กรอก LINE ID ด้วยภาษาอังกฤษ ตัวเลข จุด ขีด หรือขีดล่าง ไม่ใช่ชื่อที่แสดง');
+    if (text && f.key === 'postalCode' && !validPostalCode(text)) invalid(f.key, 'ใช้ตัวอักษรอังกฤษหรือตัวเลข 2–16 ตัว เว้นวรรคและใช้ขีดกลางได้');
     value[f.key] = text;
   }
   return value;
 }
 export function validateProfile(input) {
   const p = validateFields(input, PROFILE_FIELDS);
-  if (![p.phone, p.email, p.lineId].some(Boolean)) invalid('phone', 'ระบุเบอร์โทร อีเมล หรือ LINE อย่างน้อยหนึ่งช่องทาง');
-  if (p.birthDate && p.birthDate > new Date().toISOString().slice(0, 10)) invalid('birthDate', 'วันเกิดต้องไม่อยู่ในอนาคต');
+  for (const [key, message] of Object.entries(profileRelationErrors(p))) invalid(key, message);
   return p;
+}
+export function profileRelationErrors(p) {
+  const errors = {};
+  if (![p.phone, p.email, p.lineId].some(value => value?.trim())) errors.phone = 'ระบุเบอร์โทร อีเมล หรือ LINE อย่างน้อยหนึ่งช่องทาง';
+  if (p.birthDate && p.birthDate > bangkokDate()) errors.birthDate = 'วันเกิดต้องไม่อยู่ในอนาคต';
+  const preferred = { Phone: 'phone', LINE: 'lineId', Email: 'email' }[p.preferredChannel];
+  if (preferred && !p[preferred]?.trim() && !errors[preferred]) errors[preferred] = 'กรอกข้อมูลสำหรับช่องทางติดต่อที่เลือก หรือเปลี่ยนช่องทางติดต่อ';
+  return errors;
 }
 export function validatePolicy(input) {
   const p = validateFields(input, POLICY_FIELDS);
@@ -81,9 +92,21 @@ export function validateConsent(input) {
   only(input, [...CONSENT_FIELDS.map(f => f.key), 'scopes']);
   const { scopes, ...rest } = input;
   const c = validateFields(rest, CONSENT_FIELDS);
-  if (!Array.isArray(scopes) || !scopes.length || scopes.some(s => !Object.hasOwn(SCOPES, s)) || new Set(scopes).size !== scopes.length) invalid('scopes', 'เลือกขอบเขต Consent อย่างน้อยหนึ่งรายการ');
-  if (c.occurredAt > new Date().toISOString().slice(0, 10)) invalid('occurredAt', 'วันที่ได้รับคำตอบต้องไม่อยู่ในอนาคต');
+  for (const [key, message] of Object.entries(consentRelationErrors({ ...c, scopes }))) invalid(key, message);
   return { ...c, scopes };
+}
+export function consentRelationErrors(c) {
+  const errors = {}, scopes = c.scopes;
+  if (!Array.isArray(scopes) || !scopes.length || scopes.some(s => !Object.hasOwn(SCOPES, s)) || new Set(scopes).size !== scopes.length) errors.scopes = 'เลือกขอบเขต Consent อย่างน้อยหนึ่งรายการ';
+  if (c.occurredAt > bangkokDate()) errors.occurredAt = 'วันที่ได้รับคำตอบต้องไม่อยู่ในอนาคต';
+  return errors;
+}
+export function validateIdentity(input) {
+  only(input, ['type', 'number', 'expiresAt']);
+  const number = identityNumber(input.type, input.number);
+  if (!number) invalid('number', input.type === 'National ID' ? 'ตรวจเลขบัตร 13 หลักและเลขตรวจสอบให้ตรงกับเอกสาร' : 'กรอกเลข Passport เป็นภาษาอังกฤษหรือตัวเลข 4–40 ตัวอักษร');
+  const { expiresAt } = validateFields({ expiresAt: input.expiresAt ?? '' }, [field('expiresAt', 'วันหมดอายุ', 'date', { max: 10 })]);
+  return { type: input.type, number, expiresAt };
 }
 export function hasConsent(consents, scope) { return [...consents].reverse().find(c => c.scopes.includes(scope))?.status === 'Granted'; }
 export const fullName = profile => [profile.firstName, profile.lastName].filter(Boolean).join(' ');

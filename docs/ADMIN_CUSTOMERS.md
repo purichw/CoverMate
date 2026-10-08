@@ -136,6 +136,13 @@ website enquiry consent is never fabricated into registry consent.
 
 ## API
 
+Customer editors and APIs share `customer-model.mjs` and `field-validation.mjs`:
+formats, bounds, dependent contact fields, identity checksum and Bangkok calendar
+dates. Normalized phone/email/LINE collision checks apply to both create and edit;
+shared contact details require explicit confirmation. The server serializes
+contact changes with `customerRegistryState/{Production|Uat}` and compares legacy
+profiles without rewriting them. See [validation boundaries](VALIDATION_20261008.md).
+
 All routes below are under `/api/ops/customers`.
 
 | Method / route | Purpose |
@@ -197,6 +204,96 @@ Provider references:
 [public access prevention](https://docs.cloud.google.com/storage/docs/public-access-prevention).
 
 ## Verification and limits
+
+### New Customer layout (2026-10-08)
+
+The create screen uses a scoped `.customer-new` variant of the existing field
+renderer, selects, validation model and save controls. Six numbered disclosures
+retain every existing profile field and all five consent scopes. Desktop puts
+section headings in a left rail when the available content width is at least
+920px; narrow content uses stacked headings and mobile uses one field column.
+Sections 1, 2 and 6 start open. Optional sections keep their values when folded.
+
+For this screen only, the requested alignment is left for field labels, entered
+text, dates, counters and helper text. Dropdown values and options remain centered.
+Other customer editors retain their existing alignment. A sticky save bar releases
+on short viewports. Completion markers reflect current validation, not proof that
+consent evidence has been reviewed or that a record has been saved.
+
+New Customer now has three real steps: entry, review and acknowledged success.
+The first submit validates locally and opens Review without creating a record.
+Review uses the same field definitions and validated profile/consent payload,
+grouped in six two-column desktop sections and compact mobile disclosures.
+Each section's Edit action opens and focuses the matching original form section;
+the form DOM and its values remain intact, including explicit clearing. Back
+returns to entry; Cancel and external navigation retain the unsaved-data guard.
+Only confirmation from Review posts the record. A double-click on the first
+submit cannot skip Review; changed values require a refreshed review before save.
+
+The green readiness notice means required fields pass validation, not that consent
+evidence was legally verified. Unselected scopes show `Not recorded`, never an
+invented refusal or document attachment. All profile fields, consent fields and
+five scopes remain visible. Long text expands without HTML interpretation.
+Field errors return to editable controls; transport failures keep Review and
+the existing idempotency key for retry. Success shows step 3 only after the API
+acknowledges creation and the saved record has loaded. If its detail load fails,
+the recovery action reloads the created ID instead of creating a second record.
+There are no new schema fields, upload flows, autosave stores or production writes.
+
+`CUSTOMER_PREVIEW_URL=http://127.0.0.1:<port> node scripts/customers-new-design-check.mjs`
+checks the isolated preview at 1440/1280/1024/390/375/360/320 CSS px, field inventory,
+alignment, consent, error navigation, collapse/resize persistence, cancellation,
+double-submit prevention, failure/retry and an actual emulator create/reopen.
+Current evidence is in `uat-results/customers/new-customer/`. Captures omit only the
+preview harness's overlay banner so it cannot cover product controls; test data is
+synthetic. Physical mobile keyboards and Safari are not covered by this check.
+
+`CUSTOMER_PREVIEW_URL=http://127.0.0.1:<port> node scripts/customers-review-check.mjs`
+adds Review coverage: zero mutations before confirmation, all fields/scopes,
+six edit/return paths, keyboard focus, disclosures, responsive layout, long text,
+explicit clearing, dirty navigation, server field errors, changed-value review,
+and successful create/reload through the emulator API. Current desktop/mobile
+visual evidence is in `uat-results/customers/review/`; the supplied mockups are
+adapted to the existing shell and complete real field inventory, not fabricated
+document attachments or mock-only fields.
+
+### New Customer success (2026-10-08)
+
+Step 3 is a dedicated read-only completion screen, reusing the creation header,
+step indicator, shared status badges, button styles and Lucide icons. It replaces
+the former transient notice above the profile editor. The page displays the
+server-returned customer code, name/contact information, created timestamp in
+Bangkok time, language/source and the creator's current account name only when
+the server audit actor matches the verified session. It does not fabricate a
+staff directory or use the client clock as the creation timestamp.
+
+On narrow screens, code/contact details and creation time stay visible. Language,
+source and recorder are under an accessible disclosure; desktop shows them in
+the second column. Both layouts use the same receipt fields, not separate copies.
+
+The green Consent band lists only currently granted scopes from the saved ledger.
+Document count comes from the real response; an empty collection explicitly says
+no documents are attached. Neither this confirmation nor a checked scope proves
+identity verification, document upload or legal sufficiency of consent.
+
+Copy ID reports success only after the Clipboard API resolves; denied clipboard
+access selects the visible code for manual copying and explains the fallback.
+The three next actions open the existing customer editor, start a clean customer
+form, or return to the list. The success state is transient: refreshing the saved
+URL opens the persisted customer record, with no additional create request.
+Confirmed creation clears dirty state; an interrupted detail fetch retains the
+saved ID and retries only the read, including the return to Step 3.
+
+`CUSTOMER_PREVIEW_URL=http://127.0.0.1:<port> node scripts/customers-success-check.mjs`
+exercises real emulator creation, failed detail loading/recovery, receipt data,
+clipboard success/denial, all three actions, a fresh empty form, Archived status,
+missing/long values, focus and reload persistence. Layout checks cover
+1440/1280/1024/768/390/360/320 CSS px; current desktop/mobile screenshots and
+provenance are under `uat-results/customers/success/`. Existing entry/review
+journey checks also follow the new explicit Open Customer action. This is scoped
+Chromium/emulator evidence, not live GCS, physical-device Safari or production QA.
+All three checks run in the required emulator CI suite through
+`scripts/customers-creation-journey-check.mjs`, which owns its local preview server.
 
 - `npm run check:customers`: shared validation, scoped consent, encryption,
   tamper/context rejection, file types and generated client parity.

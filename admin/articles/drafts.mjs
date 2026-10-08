@@ -1,6 +1,7 @@
 import {normalizeArticleDocument,legacyArticleDocument,articleUrl,normalizeArticleMedia} from '../../article-document.mjs';
 import {normalizeArticleAuthorDetails} from '../../article-author.mjs';
 import {articleMediaForLanguage} from '../../article-media.mjs';
+import {validateArticle} from '../../article-validation.mjs';
 
 export const ARTICLE_CATEGORIES = {motor:['ประกันรถยนต์','Motor insurance'],health:['ประกันสุขภาพ','Health insurance'],life:['ประกันชีวิต','Life insurance'],critical:['โรคร้ายแรง','Critical illness'],finance:['วางแผนการเงิน','Financial planning'],claims:['เคลมและกรมธรรม์','Claims and policies'],travel:['ประกันเดินทาง','Travel insurance'],general:['ความรู้ทั่วไป','General']};
 // Editorial dates are entered in Bangkok time, independent of the device zone.
@@ -49,7 +50,11 @@ export function parseDraftBackup(raw) {
   const value = JSON.parse(raw);
   if (value?.schemaVersion !== 1 || !value.translations || !['th','en'].some(lang=>value.translations[lang]?.document?.type === 'doc')) throw Error('ไฟล์นี้ไม่ใช่ฉบับร่าง Article Editor');
   if (['th','en'].some(lang=>value.translations[lang]?.title && typeof value.translations[lang].title !== 'string')) throw Error('รูปแบบชื่อบทความไม่ถูกต้อง');
-  return createArticleDraft({...value,id:'local-'+crypto.randomUUID(),basePublished:false,publicationStatus:'draft',slugLocked:false,cloudDraft:false,status:'draft',revision:0,updatedAt:null});
+  const defaults=createArticleDraft();
+  const candidate={...defaults,...value,translations:Object.fromEntries(['th','en'].map(lang=>[lang,{...defaults.translations[lang],...value.translations[lang]}]))};
+  const issues=validateArticle(candidate);
+  if(issues.length)throw Error(issues[0].message);
+  return createArticleDraft({...candidate,id:'local-'+crypto.randomUUID(),basePublished:false,publicationStatus:'draft',slugLocked:false,cloudDraft:false,status:'draft',revision:0,updatedAt:null});
 }
 
 // Local drafts are per verified account and environment; never a public source.

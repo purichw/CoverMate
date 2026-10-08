@@ -960,19 +960,21 @@ async function verifyAdminBuilderControls() {
   }
 
   await changeField(page.locator('[data-cms-field="brand.advisorLogo"]'), "data:image/svg+xml,bad");
-  await waitForBodyText(page, /ที่อยู่รูปภาพไม่ถูกต้อง/);
+  await page.waitForFunction(() => document.querySelector('[data-cms-field="brand.advisorLogo"]')?.getAttribute('aria-invalid') === 'true');
   const rejectedLogoState = await page.evaluate(() => {
     const config = JSON.parse(window.localStorage.getItem("purich-draft-config-v3") || "{}");
+    const input = document.querySelector('[data-cms-field="brand.advisorLogo"]');
     return {
       logo: config?.brand?.advisorLogo || "",
-      toast: document.querySelector('[data-admin-toast="true"]')?.innerText || ""
+      input: input.value,
+      error: document.getElementById(input.getAttribute('aria-describedby'))?.textContent || ''
     };
   });
   if (rejectedLogoState.logo.startsWith("data:")) {
     failures.push("admin builder: invalid data-image logo was stored in draft config");
   }
-  if (!/ที่อยู่รูปภาพไม่ถูกต้อง/.test(rejectedLogoState.toast)) {
-    failures.push("admin builder: invalid media path toast is missing");
+  if (!/HTTPS/.test(rejectedLogoState.error) || rejectedLogoState.input !== 'data:image/svg+xml,bad') {
+    failures.push("admin builder: invalid media path needs linked field feedback and retained input");
   }
   const originalLogo = rejectedLogoState.logo;
   await changeField(page.locator('[data-cms-field="brand.advisorLogo"]'), "assets/logos/srikrung-logo.png");
@@ -989,11 +991,17 @@ async function verifyAdminBuilderControls() {
   await page.waitForFunction(url => JSON.parse(localStorage.getItem("purich-draft-config-v3") || "{}")?.brand?.advisorLogo === url, croppedLogo.url);
   if (media.crops !== 1 || media.sourceUploads !== 0) failures.push("admin builder: bundled logo should create one confirmed derivative without re-uploading the original");
   await changeField(page.locator('[data-cms-field="brand.advisorLogoAlt"]'), "Srikrung broker logo");
-  await changeField(page.locator('[data-cms-field="contact.lineUrl"]'), "http://bad.example");
-  await waitForBodyText(page, /ลิงก์ติดต่อไม่ถูกต้อง/);
+  async function verifyRejectedContact(path, value) {
+    const saved = () => page.evaluate(key => JSON.parse(localStorage.getItem('purich-draft-config-v3') || '{}')?.contact?.[key], path.split('.').at(-1));
+    const before = await saved();
+    await changeField(page.locator(`[data-cms-field="${path}"]`), value);
+    await page.waitForFunction(key => document.querySelector(`[data-cms-field="${key}"]`)?.getAttribute('aria-invalid') === 'true', path);
+    const field = await page.locator(`[data-cms-field="${path}"]`).evaluate(input => ({ value: input.value, error: document.getElementById(input.getAttribute('aria-describedby'))?.textContent }));
+    if (await saved() !== before || field.value !== value || !field.error) failures.push(`admin builder: invalid ${path} must retain input, link feedback and preserve saved value`);
+  }
+  await verifyRejectedContact('contact.lineUrl', 'http://bad.example');
   await changeField(page.locator('[data-cms-field="contact.lineUrl"]'), "https://line.me/ti/p/~covermate-smoke");
-  await changeField(page.locator('[data-cms-field="contact.email"]'), "not-an-email");
-  await waitForBodyText(page, /อีเมลไม่ถูกต้อง/);
+  await verifyRejectedContact('contact.email', 'not-an-email');
   await changeField(page.locator('[data-cms-field="contact.email"]'), "owner@covermate.example");
   await changeField(page.locator('[data-cms-field="brand.credential.th"]'), "Owner-managed credential");
   await changeField(page.locator('[data-cms-field="footer.legal.th"]'), "Licences: {{lifeLicence}} / {{nonLifeLicence}} / {{brokerLicence}}");

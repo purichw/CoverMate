@@ -42,11 +42,6 @@ service cloud.firestore {
       return canAccessSite(siteId) && adminRole() in ['owner', 'admin', 'administrator'];
     }
 
-    function validRevision() {
-      return request.resource.data.revision is int
-        && request.resource.data.revision == resource.data.get('revision', 0) + 1;
-    }
-
     function validSiteId(siteId) {
       return siteId in ["covermate", "covermate-uat"];
     }
@@ -58,19 +53,18 @@ service cloud.firestore {
 
     match /sites/{siteId}/states/live {
       allow read: if validSiteId(siteId);
-      allow create: if validSiteId(siteId) && canEditContent(siteId) && request.resource.data.revision == 1;
-      allow update: if validSiteId(siteId) && canEditContent(siteId) && validRevision();
+      // CMS writes use the authenticated API with value/length validation.
+      allow write: if false;
     }
 
     match /sites/{siteId}/states/draft {
       allow read: if validSiteId(siteId) && canAccessSite(siteId);
-      allow create: if validSiteId(siteId) && canEditContent(siteId) && request.resource.data.revision == 1;
-      allow update: if validSiteId(siteId) && canEditContent(siteId) && validRevision();
+      allow write: if false;
     }
 
     match /sites/{siteId}/versions/{versionId} {
       allow read: if validSiteId(siteId) && canAccessSite(siteId);
-      allow create: if validSiteId(siteId) && canEditContent(siteId);
+      allow write: if false;
     }
 
     match /contactLeads/{leadId} {

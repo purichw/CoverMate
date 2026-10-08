@@ -4,6 +4,7 @@ import { validContactEmail } from './covermate-submission.mjs';
 // Loaded only when preparing an enquiry, not while hydrating published content.
 export async function prepareContactPayload(input = {}) {
   if (String(input.topic || '').length > 500) throw new Error('Please keep your message within 500 characters.');
+  for (const [field,max] of Object.entries({name:120,contact:160,summary:1200})) if(String(input[field]||'').length>max) throw Object.assign(new Error('Enquiry field is too long.'),{outcome:'invalid',fields:{[field==='summary'?'form':field]:field==='summary'?'invalidFields':field+'TooLong'}});
   if (String(input.email || '').trim() && !validContactEmail(input.email)) throw Object.assign(new Error('Invalid email.'), { outcome: 'invalid', fields: { email: 'emailInvalid' } });
   const noticeDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(input.noticeText || '')));
   const noticeVersion = 'contact-' + [...new Uint8Array(noticeDigest)].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 24);

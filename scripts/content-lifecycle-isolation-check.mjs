@@ -4,6 +4,8 @@ import vm from 'node:vm';
 import {createArticleRepository} from '../server/articles.mjs';
 import {createArticleDraft} from '../admin/articles/drafts.mjs';
 import {canEditContent,normalizeAdminRole} from '../covermate-roles.mjs';
+import {assertCmsState} from '../cms-validation.mjs';
+import {mutateCms} from '../server/cms.mjs';
 
 // Run the actual website Firebase client/contract and article repository against
 // one in-memory Firestore boundary. No browser, emulator, credentials or network.
@@ -36,7 +38,8 @@ async function transaction(operation){
 }
 const db={doc:documentRef,collection:collectionRef,runTransaction:transaction};
 const localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)};
-const scope={console,URL,URLSearchParams,queueMicrotask,canEditContent,normalizeAdminRole,
+const scope={console,URL,URLSearchParams,queueMicrotask,canEditContent,normalizeAdminRole,assertCmsState,crypto,AbortSignal,
+  fetch:async(_url,options)=>{const result=await mutateCms({uid,env:{siteId:site}},JSON.parse(options.body),db);return {ok:true,json:async()=>result};},
   window:{localStorage,dispatchEvent(){}},CustomEvent:class{},
   firebaseConfig:()=>({}),emulatorEnabled:()=>false,FIREBASE_VERSION:'isolated-fixture',
   resolveCoverMateEnvironment:()=>({siteId:site,isUat:true,name:'uat'})
@@ -46,7 +49,7 @@ const contractSource=fs.readFileSync(new URL('../covermate-contract.js',import.m
   .replace(/^export \{[^\n]*\};?\n/gm,'').replace(/^export default contract;?\n/gm,'').replace(/^export /gm,'');
 const contract=vm.runInNewContext('(function(){'+contractSource+'\nreturn contract;})()',scope);
 Object.assign(scope,contract,{cacheState:contract.cacheSiteState,clearSession:contract.clearAdminSession,readSession:contract.readAdminSession,writeSession:contract.writeAdminSession});
-const auth={currentUser:{uid,email:'lifecycle@example.invalid'}};
+const auth={currentUser:{uid,email:'lifecycle@example.invalid',getIdToken:async()=> 'fixture-token'}};
 const firestore={
   getFirestore:()=>db,
   doc:(parent,...parts)=>parent===db?documentRef(parts.join('/')):documentRef(parent.path+'/'+(parts.join('/')||'fixture-'+(++serial))),
@@ -83,7 +86,7 @@ documents.set(root+'/states/draft',state('Website draft',7));
 documents.set(root+'/versions/existing',{id:'existing',config:state('Earlier website',1).config,text:{},ts:1});
 await website.hydrateLocalContent({draft:true});
 contract.cacheVersions([documents.get(root+'/versions/existing')]);
-const websitePath=path=>path.startsWith(root+'/states/')||path.startsWith(root+'/versions/');
+const websitePath=path=>path.startsWith(root+'/states/')||path.startsWith(root+'/versions/')||path.startsWith(root+'/cmsMutations/');
 const articlePath=path=>/^sites\/covermate-uat\/(?:articles|articleCatalog|articleSlugs|articleSettings|articleAudit)\//.test(path);
 const domainBytes=predicate=>JSON.stringify([...documents].filter(([path])=>predicate(path)).sort(([a],[b])=>a.localeCompare(b)));
 const cacheBytes=()=>JSON.stringify([...storage].sort(([a],[b])=>a.localeCompare(b)));
@@ -143,7 +146,7 @@ await websiteAction('Website save',()=>website.saveSiteState('draft',websiteDraf
 assert.equal(JSON.stringify(websiteState('live')),liveBeforeSave,'Website save cannot publish the website draft');
 assert.equal(websiteState('draft').revision,8);
 const beforeVersionCount=[...documents.keys()].filter(path=>path.startsWith(root+'/versions/')).length;
-await websiteAction('Website publish',()=>website.publishSiteState(websiteDraft.config,websiteDraft.text,{label:'Website only'}));
+await websiteAction('Website publish',()=>website.publishSiteState(websiteDraft.config,websiteDraft.text));
 assert.equal(websiteState('live').config.brand.name.th,'Website ready to publish');
 assert.equal(websiteState('live').revision,4);assert.equal(websiteState('draft').revision,9);
 assert.equal([...documents.keys()].filter(path=>path.startsWith(root+'/versions/')).length,beforeVersionCount+1);

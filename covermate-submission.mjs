@@ -1,3 +1,5 @@
+import { validContactEmail } from './field-validation.mjs';
+export { validContactEmail } from './field-validation.mjs';
 // One logical enquiry survives transport errors, locale changes and panel swaps.
 export class ContactSubmission {
   constructor({ prepare, send, onChange, slowMs = 8000, waitMs = 30000, now = Date.now, schedule = (fn, ms) => setTimeout(fn, ms), cancel = id => clearTimeout(id) }) {
@@ -68,18 +70,12 @@ export class ContactSubmission {
   dispose() { this.active = null; this.onChange = () => {}; this.timers.forEach(id => this.cancel(id)); this.timers.clear(); }
 }
 
-export function validContactEmail(value) {
-  if (typeof value !== 'string' || value.length > 254 || /[\r\n]/.test(value)) return false;
-  const [local, domain, extra] = value.trim().split('@');
-  return extra === undefined && !!local && local.length <= 64 && !local.startsWith('.') && !local.endsWith('.') && !local.includes('..') &&
-    /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local) && !!domain &&
-    /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(domain);
-}
-
 export function contactFieldErrors(input) {
   const fields = {};
   if (!String(input.name || '').trim()) fields.name = 'nameRequired';
   if (!String(input.contact || '').trim()) fields.contact = 'contactRequired';
+  if (String(input.name || '').length > 120) fields.name = 'nameTooLong';
+  if (String(input.contact || '').length > 160) fields.contact = 'contactTooLong';
   if (String(input.email || '').trim() && !validContactEmail(input.email)) fields.email = 'emailInvalid';
   if (String(input.topic || '').length > 500) fields.topic = 'topicTooLong';
   if (input.consent !== true) fields.consent = 'consentRequired';

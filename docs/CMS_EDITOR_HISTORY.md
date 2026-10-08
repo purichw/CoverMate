@@ -1,6 +1,6 @@
 # CMS Draft history
 
-Current source contract reviewed: 2026-09-24. Deployment evidence remains in
+Current source contract reviewed: 2026-10-08. Deployment evidence remains in
 `HANDOFF.md` and the relevant release record; the dated check counts below are
 historical evidence for their stated scope.
 
@@ -15,6 +15,9 @@ publish, reset or remove an article draft/live snapshot or article revision.
 Article Save/Publish is separate and affects only the selected article, not the
 website draft/live/version history or other articles. Article visibility settings
 also have their own document and revision.
+
+Website mutations also create private `sites/{site}/cmsMutations/{uid-requestId}`
+receipts through `/api/cms`; these are not published history or article records.
 
 Website-owned presentation includes `homeDesign.articles*`, `articlesPage` and
 `articleDetail` (headings, labels, shared artwork/layout around articles).
@@ -71,7 +74,10 @@ Explicit save/publish/reset operations block further content mutations while pen
 `src/visitor/cms-controller.js` now owns these commands and persistence
 coordination through `withCmsController`. The host in `runtime.js` still owns
 state/rendering, normalization, route/language and DOM text projection;
-`covermate-firebase.js` retains the actual writes and authorization. The generator
+`covermate-firebase.js` serializes authenticated `/api/cms` requests and caches
+confirmed results. `server/cms.mjs` owns validated transactional writes and
+idempotent receipts; API authorization rechecks the allowlist/environment.
+Direct browser writes are denied by Rules. The generator
 bundles the controller together with `editor-history.js` into the same visitor
 artifact. Delayed save completions may not replace a newer error or local Draft;
 Reset and history changes invalidate older queued autosaves.
@@ -84,6 +90,9 @@ Reset and history changes invalidate older queued autosaves.
   Save/Publish/Reset failures, complete Undo/Redo snapshots, buffer preservation,
   owner history isolation and Publish rollback expiry. Included in `check:refactor`.
 - `node scripts/editor-reset-contract-check.mjs`: actual Firebase module with isolated SDK fixtures; authorization, Draft-only transaction, fresh Live, conflict/offline preservation and write ordering.
+- `node scripts/cms-api-check.mjs`: real local Auth/Firestore and CMS API;
+  denied roles/environments, validation no-write, revision conflicts, retry,
+  atomic Publish and authoritative Draft-only Reset.
 - `node scripts/editor-history-browser-check.mjs`: actual generated editor UI with isolated Firebase fixtures; desktop/mobile interaction and screenshot evidence under `uat-results/editor-history`.
 - `node scripts/text-editor-browser-check.mjs`: existing inline text and repeatable-content regression checks.
 
