@@ -20,6 +20,7 @@ const sandbox = {
   console,
   URLSearchParams,
   URL,
+  TextEncoder,
   setTimeout,
   clearTimeout,
   requestAnimationFrame: (fn) => fn(),
@@ -88,9 +89,11 @@ assert.equal(Object.prototype.hasOwnProperty.call(sanitizedEmpty, "hero:0:th"), 
 assert.equal(sanitizedEmpty["hero:0:th"], "", "sanitizer changed an intentional empty string");
 
 const contactApp = new Component();
+const contactWrites = [], contactQueue = [], contactHistory = [];
 contactApp.readJSON = () => null;
-contactApp.writeJSON = () => {};
-contactApp.queueRemoteDraft = () => {};
+contactApp.writeJSON = (...args) => contactWrites.push(clone(args));
+contactApp.queueRemoteDraft = (...args) => contactQueue.push(clone(args));
+contactApp.recordEditorHistory = snapshot => contactHistory.push(clone(snapshot));
 contactApp.state = Object.assign({}, contactApp.state, {
   lang: "th", site: contactApp.normalizeConfig(clone(DEFAULTS), { repeatableIds: true })
 });
@@ -141,12 +144,22 @@ assert.equal(contactApp.state.site.contact.lineId, "@edited-line", "save must pr
 assert.equal(contactApp.state.site.contact.facebookName, "Edited Facebook name", "save must preserve the edited Facebook name");
 assert.equal(contactApp.state.site.contact.lineUrl, "https://line.me/R/ti/p/@original", "saved LINE label must not alter its URL");
 assert.equal(contactApp.state.site.contact.facebookUrl, "https://www.facebook.com/original-page", "saved Facebook label must not alter its URL");
-assert.equal(contactApp.state.site.contact.phone, "+66 (0)81-234-5678", "inline phone must use the existing phone sanitizer");
-assert.equal(contactApp.state.site.contact.email, "owner+inline@covermate.test", "inline email must use the existing email sanitizer");
+assert.equal(contactApp.state.site.contact.phone, "+66 (0)81abc-234-5678", "invalid inline phone stays intact for correction");
+assert.match(contactApp.state.remoteError, /ยังไม่บันทึก/);
+assert.deepEqual([contactWrites.length, contactQueue.length, contactHistory.length], [0, 0, 0], "invalid input never reaches persistence or history");
+contactApp.textOv["cms:contact.phone"] = "+66 (0)81-234-5678";
+contactApp.save(contactApp.pendingInlineConfig());
+assert.equal(contactApp.state.remoteError, "", "correcting the input clears validation feedback");
+assert.equal(contactApp.state.site.contact.phone, "+66 (0)81-234-5678", "corrected phone retains its formatting");
+assert.equal(contactApp.state.site.contact.email, "owner+inline@covermate.test", "valid email is trimmed on save");
+assert.deepEqual([contactWrites.length, contactQueue.length, contactHistory.length], [2, 1, 1], "valid input saves locally, queues remotely and enters history");
+const savedContact = clone(contactQueue[0][0].contact);
 contactApp.textOv = { "cms:contact.phone": "invalid telephone", "cms:contact.email": "not an email" };
 contactApp.save(contactApp.pendingInlineConfig());
-assert.equal(contactApp.state.site.contact.phone, "", "invalid inline phone must not bypass canonical validation");
-assert.equal(contactApp.state.site.contact.email, "", "invalid inline email must not bypass canonical validation");
+assert.equal(contactApp.state.site.contact.phone, "invalid telephone", "invalid phone must not silently disappear");
+assert.equal(contactApp.state.site.contact.email, "not an email", "invalid email must not silently disappear");
+assert.deepEqual([contactWrites.length, contactQueue.length, contactHistory.length], [2, 1, 1], "invalid edits do not overwrite the last valid save");
+assert.deepEqual(contactQueue[0][0].contact, savedContact);
 
 const faq = section(app.state.site, "faq");
 const beforeLength = faq.items.length;
@@ -196,7 +209,7 @@ console.log(JSON.stringify({
     "empty edit placeholder state retained",
     "text sanitizer keeps intentional blank",
     "TH/EN scalar contact copy uses one canonical path and preserves localized hours",
-    "scalar contact saves preserve link destinations and phone/email sanitization",
+    "scalar contact saves preserve link destinations, reject invalid input without erasing it, and persist corrected input",
     "arbitrary config paths remain excluded from inline copy",
     "repeatable hide/restore is reversible",
     "repeatable duplicate keeps identity safe",

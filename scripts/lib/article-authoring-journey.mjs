@@ -22,7 +22,24 @@ export async function authorRichArticle(page,{out,engine}) {
   const field=key=>articleField(page,key);
   const tool=action=>articleTool(page,action);
   const modalField=key=>page.locator(`.ae-modal-form [data-field="${key}"]`);
-  const submit=()=>page.locator('.ae-modal-form [type=submit]').click();
+  const submit=async()=>{
+    await page.locator('.ae-modal-form [type=submit]').click();
+    await page.locator('.ae-modal-form').waitFor({state:'detached'});
+    // Closing a formatting dialog schedules TipTap's iframe focus on a frame.
+    // Let that restoration finish before the next real pointer selection.
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  };
+  const selectParagraph=async text=>{
+    await body.locator('p').filter({hasText:text}).click();
+    await body.evaluate((el,text)=>new Promise((resolve,reject)=>{
+      const start=performance.now(),check=()=>{
+        const selected=el.editor.state.selection.$from.parent.textContent;
+        if(selected===text)return resolve();
+        if(performance.now()-start>1500)return reject(new Error(`Expected paragraph selection: ${text}; actual: ${selected}`));
+        el.ownerDocument.defaultView.requestAnimationFrame(check);
+      };check();
+    }),text);
+  };
   const cropBundledImage=async()=>{
     const dialog=page.locator('.cm-media-dialog');
     await dialog.waitFor();
@@ -68,11 +85,13 @@ export async function authorRichArticle(page,{out,engine}) {
   await body.locator('li p').filter({hasText:a.point}).click();
   await body.press('End');await body.press('Enter');
   await page.keyboard.insertText('อ่านรายละเอียดก่อนยืนยันการสมัคร');
-  await body.locator('p').filter({hasText:a.quote}).click();await tool('quote');
+  await selectParagraph(a.quote);await tool('quote');
   await modalField('attribution').fill('ทีม CoverMate');await submit();
-  await body.locator('p').filter({hasText:paragraphs.at(-1)}).click();
+  await selectParagraph(paragraphs.at(-1));
   await (await revealArticleControl(page,'[data-ae=callout][data-kind=feature]')).click();
   await modalField('title').fill('ประกันสุขภาพแบบเหมาจ่าย');await submit();
+  const feature=await body.evaluate(el=>el.editor.getJSON().content.find(node=>node.type==='callout'&&node.attrs.kind==='feature'));
+  assert.equal(feature?.content?.[0]?.content?.[0]?.text,paragraphs.at(-1),'Feature wraps the chosen top-level paragraph, never the preceding quote');
   await openArticleSettings(page);
   await field('coverAlt').fill('ภาพประกอบบทความที่เลือกจาก Editor');
   await field('caption').fill('ภาพปกและคำบรรยายจาก CMS');await tool('cover');
