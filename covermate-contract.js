@@ -42,7 +42,7 @@ export const CMS_EDITABLE_PAGES = Object.freeze([
   Object.freeze({ id: 'health', label: 'ประกันสุขภาพ', path: PUBLIC_HEALTH_PATH, section: 'service-content' }),
   Object.freeze({ id: 'life', label: 'ประกันชีวิต', path: PUBLIC_LIFE_PATH, section: 'service-content' })
 ]);
-export const ADMIN_PORTAL_MODULES = Object.freeze(["home", "operations", "content", "articles", "analytics"]);
+export const ADMIN_PORTAL_MODULES = Object.freeze([ROUTE_PAGE_HOME, "operations", "customers", "content", "articles", "analytics"]);
 export const ADMIN_PORTAL_OPERATIONS_TABS = Object.freeze(["dashboard", "leads", "tasks", "audit"]);
 
 export function normalizePath(path = "") {
@@ -117,12 +117,12 @@ export function adminPortalRouteStateFromLocation(path = "", hash = "") {
   const rawHash = decodeURIComponent(String(hash || "").replace(/^#/, "")).trim();
   const hashKey = rawHash.split(/[?&]/)[0];
   const base = {
-    module: normalizePath(path) === ADMIN_OPERATIONS_PATH ? "operations" : "home",
+    module: normalizePath(path) === ADMIN_OPERATIONS_PATH ? "operations" : ROUTE_PAGE_HOME,
     operationsTab: "dashboard"
   };
   if (!hashKey) return base;
   // Retired reference-only Settings URLs return to Home; authorization is server-owned.
-  if (hashKey === "settings") return { module: "home", operationsTab: "dashboard" };
+  if (hashKey === "settings") return { module: ROUTE_PAGE_HOME, operationsTab: "dashboard" };
   if (ADMIN_PORTAL_OPERATIONS_TABS.includes(hashKey)) {
     return { module: "operations", operationsTab: hashKey };
   }
@@ -133,8 +133,8 @@ export function adminPortalRouteStateFromLocation(path = "", hash = "") {
   return base;
 }
 
-export function adminPortalUrl(module = "home", operationsTab = "dashboard") {
-  if (module === "home") return ADMIN_ROOT_PATH;
+export function adminPortalUrl(module = ROUTE_PAGE_HOME, operationsTab = "dashboard") {
+  if (module === ROUTE_PAGE_HOME) return ADMIN_ROOT_PATH;
   if (module === "operations") {
     return operationsTab === "dashboard"
       ? `${ADMIN_ROOT_PATH}#operations`

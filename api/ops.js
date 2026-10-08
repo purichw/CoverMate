@@ -20,6 +20,10 @@ module.exports = async function opsApi(req, res) {
     const actor = await authorize(req, "view_records", environment);
     actor.environment = environment;
 
+    if (path[0] === 'customers') {
+      return send(res, method === 'POST' && path.length === 1 ? 201 : 200, await require('../server/customers-service.cjs').handle(req, actor, path));
+    }
+
     // Authentication and environment checks are shared; Cases own their owner-only gate.
     if (isCasesResource(path)) {
       return send(res, method === "POST" && path[0] === "cases" ? 201 : 200, await require('../server/cases-service.cjs').handle(req, actor, path));

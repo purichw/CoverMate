@@ -5,6 +5,15 @@ Analytics, CMS controls, media editing, validation and feedback. Retain familiar
 workflow terms (Publish, Preview, Save, Save draft, Undo, Restore, Export/Import,
 Analytics, SEO) and product/service names (LINE, Firebase, Firestore, Google).
 
+Page and tab names may use familiar English names. Customers uses **Customers**
+consistently in navigation, its heading, breadcrumbs and linked Cases sections;
+its tabs are **Profile**, **Policies**, **Documents**, **Consent** and
+**Service History**. Form labels, instructions and action descriptions remain
+natural Thai; workflow statuses remain English. This does not rename other
+modules or any stored customer data.
+Policy type names appear as Thai plus English in the Customers editor and cards,
+for example `ประกันสุขภาพ (Health)`; the stored enum remains `Health`.
+
 The CMS TH/EN selector edits the corresponding **website content**. Admin controls
 remain Thai in both modes. Customer messages, names, owner-entered content, field
 paths, routes, API enums and database keys must never be translated or rewritten.

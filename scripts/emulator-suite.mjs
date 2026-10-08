@@ -7,6 +7,7 @@ checks.push(...(process.argv.includes('--fixture-isolation')
   ? ['scripts/cases-api-check.mjs']
   : ['scripts/nfr-e2e.mjs', 'scripts/nfr-journeys.mjs']));
 checks.push('scripts/contact-intake-check.mjs', 'scripts/customer-email-check.mjs', 'scripts/articles-api-check.mjs', 'scripts/articles-cloud-e2e.mjs', 'scripts/home-articles-pins-e2e.mjs');
+checks.push('scripts/customers-api-check.mjs');
 for (const file of checks) {
   const result = spawnSync(process.execPath, [file], { stdio: 'inherit', env: { ...process.env, COVERMATE_TEST_MODE: 'emulator' } });
   if (result.status !== 0) process.exit(result.status || 1);

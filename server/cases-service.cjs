@@ -103,7 +103,7 @@ async function getCase(actor, id, params) {
   const record = C.adaptCase(id, snap.data());
   const all = (await ref.collection('caseActivities').get()).docs.map(d => d.data()).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
   const start = Math.max(0, Number(params.get('activityOffset')) || 0);
-  return { record, activities: all.slice(start, start + 20), nextActivityOffset: start + 20 < all.length ? start + 20 : null,
+  return { record, customerId: snap.data().customerId || null, activities: all.slice(start, start + 20), nextActivityOffset: start + 20 < all.length ? start + 20 : null,
     legacyHistory: start ? null : { timeline: snap.data().timeline || [], audit: snap.data().ops?.audit || [], tasks: snap.data().ops?.tasks || {} } };
 }
 async function getPreferences(actor) {

@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "build:customers": "node scripts/build-customers.mjs",
+    "preview:customers": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/customers-admin-preview.mjs\"",
+    "check:customers": "node scripts/customers-contract-check.mjs",
+    "check:customers:api": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/customers-api-check.mjs\"",
     "build:article-editor": "node scripts/build-article-editor.mjs",
     "check:article-editor": "node scripts/article-editor-check.mjs",
     "check:article-editor:browser": "node scripts/article-editor-check.mjs --browser",

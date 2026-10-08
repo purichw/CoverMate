@@ -20,7 +20,7 @@ in the working tree is not deployment evidence.
 | `/#motor-focus` | Visitor | Unexposed motor campaign variant preserved from the legacy reference set | `index.html` |
 | `/#life-focus` | Visitor | Unexposed life/health campaign variant preserved from the legacy reference set | `index.html` |
 | `/admin/login` | Owner | Admin login gate | `admin/login/index.html` |
-| `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Website content, Articles, and Analytics; shared account menu | `admin/index.html`, `admin/shell.js` |
+| `/admin` | Owner / operations | Post-login Admin Portal Home for Operations, Customers, Website content, Articles, and Analytics; shared account menu | `admin/index.html`, `admin/shell.js` |
 | `/admin#articles` | Verified owner | Articles management and rich editor inside the shared shell | `admin/articles/workspace.mjs`, `src/admin/article-editor.mjs`, `/api/articles` |
 | `/admin/ops` | Verified admin; Cases owner-only | Compatibility entry into the same Admin Portal shell, defaulting to Operations | `admin/ops/index.html`, `admin/ops/app.js`, `/api/ops/*` |
 | `/#edit`, `/#admin`, `/#preview` | Owner | Session-gated compatibility aliases for editor, panel, preview; do not generate new links | `covermate-contract.js`, `src/visitor/runtime.js` |
@@ -117,10 +117,11 @@ legacy `/#life` and `/#life-focus` hash states.
 | Surface | Route | Role |
 | --- | --- | --- |
 | Login | `/admin/login` | Firebase Google sign-in and Firestore admin allowlist check before creating the browser-local session cache. |
-| Admin Portal Home | `/admin` | Unified private gateway for Operations, Website content, Articles, Analytics and public-site exit. Shared account menu owns account details, notification preferences, notifications and log out. |
+| Admin Portal Home | `/admin` | Unified private gateway for Operations, Customers, Website content, Articles, Analytics and public-site exit. Shared account menu owns account details, notification preferences, notifications and log out. |
+| Customers | `/admin#customers` | Owner-only customer registry, manual profile/policy/consent/service entry and linked Cases. Private identity and GCS documents stay disabled until separately configured. See [ADMIN_CUSTOMERS.md](ADMIN_CUSTOMERS.md). |
 | Articles | `/admin#articles` | Catalog, visibility, pin ordering, rich editor and independent article publication. See [ADMIN_ARTICLES.md](ADMIN_ARTICLES.md) and [ARTICLE_EDITOR.md](ARTICLE_EDITOR.md). |
 | Analytics | `/admin` | First-party admin reporting inside the shared shell. The legacy `/admin/analytics` route may remain reachable for older bookmarks, but new navigation stays in the shell. |
-| Cases workspace (งานลูกค้า) | `/admin#operations` or compatibility `/admin/ops` | Owner-only case inbox/detail, follow-up, activity, and in-app notifications through `/api/ops/*`. Legacy Dashboard/Leads/Tasks/Audit APIs remain compatibility code, not visible tabs. Planned modules remain hidden. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md). |
+| Cases workspace (งานติดต่อ) | `/admin#operations` or compatibility `/admin/ops` | Owner-only case inbox/detail, follow-up, activity, and in-app notifications through `/api/ops/*`. Legacy Dashboard/Leads/Tasks/Audit APIs remain compatibility code, not visible tabs. Planned modules remain hidden. See [ADMIN_CASES_V2.md](ADMIN_CASES_V2.md). |
 | Inline editor | `/admin/edit` | Tap editable copy directly on the page; whole-Draft Undo/Redo and owner commands. |
 | Control panel | `/admin/content` | Manage sections, content, brand/chrome, media, SEO, theme/data, export/restore, Draft, and Publish. |
 | Draft preview | `/admin/preview` | Authenticated draft-only visitor rendering with one preview top bar. |
@@ -152,8 +153,9 @@ Admin login must land on `/admin` after sign-in.
 
 The `/admin` home actions must stay aligned with the live admin product:
 
-- `งานลูกค้า` switches to owner-only Cases inside the shared `/admin`
+- `งานติดต่อ` switches to owner-only Cases inside the shared `/admin`
   shell; `/admin/ops` is accepted as a compatibility entry
+- `Customers` switches to the separate owner-only registry inside the shared shell
 - `จัดการเว็บไซต์` switches to the content module inside the shared
   shell. Its primary action opens `/admin/edit`; the editor dock's `เครื่องมือ →
   แผงเครื่องมือ` command opens the control panel for section order, visibility, brand,

@@ -29,7 +29,7 @@ export function homeView({ home, cms = {}, name, role, editPath, previewPath, re
   const connectionText = loading ? 'กำลังตรวจสอบ' : error ? 'ตรวจพบปัญหา' : cms.loading ? 'กำลังตรวจสอบ CMS' : cms.error ? 'ตรวจสอบ CMS อีกครั้ง' : 'เชื่อมต่อข้อมูลแล้ว';
   const connectionTone = loading || cms.loading ? 'pending' : error || cms.error ? 'failed' : '';
   const modules = [
-    { id: 'operations', symbol: 'users', title: 'งานลูกค้า', color: 'orange', value: metric('total'), label: 'เคสทั้งหมด', detail: !loading && !error ? number(summary?.open) + ' เคสที่ยังไม่ปิด' : loading ? 'กำลังโหลดข้อมูล' : 'เชื่อมต่อไม่ได้', description: 'ดูแลข้อมูลลูกค้าและติดตามความคืบหน้าของทุกเคส' },
+    { id: 'operations', symbol: 'users', title: 'งานติดต่อ', color: 'orange', value: metric('total'), label: 'เคสทั้งหมด', detail: !loading && !error ? number(summary?.open) + ' เคสที่ยังไม่ปิด' : loading ? 'กำลังโหลดข้อมูล' : 'เชื่อมต่อไม่ได้', description: 'เรื่องที่รอคำตอบ นัดติดตาม และความคืบหน้าของแต่ละเคส' },
     { id: 'content', symbol: 'edit', title: 'จัดการเว็บไซต์', color: 'sage', value: number(drafts), label: 'ฉบับร่างรอเผยแพร่', detail: cms.loading ? 'กำลังตรวจสอบ CMS' : cms.error ? 'อ่านข้อมูล CMS ไม่ครบ' : drafts ? 'มีการแก้ไขรอเผยแพร่' : cmsKnown ? 'ไม่มีฉบับร่างค้าง' : 'ยังตรวจสอบไม่ได้', description: 'แก้ไขข้อความ รูปภาพ และส่วนต่าง ๆ บนเว็บไซต์' },
     { id: 'analytics', symbol: 'chart', title: 'Analytics', color: 'ink', value: metric('closedThisMonth'), label: 'ปิดเคสเดือนนี้', detail: 'ดูรายงานจากข้อมูลเคส', description: 'ดูภาพรวมความคืบหน้าและผลการดูแลงานลูกค้า' }
   ];

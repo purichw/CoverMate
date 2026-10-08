@@ -67,6 +67,8 @@ to distinguish healthy CI progress from a stalled push, run or promotion.
   content ownership and FAQ add/delete/hide, bilingual Draft and Undo behavior
 - [`docs/ADMIN_CASES_V2.md`](docs/ADMIN_CASES_V2.md) - owner-only Cases,
   explicit Save, follow-ups, conflict recovery and legacy compatibility
+- [`docs/ADMIN_CUSTOMERS.md`](docs/ADMIN_CUSTOMERS.md) - separate customer registry,
+  manual profile/policy/Consent entry and private document-storage setup (not activated)
 - [`docs/ADMIN_HOME_DESIGN.md`](docs/ADMIN_HOME_DESIGN.md) and
   [`docs/ADMIN_LANGUAGE.md`](docs/ADMIN_LANGUAGE.md) - current Admin Home and
   natural Thai controls with conventional English workflow terms

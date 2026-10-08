@@ -6,7 +6,7 @@ const { firestoreGet, firestoreRunQuery, firestoreCommit, docName, docFields, to
 const MAX_LIMIT = 200;
 const STATUSES = new Set(["new", "contacting", "contacted", "consultation", "quotation", "considering", "converted", "later", "notinterested", "lost"]);
 const INTERESTS = new Set(["motor", "life", "health", "accident", "savings", "unsure"]);
-const PLANNED_RESOURCES = new Set(["customers", "consultations", "quotes", "policies", "renewals", "documents", "insurers"]);
+const PLANNED_RESOURCES = new Set(["consultations", "quotes", "policies", "renewals", "documents", "insurers"]);
 
 // Compatibility endpoints retain their existing REST, status and audit contracts.
 async function handle(req, actor, path, method = String(req.method || "GET").toUpperCase()) {
@@ -468,7 +468,6 @@ function checkClientRevision(req, doc) {
 
 function plannedResource(resource) {
   const labels = {
-    customers: "Customer 360 records",
     consultations: "Consultation records",
     quotes: "Quote records",
     policies: "Policy records",

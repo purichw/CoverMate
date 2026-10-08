@@ -113,7 +113,8 @@ const written = docFields(commits[0][0].update);
 assert.equal(written.timeline[0].note, 'Private note');
 assert.equal(written.ops.audit[0].to, '12 chars');
 assert.equal(written.ops.audit[1].kind, 'Original');
-assert.equal((await legacy.handle(request('customers'), actor, ['customers'])).body.status, 'planned');
+assert.equal((await legacy.handle(request('quotes'), actor, ['quotes'])).body.status, 'planned');
+assert.equal((await legacy.handle(request('customers'), actor, ['customers'])).status, 404, 'Customers now belong to the owner-only registry, not a planned placeholder.');
 assert.equal((await legacy.handle(request('unknown'), actor, ['unknown'])).status, 404);
 
 // Exercise the actual HTTP wrapper and transport with a fail-closed fetch substitute.
@@ -153,7 +154,8 @@ try {
   const deniedWrite = await call('leads', { method: 'POST', body: {} });
   assert.equal(deniedWrite.statusCode, 403);
   assert.equal(deniedWrite.body.requiredPermission, 'edit_records');
-  assert.equal((await call('customers')).statusCode, 200);
+  assert.equal((await call('customers')).statusCode, 403, 'Real customer records are owner-only.');
+  assert.equal((await call('quotes')).statusCode, 200, 'Existing empty planned endpoints retain read-only compatibility.');
   admin.role = 'administrator';
   cases.handle = async (req, verified, route) => {
     assert.equal(verified.role, 'owner');

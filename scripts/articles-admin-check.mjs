@@ -22,7 +22,7 @@ await adapter.delete('draft',9,'DELETE');assert.deepEqual(calls.at(-1),['delete'
 for(const lifecycle of ['active','archived','trashed'])assert.equal(articleLifecycleActions({lifecycle}).some(item=>item.action==='delete'),lifecycle==='trashed','Only Trash offers permanent deletion');
 assert.equal(adminPortalRouteStateFromLocation('/admin', '#articles').module, 'articles');
 assert.equal(adminPortalUrl('articles'), '/admin#articles');
-assert.equal(ADMIN_MODULES.findIndex(item => item.id === 'articles'), 3);
+assert.deepEqual(ADMIN_MODULES.map(item => item.id), ['home', 'operations', 'customers', 'content', 'articles', 'analytics']);
 assert.deepEqual(articleListView(catalog.items).counts, { all: 6, published: 3, draft: 2, scheduled: 1, archived:0,trashed:0 });
 assert.equal(articleListView(catalog.items, { category: 'health', status: 'scheduled' }).total, 1);
 assert.equal(articleListView(catalog.items, { query: 'Five things' }).total, 1, 'Search translated title');

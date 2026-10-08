@@ -17,8 +17,11 @@ publication and public readers are implemented.
 The Operations module now presents owner-only Cases: enquiries, status,
 follow-up, working notes and in-app notifications. Legacy leads/tasks/audit
 endpoints remain compatibility APIs, not visible Operations sub-tabs.
-Customers, Consultations, Quotes, Policies, Renewals, Documents and Insurers
-remain hidden until their real contracts exist.
+Customers is a separate owner-only registry for manual profile, policy, Consent
+and service records; private document storage is prepared but not activated.
+See [ADMIN_CUSTOMERS.md](docs/ADMIN_CUSTOMERS.md). Standalone Consultations,
+Quotes, Policies, Renewals, Documents and Insurers modules remain hidden until
+their real contracts exist.
 Shared runtime environment routing lives in `covermate-environment.mjs`.
 Production host `covermateinsurance.com` resolves to production Firestore data;
 Vercel preview hosts and explicit local `cm_env=uat` resolve to UAT Firestore
@@ -53,7 +56,7 @@ Product decision checkpoint: the 2026-08-11 Admin/CMS rebuild decision record
 supersedes older reconciliation notes where they conflict with owner exit,
 launcher-card count, or insurer-count copy. The newer
 [Cases contract](docs/ADMIN_CASES_V2.md) owns the current Operations scope. `/admin` is now
-the single Admin Portal shell with Home, Operations, Website content, Articles,
+the single Admin Portal shell with Home, Operations, Customers, Website content, Articles,
 and Analytics in one sidebar. Account details, notification preferences and
 notifications live in the shared account menu. Stub/planned admin modules stay
 hidden until their real contracts exist. Future bugs should be fixed as defects unless the owner
@@ -173,6 +176,8 @@ Detailed project documents:
 | `api/articles.js`, `server/articles.mjs` | Authorized article drafts, revision-checked publication, visibility/pin settings and safe published feeds. Article lifecycle is independent of website draft/live/version actions. |
 | `article-document.mjs`, `article-validation.mjs`, `article-settings.mjs` | Shared rich document/media normalization, save/publish validation and visibility defaults. |
 | `admin/ops/cases.js`, `cases.css` | Owner Cases list/detail, unsaved draft, filters/cursors, follow-up and in-app notification UI. No browser-persisted customer-data fallback. |
+| `src/admin/customer-workspace.mjs`, `admin/customers.css`, `customer-model.mjs` | Separate owner Customer Registry, manual data-entry tabs and shared validated fields; bundled by `build:customers` into `assets/admin-customers.js`. See `docs/ADMIN_CUSTOMERS.md` for setup and scope. |
+| `server/customers-service.cjs`, `customer-vault.cjs`, `customer-documents.cjs` | Owner-only profile/policy/service/Consent transactions, encrypted identity and private GCS document adapter. GCS/billing activation is deferred; no public CMS media fallback. |
 | `api/ops.js` | Shared Firebase token/allowlist/UAT authorization and HTTP envelopes; dispatches Cases versus legacy operations. |
 | `server/cases-handler.cjs`, `cases-service.cjs` | Owner-only Cases routing, transactions, activities, idempotency, notifications and preferences. Public intake uses service helpers in its own transaction. |
 | `server/cases-repository.cjs`, `cases-contract.cjs` | Environment collection selection and complete case reads; validation, state transitions, metrics, filters and legacy projection. |

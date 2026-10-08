@@ -1,7 +1,8 @@
 // All Admin entry points share this navigation; modules own only their workspace.
 export const ADMIN_MODULES = [
   { id: 'home', label: 'หน้าแรก', icon: 'home' },
-  { id: 'operations', label: 'งานลูกค้า', icon: 'users' },
+  { id: 'operations', label: 'งานติดต่อ', icon: 'message' },
+  { id: 'customers', label: 'Customers', icon: 'users' },
   { id: 'content', label: 'จัดการเว็บไซต์', icon: 'edit' },
   { id: 'articles', label: 'บทความ', icon: 'file' },
   { id: 'analytics', label: 'Analytics', icon: 'chart' }

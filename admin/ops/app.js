@@ -1,5 +1,6 @@
 import { ADMIN_LOGIN_PATH, adminRedirect, requireVerifiedAdminSession, signOutAdmin } from "/admin/session.js";
 import { createCasesWorkspace } from "/admin/ops/cases.js";
+import { createCustomersWorkspace } from "/assets/admin-customers.js";
 import { homeView } from "/admin/home-view.js";
 import { analyticsView } from "/admin/analytics-view.js";
 import { contentView } from "/admin/content-view.js";
@@ -97,6 +98,7 @@ const state = {
   }
 };
 let casesWorkspace;
+let customersWorkspace;
 let articlesWorkspace;
 
 const screen = document.getElementById("screen");
@@ -114,8 +116,16 @@ async function init() {
   if (!state.session) return;
 
   state.sessionRole = normalizeRole(state.session.role);
+  customersWorkspace = createCustomersWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, openCase: async id => { await setModule('operations'); if (state.module === 'operations') await casesWorkspace.openCase(id); } });
   articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, repository:createCloudArticleRepository(), session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
   casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
+    openCustomer: async (id, caseId) => {
+      if (!(await casesWorkspace.leave())) return;
+      const url = new URL(location.href); url.searchParams.delete('case'); url.searchParams.delete('followUp');
+      if (id) url.searchParams.set('customer', id); else url.searchParams.set('fromCase', caseId);
+      url.hash = 'customers'; history.pushState(null, '', url.pathname + url.search + url.hash);
+      await setModule('customers', { replace: true });
+    },
     renderNavigation: () => adminNavigation(state.module, iconSvg, { mobile: true }),
     renderAccount: () => adminAccountMenu(state.session,displayRole(state.sessionRole),iconSvg,{mobile:true}),
     renderAccountDetails: () => adminAccountDetails(state.session,displayRole(state.sessionRole),iconSvg) });
@@ -156,6 +166,7 @@ function bindEvents() {
     screen.querySelector('[data-analytics-period]')?.focus({ preventScroll: true });
   });
   globalSearch.addEventListener("input", () => {
+    if (state.module === 'customers') { customersWorkspace.setSearch(globalSearch.value); return; }
     if (state.module === 'articles') { articlesWorkspace.setSearch(globalSearch.value); return; }
     if (state.module === 'operations') { casesWorkspace.setSearch(globalSearch.value); return; }
     state.query = globalSearch.value.trim().toLowerCase();
@@ -164,7 +175,7 @@ function bindEvents() {
   globalSearch.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    if (['operations', 'articles'].includes(state.module)) return;
+    if (['operations', 'articles', 'customers'].includes(state.module)) return;
     openHomeCases({ search: globalSearch.value });
   });
   window.addEventListener("hashchange", syncRouteFromLocation);
@@ -173,7 +184,7 @@ function bindEvents() {
 
 async function loadAllData() {
   if (state.module === 'content') { state.loading.clear(); return loadContentData(); }
-  if (['articles', 'operations'].includes(state.module)) { state.loading.clear(); return; }
+  if (['articles', 'operations', 'customers'].includes(state.module)) { state.loading.clear(); return; }
   if (state.module === 'home') { state.loading.clear(); return loadHomeData(); }
   if (state.module === 'analytics') { state.loading.clear(); return loadAnalyticsData(); }
   await Promise.all(DATA_RESOURCES.map((resource) => loadResource(resource)));
@@ -374,6 +385,7 @@ async function handleClick(event) {
     if (action === "logout") {
       await signOutAdmin({beforeSignOut: async () => {
         if (articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return false;
+        if (customersWorkspace?.active && !(await customersWorkspace.leave())) return false;
         if (!(await casesWorkspace.canLeave())) return false;
         // The article decision already confirmed discarding pending edits.
         // Remove its unload listener before the intentional sign-out redirect.
@@ -503,6 +515,7 @@ function render() {
 function renderChrome() {
   document.body.dataset.module = state.module;
   globalSearch.placeholder = state.module === 'articles' ? 'ค้นหาชื่อบทความ...' : ['home', 'operations'].includes(state.module) ? 'ค้นหาชื่อ เบอร์โทร LINE อีเมล หรือเลขเคส…' : 'ค้นหาเคส แล้วกด Enter';
+  if (state.module === 'customers') globalSearch.placeholder = 'ค้นหาชื่อ รหัสลูกค้า เบอร์โทร อีเมล หรือ LINE…';
   sideNav.innerHTML = adminNavigation(state.module, iconSvg);
   dataMode.hidden = true;
 }
@@ -524,6 +537,7 @@ function renderScreen() {
   if (!screen) return;
   if (state.module === 'articles') return articlesWorkspace?.mount();
   if (articlesWorkspace?.active) { articlesWorkspace.leave(); globalSearch.value = state.query; }
+  if (state.module === 'customers') return customersWorkspace?.mount();
   if (state.module === "home") return renderHome();
   if (state.module === "operations") {
     return casesWorkspace?.mount();
@@ -994,6 +1008,7 @@ async function setModule(moduleId, options = {}) {
     return;
   }
   if (!MODULES.some((item) => item.id === moduleId)) return;
+  if (moduleId !== 'customers' && customersWorkspace?.active && !(await customersWorkspace.leave())) return;
   if (moduleId !== 'articles' && articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return;
   if (moduleId !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) return;
   state.module = moduleId;
@@ -1009,6 +1024,7 @@ async function setModule(moduleId, options = {}) {
 async function setOperationsTab(tabId, options = {}) {
   if (!isOperationsTab(tabId)) return;
   if (articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) return;
+  if (customersWorkspace?.active && !(await customersWorkspace.leave())) return;
   state.module = "operations";
   state.operationsTab = tabId;
   state.recordId = null;
@@ -1232,10 +1248,12 @@ async function syncRouteFromLocation() {
   try {
     let next = routeStateFromLocation();
     if (next.module !== 'articles' && articlesWorkspace?.active && !(await articlesWorkspace.canLeave())) {writeRoute({replace:true});return;}
+    if (next.module !== 'customers' && customersWorkspace?.active && !(await customersWorkspace.leave())) {writeRoute({replace:true});return;}
     next = routeStateFromLocation();
     if (next.module === state.module && next.operationsTab === state.operationsTab) {
       normalizeRetiredSettingsUrl();
       if (next.module === 'operations') await casesWorkspace?.syncLocation();
+      if (next.module === 'customers') await customersWorkspace?.syncLocation();
       return;
     }
     if (next.module !== 'operations' && casesWorkspace?.active && !(await casesWorkspace.leave())) { writeRoute({ replace: true }); casesWorkspace.restoreLocation(); return; }
@@ -1258,7 +1276,7 @@ function normalizeRetiredSettingsUrl() {
 function routeUrl() {
   const next = new URL(adminPortalUrl(state.module, state.operationsTab), location.origin);
   const current = new URLSearchParams(location.search);
-  for (const key of state.module === 'operations' ? ['cm_env', 'case', 'followUp'] : ['cm_env']) {
+  for (const key of state.module === 'operations' ? ['cm_env', 'case', 'followUp'] : state.module === 'customers' ? ['cm_env', 'customer', 'fromCase'] : ['cm_env']) {
     if (current.has(key)) next.searchParams.set(key, current.get(key));
   }
   return next.pathname + next.search + next.hash;

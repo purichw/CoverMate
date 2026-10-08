@@ -9,6 +9,15 @@ This is the current source contract. `CMS_CONTENT_VERSION` in
 
 ## Persistence Model
 
+Customer Registry candidate (2026-10-07): `customers` / `customersUat` and their
+private subcollections are server-only, outside CMS content and browser caches.
+The verified-owner API owns manual customer/policy/service/Consent writes.
+`contactLeads{Uat}/{id}.customerId` is an optional sibling of the preserved
+canonical Case record. Document binaries are encrypted private GCS objects,
+never Firestore/CMS image data; storage activation is deferred. See
+[Customer Registry](ADMIN_CUSTOMERS.md) for the full schema, API, configuration
+and privacy/retention limits. This addition does not establish a deployed state.
+
 CoverMate currently uses Firebase Auth plus a Firestore admin allowlist for real
 admin sign-in, then caches the approved admin session in browser
 `localStorage`.
