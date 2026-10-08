@@ -94,3 +94,24 @@ from text-entry alignment, including the exceptions above; its validator passed.
   independently. Rendered coverage focuses on active shared owners and variants.
 - No backend/emulator suite, full CI, commit, push, deploy, real data writes,
   document-storage activation, or billing changes in this pass.
+
+## Authorized Release Follow-Up
+
+The user subsequently authorized push/deploy. Local `check:ci -- --suite
+preflight` passed, including the unchanged 350000-byte Home/Motor script budget
+(349977 measured). Alignment commit `50082d6` was pushed to `main`.
+
+[CI run 37775716864](https://github.com/purichw/CoverMate/actions/runs/37775716864)
+passed preflight, Visitor, Articles, Admin, Smoke and emulators. CMS failed its
+crop-cancel no-write assertion, so the production gate correctly withheld
+promotion. This first run is not passing release evidence.
+
+The failure was reproduced locally with controlled event ordering: a previously
+saved form edit was undone/redone, then the Redo save was held while remote/local
+snapshots already matched. The old equality-only baseline resolved early and
+counted that delayed Redo save against the crop cancellation. The test now waits
+for Redo's new acknowledgement before taking the baseline. The controlled
+fixture stays as regression coverage; crop cancellation still must preserve the
+entire snapshot and make zero additional saves. No runtime behavior or threshold
+was changed for this repair. Final promotion requires successful exact-SHA CI
+and deployed readback, independently of this historical failure record.

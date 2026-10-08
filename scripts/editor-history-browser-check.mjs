@@ -21,6 +21,7 @@ let failReset = false;
 let saveCount = 0;
 let resetCount = 0;
 let resetFailures = 0;
+let pendingSaveGate = null;
 const writes = [];
 const output = path.resolve(process.env.EDITOR_HISTORY_SCREENSHOT_DIR || 'uat-results/editor-history');
 fs.mkdirSync(output, { recursive: true });
@@ -61,6 +62,12 @@ try {
       return route.fulfill({ json: { config: draft.config, text: draft.text } });
     }
     if (body.action !== 'save' || body.name !== 'draft') return route.fulfill({ status: 405, json: { message: 'Publishing and non-draft writes are forbidden in this harness.' } });
+    if (pendingSaveGate) {
+      const gate = pendingSaveGate;
+      gate.received = true;
+      await gate.promise;
+      if (pendingSaveGate === gate) pendingSaveGate = null;
+    }
     draft = clean({ config: body.config, text: body.text || {}, revision: Number(draft.revision || 0) + 1 });
     saveCount++;
     return route.fulfill({ json: { ok: true, config: draft.config, text: draft.text } });
@@ -320,16 +327,28 @@ try {
   await openGroup('Form choices');
   const formField = 'formOptions.query.quote.th';
   const formBefore = await page.locator(`[data-cms-field="${formField}"]`).inputValue();
+  const savesBeforeFormEdit = saveCount;
   await editField(formField, 'หัวข้อแบบฟอร์มสำหรับทดสอบ Undo');
+  await settledDraft(savesBeforeFormEdit);
   await historyAction('undo');
   await poll(async () => (await page.locator(`[data-cms-field="${formField}"]`).inputValue()) === formBefore, 'Undo restores form choice label.');
+  // Hold Redo's acknowledgement while the service already holds its snapshot.
+  // Equality alone must not establish the no-write baseline for the crop test.
+  const savesBeforeFormRedo = saveCount;
+  const redoGate = { received: false };
+  redoGate.promise = new Promise(resolve => { redoGate.release = resolve; });
+  pendingSaveGate = redoGate;
   await historyAction('redo');
   assert.equal(await page.locator(`[data-cms-field="${formField}"]`).inputValue(), 'หัวข้อแบบฟอร์มสำหรับทดสอบ Undo');
   const mediaField = 'brand.media.headerLogo.th';
   const mediaBefore = await page.locator(`[data-cms-field="${mediaField}"]`).inputValue();
   const replacement = mediaBefore === 'assets/brand/covermate-mark.png' ? 'assets/brand/covermate-advisory-logo-en.png' : 'assets/brand/covermate-mark.png';
-  const beforeMedia = await settledDraft();
-  const beforeMediaSaves = saveCount;
+  const mediaBaseline = settledDraft(savesBeforeFormRedo).then(snapshot => ({ snapshot, saves: saveCount }));
+  await poll(() => redoGate.received, 'The delayed Redo autosave reaches the fixture.');
+  redoGate.release();
+  await poll(() => saveCount > savesBeforeFormRedo, 'The delayed Redo autosave is acknowledged.');
+  const { snapshot: beforeMedia, saves: beforeMediaSaves } = await mediaBaseline;
+  report.provenance.mediaSaveBoundary = { beforeRedo: savesBeforeFormRedo, acknowledgedBeforeCrop: beforeMediaSaves };
   const cropDialog = page.getByRole('dialog', { name: 'แก้ไขรูปภาพ', exact: true });
   const cropReady = () => page.waitForFunction(() => document.querySelector('.cm-media-stage > img')?.cropper?.ready && !document.querySelector('.cm-media-primary')?.disabled);
   await editField(mediaField, replacement);
@@ -430,6 +449,7 @@ try {
   }
   throw error;
 } finally {
+  pendingSaveGate?.release();
   report.finishedAt = new Date().toISOString();
   report.mockWrites = { saves: saveCount, resets: resetCount, resetFailures, requests: writes };
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
