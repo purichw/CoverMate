@@ -24,14 +24,22 @@ export function createPreviewImageEvidence() {
       const evidence = frames.get(frame)?.get(navigation);
       if (!evidence) return null;
       const image = evidence.images.find(image => {
-        if (image.fallback !== url) return false;
+        if (image.fallback !== url && !image.candidates.includes(url)) return false;
         const completedIds = evidence.completed.get(image.selected) || [];
         // A same-URL replacement must be a later, successfully completed
         // request, not an earlier load that predates the canceled request.
         return [...completedIds].some(completedId => completedId <= image.observedRequestId &&
-          (image.selected !== url || completedId > requestId));
+          ((image.fallback === url && image.selected !== url) || completedId > requestId));
       });
       return image?.selected || null;
+    },
+    diagnostics(frame, navigation, url) {
+      const evidence = frames.get(frame)?.get(navigation);
+      return (evidence?.images || []).filter(image => image.fallback === url || image.candidates.includes(url)).map(image => ({
+        observedRequestId: image.observedRequestId,
+        selectedWasCanceled: image.selected === url,
+        completedRequestIds: [...(evidence.completed.get(image.selected) || [])]
+      }));
     }
   };
 }

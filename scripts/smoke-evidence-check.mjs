@@ -31,6 +31,23 @@ afterSnapshot.recordImages(frame, 1, [loaded], 2);
 afterSnapshot.recordCompleted(frame, 1, selected, 3);
 assert.equal(afterSnapshot.resolve(frame, 1, fallback, 1), null, 'A later request needs its own decoded-image snapshot');
 
+const candidateReload = createPreviewImageEvidence();
+candidateReload.recordCompleted(frame, 1, selected, 1);
+candidateReload.recordImages(frame, 1, [loaded], 3);
+assert.equal(candidateReload.resolve(frame, 1, selected, 2), null, 'An older srcset load cannot excuse a later canceled candidate');
+candidateReload.recordCompleted(frame, 1, selected, 3);
+assert.equal(candidateReload.resolve(frame, 1, selected, 2), selected, 'A canceled srcset candidate needs the later completed, decoded replacement in that frame');
+assert.equal(candidateReload.resolve(otherFrame, 1, selected, 2), null);
+assert.equal(candidateReload.resolve(frame, 2, selected, 2), null);
+assert.equal(candidateReload.resolve(frame, 1, selected, 4), null, 'An abort newer than the verified snapshot still fails');
+const larger = 'https://example.test/logo-960.webp', candidateSwitch = createPreviewImageEvidence();
+candidateSwitch.recordImages(frame, 1, [{...loaded, selected:larger, candidates:[selected,larger], naturalWidth:960}], 4);
+candidateSwitch.recordCompleted(frame, 1, larger, 1);
+assert.equal(candidateSwitch.resolve(frame, 1, selected, 2), null, 'A prior candidate load is not replacement evidence');
+candidateSwitch.recordCompleted(frame, 1, larger, 3);
+assert.equal(candidateSwitch.resolve(frame, 1, selected, 2), larger, 'A newer declared responsive candidate can replace a canceled candidate');
+assert.equal(candidateSwitch.resolve(frame, 1, 'https://example.test/unrelated.webp', 2), null);
+
 assert.deepEqual(uptimeResponseDiagnostics({
   status: 429, url: 'https://user:password@example.test/admin/login?token=secret#private',
   title: '  Security\nCheckpoint  ',

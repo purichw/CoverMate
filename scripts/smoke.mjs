@@ -2969,7 +2969,7 @@ for (const [name, width, height] of viewports) {
     if (replacement) {
       console.log(`${name}: confirmed preview image replacement ${request.url()} -> ${replacement}`);
     } else {
-      failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified preview image, request navigation ${navigation})`);
+      failedRequests.push(`${request.url()} :: net::ERR_ABORTED (unverified preview image, request navigation ${navigation}, request ${requestId}, evidence ${JSON.stringify(previewImageEvidence.diagnostics(request.frame(), navigation, request.url()))})`);
     }
   }
   if (navigationAssetAborts.length) console.log(`${name}: confirmed prior-document asset cancellations ${JSON.stringify(navigationAssetAborts)}`);
