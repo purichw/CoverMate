@@ -115,3 +115,17 @@ fixture stays as regression coverage; crop cancellation still must preserve the
 entire snapshot and make zero additional saves. No runtime behavior or threshold
 was changed for this repair. Final promotion requires successful exact-SHA CI
 and deployed readback, independently of this historical failure record.
+
+The next candidate `c67ddf7` passed CMS and all other suites except Articles in
+[run 37777138471](https://github.com/purichw/CoverMate/actions/runs/37777138471).
+Articles failed in the leave-dialog harness after Axe with `clock.pauseAt:
+Cannot fast-forward to the past`. One failed-jobs-only diagnostic rerun repeated
+the same error; no further unchanged retry was used. A local controlled clock
+advance reproduced rejection of a stale absolute pause timestamp.
+
+Mobile leave tests now perform all frozen-clock navigation checks first, then
+resume timers for the same dialog's accessibility audit immediately before the
+confirmed navigation. There is no second sampled `pauseAt` call after Axe. Both
+mobile widths retain their geometry/accessibility checks, and new assertions
+require the warning and edited title to remain present while timers run.
+This is test sequencing only, not an application, timeout or coverage change.

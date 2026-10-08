@@ -134,12 +134,6 @@ try {
     assert.ok(rect.x >= 0 && rect.y >= 0 && rect.x + rect.width <= width && rect.y + rect.height <= 845, `Dialog fits ${width}px`);
     assert.equal(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth), true);
     await page.screenshot({ path: `${out}/mobile-${width}.png` });
-    const { default: AxeBuilder } = await import('@axe-core/playwright');
-    // Axe uses timers; the open warning itself must now keep Autosave paused.
-    await page.clock.resume();
-    const a11y = await new AxeBuilder({ page }).include('.ae-leave-dialog').analyze();
-    assert.deepEqual(a11y.violations, [], 'Dialog accessibility');
-    await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now()+1000)));
     await stay(); await closed(); await expectTitle(title);
     await page.locator('.case-menu-trigger').click();
     await page.locator('[data-case-panel=navigation] [data-module=home]').click();
@@ -148,6 +142,15 @@ try {
     assert.equal(await page.locator('body').getAttribute('data-module'), 'articles', 'Warning Escape retains the mobile editor');
     await page.locator('.case-menu-trigger').click();
     await page.locator('[data-case-panel=navigation] [data-module=home]').click();
+    await dialog.waitFor();
+    const { default: AxeBuilder } = await import('@axe-core/playwright');
+    // Run timer-dependent auditing last, then navigate away. Re-pausing a
+    // resumed clock at a sampled timestamp can race browser/runner latency.
+    await page.clock.resume();
+    const a11y = await new AxeBuilder({ page }).include('.ae-leave-dialog').analyze();
+    assert.deepEqual(a11y.violations, [], 'Dialog accessibility');
+    assert.equal(await dialog.isVisible(), true, 'The warning stays open while real timers run');
+    await expectTitle(title);
     await discard(); await page.waitForFunction(() => document.body.dataset.module === 'home');
     await ready();
   }
