@@ -15,7 +15,7 @@ fs.mkdirSync(output, { recursive: true });
 const sources = ['admin/index.html', 'admin/shell.css', 'admin/shell.js', 'admin/home.css', 'admin/home-view.js', 'admin/content-view.js', 'admin/content-model.mjs', 'admin/content.css', 'admin/analytics-view.js', 'admin/analytics-model.mjs', 'admin/analytics.css', 'admin/ops/cases.css', 'admin/ops/cases.js', 'admin/ops/app.js', 'covermate-contract.js'];
 const hashes = () => Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
 const report = { passed: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), sourceHashes: hashes(), environment: 'Local fixtures only; synthetic identity and records; all external requests and writes blocked', checks: [], screenshots: [], geometry: [], errors: [], mutations: [] };
-const modules = ['home', 'operations', 'content', 'articles', 'analytics'];
+const modules = ['home', 'operations', 'customers', 'content', 'articles', 'analytics'];
 const fixtures = createCasesFixture();
 const legacy = createLegacyOpsState();
 const { server, baseUrl } = await startStaticServer();
@@ -39,6 +39,7 @@ try {
     reads.push(resource);
     let data;
     if (resource === 'cases/summary') data = C.summary(fixtures.cases, fixtures.asOf);
+    else if (resource === 'customers') data = { items: [], total: 0, nextOffset: null, vaultAvailable: false };
     else if (resource === 'cases') data = C.listCases(fixtures.cases, url.searchParams, fixtures.asOf);
     else if (resource === 'notifications') data = { items: fixtures.notifications, unreadCount: fixtures.notifications.length, nextCursor: null };
     else if (resource === 'notification-capabilities') data = { inAppAvailable: true, emailAvailable: false };
@@ -53,6 +54,7 @@ try {
     if (module === 'home') await page.locator('.admin-home:not([data-home-state="loading"])').waitFor();
     if (module === 'content') await page.locator('.admin-content:not([data-cms-state="loading"])').waitFor();
     if (module === 'operations') await page.locator('.case-list[aria-busy="false"]').waitFor();
+    if (module === 'customers') await page.locator('.customer-list[aria-busy="false"]').waitFor();
     if (module === 'analytics') await page.locator('.admin-analytics:not([data-analytics-state="loading"])').waitFor();
   }
   async function capture(name) {

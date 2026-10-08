@@ -84,7 +84,7 @@ if (process.argv.includes('--browser')) {
       if (width === 1440 || width === 390) await capture(String(width));
       if (width < 1040) {
         await page.getByRole('button', { name: 'เปิดเมนู Admin' }).click();
-        assert.deepEqual(await page.locator('.case-mobile-navigation .nav-button').evaluateAll(buttons => buttons.map(button => button.dataset.module)), ['home', 'operations', 'content', 'articles', 'analytics']);
+        assert.deepEqual(await page.locator('.case-mobile-navigation .nav-button').evaluateAll(buttons => buttons.map(button => button.dataset.module)), ['home', 'operations', 'customers', 'content', 'articles', 'analytics']);
         assert.equal(await page.locator('.case-mobile-navigation [aria-current="page"]').getAttribute('data-module'), 'articles');
         await page.keyboard.press('Escape');await page.locator('.case-panel').waitFor({ state: 'detached' });
       }

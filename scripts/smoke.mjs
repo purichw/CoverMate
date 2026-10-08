@@ -2262,7 +2262,7 @@ for (const [name, width, height] of viewports) {
     failures.push(`${name} /admin: single-shell live system status copy is missing`);
   }
   const launcherLabels = adminState.moduleCards.map(card => card.title);
-  const expectedLauncherLabels = ["งานลูกค้า", "จัดการเว็บไซต์", "Analytics"];
+  const expectedLauncherLabels = ["งานติดต่อ", "จัดการเว็บไซต์", "Analytics"];
   if (JSON.stringify(launcherLabels) !== JSON.stringify(expectedLauncherLabels)) {
     failures.push(`${name} /admin: expected module labels ${expectedLauncherLabels.join(" / ")}, got ${JSON.stringify(launcherLabels)}`);
   }
