@@ -21,7 +21,7 @@ const { baseUrl } = await startStaticServer({
   async onRequest(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const send = (type, body, status = 200) => { res.writeHead(status, { 'Content-Type': type }); res.end(body); return true; };
-    if (url.pathname === '/covermate-firebase.js') return send('text/javascript', firebaseMock.replace('ops-regression-token', account.idToken) + '\nwindow.CoverMateFirebase.environment={name:"uat"};');
+    if (url.pathname === '/covermate-firebase.js') return send('text/javascript', firebaseMock.replace('ops-regression-token', account.idToken) + `\nwindow.CoverMateFirebase.auth.currentUser.uid=${JSON.stringify(account.localId)};\nwindow.CoverMateFirebase.environment={name:"uat"};`);
     if (['/admin', '/admin/', '/admin/index.html'].includes(url.pathname)) {
       const html = await fs.readFile('admin/index.html', 'utf8');
       return send('text/html', html.replace('<head>', `<head><script>localStorage.setItem('covermate-admin-session',${JSON.stringify(session)});</script>`).replace('<body', '<body data-local-preview="true"').replace('</body>', '<div style="position:fixed;bottom:0;left:0;z-index:100;width:100%;padding:4px;background:#203d31;color:white;text-align:center;font:12px sans-serif">Local preview · Synthetic data only · ข้อมูลจำลอง ไม่ใช่ข้อมูลลูกค้าจริง</div></body>'));

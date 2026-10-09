@@ -53,6 +53,7 @@
     "check:boot": "node scripts/boot-guard-regression-check.mjs",
     "check:loading": "node scripts/loading-screen-check.mjs",
     "check:admin-loading": "node scripts/admin-loading-check.mjs",
+    "check:admin-lists": "node scripts/admin-list-loading-check.mjs",
     "check:browsers": "node scripts/browser-compatibility-check.mjs",
     "check:public-request": "node scripts/public-request-check.mjs",
     "check:contact": "node scripts/contact-submission-check.mjs",

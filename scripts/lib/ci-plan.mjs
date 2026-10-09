@@ -142,6 +142,7 @@ export const checkGroups = {
     ["node",["scripts/admin-shell-browser-check.mjs"]],
     ["npm",["run","check:admin-structure"]],
     ["npm",["run","check:admin-loading"]],
+    ["npm",["run","check:admin-lists"]],
     ["npm",["run","check:ops"]],
     ["npm",["run","check:case-links"]],
     ["npm",["run","check:admin-email-template"]],

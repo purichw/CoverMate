@@ -24,12 +24,17 @@ One Cases workspace replaces the visible Operations dashboard/leads/tasks/audit 
 
 The mini dashboard uses global server counts independently of search/filter/page. Default Open scope, 20 records per page, 100 server cap, filter-bound stable cursors. Dates use Asia/Bangkok. Follow-ups due includes overdue dates even when reminders are off; Today includes future times today. Completed means an enquiry is finished, **not a policy sale**.
 
-List and summary requests have independent generation counters. An immediate
+List and summary results have independent generation counters. An immediate
 search/filter can replace the list while the initial global summary is still
 pending; the valid summary must still populate the metrics without replacing
 the filtered rows. A newer full refresh supersedes both earlier results, and
 leaving Cases invalidates both generations. Late responses from an earlier
 visit must not affect a later visit.
+
+The October 9 loading update combines initial/full-refresh rows and summary in
+one request/read, while preserving these independent result-generation guards.
+Filter-only responses stay lean. See [Admin loading](ADMIN_LOADING.md) for
+short-lived retained rows, mutation invalidation, timing and deployment limits.
 
 ## Owners and files
 
@@ -66,6 +71,7 @@ Authenticated routes under `/api/ops`:
 | Endpoint | Operation |
 |---|---|
 | `GET /cases` | Search/filter/sort/page owner-visible cases |
+| `GET /cases?includeSummary=true` | Same rows plus global summary from one repository snapshot |
 | `GET /cases/summary` | Global counts with server asOf and Bangkok timezone |
 | `GET /cases/:id` | Case, 20 activity entries, next activity offset and retained legacy history |
 | `POST /cases` | Manual create; required idempotency header |

@@ -11,7 +11,13 @@ function createCasesHandler({ recordsFor, createManual, getCase, patch, notifica
     const method = req.method || 'GET', params = new URL(req.url, 'https://covermate.local').searchParams, now = new Date().toISOString();
     if (path[0] === 'cases') {
       if (method === 'GET' && path[1] === 'summary') return C.summary(await recordsFor(actor), now);
-      if (method === 'GET' && !path[1]) return C.listCases(await recordsFor(actor), params, now);
+      if (method === 'GET' && !path[1]) {
+        const records = await recordsFor(actor);
+        const list = C.listCases(records, params, now);
+        // One authorized snapshot supplies both filtered rows and global counts.
+        if (params.get('includeSummary') === 'true') list.summary = C.summary(records, now);
+        return list;
+      }
       if (method === 'POST' && !path[1]) return createManual(req, actor);
       if (method === 'GET' && path.length === 2) return getCase(actor, path[1], params);
       if (method === 'PATCH' && path.length === 2) return patch(req, actor, path[1]);

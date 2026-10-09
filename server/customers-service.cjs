@@ -40,7 +40,9 @@ async function handle(req, actor, path) {
     const q = (params.get('search') || '').trim().toLowerCase(), status = params.get('status') || 'Active';
     const offset = Number(params.get('offset') || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || !['Active', 'Archived', 'all'].includes(status) || q.length > 200) throw error(422, 'validation', 'Invalid filter.');
-    const rows = (await customers.get()).docs.map(d => summary(d.data())).filter(r => (status === 'all' || r.profile.status === status) && (!q || [r.code, ...['firstName', 'lastName', 'firstNameEn', 'lastNameEn', 'phone', 'email', 'lineId'].map(k => r.profile[k])].join(' ').toLowerCase().includes(q))).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+    const query = status === 'all' ? customers : customers.where('profile.status', '==', status);
+    const snapshot = await query.select('id', 'code', 'version', 'createdAt', 'updatedAt', ...['firstName','lastName','firstNameEn','lastNameEn','phone','email','lineId','status','language'].map(key => `profile.${key}`)).get();
+    const rows = snapshot.docs.map(d => summary(d.data())).filter(r => !q || [r.code, ...['firstName', 'lastName', 'firstNameEn', 'lastNameEn', 'phone', 'email', 'lineId'].map(k => r.profile[k])].join(' ').toLowerCase().includes(q)).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
     return { items: rows.slice(offset, offset + 20), total: rows.length, nextOffset: offset + 20 < rows.length ? offset + 20 : null, vaultAvailable: vault.available() };
   }
   if (method === 'POST' && path.length === 1) {
@@ -69,10 +71,14 @@ async function handle(req, actor, path) {
   if (method === 'GET' && path.length === 2) {
     const snap = await ref.get(); if (!snap.exists) throw error(404, 'not_found', 'Customer not found.');
     const rows = async collection => (await ref.collection(collection).get()).docs.map(d => d.data());
-    const r = snap.data(), identity = (await ref.collection('private').doc('identity').get()).data();
-    const linked = (await cases.where('customerId', '==', r.id).get()).docs.map(d => C.adaptCase(d.id, d.data()));
-    return { ...summary(r), profile: r.profile, consents: r.consents, policies: await rows('policies'), services: await rows('services'),
-      documents: (await rows('documents')).map(({ object, ...metadata }) => metadata), activities: (await rows('activities')).sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,100),
+    const r = snap.data();
+    const [identitySnapshot, linkedSnapshot, policies, services, documentRows, activities] = await Promise.all([
+      ref.collection('private').doc('identity').get(), cases.where('customerId', '==', r.id).get(),
+      rows('policies'), rows('services'), rows('documents'), rows('activities')
+    ]);
+    const identity = identitySnapshot.data(), linked = linkedSnapshot.docs.map(d => C.adaptCase(d.id, d.data()));
+    return { ...summary(r), profile: r.profile, consents: r.consents, policies, services,
+      documents: documentRows.map(({ object, ...metadata }) => metadata), activities: activities.sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,100),
       cases: linked.map(c => ({ id: c.id, number: c.caseNumber, subject: c.enquiryTopic, status: c.status, followUp: c.followUp })),
       identity: identity ? { type: identity.type, suffix: identity.suffix, expiresAt: identity.expiresAt } : null, vaultAvailable: vault.available(), documentStorageAvailable: documents.available(actor) };
   }

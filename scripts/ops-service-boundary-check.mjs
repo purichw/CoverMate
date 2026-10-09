@@ -43,6 +43,14 @@ assert.equal(calls.length, 0, 'Owner authorization must precede repository and s
 const list = await handle(request('cases'), actor, ['cases']);
 assert.equal(list.items.length, 1);
 assert.equal((await handle(request('cases/summary'), actor, ['cases', 'summary'])).total, 2);
+const readsBefore = calls.filter(call => call.name === 'recordsFor').length;
+const combinedRequest = request('cases'); combinedRequest.url += '&includeSummary=true&search=canonical';
+const combined = await handle(combinedRequest, actor, ['cases']);
+assert.equal(combined.items.length, 1);
+assert.equal(combined.summary.total, 2, 'Combined summary remains global, not filtered.');
+assert.equal(calls.filter(call => call.name === 'recordsFor').length - readsBefore, 1, 'Rows and summary use one repository read.');
+assert.equal(list.summary, undefined, 'Existing list consumers retain the lean response.');
+assert.deepEqual(JSON.parse(fs.readFileSync(new URL('../vercel.json', import.meta.url), 'utf8')).functions['api/ops.js'].regions, ['sin1']);
 for (const [path, method, expected, body] of [
   ['cases/canonical-case', 'GET', 'getCase'], ['cases', 'POST', 'createManual', {}],
   ['cases/canonical-case', 'PATCH', 'patch', {}], ['notifications', 'GET', 'notificationList'],
@@ -138,6 +146,8 @@ try {
     const response = { headers: {}, setHeader(key, value) { this.headers[key] = value; }, end(value) { this.body = JSON.parse(value); } };
     await api(req, response);
     assert.equal(response.headers['Cache-Control'], 'no-store');
+    assert.match(response.headers['Server-Timing'], /total;dur=\d+\.\d/);
+    assert.ok(response.headers['Server-Timing'].split(', ').every(value => /^(identity|allowlist|data|total);dur=\d+\.\d$/.test(value)), 'Timing exposes only fixed phase names and durations.');
     return response;
   };
   assert.equal((await call('cases', { token: false })).statusCode, 401);

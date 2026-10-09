@@ -28,11 +28,13 @@ const notificationBody = n => {
     .replace(/ is ready to review\.$/, n.type === 'follow_up_due' ? ' · ถึงกำหนดติดตามแล้ว' : ' · พร้อมให้ตรวจสอบ');
 };
 
-export function createCasesWorkspace({ root, api, session, searchInput, navigate, openCustomer, renderNavigation, renderAccount, renderAccountDetails }) {
+export function createCasesWorkspace({ root, api, session, searchInput, navigate, openCustomer, renderNavigation, renderAccount, renderAccountDetails, canReuseList = () => false }) {
   const s = { active: false, rows: [], summary: null, list: null, loading: true, error: '', summaryError: '', scope: 'open', status: '', followUp: 'any', closedMonth: false, search: '', sort: '', cursor: '', pages: [], panel: null, record: null, draft: null, activities: [], activityOffset: null, legacy: null, saving: false, errorSave: '', conflict: null, notifications: [], unreadCount: 0, notificationError: '', unreadOnly: false, notificationCursor: null, preferences: null, capabilities: null, expandedFilters: false, generation: 0 };
   const overlay = document.createElement('div'); overlay.className = 'case-overlay'; document.body.append(overlay);
   let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, testEmailKey, testEmailSending = false, testEmailMessage = '', testEmailFailed = false, panelGeneration = 0, summaryGeneration = 0;
   let locationKey = null, linkedCaseId = null, configuredView = false;
+  let listKey = null, listLoadedAt = 0;
+  function invalidateList() { listKey = null; listLoadedAt = 0; s.rows = []; s.list = null; s.summary = null; s.generation++; summaryGeneration++; }
   const caseLocationKey = () => {
     const params = new URLSearchParams(location.search);
     return JSON.stringify([params.get('case'), params.get('followUp') || 'any']);
@@ -54,7 +56,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     const followUp = ['due', 'today', 'overdue'].includes(params.get('followUp')) ? params.get('followUp') : 'any';
     const changedFilter = followUp !== s.followUp;
     linkedCaseId = params.get('case'); locationKey = requestedKey;
-    if (changedFilter || initial) {
+    if (changedFilter) {
       Object.assign(s, { followUp, ...(followUp !== 'any' ? { scope: 'open', status: '', closedMonth: false } : {}), sort: '', cursor: '', pages: [], expandedFilters: followUp !== 'any' });
       if (!initial) load({ listOnly: true });
     }
@@ -90,29 +92,38 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     // Filtering replaces the list request, but must not discard the global
     // summary already in flight. Only a newer full load supersedes that summary.
     const requestedSummaryGeneration = listOnly ? null : ++summaryGeneration;
-    s.loading = true; s.error = ''; render();
     const params = new URLSearchParams({ scope: s.scope, followUp: s.followUp, search: s.search, limit: '20' });
     if (s.status) params.set('status', s.status);
     if (s.sort) params.set('sort', s.sort);
     if (s.cursor) params.set('cursor', s.cursor);
     if (s.closedMonth) params.set('closedMonth', 'true');
-    const tasks = [api(`cases?${params}`)];
-    if (!listOnly) tasks.push(api('cases/summary'));
-    const results = await Promise.allSettled(tasks);
-    if (!s.active) return;
-    const currentList = generation === s.generation;
-    const currentSummary = !listOnly && requestedSummaryGeneration === summaryGeneration;
-    if (!currentList && !currentSummary) return;
-    if (currentList) {
-      s.loading = false;
-      if (results[0].status === 'fulfilled') { s.list = results[0].value; s.rows = s.list.items; }
-      else { s.error = results[0].reason.message; s.rows = []; s.list = null; }
+    const key = params.toString();
+    const retained = canReuseList() && listKey === key && Date.now() - listLoadedAt < 60000;
+    s.loading = !retained; s.refreshing = retained; s.error = ''; render();
+    if (!listOnly) params.set('includeSummary', 'true');
+    const currentList = () => s.active && generation === s.generation;
+    const currentSummary = () => s.active && !listOnly && requestedSummaryGeneration === summaryGeneration;
+    try {
+      const data = await api(`cases?${params}`);
+      if (!currentList() && !currentSummary()) return;
+      if (currentList()) {
+        s.list = data; s.rows = data.items; listKey = key; listLoadedAt = Date.now();
+        s.loading = false; s.refreshing = false;
+      }
+      if (currentSummary() && data.summary) { s.summary = data.summary; s.summaryError = ''; }
+      render();
+      // Older deployments may omit the additive summary. Rows are already usable.
+      if (currentSummary() && !data.summary) {
+        try { const summary = await api('cases/summary'); if (currentSummary()) { s.summary = summary; s.summaryError = ''; } }
+        catch (e) { if (currentSummary()) { s.summary = null; s.summaryError = e.message; } }
+        if (currentSummary()) render();
+      }
+    } catch (e) {
+      if (currentList()) { s.loading = false; s.refreshing = false; s.error = e.message; s.rows = []; s.list = null; listKey = null; }
+      if (currentList() && [401, 403].includes(e.status)) { s.summary = null; s.summaryError = e.message; summaryGeneration++; }
+      if (currentSummary()) { s.summary = null; s.summaryError = e.message; }
+      if (currentList() || currentSummary()) render();
     }
-    if (currentSummary) {
-      s.summaryError = results[1].status === 'rejected' ? results[1].reason.message : '';
-      s.summary = results[1].status === 'fulfilled' ? results[1].value : null;
-    }
-    render();
   }
   async function refreshNotifications() {
     syncButtons();
@@ -155,7 +166,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       (!compact ? '<label class="case-list-search">' + icon('search') + '<span class="case-sr-only">ค้นหาในรายการเคส</span><input type="search" data-case-search value="' + esc(s.search) + '" placeholder="ค้นหาในรายการเคส…" autocomplete="off"></label>' + statusFilter() : '') + filterToggle + sort + btn('retry', icon('refresh'), 'aria-label="รีเฟรชเคส" title="รีเฟรชเคส"', 'case-icon-button') + '</div></div>' +
       '<div id="caseExtraFilters" class="case-extra-filters" ' + (s.expandedFilters ? '' : 'hidden') + '>' + (compact ? statusFilter() : '') + '<label>กำหนดติดตาม<select data-case-filter="followUp">' + ['any', 'due', 'today', 'overdue'].map(v => '<option value="' + v + '" ' + (s.followUp === v ? 'selected' : '') + '>' + title(v) + '</option>').join('') + '</select></label><small>วันที่และเวลาทั้งหมดใช้เวลาไทย (UTC+7)</small></div>' +
       (s.closedMonth ? '<div class="case-chips">' + btn('clear-month', 'ปิดเคสเดือนนี้ ×', 'aria-label="ล้างตัวกรองปิดเคสเดือนนี้"') + '</div>' : '') +
-      '<section class="case-list" data-list-state="' + (s.loading ? 'loading' : s.error ? 'error' : s.rows.length ? 'ready' : 'empty') + '" aria-label="เคสลูกค้า" aria-busy="' + s.loading + '"><div class="case-list-toolbar"><span>' + (s.loading ? 'กำลังโหลดเคส…' : s.list ? 'ทั้งหมด ' + s.list.filteredTotal + ' เคส' : 'โหลดเคสไม่ได้') + '</span></div>' +
+      '<section class="case-list" data-list-state="' + (s.loading ? 'loading' : s.error ? 'error' : s.refreshing ? 'refreshing' : s.rows.length ? 'ready' : 'empty') + '" aria-label="เคสลูกค้า" aria-busy="' + Boolean(s.loading || s.refreshing) + '"><div class="case-list-toolbar"><span>' + (s.loading ? 'กำลังโหลดเคส…' : s.list ? 'ทั้งหมด ' + s.list.filteredTotal + ' เคส' : 'โหลดเคสไม่ได้') + '</span><span class="admin-refresh-status" role="status">' + (s.refreshing ? 'ข้อมูลล่าสุดที่โหลดไว้ · กำลังอัปเดต…' : '') + '</span></div>' +
       table +
       (s.error ? '<div class="case-empty" role="alert"><h2>โหลดเคสไม่ได้</h2><p>' + esc(s.error) + '</p>' + btn('retry', 'ลองอีกครั้ง') + '</div>' : s.loading ? '<div class="case-skeleton" aria-label="กำลังโหลด"><div></div><div></div><div></div></div>' : !s.rows.length ? emptyList() : '<div class="case-mobile-list">' + s.rows.map(card).join('') + '</div>') +
       (s.list && !s.loading && s.list.filteredTotal ? '<div class="case-pagination"><span>แสดง ' + (s.pages.length * 20 + 1) + '–' + (s.pages.length * 20 + s.rows.length) + ' จาก ' + s.list.filteredTotal + '</span><div>' + btn('previous', 'ก่อนหน้า', s.pages.length ? '' : 'disabled') + btn('next', 'ถัดไป', s.list.nextCursor ? '' : 'disabled') + '</div></div>' : '') + '</section>';
@@ -450,9 +461,9 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     return true;
   }
   return {
-    mount() { if (s.active) { render(); return; } s.active = true; s.reopening = false; locationKey = null; if (configuredView) { configuredView = false; writeCaseLocation(); } render(); if (!['admin', 'administrator', 'owner'].includes(session.role)) return; syncLocation({ initial: true }).then(() => { if (s.active) load(); }); loadCapabilities(); refreshNotifications(); pollTimer = setInterval(checkVisible, 300000); },
+    mount() { if (s.active) { render(); return; } s.active = true; s.reopening = false; locationKey = null; if (!canReuseList() || Date.now() - listLoadedAt >= 60000) invalidateList(); if (configuredView) { configuredView = false; writeCaseLocation(); } s.loading = !s.list; render(); if (!['admin', 'administrator', 'owner'].includes(session.role)) return; syncLocation({ initial: true }).then(() => { if (s.active) load(); }); loadCapabilities(); refreshNotifications(); pollTimer = setInterval(checkVisible, 300000); },
     async leave() { if (!(await guard())) return false; await closePanel({ preserveLocation: true }); s.active = false; s.generation++; summaryGeneration++; clearTimeout(searchTimer); clearInterval(pollTimer); root.classList.remove('cases-screen'); return true; },
-    setSearch,
+    setSearch, invalidateList,
     newCase, openCase, openNotifications, refreshNotifications, configureView, syncLocation,
     canLeave: guard,
     async openAccount() { if (!(await guard())) return; if(!s.panel)returnFocus=document.activeElement;s.draft=null;s.record=null;s.panel='account';renderPanel();updateSelected(); },

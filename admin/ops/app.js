@@ -116,9 +116,10 @@ async function init() {
   if (!state.session) return;
 
   state.sessionRole = normalizeRole(state.session.role);
-  customersWorkspace = createCustomersWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, openCase: async id => { await setModule('operations'); if (state.module === 'operations') await casesWorkspace.openCase(id); } });
+  const canReuseList = () => window.CoverMateFirebase?.auth?.currentUser?.uid === state.session.uid;
+  customersWorkspace = createCustomersWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, canReuseList, openCase: async id => { await setModule('operations'); if (state.module === 'operations') await casesWorkspace.openCase(id); } });
   articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, repository:createCloudArticleRepository(), session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
-  casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule,
+  casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule, canReuseList,
     openCustomer: async (id, caseId) => {
       if (!(await casesWorkspace.leave())) return;
       const url = new URL(location.href); url.searchParams.delete('case'); url.searchParams.delete('followUp');
@@ -323,6 +324,10 @@ async function apiFetch(path, options = {}) {
     error.status = response.status;
     error.payload = payload;
     throw error;
+  }
+  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method) && /^(cases|customers)(\/|$|\?)/.test(path)) {
+    casesWorkspace?.invalidateList();
+    customersWorkspace?.invalidateList();
   }
   return payload;
 }

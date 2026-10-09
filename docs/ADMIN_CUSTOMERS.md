@@ -83,6 +83,10 @@ a duplicate warning; an owner can deliberately create a separate person. This
 is not fuzzy matching, identity verification or an automatic merge workflow.
 
 The registry has search, Active/Archived/All filters and 20 rows per page.
+The October 9 [loading update](ADMIN_LOADING.md) retains a recent matching list
+only while revalidating, projects list fields at the database, and reads
+independent detail collections concurrently. It preserves current authorization,
+complete search results and explicit failure states without persistent caching.
 Optional form groups are disclosures; required policy fields stay visible.
 Unsaved changes require confirmation before navigation. Failed saves retain
 input; a version conflict offers an explicit reload after discarding the draft.

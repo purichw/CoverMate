@@ -1,5 +1,43 @@
 # Admin Loading
 
+## Cases And Customers List Refresh (2026-10-09)
+
+Prepared locally; this section does not establish production deployment.
+Read-only production inspection found `api/ops` deployed in `iad1` while the
+Firestore database is in Bangkok (`asia-southeast3`). `vercel.json` now places
+Operations in `sin1`, matching the existing page/article/CMS function policy.
+No database migration, permission change or billing activation is involved.
+
+- A full Cases load requests `GET /cases?includeSummary=true`. Its filtered
+  rows and global metrics come from one authorized repository read. The old
+  summary endpoint remains compatible; if an older deployment omits the added
+  summary field, the client shows rows first and retrieves metrics separately.
+- Both workspaces retain only their latest successful list in page memory, for
+  display during revalidation. Reuse requires the same verified Firebase UID,
+  identical filters/page and an age under 60 seconds. Every revisit still makes
+  a fresh authenticated request. There is no localStorage, HTTP or server data
+  cache, and no cached authorization decision.
+- A compact status identifies retained data while updating. A new filter,
+  expired snapshot, changed identity or successful Cases/Customers mutation
+  prevents reuse. Failed reads remove retained rows and show retry/error state;
+  denied Cases reads also remove global metrics. Page reload/sign-out destroys
+  the memory state. Late responses cannot replace newer filters or editors.
+- Customer list queries filter status in Firestore and project only the fields
+  needed for search/display, excluding notes and consent evidence. Customer
+  detail loads independent subcollections in parallel after checking existence.
+  Complete substring search/global counts still scan their relevant small
+  datasets; indexed search/maintained aggregates remain separate scale work.
+- Operations responses expose fixed-name `Server-Timing` phases (`identity`,
+  `allowlist`, `data`, `total`), containing durations only. After authorized
+  deployment, use these and the executed region to measure real improvement.
+  Local request-count/state checks do not prove a production latency reduction.
+
+Scoped checks: `npm run check:admin-lists`, Cases browser/contract checks,
+Operations boundary checks, and real Customers/Cases API checks using isolated
+Auth/Firestore emulators. Delayed-read desktop/mobile screenshots are under
+`uat-results/admin-list-loading/`; they show synthetic records, not customer
+data. Whole-site CI and production timing are not part of this local pass.
+
 The `/admin` portal now uses the same first-paint loading surface as Visitor.
 This replaces the empty cream viewport while modules and verified auth load;
 it does not make Firebase authentication faster or alter access policy.

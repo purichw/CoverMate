@@ -82,9 +82,11 @@ function customerReview({ profile, consent }) {
   return `<h2 id="customer-review-title" tabindex="-1">ตรวจสอบข้อมูล</h2><div class="customer-review-ready"><span class="customer-ready-icon">${icon('check')}</span><div><strong>ข้อมูลที่จำเป็นครบแล้ว พร้อมยืนยันสร้างลูกค้า</strong><p>ข้อมูลยังไม่ถูกบันทึกในระบบ</p></div></div><div class="customer-review-grid">${sections}${reviewSection(6, 'หลักฐาน Consent', 'consent', scopes + reviewRows(CONSENT_FIELDS, consent, 'consent.'))}</div>`;
 }
 
-export function createCustomersWorkspace({ root, api, session, searchInput, openCase }) {
+export function createCustomersWorkspace({ root, api, session, searchInput, openCase, canReuseList = () => false }) {
   const s = { active: false, record: null, tab: 'profile', rows: [], total: 0, offset: 0, nextOffset: null, status: 'Active', query: '', loading: false, error: '', dirty: false, busy: false, generation: 0, creating: false, sourceCase: null };
   let dialog = null, dialogDirty = false, searchTimer, requestKey, requestSignature;
+  let listKey = null, listLoadedAt = 0;
+  function invalidateList() { listKey = null; listLoadedAt = 0; s.rows = []; s.total = 0; s.nextOffset = null; s.generation++; }
   const permitted = ['owner','admin','administrator'].includes(session.role);
   const currentId = () => new URL(location.href).searchParams.get('customer');
   const route = id => { const url = new URL(location.href); id ? url.searchParams.set('customer', id) : url.searchParams.delete('customer'); url.searchParams.delete('fromCase'); url.hash = 'customers'; history.pushState(null, '', url.pathname + url.search + url.hash); };
@@ -187,20 +189,26 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
   }
   async function loadList() {
     if (searchInput) searchInput.value = s.query;
-    const generation = ++s.generation; s.loading = true; s.error = ''; s.record = null; s.creating = false; renderList();
+    const key = `customers?status=${s.status}&search=${encodeURIComponent(s.query)}&offset=${s.offset}`;
+    const retained = canReuseList() && listKey === key && Date.now() - listLoadedAt < 60000;
+    const generation = ++s.generation; s.loading = !retained; s.refreshing = retained; s.error = ''; s.record = null; s.creating = false; renderList();
     try {
-      const result = await api(`customers?status=${s.status}&search=${encodeURIComponent(s.query)}&offset=${s.offset}`);
+      const result = await api(key);
       if (!s.active || generation !== s.generation) return;
-      s.rows = result.items; s.total = result.total; s.nextOffset = result.nextOffset;
-    } catch (e) { if (generation !== s.generation) return; s.error = e.message; }
+      s.rows = result.items; s.total = result.total; s.nextOffset = result.nextOffset; listKey = key; listLoadedAt = Date.now();
+    } catch (e) { if (generation !== s.generation) return; s.error = e.message; listKey = null; s.rows = []; s.total = 0; s.nextOffset = null; }
     if (!s.active || generation !== s.generation) return;
-    s.loading = false; renderList();
+    s.loading = false; s.refreshing = false; renderList();
   }
   function renderList() {
-    paint(`<header class="customer-page-head"><div><h1>Customers</h1><p>${s.loading ? 'กำลังโหลดข้อมูล…' : `${s.total} รายชื่อ`}</p></div>${button('new','เพิ่มลูกค้า','plus','',true)}</header>
+    const focused = root.contains(document.activeElement) ? document.activeElement.closest('[data-customer-action]') : null;
+    const focusKey = focused ? [focused.dataset.customerAction, focused.dataset.id || '', focused.dataset.value || ''] : null;
+    paint(`<header class="customer-page-head"><div><h1>Customers</h1><p>${s.loading ? 'กำลังโหลดข้อมูล…' : s.error ? 'โหลดรายชื่อไม่ได้' : `${s.total} รายชื่อ`}</p><span class="admin-refresh-status" role="status">${s.refreshing ? 'ข้อมูลล่าสุดที่โหลดไว้ · กำลังอัปเดต…' : ''}</span></div>${button('new','เพิ่มลูกค้า','plus','',true)}</header>
       <div class="customer-list-tools"><div class="customer-scope" role="group" aria-label="สถานะลูกค้า">${[['Active','Active'],['Archived','Archived'],['all','All']].map(([v,t]) => button('status',t,null,`data-value="${v}" aria-pressed="${s.status === v}"`)).join('')}</div><span class="customer-private">${icon('lock')}ข้อมูลส่วนตัว</span>${button('refresh','','refresh','aria-label="โหลดรายชื่อลูกค้าใหม่" title="โหลดข้อมูลใหม่"')}</div>
       <section class="customer-list" aria-label="รายชื่อลูกค้า" aria-busy="${s.loading}">${s.loading ? blank('กำลังโหลดรายชื่อลูกค้า','','users') : s.error ? blank('โหลดรายชื่อไม่ได้',s.error,'file',button('refresh','ลองอีกครั้ง','refresh')) : !s.rows.length ? blank(s.query ? 'ไม่พบลูกค้าที่ตรงกับคำค้น' : 'ยังไม่มีลูกค้าในรายการนี้',s.query ? 'ลองค้นด้วยชื่อ เบอร์โทร อีเมล หรือ LINE' : '', 'users', button('new','เพิ่มลูกค้า','plus','',true)) : `<table class="customer-table"><thead><tr><th>ลูกค้า</th><th>ช่องทางติดต่อ</th><th>Status</th><th>อัปเดตล่าสุด</th><th><span class="case-sr-only">เปิดข้อมูล</span></th></tr></thead><tbody>${s.rows.map(r => `<tr><td><button type="button" class="customer-person" data-customer-action="open" data-id="${r.id}"><span class="customer-avatar">${esc([...r.profile.firstName][0])}</span><span><strong>${esc(fullName(r.profile))}</strong><small>${esc(r.code)}</small></span></button></td><td><span>${esc(r.profile.phone || r.profile.email || r.profile.lineId)}</span>${r.profile.phone && r.profile.email ? `<small>${esc(r.profile.email)}</small>` : ''}</td><td>${badge(r.profile.status)}</td><td>${date(r.updatedAt)}</td><td>${button('open','','next',`data-id="${r.id}" aria-label="เปิดข้อมูล ${esc(fullName(r.profile))}" title="เปิดข้อมูลลูกค้า"`)}</td></tr>`).join('')}</tbody></table>`}</section>
       <footer class="customer-pagination"><span>${s.rows.length && !s.loading && !s.error ? `${s.offset + 1}–${s.offset + s.rows.length} จาก ${s.total} รายชื่อ` : ''}</span><div>${button('previous','ก่อนหน้า',null,s.offset === 0 || s.loading ? 'disabled' : '')}${button('next','ถัดไป',null,s.nextOffset === null || s.loading ? 'disabled' : '')}</div></footer>`);
+    root.querySelector('.customer-list').setAttribute('aria-busy', String(Boolean(s.loading || s.refreshing)));
+    if (focusKey) [...root.querySelectorAll('[data-customer-action]')].find(el => el.dataset.customerAction === focusKey[0] && (el.dataset.id || '') === focusKey[1] && (el.dataset.value || '') === focusKey[2])?.focus({ preventScroll: true });
   }
   async function loadRecord(id, { created = false } = {}) {
     const generation = ++s.generation; paint(blank('กำลังโหลดข้อมูลลูกค้า…','','user'));
@@ -501,10 +509,10 @@ export function createCustomersWorkspace({ root, api, session, searchInput, open
   root.addEventListener('click', action);
   window.addEventListener('beforeunload',e=>{if(s.active&&(s.dirty||dialogDirty||s.busy)){e.preventDefault();e.returnValue='';}});
   return {
-    get active(){return s.active;}, canLeave:guard,
+    get active(){return s.active;}, canLeave:guard, invalidateList,
     async mount(){if(s.active)return;s.active=true;if(!permitted){paint(blank('ไม่มีสิทธิ์เข้าถึงทะเบียนลูกค้า','บัญชีนี้ไม่ใช่เจ้าของระบบ','lock'));return;}await this.syncLocation();},
     async syncLocation(){if(!await guard()){const url=new URL(location.href);s.record?url.searchParams.set('customer',s.record.id):url.searchParams.delete('customer');url.hash='customers';history.replaceState(null,'',url);return;}const params=new URL(location.href).searchParams;if(params.get('fromCase'))await create(params.get('fromCase'));else if(currentId())await loadRecord(currentId());else await loadList();},
-    async leave(){if(!await guard())return false;s.active=false;s.generation++;s.record=null;s.rows=[];closeDialog();clearTimeout(searchTimer);root.classList.remove('customers-screen');return true;},
+    async leave(){if(!await guard())return false;s.active=false;s.generation++;s.record=null;closeDialog();clearTimeout(searchTimer);root.classList.remove('customers-screen');return true;},
     setSearch(value){if(!s.active)return;clearTimeout(searchTimer);searchTimer=setTimeout(async()=>{if(!s.active)return;if(!await guard()){if(searchInput)searchInput.value=s.query;return;}s.query=value.trim();s.offset=0;route(null);await loadList();},250);}
   };
 }

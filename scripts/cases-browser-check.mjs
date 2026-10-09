@@ -154,7 +154,10 @@ try {
   await page.goto(baseUrl + '/admin#operations');
   await initialSummary.started;
   const searched = records.find(record => record.status === 'new');
+  const searchedResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/ops/cases' && new URL(response.url()).searchParams.get('search') === searched.caseNumber);
   await page.locator('#globalSearch').fill(searched.caseNumber);
+  await (await searchedResponse).finished();
+  await page.waitForFunction(() => document.querySelectorAll('.cases-table tbody tr').length === 1);
   await page.locator(`.cases-table [data-case-id="${searched.id}"]`).waitFor();
   assert.equal(await page.locator('.cases-table tbody tr').count(), 1, 'Search completes while global summary is delayed.');
   assert.deepEqual(await page.locator('.case-metric strong').allTextContents(), ['—', '—', '—', '—']);

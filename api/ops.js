@@ -12,28 +12,38 @@ let environmentModulePromise = null;
 module.exports = async function opsApi(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
+  const started = performance.now(), timings = [];
+  const measure = async (name, operation) => {
+    const start = performance.now();
+    try { return await operation(); }
+    finally { timings.push(`${name};dur=${(performance.now() - start).toFixed(1)}`); }
+  };
+  const respond = (status, payload) => {
+    res.setHeader('Server-Timing', [...timings, `total;dur=${(performance.now() - started).toFixed(1)}`].join(', '));
+    return send(res, status, payload);
+  };
 
   try {
     const method = String(req.method || "GET").toUpperCase();
     const path = requestPath(req);
     const environment = await resolveRequestEnvironment(req);
-    const actor = await authorize(req, "view_records", environment);
+    const actor = await authorize(req, "view_records", environment, measure);
     actor.environment = environment;
 
     if (path[0] === 'customers') {
-      return send(res, method === 'POST' && path.length === 1 ? 201 : 200, await require('../server/customers-service.cjs').handle(req, actor, path));
+      return respond(method === 'POST' && path.length === 1 ? 201 : 200, await measure('data', () => require('../server/customers-service.cjs').handle(req, actor, path)));
     }
 
     // Authentication and environment checks are shared; Cases own their owner-only gate.
     if (isCasesResource(path)) {
-      return send(res, method === "POST" && path[0] === "cases" ? 201 : 200, await require('../server/cases-service.cjs').handle(req, actor, path));
+      return respond(method === "POST" && path[0] === "cases" ? 201 : 200, await measure('data', () => require('../server/cases-service.cjs').handle(req, actor, path)));
     }
-    const result = await legacyOperations.handle(req, actor, path, method);
-    return send(res, result.status, result.body);
+    const result = await measure('data', () => legacyOperations.handle(req, actor, path, method));
+    return respond(result.status, result.body);
   } catch (error) {
     const status = Number(error.status || 500);
     if (status >= 500) reportFailure('ops', error);
-    return send(res, status, {
+    return respond(status, {
       error: error.code || (status === 500 ? "server_error" : "request_error"),
       code: error.code || "server_error",
       message: status === 500 ? "Operations API failed." : error.message,
@@ -67,15 +77,15 @@ function loadEnvironmentModule() {
   return environmentModulePromise;
 }
 
-async function authorize(req, permission, environment) {
+async function authorize(req, permission, environment, measure) {
   const token = bearerToken(req);
   if (!token) throw httpError(401, "unauthorized", "Missing Firebase ID token.");
 
-  const account = await identityLookup(token);
+  const account = await measure('identity', () => identityLookup(token));
   const uid = account && account.localId;
   if (!uid) throw httpError(401, "unauthorized", "Firebase ID token is invalid.");
 
-  const adminDoc = await firestoreGet(`admins/${encodeURIComponent(uid)}`, token).catch((error) => {
+  const adminDoc = await measure('allowlist', () => firestoreGet(`admins/${encodeURIComponent(uid)}`, token)).catch((error) => {
     if (error.status === 404 || error.status === 403) return null;
     throw error;
   });
