@@ -5,11 +5,15 @@ const CASES_RESOURCES = new Set(['cases', 'notifications', 'notification-prefere
 const isCasesResource = path => CASES_RESOURCES.has(path[0]);
 
 // Routing depends on service operations, never the legacy REST adapter.
-function createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences, testEmail }) {
+function createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences, testEmail, addEvent, savedViews, customerMatches, customerContext }) {
   return async function handle(req, actor, path) {
     if (actor.role !== 'owner') throw error(403, 'forbidden', 'Cases are available to the verified owner.');
     const method = req.method || 'GET', params = new URL(req.url, 'https://covermate.local').searchParams, now = new Date().toISOString();
     if (path[0] === 'cases') {
+      if (path[1] === 'views' && path.length === 2 && ['GET', 'PUT'].includes(method)) return savedViews(req, actor);
+      if (path[1] === 'customer-matches' && path.length === 2 && method === 'GET') return customerMatches(actor, params);
+      if (path[1] === 'customer-context' && path.length === 3 && method === 'GET') return customerContext(actor, path[2]);
+      if (path[2] === 'activities' && path.length === 3 && method === 'POST') return addEvent(req, actor, path[1]);
       if (method === 'GET' && path[1] === 'summary') return C.summary(await recordsFor(actor), now);
       if (method === 'GET' && !path[1]) {
         const records = await recordsFor(actor);

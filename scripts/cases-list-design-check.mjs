@@ -159,7 +159,7 @@ try {
   await page.locator('.case-page-head [data-case-action="new"]').click();await page.locator('[name="contact.name"]').fill('Unsaved new case');
   await page.getByRole('button',{name:'ปิดหน้าต่าง',exact:true}).click();await page.locator('[data-case-action="discard"]').click();
   await page.locator('.case-panel').waitFor({state:'detached'});
-  await page.setViewportSize({width:390,height:844});assert.match(await page.locator('.case-card a[href^="tel:"]').first().getAttribute('href'),/^tel:\+?[\d]+$/);await page.locator('.case-card-open').first().click();await page.locator('[name="workingNote"]').waitFor();
+  await page.setViewportSize({width:390,height:844});assert.match(await page.locator('.case-card a[href^="tel:"]').first().getAttribute('href'),/^tel:\+?[\d]+$/);await page.locator('.case-card-open').first().click();await page.locator('[data-case-panel=full]').waitFor();await page.locator('[data-case-action=quick-edit]').first().click();await page.locator('[name="workingNote"]').waitFor();
   await page.getByRole('button',{name:'ปิดหน้าต่าง',exact:true}).click();await page.locator('.case-panel').waitFor({state:'detached'});
   checks.push('Desktop case row/mobile case card open existing detail;1700px docked detail inset prevents overlap; new-case form opens; unsaved detail keep/discard and new-case discard work without writes');
   console.log('Detail/create passed; checking loading and errors.');

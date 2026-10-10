@@ -1,5 +1,10 @@
 # Customer Registry
 
+October 11 local extension: [Cases Workbench](ADMIN_CASES_WORKBENCH.md) adds
+linked activity references to Service History and direct Documents/History
+navigation. Activities are not copied into standalone service records. Existing
+consent, private-storage and billing boundaries are unchanged.
+
 Implementation prepared 2026-10-07, release candidate 2026-10-08. Production
 data, billing, cloud buckets and secrets are not changed by deployment. See
 [release verification](RELEASE_CUSTOMERS_20261008.md) for gates and limitations.

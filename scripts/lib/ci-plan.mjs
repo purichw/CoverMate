@@ -1,6 +1,7 @@
 // One inventory for local full checks and isolated GitHub Actions suites.
 // Keep commands sequential inside a suite: browser fixtures can write shared files.
 export const buildCommands = [
+  ["node", ["scripts/build-cases.mjs"]],
   ["npm", ["run", "build:customers"]],
   [
     "node",
@@ -47,6 +48,7 @@ export const buildCommands = [
 export const checkGroups = {
   preflight: [
     ["npm",["run","check:performance"]],
+    ["node",["scripts/cases-workflow-check.mjs"]],
     ["node",["scripts/validation-boundaries-check.mjs"]],
     ["npm",["run","check:customers"]],
     ["node",["scripts/smoke-evidence-check.mjs"]],

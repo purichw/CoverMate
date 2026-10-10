@@ -4,6 +4,7 @@ const { error, readBody } = require('./http.cjs');
 const C = require('./cases-contract.cjs');
 const vault = require('./customer-vault.cjs');
 const documents = require('./customer-documents.cjs');
+const caseWork = require('./cases-work-service.cjs');
 const { contactKeys } = require('../field-validation.mjs');
 const model = import('../customer-model.mjs');
 const safeId = id => { if (!/^[\w-]{1,128}$/.test(id || '')) throw error(404, 'not_found', 'Record not found.'); return id; };
@@ -63,7 +64,7 @@ async function handle(req, actor, path) {
         consents: [{ ...consent, id: randomUUID(), recordedAt: now, recordedBy: actor.uid }], fingerprint };
       commitContacts(); tx.create(ref, record);
       const a = event(actor, 'customer_created', now); tx.create(ref.collection('activities').doc(a.id), a);
-      if (sourceRef) tx.update(sourceRef, { customerId: id });
+      if (sourceRef) { const record = C.adaptCase(source.id, source.data()); tx.update(sourceRef, { customerId: id, caseRecord: { ...record, version:record.version+1, updatedAt:now },updatedAt:new Date(now) }); }
       return { id };
     });
   }
@@ -77,7 +78,9 @@ async function handle(req, actor, path) {
       rows('policies'), rows('services'), rows('documents'), rows('activities')
     ]);
     const identity = identitySnapshot.data(), linked = linkedSnapshot.docs.map(d => C.adaptCase(d.id, d.data()));
+    const caseActivity = (await Promise.all(linkedSnapshot.docs.map(async d => (await caseWork.eventsFor(d.ref)).events.map(a => ({ ...a, caseNumber: C.adaptCase(d.id, d.data()).caseNumber }))))).flat().sort((a,b) => b.occurredAt.localeCompare(a.occurredAt));
     return { ...summary(r), profile: r.profile, consents: r.consents, policies, services,
+      caseActivity,
       documents: documentRows.map(({ object, ...metadata }) => metadata), activities: activities.sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,100),
       cases: linked.map(c => ({ id: c.id, number: c.caseNumber, subject: c.enquiryTopic, status: c.status, followUp: c.followUp })),
       identity: identity ? { type: identity.type, suffix: identity.suffix, expiresAt: identity.expiresAt } : null, vaultAvailable: vault.available(), documentStorageAvailable: documents.available(actor) };
@@ -156,11 +159,13 @@ async function handle(req, actor, path) {
       const target = cases.doc(safeId(body.caseId)), source = await tx.get(target);
       if (!source.exists) throw error(404, 'not_found', 'Case not found.');
       if (source.data().customerId && source.data().customerId !== r.id) throw error(409, 'already_linked', 'Case already linked.');
-      tx.update(target, { customerId: r.id }); audit.action = 'case_linked'; targetId = source.id;
+      const record = C.adaptCase(source.id, source.data());
+      tx.update(target, { customerId: r.id, caseRecord: { ...record,version:record.version+1,updatedAt:now },updatedAt:new Date(now) }); audit.action = 'case_linked'; targetId = source.id;
     } else if (path[2] === 'cases' && path.length === 3 && method === 'POST') {
       M.only(body, ['expectedVersion', 'record']); requireConsent('profile');
       targetId = randomUUID();
       const record = C.createCase(body.record, { id: targetId, now }), target = cases.doc(targetId);
+      await caseWork.validateLink(tx, actor, r.id, record.policyId);
       tx.create(target, { caseRecord: record, customerId: r.id, createdAt: new Date(now), updatedAt: new Date(now), name: record.contact.name });
       tx.create(target.collection('caseActivities').doc('created'), { id: 'created', caseId: targetId, createdAt: now, actorId: actor.uid, type: 'created', fieldsChanged: [], statusBefore: null, statusAfter: record.status, noteSnapshot: null });
       audit.action = 'case_created';

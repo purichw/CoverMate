@@ -205,8 +205,8 @@ try {
   await page.getByRole('button', { name: 'โหลดข้อมูลที่บันทึกไว้อีกครั้ง' }).click(); await page.getByRole('button', { name: 'ทิ้งการแก้ไข', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[name="workingNote"]')?.value === 'Saved elsewhere');
   await page.locator('[name="workingNote"]').fill('Contacted and followed up');
-  await page.locator('[name="status"]').selectOption('contacted_reachable'); await page.getByRole('button', { name: 'Save' }).click();
-  await page.waitForFunction(() => document.querySelector('.case-detail-meta [data-status]')?.dataset.status === 'contacted_reachable');
+  await page.locator('[name="status"]').selectOption('waiting_customer'); await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForFunction(() => document.querySelector('.case-detail-meta [data-status]')?.dataset.status === 'waiting_customer');
   await page.waitForFunction(() => !document.querySelector('.case-toast'), { timeout: 7000 });
   await page.screenshot({ path: `${output}/desktop-detail-1440.png`, fullPage: false, animations: 'disabled' });
   await page.setViewportSize({ width: 1680, height: 1050 });
@@ -230,7 +230,7 @@ try {
   assert.match(await page.locator('.case-notification p').first().textContent(), /CM-2026-001 · พร้อมให้ตรวจสอบ/);
   await checkEmailPreferences();
   await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();
-  await page.getByRole('button', { name: '+ เพิ่มเคส', exact: true }).click();
+  await page.getByRole('button', { name: 'เพิ่มเคส', exact: true }).click();
   await page.locator('[name="contact.name"]').fill('Manual test'); await page.locator('[name="contact.phone"]').fill('0800000099'); await page.locator('[name="enquiryTopic"]').fill('Manual motor enquiry');
   await page.getByRole('button', { name: 'Save' }).click(); await page.getByText('เพิ่มเคสเอง', { exact: false }).first().waitFor();
   await page.getByRole('button', { name: 'ปิดหน้าต่าง' }).click();

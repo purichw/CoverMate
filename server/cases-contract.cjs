@@ -1,11 +1,12 @@
 const { createHash } = require('node:crypto');
 const { error } = require('./http.cjs');
 const { validContactEmail, validPhone, validLineId } = require('../field-validation.mjs');
+const W = require('../case-workflow.mjs');
 
-const STATUSES = ['new', 'in_progress', 'contacted_reachable', 'contacted_no_answer', 'closed_completed', 'closed_declined'];
+const STATUSES = [...Object.keys(W.WORK_STATUSES), ...Object.keys(W.LEGACY_STATUSES)];
 const INTERESTS = ['motor', 'life', 'health', 'accident', 'savings', 'unsure', 'other'];
 const LEGACY = { new: 'new', contacting: 'in_progress', contacted: 'contacted_reachable', consultation: 'in_progress', quotation: 'in_progress', considering: 'in_progress', later: 'in_progress', converted: 'closed_completed', notinterested: 'closed_declined', lost: 'closed_declined' };
-const closed = status => status.startsWith('closed_');
+const closed = W.isClosed;
 const hash = value => createHash('sha256').update(typeof value === 'string' ? value : stable(value)).digest('hex');
 const stable = value => JSON.stringify(value, (_, item) => item && typeof item === 'object' && !Array.isArray(item) ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
 const iso = value => { const ms = value?.toMillis ? value.toMillis() : typeof value === 'object' && value?.seconds ? value.seconds * 1000 : Date.parse(value); return Number.isFinite(ms) ? new Date(ms).toISOString() : null; };
@@ -46,7 +47,7 @@ function followUp(value) {
   return { dueAt: iso(value.dueAt), reminderEnabled: value.reminderEnabled };
 }
 function fields(value, manual = false) {
-  object(value, ['contact', 'interestType', 'enquiryTopic', 'workingNote', 'status', 'followUp'], 'changes', manual ? ['contact', 'interestType', 'enquiryTopic'] : []);
+  object(value, ['contact', 'interestType', 'enquiryTopic', 'workingNote', 'status', 'followUp', 'caseType', 'nextAction', 'closureReason', 'closureNote', 'checklist', 'policyId'], 'changes', manual ? ['contact', 'interestType', 'enquiryTopic'] : []);
   if (!Object.keys(value).length) fail('changes', 'No changes supplied.');
   const result = {};
   if ('contact' in value) result.contact = contact(value.contact);
@@ -55,16 +56,29 @@ function fields(value, manual = false) {
   if ('workingNote' in value) result.workingNote = text(value.workingNote, 2000, 'workingNote');
   if ('status' in value) result.status = choice(value.status, STATUSES, 'status');
   if ('followUp' in value) result.followUp = followUp(value.followUp);
+  if ('caseType' in value) result.caseType = choice(value.caseType, Object.keys(W.CASE_TYPES), 'caseType');
+  for (const [key, max] of Object.entries({ nextAction: 300, closureNote: 1000 })) if (key in value) result[key] = text(value[key], max, key);
+  if ('closureReason' in value) result.closureReason = value.closureReason === null ? null : choice(value.closureReason, Object.keys(W.CLOSE_REASONS), 'closureReason');
+  if ('policyId' in value) { if (value.policyId !== null && (typeof value.policyId !== 'string' || !/^[\w-]{1,128}$/.test(value.policyId))) fail('policyId', 'Invalid policy.'); result.policyId = value.policyId; }
+  if ('checklist' in value) {
+    if (!Array.isArray(value.checklist) || value.checklist.length > 30) fail('checklist', 'Use up to 30 checklist items.');
+    result.checklist = value.checklist.map(item => { object(item, ['id', 'label', 'done'], 'checklist', ['id', 'label', 'done']); if (typeof item.id !== 'string' || !/^[\w-]{1,64}$/.test(item.id) || typeof item.done !== 'boolean') fail('checklist', 'Invalid checklist item.'); return { id: item.id, label: text(item.label, 200, 'checklist', 1), done: item.done }; });
+    if (new Set(result.checklist.map(item => item.id)).size !== result.checklist.length) fail('checklist', 'Duplicate checklist items.');
+  }
   return result;
 }
 function createCase(input, { id, now, source = 'manual', originalSubmission = null, privacyReceipt = null }) {
   const value = fields(input, true);
   const status = value.status || 'new';
+  if (status === 'closed' && !value.closureReason) fail('closureReason', 'Choose a closure reason.');
+  if (status === 'closed' && value.closureReason === 'other' && !value.closureNote) fail('closureNote', 'Describe the closure reason.');
   if (closed(status) && value.followUp) fail('followUp', 'Closed cases cannot have a follow-up.');
   if (value.followUp && Date.parse(value.followUp.dueAt) <= Date.parse(now)) fail('dueAt', 'Choose a future follow-up.');
   return { id, caseNumber: `CM-${id.slice(0, 10).toUpperCase()}`, source, submittedAt: now, updatedAt: now, version: 1,
     contact: value.contact, interestType: value.interestType, enquiryTopic: value.enquiryTopic, originalSubmission, privacyReceipt,
-    workingNote: value.workingNote || '', status, followUp: value.followUp || null, followUpRevision: value.followUp ? 1 : 0, closedAt: closed(status) ? now : null };
+    workingNote: value.workingNote || '', status, followUp: value.followUp || null, followUpRevision: value.followUp ? 1 : 0, closedAt: closed(status) ? now : null,
+    caseType: value.caseType || 'enquiry', nextAction: value.nextAction || '', checklist: value.checklist || [], policyId: value.policyId || null,
+    closureReason: closed(status) ? value.closureReason || null : null, closureNote: closed(status) ? value.closureNote || '' : '' };
 }
 function patchCase(current, input, now) {
   object(input, ['expectedVersion', 'changes', 'reopen'], 'body', ['expectedVersion', 'changes']);
@@ -77,15 +91,17 @@ function patchCase(current, input, now) {
   if (input.reopen && (!closed(current.status) || closed(nextStatus))) fail('reopen', 'Select an open status when reopening.');
   if (closed(nextStatus) && changes.followUp) fail('followUp', 'Closing a case clears its follow-up.');
   const next = { ...current, ...changes };
+  if (nextStatus === 'closed' && !next.closureReason) fail('closureReason', 'Choose a closure reason.');
+  if (nextStatus === 'closed' && next.closureReason === 'other' && !next.closureNote) fail('closureNote', 'Describe the closure reason.');
   if (closed(nextStatus)) { next.closedAt = current.closedAt || (closed(current.status) ? null : now); next.followUp = null; }
-  else next.closedAt = null;
+  else { next.closedAt = null; if (closed(current.status) || next.closureReason || next.closureNote) { next.closureReason = null; next.closureNote = ''; } }
   const scheduleChanged = stable(current.followUp) !== stable(next.followUp);
   if (scheduleChanged && next.followUp && Date.parse(next.followUp.dueAt) <= Date.parse(now)) {
     const onlyOff = current.followUp?.dueAt === next.followUp.dueAt && !next.followUp.reminderEnabled;
     if (!onlyOff) fail('dueAt', 'Choose a future time before scheduling or enabling a reminder.');
   }
   next.followUpRevision = current.followUpRevision + Number(scheduleChanged);
-  const changed = ['contact', 'interestType', 'enquiryTopic', 'workingNote', 'status', 'followUp'].filter(key => stable(current[key]) !== stable(next[key]));
+  const changed = ['contact', 'interestType', 'enquiryTopic', 'workingNote', 'status', 'followUp', 'caseType', 'nextAction', 'closureReason', 'closureNote', 'checklist', 'policyId'].filter(key => stable(current[key]) !== stable(next[key]));
   if (!changed.length) return { record: current, changed, scheduleChanged: false };
   next.version++; next.updatedAt = now;
   return { record: next, changed, scheduleChanged };
@@ -122,27 +138,29 @@ const localDay = value => new Date(Date.parse(value) + 7 * 3600000).toISOString(
 function summary(records, now) {
   const open = records.filter(r => !closed(r.status)), today = localDay(now);
   return { asOf: now, timezone: 'Asia/Bangkok', total: records.length, open: open.length, closed: records.length - open.length,
-    new: open.filter(r => r.status === 'new').length, noAnswer: open.filter(r => r.status === 'contacted_no_answer').length,
+    new: open.filter(r => r.status === 'new').length, noAnswer: open.filter(r => r.lastContactOutcome === 'no_answer' || !r.lastContactOutcome && r.status === 'contacted_no_answer').length,
     followUpsDue: open.filter(r => r.followUp && Date.parse(r.followUp.dueAt) <= Date.parse(now)).length,
     overdue: open.filter(r => r.followUp && localDay(r.followUp.dueAt) < today).length,
-    closedThisMonth: records.filter(r => closed(r.status) && r.closedAt && localDay(r.closedAt).slice(0, 7) === today.slice(0, 7)).length };
+    closedThisMonth: records.filter(r => closed(r.status) && r.closedAt && localDay(r.closedAt).slice(0, 7) === today.slice(0, 7)).length, workflow: W.workflowReport(records, now) };
 }
 function listCases(records, params, now) {
   const scope = choice(params.get('scope') || 'open', ['open', 'all', 'closed'], 'scope');
   const status = params.get('status') || '', due = choice(params.get('followUp') || 'any', ['any', 'due', 'today', 'overdue'], 'followUp');
   if (status) choice(status, STATUSES, 'status');
   const q = (params.get('search') || '').trim().toLowerCase().slice(0, 300), phone = q.replace(/[\s()+-]/g, '');
-  const month = params.get('closedMonth') === 'true', today = localDay(now);
-  let rows = records.filter(r => (scope === 'all' || closed(r.status) === (scope === 'closed')) && (!status || r.status === status)
+  const month = choice(params.get('closedMonth') || 'false', ['true', 'false'], 'closedMonth') === 'true', today = localDay(now);
+  const queue = params.get('queue') || ''; if (queue) choice(queue, Object.keys(W.QUEUES), 'queue');
+  const caseType = params.get('caseType') || ''; if (caseType) choice(caseType, Object.keys(W.CASE_TYPES), 'caseType');
+  let rows = records.filter(r => W.inQueue(r, queue, now) && (!caseType || (r.caseType || 'enquiry') === caseType) && (scope === 'all' || closed(r.status) === (scope === 'closed')) && (!status || (status === 'contacted_no_answer' ? r.lastContactOutcome === 'no_answer' || !r.lastContactOutcome && r.status === status : r.status === status) || status === 'in_progress' && W.workflowStatus(r.status) === status || status === 'closed' && closed(r.status))
     && (!month || closed(r.status) && r.closedAt && localDay(r.closedAt).slice(0, 7) === today.slice(0, 7))
-    && (!q || [r.caseNumber, ...Object.values(r.contact)].filter(Boolean).some(v => String(v).toLowerCase().includes(q)) || phone && r.contact.phone?.replace(/[\s()+-]/g, '').includes(phone))
+    && (!q || [r.caseNumber, r.enquiryTopic, r.nextAction, ...Object.values(r.contact)].filter(Boolean).some(v => String(v).toLowerCase().includes(q)) || phone && r.contact.phone?.replace(/[\s()+-]/g, '').includes(phone))
     && (due === 'any' || !closed(r.status) && r.followUp && (due === 'due' ? Date.parse(r.followUp.dueAt) <= Date.parse(now) : due === 'today' ? localDay(r.followUp.dueAt) === today : localDay(r.followUp.dueAt) < today)));
   const sort = params.get('sort') || (['due', 'overdue'].includes(due) ? 'follow_up' : scope === 'closed' ? 'closed' : 'newest');
   choice(sort, ['newest', 'closed', 'follow_up'], 'sort');
   const order = r => sort === 'follow_up' ? iso(r.followUp?.dueAt) || '9999' : sort === 'closed' ? iso(r.closedAt) || '' : iso(r.submittedAt);
   const compare = (a, b) => (order(a).localeCompare(order(b)) * (sort === 'follow_up' ? 1 : -1)) || a.id.localeCompare(b.id);
   rows.sort(compare); const filteredTotal = rows.length;
-  const bound = hash({ scope, status, due, q, month, sort });
+  const bound = hash({ scope, status, due, q, month, sort, queue, caseType });
   if (params.get('cursor')) {
     let cursor; try { cursor = JSON.parse(Buffer.from(params.get('cursor'), 'base64url').toString()); } catch { fail('cursor', 'Invalid cursor.'); }
     if (cursor.bound !== bound || typeof cursor.id !== 'string' || typeof cursor.order !== 'string') fail('cursor', 'Cursor does not match these filters.');

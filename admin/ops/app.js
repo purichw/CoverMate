@@ -120,9 +120,9 @@ async function init() {
   customersWorkspace = createCustomersWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, canReuseList, openCase: async id => { await setModule('operations'); if (state.module === 'operations') await casesWorkspace.openCase(id); } });
   articlesWorkspace = createArticlesWorkspace({ root: screen, load: loadArticleCatalog, loadArticle: loadArticleForEditor, repository:createCloudArticleRepository(), session: {...state.session,role:state.sessionRole}, icon: iconSvg, searchInput: globalSearch, loginUrl: adminRedirect(ADMIN_LOGIN_PATH) });
   casesWorkspace = createCasesWorkspace({ root: screen, api: apiFetch, session: { ...state.session, role: state.sessionRole }, searchInput: globalSearch, navigate: setModule, canReuseList,
-    openCustomer: async (id, caseId) => {
+    openCustomer: async (id, caseId, tab = 'profile') => {
       if (!(await casesWorkspace.leave())) return;
-      const url = new URL(location.href); url.searchParams.delete('case'); url.searchParams.delete('followUp');
+      const url = new URL(location.href); url.searchParams.delete('case'); url.searchParams.delete('followUp'); url.searchParams.delete('caseView'); url.searchParams.set('customerTab', tab);
       if (id) url.searchParams.set('customer', id); else url.searchParams.set('fromCase', caseId);
       url.hash = 'customers'; history.pushState(null, '', url.pathname + url.search + url.hash);
       await setModule('customers', { replace: true });
@@ -325,7 +325,7 @@ async function apiFetch(path, options = {}) {
     error.payload = payload;
     throw error;
   }
-  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method) && /^(cases|customers)(\/|$|\?)/.test(path)) {
+  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method) && /^(cases|customers)(\/|$|\?)/.test(path) && !/^cases\/views(?:\?|$)/.test(path)) {
     casesWorkspace?.invalidateList();
     customersWorkspace?.invalidateList();
   }
@@ -1281,7 +1281,7 @@ function normalizeRetiredSettingsUrl() {
 function routeUrl() {
   const next = new URL(adminPortalUrl(state.module, state.operationsTab), location.origin);
   const current = new URLSearchParams(location.search);
-  for (const key of state.module === 'operations' ? ['cm_env', 'case', 'followUp'] : state.module === 'customers' ? ['cm_env', 'customer', 'fromCase'] : ['cm_env']) {
+  for (const key of state.module === 'operations' ? ['cm_env', 'case', 'followUp', 'caseView'] : state.module === 'customers' ? ['cm_env', 'customer', 'fromCase', 'customerTab'] : ['cm_env']) {
     if (current.has(key)) next.searchParams.set(key, current.get(key));
   }
   return next.pathname + next.search + next.hash;

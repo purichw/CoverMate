@@ -1,6 +1,8 @@
-const STATUS = { new: 'ใหม่', in_progress: 'กำลังดำเนินการ', contacted_reachable: 'ติดต่อได้แล้ว', contacted_no_answer: 'ยังติดต่อไม่ได้', closed_completed: 'ปิดเคส · ดำเนินการแล้ว', closed_declined: 'ปิดเคส · ไม่ดำเนินการต่อ' };
+import * as W from '../../case-workflow.mjs';
+import { workIcon, workField, workflowFields, closureFields, checklistFields, customerPicker, fullCaseMarkup, timelineMarkup, reportMarkup, savedViewsMarkup } from '../../assets/admin-case-work.js';
+const STATUS = { ...W.WORK_STATUSES, ...W.LEGACY_STATUSES };
 const INTERESTS = ['motor', 'life', 'health', 'accident', 'savings', 'unsure', 'other'];
-const closed = value => value.startsWith('closed_');
+const closed = W.isClosed;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const date = value => value ? new Intl.DateTimeFormat('th-TH-u-ca-gregory', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }).format(new Date(value)) : '—';
 const title = value => ({ motor: 'ประกันรถยนต์', life: 'ประกันชีวิต', health: 'ประกันสุขภาพ', accident: 'ประกันอุบัติเหตุ', savings: 'ประกันออมทรัพย์', unsure: 'ยังไม่แน่ใจ', other: 'อื่น ๆ', open: 'ยังไม่ปิด', all: 'ทั้งหมด', closed: 'ปิดแล้ว', any: 'ทั้งหมด', due: 'ถึงกำหนดแล้ว', today: 'วันนี้', overdue: 'เลยกำหนด' }[value] || value);
@@ -17,7 +19,7 @@ Object.assign(paths, {
   sprout: '<path d="M12 22V12M12 16C5 16 3 12 3 7c6 0 9 3 9 9Zm0-4c0-6 3-9 9-9 0 6-3 9-9 9Z"/>'
 });
 const btn = (action, label, extra = '', cls = '') => `<button type="button" class="case-button ${cls}" data-case-action="${action}" ${extra}>${label}</button>`;
-const editable = r => ({ contact: structuredClone(r.contact), interestType: r.interestType, enquiryTopic: r.enquiryTopic, workingNote: r.workingNote, status: r.status, followUp: structuredClone(r.followUp) });
+const editable = r => ({ contact: structuredClone(r.contact), interestType: r.interestType, enquiryTopic: r.enquiryTopic, workingNote: r.workingNote, status: r.status, followUp: structuredClone(r.followUp), caseType: r.caseType || 'enquiry', nextAction: r.nextAction || '', closureReason: r.closureReason || null, closureNote: r.closureNote || '', checklist: structuredClone(r.checklist || []), policyId: r.policyId || null });
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // Translate system-generated notice copy without changing stored/customer text.
 const notificationTitle = n => ({ new_case: 'มีเคสใหม่จากเว็บไซต์', follow_up_due: 'ถึงกำหนดติดตามแล้ว' }[n.type] || n.title);
@@ -34,15 +36,18 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   let returnFocus, guardResolve, searchTimer, pollTimer, requestKey, requestSignature, testEmailKey, testEmailSending = false, testEmailMessage = '', testEmailFailed = false, panelGeneration = 0, summaryGeneration = 0;
   let locationKey = null, linkedCaseId = null, configuredView = false;
   let listKey = null, listLoadedAt = 0;
+  Object.assign(s, { queue: '', caseType: '', customer: null, selectedCustomer: null, events: [], nextEventOffset: null, activityDraft: null, returnToFull: false });
+  let customerTimer, customerGeneration = 0, workKey, workSignature, views = { version: 0, items: [] }, viewKey, viewSignature, pendingView, reportLoading = false, reportError = '';
   function invalidateList() { listKey = null; listLoadedAt = 0; s.rows = []; s.list = null; s.summary = null; s.generation++; summaryGeneration++; }
   const caseLocationKey = () => {
     const params = new URLSearchParams(location.search);
-    return JSON.stringify([params.get('case'), params.get('followUp') || 'any']);
+    return JSON.stringify([params.get('case'), params.get('followUp') || 'any', params.get('caseView')]);
   };
   function writeCaseLocation({ replace = false } = {}) {
     if (!s.active) return;
     const url = new URL(location.href);
     if (linkedCaseId === null) url.searchParams.delete('case'); else url.searchParams.set('case', linkedCaseId);
+    if (linkedCaseId && s.panel === 'full') url.searchParams.set('caseView', 'full'); else url.searchParams.delete('caseView');
     if (s.followUp === 'any') url.searchParams.delete('followUp'); else url.searchParams.set('followUp', s.followUp);
     if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search + url.hash);
     locationKey = caseLocationKey();
@@ -60,7 +65,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       Object.assign(s, { followUp, ...(followUp !== 'any' ? { scope: 'open', status: '', closedMonth: false } : {}), sort: '', cursor: '', pages: [], expandedFilters: followUp !== 'any' });
       if (!initial) load({ listOnly: true });
     }
-    if (linkedCaseId !== null) await openCase(linkedCaseId, { skipGuard: true, fromLocation: true });
+    if (linkedCaseId !== null) await openCase(linkedCaseId, { skipGuard: true, fromLocation: true, full: params.get('caseView') === 'full' });
     else if (s.panel) await closePanel({ preserveLocation: true });
   }
   async function loadCapabilities() {
@@ -83,7 +88,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     visualViewport.addEventListener('resize', keyboardLayout);
     visualViewport.addEventListener('scroll', keyboardLayout);
   }
-  const isDirty = () => s.draft && (!s.record || !same(s.draft, editable(s.record)));
+  const isDirty = () => Boolean(s.activityDraft?.notes?.trim()) || s.draft && (!s.record || !same(s.draft, editable(s.record)) || s.selectedCustomer?.id && s.selectedCustomer.id !== s.customerId);
   function announce(message) { const node = document.getElementById('toastRoot'); node.innerHTML = `<div class="case-toast">${esc(message)}</div>`; clearTimeout(node._caseTimer); node._caseTimer = setTimeout(() => { node.textContent = ''; }, 5000); }
   function syncButtons() { document.querySelectorAll('[data-case-action="notifications"]').forEach(b => { b.setAttribute('aria-label', `การแจ้งเตือน${s.unreadCount ? `, ยังไม่อ่าน ${s.unreadCount} รายการ` : ''}`); b.innerHTML = icon('bell') + (s.unreadCount ? `<span class="case-unread">${s.unreadCount}</span>` : ''); }); }
   async function load({ listOnly = false } = {}) {
@@ -97,6 +102,8 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     if (s.sort) params.set('sort', s.sort);
     if (s.cursor) params.set('cursor', s.cursor);
     if (s.closedMonth) params.set('closedMonth', 'true');
+    if (s.queue) params.set('queue', s.queue);
+    if (s.caseType) params.set('caseType', s.caseType);
     const key = params.toString();
     const retained = canReuseList() && listKey === key && Date.now() - listLoadedAt < 60000;
     s.loading = !retained; s.refreshing = retained; s.error = ''; render();
@@ -160,11 +167,12 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     const scopeButtons = ['open', 'all', 'closed'].map(scope => btn('scope', title(scope) + (s.summary ? ' <span>(' + s.summary[scope === 'all' ? 'total' : scope] + ')</span>' : ''), 'data-scope="' + scope + '" aria-pressed="' + (s.scope === scope) + '"', s.scope === scope ? 'selected' : '')).join('');
     const sort = '<label class="case-filter-select case-sort-filter"><span class="case-sr-only">เรียงเคส</span><select data-case-filter="sort"><option value="" ' + (!s.sort ? 'selected' : '') + '>' + (['due', 'overdue'].includes(s.followUp) ? 'กำหนดติดตามใกล้สุด' : s.scope === 'closed' ? 'ปิดล่าสุดก่อน' : 'ใหม่สุดก่อน') + '</option><option value="newest" ' + (s.sort === 'newest' ? 'selected' : '') + '>ใหม่สุดก่อน</option><option value="follow_up" ' + (s.sort === 'follow_up' ? 'selected' : '') + '>กำหนดติดตามใกล้สุด</option><option value="closed" ' + (s.sort === 'closed' ? 'selected' : '') + '>ปิดล่าสุดก่อน</option></select></label>';
     const filterToggle = btn('filters', icon('filter') + '<span class="case-filter-label">ตัวกรอง</span>' + (activeCount ? '<span class="case-filter-count">' + activeCount + '</span>' : '') + '<span class="case-filter-caret" aria-hidden="true"></span>', 'aria-expanded="' + s.expandedFilters + '" aria-controls="caseExtraFilters" aria-label="ตัวกรองเพิ่มเติม' + (activeCount ? ' (' + activeCount + ')' : '') + '"', 'case-filter-toggle');
-    const table = '<table class="cases-table"><caption class="case-sr-only">รายการเคสลูกค้า</caption><thead><tr><th scope="col">เลขที่เคส</th><th scope="col">ชื่อ–นามสกุล</th><th scope="col">ช่องทางติดต่อ</th><th scope="col">ความสนใจ / ประเภท</th><th scope="col">สถานะ</th><th scope="col">นัดติดตาม</th><th scope="col">จัดการ</th></tr></thead><tbody>' + (!s.loading && !s.error ? s.rows.map(row).join('') : '') + '</tbody></table>';
-    root.innerHTML = '<div class="case-page-head"><div><h1>งานติดต่อ</h1><p>เรื่องที่รอคำตอบ นัดติดตาม และความคืบหน้าของแต่ละเคส</p></div><p class="case-head-note">ดูแลทุกความสนใจ<br>ให้เป็นอนาคตที่มั่นคง</p><div class="case-head-actions">' + btn('new', '+ เพิ่มเคส', '', 'case-primary') + '</div></div>' +
-      summaryCards() + '<div class="case-filterbar"><div class="case-scopes" role="group" aria-label="ขอบเขตเคส">' + scopeButtons + '</div><div class="case-filter-controls" role="group" aria-label="กรองและเรียงเคส">' +
+    const table = '<table class="cases-table"><caption class="case-sr-only">รายการเคสลูกค้า</caption><thead><tr><th scope="col">เรื่องที่ต้องดูแล</th><th scope="col">ลูกค้า</th><th scope="col">กิจกรรมล่าสุด</th><th scope="col">ประเภทงาน</th><th scope="col">Status</th><th scope="col">ติดตามถัดไป</th><th scope="col">Quick edit</th></tr></thead><tbody>' + (!s.loading && !s.error ? s.rows.map(row).join('') : '') + '</tbody></table>';
+    const queues = '<nav class="case-work-queues" aria-label="คิวงาน">' + Object.entries(W.QUEUES).filter(([key]) => key !== 'stale' || s.queue === 'stale').map(([key,label]) => btn('queue', esc(label) + `<span>${s.summary?.workflow?.counts?.[key] ?? '—'}</span>`, `data-queue="${key}" aria-pressed="${(s.queue || 'all') === key}"`)).join('') + '</nav>';
+    root.innerHTML = '<div class="case-page-head"><div><h1>Cases</h1><p>งานติดต่อและการดูแลลูกค้า</p></div><div class="case-head-actions">' + btn('reports',workIcon('reports'),'title="รายงานงานติดต่อ" aria-label="รายงานงานติดต่อ"','case-icon-button') + btn('saved-views',workIcon('saveView'),'title="มุมมองที่บันทึกไว้" aria-label="มุมมองที่บันทึกไว้"','case-icon-button') + btn('new',workIcon('plus') + 'เพิ่มเคส', '', 'case-primary') + '</div></div>' +
+      summaryCards() + queues + '<div class="case-filterbar"><div class="case-scopes" role="group" aria-label="ขอบเขตเคส">' + scopeButtons + '</div><div class="case-filter-controls" role="group" aria-label="กรองและเรียงเคส">' +
       (!compact ? '<label class="case-list-search">' + icon('search') + '<span class="case-sr-only">ค้นหาในรายการเคส</span><input type="search" data-case-search value="' + esc(s.search) + '" placeholder="ค้นหาในรายการเคส…" autocomplete="off"></label>' + statusFilter() : '') + filterToggle + sort + btn('retry', icon('refresh'), 'aria-label="รีเฟรชเคส" title="รีเฟรชเคส"', 'case-icon-button') + '</div></div>' +
-      '<div id="caseExtraFilters" class="case-extra-filters" ' + (s.expandedFilters ? '' : 'hidden') + '>' + (compact ? statusFilter() : '') + '<label>กำหนดติดตาม<select data-case-filter="followUp">' + ['any', 'due', 'today', 'overdue'].map(v => '<option value="' + v + '" ' + (s.followUp === v ? 'selected' : '') + '>' + title(v) + '</option>').join('') + '</select></label><small>วันที่และเวลาทั้งหมดใช้เวลาไทย (UTC+7)</small></div>' +
+      '<div id="caseExtraFilters" class="case-extra-filters" ' + (s.expandedFilters ? '' : 'hidden') + '>' + (compact ? statusFilter() : '') + '<label>กำหนดติดตาม<select data-case-filter="followUp">' + ['any', 'due', 'today', 'overdue'].map(v => '<option value="' + v + '" ' + (s.followUp === v ? 'selected' : '') + '>' + title(v) + '</option>').join('') + '</select></label><label>ประเภทงาน<select data-case-filter="caseType"><option value="">ทั้งหมด</option>' + Object.entries(W.CASE_TYPES).map(([v,label])=>`<option value="${v}" ${s.caseType===v?'selected':''}>${esc(label)}</option>`).join('') + '</select></label><small>วันที่และเวลาทั้งหมดใช้เวลาไทย (UTC+7)</small></div>' +
       (s.closedMonth ? '<div class="case-chips">' + btn('clear-month', 'ปิดเคสเดือนนี้ ×', 'aria-label="ล้างตัวกรองปิดเคสเดือนนี้"') + '</div>' : '') +
       '<section class="case-list" data-list-state="' + (s.loading ? 'loading' : s.error ? 'error' : s.refreshing ? 'refreshing' : s.rows.length ? 'ready' : 'empty') + '" aria-label="เคสลูกค้า" aria-busy="' + Boolean(s.loading || s.refreshing) + '"><div class="case-list-toolbar"><span>' + (s.loading ? 'กำลังโหลดเคส…' : s.list ? 'ทั้งหมด ' + s.list.filteredTotal + ' เคส' : 'โหลดเคสไม่ได้') + '</span><span class="admin-refresh-status" role="status">' + (s.refreshing ? 'ข้อมูลล่าสุดที่โหลดไว้ · กำลังอัปเดต…' : '') + '</span></div>' +
       table +
@@ -186,19 +194,19 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     }
   }
   function row(r) {
-    return '<tr data-case-id="' + esc(r.id) + '" data-case-action="open" data-id="' + esc(r.id) + '"><td class="case-number">' + esc(r.caseNumber) + '<small>รับเรื่อง ' + date(r.submittedAt) + '</small></td><td><button type="button" class="case-name" data-case-action="open" data-id="' + esc(r.id) + '">' + esc(r.contact.name) + '</button><small>อัปเดต ' + date(r.updatedAt) + '</small></td><td>' + esc(r.contact.phone || r.contact.email || r.contact.lineId || r.contact.rawContact || '—') + (r.contact.phone && r.contact.lineId ? '<small>LINE ' + esc(r.contact.lineId) + '</small>' : '') + '<small>' + (r.source === 'website' ? 'จากเว็บไซต์' : 'เพิ่มเอง') + '</small></td><td>' + title(r.interestType) + '</td><td>' + badge(r.status) + '</td><td>' + followLabel(r) + '</td><td class="case-row-action">' + btn('open', icon('chevron'), 'data-id="' + esc(r.id) + '" aria-label="เปิดเคส ' + esc(r.caseNumber) + '"', 'case-icon-button') + '</td></tr>';
+    return `<tr data-case-id="${esc(r.id)}" data-case-action="full" data-id="${esc(r.id)}"><td><button type="button" class="case-subject" data-case-action="full" data-id="${esc(r.id)}">${esc(r.enquiryTopic)}</button><small>${esc(r.caseNumber)}</small></td><td><button type="button" class="case-name" data-case-action="open" data-id="${esc(r.id)}">${esc(r.contact.name)}</button><small>${esc(r.contact.phone || r.contact.email || r.contact.lineId || '')}</small></td><td>${r.lastActivityAt ? esc(W.ACTIVITY_TYPES[r.lastActivityType] || 'บันทึกการดูแล') + '<small>' + date(r.lastActivityAt) + '</small>' : '<span class="case-muted">ยังไม่มีบันทึก</span>'}</td><td>${esc(W.CASE_TYPES[r.caseType || 'enquiry'])}</td><td>${badge(r.status)}</td><td>${r.nextAction ? '<strong>' + esc(r.nextAction) + '</strong>' : ''}${followLabel(r)}</td><td class="case-row-action">${btn('open',workIcon('edit'),`data-id="${esc(r.id)}" aria-label="เปิดเคส ${esc(r.caseNumber)}" title="Quick edit"`,'case-icon-button')}</td></tr>`;
   }
   function card(r) {
     const isClosed = closed(r.status);
-    return '<article class="case-card" data-case-id="' + esc(r.id) + '"><button type="button" class="case-card-open" data-case-action="open" data-id="' + esc(r.id) + '"><span class="case-card-icon ' + (isClosed ? 'is-closed' : '') + '">' + icon(isClosed ? 'check' : r.followUp ? 'calendar' : 'file') + '</span><span class="case-card-content"><span class="case-card-top">' + badge(r.status) + '<time>' + date(r.updatedAt) + '</time></span><strong>' + esc(r.contact.name) + '</strong><span class="case-card-meta">' + title(r.interestType) + ' · ' + esc(r.caseNumber) + '</span></span><span class="case-card-chevron">' + icon('chevron') + '</span></button><div class="case-card-footer"><span class="case-card-contact">' + (r.contact.phone ? icon('phone') + contactLink('phone', r.contact.phone) : esc(r.contact.email || r.contact.lineId || r.contact.rawContact || '—')) + '</span><span class="case-card-due">' + (isClosed ? icon('check') + 'ปิดเคส ' + date(r.closedAt) : followLabel(r)) + '</span></div></article>';
+    return `<article class="case-card" data-case-id="${esc(r.id)}"><button type="button" class="case-card-open" data-case-action="full" data-id="${esc(r.id)}"><span class="case-card-icon ${isClosed ? 'is-closed' : ''}">${icon(isClosed ? 'check' : r.followUp ? 'calendar' : 'file')}</span><span class="case-card-content"><span class="case-card-top">${badge(r.status)}<time>${date(r.updatedAt)}</time></span><strong>${esc(r.enquiryTopic)}</strong><span class="case-card-customer">${esc(r.contact.name)}</span><span class="case-card-meta">${esc(W.CASE_TYPES[r.caseType || 'enquiry'])} · ${esc(r.caseNumber)}</span></span><span class="case-card-chevron">${icon('chevron')}</span></button><div class="case-card-next">${r.nextAction ? '<strong>' + esc(r.nextAction) + '</strong>' : ''}<span class="case-card-due">${isClosed ? icon('check') + 'ปิดเคส ' + date(r.closedAt) : followLabel(r)}</span></div><div class="case-card-footer"><span class="case-card-contact">${r.contact.phone ? icon('phone') + contactLink('phone', r.contact.phone) : esc(r.contact.email || r.contact.lineId || r.contact.rawContact || '—')}</span>${btn('open',workIcon('edit'),`data-id="${esc(r.id)}" aria-label="แก้ไขงาน ${esc(r.caseNumber)}" title="Quick edit"`,'case-icon-button')}</div></article>`;
   }
   function followLabel(r) { return r.followUp ? `<span class="${r.followUp.dueAt <= (s.summary?.asOf || new Date().toISOString()) ? 'case-due' : ''}">${icon('calendar')}${date(r.followUp.dueAt)}</span>` : '<span class="case-muted">ยังไม่ได้นัดติดตาม</span>'; }
   function updateSelected() { root.querySelectorAll('[data-case-id]').forEach(n => n.classList.toggle('case-selected', n.dataset.caseId === s.record?.id)); document.body.classList.toggle('case-detail-open', ['detail', 'new'].includes(s.panel)); }
-  async function openCase(id, { skipGuard = false, fromLocation = false } = {}) {
+  async function openCase(id, { skipGuard = false, fromLocation = false, full = false } = {}) {
     if (!skipGuard && !(await guard())) return;
     returnFocus = document.activeElement;
     const generation = ++panelGeneration;
-    s.panel = 'loading'; s.draft = null; s.record = null; s.errorSave = ''; s.conflict = null; renderPanel();
+    s.panel = 'loading'; s.draft = null; s.record = null; s.activityDraft = null; s.selectedCustomer = null; s.customer = null; s.returnToFull = false; s.errorSave = ''; s.conflict = null; renderPanel();
     if (!['admin', 'administrator', 'owner'].includes(session.role)) {
       s.panel = 'error'; s.errorSave = 'บัญชีนี้ไม่มีสิทธิ์เปิดเคส กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์'; renderPanel(); return;
     }
@@ -210,15 +218,17 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       const data = await api(`cases/${encodeURIComponent(id)}`);
       if (generation !== panelGeneration) return;
       s.record = data.record; s.customerId = data.customerId || null; s.draft = editable(data.record); s.activities = data.activities; s.activityOffset = data.nextActivityOffset; s.legacy = data.legacyHistory;
-      s.panel = 'detail'; requestKey = null; renderPanel(); updateSelected();
+      s.customer = data.customer || null; s.events = data.events || []; s.nextEventOffset = data.nextEventOffset ?? null;
+      s.panel = full ? 'full' : 'detail'; requestKey = null; renderPanel(); updateSelected(); writeCaseLocation({replace:true});
     } catch (e) { if (generation === panelGeneration) { s.panel = 'error'; s.errorSave = e.status === 404 ? 'ไม่พบเคสจากลิงก์นี้ เคสอาจถูกลบหรือย้ายแล้ว กรุณาค้นหาจากรายการเคส' : e.status === 403 ? 'บัญชีนี้ไม่มีสิทธิ์เปิดเคสจากลิงก์ กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์' : e.message; renderPanel(); } }
   }
   async function newCase() {
     if (!(await guard())) return;
+    panelGeneration++;
     linkedCaseId = null; writeCaseLocation();
     returnFocus = document.activeElement; s.record = null; s.panel = 'new'; s.conflict = null; s.errorSave = ''; requestKey = null;
-    s.activities = []; s.activityOffset = null; s.legacy = null; s.reopening = false;
-    s.draft = { contact: { name: '', phone: null, lineId: null, email: null, rawContact: null }, interestType: 'unsure', enquiryTopic: '', workingNote: '', status: 'new', followUp: null };
+    s.activities = []; s.activityOffset = null; s.legacy = null; s.reopening = false; s.customer = null; s.customerId = null; s.selectedCustomer = null; s.activityDraft = null; s.returnToFull = false;
+    s.draft = editable({ contact: { name: '', phone: null, lineId: null, email: null, rawContact: null }, interestType: 'unsure', enquiryTopic: '', workingNote: '', status: 'new', followUp: null });
     renderPanel(); updateSelected();
   }
   function panelShell(titleText, body, footer = '') {
@@ -235,26 +245,140 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     if (s.panel === 'error') return panelShell('เปิดเคสไม่ได้', `<p role="alert">${esc(s.errorSave)}</p>${btn('close', 'ปิด')}`);
     if (s.panel === 'notifications') return renderNotifications();
     if (s.panel === 'preferences') return renderPreferences();
+    if (s.panel === 'full') {
+      panelShell('รายละเอียดเคส', fullCaseMarkup(s, { badge, followLabel, history: historyMarkup() }));
+      overlay.querySelector('#caseActivityForm').addEventListener('submit', saveActivity);
+      return;
+    }
+    if (s.panel === 'reports') return panelShell('รายงานงานติดต่อทั้งหมด', reportLoading ? '<div class="case-skeleton" role="status" aria-label="กำลังโหลดรายงาน"><div></div><div></div></div>' : reportError ? `<p role="alert">${esc(reportError)}</p>${btn('reports','ลองอีกครั้ง')}` : reportMarkup(s.summary?.workflow));
+    if (s.panel === 'views') { panelShell('มุมมองที่บันทึกไว้', savedViewsMarkup(views)); overlay.querySelector('#caseSaveViewForm').addEventListener('submit', saveView); return; }
     const d = s.draft, r = s.record, isNew = s.panel === 'new';
     panelShell(isNew ? 'เพิ่มเคส' : esc(r.caseNumber), `<form id="caseEditForm" novalidate>
-      ${!isNew ? `<div class="case-detail-meta">${badge(r.status)}<p>รับเรื่อง ${date(r.submittedAt)}<br>${r.source === 'website' ? 'จากฟอร์มบนเว็บไซต์' : 'เพิ่มเคสเอง'}${closed(r.status) ? `<br>${r.closedAt ? `ปิดเคส ${date(r.closedAt)}` : 'ไม่มีวันที่ปิดเคสในข้อมูลเดิม'}` : ''}</p></div>` : '<p class="case-muted">เพิ่มเคสสำหรับลูกค้าที่ติดต่อเข้ามาโดยตรง</p>'}
+      ${!isNew ? `<div class="case-detail-meta">${badge(r.status)}<p>รับเรื่อง ${date(r.submittedAt)}<br>${r.source === 'website' ? 'จากฟอร์มบนเว็บไซต์' : 'เพิ่มเคสเอง'}${closed(r.status) ? `<br>${r.closedAt ? `ปิดเคส ${date(r.closedAt)}` : 'ไม่มีวันที่ปิดเคสในข้อมูลเดิม'}` : ''}</p></div>${btn('full',workIcon('open') + 'เปิดรายละเอียดและ Timeline',`data-id="${esc(r.id)}"`)}` : ''}
+      ${customerPicker(s.selectedCustomer || s.customer, s.customerId)}
       <section class="case-section"><h3>ข้อมูลติดต่อ</h3>${isNew ? contactFields(d.contact) : `<div class="case-contact-read"><strong>${esc(r.contact.name)}</strong>${['phone', 'lineId', 'email', 'rawContact'].filter(key => r.contact[key]).map(key => `<div><span class="case-muted">${{ phone: 'โทรศัพท์', lineId: 'LINE', email: 'อีเมล', rawContact: 'ข้อมูลที่แจ้งไว้' }[key]}</span><span>${contactLink(key, r.contact[key])}</span>${btn('copy', 'คัดลอก', `data-copy="${esc(r.contact[key])}"`, 'case-text-button')}</div>`).join('')}</div><details class="case-edit-contact"><summary>แก้ไขข้อมูลติดต่อ</summary>${contactFields(d.contact)}</details>`}</section>
-      ${!isNew && openCustomer ? `<section class="case-section"><h3>Customers</h3>${btn('customer-record', s.customerId ? 'เปิดข้อมูลลูกค้า' : 'สร้างข้อมูลลูกค้าจากงานนี้')}</section>` : ''}
+      ${!isNew && openCustomer && !s.customerId ? `<section class="case-section">${btn('customer-record', 'สร้างข้อมูลลูกค้าจากงานนี้')}</section>` : ''}
       <section class="case-section"><h3>เรื่องที่สนใจ</h3>${isNew ? enquiryFields(d) : `<p>${title(r.interestType)} · ${esc(r.enquiryTopic)}</p><details><summary>แก้ไขเรื่องที่สนใจ</summary>${enquiryFields(d)}</details>`}</section>
+      <section class="case-section">${workflowFields(d)}</section>
       ${!isNew ? `<details class="case-original"><summary>ข้อความที่ได้รับครั้งแรก ${r.originalSubmission ? '' : '· เพิ่มเคสเอง'}</summary>${r.originalSubmission ? `<p><strong>${esc(r.originalSubmission.name)}</strong><br>${esc(r.originalSubmission.contactInput)}</p><p>${esc(r.originalSubmission.enquiryTopic)}</p><p class="case-preserve">${esc(r.originalSubmission.message || 'ไม่ได้ระบุข้อความ')}</p>` : '<p>เคสนี้เพิ่มเอง จึงไม่มีข้อความจากเว็บไซต์</p>'}${r.privacyReceipt ? `<details><summary>หลักฐานการรับทราบนโยบายความเป็นส่วนตัว</summary><p class="case-preserve">${esc(r.privacyReceipt.noticeText)}</p><small>รับทราบเมื่อ ${date(r.privacyReceipt.acceptedAt)}<br>${esc(r.privacyReceipt.noticeVersion)}</small></details>` : '<small>ไม่พบหลักฐานการรับทราบนโยบายความเป็นส่วนตัวที่ยืนยันได้ในเคสนี้</small>'}</details>` : ''}
-      <section class="case-section"><label><strong>โน้ตติดตามงาน</strong><textarea name="workingNote" maxlength="2000" rows="4" placeholder="บันทึกข้อมูลสำหรับการติดตามครั้งถัดไป…">${esc(d.workingNote)}</textarea></label><small id="caseNoteCount">${d.workingNote.length}/2000 · โน้ตภายใน</small></section>
+      <section class="case-section">${workField('workingNote','โน้ตติดตามงาน',d.workingNote,{type:'textarea',max:2000})}<small id="caseNoteCount">${d.workingNote.length}/2000 · โน้ตภายใน</small></section>
       <section class="case-section"><h3>สถานะ</h3>${r && closed(r.status) && !s.reopening ? `<p>เคสนี้ปิดแล้ว หากต้องการติดตามต่อ ให้เปิดเคสอีกครั้ง</p>${btn('reopen', 'เปิดเคสอีกครั้ง')}<label>ผลการปิดเคส<select name="status">${Object.entries(STATUS).filter(([v]) => closed(v)).map(([v, label]) => `<option value="${v}" ${d.status === v ? 'selected' : ''}>${label}</option>`).join('')}</select></label>` : `<label class="case-sr-only" for="caseDraftStatus">สถานะเคส</label><select id="caseDraftStatus" name="status">${Object.entries(STATUS).map(([v, label]) => `<option value="${v}" ${d.status === v ? 'selected' : ''}>${label}</option>`).join('')}</select>`}<small>“ดำเนินการแล้ว” หมายถึงจบเรื่องที่ลูกค้าสอบถาม ไม่ใช่การบันทึกยอดขายประกัน</small></section>
       <section class="case-section case-followup"><h3>นัดติดตามครั้งถัดไป</h3><div id="caseFollowFields">${followFields(d)}</div></section>
-      ${!isNew ? historyMarkup() : ''}<div id="caseSaveError" role="alert">${errorMarkup()}</div></form>`, `${btn('cancel', 'ยกเลิก', s.saving ? 'disabled' : '')}<button type="submit" form="caseEditForm" class="case-button case-primary" ${s.saving ? 'disabled' : ''}>${s.saving ? 'กำลังบันทึก…' : 'Save'}</button>`);
+      <details class="case-section"><summary>รายการที่ต้องทำ</summary><div data-checklist-editor>${checklistFields(d)}</div></details>${!isNew ? historyMarkup() : ''}<div id="caseSaveError" role="alert">${errorMarkup()}</div></form>`, `${btn('cancel', 'ยกเลิก', s.saving ? 'disabled' : '')}<button type="submit" form="caseEditForm" class="case-button case-primary" ${s.saving ? 'disabled' : ''}>${s.saving ? 'กำลังบันทึก…' : 'Save'}</button>`);
+    const policy = overlay.querySelector('[name=policyId]'); if (policy) policy.value = d.policyId || '';
+    // Keep a legacy value visible on its own record, but do not offer it for new transitions.
+    overlay.querySelectorAll('select[name=status] option').forEach(option => { if (W.LEGACY_STATUSES[option.value] && option.value !== r?.status) option.remove(); });
     overlay.querySelector('#caseEditForm')?.addEventListener('submit', save);
+  }
+  async function searchCustomers(query) {
+    const target = overlay.querySelector('[data-customer-search-results]'); if (!target) return;
+    const generation = ++customerGeneration;
+    target.textContent = query.trim() ? 'กำลังค้นหา…' : ''; if (!query.trim()) return;
+    try {
+      const data = await api('customers?status=all&search=' + encodeURIComponent(query));
+      if (!target.isConnected || generation !== customerGeneration) return;
+      target.innerHTML = data.items.map(c => btn('select-customer', `<strong>${esc(c.profile.firstName)} ${esc(c.profile.lastName)}</strong><small>${esc(c.code)} · ${esc(c.profile.phone || c.profile.email || c.profile.lineId)}</small>`, `data-id="${esc(c.id)}"`, 'case-customer-result')).join('') || '<p>ไม่พบลูกค้าที่ตรงกัน</p>';
+    } catch (e) { if (target.isConnected && generation === customerGeneration) target.textContent = e.message; }
+  }
+  async function findExactMatches() {
+    if (!s.draft || s.customerId || s.selectedCustomer) return;
+    const target = overlay.querySelector('[data-customer-exact-matches]'); if (!target) return;
+    const generation = ++customerGeneration, contact = structuredClone(s.draft.contact);
+    const query = new URLSearchParams(Object.entries(contact).filter(([key,v]) => ['phone','email','lineId'].includes(key) && v));
+    if (!query.size) { target.textContent = ''; return; }
+    try {
+      const data = await api('cases/customer-matches?' + query);
+      if (!target.isConnected || generation !== customerGeneration) return;
+      target.innerHTML = data.items.length ? `<p>พบข้อมูลติดต่อที่ตรงกับลูกค้าเดิม</p>${data.items.map(c=>btn('select-customer',esc(c.name) + ' · ' + esc(c.code),`data-id="${esc(c.id)}"`)).join('')}` : '';
+    } catch (e) { if (target.isConnected && generation === customerGeneration) target.textContent = 'ตรวจรายชื่อลูกค้าเดิมไม่ได้: ' + e.message; }
+  }
+  async function selectCustomer(id) {
+    const generation = panelGeneration, draft = s.draft;
+    s.saving=true;setSaving(true);
+    try {
+      const customer = await api('cases/customer-context/' + encodeURIComponent(id));
+      if (generation !== panelGeneration || draft !== s.draft || !s.draft) return;
+      if (!customer || customer.unavailable) return announce('ยังเชื่อมลูกค้าไม่ได้ กรุณาตรวจสอบ Consent ใน Customers');
+      s.selectedCustomer = customer; s.draft.policyId = null;
+      if (!s.record && !Object.values(s.draft.contact).some(Boolean)) s.draft.contact = structuredClone(customer.contact);
+      s.saving=false;renderPanel();
+    } finally { s.saving=false;if(generation===panelGeneration)setSaving(false); }
+  }
+  function rememberActivity() {
+    const form = overlay.querySelector('#caseActivityForm'); if (!form) return;
+    const f = form.elements;
+    s.activityDraft = { type: f.activityType.value, channel: f.activityChannel.value, direction: f.activityDirection.value, outcome: f.activityOutcome.value, at: f.activityAt.value, notes: f.activityNotes.value, documentIds: [...form.querySelectorAll('[name=activityDocument]:checked')].map(el=>el.value) };
+  }
+  async function saveActivity(event) {
+    event.preventDefault(); if (s.saving) return;
+    const form = event.currentTarget; if (!form.reportValidity()) return; rememberActivity();
+    const a = s.activityDraft, at = Date.parse(a.at + '+07:00'), error = form.querySelector('[data-work-save-error]');
+    if (!Number.isFinite(at)) { error.textContent = 'ระบุวันและเวลาให้ถูกต้อง'; return; }
+    const payload = { expectedVersion: s.record.version, activity: { type:a.type,channel:a.channel,direction:a.direction,outcome:a.outcome,occurredAt:new Date(at).toISOString(),notes:a.notes,documentIds:a.documentIds } };
+    const signature = JSON.stringify(payload); if (signature !== workSignature || !workKey) { workSignature = signature; workKey = crypto.randomUUID(); }
+    s.saving = true; form.querySelectorAll('button,input,select,textarea').forEach(el=>el.disabled=true); error.textContent = '';
+    try {
+      await api(`cases/${s.record.id}/activities`, { method:'POST',headers:{'Idempotency-Key':workKey},body:payload });
+      // Readback is part of success; keep the same key and draft if the response is lost.
+      const data = await api(`cases/${s.record.id}`);
+      s.record = data.record; s.draft = editable(data.record); s.customer = data.customer; s.events = data.events || []; s.nextEventOffset = data.nextEventOffset; s.activityDraft = null; workKey = null;
+      s.saving = false; renderPanel(); load(); announce('บันทึกกิจกรรมแล้ว');
+    } catch (e) {
+      s.saving = false; form.querySelectorAll('button,input,select,textarea').forEach(el=>el.disabled=false);
+      error.innerHTML = esc(e.message || 'ยังยืนยันการบันทึกไม่ได้ กรุณาลองอีกครั้ง') + (e.payload?.code === 'version_conflict' ? btn('reload-work-version', 'โหลดเวอร์ชันล่าสุดโดยเก็บข้อความที่กรอกไว้') : '');
+    }
+  }
+  async function toggleChecklist(input) {
+    if (s.saving || !s.record) return;
+    const index = Number(input.dataset.caseCheck), list = structuredClone(s.record.checklist || []);
+    if (!list[index]) return; list[index].done = input.checked;
+    const payload = { expectedVersion:s.record.version,changes:{checklist:list} }, signature = JSON.stringify(payload);
+    if (signature !== workSignature || !workKey) { workSignature=signature;workKey=crypto.randomUUID(); }
+    s.saving=true; overlay.querySelectorAll('[data-case-check]').forEach(el=>el.disabled=true);
+    try { const r = await api(`cases/${s.record.id}`,{method:'PATCH',headers:{'Idempotency-Key':workKey},body:payload}); s.record=r;s.draft=editable(r);workKey=null;s.saving=false;renderPanel();load(); }
+    catch(e) { s.saving=false;input.checked=!input.checked;overlay.querySelectorAll('[data-case-check]').forEach(el=>el.disabled=false);overlay.querySelector('[data-check-error]').textContent=e.message; }
+  }
+  async function downloadDocument(id) {
+    if (!s.customer || s.saving) return;
+    s.saving=true;
+    try {
+      const result=await api(`customers/${s.customer.id}/document-download/${id}`,{method:'POST',headers:{'Idempotency-Key':crypto.randomUUID()},body:{expectedVersion:s.customer.version}});
+      const bytes=Uint8Array.from(atob(result.data),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([bytes],{type:result.type})),a=document.createElement('a'); a.href=url;a.download=result.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    } finally { s.saving=false; }
+  }
+  function currentFilters() { return Object.fromEntries(['scope','status','followUp','search','sort','queue','caseType','closedMonth'].map(key=>[key,String(s[key])])); }
+  async function openReports() {
+    if (!await guard()) return;
+    const generation=++panelGeneration;
+    s.draft=null;s.activityDraft=null;s.panel='reports';reportLoading=true;reportError='';renderPanel();
+    try {
+      const data=await api('cases/summary');
+      if(generation!==panelGeneration||s.panel!=='reports')return;
+      if(!data.workflow)throw new Error('รายงานยังไม่พร้อมใช้งาน กรุณาลองอีกครั้ง');
+      s.summary=data;render();
+    } catch(e) { if(generation===panelGeneration)reportError=e.message; }
+    finally { if(generation===panelGeneration&&s.panel==='reports'){reportLoading=false;renderPanel();} }
+  }
+  async function updateViews(items) {
+    const body={expectedVersion:views.version,items},signature=JSON.stringify(body);
+    if (signature!==viewSignature || !viewKey) { viewSignature=signature;viewKey=crypto.randomUUID(); }
+    views=await api('cases/views',{method:'PUT',headers:{'Idempotency-Key':viewKey},body}); viewKey=null;
+  }
+  async function saveView(event) {
+    event.preventDefault(); if(s.saving)return;
+    const form=event.currentTarget;if(!form.reportValidity())return;s.saving=true;form.querySelector('button').disabled=true;
+    const value={name:form.elements.viewName.value,filters:currentFilters()};
+    if(!pendingView || !same(value,{name:pendingView.name,filters:pendingView.filters}))pendingView={id:crypto.randomUUID(),...value};
+    try { await updateViews([...views.items,pendingView]);pendingView=null;s.saving=false;renderPanel();announce('บันทึกมุมมองแล้ว'); }
+    catch(e){s.saving=false;form.querySelector('button').disabled=false;form.querySelector('[data-view-error]').textContent=e.message;}
   }
   function contactLink(key, value) {
     if (key === 'phone' && /^[+\d][\d ()-]{6,30}$/.test(value)) return `<a href="tel:${esc(value.replace(/[^\d+]/g, ''))}">${esc(value)}</a>`;
     if (key === 'email' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return `<a href="mailto:${esc(encodeURIComponent(value))}">${esc(value)}</a>`;
     return esc(value);
   }
-  function contactFields(c) { return `<div class="case-contact-fields">${[['name', 'ชื่อ', 'text', 150], ['phone', 'โทรศัพท์', 'tel', 64], ['lineId', 'LINE ID', 'text', 100], ['email', 'อีเมล', 'email', 254], ['rawContact', 'ช่องทางอื่น / ข้อมูลที่ลูกค้าแจ้ง', 'text', 300]].map(([key, label, type, max]) => `<label>${label}${key === 'name' ? ' *' : ''}<input name="contact.${key}" type="${type}" maxlength="${max}" value="${esc(c[key] || '')}" ${key === 'name' ? 'required' : ''}></label>`).join('')}<small>ระบุช่องทางติดต่ออย่างน้อย 1 ช่องทาง</small></div>`; }
-  function enquiryFields(d) { return `<label>ประเภทที่สนใจ<select name="interestType">${INTERESTS.map(v => `<option value="${v}" ${d.interestType === v ? 'selected' : ''}>${title(v)}</option>`).join('')}</select></label><label>หัวข้อที่สอบถาม<input name="enquiryTopic" maxlength="300" value="${esc(d.enquiryTopic)}" required></label>`; }
+  function contactFields(c) { return `<div class="case-contact-fields">${[['name', 'ชื่อ', 'text', 150], ['phone', 'โทรศัพท์', 'tel', 64], ['lineId', 'LINE ID', 'text', 100], ['email', 'อีเมล', 'email', 254], ['rawContact', 'ช่องทางอื่น / ข้อมูลที่ลูกค้าแจ้ง', 'text', 300]].map(([key, label, type, max]) => workField(`contact.${key}`,label,c[key] || '',{type,max,required:key==='name'})).join('')}<small>ระบุช่องทางติดต่ออย่างน้อย 1 ช่องทาง</small></div>`; }
+  function enquiryFields(d) { return workField('interestType','ประเภทประกันที่สนใจ',d.interestType,{options:Object.fromEntries(INTERESTS.map(v=>[v,title(v)]))}) + workField('enquiryTopic','หัวข้อที่สอบถาม',d.enquiryTopic,{max:300,required:true}); }
   function reminderHelp() {
     if (!s.capabilities) return 'แจ้งเตือนใน Admin เมื่อถึงกำหนด สถานะการส่งอีเมลดูได้ในตั้งค่าการแจ้งเตือน';
     if (s.capabilities.followUpEmailAvailable && s.capabilities.schedulerAvailable) return `เมื่อเปิดแจ้งเตือน ระบบจะแจ้งใน Admin และส่งอีเมลไปยัง ${s.capabilities.intakeEmailRecipient || 'กล่องจดหมายของระบบ'} หลังถึงกำหนด${Number.isFinite(s.capabilities.schedulerCadenceMinutes) ? ` โดยตรวจทุก ${s.capabilities.schedulerCadenceMinutes} นาที` : ''} การส่งอาจล่าช้าได้`;
@@ -275,19 +399,22 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     if (invalid) { invalid.closest('details')?.setAttribute('open', ''); form.reportValidity(); return; }
     const d = s.draft;
     if (!d.contact.name.trim() || !Object.entries(d.contact).some(([k, v]) => k !== 'name' && v?.trim())) { s.errorSave = 'ระบุชื่อและช่องทางติดต่ออย่างน้อย 1 ช่องทาง'; showSaveError(); return; }
-    const changes = Object.fromEntries(Object.entries(d).filter(([key, value]) => !s.record || !same(value, s.record[key])));
-    if (s.record && !Object.keys(changes).length) { announce('ยังไม่มีการเปลี่ยนแปลงให้บันทึก'); return; }
-    const payload = s.record ? { expectedVersion: s.record.version, changes, ...(s.reopening ? { reopen: true } : {}) } : d;
+    const baseline = s.record ? editable(s.record) : null;
+    const changes = Object.fromEntries(Object.entries(d).filter(([key, value]) => !s.record || !same(value, baseline[key])));
+    const linkChanged = s.selectedCustomer?.id && s.selectedCustomer.id !== s.customerId;
+    if (s.record && !Object.keys(changes).length && !linkChanged) { announce('ยังไม่มีการเปลี่ยนแปลงให้บันทึก'); return; }
+    const payload = s.record ? { expectedVersion: s.record.version, changes: Object.keys(changes).length ? changes : { status: s.record.status }, ...(s.reopening ? { reopen: true } : {}), ...(linkChanged ? { customerId: s.selectedCustomer.id } : {}) } : { ...d, ...(s.selectedCustomer ? { customerId: s.selectedCustomer.id } : {}) };
     const signature = JSON.stringify(payload);
     if (requestSignature !== signature || !requestKey) { requestSignature = signature; requestKey = crypto.randomUUID(); }
     s.saving = true; s.errorSave = ''; s.conflict = null; setSaving(true);
     try {
       const record = await api(s.record ? `cases/${s.record.id}` : 'cases', { method: s.record ? 'PATCH' : 'POST', headers: { 'Idempotency-Key': requestKey }, body: payload });
-      s.record = record; s.draft = editable(record); s.reopening = false; s.panel = 'detail'; requestKey = null; s.saving = false;
+      s.record = record; s.draft = editable(record); s.reopening = false; s.customerId = s.selectedCustomer?.id || s.customerId; s.customer = s.selectedCustomer || s.customer; s.selectedCustomer = null; s.panel = s.returnToFull ? 'full' : 'detail'; requestKey = null; s.saving = false;
       linkedCaseId = record.id; writeCaseLocation();
       renderPanel(); announce('บันทึกเคสแล้ว'); load(); refreshNotifications();
       api(`cases/${record.id}`).then(data => {
-        if (s.record?.id !== record.id || s.panel !== 'detail') return;
+        if (s.record?.id !== record.id || !['detail','full'].includes(s.panel)) return;
+        s.customer = data.customer || null;
         s.activities = data.activities; s.activityOffset = data.nextActivityOffset; s.legacy = data.legacyHistory;
         const history = overlay.querySelector('.case-history'); if (history) { const open = history.open; history.outerHTML = historyMarkup(); overlay.querySelector('.case-history').open = open; }
       }).catch(() => { /* The case is already saved; history can be retried by reopening. */ });
@@ -304,14 +431,27 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
   function showSaveError() { const el = overlay.querySelector('#caseSaveError'); if (el) { el.innerHTML = errorMarkup(); el.scrollIntoView({ block: 'nearest' }); } }
   function setSaving(value) { overlay.querySelectorAll('input,select,textarea,button').forEach(el => { el.disabled = value; }); const submit = overlay.querySelector('[type="submit"]'); if (submit) submit.textContent = value ? 'กำลังบันทึก…' : 'Save'; }
   function input(event) {
+    if (event.target.name === 'customerSearch') { clearTimeout(customerTimer); customerTimer = setTimeout(() => searchCustomers(event.target.value), 250); return; }
+    if (event.target.name?.startsWith('activity')) {
+      const f=overlay.querySelector('#caseActivityForm')?.elements;
+      if(f && event.target.name==='activityType') {
+        const defaults={call:['phone','outbound','reached'],email:['email','outbound','sent'],message:['line','outbound','sent'],meeting:['in_person','outbound','completed'],quote:['email','outbound','sent'],document:['email','inbound','received'],note:['internal','internal','note']}[event.target.value];
+        if(defaults){[f.activityChannel.value,f.activityDirection.value,f.activityOutcome.value]=defaults;window.CoverMateSelect?.refresh();}
+      }
+      if(f && event.target.name==='activityChannel' && f.activityChannel.value==='internal'){f.activityDirection.value='internal';f.activityOutcome.value='note';window.CoverMateSelect?.refresh();}
+      rememberActivity(); return;
+    }
     if (!s.draft) return;
     const { name, value, checked } = event.target;
     event.target.removeAttribute('aria-invalid');
-    if (name.startsWith('contact.')) s.draft.contact[name.split('.')[1]] = value || (name === 'contact.name' ? '' : null);
-    else if (['interestType', 'enquiryTopic', 'workingNote', 'status'].includes(name)) {
+    if (name.startsWith('contact.')) { s.draft.contact[name.split('.')[1]] = value || (name === 'contact.name' ? '' : null); clearTimeout(customerTimer); customerTimer = setTimeout(findExactMatches, 350); }
+    else if (['interestType', 'enquiryTopic', 'workingNote', 'status', 'caseType', 'nextAction', 'closureReason', 'closureNote', 'policyId'].includes(name)) {
       s.draft[name] = value;
-      if (name === 'status') { if (closed(value)) s.draft.followUp = null; overlay.querySelector('#caseFollowFields').innerHTML = followFields(s.draft); }
+      if (['closureReason','policyId'].includes(name)) s.draft[name] = value || null;
+      if (name === 'status') { if (closed(value)) s.draft.followUp = null; overlay.querySelector('#caseFollowFields').innerHTML = followFields(s.draft); overlay.querySelector('#caseClosureFields').innerHTML = closureFields(s.draft); }
+      if (name === 'closureReason') { const note = overlay.querySelector('[name=closureNote]'); if (note) note.required = value === 'other'; }
       if (name === 'workingNote') overlay.querySelector('#caseNoteCount').textContent = `${value.length}/2000 · โน้ตภายใน`;
+    } else if (name.startsWith('checklist.')) { const [,key,index] = name.split('.'); if (s.draft.checklist[index]) s.draft.checklist[index][key] = key === 'done' ? checked : value;
     } else if (name === 'dueAt') {
       s.draft.followUp = value && Number.isFinite(Date.parse(value + '+07:00')) ? { dueAt: new Date(value + '+07:00').toISOString(), reminderEnabled: s.draft.followUp?.reminderEnabled || false } : null;
     } else if (name === 'reminderEnabled') {
@@ -330,7 +470,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     [...panel.children].forEach(child => { child.inert = true; }); panel.append(warning); warning.querySelector('button').focus();
     return new Promise(resolve => { guardResolve = resolve; });
   }
-  function resolveGuard(discard) { const resolve = guardResolve; guardResolve = null; overlay.querySelector('.case-discard')?.remove(); overlay.querySelectorAll('.case-panel > *').forEach(n => { n.inert = false; }); if (discard) { s.draft = null; s.reopening = false; } resolve?.(discard); if (!discard) overlay.querySelector('.case-panel')?.focus(); }
+  function resolveGuard(discard) { const resolve = guardResolve; guardResolve = null; overlay.querySelector('.case-discard')?.remove(); overlay.querySelectorAll('.case-panel > *').forEach(n => { n.inert = false; }); if (discard) { s.draft = null; s.activityDraft = null; s.reopening = false; s.selectedCustomer = null; } resolve?.(discard); if (!discard) overlay.querySelector('.case-panel')?.focus(); }
   async function closePanel({ preserveLocation = false } = {}) { if (!(await guard())) return; panelGeneration++; s.panel = null; document.querySelector('.case-menu-trigger')?.setAttribute('aria-expanded', 'false'); s.draft = null; s.record = null; s.reopening = false; if (!preserveLocation) { linkedCaseId = null; writeCaseLocation(); } overlay.innerHTML = ''; overlay.classList.remove('is-open'); document.body.classList.remove('case-modal-open', 'case-detail-open'); document.querySelector('.app').inert = false; updateSelected(); if (returnFocus?.isConnected) returnFocus.focus(); else root.querySelector('button')?.focus(); }
   async function openNotifications() {
     if (!(await guard())) return;
@@ -385,6 +525,26 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     try {
       if (action === 'keep-editing' || action === 'discard') return resolveGuard(action === 'discard');
       if (guardResolve) return;
+      if (s.saving) return;
+      if (action === 'full') return openCase(el.dataset.id, {full:true});
+      if (action === 'quick-edit') { rememberActivity();s.returnToFull=true;s.panel='detail';renderPanel();return; }
+      if (action === 'select-customer') return selectCustomer(el.dataset.id);
+      if (action === 'clear-customer') { s.selectedCustomer=null;s.draft.policyId=null;renderPanel();return; }
+      if (action === 'queue' || action === 'stale-queue') { if(s.panel)await closePanel();return filter({queue:el.dataset.queue || 'stale',scope:'all',status:'',followUp:'any',closedMonth:false,sort:''}); }
+      if (action === 'reports') return openReports();
+      if (action === 'saved-views') { if(!await guard())return;const generation=++panelGeneration;const data=await api('cases/views');if(generation!==panelGeneration||!s.active)return;views=data;s.draft=null;s.activityDraft=null;s.panel='views';renderPanel();return; }
+      if (action === 'view-apply') { const view=views.items.find(v=>v.id===el.dataset.id);await closePanel();searchInput.value=view.filters.search || '';return filter({...view.filters,closedMonth:view.filters.closedMonth==='true'}); }
+      if (action === 'view-remove') { if(el.dataset.confirm!=='true'){el.dataset.confirm='true';el.textContent='ยืนยันนำออก';return;}s.saving=true;el.disabled=true;try{await updateViews(views.items.filter(v=>v.id!==el.dataset.id));renderPanel();}finally{s.saving=false;el.disabled=false;}return; }
+      if (action === 'checklist-add' || action === 'checklist-remove' || action === 'checklist-template') {
+        if(action==='checklist-add' && s.draft.checklist.length<30)s.draft.checklist.push({id:crypto.randomUUID(),label:'',done:false});
+        if(action==='checklist-remove')s.draft.checklist.splice(Number(el.dataset.index),1);
+        if(action==='checklist-template') { const labels=W.CHECKLIST_TEMPLATES[s.draft.caseType];for(const label of labels)if(s.draft.checklist.length<30 && !s.draft.checklist.some(c=>c.label===label))s.draft.checklist.push({id:crypto.randomUUID(),label,done:false}); }
+        overlay.querySelector('[data-checklist-editor]').innerHTML=checklistFields(s.draft);return;
+      }
+      if (action === 'more-events') { const id=s.record.id,generation=panelGeneration;el.disabled=true;try{const data=await api(`cases/${id}?eventOffset=${s.nextEventOffset}`);if(generation!==panelGeneration||s.record?.id!==id||s.panel!=='full')return;s.events.push(...data.events);s.nextEventOffset=data.nextEventOffset;overlay.querySelector('[data-work-events]').innerHTML=timelineMarkup(s.events,s.customer,s.nextEventOffset);}finally{el.disabled=false;}return; }
+      if (action === 'reload-work-version') { const id=s.record.id,generation=panelGeneration;const data=await api(`cases/${id}`);if(generation!==panelGeneration||s.record?.id!==id)return;s.record=data.record;s.draft=editable(data.record);s.customer=data.customer;s.events=data.events||[];s.nextEventOffset=data.nextEventOffset;workKey=null;renderPanel();return; }
+      if (action === 'work-download') return downloadDocument(el.dataset.id);
+      if (['customer-documents','customer-history'].includes(action)) { if(await guard())return openCustomer(s.customerId,null,action==='customer-documents'?'documents':'history');return; }
       if (action === 'customer-record' && s.record && openCustomer) return openCustomer(s.customerId, s.record.id);
       if (action === 'new') return newCase();
       if (action === 'navigate') { await closePanel(); return navigate(el.dataset.module); }
@@ -392,17 +552,17 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
       if (action === 'close' || action === 'cancel') return closePanel();
       if (action === 'retry') { load(); refreshNotifications(); }
       if (action === 'scope') filter({ scope: el.dataset.scope, status: '', closedMonth: false, sort: '', ...(el.dataset.scope === 'closed' ? { followUp: 'any' } : {}) });
-      if (action === 'metric') filter({ scope: el.dataset.metric === 'closedThisMonth' ? 'closed' : 'open', status: { new: 'new', noAnswer: 'contacted_no_answer' }[el.dataset.metric] || '', followUp: el.dataset.metric === 'followUpsDue' ? 'due' : 'any', closedMonth: el.dataset.metric === 'closedThisMonth', sort: '' });
+      if (action === 'metric') filter({ queue:'',scope: el.dataset.metric === 'closedThisMonth' ? 'closed' : 'open', status: { new: 'new', noAnswer: 'contacted_no_answer' }[el.dataset.metric] || '', followUp: el.dataset.metric === 'followUpsDue' ? 'due' : 'any', closedMonth: el.dataset.metric === 'closedThisMonth', sort: '' });
       if (action === 'filters') { s.expandedFilters = !s.expandedFilters; render(); }
       if (action === 'clear-month') filter({ closedMonth: false });
-      if (action === 'clear-filters') { searchInput.value = ''; filter({ scope: 'open', status: '', search: '', followUp: 'any', closedMonth: false, sort: '' }); }
+      if (action === 'clear-filters') { searchInput.value = ''; filter({ scope: 'open', status: '', search: '', followUp: 'any', closedMonth: false, sort: '',queue:'',caseType:'' }); }
       if (action === 'next') { s.pages.push(s.cursor); s.cursor = s.list.nextCursor; load({ listOnly: true }); }
       if (action === 'previous') { s.cursor = s.pages.pop() || ''; load({ listOnly: true }); }
       if (action === 'copy') { await navigator.clipboard.writeText(el.dataset.copy); announce('คัดลอกแล้ว'); }
       if (action === 'reopen') { s.reopening = true; s.draft.status = 'in_progress'; renderPanel(); }
       if (action === 'clear-followup') { s.draft.followUp = null; overlay.querySelector('#caseFollowFields').innerHTML = followFields(s.draft); }
       if (action === 'reload-case') return openCase(s.record.id);
-      if (action === 'more-history') { const data = await api(`cases/${s.record.id}?activityOffset=${s.activityOffset}`); s.activities.push(...data.activities); s.activityOffset = data.nextActivityOffset; const history = overlay.querySelector('.case-history'); history.outerHTML = historyMarkup(); overlay.querySelector('.case-history').open = true; }
+      if (action === 'more-history') { const id=s.record.id,generation=panelGeneration;el.disabled=true;try{const data = await api(`cases/${id}?activityOffset=${s.activityOffset}`);if(generation!==panelGeneration||s.record?.id!==id)return;s.activities.push(...data.activities);s.activityOffset=data.nextActivityOffset;const history=overlay.querySelector('.case-history');if(history){history.outerHTML=historyMarkup();overlay.querySelector('.case-history').open=true;}}finally{el.disabled=false;} }
       if (action === 'notifications') return openNotifications();
       if (action === 'notification-all' || action === 'notification-unread') { s.unreadOnly = action === 'notification-unread'; await loadNotifications(); }
       if (action === 'notification-retry') await loadNotifications();
@@ -423,6 +583,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     } catch (e) { announce(e.message || 'ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง'); }
   }
   root.addEventListener('click', click); overlay.addEventListener('click', click); overlay.addEventListener('input', input);
+  overlay.addEventListener('change',event=>{if(event.target.matches('[data-case-check]'))toggleChecklist(event.target);});
   function setSearch(value) {
     s.search = String(value ?? '');
     searchInput.value = s.search;
@@ -453,7 +614,7 @@ export function createCasesWorkspace({ root, api, session, searchInput, navigate
     clearTimeout(searchTimer);
     const nextFollowUp = ['any', 'due', 'today', 'overdue'].includes(followUp) ? followUp : 'any';
     const nextScope = nextFollowUp !== 'any' ? 'open' : ['open', 'all', 'closed'].includes(scope) ? scope : 'open';
-    Object.assign(s, { scope: nextScope, status: '', search: String(search ?? '').trim(), followUp: nextFollowUp, closedMonth: false, sort: '', cursor: '', pages: [], expandedFilters: nextFollowUp !== 'any' });
+    Object.assign(s, { scope: nextScope, status: '', search: String(search ?? '').trim(), followUp: nextFollowUp, closedMonth: false, sort: '', cursor: '', pages: [], queue:'',caseType:'',expandedFilters: nextFollowUp !== 'any' });
     searchInput.value = s.search;
     linkedCaseId = null; configuredView = !s.active;
     writeCaseLocation();

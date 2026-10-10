@@ -1,5 +1,9 @@
 # Operations / Cases v2
 
+Current additive workflow/UI extension: [Cases Workbench](ADMIN_CASES_WORKBENCH.md)
+(October 11 local candidate). The original v2 history below is retained; the
+workbench document owns new statuses, activities, linked context and saved views.
+
 Implemented from `COVERMATE_ADMIN_CODEX_ALL_IN_ONE.md` v2, supplied 23 September 2026. Its workflow decisions override the earlier screenshot and pasted prompt. This is an implementation record, not a claim that the candidate is deployed.
 
 Current module map and request-lifecycle contract reviewed on 2026-09-24.

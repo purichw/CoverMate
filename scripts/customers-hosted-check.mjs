@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as M from '../customer-model.mjs';
 import { argValue, resolveUatUrl, vercelBypassHeaders, PROJECT_ID } from './lib/uat-env.mjs';
 import { loadPlaywright, launchChromium } from './lib/playwright.mjs';
@@ -17,6 +17,7 @@ assert.equal(environment.siteId, 'covermate-uat');
 assert.equal(url.protocol, 'https:');
 assert.match(url.hostname, /^covermate-[a-z0-9-]+-purich-w\.vercel\.app$/);
 const sha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const checkCases = process.argv.includes('--cases-workflow');
 const uid = 'customers-uat-' + randomUUID(), email = uid + '@example.invalid';
 const password = randomBytes(36).toString('base64url') + 'aA1!';
 const require = createRequire(import.meta.url);
@@ -30,7 +31,12 @@ const auth = getAuth(app), adminRef = db.doc('admins/' + uid);
 const out = 'uat-results/customers-hosted/' + uid;
 await fs.mkdir(out, { recursive: true });
 const report = { passed: false, target: url.origin, sha, uid, startedAt: new Date().toISOString(), productionWrites: 0, cmsWrites: 0, storageActivation: false, checks: [], screenshots: [], cleanup: {} };
-let browser, token, id, authCreated = false, allowed = false;
+report.sourceDirty = !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim();
+report.sourceHashes = {};
+for (const file of ['server/cases-work-service.cjs', 'server/cases-service.cjs', 'server/customers-service.cjs', 'case-workflow.mjs', 'assets/admin-case-work.js', 'assets/admin-customers.js', 'admin/ops/cases.js']) {
+  report.sourceHashes[file] = createHash('sha256').update(await fs.readFile(file)).digest('hex');
+}
+let browser, token, id, caseId, authCreated = false, allowed = false;
 const profile = { ...M.emptyFields(M.PROFILE_FIELDS), firstName: 'ลูกค้าจำลอง UAT', lastName: uid.slice(-8), email, language: 'TH' };
 const consent = { ...M.emptyFields(M.CONSENT_FIELDS), status: 'Granted', scopes: ['profile', 'policies'], occurredAt: '2026-10-08', channel: 'Signed form', noticeVersion: 'release-qa', noticeText: 'Synthetic release verification only', evidence: 'Synthetic fixture; not a real customer consent' };
 async function call(path = '', method = 'GET', body, expected = 200, key = randomUUID(), credential = token) {
@@ -44,8 +50,19 @@ async function call(path = '', method = 'GET', body, expected = 200, key = rando
   assert.equal(response.status, expected, method + ' ' + path + ': ' + JSON.stringify(value));
   return value;
 }
+async function caseCall(path = '', method = 'GET', body, expected = 200, key = randomUUID()) {
+  assert.ok(checkCases && (path === '' || path === '/views' || caseId && (path === '/' + caseId || path.startsWith('/' + caseId + '/'))), 'Only this run Case and owner views may be accessed');
+  const response = await fetch(new URL('/api/ops/cases' + path + '?cm_env=uat', url), {
+    method, redirect: 'error', signal: AbortSignal.timeout(30000),
+    headers: { ...vercelBypassHeaders(), 'Content-Type': 'application/json', 'Idempotency-Key': key, Authorization: 'Bearer ' + token },
+    ...(body ? { body: JSON.stringify(body) } : {})
+  });
+  const value = await response.json();
+  assert.equal(response.status, expected, method + ' cases' + path + ': ' + (value.code || value.message || response.status));
+  return value;
+}
 try {
-  for (const file of ['assets/admin-customers.js', 'admin/customers.css', 'customer-model.mjs', 'admin/shell.js']) {
+  for (const file of ['assets/admin-customers.js', 'admin/customers.css', 'customer-model.mjs', 'admin/shell.js', ...(checkCases ? ['assets/admin-case-work.js', 'case-workflow.mjs', 'admin/ops/cases.js', 'admin/ops/cases.css', 'admin/ops/app.js'] : [])]) {
     const response = await fetch(new URL('/' + file, url), { headers: vercelBypassHeaders(), redirect: 'error' });
     assert.equal(response.status, 200); assert.equal(await response.text(), await fs.readFile(file, 'utf8'), 'Preview artifact mismatch: ' + file);
   }
@@ -60,7 +77,8 @@ try {
     const request = route.request(), target = new URL(request.url());
     const productionStatic = isProductionHost(target.hostname) && ['GET', 'HEAD'].includes(request.method()) && !request.isNavigationRequest() && (target.pathname === '/favicon.svg' || target.pathname.startsWith('/assets/'));
     if (isProductionHost(target.hostname) && !productionStatic) return route.abort();
-    if (target.origin === url.origin && target.pathname.startsWith('/api/') && request.method() !== 'GET' && !(id && target.pathname.startsWith('/api/ops/customers/' + id))) return route.abort();
+    const ownCaseWrite = checkCases && (target.pathname === '/api/ops/cases/views' || caseId && (target.pathname === '/api/ops/cases/' + caseId || target.pathname.startsWith('/api/ops/cases/' + caseId + '/')));
+    if (target.origin === url.origin && target.pathname.startsWith('/api/') && request.method() !== 'GET' && !(id && target.pathname.startsWith('/api/ops/customers/' + id)) && !ownCaseWrite) return route.abort();
     return route.continue({ headers: { ...request.headers(), ...(target.origin === url.origin ? vercelBypassHeaders() : {}) } });
   });
   const page = await context.newPage(), errors = []; page.setDefaultTimeout(30000);
@@ -111,6 +129,65 @@ try {
   assert.equal(record.policies[0].plan, 'แผนสุขภาพตัวอย่าง');
   assert.match(await page.locator('.customer-policy').textContent(), /ประกันสุขภาพ \(Health\)/);
   const shot = out + '/policies-mobile.png'; await page.screenshot({ path: shot }); report.screenshots.push(shot);
+  if (checkCases) {
+    const caseInput = { contact: { name: M.fullName(profile), email, phone: null, lineId: null, rawContact: null }, interestType: 'health', enquiryTopic: 'Synthetic UAT renewal workbench', caseType: 'renewal', nextAction: 'ตรวจเงื่อนไขต่ออายุ', customerId: id, policyId: record.policies[0].id, checklist: [{ id: randomUUID(), label: 'ตรวจข้อมูลกรมธรรม์', done: false }] };
+    const createKey = randomUUID();
+    const created = await caseCall('', 'POST', caseInput, 201, createKey);
+    caseId = created.id; report.caseId = caseId;
+    assert.equal((await caseCall('', 'POST', caseInput, 201, createKey)).id, caseId);
+    assert.equal((await db.doc('contactLeads/' + caseId).get()).exists, false);
+    let detail = await caseCall('/' + caseId);
+    assert.equal(detail.customer.id, id); assert.equal(detail.record.policyId, record.policies[0].id);
+    await page.goto(new URL('/admin?cm_env=uat&case=' + caseId + '&caseView=full#operations', url).href);
+    await page.locator('[data-case-panel=full]').waitFor();
+    await page.locator('.case-work-composer-shell>summary').click();
+    await page.locator('[name=activityType]').selectOption('message', { force: true });
+    await page.locator('[name=activityChannel]').selectOption('line', { force: true });
+    await page.locator('[name=activityOutcome]').selectOption('sent', { force: true });
+    await page.locator('[name=activityNotes]').fill('Synthetic manual log only; no message was sent.');
+    await page.locator('#caseActivityForm [type=submit]').click();
+    await page.getByText('บันทึกกิจกรรมแล้ว', { exact: true }).waitFor();
+    await page.locator('[data-case-check="0"]').check();
+    await page.waitForFunction(() => !document.querySelector('[data-case-check="0"]').disabled);
+    await page.reload(); await page.locator('[data-case-panel=full]').waitFor();
+    assert.ok(await page.locator('[data-case-check="0"]').isChecked());
+    assert.equal(await page.locator('.case-work-timeline>li').count(), 1);
+    detail = await caseCall('/' + caseId);
+    assert.equal(detail.record.status, 'new'); assert.ok(detail.record.firstResponseAt);
+    assert.equal(detail.events[0].notes, 'Synthetic manual log only; no message was sent.');
+    await caseCall('/' + caseId + '/activities', 'POST', { expectedVersion: created.version, activity: detail.events[0] }, 409);
+    const directEvent = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/contactLeadsUat/${caseId}/caseEvents`, { headers: { Authorization: 'Bearer ' + token } });
+    assert.equal(directEvent.status, 403);
+    await page.locator('[data-case-action=quick-edit]').first().click();
+    await page.locator('[name=status]').selectOption('closed', { force: true });
+    await page.locator('[name=closureReason]').selectOption('completed', { force: true });
+    await page.locator('#caseEditForm').evaluate(form => form.requestSubmit());
+    await page.locator('[data-case-panel=full]').waitFor();
+    detail = await caseCall('/' + caseId); assert.equal(detail.record.status, 'closed'); assert.equal(detail.record.closureReason, 'completed');
+    await page.locator('[data-case-action=quick-edit]').first().click();
+    await page.locator('[data-case-action=reopen]').click();
+    await page.locator('[name=status]').selectOption('waiting_customer', { force: true });
+    await page.locator('#caseEditForm').evaluate(form => form.requestSubmit());
+    await page.locator('[data-case-panel=full]').waitFor();
+    detail = await caseCall('/' + caseId); assert.equal(detail.record.closureReason, null);
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+      const file = out + '/case-workspace-' + width + '.png';
+      // Capture the complete owned dialog, excluding unrelated UAT rows behind it.
+      await page.locator('[data-case-panel=full]').screenshot({ path: file }); report.screenshots.push(file);
+    }
+    const views = await caseCall('/views');
+    await caseCall('/views', 'PUT', { expectedVersion: views.version, items: [{ id: randomUUID(), name: 'Synthetic renewal queue', filters: { scope: 'all', caseType: 'renewal', queue: 'waiting' } }] });
+    assert.equal((await caseCall('/views')).items.length, 1);
+    await page.goto(new URL('/admin?cm_env=uat&customer=' + id + '&customerTab=history#customers', url).href);
+    await page.locator('.customer-case-activity').waitFor();
+    assert.match(await page.locator('.customer-case-activity').innerText(), /Synthetic manual log only/);
+    const customerWithEvents = await call('/' + id);
+    assert.equal(customerWithEvents.caseActivity.filter(event => event.caseId === caseId).length, 1);
+    assert.equal(customerWithEvents.services.length, 0);
+    report.checks.push('Hosted Cases: explicit Customer/policy association, idempotent create, actual UI activity/checklist/reload, first response, conflict, direct Firestore denial, close/reopen, owner views and referenced Customer timeline');
+  }
   await call('/' + id, 'PATCH', { expectedVersion: 1, profile }, 409);
   await call('/' + id + '/consents', 'POST', { expectedVersion: record.version, consent: { ...consent, scopes: ['policies'], status: 'Withdrawn' } });
   record = await call('/' + id);
@@ -125,6 +202,11 @@ try {
 } finally {
   await browser?.close();
   try {
+    if (caseId) {
+      const detail = await caseCall('/' + caseId);
+      await caseCall('/' + caseId, 'PATCH', { expectedVersion: detail.record.version, changes: { status: 'closed', closureReason: 'cancelled', closureNote: 'Synthetic UAT completed; no customer follow-up.' } });
+      report.cleanup.caseClosed = true;
+    }
     if (id) { const record = await call('/' + id); await call('/' + id, 'PATCH', { expectedVersion: record.version, profile: { ...record.profile, status: 'Archived' } }); report.cleanup.customerArchived = true; }
   } catch (error) { report.cleanup.error = error.message; report.passed = false; process.exitCode = 1; }
   try { if (allowed) { await adminRef.update({ active: false }); report.cleanup.allowlistDeactivated = true; } }

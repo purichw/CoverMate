@@ -15,7 +15,7 @@ function stores(actor) {
 
 async function recordsFor(actor) {
   const snap = await stores(actor).cases.get();
-  return snap.docs.map(doc => C.adaptCase(doc.id, doc.data()));
+  return snap.docs.map(doc => ({ ...C.adaptCase(doc.id, doc.data()), customerId: doc.data().customerId || null }));
 }
 
 module.exports = { stores, recordsFor };

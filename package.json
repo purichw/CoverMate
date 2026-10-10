@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "build:cases": "node scripts/build-cases.mjs",
     "check:alignment": "node scripts/alignment-browser-check.mjs",
     "build:customers": "node scripts/build-customers.mjs",
     "preview:customers": "COVERMATE_TEST_MODE=emulator firebase emulators:exec --only auth,firestore --project demo-covermate --config firebase.emulators.json \"node scripts/customers-admin-preview.mjs\"",

@@ -5,6 +5,7 @@ const { error, readBody } = require('./http.cjs');
 const C = require('./cases-contract.cjs');
 const adminEmail = require('./admin-notification.cjs');
 const { schedulerStatus } = require('./admin-email-scheduler.cjs');
+const work = require('./cases-work-service.cjs');
 
 const capabilities = async actor => {
   const config = adminEmail.configuration(actor.environment);
@@ -62,12 +63,15 @@ async function catchUp(actor) {
 }
 async function createManual(req, actor) {
   const body = await readBody(req), key = keyFor(req), { db, cases } = stores(actor);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) C.fail('body', 'Expected an object.');
   const id = C.hash(`${actor.uid}:manual:${key}`), ref = cases.doc(id), fingerprint = C.hash(body), now = new Date().toISOString();
-  const record = C.createCase(body, { id, now });
+  const { customerId = null, ...fields } = body;
+  const record = C.createCase(fields, { id, now });
   return db.runTransaction(async tx => {
     const old = await tx.get(ref);
     if (old.exists) { if (old.data().manualRequestFingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request ID was used for different changes.'); return old.data().caseRecord; }
-    tx.create(ref, { caseRecord: record, manualRequestFingerprint: fingerprint, createdAt: new Date(now), updatedAt: new Date(now), status: record.status, sourcePath: '/admin/ops', name: record.contact.name });
+    await work.validateLink(tx, actor, customerId, record.policyId);
+    tx.create(ref, { caseRecord: record, customerId, manualRequestFingerprint: fingerprint, createdAt: new Date(now), updatedAt: new Date(now), status: record.status, sourcePath: '/admin/ops', name: record.contact.name });
     tx.create(ref.collection('caseActivities').doc('created'), activity(record, actor.uid, now, 'created', [], null, 'created'));
     adminEmail.stageFollowUp(tx, db, record, actor.environment);
     return record;
@@ -75,17 +79,23 @@ async function createManual(req, actor) {
 }
 async function patch(req, actor, id) {
   const body = await readBody(req), key = keyFor(req), { db, cases, notifications } = stores(actor);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) C.fail('body', 'Expected an object.');
   const ref = cases.doc(safeId(id)), mutation = ref.collection('caseMutations').doc(C.hash(`${actor.uid}:${key}`)), fingerprint = C.hash(body), now = new Date().toISOString();
   return db.runTransaction(async tx => {
     const previous = await tx.get(mutation);
     if (previous.exists) { if (previous.data().fingerprint !== fingerprint) throw error(409, 'request_conflict', 'Request ID was used for different changes.'); return previous.data().record; }
     const snap = await tx.get(ref);
     if (!snap.exists) throw error(404, 'not_found', 'Case not found.');
-    const current = C.adaptCase(id, snap.data()), result = C.patchCase(current, body, now);
+    const { customerId, ...patchBody } = body;
+    const current = C.adaptCase(id, snap.data()), result = C.patchCase(current, patchBody, now);
     const { record, changed, scheduleChanged } = result;
+    const currentCustomerId = snap.data().customerId || null;
+    if (customerId !== undefined || changed.includes('policyId')) await work.validateLink(tx, actor, customerId === undefined ? currentCustomerId : customerId, record.policyId, currentCustomerId);
+    if (customerId !== undefined && customerId !== currentCustomerId) { if (!changed.length) { record.version++; record.updatedAt = now; } changed.push('customerId'); }
     const notices = (scheduleChanged || C.closed(record.status)) ? await tx.get(notifications.where('caseId', '==', id)) : null;
     if (changed.length) {
       const update = { caseRecord: record, updatedAt: new Date(now) };
+      if (customerId !== undefined) update.customerId = customerId;
       if (C.closed(record.status)) update.caseIntakeNotification = false;
       if (!snap.data().caseRecord) update.legacyCaseProjection = { status: snap.data().status || 'new', adaptedAt: now, note: 'Original fields and embedded tasks/audit retained.' };
       tx.update(ref, update);
@@ -103,7 +113,10 @@ async function getCase(actor, id, params) {
   const record = C.adaptCase(id, snap.data());
   const all = (await ref.collection('caseActivities').get()).docs.map(d => d.data()).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
   const start = Math.max(0, Number(params.get('activityOffset')) || 0);
+  const workHistory = await work.eventsFor(ref, params);
+  const customer = await work.customerContext(actor, snap.data().customerId || null);
   return { record, customerId: snap.data().customerId || null, activities: all.slice(start, start + 20), nextActivityOffset: start + 20 < all.length ? start + 20 : null,
+    ...workHistory, customer,
     legacyHistory: start ? null : { timeline: snap.data().timeline || [], audit: snap.data().ops?.audit || [], tasks: snap.data().ops?.tasks || {} } };
 }
 async function getPreferences(actor) {
@@ -159,5 +172,5 @@ async function testEmail(req, actor) {
   C.object(await readBody(req), []);
   return adminEmail.testEmail(stores(actor).db, actor, keyFor(req));
 }
-const handle = createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences, testEmail });
+const handle = createCasesHandler({ recordsFor, createManual, getCase, patch, notificationList, markRead, capabilities, getPreferences, patchPreferences, testEmail, ...work });
 module.exports = { handle, websiteRecord, stageWebsiteCreate, activity, catchUp, recordsFor, capabilities };
