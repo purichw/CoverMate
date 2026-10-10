@@ -105,7 +105,15 @@ try {
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`No page overflow at ${width}`);
    const geometry=await page.locator('.case-metric').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),i=n.querySelector('.case-metric-icon').getBoundingClientRect();return{align:getComputedStyle(n).textAlign,offset:Math.abs(r.x+r.width/2-i.x-i.width/2),height:r.height};}));
    assert.ok(geometry.every(g=>g.align==='center'&&g.offset<2),`KPI group centered at ${width}`);
-   assert.ok(Math.max(...geometry.map(g=>g.height))-Math.min(...geometry.map(g=>g.height))<2,`Equal KPI peers at ${width}`);
+   assert.ok(Math.max(...geometry.map(g=>g.height))-Math.min(...geometry.map(g=>g.height))<2,`Equal KPI peers at ${width}: ${JSON.stringify(geometry)}`);
+   if(width===320){
+    const caption=page.locator('.case-metric small').first(),original=await caption.textContent();
+    await caption.evaluate(n=>n.textContent='รายการติดตามที่ต้องตรวจสอบเพิ่มเติมก่อนติดต่อกลับในวันนี้');
+    const heights=await page.locator('.case-metric').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height));
+    assert.ok(Math.max(...heights)-Math.min(...heights)<2,`Wrapped KPI captions preserve equal peers: ${heights}`);
+    await page.screenshot({path:`${output}/after-mobile-320-wrapped-metrics.png`,animations:'disabled'});
+    await caption.evaluate((n,value)=>n.textContent=value,original);
+   }
    assert.deepEqual(await page.locator('.case-metric strong').allTextContents(),metricKeys.map(k=>String(summary[k])));
    const selectAlignments=await page.locator('.case-filterbar .cm-select-value:visible').evaluateAll(nodes=>nodes.map(n=>getComputedStyle(n).textAlign));
    assert.equal(selectAlignments.length,width<768?1:2,'Expected settled controls for the viewport');

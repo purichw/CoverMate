@@ -385,7 +385,7 @@ body[data-module="operations"] #screen.cases-screen { max-width:1600px;padding:2
 .cases-screen { margin:0 auto; }
 .cases-screen .case-page-head h1,.case-panel h1,.case-panel h2 { letter-spacing:0; }
 .cases-screen .case-page-head h1 { font-size:28px; }
-.cases-screen .case-metrics { gap:12px;margin-bottom:20px; }
+.cases-screen .case-metrics { gap:12px;margin-bottom:20px;grid-auto-rows:1fr; }
 .cases-screen .case-metric { min-height:112px;padding:12px;gap:3px;border-radius:8px; }
 .cases-screen .case-metric-icon { width:28px;height:28px;border-radius:6px;margin:0; }
 .cases-screen .case-metric-icon svg { width:18px;height:18px; }

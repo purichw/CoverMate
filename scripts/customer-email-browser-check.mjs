@@ -68,6 +68,8 @@ try {
     await ready('/');assert.equal(await page.locator('#talk form').evaluate(n=>n.noValidate),true);await fill();
     assert.equal(await page.locator('[data-cms-copy="publicCopy.contactEmail"]').innerText(),config.publicCopy.contactEmail[lang]);
     await page.locator('#contact-email').fill('bad');await submit();await page.locator('#contact-email-error').waitFor();assert.equal(posts.length,0);
+    // Validation text renders before the next-frame focus restoration.
+    await page.waitForFunction(()=>document.activeElement?.id==='contact-email');
     assert.equal(await page.evaluate(()=>document.activeElement.id),'contact-email');
     await page.locator('#contact-email').fill('visitor@example.test');
     await page.locator('#contact-email').blur();
